@@ -33,15 +33,15 @@ npm run dev
 
 Copy `.env.example` → `.env.local` and fill in. `scripts/setup.sh` does this automatically using `supabase status` for local values.
 
-| Variable                        | Where it comes from                                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Local: `npm run supabase -- status -o env`. Hosted: Supabase dashboard → Project Settings → API.             |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same as above.                                                                                               |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Same as above — **server-only**, never expose.                                                               |
-| `DATABASE_URL`                  | Local: `DB_URL` from `supabase status`. Hosted: Supabase → Database → Connection string (pooler, port 6543). |
-| `NEXT_PUBLIC_SENTRY_DSN`        | Sentry → Project Settings → Client Keys (DSN).                                                               |
-| `SENTRY_AUTH_TOKEN`             | CI/Vercel only. Sentry → User Settings → Auth Tokens (scope: `project:releases`).                            |
-| `SENTRY_ORG` / `SENTRY_PROJECT` | Set in Vercel + GitHub repo variables.                                                                       |
+| Variable                        | Where it comes from                                                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Local: `setup.sh` / `supabase status` (`API_URL`). Hosted: Project Settings → **API** → Project URL.                                                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Local: `ANON_KEY` from status. Hosted: Project Settings → **API** → `anon` key.                                                                         |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Local: `SERVICE_ROLE_KEY` from status. Hosted: **API** → `service_role` key (**server-only**).                                                          |
+| `DATABASE_URL`                  | Local: `setup.sh` maps `DB_URL` from status. Hosted: **Connect** (top of project) → **Transaction** pooler (6543); password in Settings → **Database**. |
+| `NEXT_PUBLIC_SENTRY_DSN`        | Sentry → Project Settings → Client Keys (DSN).                                                                                                          |
+| `SENTRY_AUTH_TOKEN`             | CI/Vercel only. Sentry → User Settings → Auth Tokens (scope: `project:releases`).                                                                       |
+| `SENTRY_ORG` / `SENTRY_PROJECT` | Set in Vercel + GitHub repo variables.                                                                                                                  |
 
 Hosted secrets live in 1Password under `op://Frontenac Studios/<Project>/...`. Update `.env.example` comments to match the entry name when you provision a new project.
 
@@ -64,7 +64,10 @@ Hosted secrets live in 1Password under `op://Frontenac Studios/<Project>/...`. U
 ### Supabase
 
 - Dashboard: `https://supabase.com/dashboard/project/<ref>`
-- Local: `npm run supabase -- start` (Docker required); studio at `http://127.0.0.1:54323`.
+- Hosted Postgres URL: project home → **Connect** → **Transaction** pooler (not left-sidebar “Database”). Put the URI in `DATABASE_URL`; database password is under Settings → **Database**.
+- Local: `npm run supabase -- start` (Docker required); `setup.sh` writes status into `.env.local`; studio at `http://127.0.0.1:54323`.
+- Verify DB URL: `npm run db:check` (loads `.env.local`, runs `select 1`).
+- Schema push: `npm run db:push` (loads `.env.local` via `drizzle.config.ts`).
 - Migrations: `npm run db:generate` then `npm run db:migrate` (Drizzle).
 - Schema in `src/db/schema/`. Example: `health-checks.ts`.
 
@@ -79,7 +82,8 @@ Hosted secrets live in 1Password under `op://Frontenac Studios/<Project>/...`. U
 | `npm run typecheck`                                            | `tsc --noEmit`.                                                           |
 | `npm run format` / `format:check`                              | Prettier write / check.                                                   |
 | `npm run test` / `test:run` / `test:ui`                        | Vitest watch / single run / web UI.                                       |
-| `npm run db:generate` / `db:migrate` / `db:push` / `db:studio` | Drizzle commands.                                                         |
+| `npm run db:check`                                             | Test `DATABASE_URL` from `.env.local`.                                    |
+| `npm run db:generate` / `db:migrate` / `db:push` / `db:studio` | Drizzle commands (config loads `.env.local`).                             |
 | `npm run supabase`                                             | Pass-through to the Supabase CLI.                                         |
 
 ## Conventions
