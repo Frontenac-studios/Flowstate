@@ -52,16 +52,27 @@ setup_supabase() {
   # Merge by overwriting matching keys
   python3 - <<'PY'
 import re, pathlib
+
+# supabase status -o env uses different names than this template's .env.local keys
+ALIASES = {
+    "DB_URL": "DATABASE_URL",
+    "API_URL": "NEXT_PUBLIC_SUPABASE_URL",
+    "ANON_KEY": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SERVICE_ROLE_KEY": "SUPABASE_SERVICE_ROLE_KEY",
+}
+
 env = pathlib.Path('.env.local')
 patch = pathlib.Path('.env.local.supabase.tmp').read_text().splitlines()
 vals = dict(line.split('=', 1) for line in patch if '=' in line and not line.startswith('#'))
 text = env.read_text()
 for k, v in vals.items():
-    pat = re.compile(rf'^{re.escape(k)}=.*$', re.M)
-    if pat.search(text):
-        text = pat.sub(f'{k}={v}', text)
-    else:
-        text += f'\n{k}={v}\n'
+    targets = {k, ALIASES.get(k, "")} - {""}
+    for key in targets:
+        pat = re.compile(rf'^{re.escape(key)}=.*$', re.M)
+        if pat.search(text):
+            text = pat.sub(f'{key}={v}', text)
+        else:
+            text += f'\n{key}={v}\n'
 env.write_text(text)
 PY
   rm -f .env.local.supabase.tmp
