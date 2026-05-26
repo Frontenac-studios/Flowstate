@@ -29,7 +29,14 @@ export function useSessionUndo() {
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
-  }, [queryClient, trpc.tasks.listIncomplete]);
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+  }, [
+    queryClient,
+    trpc.tasks.listIncomplete,
+    trpc.tasks.listTriageCandidates,
+    trpc.tasks.listTop3Slots,
+  ]);
 
   const uncompleteMutation = useMutation(
     trpc.tasks.uncomplete.mutationOptions({
