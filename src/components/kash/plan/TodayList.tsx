@@ -1,25 +1,29 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useDroppable } from "@dnd-kit/core";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
-import { useTRPC } from "@/trpc/client";
 
+import type { PlanTaskRow } from "./TaskRow";
 import { TaskRow } from "./TaskRow";
 
 type Props = {
   pulse: boolean;
+  tasks: PlanTaskRow[];
+  isLoading: boolean;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
 
-export function TodayList({ pulse, onComplete, onDelete }: Props) {
-  const trpc = useTRPC();
-  const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listToday.queryOptions());
+export function TodayList({ pulse, tasks, isLoading, onComplete, onDelete }: Props) {
+  const { setNodeRef, isOver } = useDroppable({ id: "bucket:today" });
 
   return (
     <section
-      className={`mt-6 ${pulse ? "kash-section-pulse rounded-[var(--kash-radius)]" : ""}`}
+      ref={setNodeRef}
+      className={`mt-6 ${
+        pulse ? "kash-section-pulse rounded-[var(--kash-radius)]" : ""
+      } ${isOver ? "kash-section-drop-target rounded-[var(--kash-radius)]" : ""}`}
       aria-labelledby="today-heading"
     >
       <h2
@@ -43,20 +47,7 @@ export function TodayList({ pulse, onComplete, onDelete }: Props) {
       ) : (
         <ul className="space-y-2">
           {tasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={{
-                id: task.id,
-                title: task.title,
-                priority: task.priority,
-                projectId: task.projectId,
-                projectSlug: task.projectSlug,
-                projectName: task.projectName,
-                isTop3: task.isTop3,
-              }}
-              onComplete={onComplete}
-              onDelete={onDelete}
-            />
+            <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
           ))}
         </ul>
       )}

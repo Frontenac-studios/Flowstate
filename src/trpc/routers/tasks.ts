@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -35,6 +36,30 @@ async function getOwnedTask(userId: string, taskId: string) {
 }
 
 export const tasksRouter = createTRPCRouter({
+  listIncomplete: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        priority: tasks.priority,
+        scheduledDate: tasks.scheduledDate,
+        bucketOverride: tasks.bucketOverride,
+        projectId: tasks.projectId,
+        isTop3: tasks.isTop3,
+        top3Order: tasks.top3Order,
+        completedAt: tasks.completedAt,
+        createdAt: tasks.createdAt,
+        projectSlug: projects.slug,
+        projectName: projects.name,
+      })
+      .from(tasks)
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)))
+      .orderBy(desc(tasks.priority), asc(tasks.createdAt));
+
+    return rows;
+  }),
+
   listToday: protectedProcedure.query(async ({ ctx }) => {
     const todayIso = toISODateString(startOfLocalDay());
 
@@ -67,6 +92,35 @@ export const tasksRouter = createTRPCRouter({
 
     return rows;
   }),
+
+  moveToBucket: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        bucket: z.enum(["today", "tomorrow", "this_week", "later"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedTask(ctx.userId, input.id);
+
+      const fields = bucketToSchedulingFields(input.bucket);
+
+      const [row] = await db
+        .update(tasks)
+        .set({
+          scheduledDate: fields.scheduledDate,
+          bucketOverride: fields.bucketOverride,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to move task." });
+      }
+
+      return row;
+    }),
 
   create: protectedProcedure
     .input(

@@ -27,19 +27,19 @@ export function useSessionUndo() {
   const queryClient = useQueryClient();
   const stackRef = useRef<UndoFrame[]>([]);
 
-  const invalidateToday = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listToday.queryKey() });
-  }, [queryClient, trpc.tasks.listToday]);
+  const invalidatePlan = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+  }, [queryClient, trpc.tasks.listIncomplete]);
 
   const uncompleteMutation = useMutation(
     trpc.tasks.uncomplete.mutationOptions({
-      onSuccess: invalidateToday,
+      onSuccess: invalidatePlan,
     })
   );
 
   const restoreMutation = useMutation(
     trpc.tasks.createFromSnapshot.mutationOptions({
-      onSuccess: invalidateToday,
+      onSuccess: invalidatePlan,
     })
   );
 
