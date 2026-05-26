@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -76,5 +76,29 @@ export const timeEntriesRouter = createTRPCRouter({
       }
 
       return { entryId: row.id };
+    }),
+
+  recentForTask: protectedProcedure
+    .input(z.object({ taskId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const rows = await db
+        .select({
+          id: taskTimeEntries.id,
+          startedAt: taskTimeEntries.startedAt,
+          endedAt: taskTimeEntries.endedAt,
+          reason: taskTimeEntries.reason,
+        })
+        .from(taskTimeEntries)
+        .where(
+          and(
+            eq(taskTimeEntries.userId, ctx.userId),
+            eq(taskTimeEntries.taskId, input.taskId),
+            isNotNull(taskTimeEntries.endedAt)
+          )
+        )
+        .orderBy(desc(taskTimeEntries.startedAt))
+        .limit(5);
+
+      return rows;
     }),
 });

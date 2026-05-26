@@ -372,6 +372,23 @@ export const tasksRouter = createTRPCRouter({
       return row!;
     }),
 
+  listRecentlyCompleted: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        completedAt: tasks.completedAt,
+        projectSlug: projects.slug,
+      })
+      .from(tasks)
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .where(and(eq(tasks.userId, ctx.userId), isNotNull(tasks.completedAt)))
+      .orderBy(desc(tasks.completedAt))
+      .limit(30);
+
+    return rows;
+  }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
