@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { EmptyPlanState } from "@/components/kash/EmptyPlanState";
+import { PlanCanvas } from "@/components/kash/plan/PlanCanvas";
 import { PlanLayout } from "@/components/kash/PlanLayout";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +16,7 @@ export default async function PlanPage() {
 
   return (
     <PlanLayout>
-      <EmptyPlanState />
+      <PlanCanvas />
     </PlanLayout>
   );
 }

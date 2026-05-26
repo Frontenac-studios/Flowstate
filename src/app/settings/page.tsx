@@ -24,14 +24,17 @@ export default async function SettingsPage() {
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="text-sm text-kash-accent hover:underline"
+            className="glass-btn-ghost text-sm"
             disabled
             title="Sign out — Phase 10"
           >
             Sign out (coming soon)
           </button>
         </form>
-        <Link href="/plan" className="inline-block text-sm text-kash-accent hover:underline">
+        <Link
+          href="/plan"
+          className="glass-pill inline-block px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+        >
           Back to plan
         </Link>
       </section>

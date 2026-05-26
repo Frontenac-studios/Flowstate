@@ -74,17 +74,13 @@ export function LoginForm() {
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-kash bg-kash-accent px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-      >
+      <button type="submit" disabled={loading} className="glass-btn-primary w-full text-sm">
         {loading ? "Please wait…" : mode === "sign_in" ? "Sign in" : "Create account"}
       </button>
 
       <button
         type="button"
-        className="w-full text-sm text-kash-accent hover:underline"
+        className="glass-link w-full text-center text-sm"
         onClick={() => setMode(mode === "sign_in" ? "sign_up" : "sign_in")}
       >
         {mode === "sign_in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
