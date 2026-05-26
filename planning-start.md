@@ -71,9 +71,19 @@ One parser pass **per non-empty line** (blank lines ignored). Inline tokens reco
 - **`#project`** — files task under matching project; missing project shows inline error with opt-in create + fuzzy suggestions (no auto-create).
 - **Priority bangs**: `!`, `!!`, `!!!` → priority 1/2/3.
 
+Semicolon mode (optional): if a line contains `;`, parse it as:
+
+- Split on `;`, trim each segment, drop empties.
+- **Segment 0 is always the title**.
+- **Segments 1..n are properties**; each property segment must be exactly one of:
+  - a date keyword (`today`, `tomorrow`, `mon`/`tue`/.../`sun`, `later`)
+  - `#project` slug
+  - priority bangs (`!`, `!!`, `!!!`)
+- Any property segment that matches none of the above shows an inline error and **blocks submit for that line** (same behavior as an invalid/missing `#project`).
+
 Tokens are stripped from the saved title. Parser runs client-side; show parsed values inline before submit (chips for a single line; compact per-line preview when 2+ lines).
 
-**Bulk submit**: ⌘Enter creates all valid lines; lines with invalid `#project` remain in the composer with per-line errors.
+**Bulk submit**: ⌘Enter creates all valid lines; lines with invalid `#project` or invalid semicolon properties remain in the composer with per-line errors.
 
 **Parse feedback after submit**: target section expands ~1.5s with a highlight pulse, then re-collapses (pulse-and-collapse). If task lands in Today, just appears in the list.
 

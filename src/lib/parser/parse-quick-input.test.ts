@@ -24,6 +24,23 @@ describe("parseQuickInput", () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it("parses semicolon mode: segment 0 is title; later segments are properties", () => {
+    const result = parseQuickInput("ship onboarding; tomorrow; #rdm; !!", ctx);
+    expect(result.title).toBe("ship onboarding");
+    expect(result.scheduledDate).toBe("2026-05-28");
+    expect(result.projectSlug).toBe("rdm");
+    expect(result.priority).toBe(2);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("warns on unrecognized semicolon property segments", () => {
+    const result = parseQuickInput("broken; notadate; #rdm", ctx);
+    expect(result.title).toBe("broken");
+    expect(result.scheduledDate).toBe("2026-05-27");
+    expect(result.projectSlug).toBe("rdm");
+    expect(result.warnings).toEqual([{ code: "invalid_property", property: "notadate" }]);
+  });
+
   it("parses tomorrow", () => {
     const result = parseQuickInput("standup tomorrow", ctx);
     expect(result.title).toBe("standup");

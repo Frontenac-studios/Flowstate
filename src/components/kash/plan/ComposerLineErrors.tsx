@@ -16,55 +16,72 @@ export function ComposerLineErrors({
   onApplySuggestion,
   onCreateProject,
 }: Props) {
-  const invalidLines = lines.filter((line) =>
-    line.parse.warnings.some((w) => w.code === "project_not_found")
-  );
+  const invalidLines = lines.filter((line) => line.parse.warnings.length > 0);
 
   if (invalidLines.length === 0) return null;
 
   return (
     <div className="mt-3 space-y-3">
       {invalidLines.map((line) => {
-        const warning = line.parse.warnings.find((w) => w.code === "project_not_found");
-        if (!warning) return null;
+        const projectWarnings = line.parse.warnings.filter((w) => w.code === "project_not_found");
+        const invalidPropertyWarnings = line.parse.warnings.filter(
+          (w) => w.code === "invalid_property"
+        );
 
+        // Note: a line can have both a missing project and invalid properties;
+        // we render both warnings within the same container.
         return (
           <div
             key={line.lineIndex}
             className="space-y-2 rounded-lg border border-red-200/60 bg-red-50/40 p-3 text-sm"
             role="alert"
           >
-            <p className="text-red-600">
-              Line {line.lineIndex + 1}: No project{" "}
-              <span className="font-mono">#{warning.slug}</span>
-              <span className="ml-2 text-kash-ink-muted">&ldquo;{line.raw}&rdquo;</span>
-            </p>
-            {line.parse.suggestions.length > 0 ? (
-              <p className="text-kash-ink-muted">
-                Did you mean{" "}
-                {line.parse.suggestions.map((s, i) => (
-                  <span key={s.slug}>
-                    {i > 0 ? ", " : ""}
-                    <button
-                      type="button"
-                      className="glass-link font-medium"
-                      onClick={() => onApplySuggestion(line, s.slug)}
-                    >
-                      #{s.slug}
-                    </button>
-                  </span>
+            {projectWarnings.map((warning) => (
+              <div key={warning.slug} className="space-y-2">
+                <p className="text-red-600">
+                  Line {line.lineIndex + 1}: No project{" "}
+                  <span className="font-mono">#{warning.slug}</span>
+                  <span className="ml-2 text-kash-ink-muted">&ldquo;{line.raw}&rdquo;</span>
+                </p>
+                {line.parse.suggestions.length > 0 ? (
+                  <p className="text-kash-ink-muted">
+                    Did you mean{" "}
+                    {line.parse.suggestions.map((s, i) => (
+                      <span key={s.slug}>
+                        {i > 0 ? ", " : ""}
+                        <button
+                          type="button"
+                          className="glass-link font-medium"
+                          onClick={() => onApplySuggestion(line, s.slug)}
+                        >
+                          #{s.slug}
+                        </button>
+                      </span>
+                    ))}
+                    ?
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  className="glass-pill hover:bg-kash-accent-soft px-3 py-1 text-kash-accent transition"
+                  onClick={() => onCreateProject(line)}
+                  disabled={creatingLineIndex === line.lineIndex}
+                >
+                  Create project &ldquo;{slugifyProjectName(warning.slug)}&rdquo;
+                </button>
+              </div>
+            ))}
+
+            {invalidPropertyWarnings.length > 0 ? (
+              <div className="space-y-2">
+                {invalidPropertyWarnings.map((w, i) => (
+                  <p key={`${w.property}-${i}`} className="text-red-600">
+                    Line {line.lineIndex + 1}: Unrecognized property{" "}
+                    <span className="font-mono">&ldquo;{w.property}&rdquo;</span>
+                  </p>
                 ))}
-                ?
-              </p>
+              </div>
             ) : null}
-            <button
-              type="button"
-              className="glass-pill hover:bg-kash-accent-soft px-3 py-1 text-kash-accent transition"
-              onClick={() => onCreateProject(line)}
-              disabled={creatingLineIndex === line.lineIndex}
-            >
-              Create project &ldquo;{slugifyProjectName(warning.slug)}&rdquo;
-            </button>
           </div>
         );
       })}

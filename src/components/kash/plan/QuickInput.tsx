@@ -148,6 +148,11 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         projects: [...projectRefs, { slug: created.slug, name: created.name }],
       });
 
+      if (!isLineProjectValid(parse)) {
+        setValue((v) => replaceComposerLineAtIndex(v, line.lineIndex, fixedRaw));
+        return;
+      }
+
       await createTaskMutation.mutateAsync({
         title: parse.title,
         scheduledDate: parse.scheduledDate,
@@ -188,7 +193,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         ref={textareaRef}
         rows={2}
         className="glass-input glass-textarea w-full resize-y"
-        placeholder="add tasks — one per line. ⌘↵ to add."
+        placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
         value={value}
         onChange={(e) => {
           setValue(e.target.value);

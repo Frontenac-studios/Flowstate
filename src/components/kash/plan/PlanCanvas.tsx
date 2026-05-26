@@ -10,10 +10,12 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { useRouter } from "next/navigation";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
+import { pickRdmTask } from "@/lib/rdm/pick-task";
 import { useTRPC } from "@/trpc/client";
 
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
@@ -43,11 +45,13 @@ export function PlanCanvas() {
   const queryClient = useQueryClient();
   const quickInputRef = useRef<QuickInputHandle>(null);
   const triageRef = useRef<TriageStripHandle>(null);
+  const router = useRouter();
   const [pulseBucket, setPulseBucket] = useState<Bucket | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [triageFocusedIndex, setTriageFocusedIndex] = useState(0);
   const [triageKeyboardActive, setTriageKeyboardActive] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastWasLargeRef = useRef(false);
   const { pushComplete, pushDelete } = useSessionUndo();
 
   const invalidatePlan = useCallback(() => {
@@ -102,6 +106,19 @@ export function PlanCanvas() {
   );
 
   const partitioned = partitionPlanTasks(tasksExcludingTriage, new Date());
+
+  const triggerRdmPick = useCallback(() => {
+    const pick = pickRdmTask(partitioned.today, { lastWasLarge: lastWasLargeRef.current });
+    if (!pick) return;
+
+    lastWasLargeRef.current = pick.isTop3;
+
+    const narration = pick.isTop3
+      ? `Going with ${pick.title} — it is Top 3.`
+      : `Going with ${pick.title} — next on your list.`;
+    const params = new URLSearchParams({ taskId: pick.id, narration });
+    router.push(`/plan/focus?${params.toString()}`);
+  }, [partitioned.today, router]);
 
   const toRow = (task: (typeof tasks)[number]): PlanTaskRow => ({
     id: task.id,
@@ -212,6 +229,20 @@ export function PlanCanvas() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      if (e.key.toLowerCase() !== "d") return;
+      if (isEditableTarget(e.target)) return;
+
+      e.preventDefault();
+      triggerRdmPick();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [triggerRdmPick]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (triageRows.length === 0) return;
 
       const inComposer = isQuickInputTarget(e.target);
@@ -297,6 +328,21 @@ export function PlanCanvas() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <div className="mb-3 flex items-center gap-2 px-2">
+        <button
+          type="button"
+          onClick={triggerRdmPick}
+          disabled={partitioned.today.length === 0}
+          className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Decide next task (RDM)"
+          title="Decide next task (⌘D)"
+        >
+          Decide
+          <span className="font-mono text-xs text-kash-ink-muted" aria-hidden>
+            ⌘D
+          </span>
+        </button>
+      </div>
       <QuickInput ref={quickInputRef} onTaskCreated={triggerPulse} />
       <TriageStrip
         ref={triageRef}
