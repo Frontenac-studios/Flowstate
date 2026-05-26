@@ -23,6 +23,8 @@ export type PlanTaskRow = {
 
 type Props = {
   task: PlanTaskRow;
+  selected?: boolean;
+  onSelect?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
@@ -37,7 +39,7 @@ function PriorityDots({ priority }: { priority: number }) {
   );
 }
 
-export function TaskRow({ task, onComplete, onDelete }: Props) {
+export function TaskRow({ task, selected = false, onSelect, onComplete, onDelete }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -45,6 +47,7 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
 
   const invalidatePlan = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
   };
 
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
@@ -97,10 +100,13 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
   return (
     <li
       ref={setNodeRef}
-      className={`glass-panel-opaque flex min-h-kash-row items-center gap-2 px-3 py-2 ${
+      className={`glass-panel-opaque flex min-h-kash-row cursor-pointer items-center gap-2 px-3 py-2 ${
+        task.isTop3 ? "border-l-2 border-kash-accent" : ""
+      } ${selected ? "ring-2 ring-[var(--kash-accent-soft)]" : ""} ${
         isDragging ? "opacity-60" : ""
       } ${isDragging ? "" : "transition-transform"}`}
       style={{ transform: CSS.Transform.toString(transform) }}
+      onClick={() => onSelect?.(task.id)}
     >
       <button
         ref={setActivatorNodeRef}
@@ -114,11 +120,18 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
         ⠿
       </button>
 
+      {task.isTop3 ? (
+        <span className="shrink-0 text-kash-accent" aria-label="Top 3">
+          ★
+        </span>
+      ) : null}
+
       <input
         type="checkbox"
         className="h-4 w-4 rounded border border-white/60 accent-kash-accent"
         aria-label={`Complete ${task.title}`}
         disabled={completeMutation.isPending}
+        onClick={(e) => e.stopPropagation()}
         onChange={() => completeMutation.mutate({ id: task.id })}
       />
 
