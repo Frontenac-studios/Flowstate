@@ -39,7 +39,7 @@ export function KashHeader() {
           type="button"
           disabled
           title="Mondays only — coming soon"
-          className="cursor-not-allowed rounded-full px-3 py-1 text-kash-ink-muted opacity-50"
+          className="cursor-not-allowed rounded-full px-3 py-1 text-kash-ink-muted opacity-50 transition"
           aria-pressed={false}
         >
           Week

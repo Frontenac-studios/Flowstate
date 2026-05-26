@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { PlanLayout } from "@/components/kash/PlanLayout";
@@ -23,9 +24,16 @@ export default async function ProjectPage({ params }: Props) {
       <section className="glass-panel-opaque px-6 py-10">
         <h1 className="text-lg font-semibold text-kash-ink">Project</h1>
         <p className="mt-2 text-kash-ink-muted">
-          Project workspace for <code className="font-mono text-sm">{id}</code> is not built yet.
+          Project workspace for{" "}
+          <code className="glass-pill px-1.5 py-0.5 font-mono text-sm">{id}</code> is not built yet.
           Miller columns, object tree, and calendar board are planned for a later release.
         </p>
+        <Link
+          href="/plan"
+          className="glass-pill mt-6 inline-block px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+        >
+          Back to plan
+        </Link>
       </section>
     </PlanLayout>
   );

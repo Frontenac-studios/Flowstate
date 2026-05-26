@@ -21,7 +21,7 @@ export default async function FocusPage() {
         <p className="mt-2 text-kash-ink-muted">Coming in Phase 5 — RDM + focus takeover.</p>
         <Link
           href="/plan"
-          className="mt-6 inline-block text-sm font-medium text-kash-accent hover:underline"
+          className="glass-pill mt-6 inline-block px-3 py-1.5 text-sm font-medium text-kash-ink-muted transition hover:text-kash-ink"
         >
           Back to plan
         </Link>
