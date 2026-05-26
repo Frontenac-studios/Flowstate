@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNotNull, isNull, lte, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, lt, lte, ne, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -85,6 +85,40 @@ export const tasksRouter = createTRPCRouter({
           eq(tasks.userId, ctx.userId),
           isNull(tasks.completedAt),
           or(isNull(tasks.scheduledDate), lte(tasks.scheduledDate, todayIso)),
+          or(isNull(tasks.bucketOverride), ne(tasks.bucketOverride, "later"))
+        )
+      )
+      .orderBy(desc(tasks.priority), asc(tasks.createdAt));
+
+    return rows;
+  }),
+
+  listTriageCandidates: protectedProcedure.query(async ({ ctx }) => {
+    const todayIso = toISODateString(startOfLocalDay());
+
+    const rows = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        priority: tasks.priority,
+        scheduledDate: tasks.scheduledDate,
+        bucketOverride: tasks.bucketOverride,
+        projectId: tasks.projectId,
+        isTop3: tasks.isTop3,
+        top3Order: tasks.top3Order,
+        completedAt: tasks.completedAt,
+        createdAt: tasks.createdAt,
+        projectSlug: projects.slug,
+        projectName: projects.name,
+      })
+      .from(tasks)
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .where(
+        and(
+          eq(tasks.userId, ctx.userId),
+          isNull(tasks.completedAt),
+          isNotNull(tasks.scheduledDate),
+          lt(tasks.scheduledDate, todayIso),
           or(isNull(tasks.bucketOverride), ne(tasks.bucketOverride, "later"))
         )
       )

@@ -20,6 +20,7 @@ import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
 import { PlanBuckets } from "./PlanBuckets";
 import { TodayList } from "./TodayList";
+import { TriageStrip, type TriageAction, type TriageStripHandle } from "./TriageStrip";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -27,19 +28,38 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 }
 
+function isInTriageStrip(target: EventTarget | null): boolean {
+  if (!target || !(target instanceof HTMLElement)) return false;
+  return target.closest("[data-triage-strip]") !== null;
+}
+
+function isQuickInputTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLTextAreaElement)) return false;
+  return target.closest("[data-quick-input]") !== null;
+}
+
 export function PlanCanvas() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const quickInputRef = useRef<QuickInputHandle>(null);
+  const triageRef = useRef<TriageStripHandle>(null);
   const [pulseBucket, setPulseBucket] = useState<Bucket | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [triageFocusedIndex, setTriageFocusedIndex] = useState(0);
+  const [triageKeyboardActive, setTriageKeyboardActive] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { pushComplete, pushDelete } = useSessionUndo();
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
-  }, [queryClient, trpc.tasks.listIncomplete, trpc.tasks.listTop3Slots]);
+  }, [
+    queryClient,
+    trpc.tasks.listIncomplete,
+    trpc.tasks.listTriageCandidates,
+    trpc.tasks.listTop3Slots,
+  ]);
 
   const triggerPulse = useCallback((bucket: Bucket) => {
     setPulseBucket(bucket);
@@ -71,8 +91,17 @@ export function PlanCanvas() {
   }, []);
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
   const { data: top3Slots = [] } = useQuery(trpc.tasks.listTop3Slots.queryOptions());
-  const partitioned = partitionPlanTasks(tasks, new Date());
+
+  const triageIds = useMemo(() => new Set(triageTasks.map((t) => t.id)), [triageTasks]);
+
+  const tasksExcludingTriage = useMemo(
+    () => tasks.filter((t) => !triageIds.has(t.id)),
+    [tasks, triageIds]
+  );
+
+  const partitioned = partitionPlanTasks(tasksExcludingTriage, new Date());
 
   const toRow = (task: (typeof tasks)[number]): PlanTaskRow => ({
     id: task.id,
@@ -83,6 +112,47 @@ export function PlanCanvas() {
     projectName: task.projectName,
     isTop3: task.isTop3,
   });
+
+  const triageRows = useMemo(
+    () =>
+      triageTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        projectSlug: t.projectSlug,
+        projectName: t.projectName,
+      })),
+    [triageTasks]
+  );
+
+  const exitTriageKeyboardMode = useCallback(() => {
+    setTriageKeyboardActive(false);
+  }, []);
+
+  useEffect(() => {
+    if (triageFocusedIndex >= triageRows.length && triageRows.length > 0) {
+      setTriageFocusedIndex(triageRows.length - 1);
+    }
+  }, [triageFocusedIndex, triageRows.length]);
+
+  useEffect(() => {
+    if (triageRows.length === 0) {
+      exitTriageKeyboardMode();
+    }
+  }, [triageRows.length, exitTriageKeyboardMode]);
+
+  useEffect(() => {
+    if (!triageKeyboardActive) return;
+
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target;
+      if (!isInTriageStrip(target)) {
+        exitTriageKeyboardMode();
+      }
+    };
+
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [triageKeyboardActive, exitTriageKeyboardMode]);
 
   const pinnedBySlot = useMemo(() => {
     const map = new Map<number, Top3SlotTask>();
@@ -140,6 +210,66 @@ export function PlanCanvas() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [pinMutation, selectedTaskId]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (triageRows.length === 0) return;
+
+      const inComposer = isQuickInputTarget(e.target);
+
+      if (e.key === "Tab" && inComposer && !e.shiftKey) {
+        e.preventDefault();
+        setTriageKeyboardActive(true);
+        triageRef.current?.focusFirst();
+        return;
+      }
+
+      if (e.key === "Escape" && triageKeyboardActive) {
+        e.preventDefault();
+        exitTriageKeyboardMode();
+        quickInputRef.current?.focus();
+        return;
+      }
+
+      // Never intercept typing in inputs, textareas, or contenteditable fields.
+      if (isEditableTarget(e.target)) return;
+
+      if (!triageKeyboardActive) return;
+
+      // Triage shortcuts only while focus remains inside the strip.
+      if (!isInTriageStrip(document.activeElement)) return;
+
+      const triageActions: Record<string, TriageAction> = {
+        "1": "today",
+        "2": "tomorrow",
+        "3": "later",
+        "4": "drop",
+      };
+
+      if (e.key in triageActions) {
+        e.preventDefault();
+        triageRef.current?.applyAction(triageActions[e.key]!);
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const next = Math.max(0, (triageRef.current?.getFocusedIndex() ?? 0) - 1);
+        triageRef.current?.focusIndex(next);
+        return;
+      }
+
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const count = triageRef.current?.getTaskCount() ?? 0;
+        const next = Math.min(count - 1, (triageRef.current?.getFocusedIndex() ?? 0) + 1);
+        triageRef.current?.focusIndex(next);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [triageKeyboardActive, triageRows.length, exitTriageKeyboardMode]);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const onDragEnd = (event: DragEndEvent) => {
@@ -168,6 +298,16 @@ export function PlanCanvas() {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <QuickInput ref={quickInputRef} onTaskCreated={triggerPulse} />
+      <TriageStrip
+        ref={triageRef}
+        tasks={triageRows}
+        focusedIndex={triageFocusedIndex}
+        onFocusedIndexChange={(index) => {
+          setTriageFocusedIndex(index);
+          setTriageKeyboardActive(true);
+        }}
+        onDelete={pushDelete}
+      />
       <Top3Slots
         pinnedBySlot={pinnedBySlot}
         onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}

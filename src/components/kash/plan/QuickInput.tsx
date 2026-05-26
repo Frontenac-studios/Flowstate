@@ -184,6 +184,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       </label>
       <textarea
         id="kash-quick-input"
+        data-quick-input
         ref={textareaRef}
         rows={2}
         className="glass-input glass-textarea w-full resize-y"
