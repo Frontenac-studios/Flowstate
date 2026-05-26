@@ -1,0 +1,96 @@
+:root {
+  --kash-gradient-1: #e8eef8;
+  --kash-gradient-2: #dce4f5;
+  --kash-gradient-3: #f0e8f8;
+  --kash-glass-bg: rgba(255, 255, 255, 0.62);
+  --kash-glass-bg-opaque: rgba(255, 255, 255, 0.92);
+  --kash-glass-border: rgba(255, 255, 255, 0.55);
+  --kash-glass-blur: 16px;
+  --kash-accent: #6b7fd7;
+  --kash-accent-soft: rgba(107, 127, 215, 0.18);
+  --kash-radius: 14px;
+  --kash-ink: #1a1d26;
+  --kash-ink-muted: #5c6370;
+  --kash-row-min-height: 44px;
+  --kash-density-base: 15px;
+}
+
+.glass-panel {
+  border-radius: var(--kash-radius);
+  border: 1px solid var(--kash-glass-border);
+  background: var(--kash-glass-bg);
+  backdrop-filter: blur(var(--kash-glass-blur));
+  -webkit-backdrop-filter: blur(var(--kash-glass-blur));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 8px 32px rgba(26, 29, 38, 0.06);
+}
+
+.glass-panel-opaque {
+  border-radius: var(--kash-radius);
+  border: 1px solid var(--kash-glass-border);
+  background: var(--kash-glass-bg-opaque);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.glass-pill {
+  border-radius: 9999px;
+  border: 1px solid var(--kash-glass-border);
+  background: var(--kash-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-input {
+  border-radius: calc(var(--kash-radius) - 2px);
+  border: 1px solid var(--kash-glass-border);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.625rem 0.875rem;
+  font-size: var(--kash-density-base);
+  color: var(--kash-ink);
+  outline: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.glass-input:focus {
+  box-shadow: 0 0 0 3px var(--kash-accent-soft);
+}
+
+.kash-gradient-bg {
+  background: linear-gradient(
+    135deg,
+    var(--kash-gradient-1) 0%,
+    var(--kash-gradient-2) 45%,
+    var(--kash-gradient-3) 100%
+  );
+  background-size: 200% 200%;
+  animation: kash-gradient-shift 18s ease infinite;
+}
+
+@keyframes kash-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kash-gradient-bg {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .glass-pill {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--kash-glass-bg-opaque);
+  }
+}
