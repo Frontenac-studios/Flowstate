@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, lte, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, lte, ne, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -92,6 +92,103 @@ export const tasksRouter = createTRPCRouter({
 
     return rows;
   }),
+
+  listTop3Slots: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        priority: tasks.priority,
+        scheduledDate: tasks.scheduledDate,
+        bucketOverride: tasks.bucketOverride,
+        projectId: tasks.projectId,
+        isTop3: tasks.isTop3,
+        top3Order: tasks.top3Order,
+        completedAt: tasks.completedAt,
+        createdAt: tasks.createdAt,
+        projectSlug: projects.slug,
+        projectName: projects.name,
+      })
+      .from(tasks)
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .where(and(eq(tasks.userId, ctx.userId), eq(tasks.isTop3, true), isNotNull(tasks.top3Order)))
+      .orderBy(asc(tasks.top3Order));
+
+    return rows;
+  }),
+
+  pinTop3: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        slot: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedTask(ctx.userId, input.id);
+      const now = new Date();
+      const todayFields = bucketToSchedulingFields("today");
+
+      await db
+        .update(tasks)
+        .set({
+          isTop3: false,
+          top3Order: null,
+          top3PinnedAt: null,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(tasks.userId, ctx.userId),
+            eq(tasks.isTop3, true),
+            eq(tasks.top3Order, input.slot),
+            ne(tasks.id, input.id)
+          )
+        );
+
+      const [row] = await db
+        .update(tasks)
+        .set({
+          isTop3: true,
+          top3Order: input.slot,
+          top3PinnedAt: now,
+          scheduledDate: todayFields.scheduledDate,
+          bucketOverride: todayFields.bucketOverride,
+          updatedAt: now,
+        })
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to pin task." });
+      }
+
+      return row;
+    }),
+
+  unpinTop3: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedTask(ctx.userId, input.id);
+      const now = new Date();
+
+      const [row] = await db
+        .update(tasks)
+        .set({
+          isTop3: false,
+          top3Order: null,
+          top3PinnedAt: null,
+          updatedAt: now,
+        })
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to unpin task." });
+      }
+
+      return row;
+    }),
 
   moveToBucket: protectedProcedure
     .input(
