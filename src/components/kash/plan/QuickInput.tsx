@@ -12,6 +12,7 @@ import {
   replaceComposerLineAtIndex,
   type ParsedLine,
 } from "@/lib/parser/parse-quick-input";
+import { deriveBucket, type Bucket } from "@/lib/tasks/derive-bucket";
 import { useTRPC } from "@/trpc/client";
 
 import { ComposerLineErrors } from "./ComposerLineErrors";
@@ -22,7 +23,7 @@ export type QuickInputHandle = {
 };
 
 type Props = {
-  onTaskCreated?: () => void;
+  onTaskCreated?: (bucket: Bucket) => void;
 };
 
 function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
@@ -57,7 +58,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   );
 
   const invalidateToday = () => {
-    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listToday.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
   };
 
@@ -115,7 +116,18 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     const { created, remaining } = await submitValidLines(parsedLines);
 
     if (created > 0) {
-      onTaskCreated?.();
+      const buckets = new Set<Bucket>();
+      for (const line of parsedLines) {
+        if (!isLineProjectValid(line.parse)) continue;
+        buckets.add(
+          deriveBucket(
+            { scheduledDate: line.parse.scheduledDate, bucketOverride: line.parse.bucketOverride },
+            new Date()
+          )
+        );
+      }
+      const bucket = buckets.size === 1 ? Array.from(buckets)[0]! : "today";
+      onTaskCreated?.(bucket);
     }
 
     setValue(remaining.join("\n"));
@@ -145,7 +157,12 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       });
 
       setValue((v) => removeComposerLineAtIndex(v, line.lineIndex));
-      onTaskCreated?.();
+      onTaskCreated?.(
+        deriveBucket(
+          { scheduledDate: parse.scheduledDate, bucketOverride: parse.bucketOverride },
+          new Date()
+        )
+      );
     } finally {
       setCreatingLineIndex(null);
     }

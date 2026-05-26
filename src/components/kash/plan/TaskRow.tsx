@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { useTRPC } from "@/trpc/client";
 
 import { TaskRowMenu } from "./TaskRowMenu";
 
-export type TodayTask = {
+export type PlanTaskRow = {
   id: string;
   title: string;
   priority: number;
@@ -20,7 +22,7 @@ export type TodayTask = {
 };
 
 type Props = {
-  task: TodayTask;
+  task: PlanTaskRow;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
@@ -41,15 +43,25 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
 
-  const invalidateToday = () => {
-    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listToday.queryKey() });
+  const invalidatePlan = () => {
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
   };
+
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `task:${task.id}`,
+      disabled: editing,
+      data: { taskId: task.id },
+    });
+
+  const { tabIndex, ...dragAttributes } = attributes;
+  void tabIndex;
 
   const completeMutation = useMutation(
     trpc.tasks.complete.mutationOptions({
       onSuccess: (data) => {
         onComplete(data.task.id, data.previousCompletedAt);
-        invalidateToday();
+        invalidatePlan();
       },
     })
   );
@@ -58,7 +70,7 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
     trpc.tasks.update.mutationOptions({
       onSuccess: () => {
         setEditing(false);
-        invalidateToday();
+        invalidatePlan();
       },
     })
   );
@@ -67,7 +79,7 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
     trpc.tasks.delete.mutationOptions({
       onSuccess: (data) => {
         onDelete(data.snapshot);
-        invalidateToday();
+        invalidatePlan();
       },
     })
   );
@@ -83,11 +95,20 @@ export function TaskRow({ task, onComplete, onDelete }: Props) {
   };
 
   return (
-    <li className="glass-panel-opaque flex min-h-kash-row items-center gap-2 px-3 py-2">
+    <li
+      ref={setNodeRef}
+      className={`glass-panel-opaque flex min-h-kash-row items-center gap-2 px-3 py-2 ${
+        isDragging ? "opacity-60" : ""
+      } ${isDragging ? "" : "transition-transform"}`}
+      style={{ transform: CSS.Transform.toString(transform) }}
+    >
       <button
+        ref={setActivatorNodeRef}
         type="button"
         className="cursor-grab text-kash-ink-muted"
         aria-label="Drag handle"
+        {...listeners}
+        {...dragAttributes}
         tabIndex={-1}
       >
         ⠿
