@@ -11,11 +11,21 @@ type Props = {
   pulse: boolean;
   tasks: PlanTaskRow[];
   isLoading: boolean;
+  selectedTaskId?: string | null;
+  onSelectTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
 
-export function TodayList({ pulse, tasks, isLoading, onComplete, onDelete }: Props) {
+export function TodayList({
+  pulse,
+  tasks,
+  isLoading,
+  selectedTaskId,
+  onSelectTask,
+  onComplete,
+  onDelete,
+}: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: "bucket:today" });
 
   return (
@@ -47,7 +57,14 @@ export function TodayList({ pulse, tasks, isLoading, onComplete, onDelete }: Pro
       ) : (
         <ul className="space-y-2">
           {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
+            <TaskRow
+              key={task.id}
+              task={task}
+              selected={selectedTaskId === task.id}
+              onSelect={onSelectTask}
+              onComplete={onComplete}
+              onDelete={onDelete}
+            />
           ))}
         </ul>
       )}
