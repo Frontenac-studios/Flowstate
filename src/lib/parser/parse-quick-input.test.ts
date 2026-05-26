@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { parseQuickInput } from "./parse-quick-input";
+import {
+  parseQuickInput,
+  parseQuickInputLines,
+  removeComposerLineAtIndex,
+  replaceComposerLineAtIndex,
+} from "./parse-quick-input";
 
 const wed = new Date(2026, 4, 27); // Wed May 27 2026
 
@@ -76,5 +81,55 @@ describe("parseQuickInput", () => {
     expect(result.bucketOverride).toBe("later");
     expect(result.scheduledDate).toBeNull();
     expect(result.title).toBe("someday");
+  });
+});
+
+describe("parseQuickInputLines", () => {
+  it("returns empty array for empty or whitespace-only input", () => {
+    expect(parseQuickInputLines("", ctx)).toEqual([]);
+    expect(parseQuickInputLines("  \n\n  ", ctx)).toEqual([]);
+  });
+
+  it("skips blank lines and assigns sequential lineIndex", () => {
+    const lines = parseQuickInputLines("task one\n\n  task two  \n", ctx);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]?.lineIndex).toBe(0);
+    expect(lines[0]?.raw).toBe("task one");
+    expect(lines[0]?.parse.title).toBe("task one");
+    expect(lines[1]?.lineIndex).toBe(1);
+    expect(lines[1]?.raw).toBe("task two");
+  });
+
+  it("parses each line independently", () => {
+    const lines = parseQuickInputLines("today standup\nreview PR tomorrow #rdm !!", ctx);
+    expect(lines[0]?.parse.title).toBe("standup");
+    expect(lines[0]?.parse.scheduledDate).toBe("2026-05-27");
+    expect(lines[1]?.parse.title).toBe("review PR");
+    expect(lines[1]?.parse.scheduledDate).toBe("2026-05-28");
+    expect(lines[1]?.parse.projectSlug).toBe("rdm");
+    expect(lines[1]?.parse.priority).toBe(2);
+  });
+
+  it("flags unknown project per line without affecting other lines", () => {
+    const lines = parseQuickInputLines("ok task\nbad #rdn", ctx);
+    expect(lines[0]?.parse.warnings).toHaveLength(0);
+    expect(lines[1]?.parse.warnings).toEqual([{ code: "project_not_found", slug: "rdn" }]);
+  });
+});
+
+describe("composer line index helpers", () => {
+  it("replaceComposerLineAtIndex updates only the targeted duplicate line", () => {
+    const value = "dup #rdn\ndup #rdn\nother";
+    expect(replaceComposerLineAtIndex(value, 1, "dup #rdm")).toBe("dup #rdn\ndup #rdm\nother");
+  });
+
+  it("removeComposerLineAtIndex removes only the targeted line", () => {
+    const value = "keep\ndup #rdn\ndup #rdn";
+    expect(removeComposerLineAtIndex(value, 1)).toBe("keep\ndup #rdn");
+  });
+
+  it("preserves blank lines when replacing by index", () => {
+    const value = "a\n\nb";
+    expect(replaceComposerLineAtIndex(value, 1, "c")).toBe("a\n\nc");
   });
 });

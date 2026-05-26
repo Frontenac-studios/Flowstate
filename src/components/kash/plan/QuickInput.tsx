@@ -1,13 +1,21 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 
-import { parseQuickInput } from "@/lib/parser/parse-quick-input";
-import { slugifyProjectName } from "@/lib/projects/slugify";
+import {
+  isLineProjectValid,
+  MAX_COMPOSER_LINES,
+  parseQuickInput,
+  parseQuickInputLines,
+  removeComposerLineAtIndex,
+  replaceComposerLineAtIndex,
+  type ParsedLine,
+} from "@/lib/parser/parse-quick-input";
 import { useTRPC } from "@/trpc/client";
 
-import { ParsePreviewChips } from "./ParsePreviewChips";
+import { ComposerLineErrors } from "./ComposerLineErrors";
+import { MultiLineParsePreview, ParsePreviewChips } from "./ParsePreviewChips";
 
 export type QuickInputHandle = {
   focus: () => void;
@@ -17,30 +25,36 @@ type Props = {
   onTaskCreated?: () => void;
 };
 
+function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
+  return raw.replace(new RegExp(`#${fromSlug}\\b`, "i"), `#${toSlug}`);
+}
+
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
   { onTaskCreated },
   ref
 ) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState("");
-  const [creatingProject, setCreatingProject] = useState(false);
+  const [creatingLineIndex, setCreatingLineIndex] = useState<number | null>(null);
+  const [lineLimitWarning, setLineLimitWarning] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    focus: () => inputRef.current?.focus(),
+    focus: () => textareaRef.current?.focus(),
   }));
 
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
 
-  const parse = parseQuickInput(value, {
-    projects: projects.map((p) => ({ slug: p.slug, name: p.name })),
-  });
+  const projectRefs = useMemo(
+    () => projects.map((p) => ({ slug: p.slug, name: p.name })),
+    [projects]
+  );
 
-  const projectWarning = parse.warnings.find((w) => w.code === "project_not_found");
-  const matchedProject = parse.projectSlug
-    ? projects.find((p) => p.slug === parse.projectSlug)
-    : null;
+  const parsedLines = useMemo(
+    () => parseQuickInputLines(value, { projects: projectRefs }),
+    [value, projectRefs]
+  );
 
   const invalidateToday = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listToday.queryKey() });
@@ -49,11 +63,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
   const createTaskMutation = useMutation(
     trpc.tasks.create.mutationOptions({
-      onSuccess: () => {
-        setValue("");
-        invalidateToday();
-        onTaskCreated?.();
-      },
+      onSuccess: invalidateToday,
     })
   );
 
@@ -63,101 +73,150 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     })
   );
 
-  const submitTask = async (projectId: string | null) => {
+  const resolveProjectId = (line: ParsedLine): string | null => {
+    if (!line.parse.projectSlug) return null;
+    return projects.find((p) => p.slug === line.parse.projectSlug)?.id ?? null;
+  };
+
+  const createTaskForLine = async (line: ParsedLine) => {
     await createTaskMutation.mutateAsync({
-      title: parse.title,
-      scheduledDate: parse.scheduledDate,
-      bucketOverride: parse.bucketOverride,
-      projectId,
-      priority: parse.priority,
+      title: line.parse.title,
+      scheduledDate: line.parse.scheduledDate,
+      bucketOverride: line.parse.bucketOverride,
+      projectId: resolveProjectId(line),
+      priority: line.parse.priority,
     });
   };
 
-  const handleSubmit = async () => {
+  const submitValidLines = async (lines: ParsedLine[]) => {
+    const valid = lines.filter((line) => isLineProjectValid(line.parse));
+    if (valid.length === 0) return { created: 0, remaining: lines.map((l) => l.raw) };
+
+    for (const line of valid) {
+      await createTaskForLine(line);
+    }
+
+    const invalid = lines.filter((line) => !isLineProjectValid(line.parse));
+    return {
+      created: valid.length,
+      remaining: invalid.map((l) => l.raw),
+    };
+  };
+
+  const handleBulkSubmit = async () => {
     if (!value.trim() || createTaskMutation.isPending) return;
 
-    if (projectWarning && !matchedProject) return;
+    if (parsedLines.length > MAX_COMPOSER_LINES) {
+      setLineLimitWarning(true);
+      return;
+    }
+    setLineLimitWarning(false);
 
-    const projectId = matchedProject?.id ?? null;
-    await submitTask(projectId);
+    const { created, remaining } = await submitValidLines(parsedLines);
+
+    if (created > 0) {
+      onTaskCreated?.();
+    }
+
+    setValue(remaining.join("\n"));
   };
 
-  const handleCreateProject = async () => {
-    if (!projectWarning) return;
-    setCreatingProject(true);
+  const handleCreateProjectForLine = async (line: ParsedLine) => {
+    const warning = line.parse.warnings.find((w) => w.code === "project_not_found");
+    if (!warning) return;
+
+    setCreatingLineIndex(line.lineIndex);
     try {
-      const slug = projectWarning.slug;
+      const slug = warning.slug;
       const name = slug.replace(/-/g, " ");
       const created = await createProjectMutation.mutateAsync({ name, slug });
-      await submitTask(created.id);
+
+      const fixedRaw = replaceProjectSlugInLine(line.raw, warning.slug, created.slug);
+      const parse = parseQuickInput(fixedRaw, {
+        projects: [...projectRefs, { slug: created.slug, name: created.name }],
+      });
+
+      await createTaskMutation.mutateAsync({
+        title: parse.title,
+        scheduledDate: parse.scheduledDate,
+        bucketOverride: parse.bucketOverride,
+        projectId: created.id,
+        priority: parse.priority,
+      });
+
+      setValue((v) => removeComposerLineAtIndex(v, line.lineIndex));
+      onTaskCreated?.();
     } finally {
-      setCreatingProject(false);
+      setCreatingLineIndex(null);
     }
   };
+
+  const handleApplySuggestion = (line: ParsedLine, suggestedSlug: string) => {
+    const warning = line.parse.warnings.find((w) => w.code === "project_not_found");
+    if (!warning) return;
+    const newRaw = replaceProjectSlugInLine(line.raw, warning.slug, suggestedSlug);
+    setValue((v) => replaceComposerLineAtIndex(v, line.lineIndex, newRaw));
+  };
+
+  const singleLineParse = parsedLines.length === 1 ? parsedLines[0]?.parse : null;
 
   return (
     <section className="glass-panel-opaque p-4">
       <label htmlFor="kash-quick-input" className="sr-only">
-        Add a task
+        Add tasks
       </label>
-      <input
+      <textarea
         id="kash-quick-input"
-        ref={inputRef}
-        type="text"
-        className="glass-input w-full"
-        placeholder="add a task — try 'review PR tomorrow #rdm !!'"
+        ref={textareaRef}
+        rows={2}
+        className="glass-input glass-textarea w-full resize-y"
+        placeholder="add tasks — one per line. ⌘↵ to add."
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setValue(e.target.value);
+          if (
+            lineLimitWarning &&
+            parseQuickInputLines(e.target.value, { projects: projectRefs }).length <=
+              MAX_COMPOSER_LINES
+          ) {
+            setLineLimitWarning(false);
+          }
+        }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            void handleSubmit();
+            void handleBulkSubmit();
           }
         }}
         autoComplete="off"
         spellCheck={false}
+        disabled={createTaskMutation.isPending}
       />
+      <p className="mt-1.5 text-xs text-kash-ink-muted">
+        Enter for new line · ⌘↵ to add tasks
+        {createTaskMutation.isPending ? " · Adding…" : null}
+      </p>
 
-      {value.trim() ? <ParsePreviewChips parse={parse} /> : null}
-
-      {projectWarning && !matchedProject ? (
-        <div className="mt-3 space-y-2 text-sm" role="alert">
-          <p className="text-red-600">
-            No project <span className="font-mono">#{projectWarning.slug}</span>
-          </p>
-          {parse.suggestions.length > 0 ? (
-            <p className="text-kash-ink-muted">
-              Did you mean{" "}
-              {parse.suggestions.map((s, i) => (
-                <span key={s.slug}>
-                  {i > 0 ? ", " : ""}
-                  <button
-                    type="button"
-                    className="glass-link font-medium"
-                    onClick={() => {
-                      const slug = s.slug;
-                      setValue((v) =>
-                        v.replace(new RegExp(`#${projectWarning.slug}\\b`, "i"), `#${slug}`)
-                      );
-                    }}
-                  >
-                    #{s.slug}
-                  </button>
-                </span>
-              ))}
-              ?
-            </p>
-          ) : null}
-          <button
-            type="button"
-            className="glass-pill hover:bg-kash-accent-soft px-3 py-1 text-kash-accent transition"
-            onClick={() => void handleCreateProject()}
-            disabled={creatingProject || createProjectMutation.isPending}
-          >
-            Create project &ldquo;{slugifyProjectName(projectWarning.slug)}&rdquo;
-          </button>
-        </div>
+      {lineLimitWarning ? (
+        <p className="mt-2 text-sm text-red-600" role="alert">
+          Too many lines — add at most {MAX_COMPOSER_LINES} tasks at once.
+        </p>
       ) : null}
+
+      {value.trim() ? (
+        parsedLines.length === 1 && singleLineParse ? (
+          <ParsePreviewChips parse={singleLineParse} />
+        ) : parsedLines.length > 1 ? (
+          <MultiLineParsePreview lines={parsedLines} />
+        ) : null
+      ) : null}
+
+      <ComposerLineErrors
+        lines={parsedLines}
+        creatingLineIndex={creatingLineIndex}
+        onApplySuggestion={handleApplySuggestion}
+        onCreateProject={(line) => void handleCreateProjectForLine(line)}
+      />
     </section>
   );
 });
