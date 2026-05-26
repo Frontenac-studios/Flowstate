@@ -19,8 +19,8 @@ const geistMono = localFont({
 
 export function generateMetadata(): Metadata {
   return {
-    title: "Frontenac Studios",
-    description: "Frontenac Studios project",
+    title: "Kash",
+    description: "Keyboard-first daily planning",
     other: {
       ...Sentry.getTraceData(),
     },

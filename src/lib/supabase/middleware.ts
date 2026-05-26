@@ -1,8 +1,10 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isAuthPath, isProtectedPath } from "@/lib/auth/paths";
+
 export async function updateSession(request: NextRequest) {
-  const response = NextResponse.next({ request });
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,17 +15,40 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll().map(({ name, value }) => ({ name, value }));
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
     }
   );
 
-  // IMPORTANT: getUser() verifies the token with the Supabase auth server.
-  // Do not use getSession() here — it only reads the local cookie without verifying.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return response;
+  const { pathname } = request.nextUrl;
+
+  if (!user && isProtectedPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (user && isAuthPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/plan";
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/plan" : "/login";
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
 }

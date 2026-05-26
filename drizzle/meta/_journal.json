@@ -8,6 +8,13 @@
       "when": 1779315248461,
       "tag": "0000_overconfident_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779754324381,
+      "tag": "0001_low_supreme_intelligence",
+      "breakpoints": true
     }
   ]
 }
