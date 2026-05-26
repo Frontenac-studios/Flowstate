@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { FocusChat } from "@/components/kash/chat/FocusChat";
+import { TypedNarration } from "@/components/kash/chat/TypedNarration";
+import { useRdmNarration } from "@/hooks/useRdmNarration";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { useTRPC } from "@/trpc/client";
@@ -29,7 +32,6 @@ export function FocusCanvas() {
   const queryClient = useQueryClient();
 
   const taskId = searchParams.get("taskId");
-  const narrationFromUrl = searchParams.get("narration");
 
   const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
@@ -58,13 +60,17 @@ export function FocusCanvas() {
     [endMutation]
   );
 
-  const narration = useMemo(() => {
-    if (narrationFromUrl) return narrationFromUrl;
-    if (!task) return "";
-    return task.isTop3
-      ? `Going with ${task.title} — it is Top 3.`
-      : `Going with ${task.title} — next on your list.`;
-  }, [narrationFromUrl, task]);
+  const { narration, loading: narrationLoading } = useRdmNarration(
+    task
+      ? {
+          id: task.id,
+          title: task.title,
+          isTop3: task.isTop3,
+          priority: task.priority,
+          projectSlug: task.projectSlug,
+        }
+      : null
+  );
 
   // Start a fresh time entry + timer whenever we land on a new task.
   useEffect(() => {
@@ -108,11 +114,7 @@ export function FocusCanvas() {
 
       lastWasLargeRef.current = pick.isTop3;
 
-      const nextNarration = pick.isTop3
-        ? `Going with ${pick.title} — it is Top 3.`
-        : `Going with ${pick.title} — next on your list.`;
-
-      const params = new URLSearchParams({ taskId: pick.id, narration: nextNarration });
+      const params = new URLSearchParams({ taskId: pick.id });
       router.replace(`/plan/focus?${params.toString()}`);
     },
     [queryClient, router, tasks, triageIds, trpc.tasks.listIncomplete]
@@ -220,9 +222,9 @@ export function FocusCanvas() {
         </div>
       </div>
 
-      <p className="mt-5 text-sm text-kash-ink-muted" aria-live="polite">
-        {narration}
-      </p>
+      <TypedNarration text={narration} loading={narrationLoading} />
+
+      <FocusChat taskId={task.id} />
 
       <div className="mt-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

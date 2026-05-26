@@ -5,9 +5,10 @@ import { useState } from "react";
 
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
+import { ChatToggleButton } from "./chat/ChatToggleButton";
+
 export function KashHeader() {
   const [planMode, setPlanMode] = useState<"day" | "week">("day");
-  const [chatOpen, setChatOpen] = useState(false);
 
   return (
     <header className="glass-panel mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink">
@@ -47,16 +48,7 @@ export function KashHeader() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setChatOpen((v) => !v)}
-          className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
-          aria-pressed={chatOpen}
-          aria-label="Toggle chat"
-          title="Chat — coming in Phase 6"
-        >
-          Chat {chatOpen ? "☑" : "☐"}
-        </button>
+        <ChatToggleButton />
         <Link
           href="/settings"
           className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"

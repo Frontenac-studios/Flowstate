@@ -113,10 +113,7 @@ export function PlanCanvas() {
 
     lastWasLargeRef.current = pick.isTop3;
 
-    const narration = pick.isTop3
-      ? `Going with ${pick.title} — it is Top 3.`
-      : `Going with ${pick.title} — next on your list.`;
-    const params = new URLSearchParams({ taskId: pick.id, narration });
+    const params = new URLSearchParams({ taskId: pick.id });
     router.push(`/plan/focus?${params.toString()}`);
   }, [partitioned.today, router]);
 
