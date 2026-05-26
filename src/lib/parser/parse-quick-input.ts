@@ -32,6 +32,76 @@ export type ParseResult = {
   suggestions: ProjectSuggestion[];
 };
 
+export type ParsedLine = {
+  lineIndex: number;
+  raw: string;
+  parse: ParseResult;
+};
+
+export const MAX_COMPOSER_LINES = 50;
+
+export function isLineProjectValid(parse: ParseResult): boolean {
+  return !parse.warnings.some((w) => w.code === "project_not_found");
+}
+
+export function parseQuickInputLines(raw: string, ctx: ParseContext): ParsedLine[] {
+  const lines: ParsedLine[] = [];
+  let lineIndex = 0;
+
+  for (const part of raw.split("\n")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    lines.push({
+      lineIndex,
+      raw: trimmed,
+      parse: parseQuickInput(trimmed, ctx),
+    });
+    lineIndex += 1;
+  }
+
+  return lines;
+}
+
+/** Update one non-empty line by its parseQuickInputLines index (not raw string match). */
+export function replaceComposerLineAtIndex(
+  value: string,
+  lineIndex: number,
+  newRaw: string
+): string {
+  let idx = 0;
+  return value
+    .split("\n")
+    .map((line) => {
+      if (!line.trim()) return line;
+      if (idx === lineIndex) {
+        idx += 1;
+        return newRaw;
+      }
+      idx += 1;
+      return line;
+    })
+    .join("\n");
+}
+
+/** Remove one non-empty line by its parseQuickInputLines index. */
+export function removeComposerLineAtIndex(value: string, lineIndex: number): string {
+  let idx = 0;
+  const parts: string[] = [];
+  for (const line of value.split("\n")) {
+    if (!line.trim()) {
+      parts.push(line);
+      continue;
+    }
+    if (idx === lineIndex) {
+      idx += 1;
+      continue;
+    }
+    idx += 1;
+    parts.push(line);
+  }
+  return parts.join("\n");
+}
+
 const WEEKDAY_PATTERN = /^(sun|mon|tue|wed|thu|fri|sat)$/i;
 const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;

@@ -47,7 +47,7 @@ Header layout:
 
 ## 4. Day mode — layout (top to bottom)
 
-1. **Quick-input** — single line, autofocused on page load. Placeholder: `add a task — try 'review PR tomorrow #rdm !!'`.
+1. **Task composer** — multiline textarea, autofocused on page load. One task per non-empty line. Placeholder: `add tasks — one per line. ⌘↵ to add.` **Enter** inserts a new line; **⌘Enter** (Ctrl+Enter) submits all lines.
 2. **Triage strip** — only renders if yesterday left unfinished tasks. Horizontal row of pill-cards; header text: _"N from yesterday — decide as you plan."_ Each pill has 4 inline action buttons: `[Today] [Tomorrow] [Later] [Drop]`.
 3. **Top 3 region** — three numbered slots `① ② ③`. Empty slot = dashed outline reading `pin a task`. Drag target.
 4. **Today list** — ordered list of tasks scheduled for today (carryovers + things pre-scheduled). Each row: drag handle · checkbox · title · `#project` chip · `!` priority dots · `⋯` menu. **Top 3 tasks live in Today**; the Top 3 slots above are pointers to them, not duplicates. Top-3 rows render with a `★` icon and a colored left border.
@@ -63,19 +63,21 @@ Provide a user setting to switch to **named-day columns** (`Today / Tomorrow / M
 
 ---
 
-## 5. Quick-input parser
+## 5. Task composer parser
 
-Inline tokens recognized:
+One parser pass **per non-empty line** (blank lines ignored). Inline tokens recognized on each line:
 
 - **Date keywords**: `today`, `tomorrow`, `mon`/`tue`/.../`sun`, `fri` etc. → sets task's scheduled date / target bucket.
-- **`#project`** — files task under matching project (creates project if not present? — confirm with user; default: auto-create).
+- **`#project`** — files task under matching project; missing project shows inline error with opt-in create + fuzzy suggestions (no auto-create).
 - **Priority bangs**: `!`, `!!`, `!!!` → priority 1/2/3.
 
-Tokens are stripped from the saved title. Parser runs client-side on submit; show parsed values inline before submit (small chips next to the input).
+Tokens are stripped from the saved title. Parser runs client-side; show parsed values inline before submit (chips for a single line; compact per-line preview when 2+ lines).
+
+**Bulk submit**: ⌘Enter creates all valid lines; lines with invalid `#project` remain in the composer with per-line errors.
 
 **Parse feedback after submit**: target section expands ~1.5s with a highlight pulse, then re-collapses (pulse-and-collapse). If task lands in Today, just appears in the list.
 
-**Refocus shortcut**: `/` from anywhere on `/plan` refocuses quick-input.
+**Refocus shortcut**: `/` from anywhere on `/plan` refocuses the task composer.
 
 **No duration parsing** in v1.
 

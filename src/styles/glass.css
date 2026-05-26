@@ -52,6 +52,11 @@
   transition: box-shadow 0.15s ease;
 }
 
+.glass-textarea {
+  min-height: 3.5rem;
+  field-sizing: content;
+}
+
 .glass-input:focus {
   box-shadow: 0 0 0 3px var(--kash-accent-soft);
 }
