@@ -130,12 +130,9 @@ export function TaskRow({ task, selected = false, onSelect, onComplete, onDelete
         type="checkbox"
         className="h-4 w-4 rounded border border-white/60 accent-kash-accent"
         aria-label={`Complete ${task.title}`}
-        checked={completeMutation.isPending}
+        disabled={completeMutation.isPending}
         onClick={(e) => e.stopPropagation()}
-        onChange={() => {
-          if (completeMutation.isPending) return;
-          completeMutation.mutate({ id: task.id });
-        }}
+        onChange={() => completeMutation.mutate({ id: task.id })}
       />
 
       <div className="min-w-0 flex-1">

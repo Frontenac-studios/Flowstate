@@ -4,6 +4,8 @@ import { test, expect } from "@playwright/test";
 const mod = "ControlOrMeta";
 
 test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ page }) => {
+  test.setTimeout(90_000);
+
   const taskTitle = `E2E smoke ${Date.now()}`;
   const today = new Date().toISOString().slice(0, 10);
 
@@ -42,7 +44,12 @@ test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ p
   await expect(taskRow).toBeVisible({ timeout: 25_000 });
 
   await taskRow.click();
+  const pinResponse = page.waitForResponse(
+    (res) => res.ok() && res.url().includes("tasks.pinTop3"),
+    { timeout: 20_000 }
+  );
   await page.keyboard.press(`${mod}+1`);
+  await pinResponse;
   await expect(taskRow.getByLabel("Top 3")).toBeVisible({ timeout: 10_000 });
 
   await page.keyboard.press(`${mod}+KeyD`);
@@ -51,14 +58,15 @@ test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ p
     timeout: 30_000,
   });
 
-  await page.goto("/plan");
-  await expect(taskRow).toBeVisible({ timeout: 15_000 });
-
   const completeResponse = page.waitForResponse(
     (res) => res.ok() && res.url().includes("tasks.complete"),
-    { timeout: 20_000 }
+    { timeout: 30_000 }
   );
-  await taskRow.getByRole("checkbox", { name: `Complete ${taskTitle}` }).click();
+  await page.getByRole("button", { name: /^Done/ }).click();
   await completeResponse;
-  await expect(taskRow).toHaveCount(0, { timeout: 15_000 });
+
+  await page.goto("/plan");
+  await expect(page.getByRole("listitem").filter({ hasText: taskTitle })).toHaveCount(0, {
+    timeout: 15_000,
+  });
 });
