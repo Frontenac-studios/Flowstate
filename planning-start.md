@@ -83,6 +83,8 @@ Semicolon mode (optional): if a line contains `;`, parse it as:
 
 Tokens are stripped from the saved title. Parser runs client-side; show parsed values inline before submit (chips for a single line; compact per-line preview when 2+ lines).
 
+**Composer assist (semicolon mode)**: a property bar above the input shows `title · due · project · priority`, highlighting the active slot. Ghost-text suggests the default for the current segment (`today`, `#project`, `!`). **Tab** accepts the suggestion when one is shown; otherwise Tab moves to the triage strip when present.
+
 **Bulk submit**: ⌘Enter creates all valid lines; lines with invalid `#project` or invalid semicolon properties remain in the composer with per-line errors.
 
 **Parse feedback after submit**: target section expands ~1.5s with a highlight pulse, then re-collapses (pulse-and-collapse). If task lands in Today, just appears in the list.
