@@ -53,6 +53,12 @@ test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ p
 
   await page.goto("/plan");
   await expect(taskRow).toBeVisible({ timeout: 15_000 });
-  await taskRow.getByRole("checkbox", { name: `Complete ${taskTitle}` }).check();
+
+  const completeResponse = page.waitForResponse(
+    (res) => res.ok() && res.url().includes("tasks.complete"),
+    { timeout: 20_000 }
+  );
+  await taskRow.getByRole("checkbox", { name: `Complete ${taskTitle}` }).click();
+  await completeResponse;
   await expect(taskRow).toHaveCount(0, { timeout: 15_000 });
 });
