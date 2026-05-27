@@ -1,12 +1,16 @@
-import { and, asc, desc, eq, isNotNull, isNull, lt, lte, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, lte, ne, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
-import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
+import {
+  validateWeekDraftAssignments,
+  type WeekDraftAssignment,
+} from "@/lib/week/validate-week-draft-assignments";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -222,6 +226,101 @@ export const tasksRouter = createTRPCRouter({
       }
 
       return row;
+    }),
+
+  scheduleToDate: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        scheduledDate: z.string().nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedTask(ctx.userId, input.id);
+
+      if (input.scheduledDate !== null && !isDateInIsoWeek(input.scheduledDate)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "scheduledDate must be within the current calendar week.",
+        });
+      }
+
+      const patch: Partial<typeof tasks.$inferInsert> = {
+        scheduledDate: input.scheduledDate,
+        updatedAt: new Date(),
+      };
+
+      if (input.scheduledDate !== null) {
+        patch.bucketOverride = null;
+      }
+
+      const [row] = await db
+        .update(tasks)
+        .set(patch)
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to schedule task.",
+        });
+      }
+
+      return row;
+    }),
+
+  applyWeekDraft: protectedProcedure
+    .input(
+      z.object({
+        assignments: z.array(
+          z.object({
+            taskId: z.string().uuid(),
+            scheduledDate: z.string(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.assignments.length === 0) {
+        return { applied: 0 };
+      }
+
+      const uniqueIds = Array.from(new Set(input.assignments.map((a) => a.taskId)));
+      const ownedRows = await db
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(and(eq(tasks.userId, ctx.userId), inArray(tasks.id, uniqueIds)));
+
+      const ownedSet = new Set(ownedRows.map((r) => r.id));
+      const validation = validateWeekDraftAssignments(
+        input.assignments as WeekDraftAssignment[],
+        ownedSet
+      );
+
+      if (!validation.ok) {
+        const message =
+          validation.error === "UNKNOWN_TASK"
+            ? "One or more tasks were not found."
+            : validation.error === "DUPLICATE_TASK"
+              ? "Duplicate task in draft."
+              : "One or more dates are outside the current week.";
+        throw new TRPCError({ code: "BAD_REQUEST", message });
+      }
+
+      const now = new Date();
+      for (const row of validation.normalized) {
+        await db
+          .update(tasks)
+          .set({
+            scheduledDate: row.scheduledDate,
+            bucketOverride: null,
+            updatedAt: now,
+          })
+          .where(and(eq(tasks.id, row.taskId), eq(tasks.userId, ctx.userId)));
+      }
+
+      return { applied: validation.normalized.length };
     }),
 
   moveToBucket: protectedProcedure
