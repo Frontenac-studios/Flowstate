@@ -7,6 +7,7 @@ import { projects } from "@/db/schema/projects";
 import { tasks } from "@/db/schema/tasks";
 import { taskTimeEntries } from "@/db/schema/task-time-entries";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { taskIdForThread } from "@/lib/chat/threads";
 
@@ -51,8 +52,11 @@ export async function fetchPlanContextSnapshot(
       .orderBy(desc(tasks.priority)),
     db
       .select({
+        id: tasks.id,
         top3Order: tasks.top3Order,
         title: tasks.title,
+        top3PinnedAt: tasks.top3PinnedAt,
+        scheduledDate: tasks.scheduledDate,
         completedAt: tasks.completedAt,
       })
       .from(tasks)
@@ -110,6 +114,35 @@ export async function fetchPlanContextSnapshot(
           .map((s) => `  ${s.top3Order}. ${s.title}${s.completedAt ? " (done today)" : ""}`)
           .join("\n")}`;
 
+  const serverTzOffset = -now.getTimezoneOffset();
+  const slippedEvaluation = evaluateTop3Stall({
+    now,
+    tzOffsetMinutes: serverTzOffset,
+    localDate: todayIso,
+    top3Tasks: top3Rows
+      .filter((r): r is typeof r & { top3Order: number } => r.top3Order !== null)
+      .map((r) => ({
+        id: r.id,
+        title: r.title,
+        top3Order: r.top3Order,
+        top3PinnedAt: r.top3PinnedAt,
+        scheduledDate: r.scheduledDate,
+        completedAt: r.completedAt,
+      })),
+    timeEntriesToday: [],
+    alreadyNudgedToday: true,
+  });
+
+  const slippedLines =
+    slippedEvaluation.slippedTasks.length === 0
+      ? "Top 3 slipped (2+ days): (none)"
+      : `Top 3 slipped (2+ days):\n${slippedEvaluation.slippedTasks
+          .map(
+            (s) =>
+              `  ${s.top3Order}. ${s.title} (pinned ${s.pinReferenceDate}, ${s.daysSlipped} days)`
+          )
+          .join("\n")}`;
+
   const completedLines =
     completedRows.length === 0
       ? "Recent completions: (none)"
@@ -160,6 +193,7 @@ export async function fetchPlanContextSnapshot(
       `Today: ${todayIso}`,
       `Triage backlog: ${triageRows.length} task(s) from prior days`,
       top3Lines,
+      slippedLines,
       formatTasks("Today bucket", partitioned.today),
       formatTasks("Tomorrow", partitioned.tomorrow),
       formatTasks("This week", partitioned.thisWeek),

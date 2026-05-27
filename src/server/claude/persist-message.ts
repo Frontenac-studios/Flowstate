@@ -4,7 +4,12 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { chatMessages } from "@/db/schema/chat-messages";
-import { textContent, type MessageContent } from "@/lib/chat/message-content";
+import {
+  nudgeContent,
+  textContent,
+  type MessageContent,
+  type MessageMeta,
+} from "@/lib/chat/message-content";
 import { taskIdForThread } from "@/lib/chat/threads";
 
 export async function listThreadMessages(userId: string, threadId: string, limit = 50) {
@@ -57,12 +62,18 @@ export async function appendUserMessage(userId: string, threadId: string, text: 
   });
 }
 
-export async function appendAssistantMessage(userId: string, threadId: string, text: string) {
+export async function appendAssistantMessage(
+  userId: string,
+  threadId: string,
+  text: string,
+  meta?: MessageMeta
+) {
+  const content = meta?.source === "nudge" ? nudgeContent(text, meta.kind) : textContent(text);
   return insertChatMessage({
     userId,
     threadId,
     role: "assistant",
-    content: textContent(text),
+    content,
   });
 }
 
