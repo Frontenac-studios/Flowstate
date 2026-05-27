@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -39,7 +40,15 @@ export async function POST(req: Request) {
     pickReason: pickReason ?? "weighted-rdm",
   };
 
-  if (!isAnthropicConfigured()) {
+  const configured = isAnthropicConfigured();
+  Sentry.addBreadcrumb({
+    category: "kash.claude",
+    message: "narrate",
+    level: "info",
+    data: { taskId, isTop3, configured },
+  });
+
+  if (!configured) {
     return NextResponse.json({
       narration: fallbackNarration(taskInput),
       configured: false,
@@ -49,7 +58,8 @@ export async function POST(req: Request) {
   try {
     const narration = await generateNarration(userId, threadId, taskInput);
     return NextResponse.json({ narration, configured: true });
-  } catch {
+  } catch (err) {
+    Sentry.captureException(err, { extra: { taskId, isTop3 } });
     return NextResponse.json({
       narration: fallbackNarration(taskInput),
       configured: true,

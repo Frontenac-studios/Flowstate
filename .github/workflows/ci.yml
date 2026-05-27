@@ -15,7 +15,6 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
       SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
-      # Set these as repo secrets/vars once Sentry is wired up
       SENTRY_ORG: ${{ vars.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -31,3 +30,43 @@ jobs:
       - run: npm run format:check
       - run: npm run test:run
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase
+        run: npx supabase start -x imgproxy,edge-runtime,logflare,vector
+      - name: Export Supabase env
+        run: |
+          # GITHUB_ENV vars are not visible in the same step — load status into the shell first.
+          STATUS_ENV="$(npx supabase status -o env)"
+          set -a
+          eval "$STATUS_ENV"
+          set +a
+          {
+            echo "$STATUS_ENV"
+            echo "DATABASE_URL=${DB_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}"
+            echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}"
+            echo "PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000"
+          } >> "$GITHUB_ENV"
+      - name: Apply database schema
+        run: npm run db:e2e-setup
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Playwright smoke
+        run: npm run test:e2e
+        env:
+          CI: true
+          E2E_USER_EMAIL: e2e@kash.test
+          E2E_USER_PASSWORD: e2e-test-password-12!

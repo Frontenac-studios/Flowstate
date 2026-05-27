@@ -99,6 +99,48 @@ describe("parseQuickInput", () => {
     expect(result.scheduledDate).toBeNull();
     expect(result.title).toBe("someday");
   });
+
+  it("treats unsupported week keywords as title tokens in space mode", () => {
+    const thisWeek = parseQuickInput("plan this week", ctx);
+    expect(thisWeek.title).toBe("plan this week");
+    expect(thisWeek.scheduledDate).toBe("2026-05-27");
+
+    const nextWeek = parseQuickInput("review next week", ctx);
+    expect(nextWeek.title).toBe("review next week");
+    expect(nextWeek.scheduledDate).toBe("2026-05-27");
+  });
+
+  it("treats ISO-like date tokens as title text in space mode", () => {
+    const result = parseQuickInput("ship 2026-05-30", ctx);
+    expect(result.title).toBe("ship 2026-05-30");
+    expect(result.scheduledDate).toBe("2026-05-27");
+  });
+
+  it("uses Untitled when semicolon segments are all empty", () => {
+    const result = parseQuickInput("; ;", ctx);
+    expect(result.title).toBe("Untitled");
+    expect(result.scheduledDate).toBe("2026-05-27");
+  });
+
+  it("parses property-only tail after empty semicolon title as first segment", () => {
+    const result = parseQuickInput("; tomorrow; #rdm", ctx);
+    expect(result.title).toBe("tomorrow");
+    expect(result.scheduledDate).toBe("2026-05-27");
+    expect(result.projectSlug).toBe("rdm");
+  });
+
+  it("applies date keywords from semicolon property segments", () => {
+    const result = parseQuickInput("standup; tomorrow; #rdm", ctx);
+    expect(result.title).toBe("standup");
+    expect(result.scheduledDate).toBe("2026-05-28");
+    expect(result.projectSlug).toBe("rdm");
+  });
+
+  it("warns on unrecognized semicolon properties such as this week", () => {
+    const result = parseQuickInput("task; this week", ctx);
+    expect(result.title).toBe("task");
+    expect(result.warnings).toEqual([{ code: "invalid_property", property: "this week" }]);
+  });
 });
 
 describe("parseQuickInputLines", () => {

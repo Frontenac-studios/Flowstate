@@ -29,4 +29,11 @@ describe("bucketToSchedulingFields", () => {
     expect(fields.scheduledDate).toBe("2026-05-31"); // Sunday
     expect(deriveBucket(fields, sat)).toBe("tomorrow");
   });
+
+  it("round-trips this_week from Saturday when scheduled to week end", () => {
+    const sat = new Date(2026, 4, 30);
+    const fields = bucketToSchedulingFields("this_week", sat);
+    expect(deriveBucket(fields, sat)).toBe("tomorrow");
+    expect(fields.scheduledDate).toBe("2026-05-31");
+  });
 });

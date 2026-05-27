@@ -7,6 +7,39 @@ describe("pickRdmTask", () => {
     expect(pickRdmTask([])).toBeNull();
   });
 
+  it("returns null when every task is completed", () => {
+    const tasks: RdmPickTask[] = [
+      { id: "a", title: "Done A", isTop3: true, completedAt: new Date() },
+      { id: "b", title: "Done B", isTop3: false, completedAt: new Date() },
+    ];
+    expect(pickRdmTask(tasks)).toBeNull();
+  });
+
+  it("never returns a completed task from a mixed pool", () => {
+    const tasks: RdmPickTask[] = [
+      { id: "done", title: "Done", isTop3: true, completedAt: new Date() },
+      { id: "open", title: "Open", isTop3: false, completedAt: null },
+    ];
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const result = pickRdmTask(tasks);
+      expect(result?.id).toBe("open");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("returns the only eligible task deterministically", () => {
+    const tasks: RdmPickTask[] = [
+      { id: "only", title: "Only open", isTop3: false, completedAt: null },
+    ];
+    expect(pickRdmTask(tasks)).toEqual({
+      id: "only",
+      title: "Only open",
+      isTop3: false,
+    } satisfies PickRdmResult);
+  });
+
   it("biases toward non-Top-3 when lastWasLarge is true", () => {
     const tasks: RdmPickTask[] = [
       { id: "top1", title: "Top 1", isTop3: true, completedAt: null },
