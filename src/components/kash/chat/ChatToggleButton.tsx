@@ -13,7 +13,9 @@ type Props = {
 export function ChatToggleButton({ threadId, className }: Props) {
   const { railOpen, toggleRail, unreadThreads, isFocusRoute, activeThreadId } = useChat();
   const dotThread = threadId ?? (isFocusRoute ? activeThreadId : GLOBAL_THREAD_ID);
-  const hasUnread = unreadThreads.has(dotThread);
+  const hasUnread =
+    unreadThreads.has(dotThread) ||
+    (isFocusRoute && !threadId && unreadThreads.has(GLOBAL_THREAD_ID));
 
   return (
     <button
