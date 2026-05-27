@@ -134,6 +134,7 @@ src/lib/utils.ts              # Shared utilities (+ example test)
 middleware.ts                 # Supabase session refresh
 sentry.{server,edge}.config.ts + instrumentation*.ts
 supabase/config.toml          # Local Supabase config
+supabase/rls/                 # RLS + SQL patches (applied after Drizzle, not on supabase start)
 drizzle/                      # Generated migrations
 ```
 

@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 /**
- * Applies SQL files in supabase/migrations/ (RLS, incremental patches).
- * Run after `npm run db:migrate` when bootstrapping local/CI databases.
+ * Applies SQL files in supabase/rls/ (RLS, incremental patches).
+ * Run after Drizzle migrations when bootstrapping local/CI databases.
+ * Not under supabase/migrations/ — the CLI applies that folder on `supabase start`
+ * before Drizzle has created tables.
  */
 const { config } = require("dotenv");
 const fs = require("fs");
@@ -38,8 +40,11 @@ async function runFile(filePath) {
 }
 
 async function main() {
-  const dir = path.join(__dirname, "../supabase/migrations");
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
+  const dir = path.join(__dirname, "../supabase/rls");
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
 
   for (const file of files) {
     await runFile(path.join(dir, file));
