@@ -8,6 +8,7 @@ import { meRouter } from "./me";
 import { projectsRouter } from "./projects";
 import { tasksRouter } from "./tasks";
 import { timeEntriesRouter } from "./time-entries";
+import { weekDraftRouter } from "./week-draft";
 
 export const appRouter = createTRPCRouter({
   hello: baseProcedure.input(z.object({ text: z.string() })).query((opts) => {
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   projects: projectsRouter,
   tasks: tasksRouter,
   timeEntries: timeEntriesRouter,
+  weekDraft: weekDraftRouter,
 });
 
 export type AppRouter = typeof appRouter;

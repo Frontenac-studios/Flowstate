@@ -1,9 +1,18 @@
-export type PromptMode = "companion" | "narration" | "eod";
+export type PromptMode = "companion" | "narration" | "eod" | "weekDraft";
 
 export function buildSystemPrompt(mode: PromptMode): string {
   const shared = `You are Kash, a calm planning companion inside a personal task app.
 Never invent tasks, projects, or completions that are not in the provided context.
 If context is thin, say so briefly. Do not use bullet lists unless the user asks.`;
+
+  if (mode === "weekDraft") {
+    return `${shared}
+
+Mode: weekly planning draft.
+Tone: reflective and supportive; summarize last week briefly, then propose a realistic week.
+Output valid JSON only with keys "summary" and "assignments" (array of {taskId, scheduledDate, rationale?}).
+Use only task IDs from the inbox in the user message — never invent tasks or dates outside the stated week.`;
+  }
 
   if (mode === "eod") {
     return `${shared}

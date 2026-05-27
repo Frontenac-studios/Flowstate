@@ -24,6 +24,8 @@ export type QuickInputHandle = {
 
 type Props = {
   onTaskCreated?: (bucket: Bucket) => void;
+  /** When true, new tasks without an explicit date land in the inbox (scheduledDate null). */
+  createInInbox?: boolean;
 };
 
 function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
@@ -31,7 +33,7 @@ function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string)
 }
 
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
-  { onTaskCreated },
+  { onTaskCreated, createInInbox = false },
   ref
 ) {
   const trpc = useTRPC();
@@ -79,10 +81,17 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     return projects.find((p) => p.slug === line.parse.projectSlug)?.id ?? null;
   };
 
+  const resolveScheduledDate = (line: ParsedLine): string | null | undefined => {
+    if (line.parse.bucketOverride === "later") return null;
+    if (line.parse.scheduledDate != null) return line.parse.scheduledDate;
+    if (createInInbox) return null;
+    return undefined;
+  };
+
   const createTaskForLine = async (line: ParsedLine) => {
     await createTaskMutation.mutateAsync({
       title: line.parse.title,
-      scheduledDate: line.parse.scheduledDate,
+      scheduledDate: resolveScheduledDate(line),
       bucketOverride: line.parse.bucketOverride,
       projectId: resolveProjectId(line),
       priority: line.parse.priority,
@@ -155,7 +164,10 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
       await createTaskMutation.mutateAsync({
         title: parse.title,
-        scheduledDate: parse.scheduledDate,
+        scheduledDate:
+          parse.bucketOverride === "later"
+            ? null
+            : (parse.scheduledDate ?? (createInInbox ? null : undefined)),
         bucketOverride: parse.bucketOverride,
         projectId: created.id,
         priority: parse.priority,
