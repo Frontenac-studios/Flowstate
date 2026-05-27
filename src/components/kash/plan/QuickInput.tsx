@@ -12,7 +12,8 @@ import {
   replaceComposerLineAtIndex,
   type ParsedLine,
 } from "@/lib/parser/parse-quick-input";
-import { deriveBucket, type Bucket } from "@/lib/tasks/derive-bucket";
+import { deriveBucket } from "@/lib/tasks/derive-bucket";
+import type { TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { useTRPC } from "@/trpc/client";
 
 import { ComposerLineErrors } from "./ComposerLineErrors";
@@ -23,7 +24,9 @@ export type QuickInputHandle = {
 };
 
 type Props = {
-  onTaskCreated?: (bucket: Bucket) => void;
+  onTaskCreated?: (pulse: TaskCreatedPulse) => void;
+  /** When true, new tasks without an explicit date land in the inbox (scheduledDate null). */
+  createInInbox?: boolean;
 };
 
 function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
@@ -31,7 +34,7 @@ function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string)
 }
 
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
-  { onTaskCreated },
+  { onTaskCreated, createInInbox = false },
   ref
 ) {
   const trpc = useTRPC();
@@ -79,10 +82,17 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     return projects.find((p) => p.slug === line.parse.projectSlug)?.id ?? null;
   };
 
+  const resolveScheduledDate = (line: ParsedLine): string | null | undefined => {
+    if (line.parse.bucketOverride === "later") return null;
+    if (line.parse.scheduledDate != null) return line.parse.scheduledDate;
+    if (createInInbox) return null;
+    return undefined;
+  };
+
   const createTaskForLine = async (line: ParsedLine) => {
     await createTaskMutation.mutateAsync({
       title: line.parse.title,
-      scheduledDate: line.parse.scheduledDate,
+      scheduledDate: resolveScheduledDate(line),
       bucketOverride: line.parse.bucketOverride,
       projectId: resolveProjectId(line),
       priority: line.parse.priority,
@@ -116,18 +126,20 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     const { created, remaining } = await submitValidLines(parsedLines);
 
     if (created > 0) {
-      const buckets = new Set<Bucket>();
+      const pulses: TaskCreatedPulse[] = [];
       for (const line of parsedLines) {
         if (!isLineProjectValid(line.parse)) continue;
-        buckets.add(
-          deriveBucket(
+        pulses.push({
+          bucket: deriveBucket(
             { scheduledDate: line.parse.scheduledDate, bucketOverride: line.parse.bucketOverride },
             new Date()
-          )
-        );
+          ),
+          scheduledDate: line.parse.scheduledDate,
+        });
       }
-      const bucket = buckets.size === 1 ? Array.from(buckets)[0]! : "today";
-      onTaskCreated?.(bucket);
+      const pulse =
+        pulses.length === 1 ? pulses[0]! : { bucket: "today" as const, scheduledDate: null };
+      onTaskCreated?.(pulse);
     }
 
     setValue(remaining.join("\n"));
@@ -148,21 +160,30 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         projects: [...projectRefs, { slug: created.slug, name: created.name }],
       });
 
+      if (!isLineProjectValid(parse)) {
+        setValue((v) => replaceComposerLineAtIndex(v, line.lineIndex, fixedRaw));
+        return;
+      }
+
       await createTaskMutation.mutateAsync({
         title: parse.title,
-        scheduledDate: parse.scheduledDate,
+        scheduledDate:
+          parse.bucketOverride === "later"
+            ? null
+            : (parse.scheduledDate ?? (createInInbox ? null : undefined)),
         bucketOverride: parse.bucketOverride,
         projectId: created.id,
         priority: parse.priority,
       });
 
       setValue((v) => removeComposerLineAtIndex(v, line.lineIndex));
-      onTaskCreated?.(
-        deriveBucket(
+      onTaskCreated?.({
+        bucket: deriveBucket(
           { scheduledDate: parse.scheduledDate, bucketOverride: parse.bucketOverride },
           new Date()
-        )
-      );
+        ),
+        scheduledDate: parse.scheduledDate,
+      });
     } finally {
       setCreatingLineIndex(null);
     }
@@ -188,7 +209,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         ref={textareaRef}
         rows={2}
         className="glass-input glass-textarea w-full resize-y"
-        placeholder="add tasks — one per line. ⌘↵ to add."
+        placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
         value={value}
         onChange={(e) => {
           setValue(e.target.value);

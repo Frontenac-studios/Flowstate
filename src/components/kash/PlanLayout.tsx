@@ -1,14 +1,27 @@
+import { ChatProvider } from "./chat/ChatProvider";
+import { ChatRail } from "./chat/ChatRail";
 import { GradientBackdrop } from "./GradientBackdrop";
-import { KashHeader } from "./KashHeader";
+import { EodReviewRunner } from "./eod/EodReviewRunner";
+import { MondayEntryRunner } from "./plan/MondayEntryRunner";
+import { PlanMainColumn } from "./plan/PlanMainColumn";
+import { PlanProvider } from "./plan/PlanProvider";
+import { ProactiveNudgesRunner } from "./nudges/ProactiveNudgesRunner";
 
 export function PlanLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen">
-      <GradientBackdrop />
-      <div className="relative z-10 mx-auto min-h-screen w-full max-w-3xl px-4 py-6 sm:px-6">
-        <KashHeader />
-        {children}
-      </div>
-    </div>
+    <ChatProvider>
+      <PlanProvider>
+        <ProactiveNudgesRunner />
+        <EodReviewRunner />
+        <MondayEntryRunner />
+        <div className="relative min-h-screen">
+          <GradientBackdrop />
+          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl gap-4 px-4 py-6 sm:px-6">
+            <PlanMainColumn>{children}</PlanMainColumn>
+            <ChatRail />
+          </div>
+        </div>
+      </PlanProvider>
+    </ChatProvider>
   );
 }

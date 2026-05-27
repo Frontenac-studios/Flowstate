@@ -7,10 +7,15 @@ import {
 
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 
-export type ParseWarning = {
-  code: "project_not_found";
-  slug: string;
-};
+export type ParseWarning =
+  | {
+      code: "project_not_found";
+      slug: string;
+    }
+  | {
+      code: "invalid_property";
+      property: string;
+    };
 
 export type ProjectSuggestion = {
   slug: string;
@@ -41,7 +46,8 @@ export type ParsedLine = {
 export const MAX_COMPOSER_LINES = 50;
 
 export function isLineProjectValid(parse: ParseResult): boolean {
-  return !parse.warnings.some((w) => w.code === "project_not_found");
+  // A "valid" line must have zero warnings (missing projects, invalid semicolon properties, etc.).
+  return parse.warnings.length === 0;
 }
 
 export function parseQuickInputLines(raw: string, ctx: ParseContext): ParsedLine[] {
@@ -145,7 +151,74 @@ function resolveDateKeyword(
   return null;
 }
 
+function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
+  const today = ctx.today ?? new Date();
+  const todayIso = toISODateString(startOfLocalDay(today));
+
+  const segments = raw
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const title = collapseWhitespace(segments[0] ?? "") || "Untitled";
+
+  let scheduledDate: string | null = todayIso;
+  let bucketOverride: "later" | null = null;
+  let projectSlug: string | null = null;
+  let priority: 0 | 1 | 2 | 3 = 0;
+  const warnings: ParseWarning[] = [];
+  let suggestions: ProjectSuggestion[] = [];
+
+  for (const segment of segments.slice(1)) {
+    const dateResult = resolveDateKeyword(segment, today);
+    if (dateResult) {
+      scheduledDate = dateResult.scheduledDate;
+      bucketOverride = dateResult.bucketOverride;
+      continue;
+    }
+
+    const priorityResult = parsePriority(segment);
+    if (priorityResult !== null) {
+      priority = priorityResult;
+      continue;
+    }
+
+    const projectMatch = segment.match(PROJECT_PATTERN);
+    if (projectMatch) {
+      projectSlug = projectMatch[1].toLowerCase();
+      continue;
+    }
+
+    warnings.push({ code: "invalid_property", property: segment });
+  }
+
+  if (projectSlug) {
+    const match = findProjectBySlug(projectSlug, ctx.projects);
+    if (!match) {
+      warnings.push({ code: "project_not_found", slug: projectSlug });
+      suggestions = fuzzyProjectSuggestions(projectSlug, ctx.projects).map((s) => ({
+        slug: s.slug,
+        name: s.name,
+      }));
+    }
+  }
+
+  return {
+    title,
+    scheduledDate,
+    bucketOverride,
+    projectSlug,
+    priority,
+    warnings,
+    suggestions,
+  };
+}
+
 export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
+  if (raw.includes(";")) {
+    return parseSemicolonQuickInput(raw, ctx);
+  }
+
   const today = ctx.today ?? new Date();
   const todayIso = toISODateString(startOfLocalDay(today));
 

@@ -1,6 +1,5 @@
 "use client";
 
-import type { Bucket } from "@/lib/tasks/derive-bucket";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
 import type { PlanTaskRow } from "./TaskRow";
@@ -14,19 +13,19 @@ export type BucketedTasks = {
 
 type Props = {
   tasks: BucketedTasks;
-  pulseBucket: Bucket | null;
+  pulseTarget: string | null;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
 
-export function PlanBuckets({ tasks, pulseBucket, onComplete, onDelete }: Props) {
+export function PlanBuckets({ tasks, pulseTarget, onComplete, onDelete }: Props) {
   return (
     <>
       <BucketSection
         bucket="tomorrow"
         label="Tomorrow"
         tasks={tasks.tomorrow}
-        pulse={pulseBucket === "tomorrow"}
+        pulse={pulseTarget === "tomorrow"}
         onComplete={onComplete}
         onDelete={onDelete}
       />
@@ -34,7 +33,7 @@ export function PlanBuckets({ tasks, pulseBucket, onComplete, onDelete }: Props)
         bucket="this_week"
         label="This Week"
         tasks={tasks.thisWeek}
-        pulse={pulseBucket === "this_week"}
+        pulse={pulseTarget === "this_week"}
         onComplete={onComplete}
         onDelete={onDelete}
       />
@@ -42,7 +41,7 @@ export function PlanBuckets({ tasks, pulseBucket, onComplete, onDelete }: Props)
         bucket="later"
         label="Later"
         tasks={tasks.later}
-        pulse={pulseBucket === "later"}
+        pulse={pulseTarget === "later"}
         onComplete={onComplete}
         onDelete={onDelete}
       />

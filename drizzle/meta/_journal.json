@@ -15,6 +15,13 @@
       "when": 1779754324381,
       "tag": "0001_low_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779823383796,
+      "tag": "0002_gigantic_fallen_one",
+      "breakpoints": true
     }
   ]
 }

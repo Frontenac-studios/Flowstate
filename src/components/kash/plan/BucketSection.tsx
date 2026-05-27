@@ -14,11 +14,21 @@ type Props = {
   label: string;
   tasks: PlanTaskRow[];
   pulse: boolean;
+  /** Override droppable id (e.g. bucket:date:2026-05-28 for named-days view). */
+  droppableId?: string;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
 
-export function BucketSection({ bucket, label, tasks, pulse, onComplete, onDelete }: Props) {
+export function BucketSection({
+  bucket,
+  label,
+  tasks,
+  pulse,
+  droppableId,
+  onComplete,
+  onDelete,
+}: Props) {
   const regionId = useId();
   const [collapsed, setCollapsed] = useState(true);
 
@@ -26,7 +36,7 @@ export function BucketSection({ bucket, label, tasks, pulse, onComplete, onDelet
     if (pulse) setCollapsed(false);
   }, [pulse]);
 
-  const { setNodeRef, isOver } = useDroppable({ id: `bucket:${bucket}` });
+  const { setNodeRef, isOver } = useDroppable({ id: droppableId ?? `bucket:${bucket}` });
 
   const hasTasks = tasks.length > 0;
   const showBody = !collapsed && hasTasks;
