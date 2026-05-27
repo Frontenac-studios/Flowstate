@@ -8,7 +8,10 @@ export const dayReviews = pgTable(
     reviewDate: date("date", { mode: "string" }).notNull(),
     summary: text("summary"),
     top3Status: jsonb("top_3_status"),
+    reflectionText: text("reflection_text"),
+    reflectiveQuestion: text("reflective_question"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex("day_reviews_user_id_date_idx").on(table.userId, table.reviewDate)]
 );

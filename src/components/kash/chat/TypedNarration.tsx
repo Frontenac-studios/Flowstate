@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-function renderNarrationText(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    return part;
-  });
-}
+import { renderInlineBold } from "@/lib/markdown/inline-bold";
 
 type Props = {
   text: string | null;
@@ -66,7 +58,7 @@ export function TypedNarration({ text, loading }: Props) {
 
   return (
     <p className="mt-5 text-sm text-kash-ink-muted" aria-live="polite">
-      {renderNarrationText(displayed)}
+      {renderInlineBold(displayed)}
       {typing ? <span className="ml-0.5 inline-block animate-pulse">▍</span> : null}
     </p>
   );
