@@ -13,23 +13,23 @@ import {
 import { useRouter } from "next/navigation";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
-import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
+import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
+import { partitionNamedDays } from "@/lib/tasks/partition-named-days";
+import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
+import { resolvePulseTarget, type TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
+import type { BucketMode } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
 import { PlanBuckets } from "./PlanBuckets";
+import { PlanBucketsNamedDays } from "./PlanBucketsNamedDays";
 import { TodayList } from "./TodayList";
 import { TriageStrip, type TriageAction, type TriageStripHandle } from "./TriageStrip";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!target || !(target instanceof HTMLElement)) return false;
-  return target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
-}
 
 function isInTriageStrip(target: EventTarget | null): boolean {
   if (!target || !(target instanceof HTMLElement)) return false;
@@ -41,6 +41,8 @@ function isQuickInputTarget(target: EventTarget | null): boolean {
   return target.closest("[data-quick-input]") !== null;
 }
 
+const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
+
 export function DayPlanCanvas() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -48,13 +50,19 @@ export function DayPlanCanvas() {
   const quickInputRef = useRef<QuickInputHandle>(null);
   const triageRef = useRef<TriageStripHandle>(null);
   const router = useRouter();
-  const [pulseBucket, setPulseBucket] = useState<Bucket | null>(null);
+  const [pulseTarget, setPulseTarget] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [triageFocusedIndex, setTriageFocusedIndex] = useState(0);
   const [triageKeyboardActive, setTriageKeyboardActive] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
   const { pushComplete, pushDelete } = useSessionUndo();
+
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+  const bucketMode: BucketMode = settings?.bucketMode ?? "relative";
+
+  /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
+  const now = useMemo(() => new Date(), []);
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -68,13 +76,20 @@ export function DayPlanCanvas() {
   ]);
 
   const triggerPulse = useCallback(
-    (bucket: Bucket) => {
+    (target: string) => {
       touchActivity();
-      setPulseBucket(bucket);
+      setPulseTarget(target);
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-      pulseTimerRef.current = setTimeout(() => setPulseBucket(null), 1500);
+      pulseTimerRef.current = setTimeout(() => setPulseTarget(null), 1500);
     },
     [touchActivity]
+  );
+
+  const handleTaskCreated = useCallback(
+    (pulse: TaskCreatedPulse) => {
+      triggerPulse(resolvePulseTarget(pulse, bucketMode, now));
+    },
+    [bucketMode, now, triggerPulse]
   );
 
   useEffect(() => {
@@ -111,17 +126,28 @@ export function DayPlanCanvas() {
     [tasks, triageIds]
   );
 
-  const partitioned = partitionPlanTasks(tasksExcludingTriage, new Date());
+  const partitionedRelative = useMemo(
+    () => partitionPlanTasks(tasksExcludingTriage, now),
+    [tasksExcludingTriage, now]
+  );
+
+  const partitionedNamed = useMemo(
+    () => partitionNamedDays(tasksExcludingTriage, now),
+    [tasksExcludingTriage, now]
+  );
+
+  const todayTasks =
+    bucketMode === "named_days" ? partitionedNamed.today : partitionedRelative.today;
 
   const triggerRdmPick = useCallback(() => {
-    const pick = pickRdmTask(partitioned.today, { lastWasLarge: lastWasLargeRef.current });
+    const pick = pickRdmTask(todayTasks, { lastWasLarge: lastWasLargeRef.current });
     if (!pick) return;
 
     lastWasLargeRef.current = pick.isTop3;
 
     const params = new URLSearchParams({ taskId: pick.id });
     router.push(`/plan/focus?${params.toString()}`);
-  }, [partitioned.today, router]);
+  }, [todayTasks, router]);
 
   const toRow = (task: (typeof tasks)[number]): PlanTaskRow => ({
     id: task.id,
@@ -192,6 +218,15 @@ export function DayPlanCanvas() {
 
   const moveMutation = useMutation(
     trpc.tasks.moveToBucket.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+      },
+    })
+  );
+
+  const scheduleMutation = useMutation(
+    trpc.tasks.scheduleToDate.mutationOptions({
       onSuccess: () => {
         touchActivity();
         invalidatePlan();
@@ -325,7 +360,17 @@ export function DayPlanCanvas() {
 
     if (!overId.startsWith("bucket:")) return;
 
-    const bucket = overId.slice("bucket:".length) as Bucket;
+    if (overId.startsWith("bucket:date:")) {
+      const iso = overId.slice("bucket:date:".length);
+      scheduleMutation.mutate({ id: taskId, scheduledDate: iso });
+      triggerPulse(iso);
+      return;
+    }
+
+    const bucketKey = overId.slice("bucket:".length);
+    if (!RELATIVE_BUCKETS.has(bucketKey)) return;
+
+    const bucket = bucketKey as Bucket;
     moveMutation.mutate({ id: taskId, bucket });
     triggerPulse(bucket);
   };
@@ -336,7 +381,7 @@ export function DayPlanCanvas() {
         <button
           type="button"
           onClick={triggerRdmPick}
-          disabled={partitioned.today.length === 0}
+          disabled={todayTasks.length === 0}
           className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Decide next task (RDM)"
           title="Decide next task (⌘D)"
@@ -347,7 +392,7 @@ export function DayPlanCanvas() {
           </span>
         </button>
       </div>
-      <QuickInput ref={quickInputRef} onTaskCreated={triggerPulse} />
+      <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} />
       <TriageStrip
         ref={triageRef}
         tasks={triageRows}
@@ -363,24 +408,42 @@ export function DayPlanCanvas() {
         onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}
       />
       <TodayList
-        pulse={pulseBucket === "today"}
-        tasks={partitioned.today.map(toRow)}
+        pulse={pulseTarget === "today"}
+        tasks={todayTasks.map(toRow)}
         isLoading={isLoading}
         selectedTaskId={selectedTaskId}
         onSelectTask={setSelectedTaskId}
         onComplete={pushComplete}
         onDelete={pushDelete}
       />
-      <PlanBuckets
-        tasks={{
-          tomorrow: partitioned.tomorrow.map(toRow),
-          thisWeek: partitioned.thisWeek.map(toRow),
-          later: partitioned.later.map(toRow),
-        }}
-        pulseBucket={pulseBucket}
-        onComplete={pushComplete}
-        onDelete={pushDelete}
-      />
+      {bucketMode === "named_days" ? (
+        <PlanBucketsNamedDays
+          tasks={{
+            tomorrow: partitionedNamed.tomorrow.map(toRow),
+            byWeekdayIso: Object.fromEntries(
+              Object.entries(partitionedNamed.byWeekdayIso).map(([iso, list]) => [
+                iso,
+                list.map(toRow),
+              ])
+            ),
+            later: partitionedNamed.later.map(toRow),
+          }}
+          pulseTarget={pulseTarget}
+          onComplete={pushComplete}
+          onDelete={pushDelete}
+        />
+      ) : (
+        <PlanBuckets
+          tasks={{
+            tomorrow: partitionedRelative.tomorrow.map(toRow),
+            thisWeek: partitionedRelative.thisWeek.map(toRow),
+            later: partitionedRelative.later.map(toRow),
+          }}
+          pulseTarget={pulseTarget}
+          onComplete={pushComplete}
+          onDelete={pushDelete}
+        />
+      )}
     </DndContext>
   );
 }

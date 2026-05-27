@@ -1,0 +1,63 @@
+import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+
+import { db } from "@/db";
+import { appSettings } from "@/db/schema/app-settings";
+import { bucketModeSchema, DEFAULT_BUCKET_MODE } from "@/lib/settings/constants";
+
+import { createTRPCRouter, protectedProcedure } from "../init";
+
+async function getOrCreateSettings(userId: string) {
+  const [existing] = await db
+    .select()
+    .from(appSettings)
+    .where(eq(appSettings.userId, userId))
+    .limit(1);
+
+  if (existing) {
+    return existing;
+  }
+
+  const [inserted] = await db
+    .insert(appSettings)
+    .values({ userId, bucketMode: DEFAULT_BUCKET_MODE })
+    .returning();
+
+  if (!inserted) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to create app settings.",
+    });
+  }
+
+  return inserted;
+}
+
+export const settingsRouter = createTRPCRouter({
+  get: protectedProcedure.query(async ({ ctx }) => {
+    const row = await getOrCreateSettings(ctx.userId);
+    const parsed = bucketModeSchema.safeParse(row.bucketMode);
+    return {
+      bucketMode: parsed.success ? parsed.data : DEFAULT_BUCKET_MODE,
+    };
+  }),
+
+  updateBucketMode: protectedProcedure.input(bucketModeSchema).mutation(async ({ ctx, input }) => {
+    await getOrCreateSettings(ctx.userId);
+
+    const [row] = await db
+      .update(appSettings)
+      .set({ bucketMode: input, updatedAt: new Date() })
+      .where(eq(appSettings.userId, ctx.userId))
+      .returning();
+
+    if (!row) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update bucket mode.",
+      });
+    }
+
+    return { bucketMode: input };
+  }),
+});

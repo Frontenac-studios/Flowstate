@@ -6,6 +6,7 @@ import { dayReviewsRouter } from "./day-reviews";
 import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
 import { projectsRouter } from "./projects";
+import { settingsRouter } from "./settings";
 import { tasksRouter } from "./tasks";
 import { timeEntriesRouter } from "./time-entries";
 import { weekDraftRouter } from "./week-draft";
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
   healthChecks: healthChecksRouter,
   me: meRouter,
   projects: projectsRouter,
+  settings: settingsRouter,
   tasks: tasksRouter,
   timeEntries: timeEntriesRouter,
   weekDraft: weekDraftRouter,
