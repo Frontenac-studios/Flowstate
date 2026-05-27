@@ -44,7 +44,10 @@ async function runMigrationFile(filePath) {
 
 async function main() {
   const dir = path.join(__dirname, "../drizzle");
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
 
   for (const file of files) {
     await runMigrationFile(path.join(dir, file));
