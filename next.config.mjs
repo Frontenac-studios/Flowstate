@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   webpack: (config) => {
     // Avoid the main barrel (includes React.createContext). Remove when tRPC ships #7228.
     config.resolve.alias["@trpc/tanstack-react-query/create-options-proxy"] = path.join(

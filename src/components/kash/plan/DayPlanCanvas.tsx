@@ -289,6 +289,10 @@ export function DayPlanCanvas() {
       const inComposer = isQuickInputTarget(e.target);
 
       if (e.key === "Tab" && inComposer && !e.shiftKey) {
+        if (quickInputRef.current?.acceptSuggestion()) {
+          e.preventDefault();
+          return;
+        }
         e.preventDefault();
         setTriageKeyboardActive(true);
         triageRef.current?.focusFirst();

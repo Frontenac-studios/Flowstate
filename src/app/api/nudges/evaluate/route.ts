@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -17,19 +18,48 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = bodySchema.safeParse(await req.json());
+  let json: unknown;
+  try {
+    json = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  const { localDate, tzOffsetMinutes } = parsed.data;
+
+  Sentry.addBreadcrumb({
+    category: "kash.nudge",
+    message: "evaluate",
+    level: "info",
+    data: { localDate, tzOffsetMinutes },
+  });
+
   try {
     const result = await runNudgeEvaluation({
       userId,
-      localDate: parsed.data.localDate,
-      tzOffsetMinutes: parsed.data.tzOffsetMinutes,
+      localDate,
+      tzOffsetMinutes,
     });
+
+    Sentry.addBreadcrumb({
+      category: "kash.nudge",
+      message: "evaluate.result",
+      level: "info",
+      data: {
+        fired: result.fired,
+        stalledCount: result.stalledCount,
+        slippedCount: result.slippedCount,
+      },
+    });
+
     return NextResponse.json(result);
   } catch (err) {
+    Sentry.captureException(err, { extra: { localDate, tzOffsetMinutes } });
     const message = err instanceof Error ? err.message : "Nudge evaluation failed.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

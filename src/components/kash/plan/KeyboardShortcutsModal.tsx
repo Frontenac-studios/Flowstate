@@ -9,7 +9,11 @@ type Shortcut = {
 
 const SHORTCUTS: Shortcut[] = [
   { keys: "/", description: "Focus the task composer" },
-  { keys: "Tab", description: "Jump from composer into the triage strip (when present)" },
+  {
+    keys: "Tab",
+    description:
+      "Accept composer suggestion when available; otherwise jump into the triage strip (when present)",
+  },
   { keys: "1 – 4", description: "Triage: Today, Tomorrow, Later, Drop" },
   { keys: "⌘1 – ⌘3", description: "Pin selected Today row to Top 3 slot" },
   { keys: "⌘D", description: "Random weighted pick (RDM) → Focus mode" },

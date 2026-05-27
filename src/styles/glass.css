@@ -26,6 +26,7 @@
     0 8px 32px rgba(26, 29, 38, 0.06);
 }
 
+/* Opaque surfaces for list rows and long scroll regions; reserve .glass-panel for chrome. */
 .glass-panel-opaque {
   border-radius: var(--kash-radius);
   border: 1px solid var(--kash-glass-border);

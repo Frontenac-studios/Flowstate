@@ -131,4 +131,48 @@ describe("evaluateTop3Stall", () => {
     });
     expect(result.shouldFireStallNudge).toBe(true);
   });
+
+  it("stalls only Top 3 tasks without focus today when others were focused", () => {
+    const now = new Date("2026-05-26T23:00:00.000Z");
+    const result = evaluateTop3Stall({
+      now,
+      tzOffsetMinutes: TZ_LA,
+      localDate: "2026-05-26",
+      top3Tasks: [
+        task({ id: "a", title: "Focused", top3Order: 1 }),
+        task({ id: "b", title: "Stalled", top3Order: 2 }),
+      ],
+      timeEntriesToday: [{ taskId: "a", startedAt: new Date("2026-05-26T20:00:00.000Z") }],
+      alreadyNudgedToday: false,
+    });
+    expect(result.stalledTasks).toEqual([{ id: "b", title: "Stalled", top3Order: 2 }]);
+    expect(result.shouldFireStallNudge).toBe(true);
+  });
+
+  it("does not fire when no incomplete Top 3 remain", () => {
+    const now = new Date("2026-05-26T23:00:00.000Z");
+    const result = evaluateTop3Stall({
+      now,
+      tzOffsetMinutes: TZ_LA,
+      localDate: "2026-05-26",
+      top3Tasks: [
+        task({
+          id: "a",
+          title: "Done 1",
+          top3Order: 1,
+          completedAt: new Date("2026-05-26T12:00:00.000Z"),
+        }),
+        task({
+          id: "b",
+          title: "Done 2",
+          top3Order: 2,
+          completedAt: new Date("2026-05-26T13:00:00.000Z"),
+        }),
+      ],
+      timeEntriesToday: [],
+      alreadyNudgedToday: false,
+    });
+    expect(result.stalledTasks).toHaveLength(0);
+    expect(result.shouldFireStallNudge).toBe(false);
+  });
 });

@@ -11,6 +11,7 @@ Opinionated starter for Frontenac Studios web projects. Click **Use this templat
 - **Drizzle ORM** + `drizzle-kit` (migrations, studio)
 - **Sentry** (errors, traces, source maps)
 - **Vitest** + Testing Library + jsdom
+- **Playwright** (one planner smoke test in CI)
 - **ESLint**, **Prettier** (with Tailwind plugin), **Husky**, **lint-staged**, **commitlint**
 - Node **20.x**, npm **≥10**
 - Deploys on **Vercel**
@@ -82,6 +83,8 @@ Hosted secrets live in 1Password under `op://Frontenac Studios/<Project>/...`. U
 | `npm run typecheck`                                            | `tsc --noEmit`.                                                           |
 | `npm run format` / `format:check`                              | Prettier write / check.                                                   |
 | `npm run test` / `test:run` / `test:ui`                        | Vitest watch / single run / web UI.                                       |
+| `npm run test:e2e` / `test:e2e:ui`                             | Playwright smoke (headless / UI mode).                                    |
+| `npm run db:e2e-setup`                                         | Drizzle migrate + Supabase RLS SQL (for local/CI E2E DB).                 |
 | `npm run db:check`                                             | Test `DATABASE_URL` from `.env.local`.                                    |
 | `npm run db:generate` / `db:migrate` / `db:push` / `db:studio` | Drizzle commands (config loads `.env.local`).                             |
 | `npm run supabase`                                             | Pass-through to the Supabase CLI.                                         |
@@ -97,12 +100,30 @@ Hosted secrets live in 1Password under `op://Frontenac Studios/<Project>/...`. U
 
 1. Push to `main` → Vercel deploys to production.
 2. Open a PR → Vercel posts a preview URL on the PR.
-3. CI (`.github/workflows/ci.yml`) runs typecheck, lint, format check, tests, and build on every push and PR.
+3. CI (`.github/workflows/ci.yml`) runs typecheck, lint, format check, Vitest, build, and a Playwright smoke job (Supabase + DB migrate) on every push and PR.
+
+### E2E smoke (local)
+
+Requires Docker, local Supabase, and schema applied:
+
+```sh
+npm run supabase -- start
+# Copy supabase status into .env.local (or run ./scripts/setup.sh)
+npm run db:e2e-setup
+npx playwright install chromium
+npm run test:e2e
+```
+
+Optional overrides: `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`, `PLAYWRIGHT_BASE_URL`. Default user: `e2e@kash.test` (created in `e2e/global-setup.ts`).
+
+RLS audit checklist: [`docs/rls-audit.md`](./docs/rls-audit.md).
 
 ## What's in here
 
 ```
-.github/workflows/ci.yml     # Typecheck, lint, test, build
+.github/workflows/ci.yml     # Typecheck, lint, Vitest, build, Playwright smoke
+e2e/                         # Playwright global setup + smoke spec
+docs/rls-audit.md            # Kash RLS sign-off checklist
 .husky/                       # pre-commit (lint-staged) + commit-msg (commitlint)
 scripts/setup.sh              # Post-clone bootstrap
 src/app/                      # App Router pages + layout + health + sentry-test

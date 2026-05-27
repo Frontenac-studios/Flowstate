@@ -36,7 +36,7 @@ async function main() {
     }
   }
 
-  const rlsPath = path.join(__dirname, "../supabase/migrations/20260525120000_kash_schema_rls.sql");
+  const rlsPath = path.join(__dirname, "../supabase/rls/20260525120000_kash_schema_rls.sql");
   const rlsRaw = fs.readFileSync(rlsPath, "utf8");
   const rlsStatements = rlsRaw
     .split("\n")

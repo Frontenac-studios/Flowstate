@@ -33,6 +33,13 @@ export async function POST(req: Request) {
 
   const { threadId, text } = parsed.data;
 
+  Sentry.addBreadcrumb({
+    category: "kash.claude",
+    message: "stream",
+    level: "info",
+    data: { threadId, textLength: text.length },
+  });
+
   try {
     const { stream, getFullText } = await streamCompanionReply({
       userId,
