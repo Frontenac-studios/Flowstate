@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.frontenac.kash",
   "build": {
-    "beforeDevCommand": "cd ../../.. && npm run dev",
+    "beforeDevCommand": "node scripts/before-dev.mjs",
     "devUrl": "http://127.0.0.1:3000",
-    "beforeBuildCommand": "cd ../../.. && npm run build:desktop && node apps/desktop/scripts/prepare-sidecar.mjs",
+    "beforeBuildCommand": "node scripts/before-build.mjs",
     "frontendDist": "../dist-placeholder"
   },
   "app": {
