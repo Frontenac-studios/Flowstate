@@ -46,6 +46,10 @@ next-env.d.ts
 supabase/.temp/
 supabase/.branches/
 
+# Tauri desktop
+apps/desktop/src-tauri/sidecar/
+apps/desktop/src-tauri/target/
+
 # Editor / AI assistant local state
 .cursor/
 .idea/

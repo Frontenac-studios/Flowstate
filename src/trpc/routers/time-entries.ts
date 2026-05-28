@@ -3,8 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { tasks } from "@/db/schema/tasks";
-import { taskTimeEntries } from "@/db/schema/task-time-entries";
+import { taskTimeEntries, tasks } from "@/db/tables";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 

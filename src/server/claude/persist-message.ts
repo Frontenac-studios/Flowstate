@@ -3,7 +3,7 @@ import "server-only";
 import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { chatMessages } from "@/db/schema/chat-messages";
+import { chatMessages } from "@/db/tables";
 import {
   nudgeContent,
   textContent,

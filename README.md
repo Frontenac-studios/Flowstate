@@ -72,12 +72,29 @@ Hosted secrets live in 1Password under `op://Frontenac Studios/<Project>/...`. U
 - Migrations: `npm run db:generate` then `npm run db:migrate` (Drizzle).
 - Schema in `src/db/schema/`. Example: `health-checks.ts`.
 
+## Kash macOS desktop
+
+Tauri app in [`apps/desktop`](apps/desktop/) bundles a Next.js standalone sidecar with SQLite offline storage and Supabase sync.
+
+```sh
+# Dev (requires Rust toolchain)
+npm run dev              # terminal 1
+npm run desktop:dev      # terminal 2
+
+# Release build
+npm run desktop:build
+```
+
+See [`apps/desktop/README.md`](apps/desktop/README.md) and [`docs/desktop-qa.md`](docs/desktop-qa.md).
+
 ## Scripts
 
 | Script                                                         | What it does                                                              |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `npm run dev`                                                  | Next dev server on `:3000`.                                               |
 | `npm run build`                                                | Production build (uploads Sentry source maps if `SENTRY_AUTH_TOKEN` set). |
+| `npm run build:desktop`                                        | Standalone Next build for Tauri sidecar (`DESKTOP_BUILD=1`).              |
+| `npm run desktop:dev` / `desktop:build`                        | Tauri dev / release `.app` + `.dmg`.                                      |
 | `npm run start`                                                | Serve the production build.                                               |
 | `npm run lint`                                                 | ESLint.                                                                   |
 | `npm run typecheck`                                            | `tsc --noEmit`.                                                           |

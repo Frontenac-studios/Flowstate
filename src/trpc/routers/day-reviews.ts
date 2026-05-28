@@ -2,9 +2,7 @@ import { and, asc, eq, gte, isNotNull, lt } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { dayReviews } from "@/db/schema/day-reviews";
-import { tasks } from "@/db/schema/tasks";
-import { taskTimeEntries } from "@/db/schema/task-time-entries";
+import { dayReviews, taskTimeEntries, tasks } from "@/db/tables";
 import { aggregateFocusToday } from "@/lib/eod/aggregate-focus-today";
 import { buildTop3Status } from "@/lib/eod/build-top3-status";
 import { countCompletionsToday } from "@/lib/eod/count-completions-today";

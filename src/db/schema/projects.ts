@@ -8,6 +8,7 @@ export const projects = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex("projects_user_id_slug_idx").on(table.userId, table.slug)]
 );

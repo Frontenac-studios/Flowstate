@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Kash",
+  "version": "0.1.0",
+  "identifier": "com.frontenac.kash",
+  "build": {
+    "beforeDevCommand": "node scripts/before-dev.mjs",
+    "devUrl": "http://127.0.0.1:3000",
+    "beforeBuildCommand": "node scripts/before-build.mjs",
+    "frontendDist": "../dist-placeholder"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Kash",
+        "width": 1280,
+        "height": 860,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' http://127.0.0.1:* https://*.supabase.co; connect-src 'self' http://127.0.0.1:* https://*.supabase.co https://api.anthropic.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app"],
+    "icon": ["icons/icon.png"],
+    "resources": ["sidecar/**/*"],
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  }
+}

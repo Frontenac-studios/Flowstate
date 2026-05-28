@@ -1,14 +1,13 @@
 import "server-only";
 
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
+import { createAppDb } from "./create-db";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL!;
+export type AppDb = PostgresJsDatabase<typeof schema>;
 
-// `prepare: false` is required when using Supabase's transaction pooler
-// (which is the recommended mode for serverless deployments).
-const client = postgres(connectionString, { prepare: false });
+const { db: rawDb } = createAppDb();
 
-export const db = drizzle(client, { schema });
+/** Typed as Postgres Drizzle client; SQLite mode uses compatible runtime API. */
+export const db = rawDb as AppDb;

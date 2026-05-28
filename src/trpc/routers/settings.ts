@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 import { db } from "@/db";
-import { appSettings } from "@/db/schema/app-settings";
+import { appSettings } from "@/db/tables";
 import { bucketModeSchema, DEFAULT_BUCKET_MODE } from "@/lib/settings/constants";
 
 import { createTRPCRouter, protectedProcedure } from "../init";

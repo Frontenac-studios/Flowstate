@@ -12,6 +12,7 @@ export const chatMessages = pgTable(
     content: jsonb("content").notNull(),
     taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
     index("chat_messages_user_id_thread_id_created_at_idx").on(
