@@ -12,6 +12,7 @@ export const nudgeEvents = pgTable(
     localDate: date("local_date", { mode: "string" }).notNull(),
     taskIds: jsonb("task_ids").$type<string[]>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("nudge_events_user_id_kind_local_date_idx").on(

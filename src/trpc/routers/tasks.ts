@@ -3,8 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { projects } from "@/db/schema/projects";
-import { tasks } from "@/db/schema/tasks";
+import { syncTaskRow } from "@/db/record-sync-mutation";
+import { projects, tasks } from "@/db/tables";
 import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 import {
@@ -201,6 +201,7 @@ export const tasksRouter = createTRPCRouter({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to pin task." });
       }
 
+      await syncTaskRow(row.id, "update", row);
       return row;
     }),
 
@@ -349,6 +350,7 @@ export const tasksRouter = createTRPCRouter({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to move task." });
       }
 
+      await syncTaskRow(row.id, "update", row);
       return row;
     }),
 
@@ -383,6 +385,7 @@ export const tasksRouter = createTRPCRouter({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create task." });
       }
 
+      await syncTaskRow(row.id, "insert", row);
       return row;
     }),
 
@@ -408,6 +411,7 @@ export const tasksRouter = createTRPCRouter({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to restore task." });
       }
 
+      await syncTaskRow(row.id, "insert", row);
       return row;
     }),
 
@@ -436,7 +440,12 @@ export const tasksRouter = createTRPCRouter({
         .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
         .returning();
 
-      return row!;
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update task." });
+      }
+
+      await syncTaskRow(row.id, "update", row);
+      return row;
     }),
 
   complete: protectedProcedure
@@ -451,8 +460,13 @@ export const tasksRouter = createTRPCRouter({
         .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
         .returning();
 
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to complete task." });
+      }
+
+      await syncTaskRow(row.id, "update", row);
       return {
-        task: row!,
+        task: row,
         previousCompletedAt: existing.completedAt,
       };
     }),
@@ -468,7 +482,15 @@ export const tasksRouter = createTRPCRouter({
         .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
         .returning();
 
-      return row!;
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to uncomplete task.",
+        });
+      }
+
+      await syncTaskRow(row.id, "update", row);
+      return row;
     }),
 
   listRecentlyCompleted: protectedProcedure.query(async ({ ctx }) => {
@@ -494,6 +516,8 @@ export const tasksRouter = createTRPCRouter({
       const existing = await getOwnedTask(ctx.userId, input.id);
 
       await db.delete(tasks).where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)));
+
+      await syncTaskRow(input.id, "delete", { id: input.id, userId: ctx.userId });
 
       return {
         snapshot: {

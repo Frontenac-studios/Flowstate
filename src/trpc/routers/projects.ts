@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { projects } from "@/db/schema/projects";
+import { projects } from "@/db/tables";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 
 import { createTRPCRouter, protectedProcedure } from "../init";

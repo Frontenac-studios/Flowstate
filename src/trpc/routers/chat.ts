@@ -2,7 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { chatMessages } from "@/db/schema/chat-messages";
+import { chatMessages } from "@/db/tables";
 import { messageContentSchema, textContent } from "@/lib/chat/message-content";
 import { taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";

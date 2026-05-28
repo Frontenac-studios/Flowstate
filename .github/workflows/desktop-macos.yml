@@ -1,0 +1,95 @@
+name: Desktop macOS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "packages/**"
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.mjs"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "packages/**"
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.mjs"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      DESKTOP_BUILD: "1"
+      DATABASE_MODE: sqlite
+      KASH_DESKTOP: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run test:run
+
+      - name: Build Next standalone for desktop
+        run: npm run build:desktop
+
+      - name: Prepare Tauri sidecar bundle
+        run: node apps/desktop/scripts/prepare-sidecar.mjs
+
+      - name: Build Tauri app (unsigned)
+        run: npm run tauri build -w @kash/desktop
+        env:
+          CI: true
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kash-macos
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg
+            apps/desktop/src-tauri/target/release/bundle/macos/*.app
+
+  notarize:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Kash-macos
+          path: dist
+
+      - name: Sign and notarize (requires secrets)
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "Skipping notarization — APPLE_* secrets not configured."
+            exit 0
+          fi
+          echo "Configure codesign + notarytool in repo secrets to enable notarized DMG upload."

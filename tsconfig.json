@@ -19,6 +19,10 @@
       }
     ],
     "paths": {
+      "@kash/db-local": ["./packages/db-local/src/index.ts"],
+      "@kash/db-local/schema": ["./packages/db-local/src/schema/index.ts"],
+      "@kash/db-local/schema/*": ["./packages/db-local/src/schema/*"],
+      "@kash/sync": ["./packages/sync/src/index.ts"],
       "@/*": ["./src/*"],
       "@trpc/tanstack-react-query/create-options-proxy": ["./src/trpc/create-options-proxy.d.ts"]
     }

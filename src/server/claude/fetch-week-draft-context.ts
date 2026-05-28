@@ -3,8 +3,7 @@ import "server-only";
 import { and, desc, eq, isNotNull, isNull, lte } from "drizzle-orm";
 
 import { db } from "@/db";
-import { projects } from "@/db/schema/projects";
-import { tasks } from "@/db/schema/tasks";
+import { projects, tasks } from "@/db/tables";
 import { datesInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { lastWeekDateRange } from "@/lib/week/template-week-draft";
 

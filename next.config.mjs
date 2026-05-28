@@ -4,8 +4,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const isDesktopBuild = process.env.DESKTOP_BUILD === "1";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(isDesktopBuild ? { output: "standalone" } : {}),
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   webpack: (config) => {
     // Avoid the main barrel (includes React.createContext). Remove when tRPC ships #7228.

@@ -12,4 +12,5 @@ export const taskTimeEntries = pgTable("task_time_entries", {
   endedAt: timestamp("ended_at", { withTimezone: true, mode: "date" }),
   reason: text("reason").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

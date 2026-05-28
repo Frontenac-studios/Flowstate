@@ -3,9 +3,7 @@ import "server-only";
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
-import { nudgeEvents } from "@/db/schema/nudge-events";
-import { tasks } from "@/db/schema/tasks";
-import { taskTimeEntries } from "@/db/schema/task-time-entries";
+import { nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";

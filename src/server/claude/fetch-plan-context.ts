@@ -3,9 +3,7 @@ import "server-only";
 import { and, desc, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { projects } from "@/db/schema/projects";
-import { tasks } from "@/db/schema/tasks";
-import { taskTimeEntries } from "@/db/schema/task-time-entries";
+import { projects, taskTimeEntries, tasks } from "@/db/tables";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
