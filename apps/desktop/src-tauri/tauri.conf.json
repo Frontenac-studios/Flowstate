@@ -32,7 +32,7 @@
     "active": true,
     "targets": ["dmg", "app"],
     "icon": ["icons/icon.png"],
-    "resources": ["sidecar/**"],
+    "resources": ["sidecar/**/*"],
     "macOS": {
       "minimumSystemVersion": "12.0"
     }
