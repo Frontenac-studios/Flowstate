@@ -21,7 +21,10 @@ export function createSqliteDb(dbPath = resolveDefaultDbPath()): {
   db: SqliteDb;
 } {
   const sqlite = new Database(dbPath);
-  sqlite.pragma("journal_mode = WAL");
+  sqlite.pragma("busy_timeout = 5000");
+  if (dbPath !== ":memory:") {
+    sqlite.pragma("journal_mode = WAL");
+  }
   sqlite.pragma("foreign_keys = ON");
   runSqliteMigrations(sqlite);
   const db = drizzle(sqlite, { schema });

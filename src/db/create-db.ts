@@ -9,10 +9,19 @@ export type AppDb = ReturnType<typeof createAppDb>["db"];
 
 let sqliteSingleton: ReturnType<typeof createSqliteDb> | null = null;
 
+function sqlitePathForPhase(): string | undefined {
+  // Next.js loads route modules in parallel during `next build`; a shared on-disk
+  // SQLite file causes SQLITE_BUSY across workers.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return ":memory:";
+  }
+  return undefined;
+}
+
 export function createAppDb() {
   if (isSqliteMode()) {
     if (!sqliteSingleton) {
-      sqliteSingleton = createSqliteDb();
+      sqliteSingleton = createSqliteDb(sqlitePathForPhase());
     }
     return { db: sqliteSingleton.db };
   }
