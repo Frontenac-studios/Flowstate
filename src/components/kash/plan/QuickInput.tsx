@@ -1,8 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
 
+import {
+  getAcceptInsertText,
+  getComposerAssistFromValue,
+  getLineAtCursor,
+  readLastProjectSlug,
+  shouldAppendSemicolonAfterAccept,
+  writeLastProjectSlug,
+} from "@/lib/parser/composer-assist";
 import {
   isLineProjectValid,
   MAX_COMPOSER_LINES,
@@ -17,10 +25,13 @@ import type { TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { useTRPC } from "@/trpc/client";
 
 import { ComposerLineErrors } from "./ComposerLineErrors";
+import { ComposerPropertyBar } from "./ComposerPropertyBar";
+import { ComposerTextarea, type ComposerTextareaHandle } from "./ComposerTextarea";
 import { MultiLineParsePreview, ParsePreviewChips } from "./ParsePreviewChips";
 
 export type QuickInputHandle = {
   focus: () => void;
+  acceptSuggestion: () => boolean;
 };
 
 type Props = {
@@ -39,14 +50,15 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 ) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<ComposerTextareaHandle>(null);
   const [value, setValue] = useState("");
+  const [cursor, setCursor] = useState(0);
+  const [focused, setFocused] = useState(false);
   const [creatingLineIndex, setCreatingLineIndex] = useState<number | null>(null);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
-
-  useImperativeHandle(ref, () => ({
-    focus: () => textareaRef.current?.focus(),
-  }));
+  const [lastProjectSlug, setLastProjectSlug] = useState<string | null>(() =>
+    readLastProjectSlug()
+  );
 
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
 
@@ -55,10 +67,67 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     [projects]
   );
 
+  const assistCtx = useMemo(
+    () => ({ projects: projectRefs, lastProjectSlug }),
+    [projectRefs, lastProjectSlug]
+  );
+
+  const assist = useMemo(
+    () => getComposerAssistFromValue(value, cursor, assistCtx),
+    [value, cursor, assistCtx]
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => textareaRef.current?.focus(),
+      acceptSuggestion: () => {
+        const el = textareaRef.current?.getTextarea();
+        if (!el) return false;
+
+        const domValue = el.value;
+        const start = el.selectionStart ?? 0;
+        const domAssist = getComposerAssistFromValue(domValue, start, assistCtx);
+        const insert = getAcceptInsertText(domAssist);
+        if (!insert) return false;
+
+        const end = el.selectionEnd ?? start;
+        const before = domValue.slice(0, start);
+        const after = domValue.slice(end);
+        let next = before + insert + after;
+
+        const { lineText, cursorInLine } = getLineAtCursor(domValue, start);
+        const appendSemi = shouldAppendSemicolonAfterAccept(
+          lineText,
+          cursorInLine + insert.length,
+          domAssist
+        );
+        if (appendSemi) {
+          next = `${before + insert}; ${after}`;
+        }
+
+        const newCursor = start + insert.length + (appendSemi ? 2 : 0);
+        setValue(next);
+        setCursor(newCursor);
+        requestAnimationFrame(() => {
+          textareaRef.current?.setSelectionRange(newCursor, newCursor);
+        });
+        return true;
+      },
+    }),
+    [assistCtx]
+  );
+
   const parsedLines = useMemo(
     () => parseQuickInputLines(value, { projects: projectRefs }),
     [value, projectRefs]
   );
+
+  const persistProjectSlug = useCallback((slug: string | null) => {
+    if (!slug) return;
+    setLastProjectSlug(slug);
+    writeLastProjectSlug(slug);
+  }, []);
 
   const invalidateToday = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -97,6 +166,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       projectId: resolveProjectId(line),
       priority: line.parse.priority,
     });
+    persistProjectSlug(line.parse.projectSlug);
   };
 
   const submitValidLines = async (lines: ParsedLine[]) => {
@@ -176,6 +246,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         priority: parse.priority,
       });
 
+      persistProjectSlug(created.slug);
       setValue((v) => removeComposerLineAtIndex(v, line.lineIndex));
       onTaskCreated?.({
         bucket: deriveBucket(
@@ -197,42 +268,43 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   };
 
   const singleLineParse = parsedLines.length === 1 ? parsedLines[0]?.parse : null;
+  const showPropertyBar = focused || value.trim().length > 0;
 
   return (
     <section className="glass-panel-opaque p-4">
       <label htmlFor="kash-quick-input" className="sr-only">
         Add tasks
       </label>
-      <textarea
-        id="kash-quick-input"
-        data-quick-input
-        ref={textareaRef}
-        rows={2}
-        className="glass-input glass-textarea w-full resize-y"
-        placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          if (
-            lineLimitWarning &&
-            parseQuickInputLines(e.target.value, { projects: projectRefs }).length <=
-              MAX_COMPOSER_LINES
-          ) {
-            setLineLimitWarning(false);
-          }
+
+      <ComposerPropertyBar assist={assist} visible={showPropertyBar} />
+
+      <div
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
         }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            void handleBulkSubmit();
-          }
-        }}
-        autoComplete="off"
-        spellCheck={false}
-        disabled={createTaskMutation.isPending}
-      />
+      >
+        <ComposerTextarea
+          ref={textareaRef}
+          id="kash-quick-input"
+          value={value}
+          onChange={setValue}
+          onCursorChange={setCursor}
+          ghostSuffix={assist.suggestionSuffix}
+          placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
+          disabled={createTaskMutation.isPending}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              void handleBulkSubmit();
+            }
+          }}
+        />
+      </div>
+
       <p className="mt-1.5 text-xs text-kash-ink-muted">
         Enter for new line · ⌘↵ to add tasks
+        {assist.suggestionSuffix ? " · ⇥ accept suggestion" : null}
         {createTaskMutation.isPending ? " · Adding…" : null}
       </p>
 

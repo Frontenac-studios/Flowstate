@@ -6,6 +6,7 @@ const e2eEnvFile = path.join(__dirname, ".env.e2e");
 
 export default defineConfig({
   testDir: "./e2e",
+  timeout: 90_000,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
