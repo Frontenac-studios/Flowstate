@@ -31,7 +31,7 @@ This file is read by Cursor and Claude Code at the start of every session. Keep 
 - Drizzle schema lives in `src/db/schema/`. One table per file.
 - Schema changes flow through `npm run db:generate`, followed by review of the generated SQL before commit.
 - Never edit a migration after it has been committed. Create a new one.
-- Row Level Security is enabled on every table. The anon role has no access by default. RLS policies are checked in alongside the schema that requires them.
+- Row Level Security is enabled on every table. The anon role has no access by default. RLS SQL lives in `supabase/rls/` (not `supabase/migrations/`, which the CLI runs on `supabase start` before Drizzle DDL exists).
 
 ## Server vs client
 

@@ -2,6 +2,8 @@
 
 Row Level Security audit for Kash user data in Supabase Postgres. Last reviewed: Phase 11 hardening.
 
+SQL files live in [`supabase/rls/`](../supabase/rls/) and are applied after Drizzle via `npm run db:e2e-setup` (not via `supabase/migrations/`, which the CLI would run on `supabase start` before tables exist).
+
 ## User-scoped tables
 
 Each table must have `ENABLE ROW LEVEL SECURITY` and four policies (SELECT, INSERT, UPDATE, DELETE) scoped to `user_id = auth.uid()`, with extra INSERT checks where noted.

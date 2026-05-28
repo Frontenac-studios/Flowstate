@@ -2,7 +2,7 @@
 /**
  * Applies SQL files in supabase/rls/ (RLS, incremental patches).
  * Run after Drizzle migrations when bootstrapping local/CI databases.
- * (Kept out of supabase/migrations so `supabase start` does not apply RLS before tables exist.)
+ * Kept out of supabase/migrations so `supabase start` does not apply RLS before tables exist.
  */
 const { config } = require("dotenv");
 const fs = require("fs");

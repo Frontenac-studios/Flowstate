@@ -21,6 +21,7 @@ export function useRdmNarration(task: TaskForNarration | null) {
     }
 
     let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setNarration(null);
 
@@ -33,6 +34,7 @@ export function useRdmNarration(task: TaskForNarration | null) {
         const res = await fetch("/api/claude/narrate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             taskId: task.id,
             title: task.title,
@@ -52,15 +54,17 @@ export function useRdmNarration(task: TaskForNarration | null) {
         if (!cancelled) {
           setNarration(data.narration ?? fallback);
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
         if (!cancelled) setNarration(fallback);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [task]);
 

@@ -129,20 +129,20 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     writeLastProjectSlug(slug);
   }, []);
 
-  const invalidateToday = () => {
-    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
-    void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
+  const invalidateToday = async () => {
+    await queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+    await queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
   };
 
   const createTaskMutation = useMutation(
     trpc.tasks.create.mutationOptions({
-      onSuccess: invalidateToday,
+      onSuccess: () => void invalidateToday(),
     })
   );
 
   const createProjectMutation = useMutation(
     trpc.projects.create.mutationOptions({
-      onSuccess: invalidateToday,
+      onSuccess: () => void invalidateToday(),
     })
   );
 
@@ -176,6 +176,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     for (const line of valid) {
       await createTaskForLine(line);
     }
+    await invalidateToday();
 
     const invalid = lines.filter((line) => !isLineProjectValid(line.parse));
     return {
