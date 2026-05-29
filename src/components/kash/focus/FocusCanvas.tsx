@@ -195,7 +195,7 @@ export function FocusCanvas() {
   }
 
   return (
-    <section className="glass-panel-opaque relative mx-auto w-full max-w-xl rounded-xl p-6 sm:p-8">
+    <section className="glass-panel-opaque relative mx-auto w-full max-w-xl p-6 sm:p-8">
       <div>
         <h1 className="text-2xl font-semibold leading-tight text-kash-ink">{task.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">
