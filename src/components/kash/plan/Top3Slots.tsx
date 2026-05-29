@@ -73,11 +73,11 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
         </div>
       ) : (
         <div
-          className={`glass-panel-opaque flex h-full min-h-[4.5rem] flex-col items-center justify-center gap-1 border border-dashed px-3 py-3 ${
-            isOver ? "border-kash-accent bg-[var(--kash-accent-soft)]" : "border-white/50"
+          className={`glass-panel flex h-full min-h-[4.5rem] flex-col items-center justify-center gap-1 px-3 py-3 transition ${
+            isOver ? "ring-2 ring-kash-accent" : ""
           }`}
         >
-          <span className="text-sm text-kash-accent" aria-hidden>
+          <span className="text-base font-medium text-kash-accent" aria-hidden>
             {label}
           </span>
           <span className="text-center text-xs text-kash-ink-muted">pin a task</span>

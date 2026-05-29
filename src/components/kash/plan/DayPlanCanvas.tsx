@@ -386,14 +386,14 @@ export function DayPlanCanvas() {
           type="button"
           onClick={triggerRdmPick}
           disabled={todayTasks.length === 0}
-          className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink disabled:cursor-not-allowed disabled:opacity-50"
+          className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-kash-accent transition hover:bg-[var(--kash-accent-soft)] disabled:cursor-not-allowed disabled:font-normal disabled:text-kash-ink-muted disabled:opacity-50 disabled:hover:bg-transparent"
           aria-label="Decide next task (RDM)"
           title="Decide next task (⌘D)"
         >
           Decide
-          <span className="font-mono text-xs text-kash-ink-muted" aria-hidden>
+          <kbd className="font-mono text-[10px] text-kash-ink-muted" aria-hidden>
             ⌘D
-          </span>
+          </kbd>
         </button>
       </div>
       <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} />
