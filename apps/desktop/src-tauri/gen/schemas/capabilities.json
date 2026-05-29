@@ -1,0 +1,17 @@
+{
+  "default": {
+    "identifier": "default",
+    "description": "Default Kash desktop capabilities",
+    "local": true,
+    "windows": ["main"],
+    "permissions": [
+      "core:default",
+      "core:window:allow-show",
+      "core:window:allow-set-focus",
+      "core:webview:allow-internal-toggle-devtools",
+      "shell:allow-open",
+      "shell:allow-spawn",
+      "shell:allow-execute"
+    ]
+  }
+}
