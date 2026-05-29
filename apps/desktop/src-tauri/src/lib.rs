@@ -96,12 +96,36 @@ fn open_main_window(app: &AppHandle, port: u16, focus_composer: bool) -> Result<
         .title("Kash")
         .inner_size(1280.0, 860.0)
         .min_inner_size(900.0, 600.0)
+        .transparent(true)
         .build()
         .map_err(|e| e.to_string())?;
+
+    apply_window_vibrancy(&win);
+
     win.show().map_err(|e| e.to_string())?;
 
     Ok(())
 }
+
+/// Apply Apple's HUD vibrancy material to the window's NSView so the
+/// desktop wallpaper shows through with native macOS frosting. No-op on
+/// other platforms.
+#[cfg(target_os = "macos")]
+fn apply_window_vibrancy(window: &tauri::WebviewWindow) {
+    use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
+
+    if let Err(err) = apply_vibrancy(
+        window,
+        NSVisualEffectMaterial::HudWindow,
+        Some(NSVisualEffectState::Active),
+        Some(16.0),
+    ) {
+        eprintln!("Warning: failed to apply window vibrancy: {err}");
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn apply_window_vibrancy(_window: &tauri::WebviewWindow) {}
 
 fn build_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let open_i = MenuItem::with_id(app, "open", "Open Kash", true, None::<&str>)?;

@@ -5,13 +5,19 @@
 @tailwind utilities;
 
 :root {
-  --background: var(--kash-gradient-1);
   --foreground: var(--kash-ink);
+}
+
+/* Body is transparent so the desktop Tauri window's NSView vibrancy material
+   can show through. On the web, GradientBackdrop covers the viewport with the
+   animated gradient as the first painted layer. */
+html,
+body {
+  background: transparent;
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
   font-family:
     var(--font-geist-sans),
     system-ui,
