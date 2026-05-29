@@ -47,13 +47,15 @@ export function TodayList({
       </h2>
 
       {isLoading ? (
-        <p className="glass-panel-opaque px-4 py-6 text-center text-sm text-kash-ink-muted">
-          Loading…
-        </p>
+        <p className="glass-panel px-4 py-8 text-center text-sm text-kash-ink-muted">Loading…</p>
       ) : tasks.length === 0 ? (
-        <p className="glass-panel-opaque px-4 py-6 text-center text-kash-ink-muted">
-          Capture something, or ask Claude what&apos;s on deck.
-        </p>
+        <div className="glass-panel flex flex-col items-center gap-2 px-4 py-10 text-center">
+          <p className="text-sm text-kash-ink">Nothing on deck yet.</p>
+          <p className="text-xs text-kash-ink-muted">
+            Capture something above, or{" "}
+            <span className="text-kash-accent">ask Claude what to focus on</span>.
+          </p>
+        </div>
       ) : (
         <ul className="space-y-2">
           {tasks.map((task) => (

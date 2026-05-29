@@ -53,9 +53,20 @@ export function BucketSection({
         aria-controls={regionId}
         onClick={() => setCollapsed((v) => !v)}
       >
-        <span className="w-5 text-kash-ink-muted" aria-hidden>
-          {showBody ? "▾" : "▸"}
-        </span>
+        <svg
+          className={`h-3.5 w-3.5 text-kash-ink-muted transition-transform duration-150 motion-reduce:transition-none ${
+            showBody ? "rotate-90" : ""
+          }`}
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M4.5 3l3 3-3 3" />
+        </svg>
         <span className="text-sm font-medium uppercase tracking-wide text-kash-ink-muted">
           {label}
         </span>

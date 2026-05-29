@@ -58,15 +58,28 @@ export function DesktopSyncBanner() {
   if (!isDesktopRuntime()) return null;
 
   return (
-    <div
-      className="border-b border-white/40 bg-white/50 px-4 py-1.5 text-center text-xs text-kash-ink-muted backdrop-blur-sm"
-      role="status"
-    >
-      {offline
-        ? "Offline — changes save locally and sync when you reconnect."
-        : lastSync
-          ? `Synced at ${lastSync}`
-          : "Desktop — syncing with your account…"}
+    <div className="pointer-events-none fixed inset-x-0 top-2 z-20 flex justify-center">
+      <div
+        className="glass-pill pointer-events-auto inline-flex items-center gap-1.5 px-3 py-1 text-xs text-kash-ink-muted"
+        role="status"
+      >
+        {offline ? (
+          <>
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
+            Offline — changes save locally
+          </>
+        ) : lastSync ? (
+          <>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+            Synced {lastSync}
+          </>
+        ) : (
+          <>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-kash-accent" aria-hidden />
+            Syncing…
+          </>
+        )}
+      </div>
     </div>
   );
 }
