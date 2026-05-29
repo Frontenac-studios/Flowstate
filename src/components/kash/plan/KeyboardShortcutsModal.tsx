@@ -74,7 +74,7 @@ export function KeyboardShortcutsModal({ open, onClose }: Props) {
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         tabIndex={-1}
-        className="glass-panel relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
+        className="glass-panel-strong relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
       >
         <h2 id="shortcuts-title" className="text-lg font-semibold text-kash-ink">
           Keyboard shortcuts

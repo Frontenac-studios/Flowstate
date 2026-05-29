@@ -14,7 +14,7 @@ export function MondayEntryModal() {
       aria-modal="true"
       aria-labelledby="monday-entry-title"
     >
-      <div className="glass-panel max-w-md p-8 text-center shadow-lg">
+      <div className="glass-panel-strong max-w-md p-8 text-center shadow-lg">
         <h2 id="monday-entry-title" className="text-xl font-semibold text-kash-ink">
           Good morning — plan the week or dive into today?
         </h2>

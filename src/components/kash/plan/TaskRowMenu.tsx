@@ -37,7 +37,7 @@ export function TaskRowMenu({ onEdit, onDelete }: Props) {
       </button>
       {open ? (
         <div
-          className="glass-panel absolute right-0 top-full z-20 mt-1 min-w-[9rem] overflow-hidden py-1 text-sm shadow-lg"
+          className="glass-panel-strong absolute right-0 top-full z-20 mt-1 min-w-[9rem] overflow-hidden py-1 text-sm shadow-lg"
           role="menu"
         >
           <button

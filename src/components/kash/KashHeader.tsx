@@ -11,7 +11,7 @@ export function KashHeader() {
   const { mode: planMode, setMode } = usePlanMode();
 
   return (
-    <header className="glass-panel mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink">
+    <header className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink">
       <span className="font-semibold tracking-tight">Kash</span>
       <span className="text-kash-ink-muted" aria-hidden>
         ·
