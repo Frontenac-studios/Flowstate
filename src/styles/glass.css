@@ -14,7 +14,13 @@
   --kash-glass-shadow: 0 10px 36px rgba(26, 29, 38, 0.08);
   --kash-accent: #6b7fd7;
   --kash-accent-soft: rgba(107, 127, 215, 0.18);
-  --kash-radius: 14px;
+  /* Concentric radius scale (Apple Liquid Glass): inner = outer − padding.
+     --kash-radius is aliased to --kash-radius-outer for back-compat. */
+  --kash-radius-outer: 16px;
+  --kash-radius-inner: 12px;
+  --kash-radius-control: 10px;
+  --kash-radius-chip: 8px;
+  --kash-radius: var(--kash-radius-outer);
   --kash-ink: #1a1d26;
   --kash-ink-muted: #5c6370;
   --kash-row-min-height: 44px;
@@ -22,7 +28,7 @@
 }
 
 .glass-panel {
-  border-radius: var(--kash-radius);
+  border-radius: var(--kash-radius-outer);
   border: 1px solid var(--kash-glass-border);
   background: var(--kash-glass-bg);
   backdrop-filter: blur(var(--kash-glass-blur)) saturate(var(--kash-glass-saturate));
@@ -32,7 +38,7 @@
 
 /* Stronger blur variant for top-level chrome (header, modals, menus, chat rail). */
 .glass-panel-strong {
-  border-radius: var(--kash-radius);
+  border-radius: var(--kash-radius-outer);
   border: 1px solid var(--kash-glass-border);
   background: var(--kash-glass-bg);
   backdrop-filter: blur(var(--kash-glass-blur-strong)) saturate(var(--kash-glass-saturate));
@@ -43,7 +49,7 @@
 /* Higher-opacity surface for dense content (list rows, long scroll regions). Gets a
    light blur + saturation so it still feels like material, not flat paint. */
 .glass-panel-opaque {
-  border-radius: var(--kash-radius);
+  border-radius: var(--kash-radius-outer);
   border: 1px solid var(--kash-glass-border);
   background: var(--kash-glass-bg-opaque);
   backdrop-filter: blur(var(--kash-glass-blur-soft)) saturate(1.3);
@@ -61,7 +67,7 @@
 }
 
 .glass-input {
-  border-radius: calc(var(--kash-radius) - 2px);
+  border-radius: var(--kash-radius-control);
   border: 1px solid var(--kash-glass-border);
   background: rgba(255, 255, 255, 0.85);
   padding: 0.625rem 0.875rem;
@@ -81,7 +87,7 @@
 }
 
 .glass-btn-primary {
-  border-radius: calc(var(--kash-radius) - 2px);
+  border-radius: var(--kash-radius-control);
   border: 1px solid rgba(107, 127, 215, 0.35);
   background: var(--kash-accent);
   padding: 0.625rem 1rem;
@@ -132,7 +138,7 @@
 }
 
 .glass-icon-btn {
-  border-radius: calc(var(--kash-radius) - 4px);
+  border-radius: var(--kash-radius-chip);
   border: 1px solid transparent;
   padding: 0.25rem 0.5rem;
   color: var(--kash-ink-muted);
