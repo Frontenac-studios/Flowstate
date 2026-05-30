@@ -1,3 +1,4 @@
+import { DesktopRuntimeFlag } from "./DesktopRuntimeFlag";
 import { DesktopSyncBanner } from "./DesktopSyncBanner";
 import { ChatProvider } from "./chat/ChatProvider";
 import { ChatRail } from "./chat/ChatRail";
@@ -12,6 +13,7 @@ export function PlanLayout({ children }: { children: React.ReactNode }) {
   return (
     <ChatProvider>
       <PlanProvider>
+        <DesktopRuntimeFlag />
         <ProactiveNudgesRunner />
         <EodReviewRunner />
         <MondayEntryRunner />

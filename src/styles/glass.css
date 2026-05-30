@@ -179,6 +179,13 @@
   text-decoration: underline;
 }
 
+/* On Tauri (DesktopRuntimeFlag adds .is-desktop to <html>), hide the gradient
+   so the native macOS NSView vibrancy material shows the desktop wallpaper
+   through the glass surfaces. */
+.is-desktop .kash-gradient-bg {
+  display: none;
+}
+
 .kash-gradient-bg {
   background: linear-gradient(
     135deg,
