@@ -1,5 +1,6 @@
 import { boolean, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+import { phases } from "./phases";
 import { projects } from "./projects";
 
 export const tasks = pgTable(
@@ -8,10 +9,12 @@ export const tasks = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull(),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    phaseId: uuid("phase_id").references(() => phases.id, { onDelete: "set null" }),
     title: text("title").notNull(),
     priority: integer("priority").notNull().default(0),
     scheduledDate: date("scheduled_date", { mode: "string" }),
     bucketOverride: text("bucket_override"),
+    sortOrder: integer("sort_order").notNull().default(0),
     isTop3: boolean("is_top_3").notNull().default(false),
     top3Order: integer("top_3_order"),
     top3PinnedAt: timestamp("top_3_pinned_at", { withTimezone: true, mode: "date" }),

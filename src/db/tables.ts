@@ -3,6 +3,7 @@ import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { chatMessages as pgChatMessages } from "./schema/chat-messages";
 import { dayReviews as pgDayReviews } from "./schema/day-reviews";
 import { nudgeEvents as pgNudgeEvents } from "./schema/nudge-events";
+import { phases as pgPhases } from "./schema/phases";
 import { projects as pgProjects } from "./schema/projects";
 import { tasks as pgTasks } from "./schema/tasks";
 import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
@@ -12,6 +13,7 @@ import { isSqliteMode } from "./mode";
 /** Runtime table handles; typed as Postgres for Drizzle query compatibility. */
 export const tasks = (isSqliteMode() ? sqliteSchema.tasks : pgTasks) as typeof pgTasks;
 export const projects = (isSqliteMode() ? sqliteSchema.projects : pgProjects) as typeof pgProjects;
+export const phases = (isSqliteMode() ? sqliteSchema.phases : pgPhases) as typeof pgPhases;
 export const taskTimeEntries = (
   isSqliteMode() ? sqliteSchema.taskTimeEntries : pgTaskTimeEntries
 ) as typeof pgTaskTimeEntries;

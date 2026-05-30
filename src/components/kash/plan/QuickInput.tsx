@@ -14,9 +14,7 @@ import {
 import {
   isLineProjectValid,
   MAX_COMPOSER_LINES,
-  parseQuickInput,
   parseQuickInputLines,
-  removeComposerLineAtIndex,
   replaceComposerLineAtIndex,
   type ParsedLine,
 } from "@/lib/parser/parse-quick-input";
@@ -54,7 +52,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   const [value, setValue] = useState("");
   const [cursor, setCursor] = useState(0);
   const [focused, setFocused] = useState(false);
-  const [creatingLineIndex, setCreatingLineIndex] = useState<number | null>(null);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const [lastProjectSlug, setLastProjectSlug] = useState<string | null>(() =>
     readLastProjectSlug()
@@ -140,12 +137,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     })
   );
 
-  const createProjectMutation = useMutation(
-    trpc.projects.create.mutationOptions({
-      onSuccess: () => void invalidateToday(),
-    })
-  );
-
   const resolveProjectId = (line: ParsedLine): string | null => {
     if (!line.parse.projectSlug) return null;
     return projects.find((p) => p.slug === line.parse.projectSlug)?.id ?? null;
@@ -216,51 +207,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     setValue(remaining.join("\n"));
   };
 
-  const handleCreateProjectForLine = async (line: ParsedLine) => {
-    const warning = line.parse.warnings.find((w) => w.code === "project_not_found");
-    if (!warning) return;
-
-    setCreatingLineIndex(line.lineIndex);
-    try {
-      const slug = warning.slug;
-      const name = slug.replace(/-/g, " ");
-      const created = await createProjectMutation.mutateAsync({ name, slug });
-
-      const fixedRaw = replaceProjectSlugInLine(line.raw, warning.slug, created.slug);
-      const parse = parseQuickInput(fixedRaw, {
-        projects: [...projectRefs, { slug: created.slug, name: created.name }],
-      });
-
-      if (!isLineProjectValid(parse)) {
-        setValue((v) => replaceComposerLineAtIndex(v, line.lineIndex, fixedRaw));
-        return;
-      }
-
-      await createTaskMutation.mutateAsync({
-        title: parse.title,
-        scheduledDate:
-          parse.bucketOverride === "later"
-            ? null
-            : (parse.scheduledDate ?? (createInInbox ? null : undefined)),
-        bucketOverride: parse.bucketOverride,
-        projectId: created.id,
-        priority: parse.priority,
-      });
-
-      persistProjectSlug(created.slug);
-      setValue((v) => removeComposerLineAtIndex(v, line.lineIndex));
-      onTaskCreated?.({
-        bucket: deriveBucket(
-          { scheduledDate: parse.scheduledDate, bucketOverride: parse.bucketOverride },
-          new Date()
-        ),
-        scheduledDate: parse.scheduledDate,
-      });
-    } finally {
-      setCreatingLineIndex(null);
-    }
-  };
-
   const handleApplySuggestion = (line: ParsedLine, suggestedSlug: string) => {
     const warning = line.parse.warnings.find((w) => w.code === "project_not_found");
     if (!warning) return;
@@ -323,12 +269,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         ) : null
       ) : null}
 
-      <ComposerLineErrors
-        lines={parsedLines}
-        creatingLineIndex={creatingLineIndex}
-        onApplySuggestion={handleApplySuggestion}
-        onCreateProject={(line) => void handleCreateProjectForLine(line)}
-      />
+      <ComposerLineErrors lines={parsedLines} onApplySuggestion={handleApplySuggestion} />
     </section>
   );
 });
