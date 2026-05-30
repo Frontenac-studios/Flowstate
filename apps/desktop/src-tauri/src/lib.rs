@@ -92,11 +92,13 @@ fn open_main_window(app: &AppHandle, port: u16, focus_composer: bool) -> Result<
         return Ok(());
     }
 
+    // Transparency is set via tauri.conf.json (Tauri 2 has no .transparent()
+    // method on the builder — it's a config-time flag). We still apply
+    // vibrancy here so the NSView gets the HUD material before show().
     let win = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(parsed))
         .title("Kash")
         .inner_size(1280.0, 860.0)
         .min_inner_size(900.0, 600.0)
-        .transparent(true)
         .build()
         .map_err(|e| e.to_string())?;
 
