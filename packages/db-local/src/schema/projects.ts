@@ -1,5 +1,13 @@
 import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
 
+export const PROJECT_CATEGORIES = [
+  "professional",
+  "personal_projects",
+  "relationships",
+  "health_wellness",
+  "adulting",
+] as const;
+
 export const projects = sqliteTable(
   "projects",
   {
@@ -7,6 +15,8 @@ export const projects = sqliteTable(
     userId: text("user_id").notNull(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    category: text("category", { enum: PROJECT_CATEGORIES }).notNull(),
+    description: text("description"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },

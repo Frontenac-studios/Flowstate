@@ -5,6 +5,7 @@ import { chatRouter } from "./chat";
 import { dayReviewsRouter } from "./day-reviews";
 import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
+import { phasesRouter } from "./phases";
 import { projectsRouter } from "./projects";
 import { settingsRouter } from "./settings";
 import { tasksRouter } from "./tasks";
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   dayReviews: dayReviewsRouter,
   healthChecks: healthChecksRouter,
   me: meRouter,
+  phases: phasesRouter,
   projects: projectsRouter,
   settings: settingsRouter,
   sync: syncRouter,

@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+
+export const projectCategory = pgEnum("project_category", [
+  "professional",
+  "personal_projects",
+  "relationships",
+  "health_wellness",
+  "adulting",
+]);
 
 export const projects = pgTable(
   "projects",
@@ -7,6 +15,8 @@ export const projects = pgTable(
     userId: uuid("user_id").notNull(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    category: projectCategory("category").notNull(),
+    description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
