@@ -6,17 +6,38 @@ CREATE TABLE IF NOT EXISTS projects (
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'adulting',
+  description TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS projects_user_id_slug_idx ON projects (user_id, slug);
 
+CREATE TABLE IF NOT EXISTS phases (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  parent_phase_id TEXT REFERENCES phases(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  start_date TEXT,
+  end_date TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  completed_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS phases_user_id_project_id_idx ON phases (user_id, project_id);
+CREATE INDEX IF NOT EXISTS phases_parent_phase_id_idx ON phases (parent_phase_id);
+
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
   project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+  phase_id TEXT REFERENCES phases(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   priority INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   scheduled_date TEXT,
   bucket_override TEXT,
   is_top_3 INTEGER NOT NULL DEFAULT 0,

@@ -1,5 +1,6 @@
 export const SYNC_TABLES = [
   "projects",
+  "phases",
   "tasks",
   "task_time_entries",
   "chat_messages",

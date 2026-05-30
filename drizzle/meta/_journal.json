@@ -29,6 +29,13 @@
       "when": 1779981261888,
       "tag": "0003_eod_day_review_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780112453497,
+      "tag": "0005_projects_phases",
+      "breakpoints": true
     }
   ]
 }

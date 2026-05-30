@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { syncTaskRow } from "@/db/record-sync-mutation";
-import { projects, tasks } from "@/db/tables";
+import { phases, projects, tasks } from "@/db/tables";
 import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 import {
@@ -361,6 +361,7 @@ export const tasksRouter = createTRPCRouter({
         scheduledDate: z.string().nullable().optional(),
         bucketOverride: z.enum(["later"]).nullable().optional(),
         projectId: z.string().uuid().nullable().optional(),
+        phaseId: z.string().uuid().nullable().optional(),
         priority: z.number().int().min(0).max(3).default(0),
       })
     )
@@ -377,6 +378,7 @@ export const tasksRouter = createTRPCRouter({
           scheduledDate,
           bucketOverride: input.bucketOverride ?? null,
           projectId: input.projectId ?? null,
+          phaseId: input.phaseId ?? null,
           priority: input.priority,
         })
         .returning();
@@ -422,6 +424,7 @@ export const tasksRouter = createTRPCRouter({
         title: z.string().min(1).max(500).optional(),
         priority: z.number().int().min(0).max(3).optional(),
         projectId: z.string().uuid().nullable().optional(),
+        phaseId: z.string().uuid().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -433,6 +436,7 @@ export const tasksRouter = createTRPCRouter({
       if (input.title !== undefined) patch.title = input.title.trim();
       if (input.priority !== undefined) patch.priority = input.priority;
       if (input.projectId !== undefined) patch.projectId = input.projectId;
+      if (input.phaseId !== undefined) patch.phaseId = input.phaseId;
 
       const [row] = await db
         .update(tasks)
@@ -531,5 +535,71 @@ export const tasksRouter = createTRPCRouter({
           top3Order: existing.top3Order,
         },
       };
+    }),
+
+  listByProject: protectedProcedure
+    .input(z.object({ projectId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      return db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          priority: tasks.priority,
+          scheduledDate: tasks.scheduledDate,
+          bucketOverride: tasks.bucketOverride,
+          projectId: tasks.projectId,
+          phaseId: tasks.phaseId,
+          sortOrder: tasks.sortOrder,
+          isTop3: tasks.isTop3,
+          top3Order: tasks.top3Order,
+          completedAt: tasks.completedAt,
+          createdAt: tasks.createdAt,
+        })
+        .from(tasks)
+        .where(and(eq(tasks.userId, ctx.userId), eq(tasks.projectId, input.projectId)))
+        .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
+    }),
+
+  moveToPhase: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        phaseId: z.string().uuid().nullable(),
+        sortOrder: z.number().int().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedTask(ctx.userId, input.id);
+
+      const patch: Partial<typeof tasks.$inferInsert> = {
+        phaseId: input.phaseId,
+        updatedAt: new Date(),
+      };
+      if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
+
+      if (input.phaseId !== null) {
+        const [phase] = await db
+          .select({ projectId: phases.projectId })
+          .from(phases)
+          .where(and(eq(phases.id, input.phaseId), eq(phases.userId, ctx.userId)))
+          .limit(1);
+        if (!phase) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Phase not found." });
+        }
+        patch.projectId = phase.projectId;
+      }
+
+      const [row] = await db
+        .update(tasks)
+        .set(patch)
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to move task." });
+      }
+
+      await syncTaskRow(row.id, "update", row);
+      return row;
     }),
 });
