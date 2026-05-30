@@ -26,7 +26,7 @@ export function ChatRail() {
 
   return (
     <aside
-      className="glass-panel-strong flex h-[calc(100vh-3rem)] w-[min(100%,22rem)] shrink-0 flex-col rounded-xl p-4"
+      className="glass-panel-strong flex h-[calc(100vh-3rem)] w-[min(100%,22rem)] shrink-0 flex-col p-4"
       aria-label="Claude chat"
     >
       <div className="mb-3 flex items-center justify-between gap-2">

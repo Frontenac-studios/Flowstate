@@ -44,7 +44,7 @@ export function SettingsForm() {
     <section className="glass-panel-opaque space-y-6 px-6 py-8">
       <h1 className="text-lg font-semibold text-kash-ink">Settings</h1>
 
-      <section className="glass-panel rounded-xl p-4">
+      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
         <h2 className="text-sm font-semibold text-kash-ink">Day view bucket style</h2>
         <p className="mt-1 text-sm text-kash-ink-muted">
           Week view always uses Mon–Sun columns and an inbox, regardless of this setting.
@@ -56,7 +56,7 @@ export function SettingsForm() {
             return (
               <label
                 key={opt.value}
-                className={`glass-panel flex cursor-pointer gap-3 rounded-xl p-3 transition ${
+                className={`glass-panel flex cursor-pointer gap-3 rounded-[var(--kash-radius-chip)] p-3 transition ${
                   checked ? "ring-1 ring-kash-accent" : ""
                 }`}
               >
@@ -85,7 +85,7 @@ export function SettingsForm() {
         ) : null}
       </section>
 
-      <section className="glass-panel rounded-xl p-4">
+      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
         <h2 className="text-sm font-semibold text-kash-ink">Accessibility</h2>
         <p className="mt-2 text-sm text-kash-ink-muted">
           Kash follows your system preferences for motion and transparency. On macOS, adjust these
@@ -97,7 +97,7 @@ export function SettingsForm() {
         </p>
       </section>
 
-      <section className="glass-panel rounded-xl p-4">
+      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
         <h2 className="text-sm font-semibold text-kash-ink">Claude (AI companion)</h2>
         <p className="mt-2 text-sm text-kash-ink-muted">
           Kash uses Claude for chat and focus narration. In v1 the API key is set by your deployment

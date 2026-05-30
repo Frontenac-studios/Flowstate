@@ -44,7 +44,7 @@ export function MessageList({ messages, streamingText }: Props) {
               </span>
             ) : null}
             <div
-              className={`rounded-xl px-3 py-2 text-sm ${
+              className={`rounded-[var(--kash-radius-inner)] px-3 py-2 text-sm ${
                 m.role === "user" ? "bg-kash-accent-soft text-kash-ink" : "glass-pill text-kash-ink"
               }`}
             >
@@ -54,7 +54,7 @@ export function MessageList({ messages, streamingText }: Props) {
         );
       })}
       {streamingText ? (
-        <div className="glass-pill mr-auto max-w-[95%] rounded-xl px-3 py-2 text-sm text-kash-ink">
+        <div className="glass-pill mr-auto max-w-[95%] rounded-[var(--kash-radius-inner)] px-3 py-2 text-sm text-kash-ink">
           <p className="whitespace-pre-wrap">{streamingText}</p>
         </div>
       ) : null}
