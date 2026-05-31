@@ -1,8 +1,11 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { TRPCError } from "@trpc/server";
+import { notFound, redirect } from "next/navigation";
 
-import { PlanLayout } from "@/components/kash/PlanLayout";
+import ProjectWorkspace from "@/components/kash/projects/ProjectWorkspace";
+import ProjectsLayout from "@/components/kash/projects/ProjectsLayout";
+import type { ProjectDetail } from "@/components/kash/projects/types";
 import { createClient } from "@/lib/supabase/server";
+import { getTRPCCaller } from "@/trpc/server";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -19,22 +22,24 @@ export default async function ProjectPage({ params }: Props) {
     redirect("/login");
   }
 
+  const caller = await getTRPCCaller();
+  let project: ProjectDetail;
+  try {
+    project = await caller.projects.getById({ id });
+  } catch (error) {
+    // A missing project or a malformed id both resolve to a 404.
+    if (
+      error instanceof TRPCError &&
+      (error.code === "NOT_FOUND" || error.code === "BAD_REQUEST")
+    ) {
+      notFound();
+    }
+    throw error;
+  }
+
   return (
-    <PlanLayout>
-      <section className="glass-panel-opaque px-6 py-10">
-        <h1 className="text-lg font-semibold text-kash-ink">Project</h1>
-        <p className="mt-2 text-kash-ink-muted">
-          Project workspace for{" "}
-          <code className="glass-pill px-1.5 py-0.5 font-mono text-sm">{id}</code> is not built yet.
-          Miller columns, object tree, and calendar board are planned for a later release.
-        </p>
-        <Link
-          href="/plan"
-          className="glass-pill mt-6 inline-block px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
-        >
-          Back to plan
-        </Link>
-      </section>
-    </PlanLayout>
+    <ProjectsLayout>
+      <ProjectWorkspace project={project} />
+    </ProjectsLayout>
   );
 }
