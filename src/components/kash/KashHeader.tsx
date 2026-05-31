@@ -53,6 +53,12 @@ export function KashHeader() {
       <div className="ml-auto flex items-center gap-2">
         <ChatToggleButton />
         <Link
+          href="/projects"
+          className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+        >
+          Projects
+        </Link>
+        <Link
           href="/settings"
           className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
         >
