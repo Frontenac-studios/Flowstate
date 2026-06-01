@@ -22,6 +22,7 @@ import { pickRdmTask } from "@/lib/rdm/pick-task";
 import type { BucketMode } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
+import { DECIDE_EVENT } from "../CommandPalette";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
@@ -278,8 +279,15 @@ export function DayPlanCanvas() {
       triggerRdmPick();
     };
 
+    // The command palette dispatches this when the user runs "Decide next task".
+    const onDecide = () => triggerRdmPick();
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(DECIDE_EVENT, onDecide);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(DECIDE_EVENT, onDecide);
+    };
   }, [triggerRdmPick]);
 
   useEffect(() => {
@@ -381,21 +389,6 @@ export function DayPlanCanvas() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <div className="mb-3 flex items-center gap-2 px-2">
-        <button
-          type="button"
-          onClick={triggerRdmPick}
-          disabled={todayTasks.length === 0}
-          className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-kash-accent transition hover:bg-[var(--kash-accent-soft)] disabled:cursor-not-allowed disabled:font-normal disabled:text-kash-ink-muted disabled:opacity-50 disabled:hover:bg-transparent"
-          aria-label="Decide next task (RDM)"
-          title="Decide next task (⌘D)"
-        >
-          Decide
-          <kbd className="font-mono text-[10px] text-kash-ink-muted" aria-hidden>
-            ⌘D
-          </kbd>
-        </button>
-      </div>
       <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} />
       <TriageStrip
         ref={triageRef}
