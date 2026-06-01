@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
+import { OPEN_PALETTE_EVENT } from "./CommandPalette";
 import { ChatToggleButton } from "./chat/ChatToggleButton";
 import { usePlanMode } from "./plan/PlanProvider";
 
@@ -51,13 +50,19 @@ export function KashHeader() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <ChatToggleButton />
-        <Link
-          href="/settings"
-          className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent(OPEN_PALETTE_EVENT))}
+          className="glass-pill flex items-center gap-2 px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+          aria-label="Open command palette"
+          title="Search & commands (⌘K)"
         >
-          Settings
-        </Link>
+          Search
+          <kbd className="font-mono text-[10px] text-kash-ink-muted" aria-hidden>
+            ⌘K
+          </kbd>
+        </button>
+        <ChatToggleButton />
       </div>
     </header>
   );

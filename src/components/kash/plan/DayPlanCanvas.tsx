@@ -22,24 +22,15 @@ import { pickRdmTask } from "@/lib/rdm/pick-task";
 import type { BucketMode } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
+import { DECIDE_EVENT } from "../CommandPalette";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
 import { PlanBuckets } from "./PlanBuckets";
 import { PlanBucketsNamedDays } from "./PlanBucketsNamedDays";
+import { TimelinePane } from "./TimelinePane";
 import { TodayList } from "./TodayList";
-import { TriageStrip, type TriageAction, type TriageStripHandle } from "./TriageStrip";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
-
-function isInTriageStrip(target: EventTarget | null): boolean {
-  if (!target || !(target instanceof HTMLElement)) return false;
-  return target.closest("[data-triage-strip]") !== null;
-}
-
-function isQuickInputTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLTextAreaElement)) return false;
-  return target.closest("[data-quick-input]") !== null;
-}
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
 
@@ -48,12 +39,9 @@ export function DayPlanCanvas() {
   const queryClient = useQueryClient();
   const { touchActivity } = usePlanMode();
   const quickInputRef = useRef<QuickInputHandle>(null);
-  const triageRef = useRef<TriageStripHandle>(null);
   const router = useRouter();
   const [pulseTarget, setPulseTarget] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [triageFocusedIndex, setTriageFocusedIndex] = useState(0);
-  const [triageKeyboardActive, setTriageKeyboardActive] = useState(false);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
   const { pushComplete, pushDelete } = useSessionUndo();
@@ -159,47 +147,6 @@ export function DayPlanCanvas() {
     isTop3: task.isTop3,
   });
 
-  const triageRows = useMemo(
-    () =>
-      triageTasks.map((t) => ({
-        id: t.id,
-        title: t.title,
-        projectSlug: t.projectSlug,
-        projectName: t.projectName,
-      })),
-    [triageTasks]
-  );
-
-  const exitTriageKeyboardMode = useCallback(() => {
-    setTriageKeyboardActive(false);
-  }, []);
-
-  useEffect(() => {
-    if (triageFocusedIndex >= triageRows.length && triageRows.length > 0) {
-      setTriageFocusedIndex(triageRows.length - 1);
-    }
-  }, [triageFocusedIndex, triageRows.length]);
-
-  useEffect(() => {
-    if (triageRows.length === 0) {
-      exitTriageKeyboardMode();
-    }
-  }, [triageRows.length, exitTriageKeyboardMode]);
-
-  useEffect(() => {
-    if (!triageKeyboardActive) return;
-
-    const onFocusIn = (e: FocusEvent) => {
-      const target = e.target;
-      if (!isInTriageStrip(target)) {
-        exitTriageKeyboardMode();
-      }
-    };
-
-    document.addEventListener("focusin", onFocusIn);
-    return () => document.removeEventListener("focusin", onFocusIn);
-  }, [triageKeyboardActive, exitTriageKeyboardMode]);
-
   const pinnedBySlot = useMemo(() => {
     const map = new Map<number, Top3SlotTask>();
     for (const task of top3Slots) {
@@ -278,71 +225,16 @@ export function DayPlanCanvas() {
       triggerRdmPick();
     };
 
+    // The command palette dispatches this when the user runs "Decide next task".
+    const onDecide = () => triggerRdmPick();
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [triggerRdmPick]);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (triageRows.length === 0) return;
-
-      const inComposer = isQuickInputTarget(e.target);
-
-      if (e.key === "Tab" && inComposer && !e.shiftKey) {
-        if (quickInputRef.current?.acceptSuggestion()) {
-          e.preventDefault();
-          return;
-        }
-        e.preventDefault();
-        setTriageKeyboardActive(true);
-        triageRef.current?.focusFirst();
-        return;
-      }
-
-      if (e.key === "Escape" && triageKeyboardActive) {
-        e.preventDefault();
-        exitTriageKeyboardMode();
-        quickInputRef.current?.focus();
-        return;
-      }
-
-      if (isEditableTarget(e.target)) return;
-
-      if (!triageKeyboardActive) return;
-
-      if (!isInTriageStrip(document.activeElement)) return;
-
-      const triageActions: Record<string, TriageAction> = {
-        "1": "today",
-        "2": "tomorrow",
-        "3": "later",
-        "4": "drop",
-      };
-
-      if (e.key in triageActions) {
-        e.preventDefault();
-        triageRef.current?.applyAction(triageActions[e.key]!);
-        return;
-      }
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        const next = Math.max(0, (triageRef.current?.getFocusedIndex() ?? 0) - 1);
-        triageRef.current?.focusIndex(next);
-        return;
-      }
-
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        const count = triageRef.current?.getTaskCount() ?? 0;
-        const next = Math.min(count - 1, (triageRef.current?.getFocusedIndex() ?? 0) + 1);
-        triageRef.current?.focusIndex(next);
-      }
+    window.addEventListener(DECIDE_EVENT, onDecide);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(DECIDE_EVENT, onDecide);
     };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [triageKeyboardActive, triageRows.length, exitTriageKeyboardMode]);
+  }, [triggerRdmPick]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -381,73 +273,55 @@ export function DayPlanCanvas() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <div className="mb-3 flex items-center gap-2 px-2">
-        <button
-          type="button"
-          onClick={triggerRdmPick}
-          disabled={todayTasks.length === 0}
-          className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-kash-accent transition hover:bg-[var(--kash-accent-soft)] disabled:cursor-not-allowed disabled:font-normal disabled:text-kash-ink-muted disabled:opacity-50 disabled:hover:bg-transparent"
-          aria-label="Decide next task (RDM)"
-          title="Decide next task (⌘D)"
-        >
-          Decide
-          <kbd className="font-mono text-[10px] text-kash-ink-muted" aria-hidden>
-            ⌘D
-          </kbd>
-        </button>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 flex-1 lg:basis-0">
+          <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} />
+          <Top3Slots
+            pinnedBySlot={pinnedBySlot}
+            onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}
+          />
+          <TodayList
+            pulse={pulseTarget === "today"}
+            tasks={todayTasks.map(toRow)}
+            isLoading={isLoading}
+            selectedTaskId={selectedTaskId}
+            onSelectTask={setSelectedTaskId}
+            onComplete={pushComplete}
+            onDelete={pushDelete}
+          />
+          {bucketMode === "named_days" ? (
+            <PlanBucketsNamedDays
+              tasks={{
+                tomorrow: partitionedNamed.tomorrow.map(toRow),
+                byWeekdayIso: Object.fromEntries(
+                  Object.entries(partitionedNamed.byWeekdayIso).map(([iso, list]) => [
+                    iso,
+                    list.map(toRow),
+                  ])
+                ),
+                later: partitionedNamed.later.map(toRow),
+              }}
+              pulseTarget={pulseTarget}
+              onComplete={pushComplete}
+              onDelete={pushDelete}
+            />
+          ) : (
+            <PlanBuckets
+              tasks={{
+                tomorrow: partitionedRelative.tomorrow.map(toRow),
+                thisWeek: partitionedRelative.thisWeek.map(toRow),
+                later: partitionedRelative.later.map(toRow),
+              }}
+              pulseTarget={pulseTarget}
+              onComplete={pushComplete}
+              onDelete={pushDelete}
+            />
+          )}
+        </div>
+        <div className="min-w-0 flex-1 lg:basis-0">
+          <TimelinePane />
+        </div>
       </div>
-      <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} />
-      <TriageStrip
-        ref={triageRef}
-        tasks={triageRows}
-        focusedIndex={triageFocusedIndex}
-        onFocusedIndexChange={(index) => {
-          setTriageFocusedIndex(index);
-          setTriageKeyboardActive(true);
-        }}
-        onDelete={pushDelete}
-      />
-      <Top3Slots
-        pinnedBySlot={pinnedBySlot}
-        onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}
-      />
-      <TodayList
-        pulse={pulseTarget === "today"}
-        tasks={todayTasks.map(toRow)}
-        isLoading={isLoading}
-        selectedTaskId={selectedTaskId}
-        onSelectTask={setSelectedTaskId}
-        onComplete={pushComplete}
-        onDelete={pushDelete}
-      />
-      {bucketMode === "named_days" ? (
-        <PlanBucketsNamedDays
-          tasks={{
-            tomorrow: partitionedNamed.tomorrow.map(toRow),
-            byWeekdayIso: Object.fromEntries(
-              Object.entries(partitionedNamed.byWeekdayIso).map(([iso, list]) => [
-                iso,
-                list.map(toRow),
-              ])
-            ),
-            later: partitionedNamed.later.map(toRow),
-          }}
-          pulseTarget={pulseTarget}
-          onComplete={pushComplete}
-          onDelete={pushDelete}
-        />
-      ) : (
-        <PlanBuckets
-          tasks={{
-            tomorrow: partitionedRelative.tomorrow.map(toRow),
-            thisWeek: partitionedRelative.thisWeek.map(toRow),
-            later: partitionedRelative.later.map(toRow),
-          }}
-          pulseTarget={pulseTarget}
-          onComplete={pushComplete}
-          onDelete={pushDelete}
-        />
-      )}
     </DndContext>
   );
 }
