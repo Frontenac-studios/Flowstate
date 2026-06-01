@@ -200,15 +200,19 @@ export function DayPlanCanvas() {
 
   const todayIso = toISODateString(now);
 
+  const invalidateBlocks = useCallback(() => {
+    touchActivity();
+    void queryClient.invalidateQueries({
+      queryKey: trpc.focusBlocks.listForDate.queryKey({ date: todayIso }),
+    });
+  }, [queryClient, todayIso, touchActivity, trpc.focusBlocks.listForDate]);
+
   const createBlockMutation = useMutation(
-    trpc.focusBlocks.create.mutationOptions({
-      onSuccess: () => {
-        touchActivity();
-        void queryClient.invalidateQueries({
-          queryKey: trpc.focusBlocks.listForDate.queryKey({ date: todayIso }),
-        });
-      },
-    })
+    trpc.focusBlocks.create.mutationOptions({ onSuccess: invalidateBlocks })
+  );
+
+  const moveBlockMutation = useMutation(
+    trpc.focusBlocks.move.mutationOptions({ onSuccess: invalidateBlocks })
   );
 
   const handleActivateTask = useCallback(
@@ -262,6 +266,16 @@ export function DayPlanCanvas() {
     if (!overId || typeof overId !== "string") return;
 
     const activeId = String(event.active.id);
+
+    // Moving an existing focus block onto a timeline slot.
+    if (activeId.startsWith("block:")) {
+      if (!overId.startsWith("timeline:")) return;
+      const startMin = Number(overId.slice("timeline:".length));
+      if (Number.isNaN(startMin)) return;
+      moveBlockMutation.mutate({ id: activeId.slice("block:".length), startMin });
+      return;
+    }
+
     if (!activeId.startsWith("task:")) return;
 
     const taskId = activeId.slice("task:".length);

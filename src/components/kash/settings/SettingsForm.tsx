@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import type { BucketMode } from "@/lib/settings/constants";
+import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
+
+const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
+
+function hourLabel(h: number): string {
+  const period = h < 12 ? "AM" : "PM";
+  const display = h % 12 === 0 ? 12 : h % 12;
+  return `${display}:00 ${period}`;
+}
 
 const BUCKET_OPTIONS: { value: BucketMode; title: string; description: string }[] = [
   {
@@ -38,6 +48,24 @@ export function SettingsForm() {
   const handleBucketChange = (mode: BucketMode) => {
     if (mode === bucketMode || updateMutation.isPending) return;
     updateMutation.mutate(mode);
+  };
+
+  const [hoursDraft, setHoursDraft] = useState<{ start: number; end: number } | null>(null);
+  const startHour = hoursDraft?.start ?? data?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
+  const endHour = hoursDraft?.end ?? data?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
+  const hoursInvalid = startHour >= endHour;
+
+  const hoursMutation = useMutation(
+    trpc.settings.updateWorkingHours.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: trpc.settings.get.queryKey() });
+      },
+    })
+  );
+
+  const handleHoursChange = (start: number, end: number) => {
+    setHoursDraft({ start, end });
+    if (start < end) hoursMutation.mutate({ dayStartHour: start, dayEndHour: end });
   };
 
   return (
@@ -81,6 +109,57 @@ export function SettingsForm() {
         {updateMutation.isError ? (
           <p className="mt-2 text-sm text-red-600" role="alert">
             Could not save bucket style. Try again.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+        <h2 className="text-sm font-semibold text-kash-ink">Working hours</h2>
+        <p className="mt-1 text-sm text-kash-ink-muted">
+          Sets the time range shown on the Today timeline.
+        </p>
+        <fieldset
+          className="mt-4 flex flex-wrap items-end gap-4"
+          disabled={isLoading || hoursMutation.isPending}
+        >
+          <legend className="sr-only">Working hours</legend>
+          <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
+            Start
+            <select
+              className="glass-input"
+              value={startHour}
+              onChange={(e) => handleHoursChange(Number(e.target.value), endHour)}
+            >
+              {HOUR_VALUES.map((h) => (
+                <option key={h} value={h}>
+                  {hourLabel(h)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
+            End
+            <select
+              className="glass-input"
+              value={endHour}
+              onChange={(e) => handleHoursChange(startHour, Number(e.target.value))}
+            >
+              {HOUR_VALUES.map((h) => (
+                <option key={h} value={h}>
+                  {hourLabel(h)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </fieldset>
+        {hoursInvalid ? (
+          <p className="mt-2 text-sm text-red-600" role="alert">
+            Start must be before end.
+          </p>
+        ) : null}
+        {hoursMutation.isError ? (
+          <p className="mt-2 text-sm text-red-600" role="alert">
+            Could not save working hours. Try again.
           </p>
         ) : null}
       </section>

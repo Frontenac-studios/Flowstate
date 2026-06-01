@@ -81,6 +81,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS day_reviews_user_id_date_idx ON day_reviews (u
 CREATE TABLE IF NOT EXISTS app_settings (
   user_id TEXT PRIMARY KEY NOT NULL,
   bucket_mode TEXT NOT NULL DEFAULT 'relative',
+  day_start_hour INTEGER NOT NULL DEFAULT 7,
+  day_end_hour INTEGER NOT NULL DEFAULT 19,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
