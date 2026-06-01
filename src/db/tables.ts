@@ -2,6 +2,7 @@ import * as sqliteSchema from "@kash/db-local/schema";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { chatMessages as pgChatMessages } from "./schema/chat-messages";
 import { dayReviews as pgDayReviews } from "./schema/day-reviews";
+import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { nudgeEvents as pgNudgeEvents } from "./schema/nudge-events";
 import { projects as pgProjects } from "./schema/projects";
 import { tasks as pgTasks } from "./schema/tasks";
@@ -27,3 +28,6 @@ export const appSettings = (
 export const nudgeEvents = (
   isSqliteMode() ? sqliteSchema.nudgeEvents : pgNudgeEvents
 ) as typeof pgNudgeEvents;
+export const focusBlocks = (
+  isSqliteMode() ? sqliteSchema.focusBlocks : pgFocusBlocks
+) as typeof pgFocusBlocks;

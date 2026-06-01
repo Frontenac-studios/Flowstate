@@ -39,6 +39,19 @@ CREATE TABLE IF NOT EXISTS task_time_entries (
   updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS focus_blocks (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  start_min INTEGER NOT NULL,
+  end_min INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'planned',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS focus_blocks_user_id_date_idx ON focus_blocks (user_id, date);
+
 CREATE TABLE IF NOT EXISTS chat_messages (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

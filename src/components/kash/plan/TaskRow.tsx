@@ -25,6 +25,8 @@ type Props = {
   task: PlanTaskRow;
   selected?: boolean;
   onSelect?: (taskId: string) => void;
+  /** Double-click / activate — opens the task in focus mode. */
+  onActivate?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
@@ -39,7 +41,14 @@ function PriorityDots({ priority }: { priority: number }) {
   );
 }
 
-export function TaskRow({ task, selected = false, onSelect, onComplete, onDelete }: Props) {
+export function TaskRow({
+  task,
+  selected = false,
+  onSelect,
+  onActivate,
+  onComplete,
+  onDelete,
+}: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -107,6 +116,7 @@ export function TaskRow({ task, selected = false, onSelect, onComplete, onDelete
       } ${isDragging ? "" : "transition-transform"}`}
       style={{ transform: CSS.Transform.toString(transform) }}
       onClick={() => onSelect?.(task.id)}
+      onDoubleClick={() => onActivate?.(task.id)}
     >
       <button
         ref={setActivatorNodeRef}

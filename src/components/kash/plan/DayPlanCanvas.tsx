@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { toISODateString } from "@/lib/dates/local-day";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import { partitionNamedDays } from "@/lib/tasks/partition-named-days";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
@@ -26,8 +27,6 @@ import { DECIDE_EVENT } from "../CommandPalette";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
-import { PlanBuckets } from "./PlanBuckets";
-import { PlanBucketsNamedDays } from "./PlanBucketsNamedDays";
 import { TimelinePane } from "./TimelinePane";
 import { TodayList } from "./TodayList";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
@@ -199,6 +198,26 @@ export function DayPlanCanvas() {
     })
   );
 
+  const todayIso = toISODateString(now);
+
+  const createBlockMutation = useMutation(
+    trpc.focusBlocks.create.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        void queryClient.invalidateQueries({
+          queryKey: trpc.focusBlocks.listForDate.queryKey({ date: todayIso }),
+        });
+      },
+    })
+  );
+
+  const handleActivateTask = useCallback(
+    (taskId: string) => {
+      router.push(`/plan/focus?${new URLSearchParams({ taskId }).toString()}`);
+    },
+    [router]
+  );
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
@@ -254,6 +273,13 @@ export function DayPlanCanvas() {
       return;
     }
 
+    if (overId.startsWith("timeline:")) {
+      const startMin = Number(overId.slice("timeline:".length));
+      if (Number.isNaN(startMin)) return;
+      createBlockMutation.mutate({ taskId, date: todayIso, startMin });
+      return;
+    }
+
     if (!overId.startsWith("bucket:")) return;
 
     if (overId.startsWith("bucket:date:")) {
@@ -286,37 +312,10 @@ export function DayPlanCanvas() {
             isLoading={isLoading}
             selectedTaskId={selectedTaskId}
             onSelectTask={setSelectedTaskId}
+            onActivateTask={handleActivateTask}
             onComplete={pushComplete}
             onDelete={pushDelete}
           />
-          {bucketMode === "named_days" ? (
-            <PlanBucketsNamedDays
-              tasks={{
-                tomorrow: partitionedNamed.tomorrow.map(toRow),
-                byWeekdayIso: Object.fromEntries(
-                  Object.entries(partitionedNamed.byWeekdayIso).map(([iso, list]) => [
-                    iso,
-                    list.map(toRow),
-                  ])
-                ),
-                later: partitionedNamed.later.map(toRow),
-              }}
-              pulseTarget={pulseTarget}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-            />
-          ) : (
-            <PlanBuckets
-              tasks={{
-                tomorrow: partitionedRelative.tomorrow.map(toRow),
-                thisWeek: partitionedRelative.thisWeek.map(toRow),
-                later: partitionedRelative.later.map(toRow),
-              }}
-              pulseTarget={pulseTarget}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-            />
-          )}
         </div>
         <div className="min-w-0 flex-1 lg:basis-0">
           <TimelinePane />
