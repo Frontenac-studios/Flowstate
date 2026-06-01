@@ -18,3 +18,11 @@ export async function recordSyncMutation(params: {
 export async function syncTaskRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "tasks", rowId, op, payload });
 }
+
+export async function syncProjectRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
+  await recordSyncMutation({ table: "projects", rowId, op, payload });
+}
+
+export async function syncPhaseRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
+  await recordSyncMutation({ table: "phases", rowId, op, payload });
+}

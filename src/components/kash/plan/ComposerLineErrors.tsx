@@ -1,21 +1,15 @@
 "use client";
 
+import Link from "next/link";
+
 import type { ParsedLine } from "@/lib/parser/parse-quick-input";
-import { slugifyProjectName } from "@/lib/projects/slugify";
 
 type Props = {
   lines: ParsedLine[];
-  creatingLineIndex: number | null;
   onApplySuggestion: (line: ParsedLine, suggestedSlug: string) => void;
-  onCreateProject: (line: ParsedLine) => void;
 };
 
-export function ComposerLineErrors({
-  lines,
-  creatingLineIndex,
-  onApplySuggestion,
-  onCreateProject,
-}: Props) {
+export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
   const invalidLines = lines.filter((line) => line.parse.warnings.length > 0);
 
   if (invalidLines.length === 0) return null;
@@ -61,14 +55,13 @@ export function ComposerLineErrors({
                     ?
                   </p>
                 ) : null}
-                <button
-                  type="button"
-                  className="glass-pill hover:bg-kash-accent-soft px-3 py-1 text-kash-accent transition"
-                  onClick={() => onCreateProject(line)}
-                  disabled={creatingLineIndex === line.lineIndex}
-                >
-                  Create project &ldquo;{slugifyProjectName(warning.slug)}&rdquo;
-                </button>
+                <p className="text-kash-ink-muted">
+                  Create it in{" "}
+                  <Link href="/projects" className="glass-link font-medium">
+                    Projects
+                  </Link>{" "}
+                  first — projects need a category.
+                </p>
               </div>
             ))}
 
