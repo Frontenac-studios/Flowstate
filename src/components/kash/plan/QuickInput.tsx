@@ -77,45 +77,44 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     [value, cursor, assistCtx]
   );
 
+  const acceptSuggestion = useCallback((): boolean => {
+    const el = textareaRef.current?.getTextarea();
+    if (!el) return false;
+
+    const domValue = el.value;
+    const start = el.selectionStart ?? 0;
+    const domAssist = getComposerAssistFromValue(domValue, start, assistCtx);
+    const insert = getAcceptInsertText(domAssist);
+    if (!insert) return false;
+
+    const end = el.selectionEnd ?? start;
+    const before = domValue.slice(0, start);
+    const after = domValue.slice(end);
+    let next = before + insert + after;
+
+    const { lineText, cursorInLine } = getLineAtCursor(domValue, start);
+    const appendSemi = shouldAppendSemicolonAfterAccept(
+      lineText,
+      cursorInLine + insert.length,
+      domAssist
+    );
+    if (appendSemi) {
+      next = `${before + insert}; ${after}`;
+    }
+
+    const newCursor = start + insert.length + (appendSemi ? 2 : 0);
+    setValue(next);
+    setCursor(newCursor);
+    requestAnimationFrame(() => {
+      textareaRef.current?.setSelectionRange(newCursor, newCursor);
+    });
+    return true;
+  }, [assistCtx]);
+
   useImperativeHandle(
     ref,
-    () => ({
-      focus: () => textareaRef.current?.focus(),
-      acceptSuggestion: () => {
-        const el = textareaRef.current?.getTextarea();
-        if (!el) return false;
-
-        const domValue = el.value;
-        const start = el.selectionStart ?? 0;
-        const domAssist = getComposerAssistFromValue(domValue, start, assistCtx);
-        const insert = getAcceptInsertText(domAssist);
-        if (!insert) return false;
-
-        const end = el.selectionEnd ?? start;
-        const before = domValue.slice(0, start);
-        const after = domValue.slice(end);
-        let next = before + insert + after;
-
-        const { lineText, cursorInLine } = getLineAtCursor(domValue, start);
-        const appendSemi = shouldAppendSemicolonAfterAccept(
-          lineText,
-          cursorInLine + insert.length,
-          domAssist
-        );
-        if (appendSemi) {
-          next = `${before + insert}; ${after}`;
-        }
-
-        const newCursor = start + insert.length + (appendSemi ? 2 : 0);
-        setValue(next);
-        setCursor(newCursor);
-        requestAnimationFrame(() => {
-          textareaRef.current?.setSelectionRange(newCursor, newCursor);
-        });
-        return true;
-      },
-    }),
-    [assistCtx]
+    () => ({ focus: () => textareaRef.current?.focus(), acceptSuggestion }),
+    [acceptSuggestion]
   );
 
   const parsedLines = useMemo(
@@ -298,6 +297,12 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
               void handleBulkSubmit();
+              return;
+            }
+            // Tab accepts the inline composer suggestion when one is available;
+            // otherwise it falls through to normal focus traversal.
+            if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
+              e.preventDefault();
             }
           }}
         />
