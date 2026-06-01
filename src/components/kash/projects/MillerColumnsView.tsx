@@ -179,12 +179,14 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
             task.id === taskId || task.sortOrder !== index || task.phaseId !== parentPhaseId
         )
         .map(({ task, index }) =>
-          m.moveTask.mutateAsync({ id: task.id, phaseId: parentPhaseId, sortOrder: index })
+          m.moveTaskSilent.mutateAsync({ id: task.id, phaseId: parentPhaseId, sortOrder: index })
         );
 
-      void Promise.all(moves);
+      // Invalidate once after all moves land, rather than per-move (less flicker).
+      const invalidate = m.invalidate;
+      void Promise.all(moves).then(invalidate);
     },
-    [tasksForParent, taskById, m.moveTask]
+    [tasksForParent, taskById, m.moveTaskSilent, m.invalidate]
   );
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));

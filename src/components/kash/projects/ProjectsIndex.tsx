@@ -42,7 +42,19 @@ export default function ProjectsIndex() {
       {hasProjects ? <CategoryFilter value={filter} onChange={setFilter} /> : null}
 
       {isLoading ? (
-        <p className="text-kash-ink-muted">Loading projects…</p>
+        <div
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          aria-busy="true"
+          aria-label="Loading projects"
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="glass-panel-opaque h-24 animate-pulse rounded-kash"
+              style={{ borderTop: "3px solid var(--kash-glass-border)" }}
+            />
+          ))}
+        </div>
       ) : !hasProjects ? (
         <div className="glass-panel-opaque flex flex-col items-center gap-2 px-6 py-12 text-center">
           <p className="font-medium text-kash-ink">No projects yet</p>

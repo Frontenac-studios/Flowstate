@@ -34,9 +34,10 @@ export function useProjectMutations(projectId: string) {
   const completeTask = useMutation(trpc.tasks.complete.mutationOptions({ onSuccess }));
   const uncompleteTask = useMutation(trpc.tasks.uncomplete.mutationOptions({ onSuccess }));
   const deleteTask = useMutation(trpc.tasks.delete.mutationOptions({ onSuccess }));
-  // moveTask is used both for cross-phase moves and within-column reorder; the
-  // reorder path awaits several mutateAsync calls, so it invalidates once here.
   const moveTask = useMutation(trpc.tasks.moveToPhase.mutationOptions({ onSuccess }));
+  // Silent variant for within-column reorder: several moves are awaited, then the
+  // caller invalidates once (avoids N refetches / flicker per reorder).
+  const moveTaskSilent = useMutation(trpc.tasks.moveToPhase.mutationOptions({}));
 
   return {
     invalidate,
@@ -50,5 +51,6 @@ export function useProjectMutations(projectId: string) {
     uncompleteTask,
     deleteTask,
     moveTask,
+    moveTaskSilent,
   };
 }
