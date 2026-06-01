@@ -3,7 +3,13 @@ import { TRPCError } from "@trpc/server";
 
 import { db } from "@/db";
 import { appSettings } from "@/db/tables";
-import { bucketModeSchema, DEFAULT_BUCKET_MODE } from "@/lib/settings/constants";
+import {
+  bucketModeSchema,
+  DEFAULT_BUCKET_MODE,
+  DEFAULT_DAY_END_HOUR,
+  DEFAULT_DAY_START_HOUR,
+  workingHoursSchema,
+} from "@/lib/settings/constants";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -39,6 +45,8 @@ export const settingsRouter = createTRPCRouter({
     const parsed = bucketModeSchema.safeParse(row.bucketMode);
     return {
       bucketMode: parsed.success ? parsed.data : DEFAULT_BUCKET_MODE,
+      dayStartHour: row.dayStartHour ?? DEFAULT_DAY_START_HOUR,
+      dayEndHour: row.dayEndHour ?? DEFAULT_DAY_END_HOUR,
     };
   }),
 
@@ -60,4 +68,29 @@ export const settingsRouter = createTRPCRouter({
 
     return { bucketMode: input };
   }),
+
+  updateWorkingHours: protectedProcedure
+    .input(workingHoursSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+
+      const [row] = await db
+        .update(appSettings)
+        .set({
+          dayStartHour: input.dayStartHour,
+          dayEndHour: input.dayEndHour,
+          updatedAt: new Date(),
+        })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update working hours.",
+        });
+      }
+
+      return { dayStartHour: input.dayStartHour, dayEndHour: input.dayEndHour };
+    }),
 });
