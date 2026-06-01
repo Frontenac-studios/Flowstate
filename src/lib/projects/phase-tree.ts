@@ -7,14 +7,14 @@
  * preserves the full objects on each node.
  */
 
-type PhaseShape = {
+export type PhaseShape = {
   id: string;
   parentPhaseId: string | null;
   sortOrder: number;
   name: string;
 };
 
-type TaskShape = {
+export type TaskShape = {
   phaseId: string | null;
   sortOrder: number;
 };

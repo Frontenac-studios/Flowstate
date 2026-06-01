@@ -53,7 +53,7 @@ export default function ProjectWorkspace({ project: initialProject }: { project:
           onSelectPath={setSelectedPath}
         />
       ) : (
-        <CalendarBoardView tree={tree} />
+        <CalendarBoardView tree={tree} projectId={initialProject.id} category={project.category} />
       )}
     </div>
   );
