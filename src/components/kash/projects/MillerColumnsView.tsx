@@ -33,6 +33,8 @@ type Confirm =
 type Props = {
   tree: Tree;
   projectId: string;
+  projectSlug: string;
+  phases: ProjectPhase[];
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
 };
@@ -54,7 +56,14 @@ function hasIncompleteDescendantTasks(node: Node): boolean {
   return node.children.some(hasIncompleteDescendantTasks);
 }
 
-export default function MillerColumnsView({ tree, projectId, selectedPath, onSelectPath }: Props) {
+export default function MillerColumnsView({
+  tree,
+  projectId,
+  projectSlug,
+  phases,
+  selectedPath,
+  onSelectPath,
+}: Props) {
   const m = useProjectMutations(projectId);
 
   const [detail, setDetail] = useState<DetailSelection>(null);
@@ -304,6 +313,8 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
                 key={col.level}
                 level={col.level}
                 parentPhaseId={col.parentPhaseId}
+                projectSlug={projectSlug}
+                phases={phases}
                 items={col.items}
                 openPhaseId={selectedPath[col.level] ?? null}
                 detail={detail}
@@ -316,12 +327,14 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
                 onSelectTask={(task) => selectTask(col.level, task)}
                 onTogglePhase={togglePhase}
                 onToggleTask={toggleTask}
-                onCreateTask={(title) =>
+                onCreateTask={(result) =>
                   m.createTask.mutate({
-                    title,
+                    title: result.title,
                     projectId,
-                    phaseId: col.parentPhaseId,
-                    bucketOverride: "later",
+                    phaseId: result.phaseId,
+                    priority: result.priority,
+                    scheduledDate: result.scheduledDate,
+                    bucketOverride: result.bucketOverride,
                   })
                 }
                 onCreatePhase={(name) =>
