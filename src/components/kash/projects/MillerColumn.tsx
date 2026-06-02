@@ -23,6 +23,7 @@ type Props = {
   detail: DetailSelection;
   focusIndex: number | null;
   pending: boolean;
+  hint?: string;
   onOpenPhase: (node: Node) => void;
   onSelectTask: (task: ProjectTask) => void;
   onTogglePhase: (node: Node) => void;
@@ -39,6 +40,7 @@ export default function MillerColumn({
   detail,
   focusIndex,
   pending,
+  hint,
   onOpenPhase,
   onSelectTask,
   onTogglePhase,
@@ -87,6 +89,9 @@ export default function MillerColumn({
           );
         })}
       </ul>
+      {hint && items.length === 0 ? (
+        <p className="mt-1 px-2 text-xs text-kash-ink-muted">{hint}</p>
+      ) : null}
       <NewItemRow onCreateTask={onCreateTask} onCreatePhase={onCreatePhase} pending={pending} />
     </div>
   );

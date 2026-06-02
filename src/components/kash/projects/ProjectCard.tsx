@@ -18,7 +18,7 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
     <Link
       href={`/projects/${project.id}`}
       className="glass-panel-opaque flex flex-col gap-3 p-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-kash-accent"
-      style={{ borderTop: `3px solid ${meta.color}` }}
+      style={{ border: `2px solid ${meta.color}` }}
     >
       <CategoryBadge category={project.category} />
       <div>

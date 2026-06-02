@@ -38,7 +38,7 @@ export default async function ProjectPage({ params }: Props) {
   }
 
   return (
-    <ProjectsLayout>
+    <ProjectsLayout showBackToProjects>
       <ProjectWorkspace project={project} />
     </ProjectsLayout>
   );
