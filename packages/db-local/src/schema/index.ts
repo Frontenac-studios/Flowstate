@@ -8,3 +8,4 @@ export * from "./projects";
 export * from "./sync-mutations";
 export * from "./task-time-entries";
 export * from "./tasks";
+export * from "./task-bulk-imports";

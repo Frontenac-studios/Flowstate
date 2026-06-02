@@ -1,3 +1,4 @@
+import { getLineAtCursor } from "@/lib/parser/composer-assist";
 import type { PhaseRef } from "@/lib/projects/find-phase-by-name";
 
 export const PROJECT_COMPOSER_PROPERTY_ORDER = [
@@ -160,6 +161,15 @@ function buildPropertyStatuses(
       status: isPropertyFilled(segments, key) ? ("filled" as const) : ("pending" as const),
     };
   });
+}
+
+export function getProjectComposerAssistFromValue(
+  value: string,
+  cursor: number,
+  ctx: ProjectComposerAssistContext
+): ProjectComposerAssistState {
+  const { lineText, cursorInLine } = getLineAtCursor(value, cursor);
+  return getProjectComposerAssist(lineText, cursorInLine, ctx);
 }
 
 export function getProjectComposerAssist(

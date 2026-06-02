@@ -1,19 +1,25 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 
+import { getLineAtCursor } from "@/lib/parser/composer-assist";
 import {
   isProjectTaskLineValid,
-  parseProjectTaskInput,
+  MAX_COMPOSER_LINES,
+  parseProjectTaskInputLines,
+  type ParsedProjectLine,
 } from "@/lib/parser/parse-project-task-input";
 import {
   getProjectAcceptInsertText,
-  getProjectComposerAssist,
+  getProjectComposerAssistFromValue,
   shouldAppendSemicolonAfterProjectAccept,
 } from "@/lib/parser/project-composer-assist";
 import { findPhaseByName } from "@/lib/projects/find-phase-by-name";
 
-import ProjectParseError from "./ProjectParseError";
+import { ComposerTextarea, type ComposerTextareaHandle } from "../plan/ComposerTextarea";
+
+import ProjectComposerLineErrors from "./ProjectComposerLineErrors";
+import ProjectMultiLineParsePreview from "./ProjectMultiLineParsePreview";
 import ProjectParsePreview from "./ProjectParsePreview";
 import ProjectPropertyBar from "./ProjectPropertyBar";
 import type { ProjectPhase } from "./types";
@@ -31,6 +37,7 @@ type Props = {
   phases: ProjectPhase[];
   defaultPhaseId: string | null;
   onCreateTask: (result: ResolvedProjectTaskInput) => void;
+  onBulkCreateTasks: (tasks: ResolvedProjectTaskInput[]) => void;
   onCreatePhase: (name: string) => void;
   pending: boolean;
 };
@@ -40,13 +47,17 @@ export default function NewItemRow({
   phases,
   defaultPhaseId,
   onCreateTask,
+  onBulkCreateTasks,
   onCreatePhase,
   pending,
 }: Props) {
   const [value, setValue] = useState("");
+  const [cursor, setCursor] = useState(0);
   const [isPhase, setIsPhase] = useState(false);
   const [focused, setFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [lineLimitWarning, setLineLimitWarning] = useState(false);
+  const textareaRef = useRef<ComposerTextareaHandle>(null);
+  const inputId = useId();
 
   const phaseRefs = useMemo(() => phases.map((p) => ({ id: p.id, name: p.name })), [phases]);
 
@@ -55,50 +66,53 @@ export default function NewItemRow({
     [projectSlug, phaseRefs]
   );
 
-  const parse = useMemo(
-    () => (isPhase ? null : parseProjectTaskInput(value, parseCtx)),
+  const parsedLines = useMemo(
+    () => (isPhase ? [] : parseProjectTaskInputLines(value, parseCtx)),
     [value, parseCtx, isPhase]
   );
 
-  const cursor = value.length;
   const assist = useMemo(
-    () => (isPhase ? null : getProjectComposerAssist(value, cursor, parseCtx)),
+    () => (isPhase ? null : getProjectComposerAssistFromValue(value, cursor, parseCtx)),
     [value, cursor, parseCtx, isPhase]
   );
 
-  const showPropertyBar =
-    !isPhase && assist !== null && (focused || value.trim().length > 0) && assist.inSemicolonMode;
+  const showPropertyBar = !isPhase && assist !== null && (focused || value.trim().length > 0);
 
-  const acceptSuggestion = (): boolean => {
+  const acceptSuggestion = useCallback((): boolean => {
     if (isPhase || !assist) return false;
-    const insert = getProjectAcceptInsertText(assist);
-    if (!insert) return false;
 
-    const el = inputRef.current;
+    const el = textareaRef.current?.getTextarea();
     if (!el) return false;
 
-    const start = el.selectionStart ?? value.length;
+    const domValue = el.value;
+    const start = el.selectionStart ?? 0;
+    const domAssist = getProjectComposerAssistFromValue(domValue, start, parseCtx);
+    const insert = getProjectAcceptInsertText(domAssist);
+    if (!insert) return false;
+
     const end = el.selectionEnd ?? start;
-    const before = value.slice(0, start);
-    const after = value.slice(end);
-    const appendSemi = shouldAppendSemicolonAfterProjectAccept(
-      value,
-      start + insert.length,
-      assist
-    );
+    const before = domValue.slice(0, start);
+    const after = domValue.slice(end);
     let next = before + insert + after;
-    let newCursor = start + insert.length;
+
+    const { lineText, cursorInLine } = getLineAtCursor(domValue, start);
+    const appendSemi = shouldAppendSemicolonAfterProjectAccept(
+      lineText,
+      cursorInLine + insert.length,
+      domAssist
+    );
     if (appendSemi) {
       next = `${before + insert}; ${after}`;
-      newCursor += 2;
     }
 
+    const newCursor = start + insert.length + (appendSemi ? 2 : 0);
     setValue(next);
+    setCursor(newCursor);
     requestAnimationFrame(() => {
-      el.setSelectionRange(newCursor, newCursor);
+      textareaRef.current?.setSelectionRange(newCursor, newCursor);
     });
     return true;
-  };
+  }, [isPhase, assist, parseCtx]);
 
   const resolvePhaseId = (parentDirName: string | null): string | null => {
     if (!parentDirName) return defaultPhaseId;
@@ -107,53 +121,59 @@ export default function NewItemRow({
     return defaultPhaseId;
   };
 
-  const submit = () => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
+  const lineToResolved = (line: ParsedProjectLine): ResolvedProjectTaskInput => ({
+    title: line.parse.title,
+    scheduledDate: line.parse.scheduledDate,
+    bucketOverride: line.parse.bucketOverride,
+    priority: line.parse.priority,
+    phaseId: resolvePhaseId(line.parse.parentDirName),
+  });
 
-    if (isPhase) {
-      onCreatePhase(trimmed);
+  const submitPhase = () => {
+    const trimmed = value.trim().split("\n")[0]?.trim() ?? "";
+    if (!trimmed) return;
+    onCreatePhase(trimmed);
+    setValue("");
+  };
+
+  const submitTasks = () => {
+    if (!value.trim() || pending) return;
+
+    if (parsedLines.length > MAX_COMPOSER_LINES) {
+      setLineLimitWarning(true);
+      return;
+    }
+    setLineLimitWarning(false);
+
+    const valid = parsedLines.filter((line) => isProjectTaskLineValid(line.parse));
+    if (valid.length === 0) return;
+
+    if (valid.length === 1) {
+      onCreateTask(lineToResolved(valid[0]!));
       setValue("");
       return;
     }
 
-    if (!parse || !isProjectTaskLineValid(parse)) return;
-
-    onCreateTask({
-      title: parse.title,
-      scheduledDate: parse.scheduledDate,
-      bucketOverride: parse.bucketOverride,
-      priority: parse.priority,
-      phaseId: resolvePhaseId(parse.parentDirName),
-    });
-    setValue("");
+    onBulkCreateTasks(valid.map(lineToResolved));
+    const invalid = parsedLines.filter((line) => !isProjectTaskLineValid(line.parse));
+    setValue(invalid.map((l) => l.raw).join("\n"));
   };
 
+  const handleSubmit = () => {
+    if (isPhase) {
+      submitPhase();
+    } else {
+      submitTasks();
+    }
+  };
+
+  const singleLineParse = parsedLines.length === 1 ? parsedLines[0]?.parse : null;
+
   return (
-    <div className="mt-1 flex flex-col gap-0.5">
+    <div className="mt-1 flex flex-col">
       {showPropertyBar && assist ? <ProjectPropertyBar assist={assist} visible /> : null}
-      <div className="flex items-center gap-1.5">
-        <input
-          ref={inputRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              submit();
-              return;
-            }
-            if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
-              e.preventDefault();
-            }
-          }}
-          disabled={pending}
-          placeholder={isPhase ? "+ new phase" : "+ task; due; priority; project; parent dir"}
-          className="glass-input flex-1 py-1.5 text-sm"
-          aria-label={isPhase ? "New phase name" : "New task"}
-        />
+
+      <div className="mb-1.5 flex items-center justify-end">
         <button
           type="button"
           onClick={() => setIsPhase((v) => !v)}
@@ -168,12 +188,63 @@ export default function NewItemRow({
           Phase
         </button>
       </div>
-      {!isPhase && parse && value.trim() ? (
-        <>
-          <ProjectParsePreview parse={parse} />
-          <ProjectParseError warnings={parse.warnings} />
-        </>
+
+      <div
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
+        }}
+      >
+        <ComposerTextarea
+          ref={textareaRef}
+          id={inputId}
+          value={value}
+          onChange={setValue}
+          onCursorChange={setCursor}
+          ghostSuffix={isPhase ? null : (assist?.suggestionSuffix ?? null)}
+          placeholder={
+            isPhase ? "+ new phase" : "add tasks — one per line. Use `;` for properties. ⌘↵ to add."
+          }
+          disabled={pending}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              handleSubmit();
+              return;
+            }
+            if (isPhase && e.key === "Enter" && !e.metaKey && !e.ctrlKey) {
+              e.preventDefault();
+              submitPhase();
+              return;
+            }
+            if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
+              e.preventDefault();
+            }
+          }}
+        />
+      </div>
+
+      <p className="mt-1.5 text-xs text-kash-ink-muted">
+        {isPhase ? "Enter to add phase" : "Enter for new line · ⌘↵ to add tasks"}
+        {!isPhase && assist?.suggestionSuffix ? " · ⇥ accept suggestion" : null}
+        {pending ? " · Adding…" : null}
+      </p>
+
+      {lineLimitWarning ? (
+        <p className="mt-2 text-sm text-red-600" role="alert">
+          Too many lines — add at most {MAX_COMPOSER_LINES} tasks at once.
+        </p>
       ) : null}
+
+      {!isPhase && value.trim() ? (
+        parsedLines.length === 1 && singleLineParse ? (
+          <ProjectParsePreview parse={singleLineParse} />
+        ) : parsedLines.length > 1 ? (
+          <ProjectMultiLineParsePreview lines={parsedLines} />
+        ) : null
+      ) : null}
+
+      {!isPhase ? <ProjectComposerLineErrors lines={parsedLines} /> : null}
     </div>
   );
 }

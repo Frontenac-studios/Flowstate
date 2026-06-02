@@ -9,6 +9,7 @@ import { meRouter } from "./me";
 import { phasesRouter } from "./phases";
 import { projectsRouter } from "./projects";
 import { settingsRouter } from "./settings";
+import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
 import { timeEntriesRouter } from "./time-entries";
 import { syncRouter } from "./sync";
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   projects: projectsRouter,
   settings: settingsRouter,
   sync: syncRouter,
+  taskBulkImports: taskBulkImportsRouter,
   tasks: tasksRouter,
   timeEntries: timeEntriesRouter,
   weekDraft: weekDraftRouter,

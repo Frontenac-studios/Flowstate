@@ -120,6 +120,28 @@ CREATE TABLE IF NOT EXISTS nudge_events (
 CREATE UNIQUE INDEX IF NOT EXISTS nudge_events_user_id_kind_local_date_idx
   ON nudge_events (user_id, kind, local_date);
 
+CREATE TABLE IF NOT EXISTS task_bulk_imports (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  task_count INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  undone_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS task_bulk_imports_user_id_project_id_created_at_idx
+  ON task_bulk_imports (user_id, project_id, created_at);
+
+CREATE TABLE IF NOT EXISTS task_bulk_import_items (
+  import_id TEXT NOT NULL REFERENCES task_bulk_imports(id) ON DELETE CASCADE,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (import_id, task_id)
+);
+CREATE INDEX IF NOT EXISTS task_bulk_import_items_user_id_updated_at_idx
+  ON task_bulk_import_items (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,

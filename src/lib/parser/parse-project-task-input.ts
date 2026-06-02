@@ -203,3 +203,36 @@ export function parseProjectTaskInput(
 
   return parsePositionalSegments(trimmed, ctx);
 }
+
+export {
+  MAX_COMPOSER_LINES,
+  replaceComposerLineAtIndex,
+  removeComposerLineAtIndex,
+} from "./parse-quick-input";
+
+export type ParsedProjectLine = {
+  lineIndex: number;
+  raw: string;
+  parse: ParseProjectTaskResult;
+};
+
+export function parseProjectTaskInputLines(
+  raw: string,
+  ctx: ParseProjectTaskContext
+): ParsedProjectLine[] {
+  const lines: ParsedProjectLine[] = [];
+  let lineIndex = 0;
+
+  for (const part of raw.split("\n")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    lines.push({
+      lineIndex,
+      raw: trimmed,
+      parse: parseProjectTaskInput(trimmed, ctx),
+    });
+    lineIndex += 1;
+  }
+
+  return lines;
+}

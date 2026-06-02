@@ -13,16 +13,41 @@ export function useProjectMutations(projectId: string) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const invalidate = useCallback(() => {
+  const invalidateProject = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: trpc.phases.listByProject.queryKey({ projectId }),
     });
     void queryClient.invalidateQueries({
       queryKey: trpc.tasks.listByProject.queryKey({ projectId }),
     });
-  }, [queryClient, trpc.phases.listByProject, trpc.tasks.listByProject, projectId]);
+    void queryClient.invalidateQueries({
+      queryKey: trpc.taskBulkImports.listByProject.queryKey({ projectId }),
+    });
+  }, [
+    queryClient,
+    trpc.phases.listByProject,
+    trpc.tasks.listByProject,
+    trpc.taskBulkImports.listByProject,
+    projectId,
+  ]);
 
-  const onSuccess = () => invalidate();
+  const invalidatePlan = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+  }, [
+    queryClient,
+    trpc.tasks.listIncomplete,
+    trpc.tasks.listTriageCandidates,
+    trpc.tasks.listTop3Slots,
+  ]);
+
+  const invalidateAll = useCallback(() => {
+    invalidateProject();
+    invalidatePlan();
+  }, [invalidateProject, invalidatePlan]);
+
+  const onSuccess = () => invalidateProject();
 
   const createPhase = useMutation(trpc.phases.create.mutationOptions({ onSuccess }));
   const updatePhase = useMutation(trpc.phases.update.mutationOptions({ onSuccess }));
@@ -39,13 +64,24 @@ export function useProjectMutations(projectId: string) {
   // caller invalidates once (avoids N refetches / flicker per reorder).
   const moveTaskSilent = useMutation(trpc.tasks.moveToPhase.mutationOptions({}));
 
+  const bulkCreateTasks = useMutation(
+    trpc.taskBulkImports.bulkCreate.mutationOptions({ onSuccess: invalidateAll })
+  );
+
+  const undoBulkImport = useMutation(
+    trpc.taskBulkImports.undo.mutationOptions({ onSuccess: invalidateAll })
+  );
+
   return {
-    invalidate,
+    invalidate: invalidateProject,
+    invalidateAll,
     createPhase,
     updatePhase,
     setPhaseComplete,
     deletePhase,
     createTask,
+    bulkCreateTasks,
+    undoBulkImport,
     updateTask,
     completeTask,
     uncompleteTask,
