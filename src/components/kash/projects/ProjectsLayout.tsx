@@ -2,8 +2,6 @@ import Link from "next/link";
 
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
-import { GradientBackdrop } from "../GradientBackdrop";
-
 export default function ProjectsLayout({
   children,
   showBackToProjects = false,
@@ -13,7 +11,6 @@ export default function ProjectsLayout({
 }) {
   return (
     <div className="relative min-h-screen">
-      <GradientBackdrop />
       <div className="relative z-10 mx-auto w-full max-w-[110rem] px-4 py-6 sm:px-6 lg:px-10">
         <header className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink">
           <Link href="/plan" className="font-semibold tracking-tight">

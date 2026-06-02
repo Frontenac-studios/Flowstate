@@ -49,6 +49,8 @@ export default function ProjectWorkspace({ project: initialProject }: { project:
         <MillerColumnsView
           tree={tree}
           projectId={initialProject.id}
+          projectSlug={project.slug}
+          phases={phasesQuery.data ?? []}
           selectedPath={selectedPath}
           onSelectPath={setSelectedPath}
         />

@@ -4,7 +4,6 @@ import { ChatProvider } from "@/components/kash/chat/ChatProvider";
 import { ChatRail } from "@/components/kash/chat/ChatRail";
 import { ChatToggleButton } from "@/components/kash/chat/ChatToggleButton";
 import { ProactiveNudgesRunner } from "@/components/kash/nudges/ProactiveNudgesRunner";
-import { GradientBackdrop } from "@/components/kash/GradientBackdrop";
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
 export function FocusLayout({ children }: { children: React.ReactNode }) {
@@ -12,7 +11,6 @@ export function FocusLayout({ children }: { children: React.ReactNode }) {
     <ChatProvider>
       <ProactiveNudgesRunner />
       <div className="relative min-h-screen">
-        <GradientBackdrop />
         <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl gap-4 px-4 py-6 sm:px-6">
           <div className="min-w-0 max-w-3xl flex-1">
             <header className="mb-6 flex items-center justify-between gap-2">

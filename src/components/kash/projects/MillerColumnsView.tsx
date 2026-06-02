@@ -15,6 +15,7 @@ import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tr
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
 import MillerGhostColumn from "./MillerGhostColumn";
+import type { ResolvedProjectTaskInput } from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
@@ -33,6 +34,8 @@ type Confirm =
 type Props = {
   tree: Tree;
   projectId: string;
+  projectSlug: string;
+  phases: ProjectPhase[];
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
 };
@@ -54,7 +57,14 @@ function hasIncompleteDescendantTasks(node: Node): boolean {
   return node.children.some(hasIncompleteDescendantTasks);
 }
 
-export default function MillerColumnsView({ tree, projectId, selectedPath, onSelectPath }: Props) {
+export default function MillerColumnsView({
+  tree,
+  projectId,
+  projectSlug,
+  phases,
+  selectedPath,
+  onSelectPath,
+}: Props) {
   const m = useProjectMutations(projectId);
 
   const [detail, setDetail] = useState<DetailSelection>(null);
@@ -284,10 +294,24 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
     setConfirm(null);
   }, [confirm, m.setPhaseComplete, m.deletePhase, m.deleteTask, selectedPath, onSelectPath]);
 
-  const createPending = m.createTask.isPending || m.createPhase.isPending;
+  const createPending =
+    m.createTask.isPending || m.createPhase.isPending || m.bulkCreateTasks.isPending;
   const isBlank = columns.length === 1 && columns[0].items.length === 0;
   const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
   const detailTask = detail?.type === "task" ? (taskById.get(detail.id) ?? null) : null;
+
+  const handleBulkCreateTasks = (batch: ResolvedProjectTaskInput[]) => {
+    m.bulkCreateTasks.mutate({
+      projectId,
+      tasks: batch.map((t) => ({
+        title: t.title,
+        phaseId: t.phaseId,
+        priority: t.priority,
+        scheduledDate: t.scheduledDate,
+        bucketOverride: t.bucketOverride,
+      })),
+    });
+  };
 
   return (
     <>
@@ -304,6 +328,8 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
                 key={col.level}
                 level={col.level}
                 parentPhaseId={col.parentPhaseId}
+                projectSlug={projectSlug}
+                phases={phases}
                 items={col.items}
                 openPhaseId={selectedPath[col.level] ?? null}
                 detail={detail}
@@ -316,14 +342,17 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
                 onSelectTask={(task) => selectTask(col.level, task)}
                 onTogglePhase={togglePhase}
                 onToggleTask={toggleTask}
-                onCreateTask={(title) =>
+                onCreateTask={(result) =>
                   m.createTask.mutate({
-                    title,
+                    title: result.title,
                     projectId,
-                    phaseId: col.parentPhaseId,
-                    bucketOverride: "later",
+                    phaseId: result.phaseId,
+                    priority: result.priority,
+                    scheduledDate: result.scheduledDate,
+                    bucketOverride: result.bucketOverride,
                   })
                 }
+                onBulkCreateTasks={handleBulkCreateTasks}
                 onCreatePhase={(name) =>
                   m.createPhase.mutate({ projectId, parentPhaseId: col.parentPhaseId, name })
                 }
