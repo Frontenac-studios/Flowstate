@@ -12,7 +12,6 @@ export function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"sign_in" | "sign_up">("sign_in");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,10 +22,7 @@ export function LoginForm() {
 
     const supabase = createClient();
 
-    const result =
-      mode === "sign_in"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+    const result = await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
 
@@ -61,7 +57,7 @@ export function LoginForm() {
         <input
           type="password"
           required
-          autoComplete={mode === "sign_in" ? "current-password" : "new-password"}
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="glass-input w-full"
@@ -75,15 +71,7 @@ export function LoginForm() {
       ) : null}
 
       <button type="submit" disabled={loading} className="glass-btn-primary w-full text-sm">
-        {loading ? "Please wait…" : mode === "sign_in" ? "Sign in" : "Create account"}
-      </button>
-
-      <button
-        type="button"
-        className="glass-link w-full text-center text-sm"
-        onClick={() => setMode(mode === "sign_in" ? "sign_up" : "sign_in")}
-      >
-        {mode === "sign_in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+        {loading ? "Please wait…" : "Sign in"}
       </button>
     </form>
   );
