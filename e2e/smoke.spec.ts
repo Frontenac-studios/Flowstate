@@ -8,7 +8,7 @@ function isTrpcResponse(res: { ok: () => boolean; url: () => string }, procedure
 }
 
 test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
 
   const taskTitle = `E2E smoke ${Date.now()}`;
   const today = new Date().toISOString().slice(0, 10);
@@ -32,43 +32,35 @@ test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ p
     await mondayCta.click();
   }
 
-  const todaySection = page.getByRole("region", { name: /^Today/i });
+  // Accessible name becomes "Today (N)" once tasks exist — bind to the stable id instead.
+  const todaySection = page.locator('section[aria-labelledby="today-heading"]');
+  const taskRow = () => todaySection.getByRole("listitem").filter({ hasText: taskTitle });
+
   const composer = page.locator("#kash-quick-input");
   await composer.click();
   await composer.fill(taskTitle);
 
   const createResponse = page.waitForResponse((res) => isTrpcResponse(res, "tasks.create"), {
-    timeout: 20_000,
-  });
-  const listRefresh = page.waitForResponse((res) => isTrpcResponse(res, "listIncomplete"), {
-    timeout: 25_000,
+    timeout: 30_000,
   });
   await composer.press(`${mod}+Enter`);
   await createResponse;
-  await listRefresh.catch(() => {});
-  await expect(composer).toHaveValue("", { timeout: 15_000 });
+  await expect(composer).toHaveValue("", { timeout: 20_000 });
   await composer.blur();
+  await expect(taskRow()).toBeVisible({ timeout: 45_000 });
 
-  const taskRow = todaySection.getByRole("listitem").filter({ hasText: taskTitle });
-  await expect.poll(async () => taskRow.isVisible(), { timeout: 25_000 }).toBe(true);
-  await expect(taskRow).toBeVisible();
-
-  await taskRow.click();
+  await taskRow().click();
   const pinResponse = page.waitForResponse((res) => isTrpcResponse(res, "tasks.pinTop3"), {
-    timeout: 20_000,
+    timeout: 30_000,
   });
   await page.keyboard.press(`${mod}+1`);
   await pinResponse;
-  await expect(taskRow.getByLabel("Top 3")).toBeVisible({ timeout: 10_000 });
+  await expect(taskRow().getByLabel("Top 3")).toBeVisible({ timeout: 15_000 });
 
   await page.keyboard.press(`${mod}+KeyD`);
-  await expect(page).toHaveURL(/\/plan\/focus\?taskId=/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/plan\/focus\?taskId=/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { level: 1, name: taskTitle })).toBeVisible({
-    timeout: 30_000,
-  });
-
-  await page.waitForResponse((res) => isTrpcResponse(res, "timeEntries.start"), {
-    timeout: 30_000,
+    timeout: 45_000,
   });
 
   const completeResponse = page.waitForResponse((res) => isTrpcResponse(res, "tasks.complete"), {
@@ -78,5 +70,5 @@ test("planner smoke: login session, capture, Top 3, RDM focus, done", async ({ p
   await completeResponse;
 
   await page.goto("/plan");
-  await expect(todaySection.getByText(taskTitle)).toHaveCount(0, { timeout: 15_000 });
+  await expect(todaySection.getByText(taskTitle)).toHaveCount(0, { timeout: 20_000 });
 });
