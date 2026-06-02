@@ -43,6 +43,13 @@
       "when": 1780357953049,
       "tag": "0006_focus_blocks_working_hours",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780428600000,
+      "tag": "0008_drop_projects_description",
+      "breakpoints": true
     }
   ]
 }

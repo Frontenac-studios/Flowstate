@@ -9,7 +9,6 @@ const LABELS: Record<ProjectComposerProperty, string> = {
   title: "task",
   due: "due",
   priority: "priority",
-  project: "project",
   parentDir: "parent dir",
 };
 

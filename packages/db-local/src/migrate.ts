@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'adulting',
-  description TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );

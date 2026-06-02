@@ -2,15 +2,19 @@
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { useRef } from "react";
 
 import type { ProjectTask } from "./types";
+
+const SINGLE_CLICK_DELAY_MS = 200;
 
 type Props = {
   task: ProjectTask;
   parentPhaseId: string | null;
   selected: boolean;
   focused: boolean;
-  onSelect: () => void;
+  onHighlight: () => void;
+  onOpenDetail: () => void;
   onToggleComplete: () => void;
 };
 
@@ -19,10 +23,12 @@ export default function MillerTaskRow({
   parentPhaseId,
   selected,
   focused,
-  onSelect,
+  onHighlight,
+  onOpenDetail,
   onToggleComplete,
 }: Props) {
   const completed = task.completedAt !== null;
+  const singleClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     attributes,
@@ -47,6 +53,21 @@ export default function MillerTaskRow({
     setDropRef(el);
   };
 
+  const handleClick = () => {
+    singleClickTimer.current = setTimeout(() => {
+      onHighlight();
+      singleClickTimer.current = null;
+    }, SINGLE_CLICK_DELAY_MS);
+  };
+
+  const handleDoubleClick = () => {
+    if (singleClickTimer.current) {
+      clearTimeout(singleClickTimer.current);
+      singleClickTimer.current = null;
+    }
+    onOpenDetail();
+  };
+
   return (
     <li
       ref={setRefs}
@@ -68,7 +89,8 @@ export default function MillerTaskRow({
       />
       <button
         type="button"
-        onClick={onSelect}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         className={`flex-1 truncate text-left text-sm ${
           completed ? "text-kash-ink-muted line-through" : "text-kash-ink"
         }`}

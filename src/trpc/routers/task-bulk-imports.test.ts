@@ -73,7 +73,6 @@ describe("task bulk import persistence (sqlite)", () => {
         name: "Test",
         slug: "test",
         category: "adulting",
-        description: null,
         createdAt: now,
         updatedAt: now,
       })

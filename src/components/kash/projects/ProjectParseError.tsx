@@ -8,8 +8,6 @@ function warningMessage(warning: ProjectParseWarning): string {
       return `No phase named "${warning.name}"`;
     case "phase_ambiguous":
       return `Ambiguous phase "${warning.name}" (${warning.matches.join(", ")})`;
-    case "project_mismatch":
-      return `Project #${warning.slug} ignored — using current project`;
   }
 }
 

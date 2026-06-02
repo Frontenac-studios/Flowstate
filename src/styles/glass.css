@@ -55,6 +55,21 @@
   box-shadow: var(--kash-glass-edge);
 }
 
+/* Nested lane inside the Miller columns strip (visible ink border on light backdrop). */
+.miller-column-card {
+  border-radius: var(--kash-radius-inner);
+  border: 1px solid color-mix(in srgb, var(--kash-ink-muted) 28%, transparent);
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: var(--kash-glass-edge);
+}
+
+.miller-column-card-active {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    var(--kash-glass-edge),
+    0 0 0 1px color-mix(in srgb, var(--kash-accent) 22%, transparent);
+}
+
 .glass-pill {
   border-radius: 9999px;
   border: 1px solid var(--kash-glass-border);
