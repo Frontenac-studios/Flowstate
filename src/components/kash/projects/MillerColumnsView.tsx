@@ -15,7 +15,8 @@ import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tr
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
 import MillerGhostColumn from "./MillerGhostColumn";
-import type { ResolvedProjectTaskInput } from "./NewItemRow";
+import { MIN_VISIBLE_COLUMNS } from "./miller-columns";
+import NewItemRow, { type ResolvedProjectTaskInput } from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
@@ -34,7 +35,6 @@ type Confirm =
 type Props = {
   tree: Tree;
   projectId: string;
-  projectSlug: string;
   phases: ProjectPhase[];
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
@@ -57,10 +57,18 @@ function hasIncompleteDescendantTasks(node: Node): boolean {
   return node.children.some(hasIncompleteDescendantTasks);
 }
 
+function isMillerDismissTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return (
+    target.closest("[data-miller-item]") !== null ||
+    target.closest("[data-miller-detail]") !== null ||
+    target.closest("[data-miller-composer]") !== null
+  );
+}
+
 export default function MillerColumnsView({
   tree,
   projectId,
-  projectSlug,
   phases,
   selectedPath,
   onSelectPath,
@@ -68,9 +76,9 @@ export default function MillerColumnsView({
   const m = useProjectMutations(projectId);
 
   const [detail, setDetail] = useState<DetailSelection>(null);
+  const [selection, setSelection] = useState<DetailSelection>(null);
   const [focus, setFocus] = useState({ col: 0, index: 0 });
   const [confirm, setConfirm] = useState<Confirm>(null);
-
   const { nodeById, taskById } = useMemo(() => {
     const nodes = new Map<string, Node>();
     const tasks = new Map<string, ProjectTask>();
@@ -114,6 +122,8 @@ export default function MillerColumnsView({
     return result;
   }, [tree, selectedPath]);
 
+  const activeColumnLevel = selectedPath.length;
+
   // Keep keyboard focus inside the rendered columns when the tree/path changes.
   useEffect(() => {
     setFocus((f) => {
@@ -128,14 +138,36 @@ export default function MillerColumnsView({
     (level: number, node: Node) => {
       onSelectPath(selectedPath.slice(0, level).concat(node.phase.id));
       setDetail({ type: "phase", id: node.phase.id });
+      setSelection(null);
       setFocus({ col: level + 1, index: 0 });
     },
     [onSelectPath, selectedPath]
   );
 
-  const selectTask = useCallback(
+  const openPhaseDetail = useCallback(
+    (level: number, node: Node) => {
+      const nextPath = selectedPath.slice(0, level).concat(node.phase.id);
+      if (nextPath.join() !== selectedPath.join()) {
+        onSelectPath(nextPath);
+      }
+      setDetail({ type: "phase", id: node.phase.id });
+      setSelection(null);
+    },
+    [onSelectPath, selectedPath]
+  );
+
+  const highlightTask = useCallback(
     (level: number, task: ProjectTask) => {
       onSelectPath(selectedPath.slice(0, level));
+      setSelection({ type: "task", id: task.id });
+    },
+    [onSelectPath, selectedPath]
+  );
+
+  const openTaskDetail = useCallback(
+    (level: number, task: ProjectTask) => {
+      onSelectPath(selectedPath.slice(0, level));
+      setSelection({ type: "task", id: task.id });
       setDetail({ type: "task", id: task.id });
     },
     [onSelectPath, selectedPath]
@@ -193,7 +225,6 @@ export default function MillerColumnsView({
           m.moveTaskSilent.mutateAsync({ id: task.id, phaseId: parentPhaseId, sortOrder: index })
         );
 
-      // Invalidate once after all moves land, rather than per-move (less flicker).
       const invalidate = m.invalidate;
       void Promise.all(moves).then(invalidate);
     },
@@ -226,6 +257,12 @@ export default function MillerColumnsView({
       if (!col) return;
       const item = col.items[focus.index];
 
+      if (e.key === "Escape" && detail) {
+        e.preventDefault();
+        setDetail(null);
+        return;
+      }
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setFocus((f) => ({
@@ -245,10 +282,19 @@ export default function MillerColumnsView({
       } else if (e.key === "Enter") {
         e.preventDefault();
         if (item?.kind === "phase") openPhase(focus.col, item.node);
-        else if (item?.kind === "task") selectTask(focus.col, item.task);
+        else if (item?.kind === "task") openTaskDetail(focus.col, item.task);
       }
     },
-    [columns, focus, openPhase, selectTask]
+    [columns, focus, openPhase, openTaskDetail, detail]
+  );
+
+  const handleWorkspacePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!detail) return;
+      if (isMillerDismissTarget(e.target)) return;
+      setDetail(null);
+    },
+    [detail]
   );
 
   const confirmConfig = useMemo(() => {
@@ -289,6 +335,7 @@ export default function MillerColumnsView({
       m.deletePhase.mutate({ id: confirm.id });
     } else {
       setDetail(null);
+      setSelection(null);
       m.deleteTask.mutate({ id: confirm.id });
     }
     setConfirm(null);
@@ -297,6 +344,9 @@ export default function MillerColumnsView({
   const createPending =
     m.createTask.isPending || m.createPhase.isPending || m.bulkCreateTasks.isPending;
   const isBlank = columns.length === 1 && columns[0].items.length === 0;
+  const ghostColumnCount = isBlank ? Math.max(0, MIN_VISIBLE_COLUMNS - columns.length) : 0;
+  const composerParentPhaseId =
+    selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
   const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
   const detailTask = detail?.type === "task" ? (taskById.get(detail.id) ?? null) : null;
 
@@ -316,78 +366,98 @@ export default function MillerColumnsView({
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="flex gap-3">
-          <div
-            tabIndex={0}
-            onKeyDown={handleKeyDown}
-            aria-label="Project columns"
-            className="glass-panel-opaque flex flex-1 gap-1 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-kash-accent"
-          >
-            {columns.map((col) => (
-              <MillerColumn
-                key={col.level}
-                level={col.level}
-                parentPhaseId={col.parentPhaseId}
-                projectSlug={projectSlug}
-                phases={phases}
-                items={col.items}
-                openPhaseId={selectedPath[col.level] ?? null}
-                detail={detail}
-                focusIndex={focus.col === col.level ? focus.index : null}
-                pending={createPending}
-                hint={
-                  isBlank && col.level === 0 ? "Start by adding a phase or task below." : undefined
-                }
-                onOpenPhase={(node) => openPhase(col.level, node)}
-                onSelectTask={(task) => selectTask(col.level, task)}
-                onTogglePhase={togglePhase}
-                onToggleTask={toggleTask}
-                onCreateTask={(result) =>
-                  m.createTask.mutate({
-                    title: result.title,
-                    projectId,
-                    phaseId: result.phaseId,
-                    priority: result.priority,
-                    scheduledDate: result.scheduledDate,
-                    bucketOverride: result.bucketOverride,
-                  })
-                }
-                onBulkCreateTasks={handleBulkCreateTasks}
-                onCreatePhase={(name) =>
-                  m.createPhase.mutate({ projectId, parentPhaseId: col.parentPhaseId, name })
-                }
-              />
-            ))}
+        <div className="flex flex-col gap-3" onPointerDown={handleWorkspacePointerDown}>
+          <div className="glass-panel-opaque p-4" data-miller-composer>
             {isBlank ? (
-              <>
-                <MillerGhostColumn />
-                <MillerGhostColumn />
-              </>
+              <p className="mb-3 text-sm text-kash-ink-muted">
+                Start by adding a phase or task below.
+              </p>
             ) : null}
+            <NewItemRow
+              phases={phases}
+              defaultPhaseId={composerParentPhaseId}
+              pending={createPending}
+              onCreateTask={(result) =>
+                m.createTask.mutate({
+                  title: result.title,
+                  projectId,
+                  phaseId: result.phaseId,
+                  priority: result.priority,
+                  scheduledDate: result.scheduledDate,
+                  bucketOverride: result.bucketOverride,
+                })
+              }
+              onBulkCreateTasks={handleBulkCreateTasks}
+              onCreatePhase={(name) =>
+                m.createPhase.mutate({
+                  projectId,
+                  parentPhaseId: composerParentPhaseId,
+                  name,
+                })
+              }
+            />
           </div>
 
-          <aside className="glass-panel-opaque w-72 shrink-0 p-4">
-            {detailNode ? (
-              <PhaseDetail
-                node={detailNode}
-                pending={m.deletePhase.isPending}
-                onUpdate={(patch) => m.updatePhase.mutate({ id: detailNode.phase.id, ...patch })}
-                onRequestDelete={() =>
-                  setConfirm({ kind: "phase-delete", id: detailNode.phase.id })
-                }
-              />
-            ) : detailTask ? (
-              <TaskDetail
-                task={detailTask}
-                pending={m.deleteTask.isPending}
-                onUpdate={(patch) => m.updateTask.mutate({ id: detailTask.id, ...patch })}
-                onToggleComplete={() => toggleTask(detailTask)}
-                onRequestDelete={() => setConfirm({ kind: "task-delete", id: detailTask.id })}
-              />
-            ) : (
-              <p className="text-sm text-kash-ink-muted">Select a phase or task to see details.</p>
-            )}
-          </aside>
+          <div className="flex gap-3">
+            <div
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
+              aria-label="Project columns"
+              className="glass-panel-opaque flex flex-1 gap-2 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-kash-accent"
+            >
+              {columns.map((col) => (
+                <MillerColumn
+                  key={col.level}
+                  level={col.level}
+                  parentPhaseId={col.parentPhaseId}
+                  items={col.items}
+                  openPhaseId={selectedPath[col.level] ?? null}
+                  detail={detail}
+                  selection={selection}
+                  focusIndex={focus.col === col.level ? focus.index : null}
+                  isActive={col.level === activeColumnLevel}
+                  onOpenPhase={(node) => openPhase(col.level, node)}
+                  onOpenPhaseDetail={(node) => openPhaseDetail(col.level, node)}
+                  onHighlightTask={(task) => highlightTask(col.level, task)}
+                  onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
+                  onTogglePhase={togglePhase}
+                  onToggleTask={toggleTask}
+                />
+              ))}
+              {Array.from({ length: ghostColumnCount }, (_, i) => (
+                <MillerGhostColumn key={`ghost-${i}`} />
+              ))}
+            </div>
+
+            {detail ? (
+              <aside
+                data-miller-detail
+                className="glass-panel-opaque w-72 shrink-0 p-4"
+                aria-label={detail.type === "phase" ? "Phase details" : "Task details"}
+              >
+                {detailNode ? (
+                  <PhaseDetail
+                    node={detailNode}
+                    pending={m.deletePhase.isPending}
+                    onUpdate={(patch) =>
+                      m.updatePhase.mutate({ id: detailNode.phase.id, ...patch })
+                    }
+                    onRequestDelete={() =>
+                      setConfirm({ kind: "phase-delete", id: detailNode.phase.id })
+                    }
+                  />
+                ) : detailTask ? (
+                  <TaskDetail
+                    task={detailTask}
+                    pending={m.deleteTask.isPending}
+                    onUpdate={(patch) => m.updateTask.mutate({ id: detailTask.id, ...patch })}
+                    onToggleComplete={() => toggleTask(detailTask)}
+                    onRequestDelete={() => setConfirm({ kind: "task-delete", id: detailTask.id })}
+                  />
+                ) : null}
+              </aside>
+            ) : null}
+          </div>
         </div>
       </DndContext>
 

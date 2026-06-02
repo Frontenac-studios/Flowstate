@@ -33,7 +33,6 @@ export type ResolvedProjectTaskInput = {
 };
 
 type Props = {
-  projectSlug: string;
   phases: ProjectPhase[];
   defaultPhaseId: string | null;
   onCreateTask: (result: ResolvedProjectTaskInput) => void;
@@ -43,7 +42,6 @@ type Props = {
 };
 
 export default function NewItemRow({
-  projectSlug,
   phases,
   defaultPhaseId,
   onCreateTask,
@@ -61,10 +59,7 @@ export default function NewItemRow({
 
   const phaseRefs = useMemo(() => phases.map((p) => ({ id: p.id, name: p.name })), [phases]);
 
-  const parseCtx = useMemo(
-    () => ({ currentProjectSlug: projectSlug, phases: phaseRefs }),
-    [projectSlug, phaseRefs]
-  );
+  const parseCtx = useMemo(() => ({ phases: phaseRefs }), [phaseRefs]);
 
   const parsedLines = useMemo(
     () => (isPhase ? [] : parseProjectTaskInputLines(value, parseCtx)),
@@ -202,9 +197,7 @@ export default function NewItemRow({
           onChange={setValue}
           onCursorChange={setCursor}
           ghostSuffix={isPhase ? null : (assist?.suggestionSuffix ?? null)}
-          placeholder={
-            isPhase ? "+ new phase" : "add tasks — one per line. Use `;` for properties. ⌘↵ to add."
-          }
+          placeholder={isPhase ? "+ new phase" : "add tasks"}
           disabled={pending}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

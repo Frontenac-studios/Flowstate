@@ -1,13 +1,7 @@
 import { getLineAtCursor } from "@/lib/parser/composer-assist";
 import type { PhaseRef } from "@/lib/projects/find-phase-by-name";
 
-export const PROJECT_COMPOSER_PROPERTY_ORDER = [
-  "title",
-  "due",
-  "priority",
-  "project",
-  "parentDir",
-] as const;
+export const PROJECT_COMPOSER_PROPERTY_ORDER = ["title", "due", "priority", "parentDir"] as const;
 
 export type ProjectComposerProperty = (typeof PROJECT_COMPOSER_PROPERTY_ORDER)[number];
 
@@ -23,22 +17,16 @@ export type ProjectComposerAssistState = {
 };
 
 export type ProjectComposerAssistContext = {
-  currentProjectSlug: string;
   phases: PhaseRef[];
 };
 
 const WEEKDAY_PATTERN = /^(sun|mon|tue|wed|thu|fri|sat)$/i;
-const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
 
 function matchesDateToken(segment: string): boolean {
   const lower = segment.trim().toLowerCase();
   if (lower === "later" || lower === "today" || lower === "tomorrow") return true;
   return WEEKDAY_PATTERN.test(lower);
-}
-
-function matchesProjectToken(segment: string): boolean {
-  return PROJECT_PATTERN.test(segment.trim());
 }
 
 function matchesPriorityToken(segment: string): boolean {
@@ -61,8 +49,6 @@ export function projectSegmentMatchesProperty(
       return matchesDateToken(trimmed);
     case "priority":
       return matchesPriorityToken(trimmed);
-    case "project":
-      return matchesProjectToken(trimmed);
     case "parentDir":
       return matchesParentDirToken(trimmed);
   }
@@ -72,8 +58,7 @@ function propertyForSegmentIndex(index: number): ProjectComposerProperty | null 
   if (index <= 0) return "title";
   if (index === 1) return "due";
   if (index === 2) return "priority";
-  if (index === 3) return "project";
-  if (index === 4) return "parentDir";
+  if (index === 3) return "parentDir";
   return null;
 }
 
@@ -112,8 +97,6 @@ function getDefaultSuggestion(
       return "today";
     case "priority":
       return "!";
-    case "project":
-      return `#${ctx.currentProjectSlug}`;
     case "parentDir":
       return ctx.phases[0]?.name ?? null;
   }
@@ -132,7 +115,7 @@ function isPropertyFilled(segments: string[], property: ProjectComposerProperty)
   const index = PROJECT_COMPOSER_PROPERTY_ORDER.indexOf(property);
   const segment = segments[index];
   if (segment === undefined) return false;
-  if (property === "due" || property === "priority" || property === "project") {
+  if (property === "due" || property === "priority") {
     if (!segment.trim()) return false;
   }
   return projectSegmentMatchesProperty(segment, property);
@@ -204,7 +187,7 @@ export function getProjectComposerAssist(
         ? segmentProperty
         : activeProperty !== segmentProperty &&
             segmentIndex >= 1 &&
-            segmentIndex <= 4 &&
+            segmentIndex <= 3 &&
             !segmentTrimmed
           ? activeProperty
           : null;

@@ -7,7 +7,6 @@ export type ProjectListItem = {
   name: string;
   slug: string;
   category: ProjectCategory;
-  description: string | null;
 };
 
 export default function ProjectCard({ project }: { project: ProjectListItem }) {
@@ -19,11 +18,6 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
       style={{ border: `2px solid ${meta.color}` }}
     >
       <h3 className="font-medium text-kash-ink">{project.name}</h3>
-      {project.description ? (
-        <p className="mt-1 line-clamp-2 text-sm text-kash-ink-muted">{project.description}</p>
-      ) : (
-        <p className="text-kash-ink-muted/60 mt-1 text-sm italic">No description</p>
-      )}
     </Link>
   );
 }

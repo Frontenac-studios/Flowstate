@@ -10,7 +10,6 @@ const wed = new Date(2026, 4, 27); // Wed May 27 2026
 
 const ctx = {
   today: wed,
-  currentProjectSlug: "flowstate",
   phases: [
     { id: "phase-design", name: "Design" },
     { id: "phase-build", name: "Build" },
@@ -30,18 +29,17 @@ describe("parseProjectTaskInput", () => {
   });
 
   it("parses full positional line", () => {
-    const result = parseProjectTaskInput("Wireframes; fri; !!; ; Design", ctx);
+    const result = parseProjectTaskInput("Wireframes; fri; !!; Design", ctx);
     expect(result.title).toBe("Wireframes");
     expect(result.scheduledDate).toBe("2026-05-29");
     expect(result.bucketOverride).toBeNull();
     expect(result.priority).toBe(2);
-    expect(result.projectSlug).toBeNull();
     expect(result.parentDirName).toBe("Design");
     expect(result.warnings).toHaveLength(0);
   });
 
   it("allows empty optional segments", () => {
-    const result = parseProjectTaskInput("Task only; ; ; ;", ctx);
+    const result = parseProjectTaskInput("Task only; ; ;", ctx);
     expect(result.title).toBe("Task only");
     expect(result.scheduledDate).toBeNull();
     expect(result.bucketOverride).toBe("later");
@@ -50,7 +48,7 @@ describe("parseProjectTaskInput", () => {
   });
 
   it("warns on invalid due and priority segments", () => {
-    const result = parseProjectTaskInput("broken; notadate; maybe; ;", ctx);
+    const result = parseProjectTaskInput("broken; notadate; maybe", ctx);
     expect(result.warnings).toEqual([
       { code: "invalid_property", property: "notadate", field: "due" },
       { code: "invalid_property", property: "maybe", field: "priority" },
@@ -59,7 +57,7 @@ describe("parseProjectTaskInput", () => {
   });
 
   it("warns when parent dir phase is not found", () => {
-    const result = parseProjectTaskInput("Task; ; ; ; Missing", ctx);
+    const result = parseProjectTaskInput("Task; ; ; Missing", ctx);
     expect(result.warnings).toEqual([{ code: "phase_not_found", name: "Missing" }]);
     expect(isProjectTaskLineValid(result)).toBe(false);
   });
@@ -72,24 +70,16 @@ describe("parseProjectTaskInput", () => {
         { id: "p2", name: "design" },
       ],
     };
-    const result = parseProjectTaskInput("Task; ; ; ; design", ambiguousCtx);
+    const result = parseProjectTaskInput("Task; ; ; design", ambiguousCtx);
     expect(result.warnings).toEqual([
       { code: "phase_ambiguous", name: "design", matches: ["Design", "design"] },
     ]);
     expect(isProjectTaskLineValid(result)).toBe(false);
   });
 
-  it("soft-warns on project mismatch but remains valid", () => {
-    const result = parseProjectTaskInput("Task; ; ; #other; Design", ctx);
-    expect(result.warnings).toEqual([{ code: "project_mismatch", slug: "other" }]);
-    expect(isProjectTaskLineValid(result)).toBe(true);
-  });
-
-  it("warns on invalid project segment format", () => {
-    const result = parseProjectTaskInput("Task; ; ; badslug; ", ctx);
-    expect(result.warnings).toEqual([
-      { code: "invalid_property", property: "badslug", field: "project" },
-    ]);
+  it("treats #project tokens as parent dir names", () => {
+    const result = parseProjectTaskInput("Task; ; ; #other", ctx);
+    expect(result.warnings).toEqual([{ code: "phase_not_found", name: "#other" }]);
     expect(isProjectTaskLineValid(result)).toBe(false);
   });
 });
@@ -106,7 +96,7 @@ describe("parseProjectTaskInputLines", () => {
   });
 
   it("flags phase errors per line without affecting other lines", () => {
-    const lines = parseProjectTaskInputLines("ok task\nbad; ; ; ; Nope", ctx);
+    const lines = parseProjectTaskInputLines("ok task\nbad; ; ; Nope", ctx);
     expect(lines[0]?.parse.warnings).toHaveLength(0);
     expect(isProjectTaskLineValid(lines[0]!.parse)).toBe(true);
     expect(lines[1]?.parse.warnings).toEqual([{ code: "phase_not_found", name: "Nope" }]);

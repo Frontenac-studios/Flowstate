@@ -14,7 +14,6 @@ export function getProjectParseChips(parse: ParseProjectTaskResult): string[] {
   const dateLabel = formatDateChip(parse.scheduledDate, parse.bucketOverride);
   if (dateLabel) chips.push(dateLabel);
   if (parse.priority > 0) chips.push("!".repeat(parse.priority));
-  if (parse.projectSlug) chips.push(`#${parse.projectSlug}`);
   if (parse.parentDirName) chips.push(parse.parentDirName);
   return chips;
 }

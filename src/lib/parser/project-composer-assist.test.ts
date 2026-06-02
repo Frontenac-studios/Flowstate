@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { getProjectComposerAssist, projectSegmentMatchesProperty } from "./project-composer-assist";
 
 const ctx = {
-  currentProjectSlug: "flowstate",
   phases: [
     { id: "p1", name: "Design" },
     { id: "p2", name: "Build" },
@@ -18,7 +17,6 @@ describe("projectSegmentMatchesProperty", () => {
   it("matches positional property tokens", () => {
     expect(projectSegmentMatchesProperty("today", "due")).toBe(true);
     expect(projectSegmentMatchesProperty("!!", "priority")).toBe(true);
-    expect(projectSegmentMatchesProperty("#flowstate", "project")).toBe(true);
     expect(projectSegmentMatchesProperty("Design", "parentDir")).toBe(true);
   });
 });
@@ -47,19 +45,11 @@ describe("getProjectComposerAssist", () => {
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
   });
 
-  it("project active after priority segment", () => {
+  it("parentDir active after priority segment", () => {
     const line = "walk dog; today; !!; ";
-    const state = assist(line, line.length);
-    expect(state.activeProperty).toBe("project");
-    expect(state.suggestion).toBe("#flowstate");
-    expect(state.properties.find((p) => p.key === "priority")?.status).toBe("filled");
-  });
-
-  it("parentDir active after project segment", () => {
-    const line = "walk dog; today; !!; #flowstate; ";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("parentDir");
     expect(state.suggestion).toBe("Design");
-    expect(state.properties.find((p) => p.key === "project")?.status).toBe("filled");
+    expect(state.properties.find((p) => p.key === "priority")?.status).toBe("filled");
   });
 });

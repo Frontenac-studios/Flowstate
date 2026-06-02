@@ -21,7 +21,6 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
-  const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const createMutation = useMutation(
@@ -50,7 +49,6 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
     createMutation.mutate({
       name: trimmedName,
       category,
-      description: description.trim() || null,
     });
   };
 
@@ -107,21 +105,6 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
           })}
         </div>
       </fieldset>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="new-project-description" className="text-sm font-medium text-kash-ink">
-          Description <span className="text-kash-ink-muted">(optional)</span>
-        </label>
-        <textarea
-          id="new-project-description"
-          className="glass-input glass-textarea"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="What is this project about?"
-          maxLength={2000}
-          rows={2}
-        />
-      </div>
 
       {error ? (
         <p role="alert" className="text-sm text-[#b42318]">

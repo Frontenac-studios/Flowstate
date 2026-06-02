@@ -14,6 +14,7 @@ type Props = {
   selected: boolean;
   focused: boolean;
   onOpen: () => void;
+  onOpenDetail: () => void;
   onToggleComplete: () => void;
 };
 
@@ -23,6 +24,7 @@ export default function MillerPhaseRow({
   selected,
   focused,
   onOpen,
+  onOpenDetail,
   onToggleComplete,
 }: Props) {
   const completed = node.phase.completedAt !== null;
@@ -52,6 +54,10 @@ export default function MillerPhaseRow({
       <button
         type="button"
         onClick={onOpen}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          onOpenDetail();
+        }}
         className={`flex flex-1 items-center justify-between gap-2 text-left text-sm ${
           completed ? "text-kash-ink-muted line-through" : "text-kash-ink"
         }`}

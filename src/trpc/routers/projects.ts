@@ -43,7 +43,6 @@ export const projectsRouter = createTRPCRouter({
         name: projects.name,
         slug: projects.slug,
         category: projects.category,
-        description: projects.description,
       })
       .from(projects)
       .where(eq(projects.userId, ctx.userId))
@@ -62,7 +61,6 @@ export const projectsRouter = createTRPCRouter({
         name: z.string().min(1).max(120),
         slug: z.string().min(1).max(64).optional(),
         category: categorySchema,
-        description: z.string().max(2000).nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -90,7 +88,6 @@ export const projectsRouter = createTRPCRouter({
             name: input.name.trim(),
             slug,
             category: input.category,
-            description: input.description ?? null,
           })
           .returning();
       } catch (error) {
@@ -120,7 +117,6 @@ export const projectsRouter = createTRPCRouter({
         id: z.string().uuid(),
         name: z.string().min(1).max(120).optional(),
         category: categorySchema.optional(),
-        description: z.string().max(2000).nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -129,7 +125,6 @@ export const projectsRouter = createTRPCRouter({
       const patch: Partial<typeof projects.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) patch.name = input.name.trim();
       if (input.category !== undefined) patch.category = input.category;
-      if (input.description !== undefined) patch.description = input.description;
 
       const [row] = await db
         .update(projects)
