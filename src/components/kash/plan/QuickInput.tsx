@@ -51,7 +51,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   const textareaRef = useRef<ComposerTextareaHandle>(null);
   const [value, setValue] = useState("");
   const [cursor, setCursor] = useState(0);
-  const [focused, setFocused] = useState(false);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const [lastProjectSlug, setLastProjectSlug] = useState<string | null>(() =>
     readLastProjectSlug()
@@ -214,7 +213,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   };
 
   const singleLineParse = parsedLines.length === 1 ? parsedLines[0]?.parse : null;
-  const showPropertyBar = focused || value.trim().length > 0;
 
   return (
     <section className="glass-panel-opaque p-4">
@@ -222,37 +220,30 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         Add tasks
       </label>
 
-      <ComposerPropertyBar assist={assist} visible={showPropertyBar} />
+      <ComposerPropertyBar assist={assist} visible />
 
-      <div
-        onFocus={() => setFocused(true)}
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
+      <ComposerTextarea
+        ref={textareaRef}
+        id="kash-quick-input"
+        value={value}
+        onChange={setValue}
+        onCursorChange={setCursor}
+        ghostSuffix={assist.suggestionSuffix}
+        placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
+        disabled={createTaskMutation.isPending}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            void handleBulkSubmit();
+            return;
+          }
+          // Tab accepts the inline composer suggestion when one is available;
+          // otherwise it falls through to normal focus traversal.
+          if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
+            e.preventDefault();
+          }
         }}
-      >
-        <ComposerTextarea
-          ref={textareaRef}
-          id="kash-quick-input"
-          value={value}
-          onChange={setValue}
-          onCursorChange={setCursor}
-          ghostSuffix={assist.suggestionSuffix}
-          placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
-          disabled={createTaskMutation.isPending}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              void handleBulkSubmit();
-              return;
-            }
-            // Tab accepts the inline composer suggestion when one is available;
-            // otherwise it falls through to normal focus traversal.
-            if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
-              e.preventDefault();
-            }
-          }}
-        />
-      </div>
+      />
 
       <p className="mt-1.5 text-xs text-kash-ink-muted">
         Enter for new line · ⌘↵ to add tasks
