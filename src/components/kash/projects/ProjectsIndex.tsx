@@ -51,7 +51,7 @@ export default function ProjectsIndex() {
             <div
               key={i}
               className="glass-panel-opaque h-24 animate-pulse rounded-kash"
-              style={{ borderTop: "3px solid var(--kash-glass-border)" }}
+              style={{ border: "2px solid var(--kash-glass-border)" }}
             />
           ))}
         </div>

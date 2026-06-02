@@ -4,7 +4,13 @@ import { formatHeaderDate } from "@/lib/dates/local-day";
 
 import { GradientBackdrop } from "../GradientBackdrop";
 
-export default function ProjectsLayout({ children }: { children: React.ReactNode }) {
+export default function ProjectsLayout({
+  children,
+  showBackToProjects = false,
+}: {
+  children: React.ReactNode;
+  showBackToProjects?: boolean;
+}) {
   return (
     <div className="relative min-h-screen">
       <GradientBackdrop />
@@ -20,11 +26,19 @@ export default function ProjectsLayout({ children }: { children: React.ReactNode
             {formatHeaderDate()}
           </time>
           <div className="ml-auto flex items-center gap-2">
+            {showBackToProjects ? (
+              <Link
+                href="/projects"
+                className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+              >
+                Projects
+              </Link>
+            ) : null}
             <Link
               href="/plan"
               className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
             >
-              Plan
+              Today
             </Link>
             <Link
               href="/settings"
