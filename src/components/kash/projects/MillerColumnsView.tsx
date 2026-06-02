@@ -14,6 +14,7 @@ import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tree";
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
+import MillerGhostColumn from "./MillerGhostColumn";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
@@ -284,6 +285,7 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
   }, [confirm, m.setPhaseComplete, m.deletePhase, m.deleteTask, selectedPath, onSelectPath]);
 
   const createPending = m.createTask.isPending || m.createPhase.isPending;
+  const isBlank = columns.length === 1 && columns[0].items.length === 0;
   const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
   const detailTask = detail?.type === "task" ? (taskById.get(detail.id) ?? null) : null;
 
@@ -307,6 +309,9 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
                 detail={detail}
                 focusIndex={focus.col === col.level ? focus.index : null}
                 pending={createPending}
+                hint={
+                  isBlank && col.level === 0 ? "Start by adding a phase or task below." : undefined
+                }
                 onOpenPhase={(node) => openPhase(col.level, node)}
                 onSelectTask={(task) => selectTask(col.level, task)}
                 onTogglePhase={togglePhase}
@@ -324,6 +329,12 @@ export default function MillerColumnsView({ tree, projectId, selectedPath, onSel
                 }
               />
             ))}
+            {isBlank ? (
+              <>
+                <MillerGhostColumn />
+                <MillerGhostColumn />
+              </>
+            ) : null}
           </div>
 
           <aside className="glass-panel-opaque w-72 shrink-0 p-4">
