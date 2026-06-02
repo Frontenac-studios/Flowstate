@@ -1,7 +1,5 @@
 :root {
-  --kash-gradient-1: #e8eef8;
-  --kash-gradient-2: #dce4f5;
-  --kash-gradient-3: #f0e8f8;
+  --kash-backdrop: #fafaf9;
   --kash-glass-bg: rgba(255, 255, 255, 0.55);
   --kash-glass-bg-opaque: rgba(255, 255, 255, 0.88);
   --kash-glass-border: rgba(255, 255, 255, 0.6);
@@ -185,41 +183,8 @@
   text-decoration: underline;
 }
 
-/* On Tauri (DesktopRuntimeFlag adds .is-desktop to <html>), hide the gradient
-   so the native macOS NSView vibrancy material shows the desktop wallpaper
-   through the glass surfaces. */
-.is-desktop .kash-gradient-bg {
-  display: none;
-}
-
-.kash-gradient-bg {
-  background: linear-gradient(
-    135deg,
-    var(--kash-gradient-1) 0%,
-    var(--kash-gradient-2) 45%,
-    var(--kash-gradient-3) 100%
-  );
-  background-size: 200% 200%;
-  animation: kash-gradient-shift 18s ease infinite;
-}
-
-@keyframes kash-gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .kash-gradient-bg {
-    animation: none;
-    background-size: 100% 100%;
-  }
+.kash-backdrop {
+  background: var(--kash-backdrop);
 }
 
 @media (prefers-reduced-transparency: reduce) {
