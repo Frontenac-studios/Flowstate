@@ -12,8 +12,8 @@
   --kash-glass-edge:
     inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(255, 255, 255, 0.18);
   --kash-glass-shadow: 0 10px 36px rgba(26, 29, 38, 0.08);
-  --kash-accent: #6b7fd7;
-  --kash-accent-soft: rgba(107, 127, 215, 0.18);
+  --kash-accent: #ff2d55;
+  --kash-accent-soft: rgba(255, 45, 85, 0.18);
   /* Concentric radius scale (Apple Liquid Glass): inner = outer − padding.
      --kash-radius is aliased to --kash-radius-outer for back-compat. */
   --kash-radius-outer: 16px;
@@ -88,7 +88,7 @@
 
 .glass-btn-primary {
   border-radius: var(--kash-radius-control);
-  border: 1px solid rgba(107, 127, 215, 0.35);
+  border: 1px solid rgba(255, 45, 85, 0.35);
   background: var(--kash-accent);
   padding: 0.625rem 1rem;
   font-size: var(--kash-density-base);
@@ -96,7 +96,7 @@
   color: #fff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 4px 16px rgba(107, 127, 215, 0.28);
+    0 4px 16px rgba(255, 45, 85, 0.28);
   transition:
     transform 0.12s ease,
     box-shadow 0.12s ease,
@@ -106,7 +106,7 @@
 .glass-btn-primary:hover:not(:disabled) {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 6px 20px rgba(107, 127, 215, 0.36);
+    0 6px 20px rgba(255, 45, 85, 0.36);
 }
 
 .glass-btn-primary:active:not(:disabled) {
@@ -164,7 +164,7 @@
 }
 
 .glass-menu-item:hover {
-  background: rgba(107, 127, 215, 0.08);
+  background: rgba(255, 45, 85, 0.08);
 }
 
 .glass-menu-item-danger {
