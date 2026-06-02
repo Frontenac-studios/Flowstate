@@ -6,7 +6,6 @@ import type { ProjectTree } from "@/lib/projects/phase-tree";
 
 import MillerPhaseRow from "./MillerPhaseRow";
 import MillerTaskRow from "./MillerTaskRow";
-import NewItemRow, { type ResolvedProjectTaskInput } from "./NewItemRow";
 import type { ProjectPhase, ProjectTask } from "./types";
 
 type Node = ProjectTree<ProjectPhase, ProjectTask>["rootPhases"][number];
@@ -18,41 +17,37 @@ export type DetailSelection = { type: "phase" | "task"; id: string } | null;
 type Props = {
   level: number;
   parentPhaseId: string | null;
-  projectSlug: string;
-  phases: ProjectPhase[];
   items: ColumnItem[];
   openPhaseId: string | null;
   detail: DetailSelection;
+  selection: DetailSelection;
   focusIndex: number | null;
-  pending: boolean;
+  isActive: boolean;
   hint?: string;
   onOpenPhase: (node: Node) => void;
-  onSelectTask: (task: ProjectTask) => void;
+  onOpenPhaseDetail: (node: Node) => void;
+  onHighlightTask: (task: ProjectTask) => void;
+  onOpenTaskDetail: (task: ProjectTask) => void;
   onTogglePhase: (node: Node) => void;
   onToggleTask: (task: ProjectTask) => void;
-  onCreateTask: (result: ResolvedProjectTaskInput) => void;
-  onBulkCreateTasks: (tasks: ResolvedProjectTaskInput[]) => void;
-  onCreatePhase: (name: string) => void;
 };
 
 export default function MillerColumn({
   level,
   parentPhaseId,
-  projectSlug,
-  phases,
   items,
   openPhaseId,
   detail,
+  selection,
   focusIndex,
-  pending,
+  isActive,
   hint,
   onOpenPhase,
-  onSelectTask,
+  onOpenPhaseDetail,
+  onHighlightTask,
+  onOpenTaskDetail,
   onTogglePhase,
   onToggleTask,
-  onCreateTask,
-  onBulkCreateTasks,
-  onCreatePhase,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column:${level}`,
@@ -62,9 +57,9 @@ export default function MillerColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-64 shrink-0 flex-col rounded-kash p-2 transition ${
-        isOver ? "bg-kash-accent/10" : ""
-      }`}
+      className={`miller-column-card flex w-64 shrink-0 flex-col p-2 transition ${
+        isActive ? "miller-column-card-active" : ""
+      } ${isOver ? "bg-kash-accent/10" : ""}`}
     >
       <ul className="flex flex-col gap-0.5">
         {items.map((item, index) => {
@@ -78,6 +73,7 @@ export default function MillerColumn({
                 selected={detail?.type === "phase" && detail.id === item.node.phase.id}
                 focused={focused}
                 onOpen={() => onOpenPhase(item.node)}
+                onOpenDetail={() => onOpenPhaseDetail(item.node)}
                 onToggleComplete={() => onTogglePhase(item.node)}
               />
             );
@@ -87,9 +83,10 @@ export default function MillerColumn({
               key={`t:${item.task.id}`}
               task={item.task}
               parentPhaseId={parentPhaseId}
-              selected={detail?.type === "task" && detail.id === item.task.id}
+              selected={selection?.type === "task" && selection.id === item.task.id}
               focused={focused}
-              onSelect={() => onSelectTask(item.task)}
+              onHighlight={() => onHighlightTask(item.task)}
+              onOpenDetail={() => onOpenTaskDetail(item.task)}
               onToggleComplete={() => onToggleTask(item.task)}
             />
           );
@@ -98,15 +95,6 @@ export default function MillerColumn({
       {hint && items.length === 0 ? (
         <p className="mt-1 px-2 text-xs text-kash-ink-muted">{hint}</p>
       ) : null}
-      <NewItemRow
-        projectSlug={projectSlug}
-        phases={phases}
-        defaultPhaseId={parentPhaseId}
-        onCreateTask={onCreateTask}
-        onBulkCreateTasks={onBulkCreateTasks}
-        onCreatePhase={onCreatePhase}
-        pending={pending}
-      />
     </div>
   );
 }

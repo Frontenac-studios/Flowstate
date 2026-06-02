@@ -16,7 +16,6 @@ export const projects = sqliteTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     category: text("category", { enum: PROJECT_CATEGORIES }).notNull(),
-    description: text("description"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },

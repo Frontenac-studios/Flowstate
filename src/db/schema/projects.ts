@@ -16,7 +16,6 @@ export const projects = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     category: projectCategory("category").notNull(),
-    description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

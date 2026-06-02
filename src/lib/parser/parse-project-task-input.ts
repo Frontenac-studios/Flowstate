@@ -7,14 +7,12 @@ import {
 import { findPhaseByName, type PhaseRef } from "@/lib/projects/find-phase-by-name";
 
 export type ProjectParseWarning =
-  | { code: "invalid_property"; property: string; field: "due" | "priority" | "project" }
-  | { code: "project_mismatch"; slug: string }
+  | { code: "invalid_property"; property: string; field: "due" | "priority" }
   | { code: "phase_not_found"; name: string }
   | { code: "phase_ambiguous"; name: string; matches: string[] };
 
 export type ParseProjectTaskContext = {
   today?: Date;
-  currentProjectSlug: string;
   phases: PhaseRef[];
 };
 
@@ -23,13 +21,11 @@ export type ParseProjectTaskResult = {
   scheduledDate: string | null;
   bucketOverride: "later" | null;
   priority: 0 | 1 | 2 | 3;
-  projectSlug: string | null;
   parentDirName: string | null;
   warnings: ProjectParseWarning[];
 };
 
 const WEEKDAY_PATTERN = /^(sun|mon|tue|wed|thu|fri|sat)$/i;
-const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
 
 function collapseWhitespace(s: string): string {
@@ -72,13 +68,6 @@ function resolveDateKeyword(
   return null;
 }
 
-function parseProjectSegment(segment: string): string | null {
-  if (!segment) return null;
-  const match = segment.match(PROJECT_PATTERN);
-  if (!match) return null;
-  return match[1].toLowerCase();
-}
-
 function laterDefaults(): Pick<ParseProjectTaskResult, "scheduledDate" | "bucketOverride"> {
   return { scheduledDate: null, bucketOverride: "later" };
 }
@@ -96,7 +85,6 @@ function parsePositionalSegments(
     parts[1]?.trim() ?? "",
     parts[2]?.trim() ?? "",
     parts[3]?.trim() ?? "",
-    parts[4]?.trim() ?? "",
   ];
 
   const title = collapseWhitespace(segments[0]) || "Untitled";
@@ -104,7 +92,6 @@ function parsePositionalSegments(
   let scheduledDate: string | null = null;
   let bucketOverride: "later" | null = "later";
   let priority: 0 | 1 | 2 | 3 = 0;
-  let projectSlug: string | null = null;
   let parentDirName: string | null = null;
 
   const dueSegment = segments[1];
@@ -128,20 +115,7 @@ function parsePositionalSegments(
     }
   }
 
-  const projectSegment = segments[3];
-  if (projectSegment) {
-    const slug = parseProjectSegment(projectSegment);
-    if (!slug) {
-      warnings.push({ code: "invalid_property", property: projectSegment, field: "project" });
-    } else {
-      projectSlug = slug;
-      if (slug !== ctx.currentProjectSlug.toLowerCase()) {
-        warnings.push({ code: "project_mismatch", slug });
-      }
-    }
-  }
-
-  const parentDirSegment = segments[4];
+  const parentDirSegment = segments[3];
   if (parentDirSegment) {
     parentDirName = parentDirSegment;
     const phaseResult = findPhaseByName(ctx.phases, parentDirSegment);
@@ -161,7 +135,6 @@ function parsePositionalSegments(
     scheduledDate,
     bucketOverride,
     priority,
-    projectSlug,
     parentDirName,
     warnings,
   };
@@ -184,7 +157,6 @@ export function parseProjectTaskInput(
       title: "",
       ...laterDefaults(),
       priority: 0,
-      projectSlug: null,
       parentDirName: null,
       warnings: [],
     };
@@ -195,7 +167,6 @@ export function parseProjectTaskInput(
       title: collapseWhitespace(trimmed) || "Untitled",
       ...laterDefaults(),
       priority: 0,
-      projectSlug: null,
       parentDirName: null,
       warnings: [],
     };
