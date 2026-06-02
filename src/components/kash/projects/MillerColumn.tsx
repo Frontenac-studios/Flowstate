@@ -6,7 +6,7 @@ import type { ProjectTree } from "@/lib/projects/phase-tree";
 
 import MillerPhaseRow from "./MillerPhaseRow";
 import MillerTaskRow from "./MillerTaskRow";
-import NewItemRow from "./NewItemRow";
+import NewItemRow, { type ResolvedProjectTaskInput } from "./NewItemRow";
 import type { ProjectPhase, ProjectTask } from "./types";
 
 type Node = ProjectTree<ProjectPhase, ProjectTask>["rootPhases"][number];
@@ -18,6 +18,8 @@ export type DetailSelection = { type: "phase" | "task"; id: string } | null;
 type Props = {
   level: number;
   parentPhaseId: string | null;
+  projectSlug: string;
+  phases: ProjectPhase[];
   items: ColumnItem[];
   openPhaseId: string | null;
   detail: DetailSelection;
@@ -28,13 +30,15 @@ type Props = {
   onSelectTask: (task: ProjectTask) => void;
   onTogglePhase: (node: Node) => void;
   onToggleTask: (task: ProjectTask) => void;
-  onCreateTask: (title: string) => void;
+  onCreateTask: (result: ResolvedProjectTaskInput) => void;
   onCreatePhase: (name: string) => void;
 };
 
 export default function MillerColumn({
   level,
   parentPhaseId,
+  projectSlug,
+  phases,
   items,
   openPhaseId,
   detail,
@@ -92,7 +96,14 @@ export default function MillerColumn({
       {hint && items.length === 0 ? (
         <p className="mt-1 px-2 text-xs text-kash-ink-muted">{hint}</p>
       ) : null}
-      <NewItemRow onCreateTask={onCreateTask} onCreatePhase={onCreatePhase} pending={pending} />
+      <NewItemRow
+        projectSlug={projectSlug}
+        phases={phases}
+        defaultPhaseId={parentPhaseId}
+        onCreateTask={onCreateTask}
+        onCreatePhase={onCreatePhase}
+        pending={pending}
+      />
     </div>
   );
 }
