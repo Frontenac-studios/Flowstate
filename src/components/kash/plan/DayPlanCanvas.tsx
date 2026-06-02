@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { toISODateString } from "@/lib/dates/local-day";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import { partitionNamedDays } from "@/lib/tasks/partition-named-days";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
@@ -199,6 +200,30 @@ export function DayPlanCanvas() {
     })
   );
 
+  const todayIso = toISODateString(now);
+
+  const invalidateBlocks = useCallback(() => {
+    touchActivity();
+    void queryClient.invalidateQueries({
+      queryKey: trpc.focusBlocks.listForDate.queryKey({ date: todayIso }),
+    });
+  }, [queryClient, todayIso, touchActivity, trpc.focusBlocks.listForDate]);
+
+  const createBlockMutation = useMutation(
+    trpc.focusBlocks.create.mutationOptions({ onSuccess: invalidateBlocks })
+  );
+
+  const moveBlockMutation = useMutation(
+    trpc.focusBlocks.move.mutationOptions({ onSuccess: invalidateBlocks })
+  );
+
+  const handleActivateTask = useCallback(
+    (taskId: string) => {
+      router.push(`/plan/focus?${new URLSearchParams({ taskId }).toString()}`);
+    },
+    [router]
+  );
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
@@ -243,6 +268,16 @@ export function DayPlanCanvas() {
     if (!overId || typeof overId !== "string") return;
 
     const activeId = String(event.active.id);
+
+    // Moving an existing focus block onto a timeline slot.
+    if (activeId.startsWith("block:")) {
+      if (!overId.startsWith("timeline:")) return;
+      const startMin = Number(overId.slice("timeline:".length));
+      if (Number.isNaN(startMin)) return;
+      moveBlockMutation.mutate({ id: activeId.slice("block:".length), startMin });
+      return;
+    }
+
     if (!activeId.startsWith("task:")) return;
 
     const taskId = activeId.slice("task:".length);
@@ -251,6 +286,13 @@ export function DayPlanCanvas() {
       const slot = Number(overId.slice("top3:".length));
       if (slot !== 1 && slot !== 2 && slot !== 3) return;
       pinMutation.mutate({ id: taskId, slot });
+      return;
+    }
+
+    if (overId.startsWith("timeline:")) {
+      const startMin = Number(overId.slice("timeline:".length));
+      if (Number.isNaN(startMin)) return;
+      createBlockMutation.mutate({ taskId, date: todayIso, startMin });
       return;
     }
 
@@ -286,6 +328,7 @@ export function DayPlanCanvas() {
             isLoading={isLoading}
             selectedTaskId={selectedTaskId}
             onSelectTask={setSelectedTaskId}
+            onActivateTask={handleActivateTask}
             onComplete={pushComplete}
             onDelete={pushDelete}
           />

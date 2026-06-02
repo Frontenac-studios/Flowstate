@@ -36,6 +36,13 @@
       "when": 1780112453497,
       "tag": "0005_projects_phases",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780357953049,
+      "tag": "0006_focus_blocks_working_hours",
+      "breakpoints": true
     }
   ]
 }

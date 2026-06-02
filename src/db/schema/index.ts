@@ -1,6 +1,7 @@
 export * from "./app-settings";
 export * from "./chat-messages";
 export * from "./day-reviews";
+export * from "./focus-blocks";
 export * from "./health-checks";
 export * from "./nudge-events";
 export * from "./phases";
