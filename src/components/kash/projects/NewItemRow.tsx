@@ -52,7 +52,6 @@ export default function NewItemRow({
   const [value, setValue] = useState("");
   const [cursor, setCursor] = useState(0);
   const [isPhase, setIsPhase] = useState(false);
-  const [focused, setFocused] = useState(false);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const textareaRef = useRef<ComposerTextareaHandle>(null);
   const inputId = useId();
@@ -70,8 +69,6 @@ export default function NewItemRow({
     () => (isPhase ? null : getProjectComposerAssistFromValue(value, cursor, parseCtx)),
     [value, cursor, parseCtx, isPhase]
   );
-
-  const showPropertyBar = !isPhase && assist !== null && (focused || value.trim().length > 0);
 
   const acceptSuggestion = useCallback((): boolean => {
     if (isPhase || !assist) return false;
@@ -166,7 +163,7 @@ export default function NewItemRow({
 
   return (
     <div className="mt-1 flex flex-col">
-      {showPropertyBar && assist ? <ProjectPropertyBar assist={assist} visible /> : null}
+      {!isPhase && assist ? <ProjectPropertyBar assist={assist} visible /> : null}
 
       <div className="mb-1.5 flex items-center justify-end">
         <button
@@ -184,38 +181,31 @@ export default function NewItemRow({
         </button>
       </div>
 
-      <div
-        onFocus={() => setFocused(true)}
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
+      <ComposerTextarea
+        ref={textareaRef}
+        id={inputId}
+        value={value}
+        onChange={setValue}
+        onCursorChange={setCursor}
+        ghostSuffix={isPhase ? null : (assist?.suggestionSuffix ?? null)}
+        placeholder={isPhase ? "+ new phase" : "add tasks"}
+        disabled={pending}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            handleSubmit();
+            return;
+          }
+          if (isPhase && e.key === "Enter" && !e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            submitPhase();
+            return;
+          }
+          if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
+            e.preventDefault();
+          }
         }}
-      >
-        <ComposerTextarea
-          ref={textareaRef}
-          id={inputId}
-          value={value}
-          onChange={setValue}
-          onCursorChange={setCursor}
-          ghostSuffix={isPhase ? null : (assist?.suggestionSuffix ?? null)}
-          placeholder={isPhase ? "+ new phase" : "add tasks"}
-          disabled={pending}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              handleSubmit();
-              return;
-            }
-            if (isPhase && e.key === "Enter" && !e.metaKey && !e.ctrlKey) {
-              e.preventDefault();
-              submitPhase();
-              return;
-            }
-            if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
-              e.preventDefault();
-            }
-          }}
-        />
-      </div>
+      />
 
       <p className="mt-1.5 text-xs text-kash-ink-muted">
         {isPhase ? "Enter to add phase" : "Enter for new line · ⌘↵ to add tasks"}
