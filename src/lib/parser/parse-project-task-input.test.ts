@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isProjectTaskLineValid, parseProjectTaskInput } from "./parse-project-task-input";
+import {
+  isProjectTaskLineValid,
+  parseProjectTaskInput,
+  parseProjectTaskInputLines,
+} from "./parse-project-task-input";
 
 const wed = new Date(2026, 4, 27); // Wed May 27 2026
 
@@ -87,5 +91,25 @@ describe("parseProjectTaskInput", () => {
       { code: "invalid_property", property: "badslug", field: "project" },
     ]);
     expect(isProjectTaskLineValid(result)).toBe(false);
+  });
+});
+
+describe("parseProjectTaskInputLines", () => {
+  it("skips blank lines and assigns sequential lineIndex", () => {
+    const lines = parseProjectTaskInputLines("task one\n\n  task two  \n", ctx);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]?.lineIndex).toBe(0);
+    expect(lines[0]?.raw).toBe("task one");
+    expect(lines[0]?.parse.title).toBe("task one");
+    expect(lines[1]?.lineIndex).toBe(1);
+    expect(lines[1]?.raw).toBe("task two");
+  });
+
+  it("flags phase errors per line without affecting other lines", () => {
+    const lines = parseProjectTaskInputLines("ok task\nbad; ; ; ; Nope", ctx);
+    expect(lines[0]?.parse.warnings).toHaveLength(0);
+    expect(isProjectTaskLineValid(lines[0]!.parse)).toBe(true);
+    expect(lines[1]?.parse.warnings).toEqual([{ code: "phase_not_found", name: "Nope" }]);
+    expect(isProjectTaskLineValid(lines[1]!.parse)).toBe(false);
   });
 });

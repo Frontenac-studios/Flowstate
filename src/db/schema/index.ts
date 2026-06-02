@@ -8,3 +8,4 @@ export * from "./phases";
 export * from "./projects";
 export * from "./task-time-entries";
 export * from "./tasks";
+export * from "./task-bulk-imports";

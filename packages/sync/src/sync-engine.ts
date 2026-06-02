@@ -6,11 +6,13 @@ import {
   nudgeEvents,
   projects,
   syncWatermarks,
+  taskBulkImportItems,
+  taskBulkImports,
   taskTimeEntries,
   tasks,
 } from "@kash/db-local/schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { pickNewerRow } from "./conflict";
 import { listPendingMutations, markMutationSynced } from "./mutation-log";
@@ -205,6 +207,43 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(nudgeEvents.id, id));
       else await db.insert(nudgeEvents).values(mapped as never);
+      return true;
+    }
+    case "task_bulk_imports": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(taskBulkImports)
+        .where(eq(taskBulkImports.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskBulkImports)
+          .set(mapped as never)
+          .where(eq(taskBulkImports.id, id));
+      else await db.insert(taskBulkImports).values(mapped as never);
+      return true;
+    }
+    case "task_bulk_import_items": {
+      const importId = mapped.importId as string;
+      const taskId = mapped.taskId as string;
+      const [existing] = await db
+        .select()
+        .from(taskBulkImportItems)
+        .where(
+          and(eq(taskBulkImportItems.importId, importId), eq(taskBulkImportItems.taskId, taskId))
+        )
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskBulkImportItems)
+          .set(mapped as never)
+          .where(
+            and(eq(taskBulkImportItems.importId, importId), eq(taskBulkImportItems.taskId, taskId))
+          );
+      else await db.insert(taskBulkImportItems).values(mapped as never);
       return true;
     }
     default:

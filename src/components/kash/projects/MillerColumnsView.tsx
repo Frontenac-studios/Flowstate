@@ -15,6 +15,7 @@ import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tr
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
 import MillerGhostColumn from "./MillerGhostColumn";
+import type { ResolvedProjectTaskInput } from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
@@ -293,10 +294,24 @@ export default function MillerColumnsView({
     setConfirm(null);
   }, [confirm, m.setPhaseComplete, m.deletePhase, m.deleteTask, selectedPath, onSelectPath]);
 
-  const createPending = m.createTask.isPending || m.createPhase.isPending;
+  const createPending =
+    m.createTask.isPending || m.createPhase.isPending || m.bulkCreateTasks.isPending;
   const isBlank = columns.length === 1 && columns[0].items.length === 0;
   const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
   const detailTask = detail?.type === "task" ? (taskById.get(detail.id) ?? null) : null;
+
+  const handleBulkCreateTasks = (batch: ResolvedProjectTaskInput[]) => {
+    m.bulkCreateTasks.mutate({
+      projectId,
+      tasks: batch.map((t) => ({
+        title: t.title,
+        phaseId: t.phaseId,
+        priority: t.priority,
+        scheduledDate: t.scheduledDate,
+        bucketOverride: t.bucketOverride,
+      })),
+    });
+  };
 
   return (
     <>
@@ -337,6 +352,7 @@ export default function MillerColumnsView({
                     bucketOverride: result.bucketOverride,
                   })
                 }
+                onBulkCreateTasks={handleBulkCreateTasks}
                 onCreatePhase={(name) =>
                   m.createPhase.mutate({ projectId, parentPhaseId: col.parentPhaseId, name })
                 }

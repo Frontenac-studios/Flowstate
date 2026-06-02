@@ -7,6 +7,8 @@ export const SYNC_TABLES = [
   "day_reviews",
   "app_settings",
   "nudge_events",
+  "task_bulk_imports",
+  "task_bulk_import_items",
 ] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];

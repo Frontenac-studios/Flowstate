@@ -31,6 +31,7 @@ export function mapRemoteRow(
     "ended_at",
     "synced_at",
     "pulled_at",
+    "undone_at",
   ];
 
   for (const key of dateFields) {
@@ -85,6 +86,9 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   taskIds: "task_ids",
   startedAt: "started_at",
   endedAt: "ended_at",
+  taskCount: "task_count",
+  undoneAt: "undone_at",
+  importId: "import_id",
 };
 
 export function mapPayloadToRemote(

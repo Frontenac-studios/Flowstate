@@ -31,6 +31,7 @@ type Props = {
   onTogglePhase: (node: Node) => void;
   onToggleTask: (task: ProjectTask) => void;
   onCreateTask: (result: ResolvedProjectTaskInput) => void;
+  onBulkCreateTasks: (tasks: ResolvedProjectTaskInput[]) => void;
   onCreatePhase: (name: string) => void;
 };
 
@@ -50,6 +51,7 @@ export default function MillerColumn({
   onTogglePhase,
   onToggleTask,
   onCreateTask,
+  onBulkCreateTasks,
   onCreatePhase,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
@@ -101,6 +103,7 @@ export default function MillerColumn({
         phases={phases}
         defaultPhaseId={parentPhaseId}
         onCreateTask={onCreateTask}
+        onBulkCreateTasks={onBulkCreateTasks}
         onCreatePhase={onCreatePhase}
         pending={pending}
       />

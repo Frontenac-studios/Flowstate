@@ -26,3 +26,19 @@ export async function syncProjectRow(rowId: string, op: SyncOp, payload: unknown
 export async function syncPhaseRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "phases", rowId, op, payload });
 }
+
+export async function syncTaskBulkImportRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "task_bulk_imports", rowId, op, payload });
+}
+
+export async function syncTaskBulkImportItemRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "task_bulk_import_items", rowId, op, payload });
+}
