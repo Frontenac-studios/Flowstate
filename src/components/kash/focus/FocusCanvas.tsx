@@ -32,6 +32,7 @@ export function FocusCanvas() {
   const queryClient = useQueryClient();
 
   const taskId = searchParams.get("taskId");
+  const blockId = searchParams.get("blockId");
 
   const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
@@ -50,6 +51,7 @@ export function FocusCanvas() {
   const startMutation = useMutation(trpc.timeEntries.start.mutationOptions());
   const endMutation = useMutation(trpc.timeEntries.end.mutationOptions());
   const completeMutation = useMutation(trpc.tasks.complete.mutationOptions());
+  const completeBlockMutation = useMutation(trpc.focusBlocks.complete.mutationOptions());
 
   const endSession = useCallback(
     async (reason: ExitReason) => {
@@ -129,11 +131,19 @@ export function FocusCanvas() {
     await endSession("done");
     await completeMutation.mutateAsync({ id: task.id });
 
+    // If we came from a timeline block, mark it done (the session above already
+    // recorded the actual time — no extra time entry is created here).
+    if (blockId) {
+      await completeBlockMutation.mutateAsync({ id: blockId });
+    }
+
     await queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     await queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
 
     window.setTimeout(() => void rollNext(task.id), 1000);
   }, [
+    blockId,
+    completeBlockMutation,
     completeMutation,
     doneFlash,
     endSession,

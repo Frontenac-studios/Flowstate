@@ -13,6 +13,7 @@ type Props = {
   isLoading: boolean;
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
+  onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
@@ -23,6 +24,7 @@ export function TodayList({
   isLoading,
   selectedTaskId,
   onSelectTask,
+  onActivateTask,
   onComplete,
   onDelete,
 }: Props) {
@@ -64,6 +66,7 @@ export function TodayList({
               task={task}
               selected={selectedTaskId === task.id}
               onSelect={onSelectTask}
+              onActivate={onActivateTask}
               onComplete={onComplete}
               onDelete={onDelete}
             />

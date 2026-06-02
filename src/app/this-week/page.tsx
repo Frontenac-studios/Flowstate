@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { PlanLayout } from "@/components/kash/PlanLayout";
+import { ThisWeekCanvas } from "@/components/kash/plan/ThisWeekCanvas";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ThisWeekPage() {
@@ -15,10 +16,7 @@ export default async function ThisWeekPage() {
 
   return (
     <PlanLayout>
-      <div className="glass-panel px-6 py-10 text-center text-kash-ink-muted">
-        <h1 className="mb-1 text-lg font-semibold text-kash-ink">This Week</h1>
-        <p className="text-sm">Upcoming tasks and weekly planning land here soon.</p>
-      </div>
+      <ThisWeekCanvas />
     </PlanLayout>
   );
 }

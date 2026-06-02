@@ -3,6 +3,7 @@ import { z } from "zod";
 import { baseProcedure, createTRPCRouter } from "../init";
 import { chatRouter } from "./chat";
 import { dayReviewsRouter } from "./day-reviews";
+import { focusBlocksRouter } from "./focus-blocks";
 import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
 import { phasesRouter } from "./phases";
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
   }),
   chat: chatRouter,
   dayReviews: dayReviewsRouter,
+  focusBlocks: focusBlocksRouter,
   healthChecks: healthChecksRouter,
   me: meRouter,
   phases: phasesRouter,
