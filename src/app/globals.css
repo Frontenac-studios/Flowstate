@@ -8,12 +8,11 @@
   --foreground: var(--kash-ink);
 }
 
-/* Body is transparent so the desktop Tauri window's NSView vibrancy material
-   can show through. On the web, GradientBackdrop covers the viewport with the
-   animated gradient as the first painted layer. */
+/* Warm-stone backdrop on html/body matches AppBackdrop so there is no flash
+   before the fixed backdrop layer paints (web and desktop). */
 html,
 body {
-  background: transparent;
+  background: var(--kash-backdrop);
 }
 
 body {

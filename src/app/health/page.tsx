@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { GradientBackdrop } from "@/components/kash/GradientBackdrop";
 import { getTRPCCaller } from "@/trpc/server";
 
 function statusBadgeClass(status: string): string {
@@ -32,7 +31,6 @@ export default async function HealthPage() {
 
   return (
     <div className="relative min-h-screen">
-      <GradientBackdrop />
       <div className="relative z-10 mx-auto min-h-screen max-w-3xl px-6 py-12">
         <header className="glass-panel mb-10 px-6 py-5">
           <p className="mb-2 text-sm text-kash-ink-muted">
