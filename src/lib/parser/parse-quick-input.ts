@@ -1,9 +1,5 @@
-import {
-  addDays,
-  parseWeekdayToken,
-  startOfLocalDay,
-  toISODateString,
-} from "@/lib/dates/local-day";
+import { resolveScheduledDateToken } from "@/lib/dates/scheduled-date-input";
+import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 
@@ -108,7 +104,6 @@ export function removeComposerLineAtIndex(value: string, lineIndex: number): str
   return parts.join("\n");
 }
 
-const WEEKDAY_PATTERN = /^(sun|mon|tue|wed|thu|fri|sat)$/i;
 const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
 
@@ -119,36 +114,6 @@ function collapseWhitespace(s: string): string {
 function parsePriority(token: string): 0 | 1 | 2 | 3 | null {
   if (!PRIORITY_PATTERN.test(token)) return null;
   return token.length as 1 | 2 | 3;
-}
-
-function resolveDateKeyword(
-  token: string,
-  today: Date
-): { scheduledDate: string | null; bucketOverride: "later" | null } | null {
-  const lower = token.toLowerCase();
-
-  if (lower === "later") {
-    return { scheduledDate: null, bucketOverride: "later" };
-  }
-
-  if (lower === "today") {
-    return { scheduledDate: toISODateString(startOfLocalDay(today)), bucketOverride: null };
-  }
-
-  if (lower === "tomorrow") {
-    return {
-      scheduledDate: toISODateString(addDays(startOfLocalDay(today), 1)),
-      bucketOverride: null,
-    };
-  }
-
-  if (WEEKDAY_PATTERN.test(lower)) {
-    const day = parseWeekdayToken(lower, today);
-    if (!day) return null;
-    return { scheduledDate: toISODateString(day), bucketOverride: null };
-  }
-
-  return null;
 }
 
 function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
@@ -170,7 +135,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
   let suggestions: ProjectSuggestion[] = [];
 
   for (const segment of segments.slice(1)) {
-    const dateResult = resolveDateKeyword(segment, today);
+    const dateResult = resolveScheduledDateToken(segment, today);
     if (dateResult) {
       scheduledDate = dateResult.scheduledDate;
       bucketOverride = dateResult.bucketOverride;
@@ -231,7 +196,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
   const tokens = raw.split(/\s+/).filter(Boolean);
 
   for (const token of tokens) {
-    const dateResult = resolveDateKeyword(token, today);
+    const dateResult = resolveScheduledDateToken(token, today);
     if (dateResult) {
       scheduledDate = dateResult.scheduledDate;
       bucketOverride = dateResult.bucketOverride;

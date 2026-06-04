@@ -1,17 +1,11 @@
+import { formatScheduledDateLabel } from "@/lib/dates/scheduled-date-input";
 import type { ParseProjectTaskResult } from "@/lib/parser/parse-project-task-input";
-
-function formatDateChip(iso: string | null, bucketOverride: string | null): string | null {
-  if (bucketOverride === "later") return "Later";
-  if (!iso) return null;
-  const today = new Date();
-  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  if (iso === todayIso) return "Today";
-  return iso;
-}
 
 export function getProjectParseChips(parse: ParseProjectTaskResult): string[] {
   const chips: string[] = [];
-  const dateLabel = formatDateChip(parse.scheduledDate, parse.bucketOverride);
+  const dateLabel = formatScheduledDateLabel(parse.scheduledDate, {
+    bucketOverride: parse.bucketOverride,
+  });
   if (dateLabel) chips.push(dateLabel);
   if (parse.priority > 0) chips.push("!".repeat(parse.priority));
   if (parse.parentDirName) chips.push(parse.parentDirName);

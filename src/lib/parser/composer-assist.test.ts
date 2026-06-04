@@ -31,9 +31,11 @@ describe("getLineAtCursor", () => {
 describe("segmentMatchesProperty", () => {
   it("matches date, project, and priority tokens", () => {
     expect(segmentMatchesProperty("today", "due")).toBe(true);
+    expect(segmentMatchesProperty("2026-05-30", "due")).toBe(true);
     expect(segmentMatchesProperty("#rdm", "project")).toBe(true);
     expect(segmentMatchesProperty("!!", "priority")).toBe(true);
     expect(segmentMatchesProperty("tod", "due")).toBe(false);
+    expect(segmentMatchesProperty("2026-02-30", "due")).toBe(false);
   });
 });
 

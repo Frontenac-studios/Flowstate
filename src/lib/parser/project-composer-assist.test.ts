@@ -4,8 +4,8 @@ import { getProjectComposerAssist, projectSegmentMatchesProperty } from "./proje
 
 const ctx = {
   phases: [
-    { id: "p1", name: "Design" },
-    { id: "p2", name: "Build" },
+    { id: "p1", name: "Design", parentPhaseId: null },
+    { id: "p2", name: "Build", parentPhaseId: null },
   ],
 };
 
