@@ -17,7 +17,7 @@ const VIEW_MODES: { value: ProjectViewMode; label: string }[] = [
 
 export default function ProjectWorkspaceHeader({ project, viewMode, onViewModeChange }: Props) {
   return (
-    <header className="glass-panel-strong flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+    <header className="glass-panel-strong relative z-30 flex flex-wrap items-center justify-between gap-3 px-5 py-4">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold text-kash-ink">{project.name}</h1>
         <CategoryBadge category={project.category} />

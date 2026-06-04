@@ -11,11 +11,13 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { defaultMillerPath, expandMillerPath } from "@/lib/projects/miller-path";
 import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tree";
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
 import MillerGhostColumn from "./MillerGhostColumn";
-import { MIN_VISIBLE_COLUMNS } from "./miller-columns";
+import { millerColumnShellClass } from "./miller-columns";
+import { useMillerStripLayout } from "./useMillerStripLayout";
 import { executeComposerSubmit } from "@/lib/projects/execute-composer-submit";
 import type { ParsedProjectLine } from "@/lib/parser/parse-project-task-input";
 
@@ -127,6 +129,19 @@ export default function MillerColumnsView({
 
   const activeColumnLevel = selectedPath.length;
 
+  const { stripRef, ghostColumnCount, widthClassName, targetVisibleColumns } = useMillerStripLayout(
+    columns.length
+  );
+
+  useEffect(() => {
+    const basePath =
+      selectedPath.length > 0 ? selectedPath : defaultMillerPath(tree, targetVisibleColumns);
+    const expanded = expandMillerPath(tree, basePath, targetVisibleColumns);
+    if (expanded.join() !== selectedPath.join()) {
+      onSelectPath(expanded);
+    }
+  }, [tree, selectedPath, targetVisibleColumns, onSelectPath]);
+
   // Keep keyboard focus inside the rendered columns when the tree/path changes.
   useEffect(() => {
     setFocus((f) => {
@@ -139,24 +154,28 @@ export default function MillerColumnsView({
 
   const openPhase = useCallback(
     (level: number, node: Node) => {
-      onSelectPath(selectedPath.slice(0, level).concat(node.phase.id));
+      const userPath = selectedPath.slice(0, level).concat(node.phase.id);
+      const expanded = expandMillerPath(tree, userPath, targetVisibleColumns);
+      onSelectPath(expanded);
       setDetail({ type: "phase", id: node.phase.id });
       setSelection(null);
-      setFocus({ col: level + 1, index: 0 });
+      setFocus({ col: expanded.length, index: 0 });
     },
-    [onSelectPath, selectedPath]
+    [onSelectPath, selectedPath, tree, targetVisibleColumns]
   );
 
   const openPhaseDetail = useCallback(
     (level: number, node: Node) => {
-      const nextPath = selectedPath.slice(0, level).concat(node.phase.id);
-      if (nextPath.join() !== selectedPath.join()) {
-        onSelectPath(nextPath);
+      const userPath = selectedPath.slice(0, level).concat(node.phase.id);
+      const expanded = expandMillerPath(tree, userPath, targetVisibleColumns);
+      if (expanded.join() !== selectedPath.join()) {
+        onSelectPath(expanded);
       }
       setDetail({ type: "phase", id: node.phase.id });
       setSelection(null);
+      setFocus({ col: expanded.length, index: 0 });
     },
-    [onSelectPath, selectedPath]
+    [onSelectPath, selectedPath, tree, targetVisibleColumns]
   );
 
   const highlightTask = useCallback(
@@ -347,7 +366,6 @@ export default function MillerColumnsView({
   const createPending =
     m.createTask.isPending || m.createPhase.isPending || m.bulkCreateTasks.isPending;
   const isBlank = columns.length === 1 && columns[0].items.length === 0;
-  const ghostColumnCount = isBlank ? Math.max(0, MIN_VISIBLE_COLUMNS - columns.length) : 0;
   const composerParentPhaseId =
     selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
   const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
@@ -375,8 +393,11 @@ export default function MillerColumnsView({
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="flex flex-col gap-3" onPointerDown={handleWorkspacePointerDown}>
-          <div className="glass-panel-opaque p-4" data-miller-composer>
+        <div
+          className="flex min-h-0 flex-1 flex-col gap-3"
+          onPointerDown={handleWorkspacePointerDown}
+        >
+          <div className="glass-panel-opaque shrink-0 p-4" data-miller-composer>
             {isBlank ? (
               <p className="mb-3 text-sm text-kash-ink-muted">
                 Add tasks below — use Parent//+ Child for subdirectories (+ on each new segment).
@@ -390,12 +411,13 @@ export default function MillerColumnsView({
             />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex min-h-0 flex-1 gap-3">
             <div
+              ref={stripRef}
               tabIndex={0}
               onKeyDown={handleKeyDown}
               aria-label="Project columns"
-              className="glass-panel-opaque flex flex-1 gap-2 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-kash-accent"
+              className="glass-panel-opaque flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-kash-accent"
             >
               {columns.map((col) => (
                 <MillerColumn
@@ -408,6 +430,7 @@ export default function MillerColumnsView({
                   selection={selection}
                   focusIndex={focus.col === col.level ? focus.index : null}
                   isActive={col.level === activeColumnLevel}
+                  shellClassName={millerColumnShellClass(widthClassName)}
                   onOpenPhase={(node) => openPhase(col.level, node)}
                   onOpenPhaseDetail={(node) => openPhaseDetail(col.level, node)}
                   onHighlightTask={(task) => highlightTask(col.level, task)}
@@ -417,14 +440,17 @@ export default function MillerColumnsView({
                 />
               ))}
               {Array.from({ length: ghostColumnCount }, (_, i) => (
-                <MillerGhostColumn key={`ghost-${i}`} />
+                <MillerGhostColumn
+                  key={`ghost-${i}`}
+                  shellClassName={millerColumnShellClass(widthClassName)}
+                />
               ))}
             </div>
 
             {detail ? (
               <aside
                 data-miller-detail
-                className="glass-panel-opaque w-72 shrink-0 p-4"
+                className="glass-panel-opaque min-h-60 w-72 shrink-0 self-stretch overflow-y-auto p-4"
                 aria-label={detail.type === "phase" ? "Phase details" : "Task details"}
               >
                 {detailNode ? (

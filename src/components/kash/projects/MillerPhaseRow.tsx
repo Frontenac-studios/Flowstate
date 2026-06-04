@@ -28,6 +28,7 @@ export default function MillerPhaseRow({
   onToggleComplete,
 }: Props) {
   const completed = node.phase.completedAt !== null;
+  const itemCount = node.children.length + node.tasks.length;
   const { setNodeRef, isOver } = useDroppable({
     id: `phasedrop:${node.phase.id}`,
     data: { kind: "phase", phaseId: node.phase.id },
@@ -39,8 +40,8 @@ export default function MillerPhaseRow({
       data-miller-item
       className={`flex items-center gap-2 rounded-kash px-2 py-1.5 transition ${
         isOpen || selected ? "bg-kash-accent/15" : "hover:bg-white/40"
-      } ${focused ? "ring-2 ring-[var(--kash-accent-soft)]" : ""} ${
-        isOver ? "ring-2 ring-kash-accent" : ""
+      } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
+        isOver ? "ring-2 ring-inset ring-kash-accent" : ""
       }`}
     >
       <input
@@ -63,15 +64,9 @@ export default function MillerPhaseRow({
         }`}
       >
         <span className="truncate font-medium">{node.phase.name}</span>
-        <span className="flex shrink-0 items-center gap-2 text-xs text-kash-ink-muted">
-          {node.children.length + node.tasks.length > 0 ? (
-            <span>
-              {node.children.length > 0 ? `${node.children.length}▸ ` : ""}
-              {node.tasks.length > 0 ? `${node.tasks.length}✓` : ""}
-            </span>
-          ) : null}
-          <span aria-hidden>›</span>
-        </span>
+        {itemCount > 0 ? (
+          <span className="shrink-0 text-xs tabular-nums text-kash-ink-muted">{itemCount}</span>
+        ) : null}
       </button>
     </li>
   );

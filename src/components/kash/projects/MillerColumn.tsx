@@ -23,6 +23,7 @@ type Props = {
   selection: DetailSelection;
   focusIndex: number | null;
   isActive: boolean;
+  shellClassName?: string;
   hint?: string;
   onOpenPhase: (node: Node) => void;
   onOpenPhaseDetail: (node: Node) => void;
@@ -41,6 +42,7 @@ export default function MillerColumn({
   selection,
   focusIndex,
   isActive,
+  shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
   hint,
   onOpenPhase,
   onOpenPhaseDetail,
@@ -57,11 +59,11 @@ export default function MillerColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`miller-column-card flex w-64 shrink-0 flex-col p-2 transition ${
+      className={`miller-column-card p-2 transition ${shellClassName} ${
         isActive ? "miller-column-card-active" : ""
       } ${isOver ? "bg-kash-accent/10" : ""}`}
     >
-      <ul className="flex flex-col gap-0.5">
+      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
         {items.map((item, index) => {
           const focused = focusIndex === index;
           if (item.kind === "phase") {
