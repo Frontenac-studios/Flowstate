@@ -10,8 +10,8 @@ export default function ProjectsLayout({
   showBackToProjects?: boolean;
 }) {
   return (
-    <div className="relative min-h-screen">
-      <div className="relative z-10 mx-auto w-full max-w-[110rem] px-4 py-6 sm:px-6 lg:px-10">
+    <div className="relative flex min-h-screen flex-col">
+      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[110rem] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-10">
         <header className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink">
           <Link href="/plan" className="font-semibold tracking-tight">
             Kash

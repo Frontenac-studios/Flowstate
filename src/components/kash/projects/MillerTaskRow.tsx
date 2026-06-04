@@ -75,7 +75,7 @@ export default function MillerTaskRow({
       style={{ transform: CSS.Translate.toString(transform) }}
       className={`flex items-center gap-2 rounded-kash px-2 py-1.5 transition ${
         selected ? "bg-kash-accent/15" : "hover:bg-white/40"
-      } ${focused ? "ring-2 ring-[var(--kash-accent-soft)]" : ""} ${
+      } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
       } ${isOver ? "border-t-2 border-kash-accent" : "border-t-2 border-transparent"}`}
     >
