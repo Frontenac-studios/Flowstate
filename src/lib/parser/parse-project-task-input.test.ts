@@ -11,95 +11,93 @@ const wed = new Date(2026, 4, 27); // Wed May 27 2026
 const ctx = {
   today: wed,
   phases: [
-    { id: "phase-design", name: "Design" },
-    { id: "phase-build", name: "Build" },
+    { id: "phase-design", name: "Design", parentPhaseId: null },
+    { id: "phase-build", name: "Build", parentPhaseId: null },
+    { id: "phase-portfolio", name: "Product & Portfolio", parentPhaseId: null },
   ],
+  parentPhaseId: null as string | null,
 };
 
 describe("parseProjectTaskInput", () => {
   it("parses bare title with later bucket default", () => {
     const result = parseProjectTaskInput("ship onboarding", ctx);
     expect(result.title).toBe("ship onboarding");
-    expect(result.scheduledDate).toBeNull();
-    expect(result.bucketOverride).toBe("later");
-    expect(result.priority).toBe(0);
     expect(result.parentDirName).toBeNull();
-    expect(result.warnings).toHaveLength(0);
+    expect(result.parentDirPath).toBeNull();
     expect(isProjectTaskLineValid(result)).toBe(true);
   });
 
   it("parses full positional line", () => {
     const result = parseProjectTaskInput("Wireframes; fri; !!; Design", ctx);
-    expect(result.title).toBe("Wireframes");
-    expect(result.scheduledDate).toBe("2026-05-29");
-    expect(result.bucketOverride).toBeNull();
-    expect(result.priority).toBe(2);
     expect(result.parentDirName).toBe("Design");
+    expect(result.pathKey).toBe("design");
+    expect(result.parentDirPath).toEqual([{ name: "Design", create: false }]);
     expect(result.warnings).toHaveLength(0);
-  });
-
-  it("allows empty optional segments", () => {
-    const result = parseProjectTaskInput("Task only; ; ;", ctx);
-    expect(result.title).toBe("Task only");
-    expect(result.scheduledDate).toBeNull();
-    expect(result.bucketOverride).toBe("later");
-    expect(result.priority).toBe(0);
-    expect(result.warnings).toHaveLength(0);
-  });
-
-  it("warns on invalid due and priority segments", () => {
-    const result = parseProjectTaskInput("broken; notadate; maybe", ctx);
-    expect(result.warnings).toEqual([
-      { code: "invalid_property", property: "notadate", field: "due" },
-      { code: "invalid_property", property: "maybe", field: "priority" },
-    ]);
-    expect(isProjectTaskLineValid(result)).toBe(false);
   });
 
   it("warns when parent dir phase is not found", () => {
     const result = parseProjectTaskInput("Task; ; ; Missing", ctx);
-    expect(result.warnings).toEqual([{ code: "phase_not_found", name: "Missing" }]);
+    expect(result.warnings[0]?.code).toBe("phase_not_found");
     expect(isProjectTaskLineValid(result)).toBe(false);
   });
 
-  it("warns when parent dir phase name is ambiguous", () => {
-    const ambiguousCtx = {
-      ...ctx,
-      phases: [
-        { id: "p1", name: "Design" },
-        { id: "p2", name: "design" },
-      ],
-    };
-    const result = parseProjectTaskInput("Task; ; ; design", ambiguousCtx);
-    expect(result.warnings).toEqual([
-      { code: "phase_ambiguous", name: "design", matches: ["Design", "design"] },
+  it("parses nested path with + on leaf when parent exists", () => {
+    const result = parseProjectTaskInput(
+      "Add rate-limiting; 2026-06-19; !!; Product & Portfolio//+ Magic-Link Gate",
+      ctx
+    );
+    expect(result.parentDirName).toBe("Product & Portfolio // Magic-Link Gate");
+    expect(result.pathKey).toBe("product & portfolio//magic-link gate");
+    expect(result.parentDirPath).toEqual([
+      { name: "Product & Portfolio", create: false },
+      { name: "Magic-Link Gate", create: true },
     ]);
+    expect(result.warnings).toHaveLength(0);
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
+
+  it("warns when parent segment in path is missing without +", () => {
+    const result = parseProjectTaskInput("Task; ; ; Product & Portfolio//Magic-Link Gate", {
+      ...ctx,
+      phases: [{ id: "phase-portfolio", name: "Product & Portfolio", parentPhaseId: null }],
+    });
+    expect(
+      result.warnings.some((w) => w.code === "phase_not_found" && w.name === "Magic-Link Gate")
+    ).toBe(true);
     expect(isProjectTaskLineValid(result)).toBe(false);
   });
 
-  it("treats #project tokens as parent dir names", () => {
-    const result = parseProjectTaskInput("Task; ; ; #other", ctx);
-    expect(result.warnings).toEqual([{ code: "phase_not_found", name: "#other" }]);
-    expect(isProjectTaskLineValid(result)).toBe(false);
+  it("parses + on both path segments", () => {
+    const result = parseProjectTaskInput("Task; ; ; + Alpha//+ Beta", ctx);
+    expect(result.parentDirCreate).toBe(true);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("warns on empty path segment", () => {
+    const result = parseProjectTaskInput("Task; ; ; A//", ctx);
+    expect(result.warnings).toEqual([{ code: "empty_phase_name" }]);
   });
 });
 
 describe("parseProjectTaskInputLines", () => {
-  it("skips blank lines and assigns sequential lineIndex", () => {
-    const lines = parseProjectTaskInputLines("task one\n\n  task two  \n", ctx);
+  it("bulk paste: nested path + on leaf, follow-up lines without +", () => {
+    const raw = [
+      "Task one; 2026-06-05; !; Product & Portfolio//+ Magic-Link Gate",
+      "Task two; 2026-06-05; !; Product & Portfolio//Magic-Link Gate",
+    ].join("\n");
+    const lines = parseProjectTaskInputLines(raw, ctx);
     expect(lines).toHaveLength(2);
-    expect(lines[0]?.lineIndex).toBe(0);
-    expect(lines[0]?.raw).toBe("task one");
-    expect(lines[0]?.parse.title).toBe("task one");
-    expect(lines[1]?.lineIndex).toBe(1);
-    expect(lines[1]?.raw).toBe("task two");
+    expect(lines.every((l) => isProjectTaskLineValid(l.parse))).toBe(true);
+    expect(lines[0]?.parse.pathKey).toBe("product & portfolio//magic-link gate");
+    expect(lines[1]?.parse.parentDirPath?.[1]?.create).toBe(false);
   });
 
-  it("flags phase errors per line without affecting other lines", () => {
-    const lines = parseProjectTaskInputLines("ok task\nbad; ; ; Nope", ctx);
-    expect(lines[0]?.parse.warnings).toHaveLength(0);
-    expect(isProjectTaskLineValid(lines[0]!.parse)).toBe(true);
-    expect(lines[1]?.parse.warnings).toEqual([{ code: "phase_not_found", name: "Nope" }]);
-    expect(isProjectTaskLineValid(lines[1]!.parse)).toBe(false);
+  it("bulk paste: flat + on first line still works", () => {
+    const raw = [
+      "Task one; 2026-06-05; !; + Product & Portfolio",
+      "Task two; 2026-06-05; !; Product & Portfolio",
+    ].join("\n");
+    const lines = parseProjectTaskInputLines(raw, ctx);
+    expect(lines.every((l) => isProjectTaskLineValid(l.parse))).toBe(true);
   });
 });

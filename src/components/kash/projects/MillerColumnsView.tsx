@@ -16,7 +16,10 @@ import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tr
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
 import MillerGhostColumn from "./MillerGhostColumn";
 import { MIN_VISIBLE_COLUMNS } from "./miller-columns";
-import NewItemRow, { type ResolvedProjectTaskInput } from "./NewItemRow";
+import { executeComposerSubmit } from "@/lib/projects/execute-composer-submit";
+import type { ParsedProjectLine } from "@/lib/parser/parse-project-task-input";
+
+import NewItemRow from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
@@ -350,16 +353,22 @@ export default function MillerColumnsView({
   const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
   const detailTask = detail?.type === "task" ? (taskById.get(detail.id) ?? null) : null;
 
-  const handleBulkCreateTasks = (batch: ResolvedProjectTaskInput[]) => {
-    m.bulkCreateTasks.mutate({
+  const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
+    await executeComposerSubmit({
       projectId,
-      tasks: batch.map((t) => ({
-        title: t.title,
-        phaseId: t.phaseId,
-        priority: t.priority,
-        scheduledDate: t.scheduledDate,
-        bucketOverride: t.bucketOverride,
+      parentPhaseId: composerParentPhaseId,
+      phases: phases.map((p) => ({
+        id: p.id,
+        name: p.name,
+        parentPhaseId: p.parentPhaseId,
       })),
+      lines,
+      defaultPhaseId: composerParentPhaseId,
+      mutations: {
+        createPhase: (input) => m.createPhase.mutateAsync(input),
+        createTask: (input) => m.createTask.mutateAsync(input),
+        bulkCreateTasks: (input) => m.bulkCreateTasks.mutateAsync(input),
+      },
     });
   };
 
@@ -370,31 +379,14 @@ export default function MillerColumnsView({
           <div className="glass-panel-opaque p-4" data-miller-composer>
             {isBlank ? (
               <p className="mb-3 text-sm text-kash-ink-muted">
-                Start by adding a phase or task below.
+                Add tasks below — use Parent//+ Child for subdirectories (+ on each new segment).
               </p>
             ) : null}
             <NewItemRow
               phases={phases}
               defaultPhaseId={composerParentPhaseId}
               pending={createPending}
-              onCreateTask={(result) =>
-                m.createTask.mutate({
-                  title: result.title,
-                  projectId,
-                  phaseId: result.phaseId,
-                  priority: result.priority,
-                  scheduledDate: result.scheduledDate,
-                  bucketOverride: result.bucketOverride,
-                })
-              }
-              onBulkCreateTasks={handleBulkCreateTasks}
-              onCreatePhase={(name) =>
-                m.createPhase.mutate({
-                  projectId,
-                  parentPhaseId: composerParentPhaseId,
-                  name,
-                })
-              }
+              onSubmitComposer={handleSubmitComposer}
             />
           </div>
 

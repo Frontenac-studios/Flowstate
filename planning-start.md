@@ -67,7 +67,7 @@ Provide a user setting to switch to **named-day columns** (`Today / Tomorrow / M
 
 One parser pass **per non-empty line** (blank lines ignored). Inline tokens recognized on each line:
 
-- **Date keywords**: `today`, `tomorrow`, `mon`/`tue`/.../`sun`, `fri` etc. → sets task's scheduled date / target bucket.
+- **Date keywords**: `today`, `tomorrow`, `mon`/`tue`/.../`sun`, `fri` etc., or `YYYY-MM-DD` ISO dates → sets task's scheduled date / target bucket. Preview chips show weekday abbreviations for dates in the current ISO week, otherwise the ISO string.
 - **`#project`** — files task under matching project; missing project shows inline error with opt-in create + fuzzy suggestions (no auto-create).
 - **Priority bangs**: `!`, `!!`, `!!!` → priority 1/2/3.
 
@@ -76,7 +76,7 @@ Semicolon mode (optional): if a line contains `;`, parse it as:
 - Split on `;`, trim each segment, drop empties.
 - **Segment 0 is always the title**.
 - **Segments 1..n are properties**; each property segment must be exactly one of:
-  - a date keyword (`today`, `tomorrow`, `mon`/`tue`/.../`sun`, `later`)
+  - a date keyword (`today`, `tomorrow`, `mon`/`tue`/.../`sun`, `later`) or valid `YYYY-MM-DD`
   - `#project` slug
   - priority bangs (`!`, `!!`, `!!!`)
 - Any property segment that matches none of the above shows an inline error and **blocks submit for that line** (same behavior as an invalid/missing `#project`).

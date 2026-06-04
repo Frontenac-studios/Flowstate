@@ -1,3 +1,4 @@
+import { isScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 import { getLineAtCursor } from "@/lib/parser/composer-assist";
 import type { PhaseRef } from "@/lib/projects/find-phase-by-name";
 
@@ -20,13 +21,10 @@ export type ProjectComposerAssistContext = {
   phases: PhaseRef[];
 };
 
-const WEEKDAY_PATTERN = /^(sun|mon|tue|wed|thu|fri|sat)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
 
 function matchesDateToken(segment: string): boolean {
-  const lower = segment.trim().toLowerCase();
-  if (lower === "later" || lower === "today" || lower === "tomorrow") return true;
-  return WEEKDAY_PATTERN.test(lower);
+  return isScheduledDateToken(segment);
 }
 
 function matchesPriorityToken(segment: string): boolean {

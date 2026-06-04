@@ -110,10 +110,24 @@ describe("parseQuickInput", () => {
     expect(nextWeek.scheduledDate).toBe("2026-05-27");
   });
 
-  it("treats ISO-like date tokens as title text in space mode", () => {
+  it("parses ISO date tokens in space mode", () => {
     const result = parseQuickInput("ship 2026-05-30", ctx);
-    expect(result.title).toBe("ship 2026-05-30");
-    expect(result.scheduledDate).toBe("2026-05-27");
+    expect(result.title).toBe("ship");
+    expect(result.scheduledDate).toBe("2026-05-30");
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("parses ISO date tokens in semicolon mode", () => {
+    const result = parseQuickInput("ship; 2026-06-02; #rdm", ctx);
+    expect(result.title).toBe("ship");
+    expect(result.scheduledDate).toBe("2026-06-02");
+    expect(result.projectSlug).toBe("rdm");
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("warns on invalid ISO date tokens in semicolon mode", () => {
+    const result = parseQuickInput("ship; 2026-02-30", ctx);
+    expect(result.warnings).toEqual([{ code: "invalid_property", property: "2026-02-30" }]);
   });
 
   it("uses Untitled when semicolon segments are all empty", () => {

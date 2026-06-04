@@ -35,6 +35,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "supabase": "supabase",
+    "auth:check-signup-disabled": "bash scripts/check-auth-signup-disabled.sh",
     "desktop:dev": "npm run build:desktop -w Flowstate && npm run tauri dev -w @kash/desktop",
     "desktop:build": "npm run build:desktop -w Flowstate && node apps/desktop/scripts/prepare-sidecar.mjs && npm run tauri build -w @kash/desktop"
   },

@@ -5,9 +5,14 @@ function warningMessage(warning: ProjectParseWarning): string {
     case "invalid_property":
       return `Invalid ${warning.field}: "${warning.property}"`;
     case "phase_not_found":
+      if (warning.underParent) {
+        return `No phase "${warning.name}" under "${warning.underParent}"`;
+      }
       return `No phase named "${warning.name}"`;
     case "phase_ambiguous":
       return `Ambiguous phase "${warning.name}" (${warning.matches.join(", ")})`;
+    case "empty_phase_name":
+      return "Parent directory name is required after +";
   }
 }
 
@@ -15,7 +20,8 @@ function isBlockingWarning(warning: ProjectParseWarning): boolean {
   return (
     warning.code === "invalid_property" ||
     warning.code === "phase_not_found" ||
-    warning.code === "phase_ambiguous"
+    warning.code === "phase_ambiguous" ||
+    warning.code === "empty_phase_name"
   );
 }
 

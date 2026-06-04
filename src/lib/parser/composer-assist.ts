@@ -1,3 +1,5 @@
+import { isScheduledDateToken } from "@/lib/dates/scheduled-date-input";
+
 import type { ProjectRef } from "./fuzzy-project";
 
 export const COMPOSER_PROPERTY_ORDER = ["title", "due", "project", "priority"] as const;
@@ -20,7 +22,6 @@ export type ComposerAssistContext = {
   lastProjectSlug?: string | null;
 };
 
-const WEEKDAY_PATTERN = /^(sun|mon|tue|wed|thu|fri|sat)$/i;
 const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
 
@@ -41,9 +42,7 @@ export function getLineAtCursor(
 }
 
 function matchesDateToken(segment: string): boolean {
-  const lower = segment.trim().toLowerCase();
-  if (lower === "later" || lower === "today" || lower === "tomorrow") return true;
-  return WEEKDAY_PATTERN.test(lower);
+  return isScheduledDateToken(segment);
 }
 
 function matchesProjectToken(segment: string): boolean {
