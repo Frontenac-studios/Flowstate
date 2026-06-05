@@ -5,6 +5,7 @@ import {
   getComposerAssistFromValue,
   getLineAtCursor,
   segmentMatchesProperty,
+  shouldAppendSemicolonAfterAccept,
 } from "./composer-assist";
 
 const projects = [
@@ -126,5 +127,27 @@ describe("getComposerAssist", () => {
     const state = getComposerAssistFromValue(value, cursor, ctx);
     expect(state.activeProperty).toBe("due");
     expect(state.suggestionSuffix).toBe("today");
+  });
+
+  it("does not suggest a fifth property after project with trailing semicolon", () => {
+    const line = "walk dog; today; !; rdm; ";
+    const state = assist(line, line.length);
+    expect(state.suggestion).toBeNull();
+    expect(state.suggestionSuffix).toBeNull();
+    expect(state.properties.every((p) => p.status === "filled")).toBe(true);
+  });
+
+  it("does not append semicolon after accepting the last property", () => {
+    const line = "walk dog; today; !; gr";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("project");
+    expect(shouldAppendSemicolonAfterAccept(line, line.length, state)).toBe(false);
+  });
+
+  it("still appends semicolon after accepting non-final properties", () => {
+    const line = "walk dog; tod";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("due");
+    expect(shouldAppendSemicolonAfterAccept(line, line.length, state)).toBe(true);
   });
 });

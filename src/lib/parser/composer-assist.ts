@@ -169,12 +169,12 @@ function isPropertyFilled(
 
 function buildPropertyStatuses(
   segments: string[],
-  activeProperty: ComposerProperty,
+  activeProperty: ComposerProperty | null,
   inSemicolonMode: boolean,
   projects: ProjectRef[]
 ): Array<{ key: ComposerProperty; status: PropertyStatus }> {
   return COMPOSER_PROPERTY_ORDER.map((key) => {
-    if (key === activeProperty) {
+    if (activeProperty && key === activeProperty) {
       return { key, status: "active" as const };
     }
     if (key === "title") {
@@ -211,7 +211,20 @@ export function getComposerAssist(
   let suggestionSuffix: string | null = null;
 
   if (inSemicolonMode) {
-    const segmentProperty = propertyForSegmentIndex(segmentIndex) ?? "priority";
+    const segmentProperty = propertyForSegmentIndex(segmentIndex);
+
+    if (segmentProperty === null) {
+      const properties = buildPropertyStatuses(segments, null, inSemicolonMode, ctx.projects);
+      return {
+        properties,
+        activeProperty: "project",
+        suggestion: null,
+        suggestionSuffix: null,
+        segmentIndex,
+        inSemicolonMode,
+      };
+    }
+
     activeProperty = segmentProperty;
 
     if (
@@ -295,6 +308,7 @@ export function shouldAppendSemicolonAfterAccept(
   state: ComposerAssistState
 ): boolean {
   if (!state.suggestion || state.activeProperty === "title") return false;
+  if (nextProperty(state.activeProperty) === null) return false;
   const afterInsert = lineText.slice(cursorInLine);
   const trimmedAfter = afterInsert.trimStart();
   if (trimmedAfter.startsWith(";")) return false;
