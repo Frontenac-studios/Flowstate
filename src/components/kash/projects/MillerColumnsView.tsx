@@ -374,7 +374,7 @@ export default function MillerColumnsView({
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
     await executeComposerSubmit({
       projectId,
-      parentPhaseId: composerParentPhaseId,
+      parentPhaseId: null,
       phases: phases.map((p) => ({
         id: p.id,
         name: p.name,
@@ -405,7 +405,6 @@ export default function MillerColumnsView({
             ) : null}
             <NewItemRow
               phases={phases}
-              defaultPhaseId={composerParentPhaseId}
               pending={createPending}
               onSubmitComposer={handleSubmitComposer}
             />

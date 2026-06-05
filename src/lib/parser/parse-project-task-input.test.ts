@@ -77,6 +77,26 @@ describe("parseProjectTaskInput", () => {
     const result = parseProjectTaskInput("Task; ; ; A//", ctx);
     expect(result.warnings).toEqual([{ code: "empty_phase_name" }]);
   });
+
+  it("validates nested paths from root when parentPhaseId is null", () => {
+    const result = parseProjectTaskInput("Task; ; ; Product & Portfolio//+ Magic-Link Gate", {
+      ...ctx,
+      parentPhaseId: null,
+    });
+    expect(result.warnings).toHaveLength(0);
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
+
+  it("would fail first path segment when parentPhaseId is Miller selection (regression guard)", () => {
+    const result = parseProjectTaskInput("Task; ; ; Product & Portfolio//+ Magic-Link Gate", {
+      ...ctx,
+      parentPhaseId: "phase-portfolio",
+    });
+    expect(
+      result.warnings.some((w) => w.code === "phase_not_found" && w.name === "Product & Portfolio")
+    ).toBe(true);
+    expect(isProjectTaskLineValid(result)).toBe(false);
+  });
 });
 
 describe("parseProjectTaskInputLines", () => {

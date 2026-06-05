@@ -26,12 +26,11 @@ import type { ProjectPhase } from "./types";
 
 type Props = {
   phases: ProjectPhase[];
-  defaultPhaseId: string | null;
   onSubmitComposer: (lines: ParsedProjectLine[]) => Promise<void>;
   pending: boolean;
 };
 
-export default function NewItemRow({ phases, defaultPhaseId, onSubmitComposer, pending }: Props) {
+export default function NewItemRow({ phases, onSubmitComposer, pending }: Props) {
   const [value, setValue] = useState("");
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
@@ -48,9 +47,9 @@ export default function NewItemRow({ phases, defaultPhaseId, onSubmitComposer, p
   const parseCtx = useMemo(
     () => ({
       phases: phaseRefs,
-      parentPhaseId: defaultPhaseId,
+      parentPhaseId: null,
     }),
-    [phaseRefs, defaultPhaseId]
+    [phaseRefs]
   );
 
   const parsedLines = useMemo(() => parseProjectTaskInputLines(value, parseCtx), [value, parseCtx]);
