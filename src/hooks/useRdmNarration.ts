@@ -14,9 +14,16 @@ export function useRdmNarration(task: TaskForNarration | null) {
   const [narration, setNarration] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const taskId = task?.id ?? null;
+  const title = task?.title ?? null;
+  const isTop3 = task?.isTop3 ?? false;
+  const priority = task?.priority ?? 0;
+  const projectSlug = task?.projectSlug ?? null;
+
   useEffect(() => {
-    if (!task) {
+    if (!taskId || !title) {
       setNarration(null);
+      setLoading(false);
       return;
     }
 
@@ -25,9 +32,9 @@ export function useRdmNarration(task: TaskForNarration | null) {
     setLoading(true);
     setNarration(null);
 
-    const fallback = task.isTop3
-      ? `Going with **${task.title}** — it's Top 3.`
-      : `Going with **${task.title}** — next on your list.`;
+    const fallback = isTop3
+      ? `Going with **${title}** — it's Top 3.`
+      : `Going with **${title}** — next on your list.`;
 
     void (async () => {
       try {
@@ -36,11 +43,11 @@ export function useRdmNarration(task: TaskForNarration | null) {
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            taskId: task.id,
-            title: task.title,
-            isTop3: task.isTop3,
-            priority: task.priority,
-            projectSlug: task.projectSlug,
+            taskId,
+            title,
+            isTop3,
+            priority,
+            projectSlug,
             pickReason: "weighted-rdm",
           }),
         });
@@ -58,7 +65,7 @@ export function useRdmNarration(task: TaskForNarration | null) {
         if (err instanceof Error && err.name === "AbortError") return;
         if (!cancelled) setNarration(fallback);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
 
@@ -66,7 +73,7 @@ export function useRdmNarration(task: TaskForNarration | null) {
       cancelled = true;
       controller.abort();
     };
-  }, [task]);
+  }, [taskId, title, isTop3, priority, projectSlug]);
 
   return { narration, loading };
 }
