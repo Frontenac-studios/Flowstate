@@ -49,6 +49,7 @@ export const tasksRouter = createTRPCRouter({
         scheduledDate: tasks.scheduledDate,
         bucketOverride: tasks.bucketOverride,
         projectId: tasks.projectId,
+        phaseId: tasks.phaseId,
         isTop3: tasks.isTop3,
         top3Order: tasks.top3Order,
         completedAt: tasks.completedAt,

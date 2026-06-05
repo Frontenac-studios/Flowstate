@@ -50,6 +50,7 @@ export default function ProjectWorkspace({ project: initialProject }: { project:
           tree={tree}
           projectId={initialProject.id}
           phases={phasesQuery.data ?? []}
+          tasks={tasksQuery.data ?? []}
           selectedPath={selectedPath}
           onSelectPath={setSelectedPath}
         />

@@ -25,7 +25,7 @@ describe("parseQuickInput", () => {
   });
 
   it("parses semicolon mode: segment 0 is title; later segments are properties", () => {
-    const result = parseQuickInput("ship onboarding; tomorrow; #rdm; !!", ctx);
+    const result = parseQuickInput("ship onboarding; tomorrow; !!; rdm", ctx);
     expect(result.title).toBe("ship onboarding");
     expect(result.scheduledDate).toBe("2026-05-28");
     expect(result.projectSlug).toBe("rdm");
@@ -34,11 +34,18 @@ describe("parseQuickInput", () => {
   });
 
   it("warns on unrecognized semicolon property segments", () => {
-    const result = parseQuickInput("broken; notadate; #rdm", ctx);
+    const result = parseQuickInput("broken; not a date; rdm", ctx);
     expect(result.title).toBe("broken");
     expect(result.scheduledDate).toBe("2026-05-27");
     expect(result.projectSlug).toBe("rdm");
-    expect(result.warnings).toEqual([{ code: "invalid_property", property: "notadate" }]);
+    expect(result.warnings).toEqual([{ code: "invalid_property", property: "not a date" }]);
+  });
+
+  it("warns on unknown slug-shaped semicolon project segments", () => {
+    const result = parseQuickInput("broken; notadate", ctx);
+    expect(result.title).toBe("broken");
+    expect(result.projectSlug).toBe("notadate");
+    expect(result.warnings).toEqual([{ code: "project_not_found", slug: "notadate" }]);
   });
 
   it("parses tomorrow", () => {
@@ -59,14 +66,33 @@ describe("parseQuickInput", () => {
     expect(result.title).toBe("demo");
   });
 
-  it("parses known #project", () => {
+  it("parses known project without hash in space mode", () => {
+    const result = parseQuickInput("fix bug rdm", ctx);
+    expect(result.projectSlug).toBe("rdm");
+    expect(result.warnings).toHaveLength(0);
+    expect(result.title).toBe("fix bug");
+  });
+
+  it("parses known project with optional hash in space mode", () => {
     const result = parseQuickInput("fix bug #rdm", ctx);
     expect(result.projectSlug).toBe("rdm");
     expect(result.warnings).toHaveLength(0);
     expect(result.title).toBe("fix bug");
   });
 
-  it("warns on unknown #project with suggestions", () => {
+  it("resolves project slug case-insensitively to canonical stored slug", () => {
+    const result = parseQuickInput("task; today; RDM", ctx);
+    expect(result.projectSlug).toBe("rdm");
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("accepts legacy hash prefix in semicolon mode", () => {
+    const result = parseQuickInput("task; today; #RDM", ctx);
+    expect(result.projectSlug).toBe("rdm");
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("warns on unknown project with suggestions", () => {
     const result = parseQuickInput("task #rdn", {
       ...ctx,
       projects: [
@@ -118,7 +144,7 @@ describe("parseQuickInput", () => {
   });
 
   it("parses ISO date tokens in semicolon mode", () => {
-    const result = parseQuickInput("ship; 2026-06-02; #rdm", ctx);
+    const result = parseQuickInput("ship; 2026-06-02; rdm", ctx);
     expect(result.title).toBe("ship");
     expect(result.scheduledDate).toBe("2026-06-02");
     expect(result.projectSlug).toBe("rdm");
@@ -137,14 +163,14 @@ describe("parseQuickInput", () => {
   });
 
   it("parses property-only tail after empty semicolon title as first segment", () => {
-    const result = parseQuickInput("; tomorrow; #rdm", ctx);
+    const result = parseQuickInput("; tomorrow; rdm", ctx);
     expect(result.title).toBe("tomorrow");
     expect(result.scheduledDate).toBe("2026-05-27");
     expect(result.projectSlug).toBe("rdm");
   });
 
   it("applies date keywords from semicolon property segments", () => {
-    const result = parseQuickInput("standup; tomorrow; #rdm", ctx);
+    const result = parseQuickInput("standup; tomorrow; rdm", ctx);
     expect(result.title).toBe("standup");
     expect(result.scheduledDate).toBe("2026-05-28");
     expect(result.projectSlug).toBe("rdm");

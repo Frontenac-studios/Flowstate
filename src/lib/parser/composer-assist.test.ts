@@ -10,6 +10,7 @@ import {
 const projects = [
   { slug: "rdm", name: "RDM" },
   { slug: "inbox", name: "Inbox" },
+  { slug: "great-white-client-build", name: "Great White Client Build" },
 ];
 
 const ctx = { projects, lastProjectSlug: "rdm" };
@@ -32,10 +33,13 @@ describe("segmentMatchesProperty", () => {
   it("matches date, project, and priority tokens", () => {
     expect(segmentMatchesProperty("today", "due")).toBe(true);
     expect(segmentMatchesProperty("2026-05-30", "due")).toBe(true);
-    expect(segmentMatchesProperty("#rdm", "project")).toBe(true);
+    expect(segmentMatchesProperty("rdm", "project", projects)).toBe(true);
+    expect(segmentMatchesProperty("#rdm", "project", projects)).toBe(true);
     expect(segmentMatchesProperty("!!", "priority")).toBe(true);
     expect(segmentMatchesProperty("tod", "due")).toBe(false);
     expect(segmentMatchesProperty("2026-02-30", "due")).toBe(false);
+    expect(segmentMatchesProperty("gr", "project", projects)).toBe(false);
+    expect(segmentMatchesProperty("#gr", "project", projects)).toBe(false);
   });
 });
 
@@ -57,45 +61,63 @@ describe("getComposerAssist", () => {
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("active");
   });
 
-  it("partial due shows suffix ay", () => {
+  it("partial due shows suffix ay for today", () => {
     const line = "walk dog; tod";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("due");
     expect(state.suggestionSuffix).toBe("ay");
   });
 
-  it("project active after due segment complete with trailing semicolon", () => {
-    const line = "walk dog; today; ";
+  it("partial due shows suffix w for tomorrow", () => {
+    const line = "walk dog; Tomorro";
     const state = assist(line, line.length);
-    expect(state.activeProperty).toBe("project");
-    expect(state.suggestion).toBe("#rdm");
-    expect(state.suggestionSuffix).toBe("#rdm");
-    expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
+    expect(state.activeProperty).toBe("due");
+    expect(state.suggestion).toBe("tomorrow");
+    expect(state.suggestionSuffix).toBe("w");
   });
 
-  it("priority active after project segment", () => {
-    const line = "walk dog; today; #rdm; ";
+  it("priority active after due segment complete with trailing semicolon", () => {
+    const line = "walk dog; today; ";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("priority");
     expect(state.suggestion).toBe("!");
-    expect(state.properties.find((p) => p.key === "project")?.status).toBe("filled");
+    expect(state.suggestionSuffix).toBe("!");
+    expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
+  });
+
+  it("project active after priority segment", () => {
+    const line = "walk dog; today; !; ";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("project");
+    expect(state.suggestion).toBe("rdm");
+    expect(state.suggestionSuffix).toBe("rdm");
+    expect(state.properties.find((p) => p.key === "priority")?.status).toBe("filled");
+  });
+
+  it("partial project shows prefix completion suffix", () => {
+    const line = "walk dog; today; !; gr";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("project");
+    expect(state.suggestion).toBe("great-white-client-build");
+    expect(state.suggestionSuffix).toBe("eat-white-client-build");
   });
 
   it("no suggestion when due token is complete without trailing semicolon", () => {
     const line = "walk dog; today";
     const state = assist(line, line.length);
-    expect(state.activeProperty).toBe("project");
+    expect(state.activeProperty).toBe("priority");
     expect(state.suggestion).toBeNull();
     expect(state.suggestionSuffix).toBeNull();
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
   });
 
   it("marks filled properties in the bar", () => {
-    const line = "walk dog; today; #rdm";
+    const line = "walk dog; today; !; rdm";
     const state = assist(line, line.length);
     expect(state.properties.find((p) => p.key === "title")?.status).toBe("filled");
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
-    expect(state.properties.find((p) => p.key === "project")?.status).toBe("filled");
+    expect(state.properties.find((p) => p.key === "priority")?.status).toBe("filled");
+    expect(state.properties.find((p) => p.key === "project")?.status).toBe("active");
   });
 
   it("getComposerAssistFromValue uses cursor line in multiline input", () => {

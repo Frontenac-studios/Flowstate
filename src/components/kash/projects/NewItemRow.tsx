@@ -15,22 +15,38 @@ import {
   shouldAppendSemicolonAfterProjectAccept,
 } from "@/lib/parser/project-composer-assist";
 import type { PhaseRef } from "@/lib/projects/find-phase-by-name";
+import {
+  buildComposerLeafPhaseIdByPathKey,
+  resolveComposerLinePhaseIdSync,
+} from "@/lib/projects/resolve-composer-line-phase-id";
+import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
 
+import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
 import { ComposerTextarea, type ComposerTextareaHandle } from "../plan/ComposerTextarea";
 
 import ProjectComposerLineErrors from "./ProjectComposerLineErrors";
 import ProjectMultiLineParsePreview from "./ProjectMultiLineParsePreview";
 import ProjectParsePreview from "./ProjectParsePreview";
 import ProjectPropertyBar from "./ProjectPropertyBar";
-import type { ProjectPhase } from "./types";
+import type { ProjectPhase, ProjectTask } from "./types";
 
 type Props = {
+  projectId: string;
   phases: ProjectPhase[];
+  tasks: ProjectTask[];
+  defaultPhaseId: string | null;
   onSubmitComposer: (lines: ParsedProjectLine[]) => Promise<void>;
   pending: boolean;
 };
 
-export default function NewItemRow({ phases, onSubmitComposer, pending }: Props) {
+export default function NewItemRow({
+  projectId,
+  phases,
+  tasks,
+  defaultPhaseId,
+  onSubmitComposer,
+  pending,
+}: Props) {
   const [value, setValue] = useState("");
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
@@ -44,6 +60,11 @@ export default function NewItemRow({ phases, onSubmitComposer, pending }: Props)
     [phases]
   );
 
+  const phaseLookup = useMemo(
+    () => phaseRefs.map((phase) => ({ phaseId: phase.id, name: phase.name })),
+    [phaseRefs]
+  );
+
   const parseCtx = useMemo(
     () => ({
       phases: phaseRefs,
@@ -53,6 +74,41 @@ export default function NewItemRow({ phases, onSubmitComposer, pending }: Props)
   );
 
   const parsedLines = useMemo(() => parseProjectTaskInputLines(value, parseCtx), [value, parseCtx]);
+
+  const duplicateWarnings = useMemo(() => {
+    if (parsedLines.length === 0) return [];
+
+    const resolveParams = {
+      phases: phaseRefs,
+      defaultPhaseId,
+      parentPhaseId: null,
+      allLines: parsedLines,
+    };
+    const leafPhaseIdByPathKey = buildComposerLeafPhaseIdByPathKey(parsedLines, phaseRefs, null);
+
+    return detectDuplicateTaskWarnings({
+      lines: parsedLines.map((line) => {
+        const { phaseId, skipExistingCheck } = resolveComposerLinePhaseIdSync(line, {
+          ...resolveParams,
+          leafPhaseIdByPathKey,
+        });
+        return {
+          lineIndex: line.lineIndex,
+          title: line.parse.title,
+          projectId,
+          phaseId,
+          skipExistingCheck,
+        };
+      }),
+      existingTasks: tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        projectId: task.projectId,
+        phaseId: task.phaseId,
+        completedAt: task.completedAt,
+      })),
+    });
+  }, [parsedLines, phaseRefs, defaultPhaseId, projectId, tasks]);
 
   const assist = useMemo(
     () => getProjectComposerAssistFromValue(value, cursor, parseCtx),
@@ -171,6 +227,12 @@ export default function NewItemRow({ phases, onSubmitComposer, pending }: Props)
           <ProjectMultiLineParsePreview lines={parsedLines} />
         ) : null
       ) : null}
+
+      <ComposerDuplicateWarnings
+        warnings={duplicateWarnings}
+        phases={phaseLookup}
+        context="project"
+      />
 
       <ProjectComposerLineErrors lines={parsedLines} />
     </div>

@@ -38,6 +38,13 @@ export default function ImportHistoryPanel({ projectId }: Props) {
     enabled: open,
   });
 
+  const undoTasksQuery = useQuery({
+    ...trpc.taskBulkImports.listTasksForImport.queryOptions({
+      importId: undoTarget?.importId ?? "",
+    }),
+    enabled: undoTarget !== null,
+  });
+
   const invalidateAll = () => {
     void queryClient.invalidateQueries({
       queryKey: trpc.phases.listByProject.queryKey({ projectId }),
@@ -173,6 +180,7 @@ export default function ImportHistoryPanel({ projectId }: Props) {
 
       <ConfirmDialog
         open={undoTarget !== null}
+        opaque
         title="Undo bulk import?"
         message={
           undoTarget
@@ -180,13 +188,28 @@ export default function ImportHistoryPanel({ projectId }: Props) {
             : ""
         }
         confirmLabel={undoMutation.isPending ? "Undoing…" : "Undo import"}
+        confirmDisabled={undoTasksQuery.isLoading || undoMutation.isPending}
         destructive
         onCancel={() => setUndoTarget(null)}
         onConfirm={() => {
           if (!undoTarget) return;
           undoMutation.mutate({ importId: undoTarget.importId });
         }}
-      />
+      >
+        <section aria-label="Tasks to remove">
+          {undoTasksQuery.isLoading ? (
+            <p className="mt-3 text-sm text-kash-ink-muted">Loading tasks…</p>
+          ) : (
+            <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-kash border border-white/40 px-2 py-2">
+              {(undoTasksQuery.data ?? []).map((task) => (
+                <li key={task.id} className="truncate text-sm text-kash-ink">
+                  {task.title}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </ConfirmDialog>
     </div>
   );
 }

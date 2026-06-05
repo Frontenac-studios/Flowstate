@@ -1,5 +1,6 @@
 "use client";
 
+import ComposerDueDateHelp from "@/components/kash/composer/ComposerDueDateHelp";
 import type {
   ProjectComposerAssistState,
   ProjectComposerProperty,
@@ -37,20 +38,35 @@ export default function ProjectPropertyBar({ assist, visible }: Props) {
                 ·
               </span>
             ) : null}
-            <span
-              role="listitem"
-              aria-current={isActive ? "step" : undefined}
-              className={[
-                "rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors",
-                isActive
-                  ? "bg-[var(--kash-accent-soft)] text-kash-accent"
-                  : isFilled
-                    ? "text-kash-ink-muted"
-                    : "text-kash-ink-muted/45",
-              ].join(" ")}
-            >
-              {LABELS[item.key]}
-            </span>
+            {item.key === "due" ? (
+              <ComposerDueDateHelp
+                label={LABELS[item.key]}
+                isActive={isActive}
+                pillClassName={[
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                  isActive
+                    ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                    : isFilled
+                      ? "text-kash-ink-muted"
+                      : "text-kash-ink-muted/45",
+                ].join(" ")}
+              />
+            ) : (
+              <span
+                role="listitem"
+                aria-current={isActive ? "step" : undefined}
+                className={[
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                  isActive
+                    ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                    : isFilled
+                      ? "text-kash-ink-muted"
+                      : "text-kash-ink-muted/45",
+                ].join(" ")}
+              >
+                {LABELS[item.key]}
+              </span>
+            )}
           </span>
         );
       })}

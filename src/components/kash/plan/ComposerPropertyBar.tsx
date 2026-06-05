@@ -1,5 +1,6 @@
 "use client";
 
+import ComposerDueDateHelp from "@/components/kash/composer/ComposerDueDateHelp";
 import type { ComposerAssistState, ComposerProperty } from "@/lib/parser/composer-assist";
 
 const LABELS: Record<ComposerProperty, string> = {
@@ -34,21 +35,39 @@ export function ComposerPropertyBar({ assist, visible }: Props) {
                 ·
               </span>
             ) : null}
-            <span
-              role="listitem"
-              aria-current={isActive ? "step" : undefined}
-              className={[
-                "rounded-full px-2 py-0.5 text-xs font-medium transition-colors",
-                isActive
-                  ? "bg-[var(--kash-accent-soft)] text-kash-accent"
-                  : isFilled
-                    ? "text-kash-ink-muted"
-                    : "text-kash-ink-muted/45",
-              ].join(" ")}
-            >
-              {LABELS[item.key]}
-              {isFilled && !isActive ? <span className="sr-only"> (filled)</span> : null}
-            </span>
+            {item.key === "due" ? (
+              <ComposerDueDateHelp
+                label={LABELS[item.key]}
+                isActive={isActive}
+                filledScreenReader={
+                  isFilled && !isActive ? <span className="sr-only"> (filled)</span> : null
+                }
+                pillClassName={[
+                  "rounded-full px-2 py-0.5 text-xs font-medium transition-colors",
+                  isActive
+                    ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                    : isFilled
+                      ? "text-kash-ink-muted"
+                      : "text-kash-ink-muted/45",
+                ].join(" ")}
+              />
+            ) : (
+              <span
+                role="listitem"
+                aria-current={isActive ? "step" : undefined}
+                className={[
+                  "rounded-full px-2 py-0.5 text-xs font-medium transition-colors",
+                  isActive
+                    ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                    : isFilled
+                      ? "text-kash-ink-muted"
+                      : "text-kash-ink-muted/45",
+                ].join(" ")}
+              >
+                {LABELS[item.key]}
+                {isFilled && !isActive ? <span className="sr-only"> (filled)</span> : null}
+              </span>
+            )}
           </span>
         );
       })}
