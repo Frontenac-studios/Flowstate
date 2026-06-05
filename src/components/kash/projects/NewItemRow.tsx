@@ -68,9 +68,9 @@ export default function NewItemRow({
   const parseCtx = useMemo(
     () => ({
       phases: phaseRefs,
-      parentPhaseId: defaultPhaseId,
+      parentPhaseId: null,
     }),
-    [phaseRefs, defaultPhaseId]
+    [phaseRefs]
   );
 
   const parsedLines = useMemo(() => parseProjectTaskInputLines(value, parseCtx), [value, parseCtx]);
@@ -81,14 +81,10 @@ export default function NewItemRow({
     const resolveParams = {
       phases: phaseRefs,
       defaultPhaseId,
-      parentPhaseId: defaultPhaseId,
+      parentPhaseId: null,
       allLines: parsedLines,
     };
-    const leafPhaseIdByPathKey = buildComposerLeafPhaseIdByPathKey(
-      parsedLines,
-      phaseRefs,
-      defaultPhaseId
-    );
+    const leafPhaseIdByPathKey = buildComposerLeafPhaseIdByPathKey(parsedLines, phaseRefs, null);
 
     return detectDuplicateTaskWarnings({
       lines: parsedLines.map((line) => {

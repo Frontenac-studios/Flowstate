@@ -138,4 +138,58 @@ describe("executeComposerSubmit", () => {
     });
     expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ phaseId: "child-new" }));
   });
+
+  it("resolves nested paths from root when defaultPhaseId is a nested Miller selection", async () => {
+    const createPhase = vi.fn().mockResolvedValue({ id: "child-id", name: "Marketing Site" });
+    const createTask = vi.fn().mockResolvedValue(undefined);
+
+    await executeComposerSubmit({
+      projectId: "proj-1",
+      parentPhaseId: null,
+      phases,
+      defaultPhaseId: "parent-id",
+      lines: [
+        taskLine("a", {
+          pathKey: "product & portfolio//marketing site",
+          parentDirPath: [
+            { name: "Product & Portfolio", create: false },
+            { name: "Marketing Site", create: true },
+          ],
+          parentDirCreate: true,
+        }),
+      ],
+      mutations: {
+        createPhase,
+        createTask,
+        bulkCreateTasks: vi.fn(),
+      },
+    });
+
+    expect(createPhase).toHaveBeenCalledOnce();
+    expect(createPhase).toHaveBeenCalledWith({
+      projectId: "proj-1",
+      parentPhaseId: "parent-id",
+      name: "Marketing Site",
+    });
+    expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ phaseId: "child-id" }));
+  });
+
+  it("uses defaultPhaseId for lines without a parent dir path", async () => {
+    const createTask = vi.fn().mockResolvedValue(undefined);
+
+    await executeComposerSubmit({
+      projectId: "proj-1",
+      parentPhaseId: null,
+      phases,
+      defaultPhaseId: "parent-id",
+      lines: [taskLine("bare task")],
+      mutations: {
+        createPhase: vi.fn(),
+        createTask,
+        bulkCreateTasks: vi.fn(),
+      },
+    });
+
+    expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ phaseId: "parent-id" }));
+  });
 });
