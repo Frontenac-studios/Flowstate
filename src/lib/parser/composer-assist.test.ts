@@ -61,11 +61,19 @@ describe("getComposerAssist", () => {
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("active");
   });
 
-  it("partial due shows suffix ay", () => {
+  it("partial due shows suffix ay for today", () => {
     const line = "walk dog; tod";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("due");
     expect(state.suggestionSuffix).toBe("ay");
+  });
+
+  it("partial due shows suffix w for tomorrow", () => {
+    const line = "walk dog; Tomorro";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("due");
+    expect(state.suggestion).toBe("tomorrow");
+    expect(state.suggestionSuffix).toBe("w");
   });
 
   it("priority active after due segment complete with trailing semicolon", () => {

@@ -1,4 +1,4 @@
-import { isScheduledDateToken } from "@/lib/dates/scheduled-date-input";
+import { isScheduledDateToken, suggestScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 
@@ -138,7 +138,7 @@ function getDefaultSuggestion(
     case "title":
       return null;
     case "due":
-      return "today";
+      return suggestScheduledDateToken(partial);
     case "project":
       return getProjectSuggestion(partial, ctx);
     case "priority":
@@ -243,7 +243,8 @@ export function getComposerAssist(
     const propertyToSuggest = suggestFor && suggestFor !== "title" ? suggestFor : null;
 
     if (propertyToSuggest) {
-      const partial = propertyToSuggest === "project" ? segmentTrimmed : "";
+      const partial =
+        propertyToSuggest === "project" || propertyToSuggest === "due" ? segmentTrimmed : "";
       suggestion = getDefaultSuggestion(propertyToSuggest, ctx, partial);
       if (suggestion) {
         suggestionSuffix = computeSuggestionSuffix(segmentTrimmed, suggestion);

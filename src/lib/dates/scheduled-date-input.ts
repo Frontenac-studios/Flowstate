@@ -12,6 +12,21 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const WEEKDAY_LABELS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
+export const SCHEDULED_DATE_KEYWORDS = ["today", "tomorrow", "later"] as const;
+export const SCHEDULED_DATE_WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+
+export const SCHEDULED_DATE_INPUT_HELP = {
+  summary: "Keywords, weekday abbreviations, or ISO date",
+  keywords: [...SCHEDULED_DATE_KEYWORDS],
+  weekdays: [...SCHEDULED_DATE_WEEKDAYS],
+  isoExample: "2026-06-05",
+} as const;
+
+const SCHEDULED_DATE_SUGGESTION_CANDIDATES = [
+  ...SCHEDULED_DATE_KEYWORDS,
+  ...SCHEDULED_DATE_WEEKDAYS,
+] as const;
+
 export type ResolvedScheduledDate = {
   scheduledDate: string | null;
   bucketOverride: "later" | null;
@@ -69,6 +84,19 @@ export function resolveScheduledDateToken(
   }
 
   return null;
+}
+
+/** Best matching token for tab completion; null when no reasonable prefix match. */
+export function suggestScheduledDateToken(partial: string): string | null {
+  const trimmed = partial.trim();
+  if (!trimmed) return "today";
+
+  const lower = trimmed.toLowerCase();
+  const matches = SCHEDULED_DATE_SUGGESTION_CANDIDATES.filter((candidate) =>
+    candidate.startsWith(lower)
+  );
+
+  return matches[0] ?? null;
 }
 
 /** Chip / preview label for a resolved scheduled date. */
