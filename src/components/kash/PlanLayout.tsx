@@ -18,7 +18,7 @@ export function PlanLayout({ children }: { children: React.ReactNode }) {
         <MondayEntryRunner />
         <div className="relative min-h-screen">
           <DesktopSyncBanner />
-          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[110rem] justify-center gap-6 px-4 py-6 pb-24 sm:px-6 lg:px-10">
+          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[110rem] gap-6 px-4 py-6 pb-24 sm:px-6 lg:px-10">
             <LeftNavRail />
             <PlanMainColumn>{children}</PlanMainColumn>
           </div>

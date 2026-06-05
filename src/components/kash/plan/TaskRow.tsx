@@ -7,9 +7,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
+import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { useTRPC } from "@/trpc/client";
-
-import { TaskRowMenu } from "./TaskRowMenu";
 
 export type PlanTaskRow = {
   id: string;
@@ -31,11 +30,14 @@ type Props = {
   onDelete: (snapshot: TaskSnapshot) => void;
 };
 
+const ACTION_WIDTH_PX = 72;
+const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
+
 function PriorityDots({ priority }: { priority: number }) {
-  if (priority === 0) return <span className="w-6" aria-hidden />;
+  if (priority === 0) return <span className="mt-0.5 w-6 shrink-0" aria-hidden />;
 
   return (
-    <span className="text-kash-accent" aria-label={`Priority ${priority}`}>
+    <span className="mt-0.5 shrink-0 text-kash-accent" aria-label={`Priority ${priority}`}>
       {"!".repeat(priority)}
     </span>
   );
@@ -53,6 +55,9 @@ export function TaskRow({
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
+  const { offset, hide, isOpen, containerRef } = useTrackpadSwipeReveal({
+    maxOffset: REVEAL_WIDTH_PX,
+  });
 
   const invalidatePlan = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -62,7 +67,7 @@ export function TaskRow({
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useDraggable({
       id: `task:${task.id}`,
-      disabled: editing,
+      disabled: editing || isOpen,
       data: { taskId: task.id },
     });
 
@@ -82,6 +87,7 @@ export function TaskRow({
     trpc.tasks.update.mutationOptions({
       onSuccess: () => {
         setEditing(false);
+        hide();
         invalidatePlan();
       },
     })
@@ -91,6 +97,7 @@ export function TaskRow({
     trpc.tasks.delete.mutationOptions({
       onSuccess: (data) => {
         onDelete(data.snapshot);
+        hide();
         invalidatePlan();
       },
     })
@@ -106,88 +113,118 @@ export function TaskRow({
     updateMutation.mutate({ id: task.id, title: trimmed });
   };
 
+  const startEdit = () => {
+    hide();
+    setEditTitle(task.title);
+    setEditing(true);
+  };
+
   return (
     <li
       ref={setNodeRef}
-      className={`glass-panel-opaque flex min-h-kash-row cursor-pointer items-center gap-2 px-3 py-2 ${
-        task.isTop3 ? "border-l-2 border-kash-accent" : ""
-      } ${selected ? "ring-2 ring-[var(--kash-accent-soft)]" : ""} ${
+      className={`relative overflow-hidden rounded-[var(--kash-radius)] ${
         isDragging ? "opacity-60" : ""
       } ${isDragging ? "" : "transition-transform"}`}
       style={{ transform: CSS.Transform.toString(transform) }}
-      onClick={() => onSelect?.(task.id)}
-      onDoubleClick={() => onActivate?.(task.id)}
     >
-      <button
-        ref={setActivatorNodeRef}
-        type="button"
-        className="cursor-grab text-kash-ink-muted"
-        aria-label="Drag handle"
-        {...listeners}
-        {...dragAttributes}
-        tabIndex={-1}
-      >
-        ⠿
-      </button>
-
-      {task.isTop3 ? (
-        <span className="shrink-0 text-kash-accent" aria-label="Top 3">
-          ★
-        </span>
-      ) : null}
-
-      <input
-        type="checkbox"
-        className="h-4 w-4 rounded border border-white/60 accent-kash-accent"
-        aria-label={`Complete ${task.title}`}
-        disabled={completeMutation.isPending}
-        onClick={(e) => e.stopPropagation()}
-        onChange={() => completeMutation.mutate({ id: task.id })}
-      />
-
-      <div className="min-w-0 flex-1">
-        {editing ? (
-          <input
-            type="text"
-            className="glass-input w-full py-1 text-sm"
-            value={editTitle}
-            autoFocus
-            onChange={(e) => setEditTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                saveTitle();
-              }
-              if (e.key === "Escape") {
-                setEditing(false);
-                setEditTitle(task.title);
-              }
+      <div ref={containerRef} className="relative">
+        <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isOpen}>
+          <button
+            type="button"
+            className="glass-panel-opaque flex w-[4.5rem] items-center justify-center text-sm text-kash-ink"
+            onClick={(e) => {
+              e.stopPropagation();
+              startEdit();
             }}
-            onBlur={saveTitle}
-          />
-        ) : (
-          <span className="block truncate text-kash-ink">{task.title}</span>
-        )}
-      </div>
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className="glass-panel-opaque flex w-[4.5rem] items-center justify-center text-sm text-kash-ink-muted"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteMutation.mutate({ id: task.id });
+            }}
+          >
+            Delete
+          </button>
+        </div>
 
-      {task.projectSlug && task.projectId ? (
-        <Link
-          href={`/projects/${task.projectId}`}
-          className="glass-pill shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+        <div
+          className={`glass-panel-opaque relative flex min-h-kash-row cursor-pointer items-start gap-2 px-3 py-2 transition-transform duration-150 ease-out ${
+            task.isTop3 ? "border-l-2 border-kash-accent" : ""
+          } ${selected ? "ring-2 ring-[var(--kash-accent-soft)]" : ""}`}
+          style={{ transform: `translateX(-${offset}px)` }}
+          onClick={() => onSelect?.(task.id)}
+          onDoubleClick={() => onActivate?.(task.id)}
         >
-          #{task.projectSlug}
-        </Link>
-      ) : null}
+          <button
+            ref={setActivatorNodeRef}
+            type="button"
+            className="mt-0.5 shrink-0 cursor-grab text-kash-ink-muted"
+            aria-label="Drag handle"
+            {...listeners}
+            {...dragAttributes}
+            tabIndex={-1}
+          >
+            ⠿
+          </button>
 
-      <PriorityDots priority={task.priority} />
+          {task.isTop3 ? (
+            <span className="shrink-0 text-kash-accent" aria-label="Top 3">
+              ★
+            </span>
+          ) : null}
 
-      <TaskRowMenu
-        onEdit={() => {
-          setEditTitle(task.title);
-          setEditing(true);
-        }}
-        onDelete={() => deleteMutation.mutate({ id: task.id })}
-      />
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 accent-kash-accent"
+            aria-label={`Complete ${task.title}`}
+            disabled={completeMutation.isPending}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => completeMutation.mutate({ id: task.id })}
+          />
+
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <input
+                type="text"
+                className="glass-input w-full py-1 text-sm"
+                value={editTitle}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveTitle();
+                  }
+                  if (e.key === "Escape") {
+                    setEditing(false);
+                    setEditTitle(task.title);
+                  }
+                }}
+                onBlur={saveTitle}
+              />
+            ) : (
+              <span className="block break-words text-kash-ink">{task.title}</span>
+            )}
+          </div>
+
+          {task.projectSlug && task.projectId ? (
+            <Link
+              href={`/projects/${task.projectId}`}
+              className="glass-pill mt-0.5 shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+              onClick={(e) => e.stopPropagation()}
+            >
+              #{task.projectSlug}
+            </Link>
+          ) : null}
+
+          <PriorityDots priority={task.priority} />
+        </div>
+      </div>
     </li>
   );
 }
