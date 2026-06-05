@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FocusChat } from "@/components/kash/chat/FocusChat";
 import { TypedNarration } from "@/components/kash/chat/TypedNarration";
+import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import { useRdmNarration } from "@/hooks/useRdmNarration";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
@@ -43,23 +44,33 @@ export function FocusCanvas() {
     return tasks.find((t) => t.id === taskId) ?? null;
   }, [taskId, tasks]);
 
-  const entryIdRef = useRef<string | null>(null);
   const lastWasLargeRef = useRef(false);
   const [seconds, setSeconds] = useState(0);
   const [doneFlash, setDoneFlash] = useState<string | null>(null);
 
-  const startMutation = useMutation(trpc.timeEntries.start.mutationOptions());
-  const endMutation = useMutation(trpc.timeEntries.end.mutationOptions());
+  const { mutateAsync: startTimeEntry } = useMutation(trpc.timeEntries.start.mutationOptions());
+  const { mutateAsync: endTimeEntry } = useMutation(trpc.timeEntries.end.mutationOptions());
   const completeMutation = useMutation(trpc.tasks.complete.mutationOptions());
   const completeBlockMutation = useMutation(trpc.focusBlocks.complete.mutationOptions());
+
+  const resetSessionUi = useCallback(() => {
+    setSeconds(0);
+    setDoneFlash(null);
+  }, []);
+
+  const entryIdRef = useFocusTimeEntry({
+    taskId,
+    startTimeEntry,
+    onSessionStart: resetSessionUi,
+  });
 
   const endSession = useCallback(
     async (reason: ExitReason) => {
       if (!entryIdRef.current) return;
-      await endMutation.mutateAsync({ entryId: entryIdRef.current, reason });
+      await endTimeEntry({ entryId: entryIdRef.current, reason });
       entryIdRef.current = null;
     },
-    [endMutation]
+    [endTimeEntry, entryIdRef]
   );
 
   const { narration, loading: narrationLoading } = useRdmNarration(
@@ -73,21 +84,6 @@ export function FocusCanvas() {
         }
       : null
   );
-
-  // Start a fresh time entry + timer whenever we land on a new task.
-  useEffect(() => {
-    if (!taskId) return;
-    setSeconds(0);
-    setDoneFlash(null);
-    entryIdRef.current = null;
-
-    const start = async () => {
-      const { entryId } = await startMutation.mutateAsync({ taskId });
-      entryIdRef.current = entryId;
-    };
-
-    void start();
-  }, [taskId, startMutation]);
 
   useEffect(() => {
     if (!taskId) return;
