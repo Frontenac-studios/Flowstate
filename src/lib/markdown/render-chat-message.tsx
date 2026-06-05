@@ -11,7 +11,7 @@ export function parseChatMessageSegments(text: string): ChatMessageSegment[] {
   const segments: ChatMessageSegment[] = [];
   let lastIndex = 0;
 
-  for (const match of text.matchAll(re)) {
+  for (const match of Array.from(text.matchAll(re))) {
     const index = match.index ?? 0;
     if (index > lastIndex) {
       segments.push({ type: "text", value: text.slice(lastIndex, index) });
