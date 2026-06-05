@@ -12,6 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { useRouter } from "next/navigation";
 
+import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { toISODateString } from "@/lib/dates/local-day";
@@ -317,7 +318,11 @@ export function DayPlanCanvas() {
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1 lg:basis-0">
-          <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} />
+          <QuickInput
+            ref={quickInputRef}
+            draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
+            onTaskCreated={handleTaskCreated}
+          />
           <Top3Slots
             pinnedBySlot={pinnedBySlot}
             onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}

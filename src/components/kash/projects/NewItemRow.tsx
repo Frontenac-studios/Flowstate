@@ -2,6 +2,8 @@
 
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 
+import { useComposerDraft } from "@/hooks/useComposerDraft";
+import { projectComposerDraftScope } from "@/lib/composer/composer-draft-constants";
 import { getLineAtCursor } from "@/lib/parser/composer-assist";
 import {
   isProjectTaskLineValid,
@@ -47,7 +49,7 @@ export default function NewItemRow({
   onSubmitComposer,
   pending,
 }: Props) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useComposerDraft(projectComposerDraftScope(projectId));
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -156,7 +158,7 @@ export default function NewItemRow({
       textareaRef.current?.setSelectionRange(newCursor, newCursor);
     });
     return true;
-  }, [cursorOnPlusParentDirLine, assist, parseCtx]);
+  }, [cursorOnPlusParentDirLine, assist, parseCtx, setValue]);
 
   const submitTasks = async () => {
     if (!value.trim() || pending || submitting) return;
