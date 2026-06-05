@@ -34,7 +34,7 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
               <div key={warning.slug} className="space-y-2">
                 <p className="text-red-600">
                   Line {line.lineIndex + 1}: No project{" "}
-                  <span className="font-mono">#{warning.slug}</span>
+                  <span className="font-mono">{warning.slug}</span>
                   <span className="ml-2 text-kash-ink-muted">&ldquo;{line.raw}&rdquo;</span>
                 </p>
                 {line.parse.suggestions.length > 0 ? (
@@ -48,7 +48,7 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
                           className="glass-link font-medium"
                           onClick={() => onApplySuggestion(line, s.slug)}
                         >
-                          #{s.slug}
+                          {s.slug}
                         </button>
                       </span>
                     ))}

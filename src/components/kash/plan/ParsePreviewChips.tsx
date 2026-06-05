@@ -11,8 +11,8 @@ export function getParseChips(parse: ParseResult): string[] {
     bucketOverride: parse.bucketOverride,
   });
   if (dateLabel) chips.push(dateLabel);
-  if (parse.projectSlug) chips.push(`#${parse.projectSlug}`);
   if (parse.priority > 0) chips.push("!".repeat(parse.priority));
+  if (parse.projectSlug) chips.push(parse.projectSlug);
   return chips;
 }
 

@@ -1,8 +1,8 @@
 import { isScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 
-import type { ProjectRef } from "./fuzzy-project";
+import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 
-export const COMPOSER_PROPERTY_ORDER = ["title", "due", "project", "priority"] as const;
+export const COMPOSER_PROPERTY_ORDER = ["title", "due", "priority", "project"] as const;
 
 export type ComposerProperty = (typeof COMPOSER_PROPERTY_ORDER)[number];
 
@@ -22,8 +22,17 @@ export type ComposerAssistContext = {
   lastProjectSlug?: string | null;
 };
 
-const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
+
+function stripOptionalHash(segment: string): string {
+  return segment.trim().replace(/^#/, "");
+}
+
+function matchesProjectToken(segment: string, projects: ProjectRef[]): boolean {
+  const stripped = stripOptionalHash(segment);
+  if (!/^[a-z0-9_-]+$/i.test(stripped)) return false;
+  return findProjectBySlug(stripped, projects) !== null;
+}
 
 export function getLineAtCursor(
   value: string,
@@ -45,15 +54,15 @@ function matchesDateToken(segment: string): boolean {
   return isScheduledDateToken(segment);
 }
 
-function matchesProjectToken(segment: string): boolean {
-  return PROJECT_PATTERN.test(segment.trim());
-}
-
 function matchesPriorityToken(segment: string): boolean {
   return PRIORITY_PATTERN.test(segment.trim());
 }
 
-export function segmentMatchesProperty(segment: string, property: ComposerProperty): boolean {
+export function segmentMatchesProperty(
+  segment: string,
+  property: ComposerProperty,
+  projects: ProjectRef[] = []
+): boolean {
   const trimmed = segment.trim();
   switch (property) {
     case "title":
@@ -61,7 +70,7 @@ export function segmentMatchesProperty(segment: string, property: ComposerProper
     case "due":
       return matchesDateToken(trimmed);
     case "project":
-      return matchesProjectToken(trimmed);
+      return matchesProjectToken(trimmed, projects);
     case "priority":
       return matchesPriorityToken(trimmed);
   }
@@ -70,8 +79,8 @@ export function segmentMatchesProperty(segment: string, property: ComposerProper
 function propertyForSegmentIndex(index: number): ComposerProperty | null {
   if (index <= 0) return "title";
   if (index === 1) return "due";
-  if (index === 2) return "project";
-  if (index === 3) return "priority";
+  if (index === 2) return "priority";
+  if (index === 3) return "project";
   return null;
 }
 
@@ -99,23 +108,39 @@ function getCurrentSegmentRaw(lineText: string, cursorInLine: number): string {
   return lineText.slice(segmentStart, cursorInLine);
 }
 
+function getProjectSuggestion(partial: string, ctx: ComposerAssistContext): string | null {
+  const stripped = stripOptionalHash(partial);
+  if (stripped) {
+    const exact = findProjectBySlug(stripped, ctx.projects);
+    if (exact) return exact.slug;
+
+    const suggestions = fuzzyProjectSuggestions(stripped, ctx.projects, 1);
+    const top = suggestions[0];
+    if (top && top.slug.toLowerCase().startsWith(stripped.toLowerCase())) {
+      return top.slug;
+    }
+    return null;
+  }
+
+  if (ctx.lastProjectSlug) {
+    const match = ctx.projects.find((p) => p.slug === ctx.lastProjectSlug);
+    if (match) return match.slug;
+  }
+  return ctx.projects[0]?.slug ?? null;
+}
+
 function getDefaultSuggestion(
   property: ComposerProperty,
-  ctx: ComposerAssistContext
+  ctx: ComposerAssistContext,
+  partial = ""
 ): string | null {
   switch (property) {
     case "title":
       return null;
     case "due":
       return "today";
-    case "project": {
-      if (ctx.lastProjectSlug) {
-        const match = ctx.projects.find((p) => p.slug === ctx.lastProjectSlug);
-        if (match) return `#${match.slug}`;
-      }
-      if (ctx.projects[0]) return `#${ctx.projects[0].slug}`;
-      return "#";
-    }
+    case "project":
+      return getProjectSuggestion(partial, ctx);
     case "priority":
       return "!";
   }
@@ -123,24 +148,30 @@ function getDefaultSuggestion(
 
 function computeSuggestionSuffix(partial: string, suggestion: string): string | null {
   if (!suggestion) return null;
-  if (!partial) return suggestion;
-  if (suggestion.toLowerCase().startsWith(partial.toLowerCase())) {
-    return suggestion.slice(partial.length);
+  const normalizedPartial = stripOptionalHash(partial);
+  if (!normalizedPartial) return suggestion;
+  if (suggestion.toLowerCase().startsWith(normalizedPartial.toLowerCase())) {
+    return suggestion.slice(normalizedPartial.length);
   }
   return null;
 }
 
-function isPropertyFilled(segments: string[], property: ComposerProperty): boolean {
+function isPropertyFilled(
+  segments: string[],
+  property: ComposerProperty,
+  projects: ProjectRef[]
+): boolean {
   const index = COMPOSER_PROPERTY_ORDER.indexOf(property);
   const segment = segments[index];
   if (segment === undefined) return false;
-  return segmentMatchesProperty(segment, property);
+  return segmentMatchesProperty(segment, property, projects);
 }
 
 function buildPropertyStatuses(
   segments: string[],
   activeProperty: ComposerProperty,
-  inSemicolonMode: boolean
+  inSemicolonMode: boolean,
+  projects: ProjectRef[]
 ): Array<{ key: ComposerProperty; status: PropertyStatus }> {
   return COMPOSER_PROPERTY_ORDER.map((key) => {
     if (key === activeProperty) {
@@ -148,7 +179,7 @@ function buildPropertyStatuses(
     }
     if (key === "title") {
       const filled = inSemicolonMode
-        ? isPropertyFilled(segments, "title")
+        ? isPropertyFilled(segments, "title", projects)
         : segments[0]?.trim().length > 0;
       return { key, status: filled ? ("filled" as const) : ("pending" as const) };
     }
@@ -157,7 +188,9 @@ function buildPropertyStatuses(
     }
     return {
       key,
-      status: isPropertyFilled(segments, key) ? ("filled" as const) : ("pending" as const),
+      status: isPropertyFilled(segments, key, projects)
+        ? ("filled" as const)
+        : ("pending" as const),
     };
   });
 }
@@ -181,13 +214,17 @@ export function getComposerAssist(
     const segmentProperty = propertyForSegmentIndex(segmentIndex) ?? "priority";
     activeProperty = segmentProperty;
 
-    if (segmentProperty !== "title" && segmentMatchesProperty(segmentTrimmed, segmentProperty)) {
+    if (
+      segmentProperty !== "title" &&
+      segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects)
+    ) {
       const advanced = nextProperty(segmentProperty);
       if (advanced) activeProperty = advanced;
     }
 
     const editingProperty =
-      segmentProperty !== "title" && !segmentMatchesProperty(segmentTrimmed, segmentProperty)
+      segmentProperty !== "title" &&
+      !segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects)
         ? segmentProperty
         : activeProperty !== segmentProperty &&
             segmentIndex >= 1 &&
@@ -198,14 +235,16 @@ export function getComposerAssist(
 
     const suggestFor =
       editingProperty ??
-      (segmentProperty !== "title" && !segmentMatchesProperty(segmentTrimmed, segmentProperty)
+      (segmentProperty !== "title" &&
+      !segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects)
         ? segmentProperty
         : null);
 
     const propertyToSuggest = suggestFor && suggestFor !== "title" ? suggestFor : null;
 
     if (propertyToSuggest) {
-      suggestion = getDefaultSuggestion(propertyToSuggest, ctx);
+      const partial = propertyToSuggest === "project" ? segmentTrimmed : "";
+      suggestion = getDefaultSuggestion(propertyToSuggest, ctx, partial);
       if (suggestion) {
         suggestionSuffix = computeSuggestionSuffix(segmentTrimmed, suggestion);
       }
@@ -213,7 +252,7 @@ export function getComposerAssist(
 
     if (
       segmentProperty !== "title" &&
-      segmentMatchesProperty(segmentTrimmed, segmentProperty) &&
+      segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects) &&
       !suggestionSuffix
     ) {
       suggestion = null;
@@ -221,7 +260,7 @@ export function getComposerAssist(
     }
   }
 
-  const properties = buildPropertyStatuses(segments, activeProperty, inSemicolonMode);
+  const properties = buildPropertyStatuses(segments, activeProperty, inSemicolonMode, ctx.projects);
 
   return {
     properties,

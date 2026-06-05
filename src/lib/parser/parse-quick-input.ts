@@ -104,8 +104,14 @@ export function removeComposerLineAtIndex(value: string, lineIndex: number): str
   return parts.join("\n");
 }
 
-const PROJECT_PATTERN = /^#([a-z0-9_-]+)$/i;
+const PROJECT_SLUG_PATTERN = /^#?([a-z0-9_-]+)$/i;
 const PRIORITY_PATTERN = /^!{1,3}$/;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function extractProjectSlugToken(token: string): string | null {
+  const match = token.match(PROJECT_SLUG_PATTERN);
+  return match ? match[1].toLowerCase() : null;
+}
 
 function collapseWhitespace(s: string): string {
   return s.trim().replace(/\s+/g, " ");
@@ -142,15 +148,20 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
       continue;
     }
 
+    if (ISO_DATE_PATTERN.test(segment.trim())) {
+      warnings.push({ code: "invalid_property", property: segment });
+      continue;
+    }
+
     const priorityResult = parsePriority(segment);
     if (priorityResult !== null) {
       priority = priorityResult;
       continue;
     }
 
-    const projectMatch = segment.match(PROJECT_PATTERN);
-    if (projectMatch) {
-      projectSlug = projectMatch[1].toLowerCase();
+    const slugCandidate = extractProjectSlugToken(segment);
+    if (slugCandidate) {
+      projectSlug = slugCandidate;
       continue;
     }
 
@@ -159,7 +170,9 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
   if (projectSlug) {
     const match = findProjectBySlug(projectSlug, ctx.projects);
-    if (!match) {
+    if (match) {
+      projectSlug = match.slug;
+    } else {
       warnings.push({ code: "project_not_found", slug: projectSlug });
       suggestions = fuzzyProjectSuggestions(projectSlug, ctx.projects).map((s) => ({
         slug: s.slug,
@@ -209,10 +222,14 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
       continue;
     }
 
-    const projectMatch = token.match(PROJECT_PATTERN);
-    if (projectMatch) {
-      projectSlug = projectMatch[1].toLowerCase();
-      continue;
+    const slugCandidate = extractProjectSlugToken(token);
+    if (slugCandidate) {
+      const hasExplicitHash = token.startsWith("#");
+      const match = findProjectBySlug(slugCandidate, ctx.projects);
+      if (hasExplicitHash || match) {
+        projectSlug = match?.slug ?? slugCandidate;
+        continue;
+      }
     }
 
     titleParts.push(token);
@@ -224,7 +241,9 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
   if (projectSlug) {
     const match = findProjectBySlug(projectSlug, ctx.projects);
-    if (!match) {
+    if (match) {
+      projectSlug = match.slug;
+    } else {
       warnings.push({ code: "project_not_found", slug: projectSlug });
       suggestions = fuzzyProjectSuggestions(projectSlug, ctx.projects).map((s) => ({
         slug: s.slug,

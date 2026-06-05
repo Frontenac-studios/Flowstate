@@ -12,4 +12,13 @@ describe("fuzzyProjectSuggestions", () => {
     const suggestions = fuzzyProjectSuggestions("rdn", projects);
     expect(suggestions[0]?.slug).toBe("rdm");
   });
+
+  it("ranks prefix slug matches for partial project input", () => {
+    const withLongSlug = [
+      ...projects,
+      { slug: "great-white-client-build", name: "Great White Client Build" },
+    ];
+    const suggestions = fuzzyProjectSuggestions("gr", withLongSlug);
+    expect(suggestions[0]?.slug).toBe("great-white-client-build");
+  });
 });

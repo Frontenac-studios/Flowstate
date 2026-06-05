@@ -39,7 +39,7 @@ type Props = {
 };
 
 function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
-  return raw.replace(new RegExp(`#${fromSlug}\\b`, "i"), `#${toSlug}`);
+  return raw.replace(new RegExp(`#?${fromSlug}\\b`, "i"), toSlug);
 }
 
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
@@ -137,7 +137,8 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
   const resolveProjectId = (line: ParsedLine): string | null => {
     if (!line.parse.projectSlug) return null;
-    return projects.find((p) => p.slug === line.parse.projectSlug)?.id ?? null;
+    const key = line.parse.projectSlug.toLowerCase();
+    return projects.find((p) => p.slug.toLowerCase() === key)?.id ?? null;
   };
 
   const resolveScheduledDate = (line: ParsedLine): string | null | undefined => {
