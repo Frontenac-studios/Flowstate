@@ -11,6 +11,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 
+import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import { partitionNamedDays } from "@/lib/tasks/partition-named-days";
@@ -147,7 +148,12 @@ export function ThisWeekCanvas() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <QuickInput ref={quickInputRef} onTaskCreated={handleTaskCreated} createInInbox />
+      <QuickInput
+        ref={quickInputRef}
+        draftStorageKey={COMPOSER_DRAFT_KEYS.planThisWeek}
+        onTaskCreated={handleTaskCreated}
+        createInInbox
+      />
       <div className="mt-4">
         {bucketMode === "named_days" ? (
           <PlanBucketsNamedDays

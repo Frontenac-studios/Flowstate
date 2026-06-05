@@ -11,6 +11,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 
+import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { datesInIsoWeek, toISODateString } from "@/lib/dates/local-day";
@@ -122,7 +123,11 @@ export function WeekCanvas() {
         />
       ) : null}
 
-      <QuickInput createInInbox onTaskCreated={() => touchActivity()} />
+      <QuickInput
+        draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
+        createInInbox
+        onTaskCreated={() => touchActivity()}
+      />
 
       {isLoading ? (
         <p className="mt-4 px-2 text-sm text-kash-ink-muted">Loading…</p>

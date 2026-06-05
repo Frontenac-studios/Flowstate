@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
 
+import { useComposerDraft } from "@/hooks/useComposerDraft";
 import {
   getAcceptInsertText,
   getComposerAssistFromValue,
@@ -36,6 +37,7 @@ export type QuickInputHandle = {
 };
 
 type Props = {
+  draftStorageKey: string;
   onTaskCreated?: (pulse: TaskCreatedPulse) => void;
   /** When true, new tasks without an explicit date land in the inbox (scheduledDate null). */
   createInInbox?: boolean;
@@ -46,13 +48,13 @@ function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string)
 }
 
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
-  { onTaskCreated, createInInbox = false },
+  { draftStorageKey, onTaskCreated, createInInbox = false },
   ref
 ) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const textareaRef = useRef<ComposerTextareaHandle>(null);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useComposerDraft(draftStorageKey);
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const [lastProjectSlug, setLastProjectSlug] = useState<string | null>(() =>
@@ -109,7 +111,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       textareaRef.current?.setSelectionRange(newCursor, newCursor);
     });
     return true;
-  }, [assistCtx]);
+  }, [assistCtx, setValue]);
 
   useImperativeHandle(
     ref,
