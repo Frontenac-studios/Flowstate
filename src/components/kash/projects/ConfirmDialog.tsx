@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
   open: boolean;
@@ -9,6 +10,9 @@ type Props = {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  opaque?: boolean;
+  confirmDisabled?: boolean;
+  children?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -20,6 +24,9 @@ export default function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   destructive = false,
+  opaque = false,
+  confirmDisabled = false,
+  children,
   onConfirm,
   onCancel,
 }: Props) {
@@ -35,7 +42,7 @@ export default function ConfirmDialog({
       if (e.key === "Escape") {
         e.preventDefault();
         onCancel();
-      } else if (e.key === "Enter") {
+      } else if (e.key === "Enter" && !confirmDisabled) {
         e.preventDefault();
         onConfirm();
       }
@@ -46,7 +53,7 @@ export default function ConfirmDialog({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onCancel, onConfirm]);
+  }, [open, confirmDisabled, onCancel, onConfirm]);
 
   useEffect(() => {
     if (open) confirmRef.current?.focus();
@@ -54,7 +61,10 @@ export default function ConfirmDialog({
 
   if (!open) return null;
 
-  return (
+  const panelClass = opaque ? "glass-panel-opaque" : "glass-panel-strong";
+  const widthClass = children ? "max-w-md" : "max-w-sm";
+
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="presentation"
@@ -62,17 +72,18 @@ export default function ConfirmDialog({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" aria-hidden />
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-md" aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        className="glass-panel-strong relative z-10 w-full max-w-sm p-6"
+        className={`${panelClass} relative z-10 w-full ${widthClass} p-6`}
       >
         <h2 id="confirm-title" className="text-lg font-semibold text-kash-ink">
           {title}
         </h2>
         <p className="mt-2 text-sm text-kash-ink-muted">{message}</p>
+        {children}
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" className="glass-btn-ghost" onClick={onCancel}>
             {cancelLabel}
@@ -82,12 +93,14 @@ export default function ConfirmDialog({
             type="button"
             className="glass-btn-primary"
             style={destructive ? { backgroundColor: "#b42318", borderColor: "#b42318" } : undefined}
+            disabled={confirmDisabled}
             onClick={onConfirm}
           >
             {confirmLabel}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

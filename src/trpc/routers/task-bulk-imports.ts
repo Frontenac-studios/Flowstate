@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -67,6 +67,22 @@ export const taskBulkImportsRouter = createTRPCRouter({
           )
         )
         .orderBy(desc(taskBulkImports.createdAt));
+    }),
+
+  listTasksForImport: protectedProcedure
+    .input(z.object({ importId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      await getOwnedImport(ctx.userId, input.importId);
+
+      return db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+        })
+        .from(taskBulkImportItems)
+        .innerJoin(tasks, eq(taskBulkImportItems.taskId, tasks.id))
+        .where(and(eq(taskBulkImportItems.importId, input.importId), eq(tasks.userId, ctx.userId)))
+        .orderBy(asc(tasks.createdAt));
     }),
 
   bulkCreate: protectedProcedure

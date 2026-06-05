@@ -19,8 +19,11 @@ import {
   type ParsedLine,
 } from "@/lib/parser/parse-quick-input";
 import { deriveBucket } from "@/lib/tasks/derive-bucket";
+import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
 import type { TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { useTRPC } from "@/trpc/client";
+
+import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
 
 import { ComposerLineErrors } from "./ComposerLineErrors";
 import { ComposerPropertyBar } from "./ComposerPropertyBar";
@@ -57,6 +60,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   );
 
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
+  const { data: incompleteTasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
 
   const projectRefs = useMemo(
     () => projects.map((p) => ({ slug: p.slug, name: p.name })),
@@ -118,6 +122,35 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     [value, projectRefs]
   );
 
+  const resolveProjectId = useCallback(
+    (line: ParsedLine): string | null => {
+      if (!line.parse.projectSlug) return null;
+      const key = line.parse.projectSlug.toLowerCase();
+      return projects.find((p) => p.slug.toLowerCase() === key)?.id ?? null;
+    },
+    [projects]
+  );
+
+  const duplicateWarnings = useMemo(() => {
+    if (parsedLines.length === 0) return [];
+
+    return detectDuplicateTaskWarnings({
+      lines: parsedLines.map((line) => ({
+        lineIndex: line.lineIndex,
+        title: line.parse.title,
+        projectId: resolveProjectId(line),
+        phaseId: null,
+      })),
+      existingTasks: incompleteTasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        projectId: task.projectId,
+        phaseId: task.phaseId,
+        completedAt: task.completedAt,
+      })),
+    });
+  }, [parsedLines, incompleteTasks, resolveProjectId]);
+
   const persistProjectSlug = useCallback((slug: string | null) => {
     if (!slug) return;
     setLastProjectSlug(slug);
@@ -134,12 +167,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       onSuccess: () => void invalidateToday(),
     })
   );
-
-  const resolveProjectId = (line: ParsedLine): string | null => {
-    if (!line.parse.projectSlug) return null;
-    const key = line.parse.projectSlug.toLowerCase();
-    return projects.find((p) => p.slug.toLowerCase() === key)?.id ?? null;
-  };
 
   const resolveScheduledDate = (line: ParsedLine): string | null | undefined => {
     if (line.parse.bucketOverride === "later") return null;
@@ -265,6 +292,8 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
           <MultiLineParsePreview lines={parsedLines} />
         ) : null
       ) : null}
+
+      <ComposerDuplicateWarnings warnings={duplicateWarnings} context="plan" />
 
       <ComposerLineErrors lines={parsedLines} onApplySuggestion={handleApplySuggestion} />
     </section>

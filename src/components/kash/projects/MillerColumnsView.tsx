@@ -41,6 +41,7 @@ type Props = {
   tree: Tree;
   projectId: string;
   phases: ProjectPhase[];
+  tasks: ProjectTask[];
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
 };
@@ -75,6 +76,7 @@ export default function MillerColumnsView({
   tree,
   projectId,
   phases,
+  tasks,
   selectedPath,
   onSelectPath,
 }: Props) {
@@ -404,7 +406,9 @@ export default function MillerColumnsView({
               </p>
             ) : null}
             <NewItemRow
+              projectId={projectId}
               phases={phases}
+              tasks={tasks}
               defaultPhaseId={composerParentPhaseId}
               pending={createPending}
               onSubmitComposer={handleSubmitComposer}

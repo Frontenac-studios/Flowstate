@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { createSqliteDb } from "@kash/db-local";
 import { projects, taskBulkImportItems, taskBulkImports, tasks } from "@kash/db-local/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { describe, expect, it, beforeEach } from "vitest";
 import { z } from "zod";
 
@@ -160,5 +160,74 @@ describe("task bulk import persistence (sqlite)", () => {
 
     const remaining = db.select().from(tasks).where(inArray(tasks.id, taskIds)).all();
     expect(remaining).toHaveLength(0);
+  });
+
+  it("lists task titles for an import in creation order", () => {
+    const now = new Date();
+    const later = new Date(now.getTime() + 1000);
+
+    const importRow = db
+      .insert(taskBulkImports)
+      .values({
+        id: randomUUID(),
+        userId,
+        projectId,
+        taskCount: 2,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+      .get();
+
+    const taskBase = {
+      userId,
+      projectId,
+      phaseId: null as string | null,
+      scheduledDate: null as string | null,
+      bucketOverride: "later" as string | null,
+      priority: 0,
+      sortOrder: 0,
+      isTop3: false,
+      top3Order: null as number | null,
+      top3PinnedAt: null as Date | null,
+      completedAt: null as Date | null,
+      updatedAt: now,
+    };
+
+    const createdTasks = db
+      .insert(tasks)
+      .values([
+        { id: randomUUID(), title: "First task", ...taskBase, createdAt: now },
+        { id: randomUUID(), title: "Second task", ...taskBase, createdAt: later },
+      ])
+      .returning()
+      .all();
+
+    db.insert(taskBulkImportItems)
+      .values(
+        createdTasks.map((row) => ({
+          importId: importRow.id,
+          taskId: row.id,
+          userId,
+          updatedAt: now,
+        }))
+      )
+      .run();
+
+    const listed = db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+      })
+      .from(taskBulkImportItems)
+      .innerJoin(tasks, eq(taskBulkImportItems.taskId, tasks.id))
+      .where(and(eq(taskBulkImportItems.importId, importRow.id), eq(tasks.userId, userId)))
+      .orderBy(asc(tasks.createdAt))
+      .all();
+
+    expect(listed).toEqual([
+      { id: createdTasks[0]!.id, title: "First task" },
+      { id: createdTasks[1]!.id, title: "Second task" },
+    ]);
   });
 });

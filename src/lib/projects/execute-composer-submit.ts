@@ -5,6 +5,7 @@ import {
   normalizePhaseName,
   type PhaseRef,
 } from "@/lib/projects/find-phase-by-name";
+import { mergeComposerPathCreateMasks } from "@/lib/projects/resolve-composer-line-phase-id";
 
 export type ResolvedProjectTaskInput = {
   title: string;
@@ -118,29 +119,6 @@ async function resolvePathToLeafPhaseId(
   return parentId;
 }
 
-function mergeCreateMasks(
-  lines: ParsedProjectLine[],
-  pathKey: string
-): ParentDirPathSegment[] | null {
-  let merged: boolean[] | null = null;
-  let segments: ParentDirPathSegment[] | null = null;
-
-  for (const line of lines) {
-    if (line.parse.pathKey !== pathKey || !line.parse.parentDirPath) continue;
-    segments = line.parse.parentDirPath;
-    if (!merged) {
-      merged = line.parse.parentDirPath.map((s) => s.create);
-    } else {
-      for (let i = 0; i < line.parse.parentDirPath.length; i += 1) {
-        merged[i] = merged[i] || line.parse.parentDirPath[i]!.create;
-      }
-    }
-  }
-
-  if (!segments || !merged) return null;
-  return segments.map((s, i) => ({ name: s.name, create: merged![i] ?? false }));
-}
-
 /**
  * Creates phases along each path (per-segment +), then creates all tasks at leaf phases.
  */
@@ -166,7 +144,7 @@ export async function executeComposerSubmit({
   const leafPhaseIdByPathKey = new Map<string, string | null>();
 
   for (const pathKey of sortedKeys) {
-    const segmentsWithMask = mergeCreateMasks(lines, pathKey);
+    const segmentsWithMask = mergeComposerPathCreateMasks(lines, pathKey);
     if (!segmentsWithMask) continue;
 
     const createMask = segmentsWithMask.map((s) => s.create);
