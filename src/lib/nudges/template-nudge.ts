@@ -13,12 +13,12 @@ export function templateStallNudge(stalled: StalledTop3Task[], slipped: SlippedT
 
   const primary = stalled[0]!;
   const slot = slotLabel(primary.top3Order);
-  let text = `It's past 2pm — **${slot} ${primary.title}** is still on your Top 3 and hasn't had focus time today. Worth a ⌘D pick?`;
+  let text = `It's past 2pm — \`${slot} ${primary.title}\` is still on your Top 3 and hasn't had focus time today. Worth a ⌘D pick?`;
 
   if (stalled.length > 1) {
     const others = stalled
       .slice(1)
-      .map((t) => `${slotLabel(t.top3Order)} ${t.title}`)
+      .map((t) => `\`${slotLabel(t.top3Order)} ${t.title}\``)
       .join(", ");
     text += ` Also waiting: ${others}.`;
   }
@@ -26,7 +26,7 @@ export function templateStallNudge(stalled: StalledTop3Task[], slipped: SlippedT
   const slippedNotStalled = slipped.filter((s) => !stalled.some((t) => t.id === s.id));
   if (slippedNotStalled.length > 0) {
     const names = slippedNotStalled
-      .map((t) => `${slotLabel(t.top3Order)} ${t.title} (${t.daysSlipped}d)`)
+      .map((t) => `\`${slotLabel(t.top3Order)} ${t.title}\` (${t.daysSlipped}d)`)
       .join(", ");
     text += ` Heads up — ${names} has been on your Top 3 for a few days.`;
   }

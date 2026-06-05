@@ -39,7 +39,7 @@ export async function generateNudge(
   const userPayload = [
     "Write one short proactive nudge (max ~50 words) for the global planning chat.",
     "The user has incomplete Top 3 tasks that have not had focus time today, and it is past 2pm their time.",
-    "Tone: gentle, supportive, never guilt-tripping. Suggest a ⌘D pick. Use **bold** once for the main task title if helpful.",
+    "Tone: gentle, supportive, never guilt-tripping. Suggest a ⌘D pick. Wrap the main task title in backticks, e.g. `Task title`.",
     "Do not use bullet lists.",
     "",
     `Stalled today (no focus session):`,
