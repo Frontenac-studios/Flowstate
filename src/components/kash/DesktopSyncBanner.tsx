@@ -8,9 +8,14 @@ import { useTRPC } from "@/trpc/client";
 
 export function DesktopSyncBanner() {
   const trpc = useTRPC();
+  const [mounted, setMounted] = useState(false);
   const [offline, setOffline] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const syncingRef = useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const syncMutation = useMutation(trpc.sync.run.mutationOptions());
 
@@ -55,7 +60,7 @@ export function DesktopSyncBanner() {
     return () => window.removeEventListener("online", onOnline);
   }, []);
 
-  if (!isDesktopRuntime()) return null;
+  if (!mounted || !isDesktopRuntime()) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-2 z-20 flex justify-center">

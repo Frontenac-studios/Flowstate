@@ -34,18 +34,18 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
     >
       {task ? (
         <div
-          className={`glass-pill flex min-h-kash-row items-center gap-2 border-l-[3px] border-kash-accent py-2 pl-3 pr-9 ${
+          className={`glass-pill flex min-h-kash-row items-start gap-2 border-l-[3px] border-kash-accent py-2 pl-3 pr-9 ${
             isCompleted ? "opacity-90" : ""
           }`}
         >
-          <span className="shrink-0 text-xs text-kash-accent" aria-hidden>
+          <span className="mt-0.5 shrink-0 text-xs text-kash-accent" aria-hidden>
             {label}
           </span>
-          <span className="shrink-0 text-kash-accent" aria-hidden>
+          <span className="mt-0.5 shrink-0 text-kash-accent" aria-hidden>
             ★
           </span>
           <span
-            className={`min-w-0 flex-1 truncate text-sm font-medium text-kash-ink ${
+            className={`min-w-0 flex-1 break-words text-sm font-medium text-kash-ink ${
               isCompleted ? "line-through opacity-60" : ""
             }`}
           >
@@ -54,7 +54,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
           {task.projectSlug && task.projectId ? (
             <Link
               href={`/projects/${task.projectId}`}
-              className="glass-pill shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+              className="glass-pill mt-0.5 shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
               onClick={(e) => e.stopPropagation()}
             >
               #{task.projectSlug}
@@ -62,7 +62,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
           ) : null}
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-1.5 text-sm leading-none text-kash-ink-muted hover:text-kash-ink"
+            className="absolute right-2 top-2 rounded-full px-1.5 text-sm leading-none text-kash-ink-muted hover:text-kash-ink"
             aria-label={`Unpin ${task.title}`}
             onClick={() => onUnpin(task.id)}
           >

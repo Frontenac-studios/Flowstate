@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { renderChatMessage } from "@/lib/markdown/render-chat-message";
+
 type Message = {
   id: string;
   role: string;
@@ -48,14 +50,14 @@ export function MessageList({ messages, streamingText }: Props) {
                 m.role === "user" ? "bg-kash-accent-soft text-kash-ink" : "glass-pill text-kash-ink"
               }`}
             >
-              <p className="whitespace-pre-wrap">{m.content.text}</p>
+              <p className="whitespace-pre-wrap">{renderChatMessage(m.content.text)}</p>
             </div>
           </div>
         );
       })}
       {streamingText ? (
         <div className="glass-pill mr-auto max-w-[95%] rounded-[var(--kash-radius-inner)] px-3 py-2 text-sm text-kash-ink">
-          <p className="whitespace-pre-wrap">{streamingText}</p>
+          <p className="whitespace-pre-wrap">{renderChatMessage(streamingText)}</p>
         </div>
       ) : null}
       <div ref={bottomRef} />

@@ -117,7 +117,7 @@ export function LeftNavRail() {
   return (
     <nav
       aria-label="Primary"
-      className="glass-panel sticky top-6 flex h-[calc(100vh-3rem)] flex-col items-center gap-1 px-2 py-3"
+      className="glass-panel sticky top-6 flex h-[calc(100vh-3rem)] shrink-0 flex-col items-center gap-1 px-2 py-3"
     >
       <span
         className="mb-2 select-none text-base font-semibold tracking-tight text-kash-ink"
