@@ -4,12 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { useChatPanel } from "@/hooks/useChatPanel";
+import { useChatSuggestions } from "@/hooks/useChatSuggestions";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useTRPC } from "@/trpc/client";
 
 import { useChat } from "./chat/ChatProvider";
 import { ChatComposer } from "./chat/ChatComposer";
+import { ChatSuggestedActions } from "./chat/ChatSuggestedActions";
 import { MessageList } from "./chat/MessageList";
 import { InboxPanel } from "./inbox/InboxPanel";
 
@@ -32,8 +34,14 @@ export function BottomDock() {
   }, [railOpen, setInboxOpen]);
 
   const threadId = activeThreadId || GLOBAL_THREAD_ID;
+  const showSuggestions = threadId === GLOBAL_THREAD_ID;
   const { messages, isLoading, configured, streamingText, streamError, isStreaming, sendMessage } =
     useChatPanel(threadId);
+  const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
+    threadId,
+    showSuggestions,
+    sendMessage
+  );
 
   useEffect(() => {
     if (railOpen) markRead(threadId);
@@ -141,6 +149,15 @@ export function BottomDock() {
                     disabled={!configured}
                     isStreaming={isStreaming}
                     onSend={(text) => void sendMessage(text)}
+                    suggestions={
+                      showSuggestions ? (
+                        <ChatSuggestedActions
+                          suggestions={suggestions}
+                          disabled={isStreaming || isSuggestionRunning}
+                          onSelect={(id) => void runSuggestion(id)}
+                        />
+                      ) : null
+                    }
                   />
                 </div>
               ) : null}

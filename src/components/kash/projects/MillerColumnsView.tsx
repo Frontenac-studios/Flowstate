@@ -31,11 +31,7 @@ import { useProjectMutations } from "./useProjectMutations";
 type Tree = ProjectTree<ProjectPhase, ProjectTask>;
 type Node = Tree["rootPhases"][number];
 
-type Confirm =
-  | { kind: "phase-complete"; id: string }
-  | { kind: "phase-delete"; id: string }
-  | { kind: "task-delete"; id: string }
-  | null;
+type Confirm = { kind: "phase-delete"; id: string } | { kind: "task-delete"; id: string } | null;
 
 type Props = {
   tree: Tree;
@@ -56,11 +52,6 @@ function orderItems(phases: Node[], tasks: ProjectTask[]): ColumnItem[] {
     ...completedPhases.map((node): ColumnItem => ({ kind: "phase", node })),
     ...t.completed.map((task): ColumnItem => ({ kind: "task", task })),
   ];
-}
-
-function hasIncompleteDescendantTasks(node: Node): boolean {
-  if (node.tasks.some((t) => t.completedAt === null)) return true;
-  return node.children.some(hasIncompleteDescendantTasks);
 }
 
 function isMillerDismissTarget(target: EventTarget | null): boolean {
@@ -197,19 +188,6 @@ export default function MillerColumnsView({
     [onSelectPath, selectedPath]
   );
 
-  const togglePhase = useCallback(
-    (node: Node) => {
-      if (node.phase.completedAt !== null) {
-        m.setPhaseComplete.mutate({ id: node.phase.id, completed: false });
-      } else if (hasIncompleteDescendantTasks(node)) {
-        setConfirm({ kind: "phase-complete", id: node.phase.id });
-      } else {
-        m.setPhaseComplete.mutate({ id: node.phase.id, completed: true });
-      }
-    },
-    [m.setPhaseComplete]
-  );
-
   const toggleTask = useCallback(
     (task: ProjectTask) => {
       if (task.completedAt !== null) m.uncompleteTask.mutate({ id: task.id });
@@ -323,14 +301,6 @@ export default function MillerColumnsView({
 
   const confirmConfig = useMemo(() => {
     if (!confirm) return null;
-    if (confirm.kind === "phase-complete") {
-      return {
-        title: "Complete this phase?",
-        message: "This marks the phase and everything inside it as complete.",
-        confirmLabel: "Complete",
-        destructive: false,
-      };
-    }
     if (confirm.kind === "phase-delete") {
       return {
         title: "Delete this phase?",
@@ -350,9 +320,7 @@ export default function MillerColumnsView({
 
   const runConfirm = useCallback(() => {
     if (!confirm) return;
-    if (confirm.kind === "phase-complete") {
-      m.setPhaseComplete.mutate({ id: confirm.id, completed: true });
-    } else if (confirm.kind === "phase-delete") {
+    if (confirm.kind === "phase-delete") {
       const idx = selectedPath.indexOf(confirm.id);
       if (idx !== -1) onSelectPath(selectedPath.slice(0, idx));
       setDetail(null);
@@ -363,7 +331,7 @@ export default function MillerColumnsView({
       m.deleteTask.mutate({ id: confirm.id });
     }
     setConfirm(null);
-  }, [confirm, m.setPhaseComplete, m.deletePhase, m.deleteTask, selectedPath, onSelectPath]);
+  }, [confirm, m.deletePhase, m.deleteTask, selectedPath, onSelectPath]);
 
   const createPending =
     m.createTask.isPending || m.createPhase.isPending || m.bulkCreateTasks.isPending;
@@ -439,7 +407,6 @@ export default function MillerColumnsView({
                   onOpenPhaseDetail={(node) => openPhaseDetail(col.level, node)}
                   onHighlightTask={(task) => highlightTask(col.level, task)}
                   onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
-                  onTogglePhase={togglePhase}
                   onToggleTask={toggleTask}
                 />
               ))}

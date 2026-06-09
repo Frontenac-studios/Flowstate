@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 type Props = {
   disabled?: boolean;
   placeholder?: string;
   isStreaming?: boolean;
   onSend: (text: string) => void;
+  suggestions?: ReactNode;
 };
 
 export function ChatComposer({
@@ -14,6 +15,7 @@ export function ChatComposer({
   placeholder = "Message Claude…",
   isStreaming,
   onSend,
+  suggestions,
 }: Props) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -27,6 +29,7 @@ export function ChatComposer({
 
   return (
     <div className="border-t border-[var(--kash-glass-border)] pt-3">
+      {suggestions}
       <textarea
         ref={textareaRef}
         value={value}
