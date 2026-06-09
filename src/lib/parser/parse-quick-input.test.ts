@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isLineProjectValid,
   parseQuickInput,
   parseQuickInputLines,
   removeComposerLineAtIndex,
@@ -156,10 +157,11 @@ describe("parseQuickInput", () => {
     expect(result.warnings).toEqual([{ code: "invalid_property", property: "2026-02-30" }]);
   });
 
-  it("uses Untitled when semicolon segments are all empty", () => {
+  it("returns empty title when semicolon segments are all empty", () => {
     const result = parseQuickInput("; ;", ctx);
-    expect(result.title).toBe("Untitled");
+    expect(result.title).toBe("");
     expect(result.scheduledDate).toBe("2026-05-27");
+    expect(isLineProjectValid(result)).toBe(false);
   });
 
   it("parses property-only tail after empty semicolon title as first segment", () => {

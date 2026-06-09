@@ -4,6 +4,8 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useRef } from "react";
 
+import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+
 import type { ProjectTask } from "./types";
 
 const SINGLE_CLICK_DELAY_MS = 200;
@@ -73,7 +75,7 @@ export default function MillerTaskRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`flex items-center gap-2 rounded-kash px-2 py-1.5 transition ${
+      className={`flex items-start gap-2 rounded-kash px-2 py-1.5 transition ${
         selected ? "bg-kash-accent/15" : "hover:bg-white/40"
       } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
@@ -91,7 +93,7 @@ export default function MillerTaskRow({
         type="button"
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
-        className={`flex-1 truncate text-left text-sm ${
+        className={`line-clamp-4 min-w-0 flex-1 break-words text-left text-sm ${
           completed ? "text-kash-ink-muted line-through" : "text-kash-ink"
         }`}
       >
@@ -105,16 +107,7 @@ export default function MillerTaskRow({
           {"!".repeat(task.priority)}
         </span>
       ) : null}
-      <button
-        type="button"
-        className="shrink-0 cursor-grab text-kash-ink-muted"
-        aria-label="Drag task"
-        tabIndex={-1}
-        {...listeners}
-        {...dragAttributes}
-      >
-        ⠿
-      </button>
+      <TaskDragHandle listeners={listeners} attributes={dragAttributes} />
     </li>
   );
 }

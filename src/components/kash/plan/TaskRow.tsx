@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
+import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { useTRPC } from "@/trpc/client";
 
@@ -28,6 +29,8 @@ type Props = {
   onActivate?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
+  onPin?: (taskId: string, sourceEl: HTMLElement) => void;
+  canPin?: boolean;
 };
 
 const ACTION_WIDTH_PX = 72;
@@ -50,13 +53,18 @@ export function TaskRow({
   onActivate,
   onComplete,
   onDelete,
+  onPin,
+  canPin = false,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
-  const { offset, hide, isOpen, containerRef } = useTrackpadSwipeReveal({
-    maxOffset: REVEAL_WIDTH_PX,
+  const rowContentRef = useRef<HTMLDivElement>(null);
+  const pinEnabled = canPin && !task.isTop3 && onPin != null;
+  const { offset, hide, isOpen, isLeftOpen, isRightOpen, containerRef } = useTrackpadSwipeReveal({
+    maxOffsetRight: REVEAL_WIDTH_PX,
+    maxOffsetLeft: pinEnabled ? ACTION_WIDTH_PX : 0,
   });
 
   const invalidatePlan = () => {
@@ -128,7 +136,26 @@ export function TaskRow({
       style={{ transform: CSS.Transform.toString(transform) }}
     >
       <div ref={containerRef} className="relative">
-        <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isOpen}>
+        {pinEnabled ? (
+          <div className="absolute inset-y-0 left-0 flex" aria-hidden={!isLeftOpen}>
+            <button
+              type="button"
+              className="glass-panel-opaque flex w-[4.5rem] flex-col items-center justify-center gap-0.5 text-sm text-kash-accent"
+              onClick={(e) => {
+                e.stopPropagation();
+                hide();
+                if (rowContentRef.current) {
+                  onPin(task.id, rowContentRef.current);
+                }
+              }}
+            >
+              <span aria-hidden>★</span>
+              <span>Pin</span>
+            </button>
+          </div>
+        ) : null}
+
+        <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
           <button
             type="button"
             className="glass-panel-opaque flex w-[4.5rem] items-center justify-center text-sm text-kash-ink"
@@ -152,25 +179,15 @@ export function TaskRow({
         </div>
 
         <div
+          ref={rowContentRef}
+          data-task-row={task.id}
           className={`glass-panel-opaque relative flex min-h-kash-row cursor-pointer items-start gap-2 px-3 py-2 transition-transform duration-150 ease-out ${
             task.isTop3 ? "border-l-2 border-kash-accent" : ""
           } ${selected ? "ring-2 ring-[var(--kash-accent-soft)]" : ""}`}
-          style={{ transform: `translateX(-${offset}px)` }}
+          style={{ transform: `translateX(${offset}px)` }}
           onClick={() => onSelect?.(task.id)}
           onDoubleClick={() => onActivate?.(task.id)}
         >
-          <button
-            ref={setActivatorNodeRef}
-            type="button"
-            className="mt-0.5 shrink-0 cursor-grab text-kash-ink-muted"
-            aria-label="Drag handle"
-            {...listeners}
-            {...dragAttributes}
-            tabIndex={-1}
-          >
-            ⠿
-          </button>
-
           {task.isTop3 ? (
             <span className="shrink-0 text-kash-accent" aria-label="Top 3">
               ★
@@ -223,6 +240,12 @@ export function TaskRow({
           ) : null}
 
           <PriorityDots priority={task.priority} />
+
+          <TaskDragHandle
+            ref={setActivatorNodeRef}
+            listeners={listeners}
+            attributes={dragAttributes}
+          />
         </div>
       </div>
     </li>

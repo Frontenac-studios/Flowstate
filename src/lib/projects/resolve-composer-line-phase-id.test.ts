@@ -29,6 +29,7 @@ function taskLine(
       parentDirPath: null,
       pathKey: null,
       parentDirCreate: false,
+      phaseOnly: false,
       warnings: [],
       ...overrides,
     },

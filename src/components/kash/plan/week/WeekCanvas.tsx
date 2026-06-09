@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closestCenter,
@@ -26,6 +26,8 @@ import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const VISIBLE_DAY_COUNT = 4;
+const DEFAULT_COMPOSER_HEIGHT_PX = 128;
 
 export function WeekCanvas() {
   const trpc = useTRPC();
@@ -34,9 +36,17 @@ export function WeekCanvas() {
   const { pushComplete, pushDelete } = useSessionUndo();
   const [draftOpen, setDraftOpen] = useState(false);
   const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
+  const [composerHeight, setComposerHeight] = useState(DEFAULT_COMPOSER_HEIGHT_PX);
+
+  const composerMeasureRef = useRef<HTMLDivElement>(null);
+  const dayScrollRef = useRef<HTMLDivElement>(null);
+  const todayColumnRef = useRef<HTMLDivElement>(null);
+  const hasPinnedTodayRef = useRef(false);
 
   const { localDate: todayIso, now } = useLocalCalendarClock();
   const weekDates = useMemo(() => datesInIsoWeek(now), [now]);
+  const dayCount = weekDates.length;
+  const columnWidthPercent = 100 / dayCount;
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
 
@@ -92,69 +102,126 @@ export function WeekCanvas() {
     }
   };
 
+  useEffect(() => {
+    const el = composerMeasureRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height && height > 0) setComposerHeight(height);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    hasPinnedTodayRef.current = false;
+  }, [todayIso]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const pinTodayToLeft = () => {
+      if (hasPinnedTodayRef.current) return;
+
+      const scrollEl = dayScrollRef.current;
+      const todayEl = todayColumnRef.current;
+      if (!scrollEl || !todayEl) return;
+
+      scrollEl.scrollLeft = todayEl.offsetLeft - scrollEl.offsetLeft;
+      hasPinnedTodayRef.current = true;
+    };
+
+    let outerFrame = 0;
+    let innerFrame = 0;
+
+    outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(pinTodayToLeft);
+    });
+
+    const scrollEl = dayScrollRef.current;
+    let observer: ResizeObserver | undefined;
+
+    if (scrollEl && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => {
+        if (!hasPinnedTodayRef.current) pinTodayToLeft();
+      });
+      observer.observe(scrollEl);
+    }
+
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+      observer?.disconnect();
+    };
+  }, [isLoading, todayIso, dayCount]);
+
+  const inboxHeightPx = composerHeight * 1.5;
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <div className="mb-3 flex flex-wrap items-center gap-2 px-2">
-        <button
-          type="button"
-          className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
-          onClick={() => {
-            setDraftOpen(true);
-            setAppliedMessage(null);
-          }}
-        >
-          Draft my week
-        </button>
-        {appliedMessage ? (
-          <span className="text-sm text-kash-accent" role="status">
-            {appliedMessage}
-          </span>
-        ) : null}
-      </div>
-
-      {draftOpen ? (
-        <WeekDraftPanel
-          taskTitleById={taskTitleById}
-          onClose={() => setDraftOpen(false)}
-          onApplied={(count) => {
-            setAppliedMessage(`Moved ${count} task${count === 1 ? "" : "s"}`);
-            setDraftOpen(false);
-          }}
+      <div ref={composerMeasureRef}>
+        <QuickInput
+          draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
+          createInInbox
+          onTaskCreated={() => touchActivity()}
         />
-      ) : null}
-
-      <QuickInput
-        draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
-        createInInbox
-        onTaskCreated={() => touchActivity()}
-      />
+      </div>
 
       {isLoading ? (
         <p className="mt-4 px-2 text-sm text-kash-ink-muted">Loading…</p>
       ) : (
-        <div className="mt-4 overflow-x-auto pb-4">
-          <div className="flex min-w-[900px] gap-2">
-            <WeekInbox
-              tasks={partitioned.inbox.map(toRow)}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-            />
-            {weekDates.map((date, index) => {
-              const iso = toISODateString(date);
-              return (
-                <WeekColumn
-                  key={iso}
-                  isoDate={iso}
-                  label={WEEKDAY_LABELS[index]!}
-                  isToday={iso === todayIso}
-                  tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
-                  onComplete={pushComplete}
-                  onDelete={pushDelete}
+        <>
+          <WeekInbox
+            tasks={partitioned.inbox.map(toRow)}
+            heightPx={inboxHeightPx}
+            onComplete={pushComplete}
+            onDelete={pushDelete}
+            onDraftClick={() => {
+              setDraftOpen(true);
+              setAppliedMessage(null);
+            }}
+            appliedMessage={appliedMessage}
+            draftPanel={
+              draftOpen ? (
+                <WeekDraftPanel
+                  taskTitleById={taskTitleById}
+                  onClose={() => setDraftOpen(false)}
+                  onApplied={(count) => {
+                    setAppliedMessage(`Moved ${count} task${count === 1 ? "" : "s"}`);
+                    setDraftOpen(false);
+                  }}
                 />
-              );
-            })}
+              ) : null
+            }
+          />
+
+          <div ref={dayScrollRef} className="mt-4 overflow-x-auto pb-4">
+            <div
+              className="flex gap-2"
+              style={{ width: `${(dayCount / VISIBLE_DAY_COUNT) * 100}%` }}
+            >
+              {weekDates.map((date, index) => {
+                const iso = toISODateString(date);
+                const isToday = iso === todayIso;
+                return (
+                  <WeekColumn
+                    key={iso}
+                    ref={isToday ? todayColumnRef : undefined}
+                    isoDate={iso}
+                    label={WEEKDAY_LABELS[index]!}
+                    isToday={isToday}
+                    columnWidthPercent={columnWidthPercent}
+                    tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
+                    onComplete={pushComplete}
+                    onDelete={pushDelete}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </DndContext>
   );

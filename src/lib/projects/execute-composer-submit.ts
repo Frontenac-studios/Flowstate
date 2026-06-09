@@ -168,13 +168,16 @@ export async function executeComposerSubmit({
     return defaultPhaseId ?? parentPhaseId;
   };
 
-  const tasks = lines.map((line) => ({
+  const taskLines = lines.filter((line) => !line.parse.phaseOnly);
+  const tasks = taskLines.map((line) => ({
     title: line.parse.title,
     scheduledDate: line.parse.scheduledDate,
     bucketOverride: line.parse.bucketOverride,
     priority: line.parse.priority,
     phaseId: resolvePhaseId(line),
   }));
+
+  if (tasks.length === 0) return;
 
   if (tasks.length === 1) {
     const t = tasks[0]!;

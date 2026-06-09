@@ -16,6 +16,7 @@ type Props = {
   onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
+  onPin?: (taskId: string, sourceEl: HTMLElement) => void;
 };
 
 export function TodayList({
@@ -27,6 +28,7 @@ export function TodayList({
   onActivateTask,
   onComplete,
   onDelete,
+  onPin,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: "bucket:today" });
 
@@ -69,6 +71,8 @@ export function TodayList({
               onActivate={onActivateTask}
               onComplete={onComplete}
               onDelete={onDelete}
+              onPin={onPin}
+              canPin={onPin != null}
             />
           ))}
         </ul>

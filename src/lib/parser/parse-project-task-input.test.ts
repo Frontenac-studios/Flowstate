@@ -97,6 +97,59 @@ describe("parseProjectTaskInput", () => {
     ).toBe(true);
     expect(isProjectTaskLineValid(result)).toBe(false);
   });
+
+  it("rejects empty bare title", () => {
+    const result = parseProjectTaskInput("   ", ctx);
+    expect(result.title).toBe("");
+    expect(isProjectTaskLineValid(result)).toBe(false);
+  });
+
+  it("parses ;;; + Research as phase-only", () => {
+    const result = parseProjectTaskInput(";;; + Research", ctx);
+    expect(result.phaseOnly).toBe(true);
+    expect(result.title).toBe("");
+    expect(result.parentDirPath).toEqual([{ name: "Research", create: true }]);
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
+
+  it("parses ;;; Design//+ Wireframes as phase-only with existing parent", () => {
+    const result = parseProjectTaskInput(";;; Design//+ Wireframes", ctx);
+    expect(result.phaseOnly).toBe(true);
+    expect(result.parentDirPath).toEqual([
+      { name: "Design", create: false },
+      { name: "Wireframes", create: true },
+    ]);
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
+
+  it("parses ;;; + Alpha//+ Beta as phase-only", () => {
+    const result = parseProjectTaskInput(";;; + Alpha//+ Beta", ctx);
+    expect(result.phaseOnly).toBe(true);
+    expect(result.parentDirCreate).toBe(true);
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
+
+  it("parses ;;; Design as phase-only no-op when phase exists", () => {
+    const result = parseProjectTaskInput(";;; Design", ctx);
+    expect(result.phaseOnly).toBe(true);
+    expect(result.pathKey).toBe("design");
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
+
+  it("rejects bare ;;; with no path", () => {
+    const result = parseProjectTaskInput(";;;", ctx);
+    expect(result.phaseOnly).toBe(true);
+    expect(result.warnings).toEqual([{ code: "empty_phase_name" }]);
+    expect(isProjectTaskLineValid(result)).toBe(false);
+  });
+
+  it("parses legacy ; ; ; + Alpha as phase-only", () => {
+    const result = parseProjectTaskInput("; ; ; + Alpha", ctx);
+    expect(result.phaseOnly).toBe(true);
+    expect(result.title).toBe("");
+    expect(result.parentDirPath).toEqual([{ name: "Alpha", create: true }]);
+    expect(isProjectTaskLineValid(result)).toBe(true);
+  });
 });
 
 describe("parseProjectTaskInputLines", () => {

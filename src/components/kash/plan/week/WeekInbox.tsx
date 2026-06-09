@@ -1,6 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { useState, type ReactNode } from "react";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
@@ -9,29 +10,93 @@ import { TaskRow } from "../TaskRow";
 
 type Props = {
   tasks: PlanTaskRow[];
+  heightPx: number;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
+  onDraftClick: () => void;
+  appliedMessage: string | null;
+  draftPanel: ReactNode;
 };
 
-export function WeekInbox({ tasks, onComplete, onDelete }: Props) {
+export function WeekInbox({
+  tasks,
+  heightPx,
+  onComplete,
+  onDelete,
+  onDraftClick,
+  appliedMessage,
+  draftPanel,
+}: Props) {
+  const [collapsed, setCollapsed] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: "week-inbox" });
 
+  const showTasks = !collapsed;
+
   return (
-    <div className="flex w-60 shrink-0 flex-col">
+    <section
+      className="glass-panel-opaque mt-4 flex flex-col p-4"
+      style={{ height: showTasks ? heightPx : undefined }}
+      aria-label="Plan tasks"
+    >
       <div
         ref={setNodeRef}
-        className={`glass-panel-opaque px-3 py-2 ${
+        className={`mb-2 flex shrink-0 items-start justify-between gap-3 rounded-[var(--kash-radius)] ${
           isOver ? "glass-section-header--drop-target" : ""
         }`}
+        onDoubleClick={() => setCollapsed((value) => !value)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={showTasks}
+        title="Double-click to collapse or expand"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setCollapsed((value) => !value);
+          }
+        }}
       >
-        <p className="text-sm font-medium uppercase tracking-wide text-kash-ink-muted">Inbox</p>
-        <p className="text-xs text-kash-ink-muted">{tasks.length} unscheduled</p>
+        <div className="min-w-0 cursor-default select-none">
+          <p className="text-sm font-medium uppercase tracking-wide text-kash-ink-muted">
+            Plan Tasks
+          </p>
+          <p className="text-xs text-kash-ink-muted">{tasks.length} unscheduled</p>
+        </div>
+        <div
+          className="flex shrink-0 items-center gap-2"
+          onDoubleClick={(e) => e.stopPropagation()}
+        >
+          {appliedMessage ? (
+            <span className="text-sm text-kash-accent" role="status">
+              {appliedMessage}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+            onClick={onDraftClick}
+          >
+            Draft my week
+          </button>
+        </div>
       </div>
-      <ul className="mt-2 max-h-[70vh] space-y-2 overflow-y-auto px-1 pb-2">
-        {tasks.map((task) => (
-          <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
-        ))}
-      </ul>
-    </div>
+
+      {draftPanel}
+
+      {showTasks ? (
+        <div className="min-h-0 flex-1 rounded-[var(--kash-radius)]">
+          {tasks.length === 0 ? (
+            <p className="text-sm text-kash-ink-muted">No unscheduled tasks</p>
+          ) : (
+            <ul className="h-full space-y-2 overflow-y-auto pb-1">
+              {tasks.map((task) => (
+                <li key={task.id}>
+                  <TaskRow task={task} onComplete={onComplete} onDelete={onDelete} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </section>
   );
 }

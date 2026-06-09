@@ -25,6 +25,7 @@ function taskLine(
       parentDirPath: null,
       pathKey: null,
       parentDirCreate: false,
+      phaseOnly: false,
       warnings: [],
       ...overrides,
     },
@@ -191,5 +192,74 @@ describe("executeComposerSubmit", () => {
     });
 
     expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ phaseId: "parent-id" }));
+  });
+
+  it("creates phases only for phase-only lines without creating tasks", async () => {
+    const createPhase = vi.fn().mockResolvedValue({ id: "research-id", name: "Research" });
+    const createTask = vi.fn();
+    const bulkCreateTasks = vi.fn();
+
+    await executeComposerSubmit({
+      projectId: "proj-1",
+      parentPhaseId: null,
+      phases: [],
+      defaultPhaseId: null,
+      lines: [
+        taskLine(";;; + Research", {
+          title: "",
+          phaseOnly: true,
+          pathKey: "research",
+          parentDirName: "Research",
+          parentDirPath: [{ name: "Research", create: true }],
+          parentDirCreate: true,
+        }),
+      ],
+      mutations: { createPhase, createTask, bulkCreateTasks },
+    });
+
+    expect(createPhase).toHaveBeenCalledOnce();
+    expect(createTask).not.toHaveBeenCalled();
+    expect(bulkCreateTasks).not.toHaveBeenCalled();
+  });
+
+  it("creates phases and only titled tasks in a mixed batch", async () => {
+    const createPhase = vi.fn().mockResolvedValue({ id: "child-id", name: "Magic-Link Gate" });
+    const bulkCreateTasks = vi.fn().mockResolvedValue(undefined);
+    const createTask = vi.fn();
+
+    await executeComposerSubmit({
+      projectId: "proj-1",
+      parentPhaseId: null,
+      phases,
+      defaultPhaseId: null,
+      lines: [
+        taskLine(";;; Product & Portfolio//+ Magic-Link Gate", {
+          title: "",
+          phaseOnly: true,
+          pathKey: "product & portfolio//magic-link gate",
+          parentDirPath: [
+            { name: "Product & Portfolio", create: false },
+            { name: "Magic-Link Gate", create: true },
+          ],
+          parentDirCreate: true,
+        }),
+        taskLine("Task one", {
+          title: "Task one",
+          pathKey: "product & portfolio//magic-link gate",
+          parentDirPath: [
+            { name: "Product & Portfolio", create: false },
+            { name: "Magic-Link Gate", create: false },
+          ],
+        }),
+      ],
+      mutations: { createPhase, createTask, bulkCreateTasks },
+    });
+
+    expect(createPhase).toHaveBeenCalledOnce();
+    expect(bulkCreateTasks).not.toHaveBeenCalled();
+    expect(createTask).toHaveBeenCalledOnce();
+    expect(createTask).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Task one", phaseId: "child-id" })
+    );
   });
 });

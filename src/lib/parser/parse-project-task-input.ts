@@ -38,10 +38,13 @@ export type ParseProjectTaskResult = {
   parentDirPath: ParentDirPathSegment[] | null;
   pathKey: string | null;
   parentDirCreate: boolean;
+  /** True when line creates phases only (;;; prefix or empty title + parent dir). */
+  phaseOnly: boolean;
   warnings: ProjectParseWarning[];
 };
 
 const PRIORITY_PATTERN = /^!{1,3}$/;
+const PHASE_ONLY_PREFIX = /^;;;\s*/;
 
 function collapseWhitespace(s: string): string {
   return s.trim().replace(/\s+/g, " ");
@@ -55,7 +58,7 @@ function parsePriority(token: string): 0 | 1 | 2 | 3 | null {
 
 function laterDefaults(): Pick<
   ParseProjectTaskResult,
-  "scheduledDate" | "bucketOverride" | "parentDirCreate" | "parentDirPath" | "pathKey"
+  "scheduledDate" | "bucketOverride" | "parentDirCreate" | "parentDirPath" | "pathKey" | "phaseOnly"
 > {
   return {
     scheduledDate: null,
@@ -63,11 +66,17 @@ function laterDefaults(): Pick<
     parentDirCreate: false,
     parentDirPath: null,
     pathKey: null,
+    phaseOnly: false,
   };
 }
 
 /** Raw segment 4 from a semicolon-mode line (for batch + scan). */
 export function extractParentDirSegmentRaw(line: string): string | null {
+  const trimmed = line.trim();
+  if (PHASE_ONLY_PREFIX.test(trimmed)) {
+    const segment = trimmed.replace(PHASE_ONLY_PREFIX, "").trim();
+    return segment || null;
+  }
   if (!line.includes(";")) return null;
   const parts = line.split(";");
   const segment = parts[3]?.trim() ?? "";
@@ -164,6 +173,35 @@ function applyParentDirSegment(
   };
 }
 
+function parsePhaseOnlyInput(raw: string, ctx: ParseProjectTaskContext): ParseProjectTaskResult {
+  const warnings: ProjectParseWarning[] = [];
+  const parentDirSegment = raw.replace(PHASE_ONLY_PREFIX, "").trim();
+
+  if (!parentDirSegment) {
+    warnings.push({ code: "empty_phase_name" });
+    return {
+      title: "",
+      ...laterDefaults(),
+      priority: 0,
+      parentDirName: null,
+      phaseOnly: true,
+      warnings,
+    };
+  }
+
+  const parentFields = applyParentDirSegment(parentDirSegment, ctx, warnings);
+
+  return {
+    title: "",
+    scheduledDate: null,
+    bucketOverride: "later",
+    priority: 0,
+    phaseOnly: true,
+    ...parentFields,
+    warnings,
+  };
+}
+
 function parsePositionalSegments(
   raw: string,
   ctx: ParseProjectTaskContext
@@ -179,7 +217,8 @@ function parsePositionalSegments(
     parts[3]?.trim() ?? "",
   ];
 
-  const title = collapseWhitespace(segments[0]) || "Untitled";
+  const title = collapseWhitespace(segments[0]) || "";
+  const phaseOnly = !title && !!segments[3];
 
   let scheduledDate: string | null = null;
   let bucketOverride: "later" | null = "later";
@@ -228,11 +267,13 @@ function parsePositionalSegments(
     parentDirPath,
     pathKey,
     parentDirCreate,
+    phaseOnly,
     warnings,
   };
 }
 
 export function isProjectTaskLineValid(parse: ParseProjectTaskResult): boolean {
+  if (!(parse.phaseOnly || parse.title.trim().length > 0)) return false;
   return !parse.warnings.some(
     (w) =>
       w.code === "invalid_property" ||
@@ -257,9 +298,13 @@ export function parseProjectTaskInput(
     };
   }
 
+  if (PHASE_ONLY_PREFIX.test(trimmed)) {
+    return parsePhaseOnlyInput(trimmed, ctx);
+  }
+
   if (!trimmed.includes(";")) {
     return {
-      title: collapseWhitespace(trimmed) || "Untitled",
+      title: collapseWhitespace(trimmed) || "",
       ...laterDefaults(),
       priority: 0,
       parentDirName: null,
