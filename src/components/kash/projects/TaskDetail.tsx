@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { getTaskTitleError } from "@/lib/taskValidation";
+
 import type { ProjectTask } from "./types";
 
 type Props = {
@@ -10,6 +12,8 @@ type Props = {
   onToggleComplete: () => void;
   onRequestDelete: () => void;
   pending: boolean;
+  /** Set when the parent's save mutation failed, so the editor can surface it. */
+  saveError?: string | null;
 };
 
 const PRIORITIES = [0, 1, 2, 3];
@@ -20,22 +24,34 @@ export default function TaskDetail({
   onToggleComplete,
   onRequestDelete,
   pending,
+  saveError = null,
 }: Props) {
   const completed = task.completedAt !== null;
   const [title, setTitle] = useState(task.title);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     setTitle(task.title);
+    setValidationError(null);
   }, [task.id, task.title]);
 
   const commitTitle = () => {
     const trimmed = title.trim();
-    if (!trimmed || trimmed === task.title) {
+    if (trimmed === task.title) {
       setTitle(task.title);
+      setValidationError(null);
       return;
     }
+    const titleError = getTaskTitleError(title);
+    if (titleError) {
+      setValidationError(titleError);
+      return;
+    }
+    setValidationError(null);
     onUpdate({ title: trimmed });
   };
+
+  const titleError = validationError ?? saveError;
 
   return (
     <div className="flex flex-col gap-4">
@@ -57,7 +73,13 @@ export default function TaskDetail({
           rows={1}
           maxLength={500}
           aria-label="Task title"
+          aria-invalid={titleError != null}
         />
+        {titleError ? (
+          <p className="text-sm text-red-600" role="alert">
+            {titleError}
+          </p>
+        ) : null}
       </div>
 
       <label className="flex items-center gap-2 text-sm text-kash-ink">

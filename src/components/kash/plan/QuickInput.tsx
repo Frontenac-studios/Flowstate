@@ -22,6 +22,7 @@ import {
 import { deriveBucket } from "@/lib/tasks/derive-bucket";
 import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
 import type { TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
+import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
 
 import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
@@ -57,6 +58,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   const [value, setValue] = useComposerDraft(draftStorageKey);
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [lastProjectSlug, setLastProjectSlug] = useState<string | null>(() =>
     readLastProjectSlug()
   );
@@ -167,6 +169,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   const createTaskMutation = useMutation(
     trpc.tasks.create.mutationOptions({
       onSuccess: () => void invalidateToday(),
+      onError: () => setSubmitError("Couldn't add your tasks — please try again."),
     })
   );
 
@@ -206,12 +209,21 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
   const handleBulkSubmit = async () => {
     if (!value.trim() || createTaskMutation.isPending) return;
+    setSubmitError(null);
 
     if (parsedLines.length > MAX_COMPOSER_LINES) {
       setLineLimitWarning(true);
       return;
     }
     setLineLimitWarning(false);
+
+    const titleError = parsedLines
+      .map((line) => getTaskTitleError(line.parse.title))
+      .find((error) => error !== null);
+    if (titleError) {
+      setSubmitError(titleError);
+      return;
+    }
 
     const { created, remaining } = await submitValidLines(parsedLines);
 
@@ -284,6 +296,12 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       {lineLimitWarning ? (
         <p className="mt-2 text-sm text-red-600" role="alert">
           Too many lines — add at most {MAX_COMPOSER_LINES} tasks at once.
+        </p>
+      ) : null}
+
+      {submitError ? (
+        <p className="mt-2 text-sm text-red-600" role="alert">
+          {submitError}
         </p>
       ) : null}
 

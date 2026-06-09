@@ -22,6 +22,7 @@ import {
   resolveComposerLinePhaseIdSync,
 } from "@/lib/projects/resolve-composer-line-phase-id";
 import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
+import { getTaskTitleError } from "@/lib/taskValidation";
 
 import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
 import { ComposerTextarea, type ComposerTextareaHandle } from "../plan/ComposerTextarea";
@@ -52,6 +53,7 @@ export default function NewItemRow({
   const [value, setValue] = useComposerDraft(projectComposerDraftScope(projectId));
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<ComposerTextareaHandle>(null);
   const inputId = useId();
@@ -164,6 +166,7 @@ export default function NewItemRow({
 
   const submitTasks = async () => {
     if (!value.trim() || pending || submitting) return;
+    setSubmitError(null);
 
     if (parsedLines.length > MAX_COMPOSER_LINES) {
       setLineLimitWarning(true);
@@ -174,11 +177,22 @@ export default function NewItemRow({
     const valid = parsedLines.filter((line) => isProjectTaskLineValid(line.parse));
     if (valid.length === 0) return;
 
+    const titleError = valid
+      .filter((line) => !line.parse.phaseOnly)
+      .map((line) => getTaskTitleError(line.parse.title))
+      .find((error) => error !== null);
+    if (titleError) {
+      setSubmitError(titleError);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await onSubmitComposer(valid);
       const invalid = parsedLines.filter((line) => !isProjectTaskLineValid(line.parse));
       setValue(invalid.map((l) => l.raw).join("\n"));
+    } catch {
+      setSubmitError("Couldn't add your tasks — please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -221,6 +235,12 @@ export default function NewItemRow({
       {lineLimitWarning ? (
         <p className="mt-2 text-sm text-red-600" role="alert">
           Too many lines — add at most {MAX_COMPOSER_LINES} tasks at once.
+        </p>
+      ) : null}
+
+      {submitError ? (
+        <p className="mt-2 text-sm text-red-600" role="alert">
+          {submitError}
         </p>
       ) : null}
 
