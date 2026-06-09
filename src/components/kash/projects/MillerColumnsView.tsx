@@ -440,6 +440,9 @@ export default function MillerColumnsView({
                   <TaskDetail
                     task={detailTask}
                     pending={m.deleteTask.isPending}
+                    saveError={
+                      m.updateTask.isError ? "Couldn't save your change — please try again." : null
+                    }
                     onUpdate={(patch) => m.updateTask.mutate({ id: detailTask.id, ...patch })}
                     onToggleComplete={() => toggleTask(detailTask)}
                     onRequestDelete={() => setConfirm({ kind: "task-delete", id: detailTask.id })}

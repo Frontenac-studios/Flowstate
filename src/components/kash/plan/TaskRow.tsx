@@ -9,6 +9,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
+import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
 
 export type PlanTaskRow = {
@@ -60,6 +61,7 @@ export function TaskRow({
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
+  const [editError, setEditError] = useState<string | null>(null);
   const rowContentRef = useRef<HTMLDivElement>(null);
   const pinEnabled = canPin && !task.isTop3 && onPin != null;
   const { offset, hide, isOpen, isLeftOpen, isRightOpen, containerRef } = useTrackpadSwipeReveal({
@@ -95,9 +97,11 @@ export function TaskRow({
     trpc.tasks.update.mutationOptions({
       onSuccess: () => {
         setEditing(false);
+        setEditError(null);
         hide();
         invalidatePlan();
       },
+      onError: () => setEditError("Couldn't save your change — please try again."),
     })
   );
 
@@ -113,17 +117,31 @@ export function TaskRow({
 
   const saveTitle = () => {
     const trimmed = editTitle.trim();
-    if (!trimmed || trimmed === task.title) {
+    if (trimmed === task.title) {
       setEditing(false);
+      setEditError(null);
       setEditTitle(task.title);
       return;
     }
+    const titleError = getTaskTitleError(editTitle);
+    if (titleError) {
+      setEditError(titleError);
+      return;
+    }
+    setEditError(null);
     updateMutation.mutate({ id: task.id, title: trimmed });
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setEditError(null);
+    setEditTitle(task.title);
   };
 
   const startEdit = () => {
     hide();
     setEditTitle(task.title);
+    setEditError(null);
     setEditing(true);
   };
 
@@ -205,25 +223,32 @@ export function TaskRow({
 
           <div className="min-w-0 flex-1">
             {editing ? (
-              <input
-                type="text"
-                className="glass-input w-full py-1 text-sm"
-                value={editTitle}
-                autoFocus
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => setEditTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    saveTitle();
-                  }
-                  if (e.key === "Escape") {
-                    setEditing(false);
-                    setEditTitle(task.title);
-                  }
-                }}
-                onBlur={saveTitle}
-              />
+              <>
+                <input
+                  type="text"
+                  className="glass-input w-full py-1 text-sm"
+                  value={editTitle}
+                  autoFocus
+                  aria-invalid={editError != null}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveTitle();
+                    }
+                    if (e.key === "Escape") {
+                      cancelEdit();
+                    }
+                  }}
+                  onBlur={saveTitle}
+                />
+                {editError ? (
+                  <p className="mt-1 text-sm text-red-600" role="alert">
+                    {editError}
+                  </p>
+                ) : null}
+              </>
             ) : (
               <span className="block break-words text-kash-ink">{task.title}</span>
             )}
