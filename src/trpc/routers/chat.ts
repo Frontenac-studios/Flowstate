@@ -1,13 +1,25 @@
 import { and, asc, eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { chatMessages } from "@/db/tables";
 import { messageContentSchema, textContent } from "@/lib/chat/message-content";
-import { taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
+import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";
+import { buildWorkOnSuggestion } from "@/server/chat/build-work-on-suggestion";
+import {
+  listPromotedSuggestions,
+  recordCustomSuggestionUsage,
+  recordPhraseSend,
+} from "@/server/chat/custom-suggestions";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
+
+const localCalendarInputSchema = z.object({
+  localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  tzOffsetMinutes: z.number().int().min(-840).max(840),
+});
 
 export const chatRouter = createTRPCRouter({
   list: protectedProcedure
@@ -95,7 +107,93 @@ export const chatRouter = createTRPCRouter({
       return { ok: true as const };
     }),
 
+  suggestWorkOn: protectedProcedure
+    .input(
+      z.object({
+        threadId: threadIdSchema,
+        lastWasLarge: z.boolean().optional(),
+        ...localCalendarInputSchema.shape,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.threadId !== GLOBAL_THREAD_ID) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Work-on suggestions are only available in global chat.",
+        });
+      }
+
+      const suggestion = await buildWorkOnSuggestion({
+        userId: ctx.userId,
+        localDate: input.localDate,
+        tzOffsetMinutes: input.tzOffsetMinutes,
+        lastWasLarge: input.lastWasLarge,
+      });
+
+      const taskId = taskIdForThread(input.threadId);
+
+      const [userRow] = await db
+        .insert(chatMessages)
+        .values({
+          userId: ctx.userId,
+          threadId: input.threadId,
+          role: "user",
+          content: textContent(suggestion.userText),
+          taskId,
+        })
+        .returning({ id: chatMessages.id });
+
+      if (!userRow) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to save user message.",
+        });
+      }
+
+      const [assistantRow] = await db
+        .insert(chatMessages)
+        .values({
+          userId: ctx.userId,
+          threadId: input.threadId,
+          role: "assistant",
+          content: textContent(suggestion.assistantText),
+          taskId,
+        })
+        .returning({ id: chatMessages.id });
+
+      if (!assistantRow) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to save assistant message.",
+        });
+      }
+
+      return {
+        userMessageId: userRow.id,
+        assistantMessageId: assistantRow.id,
+        pick: suggestion.pick,
+        lastWasLarge: suggestion.lastWasLarge,
+      };
+    }),
+
   isConfigured: protectedProcedure.query(() => {
     return { configured: isAnthropicConfigured() };
   }),
+
+  listCustomSuggestions: protectedProcedure.query(async ({ ctx }) => {
+    return listPromotedSuggestions(ctx.userId);
+  }),
+
+  recordPhraseSend: protectedProcedure
+    .input(z.object({ text: z.string().min(1).max(8000) }))
+    .mutation(async ({ ctx, input }) => {
+      return recordPhraseSend({ userId: ctx.userId, text: input.text });
+    }),
+
+  recordCustomSuggestionUsage: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await recordCustomSuggestionUsage({ userId: ctx.userId, id: input.id });
+      return { ok: true as const };
+    }),
 });

@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
+import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { toISODateString } from "@/lib/dates/local-day";
@@ -36,6 +37,10 @@ import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
 
+function clientTzOffsetMinutes(): number {
+  return -new Date().getTimezoneOffset();
+}
+
 export function DayPlanCanvas() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -53,13 +58,22 @@ export function DayPlanCanvas() {
 
   /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
   const now = useMemo(() => new Date(), []);
+  const localDate = useLocalCalendarDate();
+  const tzOffsetMinutes = clientTzOffsetMinutes();
+  const top3QueryInput = useMemo(
+    () => ({ localDate, tzOffsetMinutes }),
+    [localDate, tzOffsetMinutes]
+  );
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
-    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+    void queryClient.invalidateQueries({
+      queryKey: trpc.tasks.listTop3Slots.queryKey(top3QueryInput),
+    });
   }, [
     queryClient,
+    top3QueryInput,
     trpc.tasks.listIncomplete,
     trpc.tasks.listTriageCandidates,
     trpc.tasks.listTop3Slots,
@@ -107,7 +121,7 @@ export function DayPlanCanvas() {
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
-  const { data: top3Slots = [] } = useQuery(trpc.tasks.listTop3Slots.queryOptions());
+  const { data: top3Slots = [] } = useQuery(trpc.tasks.listTop3Slots.queryOptions(top3QueryInput));
 
   const triageIds = useMemo(() => new Set(triageTasks.map((t) => t.id)), [triageTasks]);
 

@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
+import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useTRPC } from "@/trpc/client";
+
+export type SendMessageSource = "composer" | "chip";
 
 export function useChatPanel(threadId: string) {
   const trpc = useTRPC();
@@ -19,15 +22,31 @@ export function useChatPanel(threadId: string) {
   const { data: messages = [], isLoading } = useQuery(trpc.chat.list.queryOptions({ threadId }));
 
   const appendUserMutation = useMutation(trpc.chat.appendUser.mutationOptions());
+  const recordPhraseSendMutation = useMutation(trpc.chat.recordPhraseSend.mutationOptions());
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, source: SendMessageSource = "composer") => {
       setStreamError(null);
       setIsStreaming(true);
       setStreamingText("");
 
       try {
         const { id: userMessageId } = await appendUserMutation.mutateAsync({ threadId, text });
+
+        if (threadId === GLOBAL_THREAD_ID && source === "composer") {
+          void recordPhraseSendMutation
+            .mutateAsync({ text })
+            .then((result) => {
+              if (result.promoted) {
+                void queryClient.invalidateQueries({
+                  queryKey: trpc.chat.listCustomSuggestions.queryKey(),
+                });
+              }
+            })
+            .catch(() => {
+              // Phrase tracking is best-effort; don't block chat.
+            });
+        }
 
         void queryClient.invalidateQueries({
           queryKey: trpc.chat.list.queryKey({ threadId }),
@@ -101,8 +120,10 @@ export function useChatPanel(threadId: string) {
       notifyUnread,
       queryClient,
       railOpen,
+      recordPhraseSendMutation,
       threadId,
       trpc.chat.list,
+      trpc.chat.listCustomSuggestions,
     ]
   );
 

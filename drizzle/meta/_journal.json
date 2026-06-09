@@ -50,6 +50,13 @@
       "when": 1780428600000,
       "tag": "0008_drop_projects_description",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781037655512,
+      "tag": "0009_chat_custom_suggestions",
+      "breakpoints": true
     }
   ]
 }

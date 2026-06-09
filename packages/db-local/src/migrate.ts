@@ -141,6 +141,21 @@ CREATE TABLE IF NOT EXISTS task_bulk_import_items (
 CREATE INDEX IF NOT EXISTS task_bulk_import_items_user_id_updated_at_idx
   ON task_bulk_import_items (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS chat_custom_suggestions (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  user_text TEXT NOT NULL,
+  normalized_text TEXT NOT NULL,
+  label TEXT NOT NULL,
+  send_count INTEGER NOT NULL DEFAULT 0,
+  usage_count INTEGER NOT NULL DEFAULT 0,
+  promoted_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS chat_custom_suggestions_user_id_normalized_text_idx
+  ON chat_custom_suggestions (user_id, normalized_text);
+
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,

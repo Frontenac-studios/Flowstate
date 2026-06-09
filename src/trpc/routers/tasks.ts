@@ -7,12 +7,18 @@ import { syncTaskRow } from "@/db/record-sync-mutation";
 import { phases, projects, tasks } from "@/db/tables";
 import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
+import { isExpiredTop3, isTop3ActiveForLocalDate } from "@/lib/tasks/top3-local-day";
 import {
   validateWeekDraftAssignments,
   type WeekDraftAssignment,
 } from "@/lib/week/validate-week-draft-assignments";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
+
+const localCalendarInputSchema = z.object({
+  localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  tzOffsetMinutes: z.number().int().min(-840).max(840),
+});
 
 const taskSnapshotSchema = z.object({
   id: z.string().uuid(),
@@ -132,29 +138,77 @@ export const tasksRouter = createTRPCRouter({
     return rows;
   }),
 
-  listTop3Slots: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await db
-      .select({
-        id: tasks.id,
-        title: tasks.title,
-        priority: tasks.priority,
-        scheduledDate: tasks.scheduledDate,
-        bucketOverride: tasks.bucketOverride,
-        projectId: tasks.projectId,
-        isTop3: tasks.isTop3,
-        top3Order: tasks.top3Order,
-        completedAt: tasks.completedAt,
-        createdAt: tasks.createdAt,
-        projectSlug: projects.slug,
-        projectName: projects.name,
-      })
-      .from(tasks)
-      .leftJoin(projects, eq(tasks.projectId, projects.id))
-      .where(and(eq(tasks.userId, ctx.userId), eq(tasks.isTop3, true), isNotNull(tasks.top3Order)))
-      .orderBy(asc(tasks.top3Order));
+  listTop3Slots: protectedProcedure
+    .input(localCalendarInputSchema)
+    .query(async ({ ctx, input }) => {
+      const rows = await db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          priority: tasks.priority,
+          scheduledDate: tasks.scheduledDate,
+          bucketOverride: tasks.bucketOverride,
+          projectId: tasks.projectId,
+          isTop3: tasks.isTop3,
+          top3Order: tasks.top3Order,
+          top3PinnedAt: tasks.top3PinnedAt,
+          completedAt: tasks.completedAt,
+          createdAt: tasks.createdAt,
+          projectSlug: projects.slug,
+          projectName: projects.name,
+        })
+        .from(tasks)
+        .leftJoin(projects, eq(tasks.projectId, projects.id))
+        .where(
+          and(eq(tasks.userId, ctx.userId), eq(tasks.isTop3, true), isNotNull(tasks.top3Order))
+        )
+        .orderBy(asc(tasks.top3Order));
 
-    return rows;
-  }),
+      return rows.filter((row) =>
+        isTop3ActiveForLocalDate(row, input.localDate, input.tzOffsetMinutes)
+      );
+    }),
+
+  clearExpiredTop3: protectedProcedure
+    .input(localCalendarInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const rows = await db
+        .select({
+          id: tasks.id,
+          top3PinnedAt: tasks.top3PinnedAt,
+          scheduledDate: tasks.scheduledDate,
+        })
+        .from(tasks)
+        .where(
+          and(eq(tasks.userId, ctx.userId), eq(tasks.isTop3, true), isNotNull(tasks.top3Order))
+        );
+
+      const expiredIds = rows
+        .filter((row) => isExpiredTop3(row, input.localDate, input.tzOffsetMinutes))
+        .map((row) => row.id);
+
+      if (expiredIds.length === 0) {
+        return { clearedCount: 0 };
+      }
+
+      const now = new Date();
+      const updatedRows = await db
+        .update(tasks)
+        .set({
+          isTop3: false,
+          top3Order: null,
+          top3PinnedAt: null,
+          updatedAt: now,
+        })
+        .where(and(eq(tasks.userId, ctx.userId), inArray(tasks.id, expiredIds)))
+        .returning();
+
+      for (const row of updatedRows) {
+        await syncTaskRow(row.id, "update", row);
+      }
+
+      return { clearedCount: updatedRows.length };
+    }),
 
   pinTop3: protectedProcedure
     .input(
@@ -227,6 +281,7 @@ export const tasksRouter = createTRPCRouter({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to unpin task." });
       }
 
+      await syncTaskRow(row.id, "update", row);
       return row;
     }),
 

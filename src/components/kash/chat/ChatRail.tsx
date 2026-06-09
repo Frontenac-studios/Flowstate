@@ -3,18 +3,26 @@
 import { useEffect } from "react";
 
 import { useChatPanel } from "@/hooks/useChatPanel";
+import { useChatSuggestions } from "@/hooks/useChatSuggestions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 
 import { useChat } from "./ChatProvider";
 import { ChatComposer } from "./ChatComposer";
+import { ChatSuggestedActions } from "./ChatSuggestedActions";
 import { MessageList } from "./MessageList";
 
 export function ChatRail() {
   const { railOpen, activeThreadId, closeRail, markRead } = useChat();
   const threadId = activeThreadId || GLOBAL_THREAD_ID;
+  const showSuggestions = threadId === GLOBAL_THREAD_ID;
 
   const { messages, isLoading, configured, streamingText, streamError, isStreaming, sendMessage } =
     useChatPanel(threadId);
+  const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
+    threadId,
+    showSuggestions,
+    sendMessage
+  );
 
   useEffect(() => {
     if (railOpen) markRead(threadId);
@@ -64,6 +72,15 @@ export function ChatRail() {
         disabled={!configured}
         isStreaming={isStreaming}
         onSend={(text) => void sendMessage(text)}
+        suggestions={
+          showSuggestions ? (
+            <ChatSuggestedActions
+              suggestions={suggestions}
+              disabled={isStreaming || isSuggestionRunning}
+              onSelect={(id) => void runSuggestion(id)}
+            />
+          ) : null
+        }
       />
     </aside>
   );

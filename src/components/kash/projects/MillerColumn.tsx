@@ -29,7 +29,6 @@ type Props = {
   onOpenPhaseDetail: (node: Node) => void;
   onHighlightTask: (task: ProjectTask) => void;
   onOpenTaskDetail: (task: ProjectTask) => void;
-  onTogglePhase: (node: Node) => void;
   onToggleTask: (task: ProjectTask) => void;
 };
 
@@ -48,7 +47,6 @@ export default function MillerColumn({
   onOpenPhaseDetail,
   onHighlightTask,
   onOpenTaskDetail,
-  onTogglePhase,
   onToggleTask,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
@@ -76,7 +74,6 @@ export default function MillerColumn({
                 focused={focused}
                 onOpen={() => onOpenPhase(item.node)}
                 onOpenDetail={() => onOpenPhaseDetail(item.node)}
-                onToggleComplete={() => onTogglePhase(item.node)}
               />
             );
           }

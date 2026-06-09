@@ -15,7 +15,6 @@ type Props = {
   focused: boolean;
   onOpen: () => void;
   onOpenDetail: () => void;
-  onToggleComplete: () => void;
 };
 
 export default function MillerPhaseRow({
@@ -25,9 +24,7 @@ export default function MillerPhaseRow({
   focused,
   onOpen,
   onOpenDetail,
-  onToggleComplete,
 }: Props) {
-  const completed = node.phase.completedAt !== null;
   const itemCount = node.children.length + node.tasks.length;
   const { setNodeRef, isOver } = useDroppable({
     id: `phasedrop:${node.phase.id}`,
@@ -44,14 +41,6 @@ export default function MillerPhaseRow({
         isOver ? "ring-2 ring-inset ring-kash-accent" : ""
       }`}
     >
-      <input
-        type="checkbox"
-        checked={completed}
-        onChange={onToggleComplete}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={completed ? "Mark phase incomplete" : "Mark phase complete"}
-        className="shrink-0"
-      />
       <button
         type="button"
         onClick={onOpen}
@@ -59,9 +48,7 @@ export default function MillerPhaseRow({
           e.preventDefault();
           onOpenDetail();
         }}
-        className={`flex flex-1 items-center justify-between gap-2 text-left text-sm ${
-          completed ? "text-kash-ink-muted line-through" : "text-kash-ink"
-        }`}
+        className="flex flex-1 items-center justify-between gap-2 text-left text-sm text-kash-ink"
       >
         <span className="truncate font-medium">{node.phase.name}</span>
         {itemCount > 0 ? (

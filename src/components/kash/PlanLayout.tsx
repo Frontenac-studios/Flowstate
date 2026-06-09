@@ -8,12 +8,14 @@ import { MondayEntryRunner } from "./plan/MondayEntryRunner";
 import { PlanMainColumn } from "./plan/PlanMainColumn";
 import { PlanProvider } from "./plan/PlanProvider";
 import { ProactiveNudgesRunner } from "./nudges/ProactiveNudgesRunner";
+import { Top3RolloverRunner } from "./plan/Top3RolloverRunner";
 
 export function PlanLayout({ children }: { children: React.ReactNode }) {
   return (
     <ChatProvider>
       <PlanProvider>
         <ProactiveNudgesRunner />
+        <Top3RolloverRunner />
         <EodReviewRunner />
         <MondayEntryRunner />
         <div className="relative min-h-screen">

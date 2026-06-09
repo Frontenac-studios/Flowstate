@@ -1,5 +1,6 @@
 import * as sqliteSchema from "@kash/db-local/schema";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
+import { chatCustomSuggestions as pgChatCustomSuggestions } from "./schema/chat-custom-suggestions";
 import { chatMessages as pgChatMessages } from "./schema/chat-messages";
 import { dayReviews as pgDayReviews } from "./schema/day-reviews";
 import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
@@ -31,6 +32,9 @@ export const taskTimeEntries = (
 export const chatMessages = (
   isSqliteMode() ? sqliteSchema.chatMessages : pgChatMessages
 ) as typeof pgChatMessages;
+export const chatCustomSuggestions = (
+  isSqliteMode() ? sqliteSchema.chatCustomSuggestions : pgChatCustomSuggestions
+) as typeof pgChatCustomSuggestions;
 export const dayReviews = (
   isSqliteMode() ? sqliteSchema.dayReviews : pgDayReviews
 ) as typeof pgDayReviews;
