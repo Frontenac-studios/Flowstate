@@ -57,6 +57,13 @@
       "when": 1781037655512,
       "tag": "0009_chat_custom_suggestions",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781200000000,
+      "tag": "0010_delete_untitled_tasks",
+      "breakpoints": true
     }
   ]
 }

@@ -89,19 +89,21 @@ export default function NewItemRow({
     const leafPhaseIdByPathKey = buildComposerLeafPhaseIdByPathKey(parsedLines, phaseRefs, null);
 
     return detectDuplicateTaskWarnings({
-      lines: parsedLines.map((line) => {
-        const { phaseId, skipExistingCheck } = resolveComposerLinePhaseIdSync(line, {
-          ...resolveParams,
-          leafPhaseIdByPathKey,
-        });
-        return {
-          lineIndex: line.lineIndex,
-          title: line.parse.title,
-          projectId,
-          phaseId,
-          skipExistingCheck,
-        };
-      }),
+      lines: parsedLines
+        .filter((line) => !line.parse.phaseOnly)
+        .map((line) => {
+          const { phaseId, skipExistingCheck } = resolveComposerLinePhaseIdSync(line, {
+            ...resolveParams,
+            leafPhaseIdByPathKey,
+          });
+          return {
+            lineIndex: line.lineIndex,
+            title: line.parse.title,
+            projectId,
+            phaseId,
+            skipExistingCheck,
+          };
+        }),
       existingTasks: tasks.map((task) => ({
         id: task.id,
         title: task.title,
@@ -196,7 +198,7 @@ export default function NewItemRow({
         onChange={setValue}
         onCursorChange={setCursor}
         ghostSuffix={cursorOnPlusParentDirLine ? null : (assist?.suggestionSuffix ?? null)}
-        placeholder="add tasks — parent dir: Phase or Parent//+ Child for subdirectories"
+        placeholder="add tasks — parent dir: Phase or Parent//+ Child · ;;; + Phase for directories only"
         disabled={isBusy}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

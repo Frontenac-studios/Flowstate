@@ -370,7 +370,8 @@ export default function MillerColumnsView({
           <div className="glass-panel-opaque shrink-0 p-4" data-miller-composer>
             {isBlank ? (
               <p className="mb-3 text-sm text-kash-ink-muted">
-                Add tasks below — use Parent//+ Child for subdirectories (+ on each new segment).
+                Add tasks below — Parent//+ Child for subdirectories, or ;;; + Phase to create
+                directories only.
               </p>
             ) : null}
             <NewItemRow

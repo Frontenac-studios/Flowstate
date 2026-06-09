@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
+import { animatePinToTop3 } from "@/lib/animate/pin-to-top3";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
@@ -33,9 +34,17 @@ import { PlanBuckets } from "./PlanBuckets";
 import { PlanBucketsNamedDays } from "./PlanBucketsNamedDays";
 import { TimelinePane } from "./TimelinePane";
 import { TodayList } from "./TodayList";
+import { Top3ReplacePicker } from "./Top3ReplacePicker";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
+
+function firstFreeSlot(pinnedBySlot: Map<number, Top3SlotTask>): 1 | 2 | 3 | null {
+  for (const slot of [1, 2, 3] as const) {
+    if (!pinnedBySlot.has(slot)) return slot;
+  }
+  return null;
+}
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
@@ -46,9 +55,13 @@ export function DayPlanCanvas() {
   const queryClient = useQueryClient();
   const { touchActivity } = usePlanMode();
   const quickInputRef = useRef<QuickInputHandle>(null);
+  const top3SectionRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const [pulseTarget, setPulseTarget] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [replacePickerTaskId, setReplacePickerTaskId] = useState<string | null>(null);
+  const [top3Highlighted, setTop3Highlighted] = useState(false);
+  const top3HighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
   const { pushComplete, pushDelete } = useSessionUndo();
@@ -116,7 +129,15 @@ export function DayPlanCanvas() {
   useEffect(() => {
     return () => {
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+      if (top3HighlightTimerRef.current) clearTimeout(top3HighlightTimerRef.current);
     };
+  }, []);
+
+  const highlightTop3 = useCallback(() => {
+    top3SectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setTop3Highlighted(true);
+    if (top3HighlightTimerRef.current) clearTimeout(top3HighlightTimerRef.current);
+    top3HighlightTimerRef.current = setTimeout(() => setTop3Highlighted(false), 1500);
   }, []);
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
@@ -215,6 +236,56 @@ export function DayPlanCanvas() {
     })
   );
 
+  const executePin = useCallback(
+    (taskId: string, slot: 1 | 2 | 3, sourceEl: HTMLElement | null, title: string) => {
+      const runMutation = () => pinMutation.mutate({ id: taskId, slot });
+
+      const sectionEl = top3SectionRef.current;
+      if (sourceEl && sectionEl) {
+        animatePinToTop3({
+          sourceEl,
+          top3SectionEl: sectionEl,
+          title,
+          onComplete: runMutation,
+        });
+      } else {
+        runMutation();
+      }
+    },
+    [pinMutation]
+  );
+
+  const handlePinFromToday = useCallback(
+    (taskId: string, sourceEl: HTMLElement) => {
+      const task = todayTasks.find((t) => t.id === taskId);
+      const title = task?.title ?? "";
+      const slot = firstFreeSlot(pinnedBySlot);
+
+      if (slot != null) {
+        executePin(taskId, slot, sourceEl, title);
+        return;
+      }
+
+      highlightTop3();
+      setReplacePickerTaskId(taskId);
+    },
+    [todayTasks, pinnedBySlot, executePin, highlightTop3]
+  );
+
+  const handleReplaceSlot = useCallback(
+    (slot: 1 | 2 | 3) => {
+      if (!replacePickerTaskId) return;
+      const task = todayTasks.find((t) => t.id === replacePickerTaskId);
+      const title = task?.title ?? "";
+      const sourceEl = document.querySelector<HTMLElement>(
+        `[data-task-row="${replacePickerTaskId}"]`
+      );
+      setReplacePickerTaskId(null);
+      executePin(replacePickerTaskId, slot, sourceEl, title);
+    },
+    [replacePickerTaskId, todayTasks, executePin]
+  );
+
   const todayIso = toISODateString(now);
 
   const invalidateBlocks = useCallback(() => {
@@ -298,7 +369,14 @@ export function DayPlanCanvas() {
     const taskId = activeId.slice("task:".length);
 
     if (overId.startsWith("top3:")) {
-      const slot = Number(overId.slice("top3:".length));
+      const suffix = overId.slice("top3:".length);
+      if (suffix === "next") {
+        const slot = firstFreeSlot(pinnedBySlot);
+        if (slot == null) return;
+        pinMutation.mutate({ id: taskId, slot });
+        return;
+      }
+      const slot = Number(suffix);
       if (slot !== 1 && slot !== 2 && slot !== 3) return;
       pinMutation.mutate({ id: taskId, slot });
       return;
@@ -338,9 +416,19 @@ export function DayPlanCanvas() {
             onTaskCreated={handleTaskCreated}
           />
           <Top3Slots
+            ref={top3SectionRef}
             pinnedBySlot={pinnedBySlot}
+            highlighted={top3Highlighted}
             onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}
           />
+          {replacePickerTaskId ? (
+            <Top3ReplacePicker
+              pinnedBySlot={pinnedBySlot}
+              anchorEl={top3SectionRef.current}
+              onReplace={handleReplaceSlot}
+              onDismiss={() => setReplacePickerTaskId(null)}
+            />
+          ) : null}
           <TodayList
             pulse={pulseTarget === "today"}
             tasks={todayTasks.map(toRow)}
@@ -350,6 +438,7 @@ export function DayPlanCanvas() {
             onActivateTask={handleActivateTask}
             onComplete={pushComplete}
             onDelete={pushDelete}
+            onPin={handlePinFromToday}
           />
           {bucketMode === "named_days" ? (
             <PlanBucketsNamedDays

@@ -43,14 +43,18 @@ export default function TaskDetail({
         <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
           Task
         </span>
-        <input
-          className="glass-input"
+        <textarea
+          className="glass-input glass-textarea w-full break-words"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={commitTitle}
           onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
           }}
+          rows={1}
           maxLength={500}
           aria-label="Task title"
         />

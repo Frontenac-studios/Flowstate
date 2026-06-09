@@ -42,8 +42,7 @@ export type ParsedLine = {
 export const MAX_COMPOSER_LINES = 50;
 
 export function isLineProjectValid(parse: ParseResult): boolean {
-  // A "valid" line must have zero warnings (missing projects, invalid semicolon properties, etc.).
-  return parse.warnings.length === 0;
+  return parse.warnings.length === 0 && parse.title.trim().length > 0;
 }
 
 export function parseQuickInputLines(raw: string, ctx: ParseContext): ParsedLine[] {
@@ -131,7 +130,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const title = collapseWhitespace(segments[0] ?? "") || "Untitled";
+  const title = collapseWhitespace(segments[0] ?? "") || "";
 
   let scheduledDate: string | null = todayIso;
   let bucketOverride: "later" | null = null;
@@ -235,7 +234,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     titleParts.push(token);
   }
 
-  const title = collapseWhitespace(titleParts.join(" ")) || "Untitled";
+  const title = collapseWhitespace(titleParts.join(" ")) || "";
   const warnings: ParseWarning[] = [];
   let suggestions: ProjectSuggestion[] = [];
 

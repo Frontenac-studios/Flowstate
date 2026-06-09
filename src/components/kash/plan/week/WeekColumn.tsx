@@ -1,8 +1,9 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { forwardRef } from "react";
 
-import { formatHeaderDate, parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import { formatHeaderDate, parseISODateString } from "@/lib/dates/local-day";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
 import type { PlanTaskRow } from "../TaskRow";
@@ -12,21 +13,26 @@ type Props = {
   isoDate: string;
   label: string;
   isToday: boolean;
+  columnWidthPercent: number;
   tasks: PlanTaskRow[];
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
 };
 
-export function WeekColumn({ isoDate, label, isToday, tasks, onComplete, onDelete }: Props) {
+export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
+  { isoDate, label, isToday, columnWidthPercent, tasks, onComplete, onDelete },
+  ref
+) {
   const { setNodeRef, isOver } = useDroppable({ id: `week-day:${isoDate}` });
   const headerDate = formatHeaderDate(parseISODateString(isoDate));
-  const todayIso = toISODateString(new Date());
 
   return (
     <div
-      className={`flex min-w-[140px] flex-1 flex-col rounded-[var(--kash-radius)] ${
+      ref={ref}
+      className={`flex shrink-0 flex-col rounded-[var(--kash-radius)] ${
         isToday ? "border border-kash-accent" : "border border-transparent"
       }`}
+      style={{ width: `${columnWidthPercent}%` }}
     >
       <div
         ref={setNodeRef}
@@ -45,7 +51,6 @@ export function WeekColumn({ isoDate, label, isToday, tasks, onComplete, onDelet
           <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
         ))}
       </ul>
-      <span className="sr-only" data-today-marker={isoDate === todayIso ? "true" : undefined} />
     </div>
   );
-}
+});
