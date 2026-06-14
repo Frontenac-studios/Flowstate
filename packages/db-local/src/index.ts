@@ -8,10 +8,18 @@ import * as schema from "./schema";
 
 export type SqliteDb = BetterSQLite3Database<typeof schema>;
 
+/** Matches Tauri `identifier` in apps/desktop/src-tauri/tauri.conf.json */
+export const KASH_APP_DATA_DIR_NAME = "com.frontenac.kash";
+
 export function resolveDefaultDbPath(): string {
   const dataDir =
     process.env.KASH_DATA_DIR ??
-    path.join(process.env.HOME ?? process.cwd(), "Library", "Application Support", "Kash");
+    path.join(
+      process.env.HOME ?? process.cwd(),
+      "Library",
+      "Application Support",
+      KASH_APP_DATA_DIR_NAME
+    );
   fs.mkdirSync(dataDir, { recursive: true });
   return path.join(dataDir, "kash.db");
 }

@@ -1,6 +1,5 @@
 import { BottomDock } from "./BottomDock";
 import { CommandPalette } from "./CommandPalette";
-import { DesktopSyncBanner } from "./DesktopSyncBanner";
 import { LeftNavRail } from "./LeftNavRail";
 import { ChatProvider } from "./chat/ChatProvider";
 import { EodReviewRunner } from "./eod/EodReviewRunner";
@@ -19,7 +18,6 @@ export function PlanLayout({ children }: { children: React.ReactNode }) {
         <EodReviewRunner />
         <MondayEntryRunner />
         <div className="relative min-h-screen">
-          <DesktopSyncBanner />
           <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[110rem] gap-6 px-4 py-6 pb-24 sm:px-6 lg:px-10">
             <LeftNavRail />
             <PlanMainColumn>{children}</PlanMainColumn>

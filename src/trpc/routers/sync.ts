@@ -1,4 +1,4 @@
-import { runSync } from "@kash/sync";
+import { listPendingMutations, runSync } from "@kash/sync";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -10,10 +10,13 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 
 export const syncRouter = createTRPCRouter({
   status: protectedProcedure.query(async () => {
-    return {
-      mode: isSqliteMode() ? ("sqlite" as const) : ("postgres" as const),
-      online: true,
-    };
+    const mode = isSqliteMode() ? ("sqlite" as const) : ("postgres" as const);
+    if (!isSqliteMode()) {
+      return { mode, pendingCount: 0 };
+    }
+
+    const pending = await listPendingMutations(db as unknown as import("@kash/db-local").SqliteDb);
+    return { mode, pendingCount: pending.length };
   }),
 
   run: protectedProcedure
