@@ -13,7 +13,7 @@ import {
   totalDays,
   type GanttGranularity,
 } from "@/lib/projects/gantt-scale";
-import type { ProjectTree } from "@/lib/projects/phase-tree";
+import { resolveEffectivePhaseRange, type ProjectTree } from "@/lib/projects/phase-tree";
 
 import GanttAxis from "./GanttAxis";
 import GanttRow, { GANTT_LABEL_WIDTH, GANTT_ROW_HEIGHT } from "./GanttRow";
@@ -77,8 +77,11 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
   const todayOffset = span ? dayIndex(todayIso, span.start) : -1;
   const showToday = span !== null && todayOffset >= 0 && todayOffset < total;
 
-  const isUndatedLeaf = (r: (typeof rows)[number]) =>
-    r.isLeaf && (r.node.phase.startDate === null || r.node.phase.endDate === null);
+  const isUndatedLeaf = (r: (typeof rows)[number]) => {
+    if (!r.isLeaf) return false;
+    const range = resolveEffectivePhaseRange(r.node);
+    return range.start === null || range.end === null;
+  };
   const undatedLeaves = rows.filter(isUndatedLeaf);
   const boardRows = rows.filter((r) => !isUndatedLeaf(r));
 
@@ -150,7 +153,8 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
 
       {span === null ? (
         <div className="glass-panel-opaque px-6 py-10 text-center text-kash-ink-muted">
-          No dated phases yet. Give a phase dates below to plot it on the calendar.
+          No dated phases yet. Schedule tasks in a phase or set dates manually to plot it on the
+          calendar.
         </div>
       ) : (
         <div ref={scrollRef} className="glass-panel-opaque overflow-x-auto">
@@ -189,7 +193,8 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
         <div className="glass-panel-opaque p-4">
           <h3 className="mb-2 text-sm font-medium text-kash-ink">Undated phases</h3>
           <p className="mb-3 text-xs text-kash-ink-muted">
-            These leaf phases have no dates. Click one to schedule it (today → +6 days).
+            These leaf phases have no dates and no scheduled tasks. Click one to set manual dates
+            (today → +6 days).
           </p>
           <ul className="flex flex-wrap gap-2">
             {undatedLeaves.map((r) => (

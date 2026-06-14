@@ -7,6 +7,13 @@
  * preserves the full objects on each node.
  */
 
+import {
+  endOfIsoWeekSunday,
+  parseISODateString,
+  startOfIsoWeekMonday,
+  toISODateString,
+} from "@/lib/dates/local-day";
+
 export type PhaseShape = {
   id: string;
   parentPhaseId: string | null;
@@ -17,6 +24,8 @@ export type PhaseShape = {
 export type TaskShape = {
   phaseId: string | null;
   sortOrder: number;
+  scheduledDate?: string | null;
+  completedAt?: Date | null;
 };
 
 export type PhaseTreeNode<P extends PhaseShape, T extends TaskShape> = {
@@ -29,6 +38,15 @@ export type ProjectTree<P extends PhaseShape, T extends TaskShape> = {
   rootPhases: PhaseTreeNode<P, T>[];
   /** Tasks attached directly to the project (phaseId === null). */
   looseTasks: T[];
+};
+
+export type PhaseDateRange = { start: string | null; end: string | null };
+
+type DatedPhase = { startDate: string | null; endDate: string | null };
+
+type SchedulableTask = {
+  scheduledDate?: string | null;
+  completedAt?: Date | null;
 };
 
 function bySortThenName(a: PhaseShape, b: PhaseShape): number {
@@ -78,16 +96,77 @@ export function buildPhaseTree<P extends PhaseShape, T extends TaskShape>(
   };
 }
 
-type DatedPhase = { startDate: string | null; endDate: string | null };
+/** True when the user has set at least one manual date on the phase. */
+export function hasManualPhaseDate(phase: DatedPhase): boolean {
+  return phase.startDate !== null || phase.endDate !== null;
+}
 
 /**
- * Derives a phase's effective date range. A leaf phase uses its own manually
- * set dates; a parent spans the min start / max end of all descendants that
- * have dates. ISO date strings (YYYY-MM-DD) compare correctly lexicographically.
+ * Week-snapped min/max from incomplete tasks with a scheduledDate.
+ * Returns null when no qualifying tasks exist.
+ */
+export function derivePhaseRangeFromTasks<T extends SchedulableTask>(
+  tasks: T[]
+): { start: string; end: string } | null {
+  let minIso: string | null = null;
+  let maxIso: string | null = null;
+
+  for (const task of tasks) {
+    if (task.completedAt !== null && task.completedAt !== undefined) continue;
+    const iso = task.scheduledDate;
+    if (iso == null) continue;
+    if (minIso === null || iso < minIso) minIso = iso;
+    if (maxIso === null || iso > maxIso) maxIso = iso;
+  }
+
+  if (minIso === null || maxIso === null) return null;
+
+  return {
+    start: toISODateString(startOfIsoWeekMonday(parseISODateString(minIso))),
+    end: toISODateString(endOfIsoWeekSunday(parseISODateString(maxIso))),
+  };
+}
+
+function mergeLeafPhaseRange(
+  phase: DatedPhase,
+  taskSnap: { start: string; end: string } | null
+): PhaseDateRange {
+  const start = phase.startDate ?? taskSnap?.start ?? null;
+  const end = phase.endDate ?? taskSnap?.end ?? null;
+  if (start === null || end === null) return { start: null, end: null };
+  return { start, end };
+}
+
+/**
+ * Effective display range for a phase: per-side manual DB dates merged with
+ * week-snapped task schedules on leaves; parents span child effective ranges.
+ */
+export function resolveEffectivePhaseRange<P extends PhaseShape & DatedPhase, T extends TaskShape>(
+  node: PhaseTreeNode<P, T>
+): PhaseDateRange {
+  if (node.children.length === 0) {
+    return mergeLeafPhaseRange(node.phase, derivePhaseRangeFromTasks(node.tasks));
+  }
+
+  let start: string | null = null;
+  let end: string | null = null;
+
+  for (const child of node.children) {
+    const range = resolveEffectivePhaseRange(child);
+    if (range.start !== null && (start === null || range.start < start)) start = range.start;
+    if (range.end !== null && (end === null || range.end > end)) end = range.end;
+  }
+
+  return { start, end };
+}
+
+/**
+ * Derives a phase's stored date range from DB columns only. A parent spans the
+ * min start / max end of all descendants that have stored dates.
  */
 export function derivePhaseRange<P extends PhaseShape & DatedPhase, T extends TaskShape>(
   node: PhaseTreeNode<P, T>
-): { start: string | null; end: string | null } {
+): PhaseDateRange {
   let start: string | null = null;
   let end: string | null = null;
 

@@ -1,6 +1,10 @@
 "use client";
 
-import { derivePhaseRange, type ProjectTree } from "@/lib/projects/phase-tree";
+import {
+  hasManualPhaseDate,
+  resolveEffectivePhaseRange,
+  type ProjectTree,
+} from "@/lib/projects/phase-tree";
 
 import GanttBar from "./GanttBar";
 import type { ProjectPhase, ProjectTask } from "./types";
@@ -32,13 +36,9 @@ export default function GanttRow({
   onCommit,
 }: Props) {
   const completed = node.phase.completedAt !== null;
-
-  // Leaf bars use their own manual dates (editable); parent bars are the
-  // derived min/max of descendants (locked).
-  const range = isLeaf
-    ? { start: node.phase.startDate, end: node.phase.endDate }
-    : derivePhaseRange(node);
+  const range = resolveEffectivePhaseRange(node);
   const hasBar = range.start !== null && range.end !== null;
+  const taskDerived = isLeaf && hasBar && !hasManualPhaseDate(node.phase);
 
   return (
     <div className="flex items-stretch" style={{ width: GANTT_LABEL_WIDTH + boardWidth }}>
@@ -64,6 +64,7 @@ export default function GanttRow({
             pxPerDay={pxPerDay}
             color={color}
             locked={!isLeaf}
+            taskDerived={taskDerived}
             completed={completed}
             label={node.phase.name}
             onCommit={isLeaf ? (start, end) => onCommit(node.phase.id, start, end) : undefined}
