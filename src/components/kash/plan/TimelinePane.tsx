@@ -273,7 +273,7 @@ export function TimelinePane() {
   const showNowLine = nowMinutes != null && nowMinutes >= rangeStart && nowMinutes <= rangeEnd;
 
   const openFocus = (taskId: string, blockId: string) => {
-    router.push(`/plan/focus?${new URLSearchParams({ taskId, blockId }).toString()}`);
+    router.push(`/today/focus?${new URLSearchParams({ taskId, blockId }).toString()}`);
   };
 
   return (

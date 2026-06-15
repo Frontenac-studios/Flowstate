@@ -106,14 +106,14 @@ export function FocusCanvas() {
       );
       const pick = pickRdmTask(pool, { lastWasLarge: lastWasLargeRef.current });
       if (!pick) {
-        router.push("/plan");
+        router.push("/today");
         return;
       }
 
       lastWasLargeRef.current = pick.isTop3;
 
       const params = new URLSearchParams({ taskId: pick.id });
-      router.replace(`/plan/focus?${params.toString()}`);
+      router.replace(`/today/focus?${params.toString()}`);
     },
     [queryClient, router, tasks, triageIds, trpc.tasks.listIncomplete]
   );
@@ -154,13 +154,13 @@ export function FocusCanvas() {
   const handlePark = useCallback(async () => {
     if (doneFlash) return;
     await endSession("park");
-    router.push("/plan");
+    router.push("/today");
   }, [doneFlash, endSession, router]);
 
   const handleEsc = useCallback(async () => {
     if (doneFlash) return;
     await endSession("esc");
-    router.push("/plan");
+    router.push("/today");
   }, [doneFlash, endSession, router]);
 
   // Keyboard shortcuts.
@@ -191,7 +191,7 @@ export function FocusCanvas() {
           <button
             type="button"
             className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
-            onClick={() => router.push("/plan")}
+            onClick={() => router.push("/today")}
           >
             Back to plan
           </button>

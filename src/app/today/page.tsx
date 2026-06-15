@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 
+import { PlanCanvas } from "@/components/kash/plan/PlanCanvas";
 import { PlanLayout } from "@/components/kash/PlanLayout";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function PlanningPage() {
+export default async function PlanPage() {
   const supabase = createClient();
   const {
     data: { user },
@@ -15,12 +16,7 @@ export default async function PlanningPage() {
 
   return (
     <PlanLayout>
-      <div className="glass-panel p-8 text-kash-ink-muted">
-        <h1 className="text-lg font-semibold text-kash-ink">Plan</h1>
-        <p className="mt-2 text-sm">
-          Long-horizon planning (month / quarter / year) lands here. Coming soon.
-        </p>
-      </div>
+      <PlanCanvas />
     </PlanLayout>
   );
 }

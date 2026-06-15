@@ -171,7 +171,7 @@ export function DayPlanCanvas() {
     lastWasLargeRef.current = pick.isTop3;
 
     const params = new URLSearchParams({ taskId: pick.id });
-    router.push(`/plan/focus?${params.toString()}`);
+    router.push(`/today/focus?${params.toString()}`);
   }, [todayTasks, router]);
 
   const toRow = (task: (typeof tasks)[number]): PlanTaskRow => ({
@@ -305,7 +305,7 @@ export function DayPlanCanvas() {
 
   const handleActivateTask = useCallback(
     (taskId: string) => {
-      router.push(`/plan/focus?${new URLSearchParams({ taskId }).toString()}`);
+      router.push(`/today/focus?${new URLSearchParams({ taskId }).toString()}`);
     },
     [router]
   );

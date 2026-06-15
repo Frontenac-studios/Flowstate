@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { resolveEodUiState } from "./resolve-eod-ui-state";
 
 const base = {
-  pathname: "/plan",
+  pathname: "/today",
   reviewDue: true,
   savedReviewExists: false,
   modalOpen: false,

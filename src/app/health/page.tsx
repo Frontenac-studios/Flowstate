@@ -34,7 +34,7 @@ export default async function HealthPage() {
       <div className="relative z-10 mx-auto min-h-screen max-w-3xl px-6 py-12">
         <header className="glass-panel mb-10 px-6 py-5">
           <p className="mb-2 text-sm text-kash-ink-muted">
-            <Link href="/plan" className="glass-link">
+            <Link href="/today" className="glass-link">
               ← Plan
             </Link>
           </p>

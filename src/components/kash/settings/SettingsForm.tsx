@@ -197,7 +197,7 @@ export function SettingsForm() {
       </form>
 
       <Link
-        href="/plan"
+        href="/today"
         className="glass-pill inline-block px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
       >
         Back to plan

@@ -1,4 +1,12 @@
-const PROTECTED_PREFIXES = ["/plan", "/projects", "/settings"] as const;
+const PROTECTED_PREFIXES = [
+  "/today",
+  "/plan",
+  "/this-week",
+  "/projects",
+  "/abyss",
+  "/care",
+  "/settings",
+] as const;
 
 export function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
