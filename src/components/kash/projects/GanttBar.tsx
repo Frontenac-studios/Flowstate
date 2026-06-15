@@ -23,6 +23,8 @@ type Props = {
   color: string;
   /** Parent (derived) bars are read-only. */
   locked: boolean;
+  /** Fully task-derived leaf bar (no manual DB dates). */
+  taskDerived?: boolean;
   completed: boolean;
   label?: string;
   onCommit?: (startIso: string, endIso: string) => void;
@@ -35,6 +37,7 @@ export default function GanttBar({
   pxPerDay,
   color,
   locked,
+  taskDerived = false,
   completed,
   label,
   onCommit,
@@ -113,6 +116,7 @@ export default function GanttBar({
         height,
         backgroundColor: color,
         opacity,
+        border: taskDerived ? "1.5px dashed rgba(255,255,255,0.65)" : undefined,
         boxShadow: drag ? "0 2px 8px rgba(0,0,0,0.18)" : undefined,
       }}
     >

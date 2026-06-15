@@ -7,24 +7,24 @@ is **done and merged in this PR**; the UI (tasks 3–6) is **not yet built**.
 
 Captured from product Q&A — these are the source of truth for the UI work.
 
-| Area                     | Decision                                                                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Nesting                  | **Arbitrary depth** sub-directories (phases) via `phases.parent_phase_id` self-reference.                                                     |
-| Categories               | 5 fixed categories (enum). Category is a **filterable badge**, not a Miller column.                                                           |
-| Calendar unit            | **Phase date-range bars** (Gantt-style).                                                                                                      |
-| Leaf phase dates         | **Manually set** on leaf phases (`start_date` / `end_date`).                                                                                  |
-| Parent phase dates       | **Auto-derived** (min start / max end of descendants) — computed in app layer, not stored.                                                    |
-| Calendar scope           | **One project at a time.**                                                                                                                    |
-| Calendar scale           | **Adaptive** zoom to the project's full span.                                                                                                 |
-| Calendar editing         | **Leaf bars** drag-to-shift + resize-to-rechange-duration; **parent bars locked** (read-only summary).                                        |
-| Task ↔ plan              | **Same unified task** — a project task with a `scheduled_date` shows in Today/Week on `/plan`.                                                |
-| Loose tasks              | A task may live **directly under a project** (`phase_id = null`) or inside any phase.                                                         |
-| Phase completion         | **Crossing off completes everything inside** (descendant phases + tasks), but **prompt first** (client-side) if it contains incomplete tasks. |
-| Inline `#project` create | **Blocked** — composer points to `/projects`; projects must be created there with a required category.                                        |
-| Project index            | **Flat list + category filter**, color badge per row.                                                                                         |
-| Workspace layout         | \*\*Header `[Columns                                                                                                                          | Calendar]` toggle\*\* (reuse the Day/Week toggle pattern). |
-| Add items                | **Inline "+ new" row per Miller column.**                                                                                                     |
-| Completed items          | **Dimmed + sunk to bottom** of their column.                                                                                                  |
+| Area                     | Decision                                                                                                                                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Nesting                  | **Arbitrary depth** sub-directories (phases) via `phases.parent_phase_id` self-reference.                                                                                                                                             |
+| Categories               | 5 fixed categories (enum). Category is a **filterable badge**, not a Miller column.                                                                                                                                                   |
+| Calendar unit            | **Phase date-range bars** (Gantt-style).                                                                                                                                                                                              |
+| Leaf phase dates         | **Per-side manual or auto** on leaf phases: DB `start_date` / `end_date` override that side; unset sides derive from incomplete tasks' `scheduled_date` (ISO week Mon–Sun snap). Display-time merge only — auto dates are not stored. |
+| Parent phase dates       | **Auto-derived** (min start / max end of descendants) — computed in app layer, not stored.                                                                                                                                            |
+| Calendar scope           | **One project at a time.**                                                                                                                                                                                                            |
+| Calendar scale           | **Adaptive** zoom to the project's full span.                                                                                                                                                                                         |
+| Calendar editing         | **Leaf bars** drag-to-shift + resize-to-rechange-duration; **parent bars locked** (read-only summary).                                                                                                                                |
+| Task ↔ plan              | **Same unified task** — a project task with a `scheduled_date` shows in Today/Week on `/plan`.                                                                                                                                        |
+| Loose tasks              | A task may live **directly under a project** (`phase_id = null`) or inside any phase.                                                                                                                                                 |
+| Phase completion         | **Crossing off completes everything inside** (descendant phases + tasks), but **prompt first** (client-side) if it contains incomplete tasks.                                                                                         |
+| Inline `#project` create | **Blocked** — composer points to `/projects`; projects must be created there with a required category.                                                                                                                                |
+| Project index            | **Flat list + category filter**, color badge per row.                                                                                                                                                                                 |
+| Workspace layout         | \*\*Header `[Columns                                                                                                                                                                                                                  | Calendar]` toggle\*\* (reuse the Day/Week toggle pattern). |
+| Add items                | **Inline "+ new" row per Miller column.**                                                                                                                                                                                             |
+| Completed items          | **Dimmed + sunk to bottom** of their column.                                                                                                                                                                                          |
 
 ### Categories (enum value → label → color)
 
@@ -81,10 +81,10 @@ Defined in [`src/lib/projects/categories.ts`](../src/lib/projects/categories.ts)
 
 ### 6. Calendar Gantt board
 
-- One project; adaptive zoom to span (earliest start → latest end across all dated phases).
-- **Leaf phases** (no child phases) with `start_date`/`end_date` render as draggable + resizable bars → `phases.update`.
-- **Parent phases**: locked summary bars spanning the min/max of descendants (computed client-side); visually distinct (thinner/lighter).
-- Phases without dates: not drawn (or shown in an "undated" tray).
+- One project; adaptive zoom to span (earliest start → latest effective end across all phases).
+- **Leaf phases** (no child phases): effective bar from manual dates and/or week-snapped task schedules; draggable + resizable → `phases.update` (commits both sides as manual).
+- **Parent phases**: locked summary bars spanning the min/max of descendant **effective** ranges (computed client-side); visually distinct (thinner/lighter).
+- Phases without an effective range: not drawn (or shown in an "undated" tray when no manual dates and no scheduled tasks).
 - Category color theming on bars.
 - Zoom/scroll controls; today marker.
 

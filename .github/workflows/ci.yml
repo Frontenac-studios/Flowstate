@@ -3,12 +3,19 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
   pull_request:
     branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # Supabase local demo keys — public defaults, not production secrets
       NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
@@ -24,6 +31,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'next.config.mjs') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
       - run: npm ci
       - run: npm run auth:check-signup-disabled
       - run: npm run typecheck
@@ -31,3 +45,28 @@ jobs:
       - run: npm run format:check
       - run: npm run test:run
       - run: npm run build
+
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux Tauri deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libsoup-3.0-dev libayatana-appindicator3-dev librsvg2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache Rust/cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      # generate_context! checks build.frontendDist (../dist-placeholder) exists at compile time.
+      - run: mkdir -p apps/desktop/dist-placeholder
+      # tauri.conf bundle.resources globs sidecar/**/* at compile time; the dir is a
+      # gitignored build artifact (populated by prepare-sidecar.mjs only in release.yml),
+      # so seed a placeholder file here to keep the glob non-empty for clippy.
+      - run: mkdir -p apps/desktop/src-tauri/sidecar && touch apps/desktop/src-tauri/sidecar/placeholder
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets

@@ -1,29 +1,18 @@
-name: Desktop macOS
+name: Release
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "apps/desktop/**"
-      - "packages/**"
-      - "src/**"
-      - "package.json"
-      - "package-lock.json"
-      - "next.config.mjs"
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/desktop/**"
-      - "packages/**"
-      - "src/**"
-      - "package.json"
-      - "package-lock.json"
-      - "next.config.mjs"
+    tags: ["v*"]
   workflow_dispatch:
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-macos:
     runs-on: macos-latest
+    timeout-minutes: 30
     env:
       NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
       NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
@@ -42,11 +31,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust/cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
       - run: npm ci
-
-      - run: npm run typecheck
-
-      - run: npm run test:run
 
       - name: Build Next standalone for desktop
         run: npm run build:desktop
@@ -63,14 +53,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Kash-macos
+          retention-days: 7
           path: |
             apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg
             apps/desktop/src-tauri/target/release/bundle/macos/*.app
 
   notarize:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: build
+    # Only boots a macOS runner once signing is wired up (set repo variable SIGNING_ENABLED=true).
+    if: vars.SIGNING_ENABLED == 'true'
+    needs: build-macos
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 

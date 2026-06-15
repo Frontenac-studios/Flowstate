@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildPhaseTree, derivePhaseRange, partitionByCompletion } from "./phase-tree";
+import {
+  buildPhaseTree,
+  derivePhaseRange,
+  derivePhaseRangeFromTasks,
+  partitionByCompletion,
+  resolveEffectivePhaseRange,
+} from "./phase-tree";
 
 type Phase = {
   id: string;
@@ -13,14 +19,22 @@ type Task = {
   id: string;
   phaseId: string | null;
   sortOrder: number;
+  scheduledDate?: string | null;
+  completedAt?: Date | null;
 };
 
 function phase(id: string, parentPhaseId: string | null, sortOrder: number, name = id): Phase {
   return { id, parentPhaseId, sortOrder, name };
 }
 
-function task(id: string, phaseId: string | null, sortOrder: number): Task {
-  return { id, phaseId, sortOrder };
+function task(
+  id: string,
+  phaseId: string | null,
+  sortOrder: number,
+  scheduledDate: string | null = null,
+  completedAt: Date | null = null
+): Task {
+  return { id, phaseId, sortOrder, scheduledDate, completedAt };
 }
 
 describe("buildPhaseTree", () => {
@@ -106,6 +120,112 @@ describe("derivePhaseRange", () => {
       []
     );
     expect(derivePhaseRange(tree.rootPhases[0])).toEqual({ start: null, end: null });
+  });
+});
+
+describe("derivePhaseRangeFromTasks", () => {
+  it("returns null when no incomplete scheduled tasks exist", () => {
+    expect(derivePhaseRangeFromTasks([])).toBeNull();
+    expect(
+      derivePhaseRangeFromTasks([
+        task("t1", "p1", 0, "2026-06-10", new Date("2026-06-01")),
+        task("t2", "p1", 1, null),
+      ])
+    ).toBeNull();
+  });
+
+  it("snaps a single task to its ISO week", () => {
+    expect(derivePhaseRangeFromTasks([task("t1", "p1", 0, "2026-06-10")])).toEqual({
+      start: "2026-06-08",
+      end: "2026-06-14",
+    });
+  });
+
+  it("spans weeks across earliest and latest scheduled tasks", () => {
+    expect(
+      derivePhaseRangeFromTasks([
+        task("t1", "p1", 0, "2026-06-10"),
+        task("t2", "p1", 1, "2026-06-19"),
+      ])
+    ).toEqual({
+      start: "2026-06-08",
+      end: "2026-06-21",
+    });
+  });
+});
+
+describe("resolveEffectivePhaseRange", () => {
+  type DatedPhase = Phase & { startDate: string | null; endDate: string | null };
+
+  const dated = (
+    id: string,
+    parentPhaseId: string | null,
+    startDate: string | null,
+    endDate: string | null
+  ): DatedPhase => ({ id, parentPhaseId, sortOrder: 0, name: id, startDate, endDate });
+
+  it("derives leaf range from tasks when no manual dates are set", () => {
+    const tree = buildPhaseTree<DatedPhase, Task>(
+      [dated("p1", null, null, null)],
+      [task("t1", "p1", 0, "2026-06-10"), task("t2", "p1", 1, "2026-06-19")]
+    );
+    expect(resolveEffectivePhaseRange(tree.rootPhases[0])).toEqual({
+      start: "2026-06-08",
+      end: "2026-06-21",
+    });
+  });
+
+  it("uses manual start and task-derived end when only start is set", () => {
+    const tree = buildPhaseTree<DatedPhase, Task>(
+      [dated("p1", null, "2026-06-01", null)],
+      [task("t1", "p1", 0, "2026-06-10"), task("t2", "p1", 1, "2026-06-19")]
+    );
+    expect(resolveEffectivePhaseRange(tree.rootPhases[0])).toEqual({
+      start: "2026-06-01",
+      end: "2026-06-21",
+    });
+  });
+
+  it("uses manual end and task-derived start when only end is set", () => {
+    const tree = buildPhaseTree<DatedPhase, Task>(
+      [dated("p1", null, null, "2026-06-30")],
+      [task("t1", "p1", 0, "2026-06-10")]
+    );
+    expect(resolveEffectivePhaseRange(tree.rootPhases[0])).toEqual({
+      start: "2026-06-08",
+      end: "2026-06-30",
+    });
+  });
+
+  it("ignores tasks when both manual dates are set", () => {
+    const tree = buildPhaseTree<DatedPhase, Task>(
+      [dated("p1", null, "2026-03-01", "2026-03-05")],
+      [task("t1", "p1", 0, "2026-06-10")]
+    );
+    expect(resolveEffectivePhaseRange(tree.rootPhases[0])).toEqual({
+      start: "2026-03-01",
+      end: "2026-03-05",
+    });
+  });
+
+  it("returns null when leaf has no manual dates and no schedulable tasks", () => {
+    const tree = buildPhaseTree<DatedPhase, Task>([dated("p1", null, null, null)], []);
+    expect(resolveEffectivePhaseRange(tree.rootPhases[0])).toEqual({ start: null, end: null });
+  });
+
+  it("spans parent across task-auto and manual child leaves", () => {
+    const tree = buildPhaseTree<DatedPhase, Task>(
+      [
+        dated("root", null, null, null),
+        dated("manual", "root", "2026-03-01", "2026-03-10"),
+        dated("auto", "root", null, null),
+      ],
+      [task("t1", "auto", 0, "2026-06-10")]
+    );
+    expect(resolveEffectivePhaseRange(tree.rootPhases[0])).toEqual({
+      start: "2026-03-01",
+      end: "2026-06-14",
+    });
   });
 });
 

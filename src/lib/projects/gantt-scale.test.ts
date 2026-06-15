@@ -20,7 +20,13 @@ type Phase = {
   startDate: string | null;
   endDate: string | null;
 };
-type Task = { id: string; phaseId: string | null; sortOrder: number };
+type Task = {
+  id: string;
+  phaseId: string | null;
+  sortOrder: number;
+  scheduledDate?: string | null;
+  completedAt?: Date | null;
+};
 
 function phase(
   id: string,
@@ -29,6 +35,10 @@ function phase(
   endDate: string | null
 ): Phase {
   return { id, parentPhaseId, sortOrder: 0, name: id, startDate, endDate };
+}
+
+function scheduledTask(id: string, phaseId: string, scheduledDate: string): Task {
+  return { id, phaseId, sortOrder: 0, scheduledDate, completedAt: null };
 }
 
 describe("dayIndex / offsetToDate / totalDays", () => {
@@ -53,7 +63,7 @@ describe("computeProjectSpan", () => {
         phase("root", null, null, null),
         phase("a", "root", "2026-03-05", "2026-03-08"),
         phase("b", "root", "2026-03-01", "2026-03-20"),
-        phase("c", "b", "2026-02-25", "2026-03-15"),
+        phase("c", "b", "2026-02-25", "2026-03-20"),
       ],
       []
     );
@@ -63,6 +73,14 @@ describe("computeProjectSpan", () => {
   it("returns null when nothing is dated", () => {
     const tree = buildPhaseTree<Phase, Task>([phase("a", null, null, null)], []);
     expect(computeProjectSpan(tree)).toBeNull();
+  });
+
+  it("includes task-auto leaf phases with no stored dates", () => {
+    const tree = buildPhaseTree<Phase, Task>(
+      [phase("p1", null, null, null)],
+      [scheduledTask("t1", "p1", "2026-06-10"), scheduledTask("t2", "p1", "2026-06-19")]
+    );
+    expect(computeProjectSpan(tree)).toEqual({ start: "2026-06-08", end: "2026-06-21" });
   });
 });
 

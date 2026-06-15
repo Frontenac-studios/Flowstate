@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-import { derivePhaseRange, type ProjectTree } from "@/lib/projects/phase-tree";
+import {
+  derivePhaseRangeFromTasks,
+  hasManualPhaseDate,
+  resolveEffectivePhaseRange,
+  type ProjectTree,
+} from "@/lib/projects/phase-tree";
 
 import type { ProjectPhase, ProjectTask } from "./types";
 
@@ -22,10 +27,15 @@ type Props = {
   pending: boolean;
 };
 
+function dateSideLabel(side: "Start" | "End", manual: boolean): string {
+  return manual ? side : `${side} (from tasks)`;
+}
+
 export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }: Props) {
   const { phase } = node;
   const isLeaf = node.children.length === 0;
-  const derived = derivePhaseRange(node);
+  const effective = resolveEffectivePhaseRange(node);
+  const taskSnap = isLeaf ? derivePhaseRangeFromTasks(node.tasks) : null;
 
   const [name, setName] = useState(phase.name);
   const [description, setDescription] = useState(phase.description ?? "");
@@ -48,6 +58,11 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
     const next = description.trim();
     if (next === (phase.description ?? "")) return;
     onUpdate({ description: next || null });
+  };
+
+  const clearAllDates = () => {
+    if (!hasManualPhaseDate(phase)) return;
+    onUpdate({ startDate: null, endDate: null });
   };
 
   return (
@@ -85,29 +100,61 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-kash-ink">Dates</span>
         {isLeaf ? (
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              className="glass-input"
-              value={phase.startDate ?? ""}
-              max={phase.endDate ?? undefined}
-              onChange={(e) => onUpdate({ startDate: e.target.value || null })}
-              aria-label="Start date"
-            />
-            <span className="text-kash-ink-muted">→</span>
-            <input
-              type="date"
-              className="glass-input"
-              value={phase.endDate ?? ""}
-              min={phase.startDate ?? undefined}
-              onChange={(e) => onUpdate({ endDate: e.target.value || null })}
-              aria-label="End date"
-            />
-          </div>
+          <>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-kash-ink-muted">
+                  {dateSideLabel("Start", phase.startDate !== null)}
+                </label>
+                <input
+                  type="date"
+                  className="glass-input"
+                  value={phase.startDate ?? ""}
+                  max={phase.endDate ?? taskSnap?.end ?? undefined}
+                  onChange={(e) => onUpdate({ startDate: e.target.value || null })}
+                  aria-label="Start date"
+                />
+              </div>
+              <span className="pb-2 text-kash-ink-muted">→</span>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-kash-ink-muted">
+                  {dateSideLabel("End", phase.endDate !== null)}
+                </label>
+                <input
+                  type="date"
+                  className="glass-input"
+                  value={phase.endDate ?? ""}
+                  min={phase.startDate ?? taskSnap?.start ?? undefined}
+                  onChange={(e) => onUpdate({ endDate: e.target.value || null })}
+                  aria-label="End date"
+                />
+              </div>
+            </div>
+            {effective.start && effective.end ? (
+              <p className="text-sm text-kash-ink-muted">
+                Calendar: {effective.start} → {effective.end}
+                {!hasManualPhaseDate(phase) ? " (from scheduled tasks)" : null}
+              </p>
+            ) : (
+              <p className="text-sm text-kash-ink-muted">
+                No calendar range yet — set dates or schedule tasks in this phase.
+              </p>
+            )}
+            {hasManualPhaseDate(phase) ? (
+              <button
+                type="button"
+                onClick={clearAllDates}
+                disabled={pending}
+                className="self-start text-xs text-kash-ink-muted transition hover:text-kash-ink disabled:opacity-50"
+              >
+                Clear all dates (use task schedules)
+              </button>
+            ) : null}
+          </>
         ) : (
           <p className="text-sm text-kash-ink-muted">
-            {derived.start && derived.end
-              ? `${derived.start} → ${derived.end} (derived from sub-phases)`
+            {effective.start && effective.end
+              ? `${effective.start} → ${effective.end} (derived from sub-phases)`
               : "No dated sub-phases yet."}
           </p>
         )}

@@ -7,7 +7,7 @@
 import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 
 import {
-  derivePhaseRange,
+  resolveEffectivePhaseRange,
   type PhaseShape,
   type PhaseTreeNode,
   type ProjectTree,
@@ -29,16 +29,16 @@ type DatedPhaseShape = {
   startDate: string | null;
   endDate: string | null;
 };
-type TaskShapeLite = { phaseId: string | null; sortOrder: number };
+type TaskShapeLite = TaskShape;
 
-/** Overall project span: min start / max end across all dated phases. */
+/** Overall project span: min start / max end across all effective phase ranges. */
 export function computeProjectSpan<P extends DatedPhaseShape, T extends TaskShapeLite>(
   tree: ProjectTree<P, T>
 ): GanttSpan | null {
   let start: string | null = null;
   let end: string | null = null;
   for (const node of tree.rootPhases) {
-    const range = derivePhaseRange(node);
+    const range = resolveEffectivePhaseRange(node);
     if (range.start !== null && (start === null || range.start < start)) start = range.start;
     if (range.end !== null && (end === null || range.end > end)) end = range.end;
   }
