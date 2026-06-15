@@ -7,6 +7,7 @@ Run after building the desktop app (`npm run desktop:build` from `Flowstate/`).
 - macOS 12+
 - Signed-in Kash account (same Supabase project as web)
 - Network available for initial sync
+- Hosted Supabase → Authentication → URL Configuration includes `http://127.0.0.1:4310/**` (see [`apps/desktop/README.md`](../apps/desktop/README.md))
 
 ## Offline → online sync
 
@@ -14,7 +15,7 @@ Run after building the desktop app (`npm run desktop:build` from `Flowstate/`).
 2. Create a task titled `Offline QA {timestamp}` on Today.
 3. Enable airplane mode (or disconnect network).
 4. Create a second task `Offline only {timestamp}`.
-5. Re-enable network; wait for “Synced at …” banner.
+5. Re-enable network; wait for sync banner (`Synced {time}` or pending count clearing).
 6. Open the web app on Vercel; confirm both tasks appear (order may vary).
 
 ## Menu bar

@@ -10,6 +10,11 @@ const isDesktopBuild = process.env.DESKTOP_BUILD === "1";
 const nextConfig = {
   ...(isDesktopBuild ? { output: "standalone" } : {}),
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  async redirects() {
+    // Today moved /plan -> /today. /plan now hosts long-horizon Planning, so only
+    // the focus sub-route needs forwarding for old deep links (query preserved).
+    return [{ source: "/plan/focus", destination: "/today/focus", permanent: false }];
+  },
   webpack: (config) => {
     // Avoid the main barrel (includes React.createContext). Remove when tRPC ships #7228.
     config.resolve.alias["@trpc/tanstack-react-query/create-options-proxy"] = path.join(

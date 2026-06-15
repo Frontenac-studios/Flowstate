@@ -26,7 +26,7 @@ export function FocusLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
                 <ChatToggleButton />
                 <Link
-                  href="/plan"
+                  href="/today"
                   className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
                 >
                   Back to plan

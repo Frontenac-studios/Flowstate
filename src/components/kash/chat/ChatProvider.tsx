@@ -36,7 +36,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isFocusRoute = pathname.startsWith("/plan/focus");
+  const isFocusRoute = pathname.startsWith("/today/focus");
 
   const [railOpen, setRailOpen] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string>(GLOBAL_THREAD_ID);

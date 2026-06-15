@@ -76,7 +76,7 @@ export function useEodReviewTrigger() {
   }, []);
 
   useEffect(() => {
-    if (pathname !== "/plan" || !reviewDue || skippedForToday || snoozed) return;
+    if (pathname !== "/today" || !reviewDue || skippedForToday || snoozed) return;
     if (storage.modalShownForDate === localDate) return;
 
     if (!mountedRef.current) {
@@ -91,7 +91,7 @@ export function useEodReviewTrigger() {
       const threshold = eodThresholdHour();
       const prev = prevHourRef.current;
 
-      if (prev < threshold && hour >= threshold && pathname === "/plan") {
+      if (prev < threshold && hour >= threshold && pathname === "/today") {
         setCrossedOnPage(true);
       }
       prevHourRef.current = hour;

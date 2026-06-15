@@ -62,7 +62,7 @@ fn app_data_dir(app: &AppHandle) -> String {
     app.path()
         .app_data_dir()
         .map(|p| p.to_string_lossy().into_owned())
-        .unwrap_or_else(|_| "~/Library/Application Support/Kash".to_string())
+        .unwrap_or_else(|_| "~/Library/Application Support/com.frontenac.kash".to_string())
 }
 
 fn resolve_port() -> u16 {

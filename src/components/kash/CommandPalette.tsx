@@ -33,7 +33,7 @@ export function CommandPalette() {
 
   const commands = useMemo<Command[]>(
     () => [
-      { id: "go-today", label: "Go to Today", hint: "Plan", run: () => router.push("/plan") },
+      { id: "go-today", label: "Go to Today", hint: "Plan", run: () => router.push("/today") },
       {
         id: "go-week",
         label: "Go to This Week",

@@ -9,15 +9,15 @@ export type ResolveEodUiInput = {
   snoozed: boolean;
   modalShownForDate: string | null;
   localDate: string;
-  /** First paint on /plan after 6pm without modal shown yet this session */
+  /** First paint on /today after 6pm without modal shown yet this session */
   initialPlanVisitAfterDue: boolean;
-  /** User crossed 6pm while already on /plan this session */
+  /** User crossed 6pm while already on /today this session */
   crossedThresholdOnPage: boolean;
 };
 
 export function resolveEodUiState(input: ResolveEodUiInput): EodUiState {
   if (input.modalOpen) return "modal";
-  if (input.pathname !== "/plan") return "hidden";
+  if (input.pathname !== "/today") return "hidden";
   if (!input.reviewDue) return "hidden";
   if (input.skippedForToday || input.snoozed) return "hidden";
 

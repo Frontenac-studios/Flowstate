@@ -40,13 +40,13 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPath(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/plan";
+    url.pathname = "/today";
     return NextResponse.redirect(url);
   }
 
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = user ? "/plan" : "/login";
+    url.pathname = user ? "/today" : "/login";
     return NextResponse.redirect(url);
   }
 
