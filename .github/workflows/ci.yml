@@ -65,4 +65,8 @@ jobs:
           workspaces: apps/desktop/src-tauri
       # generate_context! checks build.frontendDist (../dist-placeholder) exists at compile time.
       - run: mkdir -p apps/desktop/dist-placeholder
+      # tauri.conf bundle.resources globs sidecar/**/* at compile time; the dir is a
+      # gitignored build artifact (populated by prepare-sidecar.mjs only in release.yml),
+      # so seed a placeholder file here to keep the glob non-empty for clippy.
+      - run: mkdir -p apps/desktop/src-tauri/sidecar && touch apps/desktop/src-tauri/sidecar/placeholder
       - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets
