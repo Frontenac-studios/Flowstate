@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import ProjectWorkspace from "@/components/kash/projects/ProjectWorkspace";
 import ProjectsLayout from "@/components/kash/projects/ProjectsLayout";
 import type { ProjectDetail } from "@/components/kash/projects/types";
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 import { getTRPCCaller } from "@/trpc/server";
 
@@ -18,7 +19,7 @@ export default async function ProjectPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && !isAuthBypassed()) {
     redirect("/login");
   }
 

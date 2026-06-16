@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { isAuthPath, isProtectedPath } from "@/lib/auth/paths";
 
 export async function updateSession(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && isProtectedPath(pathname)) {
+  if (!user && !isAuthBypassed() && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
@@ -46,7 +47,7 @@ export async function updateSession(request: NextRequest) {
 
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = user ? "/today" : "/login";
+    url.pathname = user || isAuthBypassed() ? "/today" : "/login";
     return NextResponse.redirect(url);
   }
 

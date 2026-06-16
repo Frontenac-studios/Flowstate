@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import ProjectsIndex from "@/components/kash/projects/ProjectsIndex";
 import ProjectsLayout from "@/components/kash/projects/ProjectsLayout";
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ProjectsPage() {
@@ -10,7 +11,7 @@ export default async function ProjectsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && !isAuthBypassed()) {
     redirect("/login");
   }
 
