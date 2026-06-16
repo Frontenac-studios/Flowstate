@@ -338,6 +338,8 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **5. AI week arrangement:** extends the existing week-draft to respect **category balance + protected blocks** (Planner mode; high-stakes → confirm-first per §11).
 
+**6. End-of-week review** _(added Jun 16)_: a weekly reflection surfacing **time spent per category**, **time spent per project**, and **% progress toward completion** (per project/phase). Reuses the reflection pattern (daily EoD §6, monthly/quarterly §8, Care rituals §12) at week scale; the Reflection & care AI voice (§11) narrates wins. **Depends on the data spine:** time-per-category needs category (§2) + generalized time-tracking (§14 Phase 2); % progress needs a project-completion metric (completed vs total task weight per project/phase — define in §9).
+
 **Remaining open questions:**
 
 - Per-column category tally in addition to colored borders, or borders alone?
@@ -657,9 +659,10 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 
 **Remaining open questions:**
 
-- Should a blocked task be fully hidden from RDM/Today until unblocked, or just flagged and de-weighted?
-- Tags: build in v1, or defer until after category lands?
-- Recurrence end: support all three (date / count / never), or just date + never for v1?
+- ✅ Blocked task: **hidden until unblocked**, and the blocking task gets a **boosted RDM weight** to surface sooner (decided Jun 16, see data-spine doc).
+- ✅ Recurrence: **RRULE via rrule.js**, end = **on date / after N / never** (decided Jun 16).
+- Tags: build in v1, or defer until after category lands? _(still open)_
+- **Cleanup — retire the `#project` token** _(added Jun 16)_: remove every `#project-name` hashtag-token instance from the parser (`parse-quick-input.ts`, `composer-assist.ts`, `fuzzy-project.ts`, `parse-project-task-input.ts`, `project-composer-assist.ts` + tests), the composer UI (`ComposerPropertyBar`, `ParsePreviewChips`, `QuickInput`, placeholders/help text), and docs. Project assignment moves to the **semicolon property mode + autocomplete**, consistent with category capture (Phase 1D). **Confirm the replacement before deleting** so project tagging isn't broken. Naturally rides along with the Phase-1 composer work (same files).
 
 ---
 
