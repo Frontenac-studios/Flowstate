@@ -34,11 +34,16 @@ Each phase is independently shippable and leaves the app working.
 3. **Unify the shell** — generalize `PlanLayout` into `AppShell`; move plan-only
    providers/runners to the Today page; migrate this-week/settings/projects + new
    routes onto it; delete `ProjectsLayout`.
-4. **Chat to the right rail** — mount `ChatRail` in the shell; collapsed default,
-   remembered per session; remove chat from `BottomDock`.
-5. **Contextual Inbox panel** — extract `InboxPanel` from `BottomDock` into an
-   in-content panel mounted only in Today/Week/Plan; scope `⌃I` accordingly.
-6. **Retire `BottomDock`** — delete it; reclaim `pb-24`; reconcile unread badge.
+4. **Chat to the right rail** _(done — shipped in phase 3)_ — `ChatRail` mounts in
+   the shell (collapsed default, remembered per session via `kash.chat.railOpen`);
+   `BottomDock` is chat-free. Note: `FocusLayout` keeps its own `ChatProvider` +
+   `ChatRail` by design — it renders standalone (not nested under `AppShell`), so
+   this is deliberate distinct focus-mode chrome, not a duplicate mount.
+5. **Contextual Inbox panel** _(done)_ — `InboxPanel` now lives in an in-flow,
+   collapsible `ContextualInbox` strip at the top of the content column, mounted on
+   Today/Week/Plan; `⌃I` is scoped by virtue of the component only mounting there.
+6. **Retire `BottomDock`** _(done — folded into phase 5)_ — deleted; `pb-24`
+   reclaimed in `PlanSurface`. (Unread badge was already chat-only, in `ChatRail`.)
 7. **Reusable in-page switcher** — one segmented control; replace the hardcoded
    Day/Week toggle; apply to Today / Plan / Care.
 8. **Header = context only + global actions** — strip nav from header; wire `⌘D`
