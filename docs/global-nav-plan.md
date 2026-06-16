@@ -52,13 +52,25 @@ Each phase is independently shippable and leaves the app working.
    `PlanProvider`'s TTL/Monday persistence is untouched; no URL-param view state.
    Left bespoke: the `TaskDetail` priority selector (a rating) and `CategoryFilter`
    (distinct colored-pill styling).
-8. **Header = context only + global actions** — strip nav from header; wire `⌘D`
-   (Decide → Focus), confirm `⌘K` palette, decide chat-toggle keybinding.
-9. **Polish** — mobile/Tauri parity for the rail; `accessibility-review` pass.
+8. **Header = context only + global actions** _(done)_ — header was already
+   nav-free (`AppHeader`); `⌘K` palette and `⌘D` (Decide → Focus) confirmed live.
+   Chat toggle moved from `⌃J` to `⌘J` to sit with the `⌘`-family; the shortcuts
+   modal's stale "⌘K toggles chat" entry was corrected.
+9. **Polish** _(done)_ — scope set to Tauri parity (no dedicated mobile-web UX).
+   Narrow viewport uses the icon-only rail (already overlays on hover) and the
+   `ChatRail` becomes a right-side overlay drawer (scrim + Esc) below `lg` instead
+   of a third column. Tauri: header is a `data-tauri-drag-region`; `is-desktop`
+   is now actually applied (`DesktopRuntimeFlag` mounted in the root layout) and
+   keys a top inset so the macOS traffic lights clear the rail. Accessibility pass
+   over the shell surfaces.
 
 ## Open (non-blocking) follow-ups
 
 - Final icons for Plan/Abyss/Care.
-- Whether `⌃I` stays a keybinding once inbox is contextual.
-- Chat toggle: keep `⌃J` or align to `⌘`-family.
-- Narrow-width rail: bottom tab bar vs. icon-only.
+- Whether `⌃I` (inbox) should also move to the `⌘`-family for full consistency —
+  it is currently the lone Ctrl binding.
+- Desktop vibrancy: `is-desktop` is wired but no vibrancy/gradient-swap CSS exists
+  yet; revisit if we want the native NSView material to show through.
+- `FocusLayout` (the `/today/focus` chrome) doesn't share the shell, so its
+  drag-region / traffic-light inset parity is still pending.
+- A real mobile-web layout (bottom tab bar) if phone support becomes a goal.

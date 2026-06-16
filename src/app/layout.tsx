@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 
 import { AppBackdrop } from "@/components/kash/AppBackdrop";
+import { DesktopRuntimeFlag } from "@/components/kash/DesktopRuntimeFlag";
 import { DesktopSyncBanner } from "@/components/kash/DesktopSyncBanner";
 import { TRPCReactProvider } from "@/trpc/client";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AppBackdrop />
+        <DesktopRuntimeFlag />
         <TRPCReactProvider>
           {children}
           <DesktopSyncBanner />

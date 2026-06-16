@@ -30,3 +30,11 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Desktop (Tauri) parity: the frameless window uses titleBarStyle "Overlay", so
+   the macOS traffic lights float over the top-left of the content. Add clearance
+   above the shell so the left rail's top controls aren't covered. `is-desktop`
+   is applied to <html> only inside the Tauri runtime, so web is unaffected. */
+html.is-desktop .kash-shell-inner {
+  padding-top: 2.25rem;
+}

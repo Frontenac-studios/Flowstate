@@ -105,8 +105,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // Chat toggle is ⌃J (⌘K is reserved for the command palette).
-      if (!e.ctrlKey || e.metaKey || e.key.toLowerCase() !== "j") return;
+      // Chat toggle is ⌘J (⌘/Ctrl+J), grouping it with the ⌘-family actions
+      // (⌘K palette, ⌘D decide). preventDefault suppresses Chrome's ⌘J Downloads.
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "j") return;
       if (isEditableTarget(e.target)) return;
       e.preventDefault();
       toggleRail();
