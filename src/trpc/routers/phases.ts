@@ -146,6 +146,7 @@ export const phasesRouter = createTRPCRouter({
         description: z.string().max(2000).nullable().optional(),
         startDate: isoDateSchema.nullable().optional(),
         endDate: isoDateSchema.nullable().optional(),
+        sortOrder: z.number().int().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -163,6 +164,7 @@ export const phasesRouter = createTRPCRouter({
       if (input.description !== undefined) patch.description = input.description;
       if (input.startDate !== undefined) patch.startDate = input.startDate;
       if (input.endDate !== undefined) patch.endDate = input.endDate;
+      if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
 
       const [row] = await db
         .update(phases)

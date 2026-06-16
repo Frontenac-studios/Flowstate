@@ -5,8 +5,13 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { getAnthropicConfig } from "@/lib/env";
 
 import { requireAnthropicClient } from "./client";
+import { CHAT_TOOLS, executeChatTool } from "./chat-tools";
 import { fetchPlanContextSnapshot } from "./fetch-plan-context";
 import { buildSystemPrompt } from "./system-prompts";
+
+const MAX_TOOL_ROUNDS = 5;
+
+export type CompanionStreamDelta = { type: "delta"; text: string };
 
 export type NarrationInput = {
   taskId: string;
@@ -80,28 +85,70 @@ export async function streamCompanionReply(params: {
   userId: string;
   threadId: string;
   userText: string;
+  signal?: AbortSignal;
 }): Promise<{
-  stream: AsyncIterable<Anthropic.MessageStreamEvent>;
-  getFullText: () => Promise<string>;
+  stream: AsyncIterable<CompanionStreamDelta>;
+  getFullText: () => string;
+  getMutatedTasks: () => boolean;
 }> {
   const anthropic = requireAnthropicClient();
   const config = getAnthropicConfig();
   const { contextBlock, history } = await fetchPlanContextSnapshot(params.userId, params.threadId);
-  const messages = buildAnthropicMessages(history, contextBlock, params.userText);
+  let messages = buildAnthropicMessages(history, contextBlock, params.userText);
 
-  const stream = anthropic.messages.stream({
-    model: config.model,
-    max_tokens: 1024,
-    system: buildSystemPrompt("companion"),
-    messages,
-  });
+  const state = { fullText: "", mutatedTasks: false };
+
+  async function* run(): AsyncGenerator<CompanionStreamDelta> {
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+      if (params.signal?.aborted) break;
+
+      const stream = anthropic.messages.stream({
+        model: config.model,
+        max_tokens: 2048,
+        system: buildSystemPrompt("companion"),
+        messages,
+        tools: CHAT_TOOLS,
+      });
+
+      for await (const event of stream) {
+        if (params.signal?.aborted) break;
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          state.fullText += event.delta.text;
+          yield { type: "delta", text: event.delta.text };
+        }
+      }
+
+      if (params.signal?.aborted) break;
+
+      const final = await stream.finalMessage();
+      const toolUses = final.content.filter((block) => block.type === "tool_use");
+
+      if (toolUses.length === 0 || final.stop_reason !== "tool_use") {
+        break;
+      }
+
+      messages = [...messages, { role: "assistant", content: final.content }];
+
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      for (const toolUse of toolUses) {
+        if (params.signal?.aborted) break;
+        if (toolUse.type !== "tool_use") continue;
+        const result = await executeChatTool(params.userId, toolUse.name, toolUse.input);
+        if (result.mutatedTasks) state.mutatedTasks = true;
+        toolResults.push({
+          type: "tool_result",
+          tool_use_id: toolUse.id,
+          content: result.content,
+        });
+      }
+
+      messages = [...messages, { role: "user", content: toolResults }];
+    }
+  }
 
   return {
-    stream,
-    getFullText: async () => {
-      const final = await stream.finalMessage();
-      const block = final.content.find((b) => b.type === "text");
-      return block?.type === "text" ? block.text : "";
-    },
+    stream: run(),
+    getFullText: () => state.fullText,
+    getMutatedTasks: () => state.mutatedTasks,
   };
 }

@@ -33,6 +33,10 @@ const config: Config = {
       minHeight: {
         "kash-row": "var(--kash-row-min-height)",
       },
+      padding: {
+        "kash-task-y": "var(--kash-task-row-py)",
+        "kash-task-y-compact": "var(--kash-task-row-py-compact)",
+      },
     },
   },
   plugins: [],

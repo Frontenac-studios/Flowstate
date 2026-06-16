@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { readChatRailOpen, writeChatRailOpen } from "@/lib/chat/chat-rail-storage";
 import { GLOBAL_THREAD_ID, focusThreadId } from "@/lib/chat/threads";
 
 type ChatContextValue = {
@@ -38,10 +39,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isFocusRoute = pathname.startsWith("/today/focus");
 
+  // Collapsed by default; hydrated from sessionStorage after mount to avoid a
+  // server/client mismatch, then persisted per session.
   const [railOpen, setRailOpen] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string>(GLOBAL_THREAD_ID);
   const [unreadThreads, setUnreadThreads] = useState<Set<string>>(() => new Set());
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (readChatRailOpen()) setRailOpen(true);
+  }, []);
+
+  useEffect(() => {
+    writeChatRailOpen(railOpen);
+  }, [railOpen]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

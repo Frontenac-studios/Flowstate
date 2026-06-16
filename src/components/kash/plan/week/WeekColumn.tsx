@@ -48,7 +48,13 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
       </div>
       <ul className="mt-2 flex-1 space-y-2 px-1 pb-2" aria-label={`Tasks for ${isoDate}`}>
         {tasks.map((task) => (
-          <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
+          <TaskRow
+            key={task.id}
+            task={task}
+            showProject={false}
+            onComplete={onComplete}
+            onDelete={onDelete}
+          />
         ))}
       </ul>
     </div>

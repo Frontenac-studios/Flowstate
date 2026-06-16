@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { PlanLayout } from "@/components/kash/PlanLayout";
+import { AppShell } from "@/components/kash/AppShell";
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CarePage() {
@@ -9,18 +10,18 @@ export default async function CarePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && !isAuthBypassed()) {
     redirect("/login");
   }
 
   return (
-    <PlanLayout>
+    <AppShell>
       <div className="glass-panel p-8 text-kash-ink-muted">
         <h1 className="text-lg font-semibold text-kash-ink">Care</h1>
         <p className="mt-2 text-sm">
           Walks, breathing, and reflections to keep you balanced. Coming soon.
         </p>
       </div>
-    </PlanLayout>
+    </AppShell>
   );
 }

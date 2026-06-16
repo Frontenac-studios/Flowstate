@@ -12,8 +12,17 @@ type Props = {
 
 export function FocusChat({ taskId }: Props) {
   const threadId = focusThreadId(taskId);
-  const { messages, isLoading, configured, streamingText, streamError, isStreaming, sendMessage } =
-    useChatPanel(threadId);
+  const {
+    messages,
+    isLoading,
+    configured,
+    streamingText,
+    streamError,
+    isStreaming,
+    sendMessage,
+    editAndResend,
+    stopGeneration,
+  } = useChatPanel(threadId);
 
   return (
     <div className="mt-6 border-t border-[var(--kash-glass-border)] pt-4">
@@ -37,7 +46,12 @@ export function FocusChat({ taskId }: Props) {
         {isLoading ? (
           <p className="text-xs text-kash-ink-muted">Loading…</p>
         ) : (
-          <MessageList messages={messages} streamingText={streamingText} />
+          <MessageList
+            messages={messages}
+            streamingText={streamingText}
+            canEdit={!isStreaming}
+            onEditUserMessage={(id, text) => void editAndResend(id, text)}
+          />
         )}
       </div>
 
@@ -46,6 +60,7 @@ export function FocusChat({ taskId }: Props) {
         isStreaming={isStreaming}
         placeholder="Ask about this task…"
         onSend={(text) => void sendMessage(text)}
+        onStop={stopGeneration}
       />
     </div>
   );

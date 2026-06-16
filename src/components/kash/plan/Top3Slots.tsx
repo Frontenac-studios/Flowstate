@@ -36,7 +36,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
       }`}
     >
       <div
-        className={`glass-pill flex min-h-kash-row items-start gap-2 border-l-[3px] border-kash-accent py-2 pl-3 pr-9 ${
+        className={`glass-pill flex min-h-kash-row items-start gap-2 border-l-[3px] border-kash-accent py-kash-task-y pl-3 pr-9 ${
           isCompleted ? "opacity-90" : ""
         }`}
       >
@@ -64,7 +64,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
         ) : null}
         <button
           type="button"
-          className="absolute right-2 top-2 rounded-full px-1.5 text-sm leading-none text-kash-ink-muted hover:text-kash-ink"
+          className="absolute right-2 top-1 rounded-full px-1.5 text-sm leading-none text-kash-ink-muted hover:text-kash-ink"
           aria-label={`Unpin ${task.title}`}
           onClick={() => onUnpin(task.id)}
         >
@@ -82,8 +82,10 @@ function Top3HintDropZone() {
     <div
       ref={setNodeRef}
       data-top3-hint
-      className={`glass-panel flex min-h-kash-row items-center px-3 py-3 text-xs text-kash-ink-muted transition ${
-        isOver ? "kash-section-drop-target ring-2 ring-kash-accent" : ""
+      className={`flex min-h-kash-row w-full items-center text-center text-xs text-kash-ink-muted transition ${
+        isOver
+          ? "kash-section-drop-target rounded-[var(--kash-radius)] ring-2 ring-kash-accent"
+          : ""
       }`}
     >
       Swipe right on a task to your top three priorities for today
@@ -135,7 +137,7 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
         id="top3-heading"
         className="mb-3 text-sm font-medium uppercase tracking-wide text-kash-ink-muted"
       >
-        If nothing else...
+        Today&apos;s Priorities
       </h2>
       <div className="flex flex-col gap-2">
         {showHint ? <Top3HintDropZone /> : null}

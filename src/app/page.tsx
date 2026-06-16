@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -8,5 +9,5 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/today" : "/login");
+  redirect(user || isAuthBypassed() ? "/today" : "/login");
 }

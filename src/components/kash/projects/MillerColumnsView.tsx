@@ -98,6 +98,12 @@ export default function MillerColumnsView({
     [tree.looseTasks, nodeById]
   );
 
+  const phasesForParent = useCallback(
+    (parentPhaseId: string | null): Node[] =>
+      parentPhaseId === null ? tree.rootPhases : (nodeById.get(parentPhaseId)?.children ?? []),
+    [tree.rootPhases, nodeById]
+  );
+
   const columns = useMemo(() => {
     const result: { level: number; parentPhaseId: string | null; items: ColumnItem[] }[] = [];
     result.push({
@@ -233,23 +239,68 @@ export default function MillerColumnsView({
     [tasksForParent, taskById, m.moveTaskSilent, m.invalidate]
   );
 
+  const reorderPhase = useCallback(
+    (phaseId: string, targetPhaseId: string, parentPhaseId: string | null) => {
+      if (phaseId === targetPhaseId) return;
+      const dragged = nodeById.get(phaseId);
+      if (!dragged) return;
+
+      const isCompleted = dragged.phase.completedAt !== null;
+      const partition = phasesForParent(parentPhaseId).filter(
+        (n) => (n.phase.completedAt !== null) === isCompleted
+      );
+      if (!partition.some((n) => n.phase.id === targetPhaseId)) return;
+
+      const without = partition.filter((n) => n.phase.id !== phaseId);
+      const targetIndex = without.findIndex((n) => n.phase.id === targetPhaseId);
+      const insertAt = targetIndex === -1 ? without.length : targetIndex;
+      const next = [...without.slice(0, insertAt), dragged, ...without.slice(insertAt)];
+
+      const baseOrder = Math.min(...partition.map((n) => n.phase.sortOrder));
+
+      const moves = next
+        .map((n, index) => ({ phase: n.phase, sortOrder: baseOrder + index }))
+        .filter(({ phase, sortOrder }) => phase.sortOrder !== sortOrder)
+        .map(({ phase, sortOrder }) =>
+          m.updatePhaseSilent.mutateAsync({ id: phase.id, sortOrder })
+        );
+
+      void Promise.all(moves).then(m.invalidate);
+    },
+    [nodeById, phasesForParent, m.updatePhaseSilent, m.invalidate]
+  );
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const taskId = event.active.data.current?.taskId as string | undefined;
+      const active = event.active.data.current;
       const over = event.over?.data.current as
-        | { kind: "phase"; phaseId: string }
+        | { kind: "phase"; phaseId: string; parentPhaseId: string | null }
         | { kind: "column"; parentPhaseId: string | null }
         | { kind: "task"; taskId: string; parentPhaseId: string | null }
         | undefined;
-      if (!taskId || !over) return;
+      if (!over) return;
+
+      if (active?.kind === "phase-drag") {
+        if (over.kind === "phase") {
+          reorderPhase(
+            active.phaseId as string,
+            over.phaseId,
+            active.parentPhaseId as string | null
+          );
+        }
+        return;
+      }
+
+      const taskId = active?.taskId as string | undefined;
+      if (!taskId) return;
 
       if (over.kind === "phase") moveTaskToParent(taskId, over.phaseId);
       else if (over.kind === "column") moveTaskToParent(taskId, over.parentPhaseId);
       else reorderTask(taskId, over.taskId, over.parentPhaseId);
     },
-    [moveTaskToParent, reorderTask]
+    [moveTaskToParent, reorderTask, reorderPhase]
   );
 
   const handleKeyDown = useCallback(

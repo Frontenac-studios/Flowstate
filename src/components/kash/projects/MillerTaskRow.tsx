@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useRef } from "react";
 
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 
 import type { ProjectTask } from "./types";
 
@@ -75,7 +76,7 @@ export default function MillerTaskRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`flex items-start gap-2 rounded-kash px-2 py-1.5 transition ${
+      className={`flex items-start gap-2 rounded-kash px-2 py-kash-task-y-compact transition ${
         selected ? "bg-kash-accent/15" : "hover:bg-white/40"
       } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
@@ -99,14 +100,7 @@ export default function MillerTaskRow({
       >
         {task.title}
       </button>
-      {task.priority > 0 ? (
-        <span
-          className="shrink-0 text-xs text-kash-accent"
-          aria-label={`Priority ${task.priority}`}
-        >
-          {"!".repeat(task.priority)}
-        </span>
-      ) : null}
+      <TaskPriorityIndicator priority={task.priority} />
       <TaskDragHandle listeners={listeners} attributes={dragAttributes} />
     </li>
   );

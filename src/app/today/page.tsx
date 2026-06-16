@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 
+import { AppShell } from "@/components/kash/AppShell";
 import { PlanCanvas } from "@/components/kash/plan/PlanCanvas";
-import { PlanLayout } from "@/components/kash/PlanLayout";
+import { PlanModeToggle } from "@/components/kash/plan/PlanModeToggle";
+import { PlanSurface } from "@/components/kash/plan/PlanSurface";
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PlanPage() {
@@ -10,13 +13,18 @@ export default async function PlanPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && !isAuthBypassed()) {
     redirect("/login");
   }
 
   return (
-    <PlanLayout>
-      <PlanCanvas />
-    </PlanLayout>
+    <AppShell>
+      <PlanSurface>
+        <div className="mb-4 flex items-center gap-3">
+          <PlanModeToggle />
+        </div>
+        <PlanCanvas />
+      </PlanSurface>
+    </AppShell>
   );
 }

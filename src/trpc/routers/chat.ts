@@ -8,6 +8,7 @@ import { messageContentSchema, textContent } from "@/lib/chat/message-content";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";
 import { buildWorkOnSuggestion } from "@/server/chat/build-work-on-suggestion";
+import { editUserMessageAndTruncateAfter } from "@/server/claude/persist-message";
 import {
   listPromotedSuggestions,
   recordCustomSuggestionUsage,
@@ -99,6 +100,27 @@ export const chatRouter = createTRPCRouter({
       }
 
       return { id: row.id };
+    }),
+
+  editUserMessage: protectedProcedure
+    .input(
+      z.object({
+        threadId: threadIdSchema,
+        messageId: z.string().uuid(),
+        text: z.string().min(1).max(8000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await editUserMessageAndTruncateAfter(
+          ctx.userId,
+          input.threadId,
+          input.messageId,
+          input.text
+        );
+      } catch {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Message not found." });
+      }
     }),
 
   markThreadRead: protectedProcedure

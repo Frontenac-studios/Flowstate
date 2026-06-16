@@ -112,7 +112,7 @@ export function InboxPanel({ active }: { active: boolean }) {
           role="option"
           aria-selected={index === selected}
           onMouseEnter={() => setSelected(index)}
-          className={`glass-pill flex items-center gap-2 px-3 py-2 transition ${
+          className={`glass-pill flex items-center gap-2 px-3 py-kash-task-y transition ${
             index === selected ? "ring-2 ring-kash-accent" : ""
           }`}
         >
