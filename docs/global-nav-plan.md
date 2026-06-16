@@ -44,8 +44,14 @@ Each phase is independently shippable and leaves the app working.
    Today/Week/Plan; `⌃I` is scoped by virtue of the component only mounting there.
 6. **Retire `BottomDock`** _(done — folded into phase 5)_ — deleted; `pb-24`
    reclaimed in `PlanSurface`. (Unread badge was already chat-only, in `ChatRail`.)
-7. **Reusable in-page switcher** — one segmented control; replace the hardcoded
-   Day/Week toggle; apply to Today / Plan / Care.
+7. **Reusable in-page switcher** _(done)_ — shared presentational `InPageSwitcher`
+   (glass pill, `aria-pressed`, arrow-key nav). Backs Today's Day/Week and, for
+   real consolidation, the Projects view-mode and Gantt-zoom toggles; Plan
+   (Month/Quarter/Year) and Care (Walks/Breathing/Reflections) carry wired stub
+   switchers until those surfaces have content. Callers keep their own state, so
+   `PlanProvider`'s TTL/Monday persistence is untouched; no URL-param view state.
+   Left bespoke: the `TaskDetail` priority selector (a rating) and `CategoryFilter`
+   (distinct colored-pill styling).
 8. **Header = context only + global actions** — strip nav from header; wire `⌘D`
    (Decide → Focus), confirm `⌘K` palette, decide chat-toggle keybinding.
 9. **Polish** — mobile/Tauri parity for the rail; `accessibility-review` pass.

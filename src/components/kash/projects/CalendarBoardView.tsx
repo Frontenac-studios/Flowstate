@@ -15,6 +15,7 @@ import {
 } from "@/lib/projects/gantt-scale";
 import { resolveEffectivePhaseRange, type ProjectTree } from "@/lib/projects/phase-tree";
 
+import { InPageSwitcher } from "../InPageSwitcher";
 import GanttAxis from "./GanttAxis";
 import GanttRow, { GANTT_LABEL_WIDTH, GANTT_ROW_HEIGHT } from "./GanttRow";
 import type { ProjectPhase, ProjectTask } from "./types";
@@ -31,6 +32,11 @@ type Props = {
 const MIN_PX_PER_DAY = 3;
 const MAX_PX_PER_DAY = 60;
 const GRANULARITY_PX: Record<GanttGranularity, number> = { day: 28, week: 10, month: 4 };
+const GRANULARITY_OPTIONS: ReadonlyArray<{ value: GanttGranularity; label: string }> = [
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+];
 
 function clampPxPerDay(px: number): number {
   return Math.min(MAX_PX_PER_DAY, Math.max(MIN_PX_PER_DAY, px));
@@ -116,23 +122,12 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="glass-pill flex text-sm" role="group" aria-label="Zoom granularity">
-          {(["day", "week", "month"] as const).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => setGranularity(g)}
-              aria-pressed={granularityOverride === g}
-              className={`rounded-full px-3 py-1 capitalize transition ${
-                granularityOverride === g
-                  ? "bg-kash-accent text-white"
-                  : "text-kash-ink-muted hover:text-kash-ink"
-              }`}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
+        <InPageSwitcher
+          options={GRANULARITY_OPTIONS}
+          value={granularityOverride}
+          onChange={setGranularity}
+          ariaLabel="Zoom granularity"
+        />
         <button type="button" className="glass-btn-ghost" onClick={() => setZoom(1 / 1.4)}>
           −
         </button>
