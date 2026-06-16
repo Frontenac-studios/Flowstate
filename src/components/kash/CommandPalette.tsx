@@ -42,6 +42,27 @@ export function CommandPalette() {
         run: () => router.push("/this-week"),
       },
       { id: "go-projects", label: "Go to Projects", run: () => router.push("/projects") },
+      {
+        id: "go-plan",
+        label: "Go to Plan",
+        hint: "Reflect & plan",
+        keywords: "planning month quarter year horizon",
+        run: () => router.push("/plan"),
+      },
+      {
+        id: "go-abyss",
+        label: "Go to Abyss",
+        hint: "Reflect & plan",
+        keywords: "backburner ideas later parked",
+        run: () => router.push("/abyss"),
+      },
+      {
+        id: "go-care",
+        label: "Go to Care",
+        hint: "Reflect & plan",
+        keywords: "self-care wellbeing walks breathing reflection",
+        run: () => router.push("/care"),
+      },
       { id: "go-settings", label: "Go to Settings", run: () => router.push("/settings") },
       {
         id: "decide",
