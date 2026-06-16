@@ -37,66 +37,88 @@ export function ChatRail() {
     if (railOpen) markRead(threadId);
   }, [railOpen, markRead, threadId]);
 
+  // On narrow viewports the rail is an overlay drawer; Escape closes it (but not
+  // while typing in the composer). At lg it is an inline column and stays put.
+  useEffect(() => {
+    if (!railOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.tagName === "TEXTAREA" || target.tagName === "INPUT" || target.isContentEditable)
+      ) {
+        return;
+      }
+      closeRail();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [railOpen, closeRail]);
+
   if (!railOpen) return null;
 
   const title = threadId === GLOBAL_THREAD_ID ? "Claude" : "Focus chat";
 
   return (
-    <aside
-      className="glass-panel-strong sticky top-6 flex h-[calc(100vh-3rem)] w-[min(100%,22rem)] shrink-0 flex-col p-4"
-      aria-label="Claude chat"
-    >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-kash-ink">{title}</h2>
-        <button
-          type="button"
-          onClick={closeRail}
-          className="glass-icon-btn text-kash-ink-muted"
-          aria-label="Close chat"
-        >
-          ✕
-        </button>
-      </div>
+    <>
+      <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" aria-hidden onClick={closeRail} />
+      <aside
+        className="glass-panel-strong fixed inset-y-3 right-3 z-50 flex w-[min(100%-1.5rem,22rem)] flex-col p-4 lg:sticky lg:inset-auto lg:top-6 lg:z-auto lg:h-[calc(100vh-3rem)] lg:w-[min(100%,22rem)] lg:shrink-0"
+        aria-label="Claude chat"
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-kash-ink">{title}</h2>
+          <button
+            type="button"
+            onClick={closeRail}
+            className="glass-icon-btn text-kash-ink-muted"
+            aria-label="Close chat"
+          >
+            ✕
+          </button>
+        </div>
 
-      {!configured ? (
-        <p className="bg-kash-accent-soft mb-3 rounded-lg px-3 py-2 text-xs text-kash-ink-muted">
-          Claude isn&apos;t configured — add{" "}
-          <code className="text-kash-ink">ANTHROPIC_API_KEY</code> to your environment.
-        </p>
-      ) : null}
+        {!configured ? (
+          <p className="bg-kash-accent-soft mb-3 rounded-lg px-3 py-2 text-xs text-kash-ink-muted">
+            Claude isn&apos;t configured — add{" "}
+            <code className="text-kash-ink">ANTHROPIC_API_KEY</code> to your environment.
+          </p>
+        ) : null}
 
-      {streamError ? (
-        <p className="mb-2 text-xs text-red-600" role="alert">
-          {streamError}
-        </p>
-      ) : null}
+        {streamError ? (
+          <p className="mb-2 text-xs text-red-600" role="alert">
+            {streamError}
+          </p>
+        ) : null}
 
-      {isLoading ? (
-        <p className="text-sm text-kash-ink-muted">Loading…</p>
-      ) : (
-        <MessageList
-          messages={messages}
-          streamingText={streamingText}
-          canEdit={!isStreaming && !isSuggestionRunning}
-          onEditUserMessage={(id, text) => void editAndResend(id, text)}
+        {isLoading ? (
+          <p className="text-sm text-kash-ink-muted">Loading…</p>
+        ) : (
+          <MessageList
+            messages={messages}
+            streamingText={streamingText}
+            canEdit={!isStreaming && !isSuggestionRunning}
+            onEditUserMessage={(id, text) => void editAndResend(id, text)}
+          />
+        )}
+
+        <ChatComposer
+          disabled={!configured}
+          isStreaming={isStreaming}
+          onSend={(text) => void sendMessage(text)}
+          onStop={stopGeneration}
+          suggestions={
+            showSuggestions ? (
+              <ChatSuggestedActions
+                suggestions={suggestions}
+                disabled={isStreaming || isSuggestionRunning}
+                onSelect={(id) => void runSuggestion(id)}
+              />
+            ) : null
+          }
         />
-      )}
-
-      <ChatComposer
-        disabled={!configured}
-        isStreaming={isStreaming}
-        onSend={(text) => void sendMessage(text)}
-        onStop={stopGeneration}
-        suggestions={
-          showSuggestions ? (
-            <ChatSuggestedActions
-              suggestions={suggestions}
-              disabled={isStreaming || isSuggestionRunning}
-              onSelect={(id) => void runSuggestion(id)}
-            />
-          ) : null
-        }
-      />
-    </aside>
+      </aside>
+    </>
   );
 }

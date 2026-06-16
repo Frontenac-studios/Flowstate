@@ -228,7 +228,7 @@ export function LeftNavRail() {
 
   return (
     <div
-      className={`sticky top-6 h-[calc(100vh-3rem)] shrink-0 transition-[width] duration-200 ${
+      className={`sticky top-6 z-30 h-[calc(100vh-3rem)] shrink-0 transition-[width] duration-200 ${
         pinned ? "w-44" : "w-16"
       }`}
     >
@@ -238,8 +238,14 @@ export function LeftNavRail() {
         onMouseLeave={() => setPeek(false)}
         onFocus={() => setPeek(true)}
         onBlur={() => setPeek(false)}
-        className={`glass-panel absolute inset-y-0 left-0 z-20 flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
+        className={`absolute inset-y-0 left-0 z-20 flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
           expanded ? "w-44" : "w-16"
+        } ${
+          // When peeked-but-not-pinned the rail floats over the content column;
+          // use an opaque surface + elevation so labels don't bleed through. The
+          // pinned/collapsed rail reserves its own width (no overlap), so the
+          // lighter glass is fine there.
+          expanded && !pinned ? "glass-panel-opaque shadow-xl" : "glass-panel"
         }`}
       >
         <div className="mb-1 flex h-8 items-center px-1">

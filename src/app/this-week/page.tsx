@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/kash/AppShell";
+import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import { PlanSurface } from "@/components/kash/plan/PlanSurface";
 import { ThisWeekCanvas } from "@/components/kash/plan/ThisWeekCanvas";
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
@@ -19,6 +20,7 @@ export default async function ThisWeekPage() {
   return (
     <AppShell>
       <PlanSurface>
+        <ContextualInbox />
         <ThisWeekCanvas />
       </PlanSurface>
     </AppShell>

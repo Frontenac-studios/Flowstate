@@ -2,6 +2,7 @@
 
 > **Status:** Working skeleton. This is a _living_ document, not a scoping brief.
 > **Companion doc:** `planning-start.md` is the frozen v1 brief — keep it for the _reasoning_ behind the daily loop (RDM, Focus, triage), but this file supersedes it as the source of truth for where Kash is going.
+> **Build tracker:** `kash-3.0-build-breakdown.md` maps spec maturity — recurring decision dimensions per feature, and which areas are concept-complete vs. need focused breakdown. Use it to check completeness before building.
 
 ---
 
@@ -241,6 +242,8 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 ## 6. Today (Daily Loop)
 
+> **Status: RESOLVED (Jun 2026).** Core UX decided via the Today design session (day timeline, Top-3 deadline, DND, self-care). Spec below.
+
 **Purpose:** The core "finish one visible thing" engine. What needs doing today, surfaced one decision at a time.
 
 **Current state:** `Built` — strongest area. Composer/parser, Top 3, buckets, triage strip, RDM → Focus + timer, EoD review, nudges.
@@ -255,14 +258,52 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **Category-aware Today:** show today's load per category; warn if the whole day is one category.
 - **Self-care interleaving:** Today proactively inserts walk/breathing prompts (§10) between work blocks.
 
-**Open questions:**
+### Detail — resolved Today UX
 
-- Is the 5pm Top-3 deadline a hard reminder cascade or a soft nudge?
-- Should DND actually control the OS (desktop app can; web can't) or just in-app quieting?
+**Three views (in-page switcher per §4): List · Calendar · Review.** List is the default (today's existing layout: composer, Top 3, buckets, triage).
+
+**1. Day Calendar view — "living record now, opt-in auto-draft later":**
+
+- The timeline is **not** pre-planned. It fills in as the day happens: external calendar events render as blocks; starting a focus session (via Decide ⌘D or a task's focus action) **drops a 45-min block onto the timeline at the current time** and starts the timer.
+- Completed blocks stay visible with their actual duration ("✓ 38m") — the day becomes a colored record of what you did.
+- **Category color** on each block's left edge; a day **balance bar** at the bottom shows category load at a glance.
+- Self-care prompts (walks/breathing) appear as gentle dashed rows in the gaps between blocks (see §4 below).
+- **Roadmap (later, opt-in):** a confirm-first "draft my day" button that auto-lays-out blocks (Planner mode). Deferred until real time-tracking data exists to make placement accurate — Option A _generates the fuel_ auto-scheduling needs. Build A first.
+- _Rejected:_ manual time-blocking (re-introduces morning-arranging friction RDM removes) and day-one auto-scheduling (inaccurate without time data, surprises break trust).
+
+**2. Top-3 discipline — soft escalating nudges:**
+
+- Target: Top 3 done by 5pm. Each Top-3 auto-gets a 45-min focus block; spaced with simpler tasks between them.
+- Enforcement is **soft and escalating**, never blocking: afternoon chip → chat note → Focus-coach mention as 5pm nears. Urgency without guilt (ADHD-friendly, self-compassion preserved).
+- Completed Top-3 stays visible (crossed out) as proof of progress; multi-day slips get flagged by the Reflection guide (§11).
+
+**3. Focus blocks — auto-DND:**
+
+- Starting a focus block/timer **auto-enables Do Not Disturb**: real OS-level DND on the Tauri desktop app, in-app quieting on web (see §15 for the per-platform delivery layer).
+- 45-min default, completable early. Optional time-tracking on the task (feeds EoD chart + §9 scoping + the §2 time-based balance upgrade).
+
+**4. Self-care interleaving — gentle auto-suggestions:**
+
+- Between focus blocks, Today auto-surfaces a **non-blocking** walk/breathing prompt (a chip or Care-guide note). Auto per the low-stakes autonomy tier (§11); never forced, easy to dismiss.
+
+**5. Missed-task handling & Review:**
+
+- **Review view / EoD:** celebrate wins, replay what got done, reflect (extend the existing EoD review toward Finch-style self-compassion), then triage leftovers.
+- Incomplete tasks → reschedule later in the week or drop into the Abyss (§10). No silent auto-rollover; morning triage (§4 contextual inbox) is the catch-all.
+
+**6. Category-aware Today:** the balance bar warns (gently) if the whole day is one category — the first place "balance is the product" becomes visible.
+
+**Remaining open questions:**
+
+- Default Calendar window (e.g. 7am–9pm) and whether it auto-scrolls to "now."
+- Does the balance bar weight by Top-3 (large/small) here too, matching §2?
+- EoD Review trigger time — keep 6pm, or make it configurable?
 
 ---
 
 ## 7. Week View
+
+> **Status: RESOLVED (Jun 2026).** Protected blocks, balance visualization, and over-commit behavior decided. Reuses Today's patterns (switcher, category colors, contextual inbox).
 
 **Purpose:** Plan and balance the week — what's happening each day, and whether the week is balanced across categories.
 
@@ -276,14 +317,38 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **Protected blocks:** explicitly block time for Relationships / Personal Projects / Body & Mind, and have the week defend them.
 - **AI week arrangement** that respects category balance and protected blocks (extend existing week-draft).
 
-**Open questions:**
+### Detail — resolved Week UX
 
-- Does "block time for a category" create a calendar event, a placeholder task, or a constraint the AI plans around?
-- Should the week warn before you over-commit a single day?
+**1. Protected blocks — placeholder + soft constraint:**
+
+- Blocking time for a category (e.g. "Thu eve — Relationships") creates a **visible placeholder block on that day** — a promise to yourself you can later fill with a real task.
+- It is **also a soft constraint** the Planner respects when arranging the week (won't pile work over it; treats it as spoken-for).
+- **No fixed clock time required** — "sometime Thursday" is valid; can be made time-specific if you want. _Rejected:_ rigid timed calendar events; invisible constraint-only blocks.
+
+**2. Balance visualization — category-colored task borders:**
+
+- Every task in the 7-day grid carries its **category color** as a border/accent; the week's mix is read by scanning the colors. Lightweight (no aggregate bars in the columns).
+- _Note vs Today:_ Today shows an aggregate balance bar; Week conveys mix through colored borders. (Open question: optionally add a small per-column category tally later.)
+
+**3. Per-day priorities:** up to **3 priorities per day**, set ahead of time — mirrors the Top-3 mechanic at week scale.
+
+**4. Over-commit — soft warning:**
+
+- A **gentle, non-blocking flag** when a single day exceeds a load threshold (by task count/weight). Catches over-planning early without policing. Threshold tunable.
+
+**5. AI week arrangement:** extends the existing week-draft to respect **category balance + protected blocks** (Planner mode; high-stakes → confirm-first per §11).
+
+**Remaining open questions:**
+
+- Per-column category tally in addition to colored borders, or borders alone?
+- Over-commit threshold: fixed default, or learned from your typical week?
+- Do protected blocks recur (every week) or get set fresh each week?
 
 ---
 
 ## 8. Planning Mode (Month / Quarter / Year)
+
+> **Status: RESOLVED (Jun 2026).** Bingo card, cadence, and the intentions→execution "balance pass" decided. Year-visualization form still open (needs a mockup).
 
 **Purpose:** The long-horizon layer the app completely lacks today. Plan by weeks, months, quarters; set annual goals; keep "what I _wanted_ to do" alive alongside "what I _must_ do."
 
@@ -298,15 +363,43 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **AI as planning partner:** helps draft the month/quarter, rolls big goals down into weeks, and revisits/adjusts as reality shifts.
 - **Tie-in to Values (§11):** annual goals reference your Top 5 Values so the year reflects what matters, not just what's urgent.
 
-**Open questions:**
+### Detail — resolved Planning Mode
 
-- Is the bingo card free-form (any goals) or structured (N goals per category)?
-- How do monthly intentions connect to weekly/daily execution — suggestions, or hard scheduled blocks?
-- What's the cadence of the planning ritual (start of each month? quarter? both)?
+**Horizon zoom (per §4 in-page switcher): Week · Month · Quarter · Year · Bingo.** One "Plan" rail item.
+
+**1. Annual bingo card — free-form, category-tagged:**
+
+- Add any goals; **each carries exactly one life category** (§2 MECE).
+- The card **visualizes category balance** — surfaces if the year skews one category or is missing Body & Mind.
+- Tracks both obligations and desires; mark progress / completion through the year (the bingo metaphor).
+- _Rejected:_ fixed N-per-category (too rigid); uncategorized free-form (loses the balance signal).
+
+**2. Cadence — nested monthly + quarterly:**
+
+- **Quarterly themes** set direction; **monthly intentions** make them concrete and adjustable.
+- Monthly self-care planning: reserve **1–2 "outside / personal" days per month** → become _suggested_ protected blocks (§7), not hard events.
+
+**3. Intentions → execution — a soft "balance pass" that closes planning:**
+
+- Balance is a **closing step** in the Today, Week, and Plan-by-week flows. After you've planned, the app runs a gentle balance check and **softly auto-suggests tasks / protected blocks** to fill category gaps and honor the month/quarter intentions.
+- Soft and optional — accept or dismiss (low-stakes autonomy tier, §11). **Never pre-fills or forces.**
+- This is the mechanism that keeps long-horizon intentions alive in daily/weekly execution without rigid scheduling.
+
+**4. Balance over time:** a year **heatmap** of category attention to spot a neglected category early. (Form — see open question.)
+
+**5. AI planning partner:** drafts the month/quarter, rolls big goals down into weeks, revisits/adjusts; references **Top 5 Values** (§13) so the year reflects what matters, not just what's urgent.
+
+**Remaining open questions:**
+
+- Year-visualization form: vertical months-scroll (expand to weeks) vs a 52-week grid vs quarter cards — resolve with a mockup.
+- Bingo card shape: a true 5×5 grid, or an open list? Does completing a "line" carry a reward (ties to §12 gamification)?
+- Does the balance pass suggest from the existing backlog/Abyss, generate new tasks, or both?
 
 ---
 
 ## 9. Projects
+
+> **Status: RESOLVED (Jun 2026).** New capabilities (similarity, templating, nesting) decided. Core (phases, Miller, Gantt/calendar, time entries) already built.
 
 **Purpose:** Plan and execute multi-step work with phases, visualized over time, with AI that learns how long things actually take.
 
@@ -323,14 +416,38 @@ Date, the current section's in-page switcher (when relevant), and global-action 
   - Re-plan an entire project's dates from real time-tracking data when something slips.
 - **Project category** drives task categories (see §2 open questions).
 
-**Open questions:**
+### Detail — resolved Projects additions
 
-- Does every project map to exactly one life category, or can a project span categories?
-- What signals "similar project" for templating — manual tag, AI inference, or both?
+**1. Structure — fixed depth: project → phase → subphase → task.**
+
+- Bounded hierarchy that maps cleanly to Miller columns and the calendar; easy to visualize and timeline. _Rejected:_ arbitrary recursive nesting (invites over-nesting, hard to plan dates for).
+- **Drag tasks** between phases/subphases and across the calendar.
+- Views (built): Miller columns · calendar of phase date ranges · multi-project calendar.
+
+**2. Category (settled by §2):** every project carries exactly one category; its tasks inherit it with override allowed. A project is single-category, but its task mix can span categories.
+
+**3. Similarity — you tag + AI infers:**
+
+- You can mark a project "like this past one"; the AI _also_ infers similarity from structure/names/category. Your judgment plus pattern-matching.
+
+**4. Templating — structure + tasks + learned durations:**
+
+- A template captures phases/subphases, their task lists, **and typical durations learned from past similar projects** — so creating a new project auto-drafts a realistic timeline.
+- Leans on the time-tracking spine (§14, now on any task) and feeds the AI-scoping dream.
+
+**5. Re-planning (settled by §11):** when a project slips, the Planner **proposes** a date re-plan from real time data; you confirm (high-stakes → confirm-first). Never silently reshuffles.
+
+**Remaining open questions:**
+
+- Templating: auto-save a finished project as a template, or explicit "save as template"?
+- How much history before duration estimates are trustworthy (min sample size)?
+- Multi-project calendar: color by category, by project, or toggle?
 
 ---
 
 ## 10. The Abyss
+
+> **Status: RESOLVED (Jun 2026).** Capture/Drop behavior, resurfacing, and pattern structure decided.
 
 **Purpose:** A real home for everything you _want_ to do but had to deprioritize — ideas, recurring "I should…" items, backburner tasks (personal and project-related). Not a graveyard; a tended garden the AI watches for patterns.
 
@@ -344,10 +461,30 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **Pattern tracking:** detect things that keep coming back, cluster by theme/category, reveal what you keep deferring.
 - **Promotion path:** one move to pull an Abyss item into Today / Week / a Project / an annual goal.
 
-**Open questions:**
+### Detail — resolved Abyss
 
-- Should the Abyss auto-pull from dropped tasks (a "Drop" sends here) or be capture-only?
-- How aggressive should resurfacing be — scheduled review, or AI-initiated nudges?
+**1. Two ways in:**
+
+- **Capture when inspired** — fast, frictionless add from anywhere (quick-input style) so ideas don't evaporate.
+- **Drop → Abyss** — the triage "Drop" action (§6) slides a task into the Abyss instead of deleting it. A **separate explicit Delete** exists for true trash. Nothing good is lost to a busy day.
+
+**2. Organization — category-tagged + AI theme clusters:**
+
+- Each item carries a life category — **optional at capture** so inspiration stays frictionless, filled in later (or by AI suggestion).
+- The AI **clusters recurring themes** and counts how often an item resurfaces — this is what makes "see patterns over time" real (e.g. "you've parked 'learn watercolor' 4 times").
+
+**3. Resurfacing — periodic review (calm by design):**
+
+- Items come back through a **light periodic Abyss review ritual**, not proactive interruptions. You chose the calmer model — the Abyss doesn't nag.
+- **Reconciliation with §8:** the planning **balance pass** may _reference_ Abyss themes when softly suggesting tasks, but the Abyss's dedicated resurfacing is the review, not in-the-moment pop-ups. (Keeps §8 and §10 consistent: no surprise nudges from the Abyss.)
+
+**4. Promotion path:** one move to pull an Abyss item into Today / Week / a Project / an annual goal (§8 bingo card).
+
+**Remaining open questions:**
+
+- Abyss review cadence: weekly, monthly, or user-set?
+- Does Drop ever auto-expire from the Abyss (e.g., archive after a year untouched), or stay forever?
+- Capture entry point: a global shortcut (like ⌘D for Decide), the right chat rail, or both?
 
 ---
 
@@ -405,6 +542,8 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 
 ## 12. Self-Care & Wellbeing (Finch-style)
 
+> **Status: RESOLVED (Jun 2026).** Metaphor (garden, stats-first), reward basis, and reminder channels decided. Care is a top-level destination (§4) AND woven into Today (§6).
+
 **Purpose:** Make it hard to neglect yourself. Gamify mental health gently; ground you through the day; protect rest and reflection.
 
 **Current state:** `None`.
@@ -418,11 +557,32 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 - **Travel planning around work:** help plan trips/outside-time that fit the work calendar.
 - **Care hub:** a home (`/care`?) for walks, breathing, reflections, and self-care streak/garden — or woven into Today. (See §4 open question.)
 
-**Open questions:**
+### Detail — resolved Care
 
-- What's the reward metaphor — a Finch-like growing companion, a garden, a streak, points?
-- Are walk/breathing reminders OS notifications (desktop), in-app, or both?
-- How do you want to be reminded without it feeling like nagging?
+**1. Gamification metaphor — a generative garden, built stats-first:**
+
+- The reward is a **presentation skin over one shared dataset** (self-care events + balance over time).
+- **Phase 1:** ship **gentle stats** — quiet visualizations of self-care and category balance. Cheap, reuses existing data-viz, immediately useful.
+- **Phase 2:** grow into a **generative garden** that flourishes from your data — procedural/algorithmic art (affordable, scales, degrades gracefully, on-brand with the calm aesthetic). Pairs with the Reflection & care AI voice (§11).
+- _Rejected:_ hand-drawn companion (highest art cost) as the starting point; streaks/points (guilt/streak-shaming risk).
+- **Encouragement only** — the garden never wilts or punishes a skipped day. Design principle #3.
+
+**2. What nourishes it — self-care acts + life balance:**
+
+- Walks, breathing sessions, reflections **and** a balanced week (category balance, §2) both feed the garden. Celebrates a _balanced life_, not raw output — never rewards overwork.
+
+**3. Reminder channels — both:**
+
+- Real **OS notifications on the Tauri desktop**, **in-app prompts on web** (shared §15 delivery layer; consistent with auto-DND, §6).
+- Walk reminders 2–3×/day around work; breathing offered proactively during stressful stretches and any time on demand. All gentle, dismissible (low-stakes autonomy, §11).
+
+**4. Care hub contents (`/care`):** walks, breathing exercises, reflection rituals (daily EoD celebration / weekly / monthly), the garden + stats, and travel-planning-around-work. Self-care prompts also surface inline in Today.
+
+**Remaining open questions:**
+
+- Breathing visualization style → defer to the Design Tokens + animation passes (§5, final phase).
+- Garden art direction and "growth" rules → its own design spike when Phase 2 begins.
+- Reflection ritual cadence/prompts: reuse §11 Reflection guide, or scripted templates?
 
 ---
 
@@ -509,11 +669,13 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 
 ## 15. System-wide mechanics
 
-- **Notifications & DND:** focus blocks and walk reminders need a delivery layer. Desktop (Tauri) can control real OS DND/notifications; web is limited. Decide the per-platform story.
-- **Time-tracking as the data spine:** durations feed AI scoping (§9), EoD charts, and balance analytics. Make capture frictionless and consistent everywhere.
-- **Gamification engine:** a shared rewards/streak/garden system serving §12, surfaced lightly in Today and Care.
-- **Offline + sync:** the desktop app already does offline SQLite + Supabase sync — new tables (categories, values, abyss, planning, self-care) must respect that.
-- **RLS & privacy:** every new table scoped to `auth.uid()` per repo conventions; the personal-context doc (§13) is especially sensitive.
+> **Status: MOSTLY RESOLVED (Jun 2026) by reference** — the feature sessions settled most of this. One real platform limitation remains open (web background reminders).
+
+- **Notifications & DND** — settled by §6/§12: focus blocks **auto-enable DND**; reminders go **OS-level on Tauri desktop, in-app on web**. Build one shared delivery abstraction with a desktop adapter (real OS DND + notifications) and a web adapter (in-app + best-effort Web Notifications). **Open:** web reminders when the app is _closed_ are unreliable — decide a fallback (email digest? desktop-only? accept the gap).
+- **Time-tracking as the data spine** — settled by §14: optional on **any** task; feeds §9 scoping, EoD charts, the §2 time-based balance upgrade. Keep capture frictionless (Focus timer + manual).
+- **Gamification engine** — settled by §12: one shared dataset (self-care events + balance), rendered **stats-first, then generative garden**. Surfaced lightly in Today and in Care. Encouragement-only (no punitive states).
+- **Offline + sync** — existing Tauri SQLite + Supabase sync. All new tables (category on tasks, recurrence, dependencies, abyss, planning/goals, values/About-me, self-care events) must respect the sync model.
+- **RLS & privacy** — every new table scoped to `auth.uid()` per repo conventions; the §13 About-me doc is especially sensitive (transparent, user-editable, never logged).
 
 ---
 
@@ -538,13 +700,13 @@ Decisions to resolve as sections get expanded (collected from above):
 - **Categories:** ✅ RESOLVED (§2) — fixed 5, rename/recolor only, strict MECE, inherit-with-override, task-count balance. _Remaining:_ final labels, balance weighting, backfill method.
 - **Navigation:** ✅ RESOLVED (§4) — three-column shell, grouped left rail, right chat rail, contextual inbox, in-page switchers. _Remaining:_ `/plan` route naming, right-rail default state, chat keybinding, mobile/Tauri parity.
 - **Design:** glass vs. flat? light/dark? reference apps for feel?
-- **Today:** 5pm deadline hardness? real OS DND?
-- **Week:** category blocks = events, tasks, or constraints?
-- **Planning:** bingo card structure? planning cadence?
-- **Projects:** one category per project? what defines "similar" for templating?
-- **Abyss:** auto-capture dropped tasks? resurfacing aggressiveness?
+- **Today:** ✅ RESOLVED (§6) — living-record timeline (+auto-draft later), soft Top-3 nudges, auto-DND, gentle self-care prompts.
+- **Week:** ✅ RESOLVED (§7) — placeholder+constraint protected blocks, colored task borders, soft over-commit warning.
+- **Planning:** ✅ RESOLVED (§8) — category-tagged bingo card, monthly+quarterly cadence, soft balance-pass closing step. _Remaining:_ year-viz form.
+- **Projects:** ✅ RESOLVED (§9) — fixed nesting, tag+AI similarity, templates with learned durations, confirm-first re-plan.
+- **Abyss:** ✅ RESOLVED (§10) — Drop→Abyss (+ explicit Delete), category-tagged + AI theme clusters, periodic-review resurfacing.
 - **AI:** ✅ RESOLVED (§11) — tiered autonomy, specialized modes (Planner / Focus coach / Reflection & care guide) sharing one brain, single editable About-me doc. _Remaining:_ mode visual identity, About-me auto-draft behavior.
-- **Self-care:** reward metaphor? reminder channel?
+- **Self-care:** ✅ RESOLVED (§12) — generative garden (stats-first), nourished by self-care + balance, both-channel reminders.
 - **Values:** ranked or flat? retroactive context edits?
 - **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task. _Remaining:_ blocked-task RDM behavior, tags timing, recurrence-end options.
 

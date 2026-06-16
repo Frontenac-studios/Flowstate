@@ -24,7 +24,7 @@ export function ChatToggleButton({ threadId, className }: Props) {
       className={`glass-pill relative px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink ${className ?? ""}`}
       aria-pressed={railOpen}
       aria-label={hasUnread ? "Toggle chat (unread)" : "Toggle chat"}
-      title="Chat (⌃J)"
+      title="Chat (⌘J)"
     >
       Chat {railOpen ? "☑" : "☐"}
       {hasUnread ? (

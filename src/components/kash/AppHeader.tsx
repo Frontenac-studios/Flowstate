@@ -12,7 +12,13 @@ import { ChatToggleButton } from "./chat/ChatToggleButton";
  */
 export function AppHeader() {
   return (
-    <header className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink">
+    <header
+      // Frameless Tauri window (titleBarStyle "Overlay", hiddenTitle): the
+      // header doubles as the drag region. Ignored by browsers; interactive
+      // children (buttons) still receive their own clicks.
+      data-tauri-drag-region
+      className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink"
+    >
       <span className="font-semibold tracking-tight">Kash</span>
       <span className="text-kash-ink-muted" aria-hidden>
         ·

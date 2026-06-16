@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/kash/AppShell";
+import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import { PlanCanvas } from "@/components/kash/plan/PlanCanvas";
 import { PlanModeToggle } from "@/components/kash/plan/PlanModeToggle";
 import { PlanSurface } from "@/components/kash/plan/PlanSurface";
@@ -20,6 +21,7 @@ export default async function PlanPage() {
   return (
     <AppShell>
       <PlanSurface>
+        <ContextualInbox />
         <div className="mb-4 flex items-center gap-3">
           <PlanModeToggle />
         </div>

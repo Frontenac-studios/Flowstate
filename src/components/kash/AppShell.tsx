@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ChatProvider>
       <ProactiveNudgesRunner />
       <div className="relative min-h-screen">
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[110rem] gap-6 px-4 py-6 sm:px-6 lg:px-10">
+        <div className="kash-shell-inner relative z-10 mx-auto flex min-h-screen w-full max-w-[110rem] gap-6 px-4 py-6 sm:px-6 lg:px-10">
           <LeftNavRail />
           <div className="flex min-w-0 flex-1 flex-col">
             <AppHeader />
