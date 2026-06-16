@@ -41,35 +41,63 @@ export async function POST(req: Request) {
   });
 
   try {
-    const { stream, getFullText } = await streamCompanionReply({
+    const { stream, getFullText, getMutatedTasks } = await streamCompanionReply({
       userId,
       threadId,
       userText: text,
+      signal: req.signal,
     });
 
     const encoder = new TextEncoder();
     let assistantText = "";
+    let saved = false;
+
+    const saveAssistant = async (partial: string) => {
+      const trimmed = partial.trim();
+      if (!trimmed || saved) return;
+      saved = true;
+      await appendAssistantMessage(userId, threadId, trimmed);
+    };
 
     const readable = new ReadableStream({
       async start(controller) {
         try {
           for await (const event of stream) {
-            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-              assistantText += event.delta.text;
+            if (req.signal.aborted) {
+              await saveAssistant(assistantText || getFullText());
               controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ type: "delta", text: event.delta.text })}\n\n`
-                )
+                encoder.encode(`data: ${JSON.stringify({ type: "cancelled" })}\n\n`)
+              );
+              controller.close();
+              return;
+            }
+
+            if (event.type === "delta") {
+              assistantText += event.text;
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ type: "delta", text: event.text })}\n\n`)
               );
             }
           }
 
-          const full = assistantText || (await getFullText());
-          if (full) {
-            await appendAssistantMessage(userId, threadId, full);
+          if (req.signal.aborted) {
+            await saveAssistant(assistantText || getFullText());
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: "cancelled" })}\n\n`)
+            );
+            controller.close();
+            return;
           }
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`));
+          const full = assistantText || getFullText();
+          if (full.trim()) {
+            await saveAssistant(full);
+          }
+
+          const mutatedTasks = getMutatedTasks();
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "done", mutatedTasks })}\n\n`)
+          );
           controller.close();
         } catch (err) {
           Sentry.captureException(err, {
@@ -81,6 +109,9 @@ export async function POST(req: Request) {
           );
           controller.close();
         }
+      },
+      async cancel() {
+        await saveAssistant(assistantText || getFullText());
       },
     });
 

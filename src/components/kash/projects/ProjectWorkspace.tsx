@@ -11,7 +11,13 @@ import MillerColumnsView from "./MillerColumnsView";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
-export default function ProjectWorkspace({ project: initialProject }: { project: ProjectDetail }) {
+export default function ProjectWorkspace({
+  project: initialProject,
+  showBackToProjects = false,
+}: {
+  project: ProjectDetail;
+  showBackToProjects?: boolean;
+}) {
   const trpc = useTRPC();
 
   const { data: project } = useQuery(
@@ -41,6 +47,7 @@ export default function ProjectWorkspace({ project: initialProject }: { project:
         project={project}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        showBackToProjects={showBackToProjects}
       />
 
       {isLoading ? (

@@ -4,7 +4,13 @@ import { and, desc, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
 
 import { db } from "@/db";
 import { projects, taskTimeEntries, tasks } from "@/db/tables";
-import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import {
+  addDays,
+  datesInIsoWeek,
+  startOfIsoWeekMonday,
+  startOfLocalDay,
+  toISODateString,
+} from "@/lib/dates/local-day";
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { taskIdForThread } from "@/lib/chat/threads";
@@ -97,13 +103,18 @@ export async function fetchPlanContextSnapshot(
         t.isTop3 ? "top3" : null,
         t.priority > 0 ? `p${t.priority}` : null,
         t.projectSlug ? `#${t.projectSlug}` : null,
+        t.scheduledDate ? `due ${t.scheduledDate}` : null,
       ]
         .filter(Boolean)
         .join(", ");
-      return `- ${t.title}${tags ? ` (${tags})` : ""}`;
+      return `- id=${t.id} | ${t.title}${tags ? ` (${tags})` : ""}`;
     });
     return `${label}:\n${lines.join("\n")}`;
   };
+
+  const thisWeekDates = datesInIsoWeek(now).map(toISODateString);
+  const nextWeekRef = addDays(startOfIsoWeekMonday(now), 7);
+  const nextWeekDates = datesInIsoWeek(nextWeekRef).map(toISODateString);
 
   const top3Lines =
     top3Rows.length === 0
@@ -189,6 +200,8 @@ export async function fetchPlanContextSnapshot(
   const contextBlock = truncateContext(
     [
       `Today: ${todayIso}`,
+      `This calendar week (Mon–Sun): ${thisWeekDates[0]} … ${thisWeekDates[6]}`,
+      `Next calendar week (Mon–Sun): ${nextWeekDates[0]} … ${nextWeekDates[6]}`,
       `Triage backlog: ${triageRows.length} task(s) from prior days`,
       top3Lines,
       slippedLines,

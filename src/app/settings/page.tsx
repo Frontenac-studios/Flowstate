@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { PlanLayout } from "@/components/kash/PlanLayout";
+import { AppShell } from "@/components/kash/AppShell";
 import { SettingsForm } from "@/components/kash/settings/SettingsForm";
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
@@ -16,8 +16,8 @@ export default async function SettingsPage() {
   }
 
   return (
-    <PlanLayout>
+    <AppShell>
       <SettingsForm />
-    </PlanLayout>
+    </AppShell>
   );
 }

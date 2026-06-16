@@ -58,7 +58,7 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
             <button
               key={slot}
               type="button"
-              className="glass-pill flex min-h-9 items-center gap-2 px-3 py-1.5 text-left text-sm text-kash-ink hover:ring-2 hover:ring-[var(--kash-accent-soft)]"
+              className="glass-pill flex min-h-9 items-center gap-2 px-3 py-kash-task-y-compact text-left text-sm text-kash-ink hover:ring-2 hover:ring-[var(--kash-accent-soft)]"
               onClick={() => onReplace(slot)}
             >
               <span className="shrink-0 text-xs text-kash-accent" aria-hidden>

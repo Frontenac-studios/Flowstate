@@ -7,6 +7,7 @@ type Props = {
   placeholder?: string;
   isStreaming?: boolean;
   onSend: (text: string) => void;
+  onStop?: () => void;
   suggestions?: ReactNode;
 };
 
@@ -15,6 +16,7 @@ export function ChatComposer({
   placeholder = "Message Claude…",
   isStreaming,
   onSend,
+  onStop,
   suggestions,
 }: Props) {
   const [value, setValue] = useState("");
@@ -45,14 +47,23 @@ export function ChatComposer({
         placeholder={placeholder}
         className="glass-textarea glass-input w-full resize-none text-sm text-kash-ink"
       />
-      <div className="mt-2 flex justify-end">
+      <div className="mt-2 flex justify-end gap-2">
+        {isStreaming && onStop ? (
+          <button
+            type="button"
+            onClick={onStop}
+            className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+          >
+            Stop
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={submit}
           disabled={disabled || isStreaming || !value.trim()}
           className="glass-btn-primary px-3 py-1.5 text-sm"
         >
-          {isStreaming ? "Thinking…" : "Send"}
+          Send
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { PlanLayout } from "@/components/kash/PlanLayout";
+import { AppShell } from "@/components/kash/AppShell";
+import { PlanSurface } from "@/components/kash/plan/PlanSurface";
 import { ThisWeekCanvas } from "@/components/kash/plan/ThisWeekCanvas";
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
@@ -16,8 +17,10 @@ export default async function ThisWeekPage() {
   }
 
   return (
-    <PlanLayout>
-      <ThisWeekCanvas />
-    </PlanLayout>
+    <AppShell>
+      <PlanSurface>
+        <ThisWeekCanvas />
+      </PlanSurface>
+    </AppShell>
   );
 }

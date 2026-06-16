@@ -51,6 +51,7 @@ export function useProjectMutations(projectId: string) {
 
   const createPhase = useMutation(trpc.phases.create.mutationOptions({ onSuccess }));
   const updatePhase = useMutation(trpc.phases.update.mutationOptions({ onSuccess }));
+  const updatePhaseSilent = useMutation(trpc.phases.update.mutationOptions({}));
   const setPhaseComplete = useMutation(trpc.phases.setComplete.mutationOptions({ onSuccess }));
   const deletePhase = useMutation(trpc.phases.delete.mutationOptions({ onSuccess }));
 
@@ -77,6 +78,7 @@ export function useProjectMutations(projectId: string) {
     invalidateAll,
     createPhase,
     updatePhase,
+    updatePhaseSilent,
     setPhaseComplete,
     deletePhase,
     createTask,

@@ -8,6 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { useTRPC } from "@/trpc/client";
 
@@ -31,20 +32,11 @@ type Props = {
   onDelete: (snapshot: TaskSnapshot) => void;
   onPin?: (taskId: string, sourceEl: HTMLElement) => void;
   canPin?: boolean;
+  showProject?: boolean;
 };
 
 const ACTION_WIDTH_PX = 72;
 const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
-
-function PriorityDots({ priority }: { priority: number }) {
-  if (priority === 0) return <span className="mt-0.5 w-6 shrink-0" aria-hidden />;
-
-  return (
-    <span className="mt-0.5 shrink-0 text-kash-accent" aria-label={`Priority ${priority}`}>
-      {"!".repeat(priority)}
-    </span>
-  );
-}
 
 export function TaskRow({
   task,
@@ -55,6 +47,7 @@ export function TaskRow({
   onDelete,
   onPin,
   canPin = false,
+  showProject = true,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -181,7 +174,7 @@ export function TaskRow({
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`glass-panel-opaque relative flex min-h-kash-row cursor-pointer items-start gap-2 px-3 py-2 transition-transform duration-150 ease-out ${
+          className={`glass-panel-opaque relative flex min-h-kash-row cursor-pointer items-start gap-2 px-3 py-kash-task-y transition-transform duration-150 ease-out ${
             task.isTop3 ? "border-l-2 border-kash-accent" : ""
           } ${selected ? "ring-2 ring-[var(--kash-accent-soft)]" : ""}`}
           style={{ transform: `translateX(${offset}px)` }}
@@ -229,7 +222,7 @@ export function TaskRow({
             )}
           </div>
 
-          {task.projectSlug && task.projectId ? (
+          {showProject && task.projectSlug && task.projectId ? (
             <Link
               href={`/projects/${task.projectId}`}
               className="glass-pill mt-0.5 shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
@@ -239,7 +232,7 @@ export function TaskRow({
             </Link>
           ) : null}
 
-          <PriorityDots priority={task.priority} />
+          <TaskPriorityIndicator priority={task.priority} reserveSpace />
 
           <TaskDragHandle
             ref={setActivatorNodeRef}

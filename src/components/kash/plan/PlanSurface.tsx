@@ -1,0 +1,25 @@
+"use client";
+
+import { BottomDock } from "../BottomDock";
+import { EodReviewRunner } from "../eod/EodReviewRunner";
+import { MondayEntryRunner } from "./MondayEntryRunner";
+import { PlanProvider } from "./PlanProvider";
+import { Top3RolloverRunner } from "./Top3RolloverRunner";
+
+/**
+ * Wraps the Today and Week surfaces with plan-mode state, the daily-loop runners
+ * (Top-3 rollover, end-of-day review, Monday entry), and the contextual inbox
+ * dock. These are scoped here rather than in the global shell so they don't run
+ * on Projects, Settings, Abyss, or Care.
+ */
+export function PlanSurface({ children }: { children: React.ReactNode }) {
+  return (
+    <PlanProvider>
+      <Top3RolloverRunner />
+      <EodReviewRunner />
+      <MondayEntryRunner />
+      <div className="flex min-h-0 flex-1 flex-col pb-24">{children}</div>
+      <BottomDock />
+    </PlanProvider>
+  );
+}

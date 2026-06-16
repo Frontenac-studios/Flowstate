@@ -17,7 +17,7 @@ export function Top3ReviewSummary({ top3Status }: Props) {
         return (
           <div
             key={slot.order}
-            className={`glass-pill flex min-h-[4rem] flex-col justify-center border-l-[3px] px-3 py-2 ${
+            className={`glass-pill flex min-h-[4rem] flex-col justify-center border-l-[3px] px-3 py-kash-task-y ${
               slot.status === "empty" ? "border-transparent opacity-70" : "border-kash-accent"
             }`}
           >

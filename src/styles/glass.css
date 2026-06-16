@@ -1,5 +1,5 @@
 :root {
-  --kash-backdrop: #fafaf9;
+  --kash-backdrop: #eeeeee;
   --kash-glass-bg: rgba(255, 255, 255, 0.55);
   --kash-glass-bg-opaque: rgba(255, 255, 255, 0.88);
   --kash-glass-border: rgba(255, 255, 255, 0.6);
@@ -21,7 +21,9 @@
   --kash-radius: var(--kash-radius-outer);
   --kash-ink: #1a1d26;
   --kash-ink-muted: #5c6370;
-  --kash-row-min-height: 44px;
+  --kash-row-min-height: 36px;
+  --kash-task-row-py: 4px;
+  --kash-task-row-py-compact: 3px;
   --kash-density-base: 15px;
 }
 

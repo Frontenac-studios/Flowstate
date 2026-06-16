@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { notFound, redirect } from "next/navigation";
 
+import { AppShell } from "@/components/kash/AppShell";
 import ProjectWorkspace from "@/components/kash/projects/ProjectWorkspace";
-import ProjectsLayout from "@/components/kash/projects/ProjectsLayout";
 import type { ProjectDetail } from "@/components/kash/projects/types";
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
@@ -39,8 +39,8 @@ export default async function ProjectPage({ params }: Props) {
   }
 
   return (
-    <ProjectsLayout showBackToProjects>
-      <ProjectWorkspace project={project} />
-    </ProjectsLayout>
+    <AppShell>
+      <ProjectWorkspace project={project} showBackToProjects />
+    </AppShell>
   );
 }

@@ -12,6 +12,7 @@ import {
   validateWeekDraftAssignments,
   type WeekDraftAssignment,
 } from "@/lib/week/validate-week-draft-assignments";
+import { applyScheduleBatch } from "@/server/tasks/apply-schedule-batch";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -378,6 +379,21 @@ export const tasksRouter = createTRPCRouter({
       }
 
       return { applied: validation.normalized.length };
+    }),
+
+  applyScheduleBatch: protectedProcedure
+    .input(
+      z.object({
+        assignments: z.array(
+          z.object({
+            taskId: z.string().uuid(),
+            scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return applyScheduleBatch(ctx.userId, input.assignments);
     }),
 
   moveToBucket: protectedProcedure

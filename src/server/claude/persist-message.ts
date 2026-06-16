@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt } from "drizzle-orm";
 
 import { db } from "@/db";
 import { chatMessages } from "@/db/tables";
@@ -80,6 +80,52 @@ export async function appendAssistantMessage(
 export async function updateAssistantMessage(messageId: string, userId: string, text: string) {
   await db
     .update(chatMessages)
-    .set({ content: textContent(text) })
+    .set({ content: textContent(text), updatedAt: new Date() })
     .where(and(eq(chatMessages.id, messageId), eq(chatMessages.userId, userId)));
+}
+
+export async function editUserMessageAndTruncateAfter(
+  userId: string,
+  threadId: string,
+  messageId: string,
+  text: string
+) {
+  const [row] = await db
+    .select({
+      id: chatMessages.id,
+      role: chatMessages.role,
+      createdAt: chatMessages.createdAt,
+    })
+    .from(chatMessages)
+    .where(
+      and(
+        eq(chatMessages.id, messageId),
+        eq(chatMessages.userId, userId),
+        eq(chatMessages.threadId, threadId)
+      )
+    )
+    .limit(1);
+
+  if (!row || row.role !== "user") {
+    throw new Error("User message not found.");
+  }
+
+  const now = new Date();
+
+  await db
+    .update(chatMessages)
+    .set({ content: textContent(text.trim()), updatedAt: now })
+    .where(and(eq(chatMessages.id, messageId), eq(chatMessages.userId, userId)));
+
+  await db
+    .delete(chatMessages)
+    .where(
+      and(
+        eq(chatMessages.userId, userId),
+        eq(chatMessages.threadId, threadId),
+        gt(chatMessages.createdAt, row.createdAt)
+      )
+    );
+
+  return { id: messageId };
 }

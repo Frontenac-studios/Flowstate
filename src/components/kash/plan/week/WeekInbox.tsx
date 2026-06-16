@@ -90,7 +90,12 @@ export function WeekInbox({
             <ul className="h-full space-y-2 overflow-y-auto pb-1">
               {tasks.map((task) => (
                 <li key={task.id}>
-                  <TaskRow task={task} onComplete={onComplete} onDelete={onDelete} />
+                  <TaskRow
+                    task={task}
+                    showProject={false}
+                    onComplete={onComplete}
+                    onDelete={onDelete}
+                  />
                 </li>
               ))}
             </ul>

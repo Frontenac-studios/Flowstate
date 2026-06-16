@@ -69,6 +69,7 @@ export default function MillerColumn({
               <MillerPhaseRow
                 key={`p:${item.node.phase.id}`}
                 node={item.node}
+                parentPhaseId={parentPhaseId}
                 isOpen={openPhaseId === item.node.phase.id}
                 selected={detail?.type === "phase" && detail.id === item.node.phase.id}
                 focused={focused}
