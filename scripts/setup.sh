@@ -76,7 +76,7 @@ for k, v in vals.items():
 env.write_text(text)
 PY
   rm -f .env.local.supabase.tmp
-  echo "  Studio: http://127.0.0.1:54323"
+  echo "  Studio: http://127.0.0.1:54423"
 }
 
 setup_sentry() {
