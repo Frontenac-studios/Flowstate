@@ -1,4 +1,5 @@
 export * from "./app-settings";
+export * from "./category-settings";
 export * from "./chat-custom-suggestions";
 export * from "./chat-messages";
 export * from "./day-reviews";

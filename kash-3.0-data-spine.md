@@ -49,9 +49,9 @@ Quick confirmations that gate the schema work.
 
 **Schema**
 
-- **1.1** Add `tasks.category` (`project_category` enum). Migration path: add **nullable** → backfill → set **NOT NULL**? Or NOT NULL with a temporary default? (Decide the safe migration sequence.)
+- **1.1 (decided — §7)** Add `tasks.category` (`project_category` enum). Migration sequence: add **nullable** → AI backfill → set **NOT NULL** (two migrations with the backfill between).
   - **1.1a (decided)** Add a companion `tasks.category_unresolved` boolean (default `false`) — the invisible-plumbing state from 1.4d. A row can carry `category = 'adulting'` (NOT NULL satisfied) while `category_unresolved = true` so the UI renders a **neutral "no category yet" marker** (never the word Adulting), the row stays **out of balance math**, and a backfill pass / the resolver re-fills it later (offline re-resolve, 1.4e). Set `false` once any layer 1–4 resolves it.
-- **1.2** Category settings store — extend `app_settings` (JSON blob of label/color overrides) **vs** a dedicated `category_settings` table (one row per category per user). Decide shape.
+- **1.2 (decided — §7)** Category settings store = a dedicated `category_settings` table (one row per category per user): label, color, sort, weekly targets / §7.6 review prefs. (Not an `app_settings` JSON blob.)
 
 **Behavior / integration**
 
