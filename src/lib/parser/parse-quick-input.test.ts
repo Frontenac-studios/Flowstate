@@ -67,18 +67,18 @@ describe("parseQuickInput", () => {
     expect(result.title).toBe("demo");
   });
 
-  it("parses known project without hash in space mode", () => {
+  it("Q6: does not parse a bare project slug in space mode — it stays title text", () => {
     const result = parseQuickInput("fix bug rdm", ctx);
-    expect(result.projectSlug).toBe("rdm");
+    expect(result.projectSlug).toBeNull();
     expect(result.warnings).toHaveLength(0);
-    expect(result.title).toBe("fix bug");
+    expect(result.title).toBe("fix bug rdm");
   });
 
-  it("parses known project with optional hash in space mode", () => {
+  it("Q6: the #project space token is retired — # tokens stay title text", () => {
     const result = parseQuickInput("fix bug #rdm", ctx);
-    expect(result.projectSlug).toBe("rdm");
+    expect(result.projectSlug).toBeNull();
     expect(result.warnings).toHaveLength(0);
-    expect(result.title).toBe("fix bug");
+    expect(result.title).toBe("fix bug #rdm");
   });
 
   it("resolves project slug case-insensitively to canonical stored slug", () => {
@@ -93,8 +93,22 @@ describe("parseQuickInput", () => {
     expect(result.warnings).toHaveLength(0);
   });
 
-  it("warns on unknown project with suggestions", () => {
+  it("Q6: a # token in space mode no longer warns or suggests projects", () => {
     const result = parseQuickInput("task #rdn", {
+      ...ctx,
+      projects: [
+        { slug: "rdm", name: "RDM" },
+        { slug: "flow", name: "Flow" },
+      ],
+    });
+    expect(result.projectSlug).toBeNull();
+    expect(result.warnings).toHaveLength(0);
+    expect(result.suggestions).toHaveLength(0);
+    expect(result.title).toBe("task #rdn");
+  });
+
+  it("warns on unknown project with suggestions in semicolon mode", () => {
+    const result = parseQuickInput("task; today; rdn", {
       ...ctx,
       projects: [
         { slug: "rdm", name: "RDM" },
@@ -112,11 +126,11 @@ describe("parseQuickInput", () => {
     expect(parseQuickInput("med !", ctx).priority).toBe(1);
   });
 
-  it("parses combined tokens", () => {
+  it("parses combined date + priority tokens in space mode (Q6: no project token)", () => {
     const result = parseQuickInput("review PR tomorrow #rdm !!", ctx);
-    expect(result.title).toBe("review PR");
+    expect(result.title).toBe("review PR #rdm");
     expect(result.scheduledDate).toBe("2026-05-28");
-    expect(result.projectSlug).toBe("rdm");
+    expect(result.projectSlug).toBeNull();
     expect(result.priority).toBe(2);
   });
 
@@ -202,7 +216,7 @@ describe("parseQuickInputLines", () => {
   });
 
   it("parses each line independently", () => {
-    const lines = parseQuickInputLines("today standup\nreview PR tomorrow #rdm !!", ctx);
+    const lines = parseQuickInputLines("today standup\nreview PR; tomorrow; rdm; !!", ctx);
     expect(lines[0]?.parse.title).toBe("standup");
     expect(lines[0]?.parse.scheduledDate).toBe("2026-05-27");
     expect(lines[1]?.parse.title).toBe("review PR");
@@ -211,8 +225,8 @@ describe("parseQuickInputLines", () => {
     expect(lines[1]?.parse.priority).toBe(2);
   });
 
-  it("flags unknown project per line without affecting other lines", () => {
-    const lines = parseQuickInputLines("ok task\nbad #rdn", ctx);
+  it("flags unknown project per line (semicolon mode) without affecting other lines", () => {
+    const lines = parseQuickInputLines("ok task\nbad; rdn", ctx);
     expect(lines[0]?.parse.warnings).toHaveLength(0);
     expect(lines[1]?.parse.warnings).toEqual([{ code: "project_not_found", slug: "rdn" }]);
   });

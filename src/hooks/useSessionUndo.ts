@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 
+import type { ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
 export type TaskSnapshot = {
@@ -14,6 +15,9 @@ export type TaskSnapshot = {
   projectId: string | null;
   isTop3: boolean;
   top3Order: number | null;
+  // Q1: undo restores the exact resolved category + unresolved marker.
+  category: ProjectCategory | null;
+  categoryUnresolved: boolean;
 };
 
 type UndoFrame =

@@ -37,6 +37,10 @@ const taskSnapshotSchema = z.object({
   projectId: z.string().uuid().nullable(),
   isTop3: z.boolean(),
   top3Order: z.number().int().nullable(),
+  // Q1: undo = "put it back exactly" — carry the resolved category and its
+  // unresolved marker through delete → restore unchanged (no re-resolution).
+  category: categorySchema.nullable(),
+  categoryUnresolved: z.boolean(),
 });
 
 async function getOwnedTask(userId: string, taskId: string) {
@@ -504,6 +508,8 @@ export const tasksRouter = createTRPCRouter({
           projectId: input.projectId,
           isTop3: input.isTop3,
           top3Order: input.top3Order,
+          category: input.category,
+          categoryUnresolved: input.categoryUnresolved,
         })
         .returning();
 
@@ -638,6 +644,8 @@ export const tasksRouter = createTRPCRouter({
           projectId: existing.projectId,
           isTop3: existing.isTop3,
           top3Order: existing.top3Order,
+          category: existing.category,
+          categoryUnresolved: existing.categoryUnresolved,
         },
       };
     }),
