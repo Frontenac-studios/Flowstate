@@ -71,14 +71,24 @@ Implements the MECE category dimension end-to-end. Decisions: dedicated `categor
 ### 1F — Sync / offline parity
 
 - `packages/db-local`: `category` + `category_unresolved` on SQLite tasks, `last_used_category` on app_settings, new `category_settings` table (idempotent ADD COLUMN for existing DBs). `packages/sync`: register `category_settings`; row-mapper round-trips `category_unresolved` boolean↔0/1; offline create uses the resolver with `online:false`.
-- **Reconnect re-resolve (1.4e):** on reconnect, re-run inference for `category_unresolved` rows. **Pending the AI provider** — until `inferCategoryFromTitle` is wired this is a no-op, so it's deliberately not built yet.
-- **Accept:** offline create carries category and syncs; settings sync both ways; unresolved rows re-resolve once AI lands.
+- **Offline categorizes live (1.4e superseded by 1.AId):** the local embedding model runs on-device, so offline create resolves the category locally — **no reconnect re-resolve loop**. Any `category_unresolved` rows are cleaned up by the bulk backfill (0.3), not a reconnect trigger.
+- **Accept:** offline create carries a locally-resolved category and syncs; settings sync both ways.
 
 ### 1G — Verification
 
 - Vitest: helper (1C), parser (1D), backfill (1B). Manual QA: capture, inheritance+override, chip edit, settings, offline→sync, NULL check. Gates: typecheck, lint, RLS audit.
 
-**Order:** `1A → 1B → 1C → (1D ∥ 1E) → 1F → 1G`.
+### 1H — AI inference provider (embeddings) — _decisions 1.AIa–d, not yet built_
+
+Replaces the abstaining `infer-category.ts` stub with the real classifier:
+
+- **Embeddings nearest-prototype (1.AIb):** seed 5 category **prototype vectors** from a handful of example titles per category (embed once, cache). `inferCategoryFromTitle(title)` = embed title → cosine vs the 5 prototypes → top match + score.
+- **Confidence = floor + margin (1.AIc):** return `{category, confidence}` only when top ≥ floor (≈0.70) **and** top − 2nd ≥ margin (≈0.10); else abstain (`null`) so the ladder falls to last-used. Both knobs tunable/config.
+- **Location = hybrid (1.AId):** small **local** model (ONNX/transformers.js, ~few MB) for the **live + offline** path, injected on client/server/offline behind the existing seam; **sharper hosted model** (hosted embeddings or Haiku) only inside `scripts/backfill-loose-task-categories.cjs` (1B).
+- **Trigger = live per keystroke (1.AIa):** the composer calls inference debounced (~150ms), cached by normalized title, so the accent bar updates as you type. _Open: keep per-keystroke cost at/near free (local model + cache); revisit model choice if not._
+- **Accept:** "Call mom" → Relationships above threshold; ambiguous titles abstain to last-used; live accent bar updates while typing; offline categorizes with no network; backfill uses the sharper model.
+
+**Order:** `1A → 1B → 1C → (1D ∥ 1E) → 1F → 1G → 1H`. (Spine 1A–1G works with the stub; 1H lights up AI-forward.)
 
 ---
 
