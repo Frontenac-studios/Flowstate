@@ -215,7 +215,6 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
   let scheduledDate: string | null = todayIso;
   let bucketOverride: "later" | null = null;
-  let projectSlug: string | null = null;
   let priority: 0 | 1 | 2 | 3 = 0;
   const titleParts: string[] = [];
 
@@ -235,44 +234,22 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
       continue;
     }
 
-    const slugCandidate = extractProjectSlugToken(token);
-    if (slugCandidate) {
-      const hasExplicitHash = token.startsWith("#");
-      const match = findProjectBySlug(slugCandidate, ctx.projects);
-      if (hasExplicitHash || match) {
-        projectSlug = match?.slug ?? slugCandidate;
-        continue;
-      }
-    }
-
+    // Q6: the `#project` space token is retired. Project is set only via the
+    // `;` property segment (like category) — one input language. Anything that
+    // isn't a date or priority token is plain title text here.
     titleParts.push(token);
   }
 
   const title = collapseWhitespace(titleParts.join(" ")) || "";
-  const warnings: ParseWarning[] = [];
-  let suggestions: ProjectSuggestion[] = [];
-
-  if (projectSlug) {
-    const match = findProjectBySlug(projectSlug, ctx.projects);
-    if (match) {
-      projectSlug = match.slug;
-    } else {
-      warnings.push({ code: "project_not_found", slug: projectSlug });
-      suggestions = fuzzyProjectSuggestions(projectSlug, ctx.projects).map((s) => ({
-        slug: s.slug,
-        name: s.name,
-      }));
-    }
-  }
 
   return {
     title,
     scheduledDate,
     bucketOverride,
-    projectSlug,
+    projectSlug: null,
     priority,
     category: null,
-    warnings,
-    suggestions,
+    warnings: [],
+    suggestions: [],
   };
 }
