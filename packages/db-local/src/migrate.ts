@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   sort_order INTEGER NOT NULL DEFAULT 0,
   scheduled_date TEXT,
   bucket_override TEXT,
+  category TEXT,
+  category_unresolved INTEGER NOT NULL DEFAULT 0,
   is_top_3 INTEGER NOT NULL DEFAULT 0,
   top_3_order INTEGER,
   top_3_pinned_at INTEGER,
@@ -103,8 +105,21 @@ CREATE TABLE IF NOT EXISTS app_settings (
   bucket_mode TEXT NOT NULL DEFAULT 'relative',
   day_start_hour INTEGER NOT NULL DEFAULT 7,
   day_end_hour INTEGER NOT NULL DEFAULT 19,
+  last_used_category TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS category_settings (
+  user_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  label TEXT,
+  color TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  weekly_target INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, category)
 );
 
 CREATE TABLE IF NOT EXISTS nudge_events (
@@ -173,6 +188,28 @@ CREATE TABLE IF NOT EXISTS sync_watermarks (
 );
 `;
 
+// SQLite has no "ADD COLUMN IF NOT EXISTS", so add each new column only when the
+// table doesn't already have it — keeps existing local DBs (created before these
+// columns) in sync without a versioned-migration table. All identifiers below are
+// hardcoded constants, never user input.
+const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: string }> = [
+  { table: "tasks", column: "category", definition: "TEXT" },
+  { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
+  { table: "app_settings", column: "last_used_category", definition: "TEXT" },
+];
+
+function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {
+  const info = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  return info.some((c) => c.name === column);
+}
+
 export function runSqliteMigrations(sqlite: Database.Database): void {
   sqlite.exec(MIGRATION_SQL);
+
+  for (const { table, column, definition } of ADDED_COLUMNS) {
+    if (!hasColumn(sqlite, table, column)) {
+      const alterSql = `ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`;
+      sqlite.exec(alterSql);
+    }
+  }
 }

@@ -6,6 +6,7 @@ export const SYNC_TABLES = [
   "chat_messages",
   "day_reviews",
   "app_settings",
+  "category_settings",
   "nudge_events",
   "task_bulk_imports",
   "task_bulk_import_items",

@@ -1,7 +1,7 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { phases } from "./phases";
-import { projects } from "./projects";
+import { PROJECT_CATEGORIES, projects } from "./projects";
 
 export const tasks = sqliteTable(
   "tasks",
@@ -15,6 +15,10 @@ export const tasks = sqliteTable(
     sortOrder: integer("sort_order").notNull().default(0),
     scheduledDate: text("scheduled_date"),
     bucketOverride: text("bucket_override"),
+    category: text("category", { enum: PROJECT_CATEGORIES }),
+    categoryUnresolved: integer("category_unresolved", { mode: "boolean" })
+      .notNull()
+      .default(false),
     isTop3: integer("is_top_3", { mode: "boolean" }).notNull().default(false),
     top3Order: integer("top_3_order"),
     top3PinnedAt: integer("top_3_pinned_at", { mode: "timestamp_ms" }),
