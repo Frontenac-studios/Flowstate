@@ -101,6 +101,34 @@ The `inferCategoryFromTitle` seam is an **embeddings nearest-prototype** classif
 
 **Acceptance:** every task has a category; new tasks inherit or require one; settings (labels) editable; offline-consistent.
 
+**Phase 1 follow-up decisions (Q1–Q6, decided):**
+
+- **Q1 Undo-delete** — restore **preserves the snapshot's exact category + `category_unresolved`** (undo = "put it back exactly"). Add `category` to the delete snapshot + `createFromSnapshot` input.
+- **Q2 Backfill review (0.3)** — **confidence-gated**: auto-apply guesses that pass floor+margin (1.AIc); route only shaky/ambiguous ones to a short review list (or leave as the unresolved marker). Reuses confidence + the neutral marker.
+- **Q3 Settings editor scope (1E)** — **labels + sort order only** in Phase 1. Colors stay with Design Tokens; weekly targets stay schema-only until Week/review. No half-built surfaces.
+- **Q5 Category edit affordance** — **task detail panel only**. Category is a field in the detail view; rows stay clean (no always-on chip). Single edit surface.
+- **Q6 `#project` token** — **retired**. Project is set only via the `;` property segment, like category — one input language. Bundle the parser/composer change with 1D.
+
+---
+
+## Task views, filters & visual language (cross-cutting)
+
+> Driven by the Q4 expansion. Applies to every task-list surface (Today, This Week, Inbox, Projects, Focus). Decisions VF1–VF4 below; per-page defaults VF5.
+
+**Core model — calm by default, reveal on demand.** Task rows are **clean** (checkbox + title) by default. Each task **property** (category, priority, project, due, …) has its **own toggle — one per property**. Flipping a property's toggle turns on a **lens** for that dimension.
+
+- **VF1 — Default + indicators.** No property chrome shown until a lens is on. Each property has a fixed **zone** so revealed indicators never crowd: **category = left color stripe · priority = pips · project = pill · due = date**. Priority and project read as distinct channels from category (the user's explicit ask).
+- **VF2 — A lens = reveal + filter + group.** Toggling a property reveals its indicator, exposes **value filters** (narrow to values), and lets you **group/sort** the list by it. A lens is a mode, not just "show".
+- **VF3 — One group lens + stackable filters.** Exactly **one** property colors/groups at a time (group-by is naturally singular); **value-filters from any properties stack** on top (e.g. group by category, filtered to priority ≥ 2). Toggle via **keystroke + UI**.
+- **VF4 — Color model.** **Category** = the 5 life-area colors (hexes from Design Tokens; shown under the Category lens). **Projects** = **auto-ramp by phase order** (sequential ramp; phase = identity, not status) — projects get no category lens (one project = one category). **Priority** = a low→high urgency ramp on the pips.
+- **VF5 — Per-page defaults** (all clean; lenses opt-in):
+  - **Today** — clean, no lens.
+  - **This Week** — day groups (existing), clean tasks; Category lens reveals weekly balance.
+  - **Inbox** — clean flat list; Category/Project lens to triage.
+  - **Projects** — **Miller columns as today, no lens on**; phase coloring + Priority lens available on demand.
+
+> Build note: this is its own UI workstream layered on the data spine, not a schema change. The category data + stripe (Step 4c) are the first slice; the lens/filter framework + per-page wiring + project phase-ramp are net-new UI.
+
 ---
 
 ## Phase 2 — Time-tracking on any task (light)
@@ -225,3 +253,13 @@ Filled as we resolve each phase.
 | 3.f   | Create/remove UI            | **Both** task detail + Miller/Gantt linking                                                                                                                                                                                                                                                                         | Jun 16 |
 | 4.2   | Recurrence end model        | All three: on date (UNTIL) / after N (COUNT) / never                                                                                                                                                                                                                                                                | Jun 16 |
 | 4.1   | Recurrence rule format      | RRULE (iCalendar) via rrule.js; friendly "Repeat" picker UI serializes to it                                                                                                                                                                                                                                        | Jun 16 |
+| Q1    | Undo-delete category        | **Preserve the snapshot** — restore the exact `category` + `category_unresolved`; add category to delete snapshot + `createFromSnapshot`                                                                                                                                                                            | Jun 17 |
+| Q2    | Backfill review (0.3)       | **Confidence-gated** — auto-apply floor+margin passes (1.AIc); only shaky/ambiguous go to a short review list or stay unresolved                                                                                                                                                                                    | Jun 17 |
+| Q3    | Settings editor scope       | **Labels + sort order only** in Phase 1; colors via Design Tokens, weekly targets schema-only until Week/review                                                                                                                                                                                                     | Jun 17 |
+| Q5    | Category edit affordance    | **Task detail panel only** — category is a detail-view field; rows stay clean (no always-on chip)                                                                                                                                                                                                                   | Jun 17 |
+| Q6    | `#project` token            | **Retired** — project set only via the `;` property segment (one input language); bundle parser/composer change with 1D                                                                                                                                                                                             | Jun 17 |
+| VF1   | Row default + indicators    | **Clean by default**; one toggle per property; zoned indicators (category = left stripe · priority = pips · project = pill · due = date)                                                                                                                                                                            | Jun 17 |
+| VF2   | Lens behavior               | A property toggle = **reveal + filter + group** (a lens / mode, not just "show")                                                                                                                                                                                                                                    | Jun 17 |
+| VF3   | Lens multiplicity           | **One group lens at a time + stackable value-filters**; toggle via keystroke + UI                                                                                                                                                                                                                                   | Jun 17 |
+| VF4   | Color model                 | Category = 5 life-area colors (Design Tokens); Projects = **auto-ramp by phase order** (no category lens); priority = urgency ramp                                                                                                                                                                                  | Jun 17 |
+| VF5   | Per-page defaults           | All clean / lenses opt-in: Today clean · This Week day-groups + clean · Inbox clean flat · Projects **Miller as-is, no lens**                                                                                                                                                                                       | Jun 17 |
