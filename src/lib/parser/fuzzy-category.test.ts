@@ -14,8 +14,8 @@ describe("matchCategorySegment", () => {
   });
 
   it("normalizes ampersand and spacing for Body & Mind", () => {
-    expect(matchCategorySegment("Body & Mind")).toBe("health_wellness");
-    expect(matchCategorySegment("body and mind")).toBe("health_wellness");
+    expect(matchCategorySegment("Body & Mind")).toBe("body_mind");
+    expect(matchCategorySegment("body and mind")).toBe("body_mind");
   });
 
   it("matches the key for a multi-word label", () => {
@@ -36,14 +36,14 @@ describe("matchCategorySegment", () => {
       professional: "Work",
       personal_projects: "Side Projects",
       relationships: "People",
-      health_wellness: "Wellbeing",
+      body_mind: "Wellbeing",
       adulting: "Life Admin",
     };
-    expect(matchCategorySegment("Wellbeing", labels)).toBe("health_wellness");
+    expect(matchCategorySegment("Wellbeing", labels)).toBe("body_mind");
     // The old label (which isn't also the key) no longer matches once renamed.
     expect(matchCategorySegment("Body & Mind", labels)).toBeNull();
     // The stable key still matches regardless of label overrides.
-    expect(matchCategorySegment("health_wellness", labels)).toBe("health_wellness");
+    expect(matchCategorySegment("body_mind", labels)).toBe("body_mind");
   });
 });
 
