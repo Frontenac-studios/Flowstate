@@ -29,7 +29,7 @@ describe("resolveTaskCategory", () => {
       {
         explicit: "professional",
         projectCategory: "personal_projects",
-        lastUsed: "health_wellness",
+        lastUsed: "body_mind",
         online: true,
       },
       inferRelationships

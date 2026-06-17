@@ -2,7 +2,7 @@ export const PROJECT_CATEGORIES = [
   "professional",
   "personal_projects",
   "relationships",
-  "health_wellness",
+  "body_mind",
   "adulting",
 ] as const;
 
@@ -12,7 +12,7 @@ export const PROJECT_CATEGORY_META: Record<ProjectCategory, { label: string; col
   professional: { label: "Professional", color: "#ffb900" },
   personal_projects: { label: "Personal Projects", color: "#f78200" },
   relationships: { label: "Relationships", color: "#973999" },
-  health_wellness: { label: "Body & Mind", color: "#5ebd3e" },
+  body_mind: { label: "Body & Mind", color: "#5ebd3e" },
   adulting: { label: "Adulting", color: "#e23838" },
 };
 

@@ -4,7 +4,7 @@ export const projectCategory = pgEnum("project_category", [
   "professional",
   "personal_projects",
   "relationships",
-  "health_wellness",
+  "body_mind",
   "adulting",
 ]);
 

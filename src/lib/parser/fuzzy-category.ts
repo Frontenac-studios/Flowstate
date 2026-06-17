@@ -16,7 +16,7 @@ export function defaultCategoryLabels(): CategoryLabels {
 }
 
 // Fold to a comparable form: lowercase, "&" → "and", non-alphanumerics → spaces.
-// So "Body & Mind", "body and mind", and the key "health_wellness" all converge.
+// So "Body & Mind", "body and mind", and the key "body_mind" all converge.
 function normalize(s: string): string {
   return s
     .trim()

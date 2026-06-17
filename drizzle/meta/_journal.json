@@ -71,6 +71,13 @@
       "when": 1781666382322,
       "tag": "0009_free_mulholland_black",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781729378361,
+      "tag": "0010_rename_health_wellness_to_body_mind",
+      "breakpoints": true
     }
   ]
 }
