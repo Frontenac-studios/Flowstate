@@ -47,6 +47,8 @@ export const settingsRouter = createTRPCRouter({
       bucketMode: parsed.success ? parsed.data : DEFAULT_BUCKET_MODE,
       dayStartHour: row.dayStartHour ?? DEFAULT_DAY_START_HOUR,
       dayEndHour: row.dayEndHour ?? DEFAULT_DAY_END_HOUR,
+      // 1.4 habit layer: lets the composer preview the category a loose task will land on.
+      lastUsedCategory: row.lastUsedCategory ?? null,
     };
   }),
 
