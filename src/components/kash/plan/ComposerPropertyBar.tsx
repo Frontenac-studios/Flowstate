@@ -8,6 +8,7 @@ const LABELS: Record<ComposerProperty, string> = {
   due: "due",
   project: "project",
   priority: "priority",
+  category: "category",
 };
 
 type Props = {
