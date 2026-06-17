@@ -6,7 +6,12 @@ import { db } from "@/db";
 import { syncTaskRow } from "@/db/record-sync-mutation";
 import { phases, projects, tasks } from "@/db/tables";
 import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
+import {
+  resolveTaskCategoryForUser,
+  setLastUsedCategory,
+} from "@/server/tasks/resolve-task-category";
 import { isExpiredTop3, isTop3ActiveForLocalDate } from "@/lib/tasks/top3-local-day";
 import {
   validateWeekDraftAssignments,
@@ -20,6 +25,8 @@ const localCalendarInputSchema = z.object({
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   tzOffsetMinutes: z.number().int().min(-840).max(840),
 });
+
+const categorySchema = z.enum(PROJECT_CATEGORIES);
 
 const taskSnapshotSchema = z.object({
   id: z.string().uuid(),
@@ -61,6 +68,8 @@ export const tasksRouter = createTRPCRouter({
         top3Order: tasks.top3Order,
         completedAt: tasks.completedAt,
         createdAt: tasks.createdAt,
+        category: tasks.category,
+        categoryUnresolved: tasks.categoryUnresolved,
         projectSlug: projects.slug,
         projectName: projects.name,
       })
@@ -435,28 +444,45 @@ export const tasksRouter = createTRPCRouter({
         projectId: z.string().uuid().nullable().optional(),
         phaseId: z.string().uuid().nullable().optional(),
         priority: z.number().int().min(0).max(3).default(0),
+        category: categorySchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const todayIso = toISODateString(startOfLocalDay());
       const scheduledDate =
         input.bucketOverride === "later" ? null : (input.scheduledDate ?? todayIso);
+      const title = input.title.trim();
+
+      // Phase 1 (1.4a): run the shared resolver ladder for every create.
+      const resolved = await resolveTaskCategoryForUser({
+        userId: ctx.userId,
+        title,
+        explicit: input.category ?? null,
+        projectId: input.projectId ?? null,
+      });
 
       const [row] = await db
         .insert(tasks)
         .values({
           userId: ctx.userId,
-          title: input.title.trim(),
+          title,
           scheduledDate,
           bucketOverride: input.bucketOverride ?? null,
           projectId: input.projectId ?? null,
           phaseId: input.phaseId ?? null,
           priority: input.priority,
+          category: resolved.category,
+          categoryUnresolved: resolved.unresolved,
         })
         .returning();
 
       if (!row) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create task." });
+      }
+
+      // Habit layer: remember a real category only (skip the unresolved fallback).
+      if (!resolved.unresolved) {
+        await setLastUsedCategory(ctx.userId, resolved.category);
       }
 
       await syncTaskRow(row.id, "insert", row);
@@ -497,6 +523,7 @@ export const tasksRouter = createTRPCRouter({
         priority: z.number().int().min(0).max(3).optional(),
         projectId: z.string().uuid().nullable().optional(),
         phaseId: z.string().uuid().nullable().optional(),
+        category: categorySchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -509,6 +536,12 @@ export const tasksRouter = createTRPCRouter({
       if (input.priority !== undefined) patch.priority = input.priority;
       if (input.projectId !== undefined) patch.projectId = input.projectId;
       if (input.phaseId !== undefined) patch.phaseId = input.phaseId;
+      // Explicit category edit is a layer-1 assignment: set it and clear the
+      // unresolved flag so the row leaves the invisible-plumbing state (1.4d).
+      if (input.category !== undefined) {
+        patch.category = input.category;
+        patch.categoryUnresolved = false;
+      }
 
       const [row] = await db
         .update(tasks)

@@ -10,6 +10,11 @@ import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
+import {
+  categoryLabel,
+  PROJECT_CATEGORY_META,
+  type ProjectCategory,
+} from "@/lib/projects/categories";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
 
@@ -21,7 +26,13 @@ export type PlanTaskRow = {
   projectSlug: string | null;
   projectName: string | null;
   isTop3: boolean;
+  // Optional so list builders that don't yet select category still type-check;
+  // when present, the row shows the life-area stripe (1.4b) or neutral marker (1.4d).
+  category?: ProjectCategory | null;
+  categoryUnresolved?: boolean;
 };
+
+const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
 
 type Props = {
   task: PlanTaskRow;
@@ -57,6 +68,15 @@ export function TaskRow({
   const [editError, setEditError] = useState<string | null>(null);
   const rowContentRef = useRef<HTMLDivElement>(null);
   const pinEnabled = canPin && !task.isTop3 && onPin != null;
+
+  // 1.4b/1.4d life-area stripe: category color when resolved, neutral marker when
+  // unresolved. Only shown when the row actually carries category data.
+  const hasCategoryData = task.category !== undefined;
+  const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
+  const stripeColor = resolvedCategory
+    ? PROJECT_CATEGORY_META[resolvedCategory].color
+    : NEUTRAL_CATEGORY_STRIPE;
+  const stripeLabel = resolvedCategory ? categoryLabel(resolvedCategory) : "No category yet";
   const { offset, hide, isOpen, isLeftOpen, isRightOpen, containerRef } = useTrackpadSwipeReveal({
     maxOffsetRight: REVEAL_WIDTH_PX,
     maxOffsetLeft: pinEnabled ? ACTION_WIDTH_PX : 0,
@@ -199,6 +219,15 @@ export function TaskRow({
           onClick={() => onSelect?.(task.id)}
           onDoubleClick={() => onActivate?.(task.id)}
         >
+          {hasCategoryData ? (
+            <span
+              className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full"
+              style={{ backgroundColor: stripeColor }}
+              aria-label={stripeLabel}
+              title={stripeLabel}
+            />
+          ) : null}
+
           {task.isTop3 ? (
             <span className="shrink-0 text-kash-accent" aria-label="Top 3">
               ★

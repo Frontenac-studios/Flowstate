@@ -1,6 +1,8 @@
 import { resolveScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import { type ProjectCategory } from "@/lib/projects/categories";
 
+import { matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 
 export type ParseWarning =
@@ -29,6 +31,8 @@ export type ParseResult = {
   bucketOverride: "later" | null;
   projectSlug: string | null;
   priority: 0 | 1 | 2 | 3;
+  /** Explicit category from a `;` segment (1.4b layer 1). null = let the resolver decide. */
+  category: ProjectCategory | null;
   warnings: ParseWarning[];
   suggestions: ProjectSuggestion[];
 };
@@ -136,6 +140,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
   let bucketOverride: "later" | null = null;
   let projectSlug: string | null = null;
   let priority: 0 | 1 | 2 | 3 = 0;
+  let category: ProjectCategory | null = null;
   const warnings: ParseWarning[] = [];
   let suggestions: ProjectSuggestion[] = [];
 
@@ -155,6 +160,14 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     const priorityResult = parsePriority(segment);
     if (priorityResult !== null) {
       priority = priorityResult;
+      continue;
+    }
+
+    // Category must be tried before the project slug — names like "relationships"
+    // also satisfy the slug pattern, and an explicit category should win.
+    const categoryMatch = matchCategorySegment(segment);
+    if (categoryMatch) {
+      category = categoryMatch;
       continue;
     }
 
@@ -186,6 +199,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     bucketOverride,
     projectSlug,
     priority,
+    category,
     warnings,
     suggestions,
   };
@@ -257,6 +271,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     bucketOverride,
     projectSlug,
     priority,
+    category: null,
     warnings,
     suggestions,
   };

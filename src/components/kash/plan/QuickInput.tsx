@@ -21,12 +21,14 @@ import {
 } from "@/lib/parser/parse-quick-input";
 import { deriveBucket } from "@/lib/tasks/derive-bucket";
 import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
+import { previewLineCategory } from "@/lib/tasks/preview-line-category";
 import type { TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
 
 import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
 
+import { ComposerCategoryAccent } from "./ComposerCategoryAccent";
 import { ComposerLineErrors } from "./ComposerLineErrors";
 import { ComposerPropertyBar } from "./ComposerPropertyBar";
 import { ComposerTextarea, type ComposerTextareaHandle } from "./ComposerTextarea";
@@ -65,6 +67,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
   const { data: incompleteTasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
   const projectRefs = useMemo(
     () => projects.map((p) => ({ slug: p.slug, name: p.name })),
@@ -187,6 +190,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       bucketOverride: line.parse.bucketOverride,
       projectId: resolveProjectId(line),
       priority: line.parse.priority,
+      category: line.parse.category ?? undefined,
     });
     persistProjectSlug(line.parse.projectSlug);
   };
@@ -256,6 +260,20 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
   const singleLineParse = parsedLines.length === 1 ? parsedLines[0]?.parse : null;
 
+  const categoryProjects = useMemo(
+    () => projects.map((p) => ({ slug: p.slug, category: p.category })),
+    [projects]
+  );
+
+  const categoryPreview = useMemo(() => {
+    if (!singleLineParse || !singleLineParse.title.trim()) return null;
+    return previewLineCategory(
+      singleLineParse,
+      categoryProjects,
+      settings?.lastUsedCategory ?? null
+    );
+  }, [singleLineParse, categoryProjects, settings?.lastUsedCategory]);
+
   return (
     <section className="glass-panel-opaque p-4">
       <label htmlFor="kash-quick-input" className="sr-only">
@@ -264,28 +282,30 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
       <ComposerPropertyBar assist={assist} visible />
 
-      <ComposerTextarea
-        ref={textareaRef}
-        id="kash-quick-input"
-        value={value}
-        onChange={setValue}
-        onCursorChange={setCursor}
-        ghostSuffix={assist.suggestionSuffix}
-        placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
-        disabled={createTaskMutation.isPending}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            void handleBulkSubmit();
-            return;
-          }
-          // Tab accepts the inline composer suggestion when one is available;
-          // otherwise it falls through to normal focus traversal.
-          if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
-            e.preventDefault();
-          }
-        }}
-      />
+      <ComposerCategoryAccent preview={categoryPreview}>
+        <ComposerTextarea
+          ref={textareaRef}
+          id="kash-quick-input"
+          value={value}
+          onChange={setValue}
+          onCursorChange={setCursor}
+          ghostSuffix={assist.suggestionSuffix}
+          placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
+          disabled={createTaskMutation.isPending}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              void handleBulkSubmit();
+              return;
+            }
+            // Tab accepts the inline composer suggestion when one is available;
+            // otherwise it falls through to normal focus traversal.
+            if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
+              e.preventDefault();
+            }
+          }}
+        />
+      </ComposerCategoryAccent>
 
       <p className="mt-1.5 text-xs text-kash-ink-muted">
         Enter for new line · ⌘↵ to add tasks

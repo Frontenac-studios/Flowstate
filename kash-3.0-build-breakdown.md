@@ -17,6 +17,18 @@ Most features are now **concept-complete but spec-incomplete.** The trick is to 
 
 ---
 
+## 0.5 Current code state (verified Jun 2026)
+
+A repo scan shows building has **already started on the navigation shell** we spec'd:
+
+- **Navigation shell — in active build** (PR #55 `feat/global-nav-shell`): narrow overlay rail that peeks/expands, chat moved to `⌘J`, command palette, Tauri parity. Matches the §4 spec; moving spec → code.
+- **Routes scaffolded:** `/today` (+ `/today/focus`), `/abyss`, `/care` now exist alongside the legacy `/plan`. They have pages but **no data or logic behind them yet** — empty shells.
+- **Not yet built (the gap):** `tasks` still has **no `category` column**; there are **no** `task_recurrence`, `task_occurrence_overrides`, `task_dependencies`, abyss, care/wellbeing, goals, or values tables. The data foundation under the new routes doesn't exist.
+
+**Implication:** the _shell_ is going up, but the _foundation_ it stands on hasn't been poured. The empty `/abyss` and `/care` routes exist precisely because the data layer beneath them is missing — which points directly at what to build next (§6).
+
+---
+
 ## 1. The recurring spec dimensions
 
 These are the **subsections that recur in every feature build** — the predictable places a decision or a draft is needed before a feature is "done." Use them as a checklist against any feature.
@@ -40,11 +52,11 @@ Two dimensions are deliberately deferred app-wide: **#4 colors/tokens** (the Des
 
 Per feature: are the **product forks** decided, and is the **build spec** implementation-ready? Then — what's the nature of the remaining work?
 
-**Legend:** ✅ done · 🟡 partial · 🔴 open · ⬛ already built in code
+**Legend:** ✅ done · 🟡 partial · 🔴 open · ⬛ already built in code · 🏗️ in active build
 
 | Feature               | Product forks | Build spec | Remaining work is mostly…                                                                   |
 | --------------------- | ------------- | ---------- | ------------------------------------------------------------------------------------------- |
-| §4 Navigation         | ✅            | 🟡         | **Spec detail** (component spec, mobile/Tauri pattern, route naming)                        |
+| §4 Navigation         | ✅            | 🟡         | 🏗️ **In build (PR #55)** — shell + routes up; finish component spec, route naming           |
 | §2 Life Categories    | ✅            | 🟡         | **Spec detail** (migration/backfill, label confirm) + colors in tokens                      |
 | §14 Task & Data Model | ✅            | 🟡         | **Spec detail** (field-level schema, RRULE, override edge cases)                            |
 | §11 AI Companion      | ✅            | 🔴         | **Mixed** — product (mode identity, About-me format) + heavy spec (prompts, tool catalog)   |
@@ -90,7 +102,9 @@ These deserve their own **focused decision sessions**, broken into subphases:
 
 ## 4. Recommended order of remaining sessions
 
-1. **Finish Design Tokens (§5)** — in progress; unblocks all visual work.
+_These are decision sessions. The next **build** target needs no decisions — it's the data spine in §6, which can proceed in parallel with finishing Design Tokens._
+
+1. **Finish Design Tokens (§5)** — unblocks all visual work; runs in parallel with the §6 build.
 2. **Planning Mode (§8)** — biggest open surface; do it as 4 subphase mini-sessions (year-view → bingo → balance-pass → data model).
 3. **Care / garden (§12)** — second-biggest; subphase it (growth model + art is its own spike).
 4. **AI persona layer (§11)** — modes, About-me format, tool catalog.
@@ -105,3 +119,33 @@ These deserve their own **focused decision sessions**, broken into subphases:
 - `kash-3.0-plan.md` = the **spec** (what each feature is and the forks decided so far).
 - This file = the **map of what's left**, so you can "check for completeness" before building any feature.
 - A feature is **build-ready** when dimensions 1–3 and 5–7 (§1 above) are ✅ in its plan section, with colors (§5) and motion (animation pass) handled globally.
+
+---
+
+## 6. What to build next — the foundation data spine
+
+**Recommendation: build the data spine next — §2 Categories-on-tasks + §14 Task/Data-Model tables.** With the nav shell already in build, this is the true root dependency and the visible gap (the new `/abyss` and `/care` routes are empty because this layer is missing).
+
+**Why this one, in build order (most global → buildable now):**
+
+- **Deepest dependency.** Balance bars, week color, planning heatmaps, the garden's "balance" food, and AI rebalancing all read category + time data that doesn't exist yet. Nothing balance-related can be built until this is.
+- **Concept-locked** (✅ forks in §2 and §14) — no decision sessions required. I can draft the full schema/migration spec immediately.
+- **Buildable without Design Tokens.** The data layer and inheritance logic don't need colors; colors apply later when category UI renders. So tokens finish in parallel, not as a blocker.
+- **Low risk, high leverage** — unblocks the "balance is the product" features the new shell will surface.
+
+**Finish breaking it down — global → detail:**
+
+- **Level 1 — concept (✅ done):** category = strict-MECE first-class dimension, exactly one per task; recurrence = rule + generated occurrences; dependencies = project-scoped; time-tracking on any task.
+- **Level 2 — schema (draft next):**
+  - `tasks.category` (`project_category` enum) `NOT NULL` + backfill
+  - `task_recurrence` (start, frequency/RRULE, end: date | count | never)
+  - `task_occurrence_overrides` (per-date complete / skip / reschedule)
+  - `task_dependencies` (blocker_id, blocked_id, same-project constraint)
+  - generalize `task_time_entries` to any task
+  - category label/color overrides store (extend `app_settings` or new `category_settings`)
+- **Level 3 — integration detail:** RLS per table (`auth.uid()`); Drizzle one-file-per-table; `db:generate` → review SQL before commit; SQLite/offline-sync parity; project→task category inheritance + override; loose-task backfill; blocked-task RDM behavior.
+- **Level 4 — acceptance:** every task carries a category end-to-end; recurring tasks generate occurrences; dependencies block; time tracks on any task; all RLS-scoped; migration reviewed; TS types regenerated.
+
+**Tiny confirmations to make while building (non-blocking):** final category labels · balance weighting (count vs Top-3-weighted) · backfill method (AI vs manual) · recurrence-end options · blocked-task RDM (hide vs flag).
+
+**Then, in order:** (1) finish Design Tokens so category color + balance visuals can render → (2) wire Today's category-aware timeline + balance bar onto the new spine → (3) the balance-dependent features (Week color, Planning balance-pass, Care garden food).

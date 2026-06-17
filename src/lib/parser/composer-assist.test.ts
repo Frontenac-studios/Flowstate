@@ -112,13 +112,15 @@ describe("getComposerAssist", () => {
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
   });
 
-  it("marks filled properties in the bar", () => {
+  it("marks filled properties in the bar and advances to category", () => {
     const line = "walk dog; today; !; rdm";
     const state = assist(line, line.length);
     expect(state.properties.find((p) => p.key === "title")?.status).toBe("filled");
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
     expect(state.properties.find((p) => p.key === "priority")?.status).toBe("filled");
-    expect(state.properties.find((p) => p.key === "project")?.status).toBe("active");
+    // A complete project is now filled; the cursor advances to the category slot.
+    expect(state.properties.find((p) => p.key === "project")?.status).toBe("filled");
+    expect(state.properties.find((p) => p.key === "category")?.status).toBe("active");
   });
 
   it("getComposerAssistFromValue uses cursor line in multiline input", () => {
@@ -129,19 +131,47 @@ describe("getComposerAssist", () => {
     expect(state.suggestionSuffix).toBe("today");
   });
 
-  it("does not suggest a fifth property after project with trailing semicolon", () => {
+  it("category is the fifth property after project with trailing semicolon", () => {
     const line = "walk dog; today; !; rdm; ";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("category");
+    expect(state.properties.find((p) => p.key === "project")?.status).toBe("filled");
+  });
+
+  it("does not suggest a sixth property after category", () => {
+    const line = "walk dog; today; !; rdm; relationships; ";
     const state = assist(line, line.length);
     expect(state.suggestion).toBeNull();
     expect(state.suggestionSuffix).toBeNull();
     expect(state.properties.every((p) => p.status === "filled")).toBe(true);
   });
 
-  it("does not append semicolon after accepting the last property", () => {
+  it("completes a partial category to its label", () => {
+    const line = "walk dog; today; !; rdm; rel";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("category");
+    expect(state.suggestion).toBe("Relationships");
+    expect(state.suggestionSuffix).toBe("ationships");
+  });
+
+  it("marks a completed category segment as filled once the cursor moves past it", () => {
+    const line = "walk dog; today; !; rdm; relationships; ";
+    const state = assist(line, line.length);
+    expect(state.properties.find((p) => p.key === "category")?.status).toBe("filled");
+  });
+
+  it("does not append semicolon after accepting category (the last property)", () => {
+    const line = "walk dog; today; !; rdm; rel";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("category");
+    expect(shouldAppendSemicolonAfterAccept(line, line.length, state)).toBe(false);
+  });
+
+  it("appends a semicolon after accepting project (no longer the last property)", () => {
     const line = "walk dog; today; !; gr";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("project");
-    expect(shouldAppendSemicolonAfterAccept(line, line.length, state)).toBe(false);
+    expect(shouldAppendSemicolonAfterAccept(line, line.length, state)).toBe(true);
   });
 
   it("still appends semicolon after accepting non-final properties", () => {

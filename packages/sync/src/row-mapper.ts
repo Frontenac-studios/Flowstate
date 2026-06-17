@@ -57,6 +57,14 @@ export function mapRemoteRow(
     mapped.isTop3 = mapped.isTop3 ? 1 : 0;
   }
 
+  if (
+    table === "tasks" &&
+    "categoryUnresolved" in mapped &&
+    typeof mapped.categoryUnresolved === "boolean"
+  ) {
+    mapped.categoryUnresolved = mapped.categoryUnresolved ? 1 : 0;
+  }
+
   return mapped;
 }
 
@@ -121,6 +129,10 @@ export function mapPayloadToRemote(
 
   if (table === "tasks" && typeof out.is_top_3 === "number") {
     out.is_top_3 = out.is_top_3 === 1;
+  }
+
+  if (table === "tasks" && typeof out.category_unresolved === "number") {
+    out.category_unresolved = out.category_unresolved === 1;
   }
 
   return out;

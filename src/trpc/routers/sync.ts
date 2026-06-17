@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { isSqliteMode } from "@/db/mode";
+import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -33,6 +34,9 @@ export const syncRouter = createTRPCRouter({
 
       const token = input?.accessToken ?? session?.access_token;
       if (!token) {
+        if (isAuthBypassed()) {
+          return { pulled: 0, pushed: 0, errors: [] as string[], skipped: true as const };
+        }
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Sign in required to sync.",

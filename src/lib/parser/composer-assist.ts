@@ -1,8 +1,9 @@
 import { isScheduledDateToken, suggestScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 
+import { fuzzyCategorySuggestions, matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 
-export const COMPOSER_PROPERTY_ORDER = ["title", "due", "priority", "project"] as const;
+export const COMPOSER_PROPERTY_ORDER = ["title", "due", "priority", "project", "category"] as const;
 
 export type ComposerProperty = (typeof COMPOSER_PROPERTY_ORDER)[number];
 
@@ -73,6 +74,8 @@ export function segmentMatchesProperty(
       return matchesProjectToken(trimmed, projects);
     case "priority":
       return matchesPriorityToken(trimmed);
+    case "category":
+      return matchCategorySegment(trimmed) !== null;
   }
 }
 
@@ -81,6 +84,7 @@ function propertyForSegmentIndex(index: number): ComposerProperty | null {
   if (index === 1) return "due";
   if (index === 2) return "priority";
   if (index === 3) return "project";
+  if (index === 4) return "category";
   return null;
 }
 
@@ -129,6 +133,20 @@ function getProjectSuggestion(partial: string, ctx: ComposerAssistContext): stri
   return ctx.projects[0]?.slug ?? null;
 }
 
+// Complete a partial category name to its label (or key) when one is a prefix of
+// what's typed. No default ghost on an empty segment — there's no canonical default
+// category here (the accent bar already shows the resolver's assumption).
+function getCategorySuggestion(partial: string): string | null {
+  const typed = partial.trim();
+  if (!typed) return null;
+  const lower = typed.toLowerCase();
+  const [top] = fuzzyCategorySuggestions(typed, undefined, 1);
+  if (!top) return null;
+  if (top.label.toLowerCase().startsWith(lower)) return top.label;
+  if (top.category.toLowerCase().startsWith(lower)) return top.category;
+  return null;
+}
+
 function getDefaultSuggestion(
   property: ComposerProperty,
   ctx: ComposerAssistContext,
@@ -143,6 +161,8 @@ function getDefaultSuggestion(
       return getProjectSuggestion(partial, ctx);
     case "priority":
       return "!";
+    case "category":
+      return getCategorySuggestion(partial);
   }
 }
 
@@ -217,7 +237,7 @@ export function getComposerAssist(
       const properties = buildPropertyStatuses(segments, null, inSemicolonMode, ctx.projects);
       return {
         properties,
-        activeProperty: "project",
+        activeProperty: "category",
         suggestion: null,
         suggestionSuffix: null,
         segmentIndex,
@@ -257,7 +277,11 @@ export function getComposerAssist(
 
     if (propertyToSuggest) {
       const partial =
-        propertyToSuggest === "project" || propertyToSuggest === "due" ? segmentTrimmed : "";
+        propertyToSuggest === "project" ||
+        propertyToSuggest === "due" ||
+        propertyToSuggest === "category"
+          ? segmentTrimmed
+          : "";
       suggestion = getDefaultSuggestion(propertyToSuggest, ctx, partial);
       if (suggestion) {
         suggestionSuffix = computeSuggestionSuffix(segmentTrimmed, suggestion);
