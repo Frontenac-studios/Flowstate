@@ -68,6 +68,8 @@ export const tasksRouter = createTRPCRouter({
         top3Order: tasks.top3Order,
         completedAt: tasks.completedAt,
         createdAt: tasks.createdAt,
+        category: tasks.category,
+        categoryUnresolved: tasks.categoryUnresolved,
         projectSlug: projects.slug,
         projectName: projects.name,
       })
