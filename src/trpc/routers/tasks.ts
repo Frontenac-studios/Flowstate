@@ -39,7 +39,8 @@ const taskSnapshotSchema = z.object({
   top3Order: z.number().int().nullable(),
   // Q1: undo = "put it back exactly" — carry the resolved category and its
   // unresolved marker through delete → restore unchanged (no re-resolution).
-  category: categorySchema.nullable(),
+  // category is NOT NULL on tasks (1B), so a deleted row always carries one.
+  category: categorySchema,
   categoryUnresolved: z.boolean(),
 });
 

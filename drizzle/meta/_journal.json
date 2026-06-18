@@ -78,6 +78,13 @@
       "when": 1781729378361,
       "tag": "0010_rename_health_wellness_to_body_mind",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781817725768,
+      "tag": "0011_tasks_category_not_null",
+      "breakpoints": true
     }
   ]
 }

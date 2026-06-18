@@ -16,7 +16,8 @@ export type TaskSnapshot = {
   isTop3: boolean;
   top3Order: number | null;
   // Q1: undo restores the exact resolved category + unresolved marker.
-  category: ProjectCategory | null;
+  // category is NOT NULL on tasks (1B), so a snapshot always carries one.
+  category: ProjectCategory;
   categoryUnresolved: boolean;
 };
 
