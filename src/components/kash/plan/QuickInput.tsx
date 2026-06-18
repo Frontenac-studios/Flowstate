@@ -31,6 +31,7 @@ import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
 import { ComposerCategoryAccent } from "./ComposerCategoryAccent";
 import { ComposerLineErrors } from "./ComposerLineErrors";
 import { ComposerPropertyBar } from "./ComposerPropertyBar";
+import { useLiveCategoryInference } from "./useLiveCategoryInference";
 import { ComposerTextarea, type ComposerTextareaHandle } from "./ComposerTextarea";
 import { MultiLineParsePreview, ParsePreviewChips } from "./ParsePreviewChips";
 
@@ -265,14 +266,21 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     [projects]
   );
 
+  // Live AI guess (1H) — only when no explicit/project value already decides the line,
+  // mirroring the server's needsInference so the model isn't run needlessly.
+  const aiEnabled =
+    !!singleLineParse?.title.trim() && !singleLineParse.category && !singleLineParse.projectSlug;
+  const aiInference = useLiveCategoryInference(singleLineParse?.title ?? "", aiEnabled);
+
   const categoryPreview = useMemo(() => {
     if (!singleLineParse || !singleLineParse.title.trim()) return null;
     return previewLineCategory(
       singleLineParse,
       categoryProjects,
-      settings?.lastUsedCategory ?? null
+      settings?.lastUsedCategory ?? null,
+      aiInference
     );
-  }, [singleLineParse, categoryProjects, settings?.lastUsedCategory]);
+  }, [singleLineParse, categoryProjects, settings?.lastUsedCategory, aiInference]);
 
   return (
     <section className="glass-panel-opaque p-4">

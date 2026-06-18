@@ -1,18 +1,24 @@
 import { type ProjectCategory } from "@/lib/projects/categories";
 import { type ParseResult } from "@/lib/parser/parse-quick-input";
-import { resolveTaskCategory, type ResolvedCategory } from "@/lib/tasks/resolveTaskCategory";
+import {
+  type CategoryInference,
+  resolveTaskCategory,
+  type ResolvedCategory,
+} from "@/lib/tasks/resolveTaskCategory";
 
 export type CategoryProjectRef = { slug: string; category: ProjectCategory };
 
 // 1.4b composer accent bar: the category a parsed line will land on, computed
-// client-side. Runs the shared resolver with `online: false` so the AI layer is
-// skipped — which matches the server today (inference abstains) and degrades
-// honestly: the preview shows explicit > project > last-used, never a guess the
-// client can't actually make. `unresolved: true` drives the neutral marker.
+// client-side. The optional `aiInference` is the live embeddings guess (1H), already
+// gated by the classifier and fed in by the composer's debounced inference hook. When
+// it's null the AI layer is skipped (`online: false`) and the preview degrades honestly
+// to explicit > project > last-used; when present, layer 3 lets a confident guess
+// outrank last-used (Model C). `unresolved: true` drives the neutral marker (1.4d).
 export function previewLineCategory(
   parse: Pick<ParseResult, "title" | "category" | "projectSlug">,
   projects: CategoryProjectRef[],
-  lastUsed: ProjectCategory | null
+  lastUsed: ProjectCategory | null,
+  aiInference: CategoryInference | null = null
 ): ResolvedCategory {
   const projectCategory = parse.projectSlug
     ? (projects.find((p) => p.slug.toLowerCase() === parse.projectSlug!.toLowerCase())?.category ??
@@ -21,7 +27,7 @@ export function previewLineCategory(
 
   return resolveTaskCategory(
     parse.title,
-    { explicit: parse.category, projectCategory, lastUsed, online: false },
-    () => null
+    { explicit: parse.category, projectCategory, lastUsed, online: aiInference !== null },
+    () => aiInference
   );
 }
