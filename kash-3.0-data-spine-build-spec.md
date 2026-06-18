@@ -60,7 +60,7 @@ Implements the MECE category dimension end-to-end. Decisions: dedicated `categor
 - Parser (`parse-quick-input.ts`): recognize a category-name segment → emit `category`, matched before the project slug (`fuzzy-category.ts`, key/label normalized).
 - Assist (`composer-assist.ts`): add `category` as the 5th property slot; autocomplete the 5 labels (ghost text); Tab accepts.
 - UI **= color accent bar, NOT a chip** (1.4b): `ComposerCategoryAccent.tsx` renders the left accent bar + faint trailing label + neutral "no category yet" marker for unresolved; preview via `previewLineCategory` (resolver, `online:false`). `ComposerPropertyBar.tsx` shows the category hint chip; `QuickInput.tsx` passes `category` to `create`.
-- **⚠ Bundle the `#project`-token retirement here** (plan §14 cleanup) — same files; one composer refactor. _(Not yet done.)_
+- **⚠ Bundle the `#project`-token retirement here** (plan §14 cleanup) — same files; one composer refactor. _(✅ done, Q6 — space-mode `#project` token retired; project set only via the `;` segment. Live accent bar now also shows the AI guess via 1H.)_
 - **Accept:** `Call mom; tomorrow; relationships` files under Relationships, title "Call mom"; autocomplete + accent bar work (no chip).
 
 ### 1E — tRPC + task UI
