@@ -10,6 +10,11 @@ const isDesktopBuild = process.env.DESKTOP_BUILD === "1";
 const nextConfig = {
   ...(isDesktopBuild ? { output: "standalone" } : {}),
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // transformers.js pulls onnxruntime-node (a native binary) on the server path; keep it
+  // out of the webpack bundle so it loads from node_modules at runtime (1H embeddings).
+  experimental: {
+    serverComponentsExternalPackages: ["@huggingface/transformers"],
+  },
   async redirects() {
     // Today moved /plan -> /today. /plan now hosts long-horizon Planning, so only
     // the focus sub-route needs forwarding for old deep links (query preserved).

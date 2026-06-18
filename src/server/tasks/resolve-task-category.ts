@@ -7,7 +7,7 @@ import { appSettings, projects } from "@/db/tables";
 import { type ProjectCategory } from "@/lib/projects/categories";
 import { resolveTaskCategory, type ResolvedCategory } from "@/lib/tasks/resolveTaskCategory";
 
-import { inferCategoryFromTitle } from "./infer-category";
+import { inferCategory } from "./infer-category";
 
 interface ResolveArgs {
   userId: string;
@@ -44,6 +44,12 @@ export async function resolveTaskCategoryForUser({
     .where(eq(appSettings.userId, userId))
     .limit(1);
 
+  // The pure resolver is synchronous; the embedding call is async. Run inference here
+  // (only when no explicit/project value would win anyway) and inject the precomputed
+  // result as the layer-3 seam, keeping resolveTaskCategory pure + sync + easily tested.
+  const needsInference = !explicit && !projectCategory;
+  const inference = needsInference ? await inferCategory(title) : null;
+
   return resolveTaskCategory(
     title,
     {
@@ -52,7 +58,7 @@ export async function resolveTaskCategoryForUser({
       lastUsed: settings?.lastUsedCategory ?? null,
       online: true,
     },
-    inferCategoryFromTitle
+    () => inference
   );
 }
 

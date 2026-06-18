@@ -1,18 +1,10 @@
 import "server-only";
 
-import { type InferCategoryFromTitle } from "@/lib/tasks/resolveTaskCategory";
-
-// Phase 1 (1.4a) layer-3 seam — the single place the AI provider gets wired.
+// Phase 1 (1.4a / 1H) layer-3 seam — the server entry point for the AI provider.
 //
-// Decided design (data-spine.md §7, 1.AIa–d / build-spec 1H): an EMBEDDINGS
-// nearest-prototype classifier, NOT an LLM. Embed the title, take cosine similarity
-// against five category prototype vectors, and return { category, confidence } only
-// when the top match clears a floor AND beats the runner-up by a margin (1.AIc);
-// otherwise abstain (null). A small local model powers live + offline; a sharper
-// hosted model is used only by the bulk backfill.
-//
-// Until that lands this abstains (returns null), so resolveTaskCategory falls through
-// to last-used and then the unresolved fallback — capture never blocks and nothing is
-// mis-categorised with false confidence. The real provider must also swallow its own
-// errors as `null` (an error == "no opinion", not a thrown request).
-export const inferCategoryFromTitle: InferCategoryFromTitle = () => null;
+// The real classifier (data-spine §7, 1.AIa–d) is an EMBEDDINGS nearest-prototype model,
+// not an LLM, and is isomorphic: the same small local model runs in the browser (live +
+// offline) and here in Node for the create path, so the stored category is AI-forward
+// (Model C). This module just re-exports it behind the documented server seam; the
+// provider already abstains to `null` on low confidence or any error.
+export { inferCategory, warmCategoryInference } from "@/lib/tasks/category-inference";
