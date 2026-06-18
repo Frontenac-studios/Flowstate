@@ -667,6 +667,8 @@ export const tasksRouter = createTRPCRouter({
           top3Order: tasks.top3Order,
           completedAt: tasks.completedAt,
           createdAt: tasks.createdAt,
+          category: tasks.category,
+          categoryUnresolved: tasks.categoryUnresolved,
         })
         .from(tasks)
         .where(and(eq(tasks.userId, ctx.userId), eq(tasks.projectId, input.projectId)))
