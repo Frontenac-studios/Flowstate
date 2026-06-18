@@ -8,6 +8,8 @@ import type { BucketMode } from "@/lib/settings/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
+import CategorySettingsSection from "./CategorySettingsSection";
+
 const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
 
 function hourLabel(h: number): string {
@@ -163,6 +165,8 @@ export function SettingsForm() {
           </p>
         ) : null}
       </section>
+
+      <CategorySettingsSection />
 
       <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
         <h2 className="text-sm font-semibold text-kash-ink">Accessibility</h2>
