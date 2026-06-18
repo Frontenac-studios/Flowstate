@@ -134,21 +134,21 @@ export default function TaskDetail({
             aria-hidden
             className="h-4 w-4 shrink-0 rounded-full"
             style={{
-              backgroundColor: task.category ? categoryColor(task.category) : "transparent",
-              boxShadow: task.category ? undefined : "inset 0 0 0 1.5px var(--kash-ink-muted)",
+              // Unresolved (1.4d) renders as a neutral marker, never the placeholder's color.
+              backgroundColor: task.categoryUnresolved
+                ? "transparent"
+                : categoryColor(task.category),
+              boxShadow: task.categoryUnresolved
+                ? "inset 0 0 0 1.5px var(--kash-ink-muted)"
+                : undefined,
             }}
           />
           <select
             id="task-detail-category"
             className="glass-input"
-            value={task.category ?? ""}
+            value={task.category}
             onChange={(e) => onUpdate({ category: e.target.value as ProjectCategory })}
           >
-            {task.category === null ? (
-              <option value="" disabled>
-                Choose a category…
-              </option>
-            ) : null}
             {categoryOptions.map((opt) => (
               <option key={opt.category} value={opt.category}>
                 {opt.label}

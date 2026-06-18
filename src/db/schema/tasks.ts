@@ -11,8 +11,10 @@ export const tasks = pgTable(
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     phaseId: uuid("phase_id").references(() => phases.id, { onDelete: "set null" }),
     title: text("title").notNull(),
-    // Phase 1 (1.1): added nullable first; a follow-up migration backfills then sets NOT NULL.
-    category: projectCategory("category"),
+    // Phase 1 (1.1): added nullable, backfilled (1B), now NOT NULL. The resolver always
+    // produces a value (the unresolved fallback stores `adulting` + category_unresolved=true),
+    // so every task is categorized; "no category yet" is the unresolved flag, never NULL.
+    category: projectCategory("category").notNull(),
     // Phase 1 (1.1a / 1.4d): invisible-plumbing flag. true = stored as a NOT-NULL
     // placeholder but not really categorized — render a neutral "no category yet"
     // marker, keep out of balance math, re-resolve later (offline reconnect / backfill).
