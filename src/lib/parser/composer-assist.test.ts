@@ -77,13 +77,21 @@ describe("getComposerAssist", () => {
     expect(state.suggestionSuffix).toBe("w");
   });
 
-  it("priority active after due segment complete with trailing semicolon", () => {
+  it("priority active after due segment complete with trailing semicolon (no default ghost)", () => {
     const line = "walk dog; today; ";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("priority");
-    expect(state.suggestion).toBe("!");
-    expect(state.suggestionSuffix).toBe("!");
+    expect(state.suggestion).toBeNull();
+    expect(state.suggestionSuffix).toBeNull();
     expect(state.properties.find((p) => p.key === "due")?.status).toBe("filled");
+  });
+
+  it("completes a partial priority word", () => {
+    const line = "walk dog; today; hi";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("priority");
+    expect(state.suggestion).toBe("high");
+    expect(state.suggestionSuffix).toBe("gh");
   });
 
   it("project active after priority segment", () => {

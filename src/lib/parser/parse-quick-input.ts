@@ -1,6 +1,7 @@
 import { resolveScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { type ProjectCategory } from "@/lib/projects/categories";
+import { parsePriorityWord } from "@/lib/tasks/priority";
 
 import { matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
@@ -157,7 +158,9 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
       continue;
     }
 
-    const priorityResult = parsePriority(segment);
+    // Priority is a named `;` property — words (low/med/high), with `!`/`!!`/`!!!`
+    // kept as a quiet alias for muscle memory. One input language (VF-1).
+    const priorityResult = parsePriority(segment) ?? parsePriorityWord(segment);
     if (priorityResult !== null) {
       priority = priorityResult;
       continue;
@@ -215,7 +218,6 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
   let scheduledDate: string | null = todayIso;
   let bucketOverride: "later" | null = null;
-  let priority: 0 | 1 | 2 | 3 = 0;
   const titleParts: string[] = [];
 
   const tokens = raw.split(/\s+/).filter(Boolean);
@@ -228,15 +230,9 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
       continue;
     }
 
-    const priorityResult = parsePriority(token);
-    if (priorityResult !== null) {
-      priority = priorityResult;
-      continue;
-    }
-
-    // Q6: the `#project` space token is retired. Project is set only via the
-    // `;` property segment (like category) — one input language. Anything that
-    // isn't a date or priority token is plain title text here.
+    // VF-1: the inline `!` priority token is retired alongside the `#project`
+    // token (Q6). Priority is set only via the `;` property segment — one input
+    // language. Anything that isn't a date here is plain title text.
     titleParts.push(token);
   }
 
@@ -247,7 +243,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     scheduledDate,
     bucketOverride,
     projectSlug: null,
-    priority,
+    priority: 0,
     category: null,
     warnings: [],
     suggestions: [],

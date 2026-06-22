@@ -120,18 +120,23 @@ describe("parseQuickInput", () => {
     expect(result.suggestions[0]?.slug).toBe("rdm");
   });
 
-  it("parses priority bangs", () => {
-    expect(parseQuickInput("urgent !!!", ctx).priority).toBe(3);
-    expect(parseQuickInput("high !!", ctx).priority).toBe(2);
-    expect(parseQuickInput("med !", ctx).priority).toBe(1);
+  it("parses priority words in a ; segment", () => {
+    expect(parseQuickInput("plan offsite; high", ctx).priority).toBe(3);
+    expect(parseQuickInput("plan offsite; med", ctx).priority).toBe(2);
+    expect(parseQuickInput("plan offsite; low", ctx).priority).toBe(1);
+    expect(parseQuickInput("plan offsite; none", ctx).priority).toBe(0);
   });
 
-  it("parses combined date + priority tokens in space mode (Q6: no project token)", () => {
-    const result = parseQuickInput("review PR tomorrow #rdm !!", ctx);
-    expect(result.title).toBe("review PR #rdm");
+  it("keeps ! / !! / !!! as a quiet alias inside a ; segment", () => {
+    expect(parseQuickInput("plan offsite; !!!", ctx).priority).toBe(3);
+    expect(parseQuickInput("plan offsite; !", ctx).priority).toBe(1);
+  });
+
+  it("retires the inline ! priority token in space mode (VF-1: ; segment only)", () => {
+    const result = parseQuickInput("review PR tomorrow !!", ctx);
+    expect(result.title).toBe("review PR !!");
     expect(result.scheduledDate).toBe("2026-05-28");
-    expect(result.projectSlug).toBeNull();
-    expect(result.priority).toBe(2);
+    expect(result.priority).toBe(0);
   });
 
   it("parses later bucket override", () => {

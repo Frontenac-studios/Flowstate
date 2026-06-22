@@ -1,4 +1,5 @@
 import { isScheduledDateToken, suggestScheduledDateToken } from "@/lib/dates/scheduled-date-input";
+import { parsePriorityWord, PRIORITY_WORD_SUGGESTIONS } from "@/lib/tasks/priority";
 
 import { fuzzyCategorySuggestions, matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
@@ -56,7 +57,16 @@ function matchesDateToken(segment: string): boolean {
 }
 
 function matchesPriorityToken(segment: string): boolean {
-  return PRIORITY_PATTERN.test(segment.trim());
+  const trimmed = segment.trim();
+  return PRIORITY_PATTERN.test(trimmed) || parsePriorityWord(trimmed) !== null;
+}
+
+// Complete a partial priority word to its canonical form (low/med/high). No
+// default ghost on an empty segment — priority is opt-in.
+function getPrioritySuggestion(partial: string): string | null {
+  const typed = partial.trim().toLowerCase();
+  if (!typed) return null;
+  return PRIORITY_WORD_SUGGESTIONS.find((word) => word.startsWith(typed)) ?? null;
 }
 
 export function segmentMatchesProperty(
@@ -160,7 +170,7 @@ function getDefaultSuggestion(
     case "project":
       return getProjectSuggestion(partial, ctx);
     case "priority":
-      return "!";
+      return getPrioritySuggestion(partial);
     case "category":
       return getCategorySuggestion(partial);
   }
@@ -279,7 +289,8 @@ export function getComposerAssist(
       const partial =
         propertyToSuggest === "project" ||
         propertyToSuggest === "due" ||
-        propertyToSuggest === "category"
+        propertyToSuggest === "category" ||
+        propertyToSuggest === "priority"
           ? segmentTrimmed
           : "";
       suggestion = getDefaultSuggestion(propertyToSuggest, ctx, partial);
