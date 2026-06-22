@@ -10,10 +10,19 @@ const isDesktopBuild = process.env.DESKTOP_BUILD === "1";
 const nextConfig = {
   ...(isDesktopBuild ? { output: "standalone" } : {}),
   allowedDevOrigins: ["127.0.0.1", "localhost"],
-  // transformers.js pulls onnxruntime-node (a native binary) on the server path; keep it
-  // out of the webpack bundle so it loads from node_modules at runtime (1H embeddings).
+  // transformers.js pulls onnxruntime-node (a native binary) into the CLIENT bundle via the
+  // live composer hook; keep it external so the browser path loads it at runtime (1H).
   experimental: {
     serverComponentsExternalPackages: ["@huggingface/transformers"],
+    // Vercel function-size guard. The server create path now uses a HOSTED classifier
+    // (src/server/tasks/infer-category.ts -> hosted-category-inference.ts), so nothing
+    // server-side imports transformers/onnxruntime-node anymore. onnxruntime-node ships a
+    // ~355MB native binary that, when traced into serverless functions, exceeds Vercel's
+    // ~250MB limit and fails the deploy (next build alone doesn't catch it). Exclude it from
+    // function tracing so a future stray server import can't silently blow the limit again.
+    outputFileTracingExcludes: {
+      "*": ["node_modules/onnxruntime-node/**"],
+    },
   },
   async redirects() {
     // Today moved /plan -> /today. /plan now hosts long-horizon Planning, so only
