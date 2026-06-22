@@ -61,9 +61,7 @@ function parseDistribution(text) {
   const scores = CATEGORIES.map((c) => [c, Number(raw[c]) || 0]);
   const total = scores.reduce((acc, [, v]) => acc + v, 0);
   if (total <= 0) return null;
-  return scores
-    .map(([c, v]) => [c, v / total])
-    .sort((a, b) => b[1] - a[1]);
+  return scores.map(([c, v]) => [c, v / total]).sort((a, b) => b[1] - a[1]);
 }
 
 async function classify(anthropic, title) {
