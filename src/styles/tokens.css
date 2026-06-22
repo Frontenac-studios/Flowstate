@@ -60,6 +60,16 @@
   --status-icon: var(--ink-muted);
   --status-critical: #b3122a;
 
+  /* ---- priority + due urgency (VF-4) ---- */
+  /* Priority pips: graphite ramp, crimson only at High; always count-coded (1/2/3). */
+  --priority-low: #c2c6cd;
+  --priority-med: #8a909b;
+  --priority-high: var(--status-critical);
+  /* Due: crimson overdue only; soon (today/tomorrow) = graphite bold; future = muted. */
+  --due-overdue: var(--status-critical);
+  --due-soon: var(--ink);
+  --due-future: var(--ink-faint);
+
   /* ---- typography (DT-5b) ---- */
   --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --text-caption: 11px;

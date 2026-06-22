@@ -7,15 +7,15 @@ export type PriorityMeta = {
   label: string;
   /** Number of urgency dots (0 = none, reserved-empty zone). */
   dots: number;
-  /** Tailwind bg-* for the dots on the muted → amber → red urgency ramp (VF4). */
+  /** Tailwind bg-* for the dots: graphite ramp, crimson only at High (VF-4). */
   dotClass: string;
 };
 
 export const PRIORITY_META: Record<PriorityLevel, PriorityMeta> = {
   0: { level: 0, label: "None", dots: 0, dotClass: "" },
-  1: { level: 1, label: "Low", dots: 1, dotClass: "bg-slate-400" },
-  2: { level: 2, label: "Med", dots: 2, dotClass: "bg-amber-500" },
-  3: { level: 3, label: "High", dots: 3, dotClass: "bg-red-500" },
+  1: { level: 1, label: "Low", dots: 1, dotClass: "bg-[var(--priority-low)]" },
+  2: { level: 2, label: "Med", dots: 2, dotClass: "bg-[var(--priority-med)]" },
+  3: { level: 3, label: "High", dots: 3, dotClass: "bg-[var(--priority-high)]" },
 };
 
 /** Clamp any stored priority integer to a known level (defaults to None). */

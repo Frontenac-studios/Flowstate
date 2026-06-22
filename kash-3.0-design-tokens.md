@@ -238,6 +238,50 @@ Canonical token-consuming components. ⬛ = exists in code · 🆕 = net-new.
 
 ---
 
+## 7.5 Priority & due urgency (VF-4)
+
+Reconciles the VF-1 priority dots + due labels with the flat-calm palette so urgency never
+collides with category color (which owns saturation for *meaning*). Principle: lean on
+**graphite intensity + count + weight**; spend a hue (crimson) only on genuine "act now."
+
+**Decision log**
+
+| #     | Decision            | Choice                                                                       |
+| ----- | ------------------- | --------------------------------------------------------------------------- |
+| VF4-P1 | Priority encoding  | Graphite ramp, crimson only at High                                          |
+| VF4-P2 | Priority redundancy| Always count-coded (1/2/3 dots) — legible without color                      |
+| VF4-P3 | None level         | Empty + reserved width (no reflow)                                           |
+| VF4-D1 | Due encoding       | Crimson overdue only; today/tomorrow graphite bold; rest muted              |
+| VF4-D2 | Soon window        | Today + tomorrow (bold)                                                      |
+| VF4-D3 | Overdue weight     | Crimson label + bold task title                                              |
+| VF4-R1 | Crimson reuse      | One crimson for urgent (inline) and destructive (controls) — context separates |
+| VF4-R2 | Red vs red         | Priority dots distinct from Relationships stripe by shape + darker shade + zone |
+| VF4-R3 | Double alarm       | High + overdue may show crimson 2–3× — intentional reinforcement             |
+
+**Priority pips** (always 1/2/3 dots; `--priority-*`):
+
+| Level | Dots | Token            | Value             |
+| ----- | ---- | ---------------- | ----------------- |
+| None  | —    | (reserved width) | —                 |
+| Low   | 1    | `--priority-low` | `#c2c6cd`         |
+| Med   | 2    | `--priority-med` | `#8a909b`         |
+| High  | 3    | `--priority-high`| crimson `#b3122a` |
+
+**Due label** (trailing; suppressed on day-grouped surfaces; `--due-*`):
+
+| State              | Token          | Treatment                          |
+| ------------------ | -------------- | ---------------------------------- |
+| Overdue            | `--due-overdue`| crimson label **+ bold title**     |
+| Today / tomorrow   | `--due-soon`   | graphite **bold** label            |
+| Beyond tomorrow    | `--due-future` | muted (`--ink-faint`)              |
+
+**Implementation (built on `feat/design-tokens`):**
+`src/lib/tasks/priority.ts` dot ramp → `bg-[var(--priority-*)]`; `src/lib/dates/format-relative-due.ts`
+emphasis = `danger` (overdue) / `soon` (today+tomorrow) / `muted`, adds `"tomorrow"`;
+`src/components/kash/plan/TaskRow.tsx` due classes → `--due-*` tokens + bold title when overdue.
+
+---
+
 ## 8. Draftable (derivable, no decision needed)
 
 - Per-category fill/text values above are computed defaults — fine-tune for AA contrast during build.

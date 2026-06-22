@@ -102,12 +102,13 @@ export function TaskRow({
 
   const relativeDue =
     activeReveal.due && !suppressDue ? formatRelativeDue(task.scheduledDate) : null;
+  const isOverdue = relativeDue?.emphasis === "danger";
   const dueEmphasisClass =
     relativeDue?.emphasis === "danger"
-      ? "text-red-600"
-      : relativeDue?.emphasis === "warning"
-        ? "text-amber-600"
-        : "text-kash-ink-muted";
+      ? "font-medium text-[var(--due-overdue)]"
+      : relativeDue?.emphasis === "soon"
+        ? "font-medium text-[var(--due-soon)]"
+        : "text-[var(--due-future)]";
   const showProjectIndicator = Boolean(activeReveal.project && showProject && task.projectName);
   const { offset, hide, isOpen, isLeftOpen, isRightOpen, containerRef } = useTrackpadSwipeReveal({
     maxOffsetRight: REVEAL_WIDTH_PX,
@@ -303,7 +304,11 @@ export function TaskRow({
                 ) : null}
               </>
             ) : (
-              <span className="block break-words text-kash-ink">{task.title}</span>
+              <span
+                className={`block break-words text-kash-ink ${isOverdue ? "font-medium" : ""}`}
+              >
+                {task.title}
+              </span>
             )}
           </div>
 

@@ -10,21 +10,25 @@ describe("formatRelativeDue", () => {
     expect(formatRelativeDue(undefined, today)).toBeNull();
   });
 
-  it("labels today as a warning", () => {
+  it("labels today and tomorrow as soon", () => {
     expect(formatRelativeDue("2026-06-22", today)).toEqual({
       text: "today",
-      emphasis: "warning",
+      emphasis: "soon",
       days: 0,
+    });
+    expect(formatRelativeDue("2026-06-23", today)).toEqual({
+      text: "tomorrow",
+      emphasis: "soon",
+      days: 1,
     });
   });
 
-  it("labels future dates as muted", () => {
+  it("labels dates beyond tomorrow as muted", () => {
     expect(formatRelativeDue("2026-06-25", today)).toEqual({
       text: "in 3d",
       emphasis: "muted",
       days: 3,
     });
-    expect(formatRelativeDue("2026-06-23", today)).toMatchObject({ text: "in 1d" });
   });
 
   it("labels past dates as overdue danger", () => {
