@@ -1,93 +1,84 @@
+/* Flat-calm surfaces (DT-1). The legacy --kash-* variables and .glass-* class names
+ * are retained for back-compat (36+ files reference them) but now resolve to the flat
+ * token system in tokens.css. New code should consume tokens.css names directly. */
+@import "./tokens.css";
+
 :root {
-  --kash-backdrop: #eeeeee;
-  --kash-glass-bg: rgba(255, 255, 255, 0.55);
-  --kash-glass-bg-opaque: rgba(255, 255, 255, 0.88);
-  --kash-glass-border: rgba(255, 255, 255, 0.6);
-  --kash-glass-blur: 24px;
-  --kash-glass-blur-strong: 36px;
-  --kash-glass-blur-soft: 10px;
-  --kash-glass-saturate: 1.6;
-  --kash-glass-edge:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(255, 255, 255, 0.18);
-  --kash-glass-shadow: 0 10px 36px rgba(26, 29, 38, 0.08);
-  --kash-accent: #ff2d55;
-  --kash-accent-soft: rgba(255, 45, 85, 0.18);
-  /* Concentric radius scale (Apple Liquid Glass): inner = outer − padding.
-     --kash-radius is aliased to --kash-radius-outer for back-compat. */
-  --kash-radius-outer: 16px;
-  --kash-radius-inner: 12px;
-  --kash-radius-control: 10px;
-  --kash-radius-chip: 8px;
-  --kash-radius: var(--kash-radius-outer);
-  --kash-ink: #1a1d26;
-  --kash-ink-muted: #5c6370;
-  --kash-row-min-height: 36px;
-  --kash-task-row-py: 4px;
-  --kash-task-row-py-compact: 3px;
-  --kash-density-base: 15px;
+  /* legacy aliases → new tokens */
+  --kash-backdrop: var(--bg);
+  --kash-glass-bg: var(--surface);
+  --kash-glass-bg-opaque: var(--surface);
+  --kash-glass-border: var(--border);
+  --kash-glass-blur: 0px;
+  --kash-glass-blur-strong: 0px;
+  --kash-glass-blur-soft: 0px;
+  --kash-glass-saturate: 1;
+  --kash-glass-edge: none;
+  --kash-glass-shadow: var(--shadow-none);
+  --kash-accent: var(--accent);
+  --kash-accent-soft: var(--accent-soft);
+  --kash-radius-outer: var(--radius-card);
+  --kash-radius-inner: var(--radius-row);
+  --kash-radius-control: var(--radius-control);
+  --kash-radius-chip: var(--radius-chip);
+  --kash-radius: var(--radius-card);
+  --kash-ink: var(--ink);
+  --kash-ink-muted: var(--ink-muted);
+  --kash-row-min-height: var(--row-min-height);
+  --kash-task-row-py: var(--row-py);
+  --kash-task-row-py-compact: 2px;
+  --kash-density-base: var(--density-base);
 }
 
 .glass-panel {
-  border-radius: var(--kash-radius-outer);
-  border: 1px solid var(--kash-glass-border);
-  background: var(--kash-glass-bg);
-  backdrop-filter: blur(var(--kash-glass-blur)) saturate(var(--kash-glass-saturate));
-  -webkit-backdrop-filter: blur(var(--kash-glass-blur)) saturate(var(--kash-glass-saturate));
-  box-shadow: var(--kash-glass-edge), var(--kash-glass-shadow);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  box-shadow: var(--shadow-none);
 }
 
-/* Stronger blur variant for top-level chrome (header, modals, menus, chat rail). */
+/* Top-level chrome / overlays (header, modals, menus, chat rail) — the one place a
+   soft shadow is allowed (DT-5c). */
 .glass-panel-strong {
-  border-radius: var(--kash-radius-outer);
-  border: 1px solid var(--kash-glass-border);
-  background: var(--kash-glass-bg);
-  backdrop-filter: blur(var(--kash-glass-blur-strong)) saturate(var(--kash-glass-saturate));
-  -webkit-backdrop-filter: blur(var(--kash-glass-blur-strong)) saturate(var(--kash-glass-saturate));
-  box-shadow: var(--kash-glass-edge), var(--kash-glass-shadow);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
 }
 
-/* Higher-opacity surface for dense content (list rows, long scroll regions). Gets a
-   light blur + saturation so it still feels like material, not flat paint. */
 .glass-panel-opaque {
-  border-radius: var(--kash-radius-outer);
-  border: 1px solid var(--kash-glass-border);
-  background: var(--kash-glass-bg-opaque);
-  backdrop-filter: blur(var(--kash-glass-blur-soft)) saturate(1.3);
-  -webkit-backdrop-filter: blur(var(--kash-glass-blur-soft)) saturate(1.3);
-  box-shadow: var(--kash-glass-edge);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  box-shadow: var(--shadow-none);
 }
 
-/* Nested lane inside the Miller columns strip (visible ink border on light backdrop). */
 .miller-column-card {
-  border-radius: var(--kash-radius-inner);
-  border: 1px solid color-mix(in srgb, var(--kash-ink-muted) 28%, transparent);
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: var(--kash-glass-edge);
+  border-radius: var(--radius-row);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-none);
 }
 
 .miller-column-card-active {
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow:
-    var(--kash-glass-edge),
-    0 0 0 1px color-mix(in srgb, var(--kash-accent) 22%, transparent);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--accent-soft);
 }
 
 .glass-pill {
-  border-radius: 9999px;
-  border: 1px solid var(--kash-glass-border);
-  background: var(--kash-glass-bg);
-  backdrop-filter: blur(18px) saturate(var(--kash-glass-saturate));
-  -webkit-backdrop-filter: blur(18px) saturate(var(--kash-glass-saturate));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-none);
 }
 
 .glass-input {
-  border-radius: var(--kash-radius-control);
-  border: 1px solid var(--kash-glass-border);
-  background: rgba(255, 255, 255, 0.85);
-  padding: 0.625rem 0.875rem;
-  font-size: var(--kash-density-base);
-  color: var(--kash-ink);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--density-base);
+  color: var(--ink);
   outline: none;
   transition: box-shadow 0.15s ease;
 }
@@ -98,30 +89,27 @@
 }
 
 .glass-input:focus {
-  box-shadow: 0 0 0 3px var(--kash-accent-soft);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .glass-btn-primary {
-  border-radius: var(--kash-radius-control);
-  border: 1px solid rgba(255, 45, 85, 0.35);
-  background: var(--kash-accent);
-  padding: 0.625rem 1rem;
-  font-size: var(--kash-density-base);
-  font-weight: 500;
-  color: #fff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 4px 16px rgba(255, 45, 85, 0.28);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  padding: 0.5rem 1rem;
+  font-size: var(--density-base);
+  font-weight: var(--weight-medium);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-none);
   transition:
     transform 0.12s ease,
-    box-shadow 0.12s ease,
+    background 0.12s ease,
     opacity 0.12s ease;
 }
 
 .glass-btn-primary:hover:not(:disabled) {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 6px 20px rgba(255, 45, 85, 0.36);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .glass-btn-primary:active:not(:disabled) {
@@ -134,12 +122,12 @@
 }
 
 .glass-btn-ghost {
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
   background: transparent;
   padding: 0.375rem 0.75rem;
-  font-size: var(--kash-density-base);
-  color: var(--kash-ink-muted);
+  font-size: var(--density-base);
+  color: var(--ink-muted);
   transition:
     background 0.12s ease,
     color 0.12s ease,
@@ -147,16 +135,16 @@
 }
 
 .glass-btn-ghost:hover {
-  border-color: var(--kash-glass-border);
-  background: rgba(255, 255, 255, 0.45);
-  color: var(--kash-ink);
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .glass-icon-btn {
-  border-radius: var(--kash-radius-chip);
+  border-radius: var(--radius-chip);
   border: 1px solid transparent;
   padding: 0.25rem 0.5rem;
-  color: var(--kash-ink-muted);
+  color: var(--ink-muted);
   transition:
     background 0.12s ease,
     color 0.12s ease,
@@ -164,9 +152,9 @@
 }
 
 .glass-icon-btn:hover {
-  border-color: var(--kash-glass-border);
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--kash-ink);
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .glass-menu-item {
@@ -174,24 +162,24 @@
   width: 100%;
   padding: 0.5rem 0.75rem;
   text-align: left;
-  color: var(--kash-ink);
+  color: var(--ink);
   transition: background 0.12s ease;
 }
 
 .glass-menu-item:hover {
-  background: rgba(255, 45, 85, 0.08);
+  background: var(--surface-2);
 }
 
 .glass-menu-item-danger {
-  color: #b42318;
+  color: var(--status-critical);
 }
 
 .glass-menu-item-danger:hover {
-  background: rgba(180, 35, 24, 0.08);
+  background: color-mix(in srgb, var(--status-critical) 8%, transparent);
 }
 
 .glass-link {
-  color: var(--kash-accent);
+  color: var(--accent);
   transition: opacity 0.12s ease;
 }
 
@@ -201,22 +189,7 @@
 }
 
 .kash-backdrop {
-  background: var(--kash-backdrop);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .glass-panel,
-  .glass-panel-strong,
-  .glass-panel-opaque,
-  .glass-pill {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--kash-glass-bg-opaque);
-  }
-
-  .glass-input {
-    background: var(--kash-glass-bg-opaque);
-  }
+  background: var(--bg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -238,39 +211,29 @@
 
 .glass-section-header {
   display: flex;
-  min-height: var(--kash-row-min-height);
+  min-height: var(--row-min-height);
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 0.875rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .glass-section-header--drop-target {
-  box-shadow:
-    inset 0 0 0 2px var(--kash-accent-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
 }
 
 .kash-section-drop-target {
-  box-shadow:
-    inset 0 0 0 2px var(--kash-accent-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
 }
 
 @keyframes kash-section-pulse {
   0% {
-    box-shadow:
-      inset 0 0 0 0 var(--kash-accent-soft),
-      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    box-shadow: inset 0 0 0 0 var(--accent-soft);
   }
   25% {
-    box-shadow:
-      inset 0 0 0 3px var(--kash-accent-soft),
-      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    box-shadow: inset 0 0 0 3px var(--accent-soft);
   }
   100% {
-    box-shadow:
-      inset 0 0 0 0 transparent,
-      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    box-shadow: inset 0 0 0 0 transparent;
   }
 }
 

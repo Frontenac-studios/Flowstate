@@ -11,6 +11,30 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        // flat-calm tokens (tokens.css)
+        bg: "var(--bg)",
+        surface: "var(--surface)",
+        "surface-2": "var(--surface-2)",
+        border: "var(--border)",
+        "border-subtle": "var(--border-subtle)",
+        ink: "var(--ink)",
+        "ink-muted": "var(--ink-muted)",
+        "ink-faint": "var(--ink-faint)",
+        accent: {
+          DEFAULT: "var(--accent)",
+          hover: "var(--accent-hover)",
+          soft: "var(--accent-soft)",
+          on: "var(--on-accent)",
+        },
+        critical: "var(--status-critical)",
+        cat: {
+          professional: "var(--cat-professional-solid)",
+          personal: "var(--cat-personal-solid)",
+          relationships: "var(--cat-relationships-solid)",
+          adulting: "var(--cat-adulting-solid)",
+          "body-mind": "var(--cat-body-mind-solid)",
+        },
+        // legacy aliases (back-compat)
         kash: {
           accent: "var(--kash-accent)",
           ink: "var(--kash-ink)",
@@ -20,15 +44,29 @@ const config: Config = {
       },
       borderRadius: {
         kash: "var(--kash-radius)",
+        card: "var(--radius-card)",
+        row: "var(--radius-row)",
+        control: "var(--radius-control)",
+        chip: "var(--radius-chip)",
       },
       backdropBlur: {
         kash: "var(--kash-glass-blur)",
       },
       boxShadow: {
-        "glass-inset": "inset 0 1px 0 rgba(255, 255, 255, 0.65)",
+        overlay: "var(--shadow-overlay)",
+        "glass-inset": "none",
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)"],
       },
       fontSize: {
         kash: "var(--kash-density-base)",
+        caption: "var(--text-caption)",
+        meta: "var(--text-meta)",
+        body: "var(--text-body)",
+        subtitle: "var(--text-subtitle)",
+        title: "var(--text-title)",
+        h1: "var(--text-h1)",
       },
       minHeight: {
         "kash-row": "var(--kash-row-min-height)",
