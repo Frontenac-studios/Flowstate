@@ -26,6 +26,42 @@ const nextConfig = {
       __dirname,
       "node_modules/@trpc/tanstack-react-query/src/internals/createOptionsProxy.ts"
     );
+
+    // 1H embeddings: the live composer hook (a client component) pulls
+    // @huggingface/transformers -> onnxruntime-web into the browser bundle. ORT
+    // ships pre-minified ESM runtimes (e.g. ort.webgpu.bundle.min.<hash>.mjs) that
+    // use top-level `import.meta`; Next re-runs them through Terser, which rejects
+    // import.meta outside module code and fails `next build`. They are already
+    // minified, so flag them `minimized` — Terser skips anything already flagged.
+    // (Next's minimizers are opaque functions, so a TerserPlugin `exclude` can't be
+    // attached directly.) Matches `.../ort.*.mjs` and `.../ort-wasm-*.mjs` only.
+    const ortBundle = /(?:^|[\\/])ort[-.][^\\/]*\.mjs$/;
+    config.plugins.push({
+      apply(compiler) {
+        const { Compilation } = compiler.webpack;
+        compiler.hooks.compilation.tap("MarkOrtBundlesMinified", (compilation) => {
+          compilation.hooks.processAssets.tap(
+            {
+              name: "MarkOrtBundlesMinified",
+              // Run before Terser's PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE pass.
+              stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
+            },
+            (assets) => {
+              for (const name of Object.keys(assets)) {
+                if (ortBundle.test(name)) {
+                  compilation.updateAsset(
+                    name,
+                    (source) => source,
+                    (info) => ({ ...info, minimized: true })
+                  );
+                }
+              }
+            }
+          );
+        });
+      },
+    });
+
     return config;
   },
 };
