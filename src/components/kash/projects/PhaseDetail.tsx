@@ -164,7 +164,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
         type="button"
         onClick={onRequestDelete}
         disabled={pending}
-        className="self-start text-sm text-[#b42318] transition hover:underline disabled:opacity-50"
+        className="self-start text-sm text-critical transition hover:underline disabled:opacity-50"
       >
         Delete phase
       </button>

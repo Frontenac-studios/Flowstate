@@ -92,7 +92,14 @@ export default function ConfirmDialog({
             ref={confirmRef}
             type="button"
             className="glass-btn-primary"
-            style={destructive ? { backgroundColor: "#b42318", borderColor: "#b42318" } : undefined}
+            style={
+              destructive
+                ? {
+                    backgroundColor: "var(--status-critical)",
+                    borderColor: "var(--status-critical)",
+                  }
+                : undefined
+            }
             disabled={confirmDisabled}
             onClick={onConfirm}
           >
