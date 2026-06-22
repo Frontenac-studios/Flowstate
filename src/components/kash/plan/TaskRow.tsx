@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -17,9 +17,11 @@ import {
   type ProjectCategory,
 } from "@/lib/projects/categories";
 import { projectPhaseColor } from "@/lib/projects/project-phase-color";
-import { NO_REVEAL, readVfRevealFromQuery, type RevealFlags } from "@/lib/tasks/lens";
+import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
+
+import { useReveal } from "./LensProvider";
 
 export type PlanTaskRow = {
   id: string;
@@ -53,8 +55,8 @@ type Props = {
   /** Surfaces that are already project-scoped pass false to never reveal project. */
   showProject?: boolean;
   /**
-   * Which property indicators to reveal (VF-1). Omit to fall back to the dev
-   * query toggle (`?vfReveal=…`) until VF-2 wires real lens state.
+   * Explicit reveal override. Normally omitted — the row reads the active lens
+   * from the surrounding `LensProvider` via `useReveal()` (VF-2).
    */
   reveal?: RevealFlags;
   /** Day-grouped surfaces (Today, This Week) suppress the due lens (VF5). */
@@ -85,12 +87,11 @@ export function TaskRow({
   const rowContentRef = useRef<HTMLDivElement>(null);
   const pinEnabled = canPin && !task.isTop3 && onPin != null;
 
-  // VF-1: clean by default. Indicators reveal per-lens. Until VF-2 wires real
-  // state, fall back to the dev query toggle (read in an effect to avoid a
-  // hydration mismatch — the server always renders clean).
-  const [devReveal, setDevReveal] = useState<RevealFlags>(NO_REVEAL);
-  useEffect(() => setDevReveal(readVfRevealFromQuery()), []);
-  const activeReveal = reveal ?? devReveal;
+  // Clean by default; indicators reveal per active lens (VF-2). The surrounding
+  // LensProvider renders clean on the server / first paint, then hydrates from
+  // storage — so no hydration mismatch. An explicit `reveal` prop overrides it.
+  const lensReveal = useReveal();
+  const activeReveal = reveal ?? lensReveal;
 
   // 1.4b/1.4d life-area stripe: category color when resolved, neutral marker when
   // unresolved. Lens-gated (VF-1) — the stripe is the category channel only.
@@ -304,9 +305,7 @@ export function TaskRow({
                 ) : null}
               </>
             ) : (
-              <span
-                className={`block break-words text-kash-ink ${isOverdue ? "font-medium" : ""}`}
-              >
+              <span className={`block break-words text-kash-ink ${isOverdue ? "font-medium" : ""}`}>
                 {task.title}
               </span>
             )}

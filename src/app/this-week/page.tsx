@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/kash/AppShell";
 import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
+import { LensControlBar } from "@/components/kash/plan/LensControlBar";
+import { LensProvider } from "@/components/kash/plan/LensProvider";
 import { PlanSurface } from "@/components/kash/plan/PlanSurface";
 import { ThisWeekCanvas } from "@/components/kash/plan/ThisWeekCanvas";
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
@@ -21,7 +23,12 @@ export default async function ThisWeekPage() {
     <AppShell>
       <PlanSurface>
         <ContextualInbox />
-        <ThisWeekCanvas />
+        <LensProvider scope="this-week">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <LensControlBar />
+          </div>
+          <ThisWeekCanvas />
+        </LensProvider>
       </PlanSurface>
     </AppShell>
   );
