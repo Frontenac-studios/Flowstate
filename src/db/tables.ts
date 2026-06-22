@@ -1,5 +1,6 @@
 import * as sqliteSchema from "@kash/db-local/schema";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
+import { categorySettings as pgCategorySettings } from "./schema/category-settings";
 import { chatCustomSuggestions as pgChatCustomSuggestions } from "./schema/chat-custom-suggestions";
 import { chatMessages as pgChatMessages } from "./schema/chat-messages";
 import { dayReviews as pgDayReviews } from "./schema/day-reviews";
@@ -41,6 +42,9 @@ export const dayReviews = (
 export const appSettings = (
   isSqliteMode() ? sqliteSchema.appSettings : pgAppSettings
 ) as typeof pgAppSettings;
+export const categorySettings = (
+  isSqliteMode() ? sqliteSchema.categorySettings : pgCategorySettings
+) as typeof pgCategorySettings;
 export const nudgeEvents = (
   isSqliteMode() ? sqliteSchema.nudgeEvents : pgNudgeEvents
 ) as typeof pgNudgeEvents;

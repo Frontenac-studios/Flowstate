@@ -22,7 +22,7 @@ const bulkTaskInputSchema = z.object({
 
 async function assertOwnedProject(userId: string, projectId: string) {
   const [row] = await db
-    .select({ id: projects.id })
+    .select({ id: projects.id, category: projects.category })
     .from(projects)
     .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
     .limit(1);
@@ -30,6 +30,7 @@ async function assertOwnedProject(userId: string, projectId: string) {
   if (!row) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
   }
+  return row;
 }
 
 async function getOwnedImport(userId: string, importId: string) {
@@ -93,7 +94,7 @@ export const taskBulkImportsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await assertOwnedProject(ctx.userId, input.projectId);
+      const project = await assertOwnedProject(ctx.userId, input.projectId);
 
       const now = new Date();
       const taskCount = input.tasks.length;
@@ -128,6 +129,9 @@ export const taskBulkImportsRouter = createTRPCRouter({
               scheduledDate: t.bucketOverride === "later" ? null : t.scheduledDate,
               bucketOverride: t.bucketOverride,
               priority: t.priority,
+              // Imported tasks belong to a project, so they inherit its category
+              // (resolver layer 2 — project context); a real categorization, not unresolved.
+              category: project.category,
             }))
           )
           .returning();

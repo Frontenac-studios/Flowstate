@@ -1,14 +1,18 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import { PROJECT_CATEGORIES, type ProjectCategory, categoryColor } from "@/lib/projects/categories";
+import { defaultCategoryLabel } from "@/lib/projects/category-settings";
 import { getTaskTitleError } from "@/lib/taskValidation";
+import { useTRPC } from "@/trpc/client";
 
 import type { ProjectTask } from "./types";
 
 type Props = {
   task: ProjectTask;
-  onUpdate: (patch: { title?: string; priority?: number }) => void;
+  onUpdate: (patch: { title?: string; priority?: number; category?: ProjectCategory }) => void;
   onToggleComplete: () => void;
   onRequestDelete: () => void;
   pending: boolean;
@@ -26,9 +30,22 @@ export default function TaskDetail({
   pending,
   saveError = null,
 }: Props) {
+  const trpc = useTRPC();
   const completed = task.completedAt !== null;
   const [title, setTitle] = useState(task.title);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Effective labels + order come from category-settings; fall back to seed labels in
+  // declared order until the query resolves (Q5 edit surface lives only here).
+  const { data: categorySettings } = useQuery(trpc.categorySettings.get.queryOptions());
+  const categoryOptions =
+    categorySettings ??
+    PROJECT_CATEGORIES.map((category, sortOrder) => ({
+      category,
+      label: defaultCategoryLabel(category),
+      labelOverride: null,
+      sortOrder,
+    }));
 
   useEffect(() => {
     setTitle(task.title);
@@ -106,6 +123,42 @@ export default function TaskDetail({
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="task-detail-category" className="text-sm font-medium text-kash-ink">
+          Category
+        </label>
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="h-4 w-4 shrink-0 rounded-full"
+            style={{
+              // Unresolved (1.4d) renders as a neutral marker, never the placeholder's color.
+              backgroundColor: task.categoryUnresolved
+                ? "transparent"
+                : categoryColor(task.category),
+              boxShadow: task.categoryUnresolved
+                ? "inset 0 0 0 1.5px var(--kash-ink-muted)"
+                : undefined,
+            }}
+          />
+          <select
+            id="task-detail-category"
+            className="glass-input"
+            value={task.category}
+            onChange={(e) => onUpdate({ category: e.target.value as ProjectCategory })}
+          >
+            {categoryOptions.map((opt) => (
+              <option key={opt.category} value={opt.category}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {task.categoryUnresolved ? (
+          <p className="text-xs text-kash-ink-muted">Auto-filed — pick a category to confirm.</p>
+        ) : null}
       </div>
 
       <button

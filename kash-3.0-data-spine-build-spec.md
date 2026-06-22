@@ -4,13 +4,13 @@
 
 **Phase status**
 
-| Phase | Scope                     | Spec                                               | Build                                                                                                                                    |
-| ----- | ------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | Decisions/confirmations   | ✅ logged                                          | n/a                                                                                                                                      |
-| 1     | Category on tasks         | ✅ spec'd (1A–1G) · resolver reconciled to Model C | 🟡 spine built (schema, resolver, tRPC, composer accent, task-row stripe, sync); AI provider + backfill + enum-rename + NOT NULL pending |
-| 2     | Time-tracking on any task | ✅ spec'd (2A–2E)                                  | ⬜                                                                                                                                       |
-| 3     | Task dependencies         | ✅ spec'd (3A–3E)                                  | ⬜                                                                                                                                       |
-| 4     | Recurrence                | ⬜ to spec                                         | ⬜                                                                                                                                       |
+| Phase | Scope                     | Spec                                               | Build                                                                                                                                                                                                                                          |
+| ----- | ------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Decisions/confirmations   | ✅ logged                                          | n/a                                                                                                                                                                                                                                            |
+| 1     | Category on tasks         | ✅ spec'd (1A–1G) · resolver reconciled to Model C | 🟡 spine + AI built (schema, resolver, tRPC, composer accent, task-row stripe, sync, enum-rename, settings router+editor, task-detail field, AI inference provider, loose-task backfill); **only `tasks.category` NOT NULL migration remains** |
+| 2     | Time-tracking on any task | ✅ spec'd (2A–2E)                                  | ⬜                                                                                                                                                                                                                                             |
+| 3     | Task dependencies         | ✅ spec'd (3A–3E)                                  | ⬜                                                                                                                                                                                                                                             |
+| 4     | Recurrence                | ⬜ to spec                                         | ⬜                                                                                                                                                                                                                                             |
 
 **Overall build order:** `1 → 2 → 3 → 4` (by risk). Phases 2 (after 2A) and 3 are largely independent of 1; Design Tokens runs in parallel (only category _colors_ depend on it).
 
@@ -47,10 +47,11 @@ Implements the MECE category dimension end-to-end. Decisions: dedicated `categor
 - Project tasks ← project's category (SQL update). Loose tasks ← AI pass (`scripts/backfill-loose-task-categories.cjs`, same `inferCategoryFromTitle` as runtime) → user review → apply. Rows the AI can't resolve stay `category_unresolved=true`.
 - Then second migration sets `tasks.category` **NOT NULL** (the column is created nullable in 1A).
 - **Accept:** zero NULLs; seeded; NOT NULL; AI assignments spot-checked.
+- **Status (2026-06-18):** ✅ enum rename `health_wellness`→`body_mind` migrated; ✅ backfill shipped (`scripts/backfill-loose-task-categories.cjs`, Haiku + floor/margin gate per Q2) and run on local → 0 NULLs, 10 unresolved markers held back. ⬜ **NOT NULL migration still pending** (next step). Per-category `category_settings` seeding stays lazy (rows created on first edit); the accent bar + stripe still read `PROJECT_CATEGORY_META`.
 
 ### 1C — Loose-task resolver (shared TS) — **Model C, AI-forward**
 
-- Pure ladder `src/lib/tasks/resolveTaskCategory.ts`: **explicit → project.category → AI(if confident) → lastUsed → Unresolved(`adulting` + `category_unresolved=true`)**. `inferCategoryFromTitle` injected (returns `{category, confidence}`); confidence `THRESHOLD` gates whether AI outranks habit (1.4c). Server wrapper `src/server/tasks/resolve-task-category.ts` gathers project/last-used; `infer-category.ts` is the AI seam (abstains until wired). `online:false` skips the AI layer (offline / client preview).
+- Pure ladder `src/lib/tasks/resolveTaskCategory.ts`: **explicit → project.category → AI(if confident) → lastUsed → Unresolved(`adulting` + `category_unresolved=true`)**. `inferCategoryFromTitle` injected (returns `{category, confidence}`); confidence `THRESHOLD` gates whether AI outranks habit (1.4c). Server wrapper `src/server/tasks/resolve-task-category.ts` gathers project/last-used and (1H) precomputes the async embedding inference, injecting it into the pure sync resolver; `infer-category.ts` is the AI seam (✅ now the real embeddings provider, was the abstaining stub). `online:false` skips the AI layer (offline / client preview).
 - **lastUsed update:** set `last_used_category` to the resolved category on create, **except the unresolved fallback** (don't poison habit).
 - **Accept:** pure, framework-free, fully tested; server + offline + client-preview import it.
 
@@ -59,13 +60,13 @@ Implements the MECE category dimension end-to-end. Decisions: dedicated `categor
 - Parser (`parse-quick-input.ts`): recognize a category-name segment → emit `category`, matched before the project slug (`fuzzy-category.ts`, key/label normalized).
 - Assist (`composer-assist.ts`): add `category` as the 5th property slot; autocomplete the 5 labels (ghost text); Tab accepts.
 - UI **= color accent bar, NOT a chip** (1.4b): `ComposerCategoryAccent.tsx` renders the left accent bar + faint trailing label + neutral "no category yet" marker for unresolved; preview via `previewLineCategory` (resolver, `online:false`). `ComposerPropertyBar.tsx` shows the category hint chip; `QuickInput.tsx` passes `category` to `create`.
-- **⚠ Bundle the `#project`-token retirement here** (plan §14 cleanup) — same files; one composer refactor. _(Not yet done.)_
+- **⚠ Bundle the `#project`-token retirement here** (plan §14 cleanup) — same files; one composer refactor. _(✅ done, Q6 — space-mode `#project` token retired; project set only via the `;` segment. Live accent bar now also shows the AI guess via 1H.)_
 - **Accept:** `Call mom; tomorrow; relationships` files under Relationships, title "Call mom"; autocomplete + accent bar work (no chip).
 
 ### 1E — tRPC + task UI
 
-- `tasks.ts` router: `category` in `create`/`update` Zod; `create` calls the resolver; `update` with an explicit category clears `category_unresolved`. New `category-settings` router (`get`/`update`) — _not yet built_.
-- `TaskRow.tsx`: category **left stripe** (color when resolved, neutral marker when unresolved) + clickable chip for edit. `TaskDetail.tsx`: category field. `SettingsForm.tsx`: settings editor. _(Stripe done on the plan day view; detail field + settings editor pending.)_
+- `tasks.ts` router: `category` in `create`/`update` Zod; `create` calls the resolver; `update` with an explicit category clears `category_unresolved`. New `category-settings` router (`get`/`update`/`reorder`) — ✅ **built** (labels + sort order only, Q3; color read-only, weekly targets schema-only).
+- `TaskRow.tsx`: category **left stripe** (color when resolved, neutral marker when unresolved). `TaskDetail.tsx`: category field. `SettingsForm.tsx`: settings editor. _(✅ Stripe on plan day view; ✅ task-detail category field (Q5 — detail-panel only, no row chip); ✅ settings editor `CategorySettingsSection` with inline label edit + up/down reorder. All verified live.)_
 - **Accept:** create/edit category via UI; row shows the life-area stripe; settings persist everywhere.
 
 ### 1F — Sync / offline parity
@@ -78,7 +79,9 @@ Implements the MECE category dimension end-to-end. Decisions: dedicated `categor
 
 - Vitest: helper (1C), parser (1D), backfill (1B). Manual QA: capture, inheritance+override, chip edit, settings, offline→sync, NULL check. Gates: typecheck, lint, RLS audit.
 
-### 1H — AI inference provider (embeddings) — _decisions 1.AIa–d, not yet built_
+### 1H — AI inference provider (embeddings) — _decisions 1.AIa–d_ — ✅ **built (2026-06-18)**
+
+> Shipped: pure `category-classifier.ts` (cosine + softmax floor/margin, unit-tested); `category-prototypes.ts` seed titles; `embed-text.ts` local all-MiniLM-L6-v2 int8 via transformers.js (dynamic import, memoized); `category-inference.ts` provider; server seam precomputes async inference into the pure resolver; live composer accent bar via debounced `useLiveCategoryInference`. Verified: "Call mom"→Relationships, "Pay the electricity bill"→Adulting (live bar + server-create); gibberish abstains. Knobs (temp 0.1 / floor 0.70 / margin 0.10) are first-pass and tunable.
 
 Replaces the abstaining `infer-category.ts` stub with the real classifier:
 

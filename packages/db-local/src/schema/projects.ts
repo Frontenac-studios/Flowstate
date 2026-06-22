@@ -4,7 +4,7 @@ export const PROJECT_CATEGORIES = [
   "professional",
   "personal_projects",
   "relationships",
-  "health_wellness",
+  "body_mind",
   "adulting",
 ] as const;
 

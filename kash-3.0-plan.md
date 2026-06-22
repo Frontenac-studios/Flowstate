@@ -580,7 +580,30 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 
 **4. Care hub contents (`/care`):** walks, breathing exercises, reflection rituals (daily EoD celebration / weekly / monthly), the garden + stats, and travel-planning-around-work. Self-care prompts also surface inline in Today.
 
-**Remaining open questions:**
+**5. The 3 Daily Wins** _(added Jun 16)_ — a daily wellbeing structure inspired by "a physical, a mental, a spiritual win." Decisions you made:
+
+- **Structure: a cross-cutting lens**, not a category. A _win-axis_ (physical / mental / spiritual) sits orthogonal to the 5 life categories — **any task in any category can also count as a win** (a fulfilling work task can be your mental win).
+- **Auto-detected** from activity (completed tasks via title inference — reusing the Phase 1 category-inference seam — plus existing signals: walk reminders → physical, breathing → spiritual, daily reflection → spiritual).
+- **Naming deferred** — the physical/mental/spiritual concept is locked; exact labels (and whether "spiritual" is reframed) settled in the design/copy pass.
+- **Encouragement: both** a gentle daily prompt _and_ garden nourishment (hitting wins feeds §12's garden). Encouragement-only, never punitive.
+
+**Resolved (Jun 16, Rounds 1–2):**
+
+- **Data model:** facets **computed live** from activity; **only manual edits stored as overrides** (which win over the computed value). No per-task facet field by default — mirrors the recurrence exceptions pattern. History/trends recompute from the activity log + overrides.
+- **Editable:** fully — correct a wrong guess _and_ add a missed win.
+- **Surface:** **both** — a compact 3-slot tracker glance in Today + a fuller view (history/trends) in Care.
+- **Daily reset:** local midnight (matches the app's day rollover / morning triage).
+- **Daily review:** celebrate what you got, then **gently** note an open facet ("2 of 3 — spiritual was quiet today"). No guilt.
+- **In-day prompt:** a couple of gentle touchpoints if a facet's still open, via the §15 notification layer (like other Care prompts).
+- **Garden:** each win nourishes a little; all 3 in a day = a small bonus.
+
+**Still to draft (spec detail, not forks — I'll draft for your review):**
+
+- Detection taxonomy — which signals map to physical / mental / spiritual. Seed: walks / workouts / rest → physical; reading / writing / creating / learning → mental; breathing / reflection / gratitude → spiritual; other tasks via title inference (Phase 1 seam). Cross-cutting, so non-Body-&-Mind tasks contribute.
+- Exact touchpoint times for the in-day prompt.
+- Win attribution display (show what counted, tap to correct) — follows from "fully editable."
+
+**Remaining open questions (Care):**
 
 - Breathing visualization style → defer to the Design Tokens + animation passes (§5, final phase).
 - Garden art direction and "growth" rules → its own design spike when Phase 2 begins.
