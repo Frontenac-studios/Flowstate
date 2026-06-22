@@ -1,5 +1,6 @@
 import { formatScheduledDateLabel } from "@/lib/dates/scheduled-date-input";
 import type { ParsedLine, ParseResult } from "@/lib/parser/parse-quick-input";
+import { priorityMeta } from "@/lib/tasks/priority";
 
 type Props = {
   parse: ParseResult;
@@ -11,7 +12,7 @@ export function getParseChips(parse: ParseResult): string[] {
     bucketOverride: parse.bucketOverride,
   });
   if (dateLabel) chips.push(dateLabel);
-  if (parse.priority > 0) chips.push("!".repeat(parse.priority));
+  if (parse.priority > 0) chips.push(priorityMeta(parse.priority).label);
   if (parse.projectSlug) chips.push(parse.projectSlug);
   return chips;
 }

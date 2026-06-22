@@ -11,6 +11,7 @@ import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import { useRdmNarration } from "@/hooks/useRdmNarration";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
+import { priorityMeta } from "@/lib/tasks/priority";
 import { useTRPC } from "@/trpc/client";
 
 import { timeString } from "./timeString";
@@ -18,10 +19,13 @@ import { timeString } from "./timeString";
 type ExitReason = "done" | "park" | "esc";
 
 function priorityDots(priority: number) {
-  if (priority <= 0) return null;
+  const meta = priorityMeta(priority);
+  if (meta.dots === 0) return null;
   return (
-    <span className="text-kash-accent" aria-label={`Priority ${priority}`}>
-      {"!".repeat(priority)}
+    <span className="inline-flex items-center gap-0.5" aria-label={`Priority ${meta.label}`}>
+      {Array.from({ length: meta.dots }, (_, i) => (
+        <span key={i} className={`h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
+      ))}
     </span>
   );
 }

@@ -1,5 +1,6 @@
 import { formatScheduledDateLabel } from "@/lib/dates/scheduled-date-input";
 import type { ParseProjectTaskResult } from "@/lib/parser/parse-project-task-input";
+import { priorityMeta } from "@/lib/tasks/priority";
 
 export function getProjectParseChips(parse: ParseProjectTaskResult): string[] {
   const chips: string[] = [];
@@ -7,7 +8,7 @@ export function getProjectParseChips(parse: ParseProjectTaskResult): string[] {
     bucketOverride: parse.bucketOverride,
   });
   if (dateLabel) chips.push(dateLabel);
-  if (parse.priority > 0) chips.push("!".repeat(parse.priority));
+  if (parse.priority > 0) chips.push(priorityMeta(parse.priority).label);
   if (parse.parentDirName) chips.push(parse.parentDirName);
   return chips;
 }
