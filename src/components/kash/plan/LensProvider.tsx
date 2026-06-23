@@ -16,6 +16,8 @@ import {
   EMPTY_LENS,
   NO_REVEAL,
   revealFlagsFromLens,
+  setGroupLens,
+  toggleFilterValue,
   toggleLens,
   type LensProperty,
   type LensState,
@@ -31,9 +33,12 @@ export const LENS_KEY_BINDINGS: Record<string, LensProperty> = {
 };
 
 type LensContextValue = {
+  scope: LensScope;
   state: LensState;
   reveal: RevealFlags;
   toggle: (prop: LensProperty) => void;
+  setGroup: (prop: LensProperty | null) => void;
+  toggleFilter: (prop: LensProperty, value: string) => void;
 };
 
 const LensContext = createContext<LensContextValue | null>(null);
@@ -52,15 +57,29 @@ export function LensProvider({ scope, children }: { scope: LensScope; children: 
     setState(readLensState(scope));
   }, [scope]);
 
-  const toggle = useCallback(
-    (prop: LensProperty) => {
+  // All mutations flow through one updater so every change persists.
+  const update = useCallback(
+    (next: (prev: LensState) => LensState) => {
       setState((prev) => {
-        const next = toggleLens(prev, prop);
-        writeLensState(scope, next);
-        return next;
+        const value = next(prev);
+        writeLensState(scope, value);
+        return value;
       });
     },
     [scope]
+  );
+
+  const toggle = useCallback(
+    (prop: LensProperty) => update((prev) => toggleLens(prev, prop)),
+    [update]
+  );
+  const setGroup = useCallback(
+    (prop: LensProperty | null) => update((prev) => setGroupLens(prev, prop)),
+    [update]
+  );
+  const toggleFilter = useCallback(
+    (prop: LensProperty, value: string) => update((prev) => toggleFilterValue(prev, prop, value)),
+    [update]
   );
 
   useEffect(() => {
@@ -78,8 +97,8 @@ export function LensProvider({ scope, children }: { scope: LensScope; children: 
   }, [toggle]);
 
   const value = useMemo<LensContextValue>(
-    () => ({ state, reveal: revealFlagsFromLens(state), toggle }),
-    [state, toggle]
+    () => ({ scope, state, reveal: revealFlagsFromLens(state), toggle, setGroup, toggleFilter }),
+    [scope, state, toggle, setGroup, toggleFilter]
   );
 
   return <LensContext.Provider value={value}>{children}</LensContext.Provider>;
