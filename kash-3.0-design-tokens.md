@@ -3,23 +3,24 @@
 > The implementation spec for §5 (Design System & Visual Language) of `kash-3.0-plan.md`.
 > All decisions below were made in the Design Tokens session (Jun 22 2026). This doc is build-ready:
 > hand it to a build session to replace the legacy `kash-*` glass tokens in `src/styles/glass.css`
-> + `tailwind.config.ts`. Companions: `kash-3.0-plan.md` (§5), `kash-3.0-build-breakdown.md` (§5).
+>
+> - `tailwind.config.ts`. Companions: `kash-3.0-plan.md` (§5), `kash-3.0-build-breakdown.md` (§5).
 
 ---
 
 ## 0. Decision log
 
-| #     | Decision         | Choice                                                                                                                              |
-| ----- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| DT-1  | Aesthetic        | **Flat calm** — solid surfaces, no glassmorphism/blur                                                                              |
-| DT-2  | Accent           | **Neutral graphite** — all saturation reserved for category meaning                                                                |
+| #     | Decision         | Choice                                                                                                                                  |
+| ----- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| DT-1  | Aesthetic        | **Flat calm** — solid surfaces, no glassmorphism/blur                                                                                   |
+| DT-2  | Accent           | **Neutral graphite** — all saturation reserved for category meaning                                                                     |
 | DT-3  | Category palette | **Apple set**: Blue=Professional · Purple=Personal Projects · Red=Relationships · Orange=Adulting · Green=Body & Mind · Yellow reserved |
-| DT-3b | Semantics        | **Icon-led + graphite**; color used only for genuinely critical alerts                                                             |
-| DT-4  | Theming          | **Light only** for v1; tokens structured so a dark theme drops in later without rework                                             |
-| DT-5a | Density          | **Compact** (~30px rows, 13px base text)                                                                                           |
-| DT-5b | Typeface         | **Figtree**                                                                                                                        |
-| DT-5c | Surface finish   | **Crisp + structured** — 8px cards / 5px rows, firm border, no shadow (one shadow token for overlays only)                          |
-| DT-6  | Components       | Canonical inventory locked (24 components, ~13 net-new) — see §7                                                                   |
+| DT-3b | Semantics        | **Icon-led + graphite**; color used only for genuinely critical alerts                                                                  |
+| DT-4  | Theming          | **Light only** for v1; tokens structured so a dark theme drops in later without rework                                                  |
+| DT-5a | Density          | **Compact** (~30px rows, 13px base text)                                                                                                |
+| DT-5b | Typeface         | **Figtree**                                                                                                                             |
+| DT-5c | Surface finish   | **Crisp + structured** — 8px cards / 5px rows, firm border, no shadow (one shadow token for overlays only)                              |
+| DT-6  | Components       | Canonical inventory locked (24 components, ~13 net-new) — see §7                                                                        |
 
 ---
 
@@ -42,21 +43,21 @@ only saturated thing on screen**, so the eye goes straight to "which life area."
 ```css
 :root {
   /* surfaces */
-  --bg:           #f5f6f8;   /* app backdrop */
-  --surface:      #ffffff;   /* cards, panels */
-  --surface-2:    #f7f8fa;   /* row fill, inset */
+  --bg: #f5f6f8; /* app backdrop */
+  --surface: #ffffff; /* cards, panels */
+  --surface-2: #f7f8fa; /* row fill, inset */
   /* borders (firm, per DT-5c) */
-  --border:        #dcdfe5;  /* default firm border */
-  --border-subtle: #e7e9ee;  /* dividers, low-emphasis */
+  --border: #dcdfe5; /* default firm border */
+  --border-subtle: #e7e9ee; /* dividers, low-emphasis */
   /* ink */
-  --ink:        #1f2430;     /* primary text */
-  --ink-muted:  #6b7280;     /* secondary text, meta */
-  --ink-faint:  #9aa0ad;     /* hints, disabled */
+  --ink: #1f2430; /* primary text */
+  --ink-muted: #6b7280; /* secondary text, meta */
+  --ink-faint: #9aa0ad; /* hints, disabled */
   /* accent = graphite (DT-2) */
-  --accent:        #2b3140;  /* primary buttons, active, links */
-  --accent-hover:  #3a4150;
-  --on-accent:     #ffffff;
-  --focus-ring:    rgba(43,49,64,0.35);
+  --accent: #2b3140; /* primary buttons, active, links */
+  --accent-hover: #3a4150;
+  --on-accent: #ffffff;
+  --focus-ring: rgba(43, 49, 64, 0.35);
 }
 ```
 
@@ -70,41 +71,41 @@ and **text** (a darkened shade for text on the fill, meeting AA on the light fil
 ```css
 :root {
   /* Professional — Blue */
-  --cat-professional-fill:  #e5f5fc;
+  --cat-professional-fill: #e5f5fc;
   --cat-professional-solid: #009ddc;
-  --cat-professional-text:  #0a6a93;
+  --cat-professional-text: #0a6a93;
   /* Personal Projects — Purple */
-  --cat-personal-fill:  #f4e8f4;
+  --cat-personal-fill: #f4e8f4;
   --cat-personal-solid: #973d97;
-  --cat-personal-text:  #6e2c6e;
+  --cat-personal-text: #6e2c6e;
   /* Relationships — Red */
-  --cat-relationships-fill:  #fce8e9;
+  --cat-relationships-fill: #fce8e9;
   --cat-relationships-solid: #e03a3e;
-  --cat-relationships-text:  #962427;
+  --cat-relationships-text: #962427;
   /* Adulting — Orange */
-  --cat-adulting-fill:  #fdeede;
+  --cat-adulting-fill: #fdeede;
   --cat-adulting-solid: #f6821f;
-  --cat-adulting-text:  #9a4e08;
+  --cat-adulting-text: #9a4e08;
   /* Body & Mind — Green */
-  --cat-body-mind-fill:  #ecf6e8;
+  --cat-body-mind-fill: #ecf6e8;
   --cat-body-mind-solid: #61bb47;
-  --cat-body-mind-text:  #3a7026;
+  --cat-body-mind-text: #3a7026;
   /* Reserved — Yellow (status/highlight, never a category) */
-  --reserved-yellow-fill:  #fff4dc;
+  --reserved-yellow-fill: #fff4dc;
   --reserved-yellow-solid: #fcb827;
-  --reserved-yellow-text:  #8a5a14;
+  --reserved-yellow-text: #8a5a14;
 }
 ```
 
 Enum mapping (the DB `project_category` values → tokens):
 
-| Enum value      | Category          | Token prefix          |
-| --------------- | ----------------- | --------------------- |
-| `professional`  | Professional      | `--cat-professional-*`|
-| `personal`*     | Personal Projects | `--cat-personal-*`    |
-| `relationships` | Relationships     | `--cat-relationships-*`|
-| `adulting`      | Adulting          | `--cat-adulting-*`    |
-| `body_mind`     | Body & Mind       | `--cat-body-mind-*`   |
+| Enum value      | Category          | Token prefix            |
+| --------------- | ----------------- | ----------------------- |
+| `professional`  | Professional      | `--cat-professional-*`  |
+| `personal`\*    | Personal Projects | `--cat-personal-*`      |
+| `relationships` | Relationships     | `--cat-relationships-*` |
+| `adulting`      | Adulting          | `--cat-adulting-*`      |
+| `body_mind`     | Body & Mind       | `--cat-body-mind-*`     |
 
 \* confirm the exact existing enum value for Personal Projects against `src/db/schema/projects.ts`.
 
@@ -119,9 +120,9 @@ Color appears only for genuinely critical alerts.
 
 ```css
 :root {
-  --status-ink:      var(--ink);        /* default status text */
-  --status-icon:     var(--ink-muted);  /* success/info/neutral icons */
-  --status-critical: #b3122a;           /* deep crimson — reserved, distinct from --cat-relationships-solid */
+  --status-ink: var(--ink); /* default status text */
+  --status-icon: var(--ink-muted); /* success/info/neutral icons */
+  --status-critical: #b3122a; /* deep crimson — reserved, distinct from --cat-relationships-solid */
 }
 ```
 
@@ -149,18 +150,18 @@ Build rule: **no component may reference a raw hex** — only the tokens in this
 :root {
   --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   /* type scale — compact (DT-5a) */
-  --text-caption: 11px;   /* timestamps, micro-labels */
-  --text-meta:    12px;   /* due labels, secondary meta */
-  --text-body:    13px;   /* task title, row text (base) */
-  --text-subtitle:15px;   /* section subtitles */
-  --text-title:   17px;   /* surface titles */
-  --text-h1:      20px;   /* page headings */
+  --text-caption: 11px; /* timestamps, micro-labels */
+  --text-meta: 12px; /* due labels, secondary meta */
+  --text-body: 13px; /* task title, row text (base) */
+  --text-subtitle: 15px; /* section subtitles */
+  --text-title: 17px; /* surface titles */
+  --text-h1: 20px; /* page headings */
   /* weights — two only */
   --weight-regular: 400;
-  --weight-medium:  500;
+  --weight-medium: 500;
   /* line-height */
-  --leading-tight: 1.25;  /* headings */
-  --leading-body:  1.4;   /* body, rows */
+  --leading-tight: 1.25; /* headings */
+  --leading-body: 1.4; /* body, rows */
 }
 ```
 
@@ -174,8 +175,15 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 
 ```css
 :root {
-  --space-0:2px; --space-1:4px; --space-2:6px; --space-3:8px;
-  --space-4:12px; --space-5:16px; --space-6:20px; --space-7:24px; --space-8:32px;
+  --space-0: 2px;
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
 }
 ```
 
@@ -183,11 +191,11 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 
 ```css
 :root {
-  --radius-card:    8px;
-  --radius-row:     5px;
+  --radius-card: 8px;
+  --radius-row: 5px;
   --radius-control: 5px;
-  --radius-chip:    5px;
-  --radius-pill:    9999px;
+  --radius-chip: 5px;
+  --radius-pill: 9999px;
 }
 ```
 
@@ -195,8 +203,8 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 
 ```css
 :root {
-  --shadow-none:    none;             /* default for all surfaces */
-  --shadow-overlay: 0 8px 24px rgba(20,28,40,0.12);  /* menus, modals, popovers ONLY */
+  --shadow-none: none; /* default for all surfaces */
+  --shadow-overlay: 0 8px 24px rgba(20, 28, 40, 0.12); /* menus, modals, popovers ONLY */
 }
 ```
 
@@ -205,8 +213,8 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 ```css
 :root {
   --row-min-height: 30px;
-  --row-py:         3px;
-  --density-base:   13px;   /* == --text-body */
+  --row-py: 3px;
+  --density-base: 13px; /* == --text-body */
 }
 ```
 
@@ -241,39 +249,39 @@ Canonical token-consuming components. ⬛ = exists in code · 🆕 = net-new.
 ## 7.5 Priority & due urgency (VF-4)
 
 Reconciles the VF-1 priority dots + due labels with the flat-calm palette so urgency never
-collides with category color (which owns saturation for *meaning*). Principle: lean on
+collides with category color (which owns saturation for _meaning_). Principle: lean on
 **graphite intensity + count + weight**; spend a hue (crimson) only on genuine "act now."
 
 **Decision log**
 
-| #     | Decision            | Choice                                                                       |
-| ----- | ------------------- | --------------------------------------------------------------------------- |
-| VF4-P1 | Priority encoding  | Graphite ramp, crimson only at High                                          |
-| VF4-P2 | Priority redundancy| Always count-coded (1/2/3 dots) — legible without color                      |
-| VF4-P3 | None level         | Empty + reserved width (no reflow)                                           |
-| VF4-D1 | Due encoding       | Crimson overdue only; today/tomorrow graphite bold; rest muted              |
-| VF4-D2 | Soon window        | Today + tomorrow (bold)                                                      |
-| VF4-D3 | Overdue weight     | Crimson label + bold task title                                              |
-| VF4-R1 | Crimson reuse      | One crimson for urgent (inline) and destructive (controls) — context separates |
-| VF4-R2 | Red vs red         | Priority dots distinct from Relationships stripe by shape + darker shade + zone |
-| VF4-R3 | Double alarm       | High + overdue may show crimson 2–3× — intentional reinforcement             |
+| #      | Decision            | Choice                                                                          |
+| ------ | ------------------- | ------------------------------------------------------------------------------- |
+| VF4-P1 | Priority encoding   | Graphite ramp, crimson only at High                                             |
+| VF4-P2 | Priority redundancy | Always count-coded (1/2/3 dots) — legible without color                         |
+| VF4-P3 | None level          | Empty + reserved width (no reflow)                                              |
+| VF4-D1 | Due encoding        | Crimson overdue only; today/tomorrow graphite bold; rest muted                  |
+| VF4-D2 | Soon window         | Today + tomorrow (bold)                                                         |
+| VF4-D3 | Overdue weight      | Crimson label + bold task title                                                 |
+| VF4-R1 | Crimson reuse       | One crimson for urgent (inline) and destructive (controls) — context separates  |
+| VF4-R2 | Red vs red          | Priority dots distinct from Relationships stripe by shape + darker shade + zone |
+| VF4-R3 | Double alarm        | High + overdue may show crimson 2–3× — intentional reinforcement                |
 
 **Priority pips** (always 1/2/3 dots; `--priority-*`):
 
-| Level | Dots | Token            | Value             |
-| ----- | ---- | ---------------- | ----------------- |
-| None  | —    | (reserved width) | —                 |
-| Low   | 1    | `--priority-low` | `#c2c6cd`         |
-| Med   | 2    | `--priority-med` | `#8a909b`         |
-| High  | 3    | `--priority-high`| crimson `#b3122a` |
+| Level | Dots | Token             | Value             |
+| ----- | ---- | ----------------- | ----------------- |
+| None  | —    | (reserved width)  | —                 |
+| Low   | 1    | `--priority-low`  | `#c2c6cd`         |
+| Med   | 2    | `--priority-med`  | `#8a909b`         |
+| High  | 3    | `--priority-high` | crimson `#b3122a` |
 
 **Due label** (trailing; suppressed on day-grouped surfaces; `--due-*`):
 
-| State              | Token          | Treatment                          |
-| ------------------ | -------------- | ---------------------------------- |
-| Overdue            | `--due-overdue`| crimson label **+ bold title**     |
-| Today / tomorrow   | `--due-soon`   | graphite **bold** label            |
-| Beyond tomorrow    | `--due-future` | muted (`--ink-faint`)              |
+| State            | Token           | Treatment                      |
+| ---------------- | --------------- | ------------------------------ |
+| Overdue          | `--due-overdue` | crimson label **+ bold title** |
+| Today / tomorrow | `--due-soon`    | graphite **bold** label        |
+| Beyond tomorrow  | `--due-future`  | muted (`--ink-faint`)          |
 
 **Implementation (built on `feat/design-tokens`):**
 `src/lib/tasks/priority.ts` dot ramp → `bg-[var(--priority-*)]`; `src/lib/dates/format-relative-due.ts`
