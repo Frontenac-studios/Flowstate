@@ -12,9 +12,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { defaultMillerPath, expandMillerPath } from "@/lib/projects/miller-path";
+import {
+  filterTasksByPriority,
+  readPriorityFilter,
+  writePriorityFilter,
+} from "@/lib/projects/miller-priority-filter";
 import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tree";
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
+import MillerPriorityFilter from "./MillerPriorityFilter";
 import MillerGhostColumn from "./MillerGhostColumn";
 import { millerColumnShellClass } from "./miller-columns";
 import { useMillerStripLayout } from "./useMillerStripLayout";
@@ -77,6 +83,21 @@ export default function MillerColumnsView({
   const [selection, setSelection] = useState<DetailSelection>(null);
   const [focus, setFocus] = useState({ col: 0, index: 0 });
   const [confirm, setConfirm] = useState<Confirm>(null);
+
+  // Projects priority lens (VF-4c): filters visible tasks; phases stay. Clean by
+  // default, hydrated from localStorage after mount.
+  const [priorityLevels, setPriorityLevels] = useState<Set<number>>(new Set());
+  useEffect(() => setPriorityLevels(readPriorityFilter()), []);
+  const togglePriority = useCallback((level: number) => {
+    setPriorityLevels((prev) => {
+      const next = new Set(prev);
+      if (next.has(level)) next.delete(level);
+      else next.add(level);
+      writePriorityFilter(next);
+      return next;
+    });
+  }, []);
+
   const { nodeById, taskById } = useMemo(() => {
     const nodes = new Map<string, Node>();
     const tasks = new Map<string, ProjectTask>();
@@ -109,7 +130,7 @@ export default function MillerColumnsView({
     result.push({
       level: 0,
       parentPhaseId: null,
-      items: orderItems(tree.rootPhases, tree.looseTasks),
+      items: orderItems(tree.rootPhases, filterTasksByPriority(tree.looseTasks, priorityLevels)),
     });
 
     let currentPhases = tree.rootPhases;
@@ -119,12 +140,12 @@ export default function MillerColumnsView({
       result.push({
         level: i + 1,
         parentPhaseId: node.phase.id,
-        items: orderItems(node.children, node.tasks),
+        items: orderItems(node.children, filterTasksByPriority(node.tasks, priorityLevels)),
       });
       currentPhases = node.children;
     }
     return result;
-  }, [tree, selectedPath]);
+  }, [tree, selectedPath, priorityLevels]);
 
   const activeColumnLevel = selectedPath.length;
 
@@ -434,6 +455,12 @@ export default function MillerColumnsView({
               onSubmitComposer={handleSubmitComposer}
             />
           </div>
+
+          {!isBlank ? (
+            <div className="flex shrink-0 items-center justify-end px-1">
+              <MillerPriorityFilter value={priorityLevels} onToggle={togglePriority} />
+            </div>
+          ) : null}
 
           <div className="flex min-h-0 flex-1 gap-3">
             <div
