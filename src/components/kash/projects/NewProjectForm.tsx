@@ -107,7 +107,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
       </fieldset>
 
       {error ? (
-        <p role="alert" className="text-sm text-[#b42318]">
+        <p role="alert" className="text-sm text-critical">
           {error}
         </p>
       ) : null}

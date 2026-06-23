@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { PROJECT_CATEGORIES, type ProjectCategory, categoryColor } from "@/lib/projects/categories";
 import { defaultCategoryLabel } from "@/lib/projects/category-settings";
+import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
 
@@ -19,8 +20,6 @@ type Props = {
   /** Set when the parent's save mutation failed, so the editor can surface it. */
   saveError?: string | null;
 };
-
-const PRIORITIES = [0, 1, 2, 3];
 
 export default function TaskDetail({
   task,
@@ -107,21 +106,29 @@ export default function TaskDetail({
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-kash-ink">Priority</span>
         <div className="glass-pill flex w-fit text-sm" role="group" aria-label="Priority">
-          {PRIORITIES.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => onUpdate({ priority: p })}
-              aria-pressed={task.priority === p}
-              className={`rounded-full px-3 py-1 transition ${
-                task.priority === p
-                  ? "bg-kash-accent text-white"
-                  : "text-kash-ink-muted hover:text-kash-ink"
-              }`}
-            >
-              {p === 0 ? "None" : "!".repeat(p)}
-            </button>
-          ))}
+          {PRIORITY_LEVELS.map((p) => {
+            const meta = priorityMeta(p);
+            const selected = task.priority === p;
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onUpdate({ priority: p })}
+                aria-pressed={selected}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition ${
+                  selected ? "bg-kash-accent text-white" : "text-kash-ink-muted hover:text-kash-ink"
+                }`}
+              >
+                {Array.from({ length: meta.dots }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-1.5 rounded-full ${selected ? "bg-white" : meta.dotClass}`}
+                  />
+                ))}
+                {meta.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -165,7 +172,7 @@ export default function TaskDetail({
         type="button"
         onClick={onRequestDelete}
         disabled={pending}
-        className="self-start text-sm text-[#b42318] transition hover:underline disabled:opacity-50"
+        className="self-start text-sm text-critical transition hover:underline disabled:opacity-50"
       >
         Delete task
       </button>

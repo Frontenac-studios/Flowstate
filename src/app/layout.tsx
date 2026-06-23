@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import type { Metadata } from "next";
+import { Figtree } from "next/font/google";
 import localFont from "next/font/local";
 
 import { AppBackdrop } from "@/components/kash/AppBackdrop";
@@ -9,6 +10,12 @@ import { TRPCReactProvider } from "@/trpc/client";
 
 import "./globals.css";
 
+const figtree = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-sans",
+  display: "swap",
+});
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -37,7 +44,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${figtree.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <AppBackdrop />
         <DesktopRuntimeFlag />
         <TRPCReactProvider>

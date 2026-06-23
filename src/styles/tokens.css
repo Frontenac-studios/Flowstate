@@ -1,0 +1,112 @@
+/* Kash 3.0 — Design Tokens (source of truth)
+ * Spec: kash-3.0-design-tokens.md. Flat-calm aesthetic (DT-1), graphite accent (DT-2),
+ * Apple category palette (DT-3), icon-led semantics (DT-3b), light theme only (DT-4),
+ * compact density (DT-5a), Figtree (DT-5b), crisp/flat finish (DT-5c).
+ *
+ * Theming: every value here is a semantic variable. A dark theme = one extra
+ * :root[data-theme="dark"] block remapping these same names. No component references
+ * a raw hex — only these tokens (legacy --kash-* names are aliased in glass.css).
+ */
+:root {
+  /* ---- surfaces ---- */
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+
+  /* ---- borders (firm, DT-5c) ---- */
+  --border: #dcdfe5;
+  --border-subtle: #e7e9ee;
+
+  /* ---- ink ---- */
+  --ink: #1f2430;
+  --ink-muted: #6b7280;
+  --ink-faint: #9aa0ad;
+
+  /* ---- accent = graphite (DT-2) ---- */
+  --accent: #2b3140;
+  --accent-hover: #3a4150;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(43, 49, 64, 0.16);
+  --focus-ring: rgba(43, 49, 64, 0.35);
+
+  /* ---- category palette (DT-3, Apple set): fill / solid / text ---- */
+  --cat-professional-fill: #e5f5fc;
+  --cat-professional-solid: #009ddc;
+  --cat-professional-text: #0a6a93;
+
+  --cat-personal-fill: #f4e8f4;
+  --cat-personal-solid: #973d97;
+  --cat-personal-text: #6e2c6e;
+
+  --cat-relationships-fill: #fce8e9;
+  --cat-relationships-solid: #e03a3e;
+  --cat-relationships-text: #962427;
+
+  --cat-adulting-fill: #fdeede;
+  --cat-adulting-solid: #f6821f;
+  --cat-adulting-text: #9a4e08;
+
+  --cat-body-mind-fill: #ecf6e8;
+  --cat-body-mind-solid: #61bb47;
+  --cat-body-mind-text: #3a7026;
+
+  /* reserved — yellow (status/highlight, never a category) */
+  --reserved-yellow-fill: #fff4dc;
+  --reserved-yellow-solid: #fcb827;
+  --reserved-yellow-text: #8a5a14;
+
+  /* ---- semantics (DT-3b): icon-led + graphite; color for critical only ---- */
+  --status-ink: var(--ink);
+  --status-icon: var(--ink-muted);
+  --status-critical: #b3122a;
+
+  /* ---- priority + due urgency (VF-4) ---- */
+  /* Priority pips: graphite ramp, crimson only at High; always count-coded (1/2/3). */
+  --priority-low: #c2c6cd;
+  --priority-med: #8a909b;
+  --priority-high: var(--status-critical);
+  /* Due: crimson overdue only; soon (today/tomorrow) = graphite bold; future = muted. */
+  --due-overdue: var(--status-critical);
+  --due-soon: var(--ink);
+  --due-future: var(--ink-faint);
+
+  /* ---- typography (DT-5b) ---- */
+  --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-caption: 11px;
+  --text-meta: 12px;
+  --text-body: 13px;
+  --text-subtitle: 15px;
+  --text-title: 17px;
+  --text-h1: 20px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --leading-tight: 1.25;
+  --leading-body: 1.4;
+
+  /* ---- spacing — 4px grid ---- */
+  --space-0: 2px;
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+
+  /* ---- radius (DT-5c — crisp) ---- */
+  --radius-card: 8px;
+  --radius-row: 5px;
+  --radius-control: 5px;
+  --radius-chip: 5px;
+  --radius-pill: 9999px;
+
+  /* ---- elevation (DT-5c — flat; shadow only for overlays) ---- */
+  --shadow-none: none;
+  --shadow-overlay: 0 8px 24px rgba(20, 28, 40, 0.12);
+
+  /* ---- density (DT-5a — compact) ---- */
+  --row-min-height: 30px;
+  --row-py: 3px;
+  --density-base: 13px;
+}

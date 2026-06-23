@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/kash/AppShell";
 import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
+import { LensControlBar } from "@/components/kash/plan/LensControlBar";
+import { LensProvider } from "@/components/kash/plan/LensProvider";
 import { PlanCanvas } from "@/components/kash/plan/PlanCanvas";
 import { PlanModeToggle } from "@/components/kash/plan/PlanModeToggle";
 import { PlanSurface } from "@/components/kash/plan/PlanSurface";
@@ -22,10 +24,13 @@ export default async function PlanPage() {
     <AppShell>
       <PlanSurface>
         <ContextualInbox />
-        <div className="mb-4 flex items-center gap-3">
-          <PlanModeToggle />
-        </div>
-        <PlanCanvas />
+        <LensProvider scope="today">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <PlanModeToggle />
+            <LensControlBar />
+          </div>
+          <PlanCanvas />
+        </LensProvider>
       </PlanSurface>
     </AppShell>
   );

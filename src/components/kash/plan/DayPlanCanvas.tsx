@@ -184,6 +184,7 @@ export function DayPlanCanvas() {
     isTop3: task.isTop3,
     category: task.category,
     categoryUnresolved: task.categoryUnresolved,
+    scheduledDate: task.scheduledDate,
   });
 
   const pinnedBySlot = useMemo(() => {

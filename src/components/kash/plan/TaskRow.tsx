@@ -10,13 +10,18 @@ import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
+import { formatRelativeDue } from "@/lib/dates/format-relative-due";
 import {
   categoryLabel,
   PROJECT_CATEGORY_META,
   type ProjectCategory,
 } from "@/lib/projects/categories";
+import { projectPhaseColor } from "@/lib/projects/project-phase-color";
+import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
+
+import { useReveal } from "./LensProvider";
 
 export type PlanTaskRow = {
   id: string;
@@ -27,9 +32,12 @@ export type PlanTaskRow = {
   projectName: string | null;
   isTop3: boolean;
   // Optional so list builders that don't yet select category still type-check;
-  // when present, the row shows the life-area stripe (1.4b) or neutral marker (1.4d).
+  // surfaced under the category lens as the life-area stripe (1.4b) or neutral
+  // marker (1.4d).
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
+  // Surfaced under the due lens as a relative label (VF-1).
+  scheduledDate?: string | null;
 };
 
 const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
@@ -44,7 +52,15 @@ type Props = {
   onDelete: (snapshot: TaskSnapshot) => void;
   onPin?: (taskId: string, sourceEl: HTMLElement) => void;
   canPin?: boolean;
+  /** Surfaces that are already project-scoped pass false to never reveal project. */
   showProject?: boolean;
+  /**
+   * Explicit reveal override. Normally omitted — the row reads the active lens
+   * from the surrounding `LensProvider` via `useReveal()` (VF-2).
+   */
+  reveal?: RevealFlags;
+  /** Day-grouped surfaces (Today, This Week) suppress the due lens (VF5). */
+  suppressDue?: boolean;
 };
 
 const ACTION_WIDTH_PX = 72;
@@ -60,6 +76,8 @@ export function TaskRow({
   onPin,
   canPin = false,
   showProject = true,
+  reveal,
+  suppressDue = false,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -69,14 +87,30 @@ export function TaskRow({
   const rowContentRef = useRef<HTMLDivElement>(null);
   const pinEnabled = canPin && !task.isTop3 && onPin != null;
 
+  // Clean by default; indicators reveal per active lens (VF-2). The surrounding
+  // LensProvider renders clean on the server / first paint, then hydrates from
+  // storage — so no hydration mismatch. An explicit `reveal` prop overrides it.
+  const lensReveal = useReveal();
+  const activeReveal = reveal ?? lensReveal;
+
   // 1.4b/1.4d life-area stripe: category color when resolved, neutral marker when
-  // unresolved. Only shown when the row actually carries category data.
-  const hasCategoryData = task.category !== undefined;
+  // unresolved. Lens-gated (VF-1) — the stripe is the category channel only.
   const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
   const stripeColor = resolvedCategory
     ? PROJECT_CATEGORY_META[resolvedCategory].color
     : NEUTRAL_CATEGORY_STRIPE;
   const stripeLabel = resolvedCategory ? categoryLabel(resolvedCategory) : "No category yet";
+
+  const relativeDue =
+    activeReveal.due && !suppressDue ? formatRelativeDue(task.scheduledDate) : null;
+  const isOverdue = relativeDue?.emphasis === "danger";
+  const dueEmphasisClass =
+    relativeDue?.emphasis === "danger"
+      ? "font-medium text-[var(--due-overdue)]"
+      : relativeDue?.emphasis === "soon"
+        ? "font-medium text-[var(--due-soon)]"
+        : "text-[var(--due-future)]";
+  const showProjectIndicator = Boolean(activeReveal.project && showProject && task.projectName);
   const { offset, hide, isOpen, isLeftOpen, isRightOpen, containerRef } = useTrackpadSwipeReveal({
     maxOffsetRight: REVEAL_WIDTH_PX,
     maxOffsetLeft: pinEnabled ? ACTION_WIDTH_PX : 0,
@@ -219,14 +253,13 @@ export function TaskRow({
           onClick={() => onSelect?.(task.id)}
           onDoubleClick={() => onActivate?.(task.id)}
         >
-          {hasCategoryData ? (
-            <span
-              className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full"
-              style={{ backgroundColor: stripeColor }}
-              aria-label={stripeLabel}
-              title={stripeLabel}
-            />
-          ) : null}
+          <span
+            className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full"
+            style={{ backgroundColor: activeReveal.category ? stripeColor : "transparent" }}
+            aria-label={activeReveal.category ? stripeLabel : undefined}
+            title={activeReveal.category ? stripeLabel : undefined}
+            aria-hidden={!activeReveal.category}
+          />
 
           {task.isTop3 ? (
             <span className="shrink-0 text-kash-accent" aria-label="Top 3">
@@ -272,21 +305,36 @@ export function TaskRow({
                 ) : null}
               </>
             ) : (
-              <span className="block break-words text-kash-ink">{task.title}</span>
+              <span className={`block break-words text-kash-ink ${isOverdue ? "font-medium" : ""}`}>
+                {task.title}
+              </span>
             )}
           </div>
 
-          {showProject && task.projectSlug && task.projectId ? (
+          {showProjectIndicator && task.projectId ? (
             <Link
               href={`/projects/${task.projectId}`}
-              className="glass-pill mt-0.5 shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+              className="mt-0.5 flex max-w-[8rem] shrink-0 items-center gap-1.5 text-xs text-kash-ink-muted hover:text-kash-accent"
               onClick={(e) => e.stopPropagation()}
             >
-              #{task.projectSlug}
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: projectPhaseColor(task.projectId) }}
+                aria-hidden
+              />
+              <span className="truncate">{task.projectName}</span>
             </Link>
           ) : null}
 
-          <TaskPriorityIndicator priority={task.priority} reserveSpace />
+          {relativeDue ? (
+            <span className={`mt-0.5 shrink-0 self-start text-xs ${dueEmphasisClass}`}>
+              {relativeDue.text}
+            </span>
+          ) : null}
+
+          {activeReveal.priority ? (
+            <TaskPriorityIndicator priority={task.priority} reserveSpace />
+          ) : null}
 
           <TaskDragHandle
             ref={setActivatorNodeRef}

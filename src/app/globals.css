@@ -17,12 +17,8 @@ body {
 
 body {
   color: var(--foreground);
-  font-family:
-    var(--font-geist-sans),
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: var(--kash-density-base);
+  font-family: var(--font-sans);
+  font-size: var(--density-base);
 }
 
 @layer utilities {

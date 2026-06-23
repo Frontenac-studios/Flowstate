@@ -17,6 +17,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: "⌃I", description: "Toggle the triage inbox" },
   { keys: "1 – 4", description: "Triage: Today, Tomorrow, Later, Drop" },
   { keys: "⌘1 – ⌘3", description: "Pin selected Today row to Top 3 slot" },
+  { keys: "C / P / R / D", description: "Toggle Category / Project / Priority / Due lens (max 2)" },
   { keys: "⌘D", description: "Random weighted pick (RDM) → Focus mode" },
   { keys: "⌘Return", description: "Mark current focus task done" },
   { keys: "Esc", description: "Exit Focus mode (or leave triage keyboard mode)" },
