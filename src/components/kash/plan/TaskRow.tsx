@@ -16,7 +16,7 @@ import {
   PROJECT_CATEGORY_META,
   type ProjectCategory,
 } from "@/lib/projects/categories";
-import { projectPhaseColor } from "@/lib/projects/project-phase-color";
+import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
@@ -38,6 +38,10 @@ export type PlanTaskRow = {
   categoryUnresolved?: boolean;
   // Surfaced under the due lens as a relative label (VF-1).
   scheduledDate?: string | null;
+  // Phase identity for the project lens (VF-4): name shown as "Project · Phase",
+  // sortOrder drives the phase-ramp dot color.
+  phaseName?: string | null;
+  phaseSortOrder?: number | null;
 };
 
 const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
@@ -314,15 +318,18 @@ export function TaskRow({
           {showProjectIndicator && task.projectId ? (
             <Link
               href={`/projects/${task.projectId}`}
-              className="mt-0.5 flex max-w-[8rem] shrink-0 items-center gap-1.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+              className="mt-0.5 flex max-w-[11rem] shrink-0 items-center gap-1.5 text-xs text-kash-ink-muted hover:text-kash-accent"
               onClick={(e) => e.stopPropagation()}
             >
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: projectPhaseColor(task.projectId) }}
+                style={{ backgroundColor: phaseRampColor(task.projectId, task.phaseSortOrder) }}
                 aria-hidden
               />
-              <span className="truncate">{task.projectName}</span>
+              <span className="truncate">
+                {task.projectName}
+                {task.phaseName ? ` · ${task.phaseName}` : ""}
+              </span>
             </Link>
           ) : null}
 

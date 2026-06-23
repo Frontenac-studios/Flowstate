@@ -5,7 +5,7 @@ import {
   PROJECT_CATEGORY_META,
   type ProjectCategory,
 } from "@/lib/projects/categories";
-import { projectPhaseColor } from "@/lib/projects/project-phase-color";
+import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { priorityMeta } from "@/lib/tasks/priority";
 
 import type { LensProperty, LensState } from "./lens";
@@ -136,7 +136,7 @@ function groupColor(prop: LensProperty, key: string): string {
     case "priority":
       return PRIORITY_COLOR[key] ?? NEUTRAL_COLOR;
     case "project":
-      return key === LENS_NONE ? NEUTRAL_COLOR : projectPhaseColor(key);
+      return key === LENS_NONE ? NEUTRAL_COLOR : phaseRampColor(key);
     case "due":
       return DUE_BUCKET_COLOR[key as DueBucket];
   }
