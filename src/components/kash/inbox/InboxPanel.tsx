@@ -5,9 +5,15 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { PROJECT_CATEGORY_META } from "@/lib/projects/categories";
+import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { useTRPC } from "@/trpc/client";
 
+import { useReveal } from "../plan/LensProvider";
+
 type InboxAction = "today" | "tomorrow" | "later" | "drop";
+
+const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
 
 const ACTIONS: ReadonlyArray<readonly [InboxAction, string, string]> = [
   ["today", "Today", "1"],
@@ -26,6 +32,7 @@ export function InboxPanel({ active }: { active: boolean }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { pushDelete } = useSessionUndo();
+  const reveal = useReveal();
   const [selected, setSelected] = useState(0);
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
@@ -106,37 +113,60 @@ export function InboxPanel({ active }: { active: boolean }) {
 
   return (
     <ul className="space-y-1.5" role="listbox" aria-label="Triage inbox">
-      {tasks.map((task, index) => (
-        <li
-          key={task.id}
-          role="option"
-          aria-selected={index === selected}
-          onMouseEnter={() => setSelected(index)}
-          className={`glass-pill flex items-center gap-2 px-3 py-kash-task-y transition ${
-            index === selected ? "ring-2 ring-kash-accent" : ""
-          }`}
-        >
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-kash-ink">
-            {task.title}
-          </span>
-          {task.projectSlug ? (
-            <span className="shrink-0 text-xs text-kash-ink-muted">#{task.projectSlug}</span>
-          ) : null}
-          <div className="flex shrink-0 gap-1">
-            {ACTIONS.map(([action, label, key]) => (
-              <button
-                key={action}
-                type="button"
-                onClick={() => apply(index, action)}
-                className="glass-pill px-2 py-0.5 text-xs text-kash-ink-muted transition hover:bg-[var(--kash-accent-soft)] hover:text-kash-accent"
-              >
-                {label}
-                <span className="ml-1 opacity-60">{key}</span>
-              </button>
-            ))}
-          </div>
-        </li>
-      ))}
+      {tasks.map((task, index) => {
+        const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
+        const stripeColor = resolvedCategory
+          ? PROJECT_CATEGORY_META[resolvedCategory].color
+          : NEUTRAL_CATEGORY_STRIPE;
+        return (
+          <li
+            key={task.id}
+            role="option"
+            aria-selected={index === selected}
+            onMouseEnter={() => setSelected(index)}
+            className={`glass-pill flex items-center gap-2 px-3 py-kash-task-y transition ${
+              index === selected ? "ring-2 ring-kash-accent" : ""
+            }`}
+          >
+            {reveal.category ? (
+              <span
+                className="w-[3px] shrink-0 self-stretch rounded-full"
+                style={{ backgroundColor: stripeColor }}
+                aria-hidden
+              />
+            ) : null}
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-kash-ink">
+              {task.title}
+            </span>
+            {reveal.project && task.projectName ? (
+              <span className="flex max-w-[10rem] shrink-0 items-center gap-1.5 text-xs text-kash-ink-muted">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: phaseRampColor(task.projectId, task.phaseSortOrder) }}
+                  aria-hidden
+                />
+                <span className="truncate">
+                  {task.projectName}
+                  {task.phaseName ? ` · ${task.phaseName}` : ""}
+                </span>
+              </span>
+            ) : null}
+            <div className="flex shrink-0 gap-1">
+              {ACTIONS.map(([action, label, key]) => (
+                <button
+                  key={action}
+                  type="button"
+                  onClick={() => apply(index, action)}
+                  className="glass-pill px-2 py-0.5 text-xs text-kash-ink-muted transition hover:bg-[var(--kash-accent-soft)] hover:text-kash-accent"
+                >
+                  {label}
+                  <span className="ml-1 opacity-60">{key}</span>
+                </button>
+              ))}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }

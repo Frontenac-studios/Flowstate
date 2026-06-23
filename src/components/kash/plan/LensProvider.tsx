@@ -14,6 +14,7 @@ import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { readLensState, writeLensState, type LensScope } from "@/lib/plan/lens-storage";
 import {
   EMPTY_LENS,
+  LENS_PROPERTIES,
   NO_REVEAL,
   revealFlagsFromLens,
   setGroupLens,
@@ -34,6 +35,8 @@ export const LENS_KEY_BINDINGS: Record<string, LensProperty> = {
 
 type LensContextValue = {
   scope: LensScope;
+  /** Which properties this surface exposes (control-bar chips + bound keys). */
+  properties: readonly LensProperty[];
   state: LensState;
   reveal: RevealFlags;
   toggle: (prop: LensProperty) => void;
@@ -50,7 +53,23 @@ const LensContext = createContext<LensContextValue | null>(null);
  * persisted choice. Binds the c/p/r/d toggle keys window-wide, guarded so they
  * never fire while typing.
  */
-export function LensProvider({ scope, children }: { scope: LensScope; children: ReactNode }) {
+export function LensProvider({
+  scope,
+  children,
+  properties = LENS_PROPERTIES,
+  bindKeys = true,
+}: {
+  scope: LensScope;
+  children: ReactNode;
+  /** Limit the exposed lenses (e.g. Inbox = category + project only). */
+  properties?: readonly LensProperty[];
+  /**
+   * Bind the c/p/r/d window keystrokes. Off for surfaces that share a route with
+   * another LensProvider (e.g. the inbox strip beside the day canvas), so the
+   * keys don't toggle two scopes at once — that surface is click-only.
+   */
+  bindKeys?: boolean;
+}) {
   const [state, setState] = useState<LensState>(EMPTY_LENS);
 
   useEffect(() => {
@@ -83,22 +102,31 @@ export function LensProvider({ scope, children }: { scope: LensScope; children: 
   );
 
   useEffect(() => {
+    if (!bindKeys) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (isEditableTarget(e.target)) return;
       const prop = LENS_KEY_BINDINGS[e.key.toLowerCase()];
-      if (!prop) return;
+      if (!prop || !properties.includes(prop)) return;
       e.preventDefault();
       toggle(prop);
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [toggle]);
+  }, [toggle, bindKeys, properties]);
 
   const value = useMemo<LensContextValue>(
-    () => ({ scope, state, reveal: revealFlagsFromLens(state), toggle, setGroup, toggleFilter }),
-    [scope, state, toggle, setGroup, toggleFilter]
+    () => ({
+      scope,
+      properties,
+      state,
+      reveal: revealFlagsFromLens(state),
+      toggle,
+      setGroup,
+      toggleFilter,
+    }),
+    [scope, properties, state, toggle, setGroup, toggleFilter]
   );
 
   return <LensContext.Provider value={value}>{children}</LensContext.Provider>;

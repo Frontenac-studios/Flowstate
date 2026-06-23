@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import { lensFilterOptions } from "@/lib/tasks/lens-apply";
-import { LENS_PROPERTIES, type LensProperty } from "@/lib/tasks/lens";
+import { type LensProperty } from "@/lib/tasks/lens";
 
 import { LENS_KEY_BINDINGS, useLens } from "./LensProvider";
 
@@ -57,7 +57,7 @@ export function LensControlBar() {
   return (
     <div className="flex flex-col gap-2">
       <div className="glass-pill flex items-center gap-1 text-sm" role="group" aria-label="Lenses">
-        {LENS_PROPERTIES.map((prop) => {
+        {lens.properties.map((prop) => {
           const meta = LENS_META[prop];
           const key = KEY_FOR_PROPERTY[prop];
           const active = lens.reveal[prop] === true;
