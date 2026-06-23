@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { useTRPC } from "@/trpc/client";
 
+import { LensControlBar } from "../plan/LensControlBar";
+import { LensProvider } from "../plan/LensProvider";
 import { InboxPanel } from "./InboxPanel";
 
 /**
@@ -22,47 +24,53 @@ export function ContextualInbox() {
   const inboxCount = triage.length;
 
   return (
-    <div className="glass-panel-strong mb-4 overflow-hidden">
-      {!open ? (
-        <div className="flex items-center gap-2 px-4 py-2">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-1.5 rounded-[var(--kash-radius-chip)] px-2 py-1 text-sm text-kash-ink-muted transition hover:text-kash-ink"
-            title="Inbox (⌃I)"
-          >
-            📥 Inbox
-            {inboxCount > 0 ? (
-              <span className="rounded-full bg-[var(--kash-accent-soft)] px-1.5 text-xs text-kash-accent">
-                {inboxCount}
-              </span>
-            ) : null}
-          </button>
-          <span className="ml-auto hidden text-xs text-kash-ink-muted sm:block">⌃I inbox</span>
-        </div>
-      ) : (
-        <div className="flex max-h-[42vh] flex-col">
-          <div className="flex items-center gap-1 border-b border-[var(--kash-glass-border)] px-3 py-2">
-            <span className="rounded-[var(--kash-radius-chip)] bg-[var(--kash-accent-soft)] px-2.5 py-1 text-sm text-kash-accent">
-              {inboxCount > 0 ? `📥 Inbox ${inboxCount}` : "📥 Inbox"}
-            </span>
+    <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
+      <div className="glass-panel-strong mb-4 overflow-hidden">
+        {!open ? (
+          <div className="flex items-center gap-2 px-4 py-2">
             <button
               type="button"
-              onClick={() => setOpen(false)}
-              className="glass-icon-btn ml-auto text-kash-ink-muted"
-              aria-label="Collapse inbox"
-              title="Collapse"
+              onClick={() => setOpen(true)}
+              className="flex items-center gap-1.5 rounded-[var(--kash-radius-chip)] px-2 py-1 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+              title="Inbox (⌃I)"
             >
-              ⌄
+              📥 Inbox
+              {inboxCount > 0 ? (
+                <span className="rounded-full bg-[var(--kash-accent-soft)] px-1.5 text-xs text-kash-accent">
+                  {inboxCount}
+                </span>
+              ) : null}
             </button>
+            <span className="ml-auto hidden text-xs text-kash-ink-muted sm:block">⌃I inbox</span>
           </div>
+        ) : (
+          <div className="flex max-h-[42vh] flex-col">
+            <div className="flex items-center gap-1 border-b border-[var(--kash-glass-border)] px-3 py-2">
+              <span className="rounded-[var(--kash-radius-chip)] bg-[var(--kash-accent-soft)] px-2.5 py-1 text-sm text-kash-accent">
+                {inboxCount > 0 ? `📥 Inbox ${inboxCount}` : "📥 Inbox"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="glass-icon-btn ml-auto text-kash-ink-muted"
+                aria-label="Collapse inbox"
+                title="Collapse"
+              >
+                ⌄
+              </button>
+            </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-            <InboxPanel active={open} />
+            <div className="border-b border-[var(--kash-glass-border)] px-3 py-2">
+              <LensControlBar />
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+              <InboxPanel active={open} />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </LensProvider>
   );
 }
 

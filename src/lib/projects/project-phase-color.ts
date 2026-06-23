@@ -1,16 +1,44 @@
 /**
- * VF-1 first-pass project indicator color.
+ * Auto-ramp-by-phase-order project color (VF-4, decision VF4).
  *
- * VF-4 replaces this with the real auto-ramp-by-phase-order (decision VF4): a
- * sequential ramp keyed on a phase's position within its project. For now we
- * derive a stable per-project hue so different projects read as distinct dots,
- * behind the same call site the ramp will later use.
+ * Each project owns a stable hue (so its phases read as one family and distinct
+ * projects stay distinguishable). Within a project, a phase's color steps along
+ * a lightness ramp keyed on its order — phase = identity by position, not status
+ * — so earlier phases read lighter and later phases darker. Tasks with no phase
+ * fall back to the project's base lightness; no project → a neutral marker.
+ *
+ * `phaseOrdinal` is the phase's order within its project (its `sortOrder`); the
+ * same basis is used on the plan rows and in the Miller phase rows.
  */
-export function projectPhaseColor(projectId: string | null): string {
-  if (!projectId) return "var(--kash-ink-muted)";
+const RAMP_BASE_LIGHTNESS = 56;
+const RAMP_STEP = 8;
+const RAMP_MIN_LIGHTNESS = 34;
+const RAMP_MAX_LIGHTNESS = 64;
+
+function projectHue(projectId: string): number {
   let hash = 0;
   for (let i = 0; i < projectId.length; i += 1) {
     hash = (hash * 31 + projectId.charCodeAt(i)) % 360;
   }
-  return `hsl(${hash} 52% 52%)`;
+  return hash;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function phaseRampColor(projectId: string | null, phaseOrdinal?: number | null): string {
+  if (!projectId) return "var(--kash-ink-muted)";
+  const hue = projectHue(projectId);
+  if (phaseOrdinal == null) {
+    return `hsl(${hue} 52% ${RAMP_BASE_LIGHTNESS}%)`;
+  }
+  // Earlier phases lighter, later phases darker; clamped so long projects don't
+  // run off the ramp.
+  const lightness = clamp(
+    RAMP_MAX_LIGHTNESS - phaseOrdinal * RAMP_STEP,
+    RAMP_MIN_LIGHTNESS,
+    RAMP_MAX_LIGHTNESS
+  );
+  return `hsl(${hue} 52% ${lightness}%)`;
 }

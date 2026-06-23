@@ -3,6 +3,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
+import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
 
 import type { ProjectPhase, ProjectTask } from "./types";
@@ -75,7 +76,14 @@ export default function MillerPhaseRow({
         }}
         className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-kash-ink"
       >
-        <span className="min-w-0 flex-1 break-words font-medium">{node.phase.name}</span>
+        <span className="flex min-w-0 flex-1 items-start gap-1.5">
+          <span
+            className="mt-1 h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: phaseRampColor(node.phase.projectId, node.phase.sortOrder) }}
+            aria-hidden
+          />
+          <span className="min-w-0 flex-1 break-words font-medium">{node.phase.name}</span>
+        </span>
         {itemCount > 0 ? (
           <span className="mt-0.5 shrink-0 text-xs tabular-nums text-kash-ink-muted">
             {itemCount}

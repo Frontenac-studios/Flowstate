@@ -6,7 +6,7 @@ import { EMPTY_LENS, parseLens, serializeLens, type LensState } from "@/lib/task
  * synced domain data. Today (day + week modes) shares one scope; This Week has
  * its own, so a lens turned on in one surface doesn't bleed into the other.
  */
-export type LensScope = "today" | "this-week";
+export type LensScope = "today" | "this-week" | "inbox";
 
 const KEY_PREFIX = "kash-lens:";
 

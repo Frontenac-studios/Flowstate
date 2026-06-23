@@ -5,7 +5,10 @@ import { useDroppable } from "@dnd-kit/core";
 
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
+import { applyLens } from "@/lib/tasks/lens-apply";
 
+import { useLens } from "./LensProvider";
+import { LensGroupSection } from "./LensGroupSection";
 import type { PlanTaskRow } from "./TaskRow";
 import { TaskRow } from "./TaskRow";
 
@@ -38,7 +41,19 @@ export function BucketSection({
 
   const { setNodeRef, isOver } = useDroppable({ id: droppableId ?? `bucket:${bucket}` });
 
-  const hasTasks = tasks.length > 0;
+  // VF-3: on This Week, filter + (optionally) group tasks within each day/bucket
+  // — the day-groups stay as the outer level and lens groups nest inside. Today
+  // (and any non-lens scope) renders the plain list unchanged.
+  const lens = useLens();
+  const result = lens?.scope === "this-week" ? applyLens(tasks, lens.state) : null;
+  const visibleCount =
+    result == null
+      ? tasks.length
+      : result.kind === "grouped"
+        ? result.groups.reduce((sum, g) => sum + g.tasks.length, 0)
+        : result.tasks.length;
+
+  const hasTasks = visibleCount > 0;
   const showBody = !collapsed && hasTasks;
 
   return (
@@ -71,17 +86,30 @@ export function BucketSection({
           {label}
         </span>
         <span className="ml-auto text-sm text-kash-ink-muted">
-          {hasTasks ? `(${tasks.length})` : ""}
+          {hasTasks ? `(${visibleCount})` : ""}
         </span>
       </button>
 
       <div id={regionId} hidden={!showBody} className="mt-3">
         {showBody ? (
-          <ul className="space-y-2">
-            {tasks.map((task) => (
-              <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
-            ))}
-          </ul>
+          result?.kind === "grouped" ? (
+            <div>
+              {result.groups.map((group) => (
+                <LensGroupSection
+                  key={group.key}
+                  group={group}
+                  onComplete={onComplete}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {(result?.kind === "flat" ? result.tasks : tasks).map((task) => (
+                <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
+              ))}
+            </ul>
+          )
         ) : null}
       </div>
     </section>

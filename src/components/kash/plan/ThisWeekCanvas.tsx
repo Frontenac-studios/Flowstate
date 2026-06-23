@@ -101,6 +101,11 @@ export function ThisWeekCanvas() {
     projectSlug: task.projectSlug,
     projectName: task.projectName,
     isTop3: task.isTop3,
+    category: task.category,
+    categoryUnresolved: task.categoryUnresolved,
+    scheduledDate: task.scheduledDate,
+    phaseName: task.phaseName,
+    phaseSortOrder: task.phaseSortOrder,
   });
 
   const moveMutation = useMutation(

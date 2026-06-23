@@ -185,6 +185,8 @@ export function DayPlanCanvas() {
     category: task.category,
     categoryUnresolved: task.categoryUnresolved,
     scheduledDate: task.scheduledDate,
+    phaseName: task.phaseName,
+    phaseSortOrder: task.phaseSortOrder,
   });
 
   const pinnedBySlot = useMemo(() => {

@@ -77,9 +77,12 @@ export const tasksRouter = createTRPCRouter({
         categoryUnresolved: tasks.categoryUnresolved,
         projectSlug: projects.slug,
         projectName: projects.name,
+        phaseName: phases.name,
+        phaseSortOrder: phases.sortOrder,
       })
       .from(tasks)
       .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .leftJoin(phases, eq(tasks.phaseId, phases.id))
       .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)))
       .orderBy(desc(tasks.priority), asc(tasks.createdAt));
 
@@ -134,11 +137,16 @@ export const tasksRouter = createTRPCRouter({
         top3Order: tasks.top3Order,
         completedAt: tasks.completedAt,
         createdAt: tasks.createdAt,
+        category: tasks.category,
+        categoryUnresolved: tasks.categoryUnresolved,
         projectSlug: projects.slug,
         projectName: projects.name,
+        phaseName: phases.name,
+        phaseSortOrder: phases.sortOrder,
       })
       .from(tasks)
       .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .leftJoin(phases, eq(tasks.phaseId, phases.id))
       .where(
         and(
           eq(tasks.userId, ctx.userId),
