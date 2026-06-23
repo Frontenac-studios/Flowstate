@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import { PROJECT_CATEGORIES, type ProjectCategory, categoryColor } from "@/lib/projects/categories";
 import { defaultCategoryLabel } from "@/lib/projects/category-settings";
 import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
@@ -166,6 +167,10 @@ export default function TaskDetail({
         {task.categoryUnresolved ? (
           <p className="text-xs text-kash-ink-muted">Auto-filed — pick a category to confirm.</p>
         ) : null}
+      </div>
+
+      <div className="border-t border-[var(--border-subtle)] pt-4">
+        <TaskTimeEntries taskId={task.id} />
       </div>
 
       <button

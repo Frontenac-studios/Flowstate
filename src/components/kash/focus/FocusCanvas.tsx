@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FocusChat } from "@/components/kash/chat/FocusChat";
 import { TypedNarration } from "@/components/kash/chat/TypedNarration";
+import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import { useRdmNarration } from "@/hooks/useRdmNarration";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
@@ -261,6 +262,15 @@ export function FocusCanvas() {
           <div className="mt-1 font-mono text-2xl text-kash-ink">{timeString(seconds)}</div>
         </div>
       </div>
+
+      <details className="mt-6 border-t border-[var(--border-subtle)] pt-4">
+        <summary className="cursor-pointer list-none text-xs text-kash-ink-muted transition hover:text-kash-ink">
+          Edit times
+        </summary>
+        <div className="mt-3">
+          <TaskTimeEntries taskId={task.id} />
+        </div>
+      </details>
 
       {doneFlash ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-kash-accent">

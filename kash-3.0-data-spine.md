@@ -147,13 +147,14 @@ The `inferCategoryFromTitle` seam is an **embeddings nearest-prototype** classif
 
 > Schema already supports this (`task_time_entries.task_id` → any task). This phase is mostly wiring + surfacing.
 
-- **2.1** Confirm no schema change needed; if we want category analytics on entries, decide whether to **snapshot category on the entry** or always derive from the task (recommend derive).
-- **2.2** Focus-mode timer writes entries for Today/standalone tasks (currently project-task-centric in UI).
-- **2.3** Surface time-on-task in Today (not just Projects) — read path for EoD chart + future balance/scoping.
-- **2.4** Confirm RLS/sync already cover it (they should).
-- **2.5** Aggregations for the **end-of-week review** (plan §7.6): time-per-category and time-per-project roll-ups from `task_time_entries` joined to `tasks.category` / `tasks.project_id`. (The "% progress toward completion" metric is a Projects concern — define a project/phase completion calc in §9, fed by Top-3-weighted task counts.)
+- **2.1** Confirm no schema change needed; if we want category analytics on entries, decide whether to **snapshot category on the entry** or always derive from the task (recommend derive). → **Decided: derive** (no new column). Lands with the 2.5 roll-ups (PR2).
+- **2.2** Focus-mode timer writes entries for Today/standalone tasks (currently project-task-centric in UI). → ✅ **PR1.** Confirmed the write path was already task-agnostic (`timeEntries.start`/`end` take any `taskId`, no project gate); browser-verified a standalone Today task auto-logs a completed entry.
+- **2.2a** Manual add/edit/delete entries (decided in-scope; placement **P1 — shared `<TaskTimeEntries>`** in Projects task detail + the Focus surface). → ✅ **PR1.** `timeEntries.create`/`update`/`delete` (reason `"manual"`, ≤24h window guard, RLS belt-and-braces); pure parse/format helpers in `src/lib/time/duration.ts` (Vitest). Browser-verified create/edit/delete in both hosts.
+- **2.3** Surface time-on-task in Today (not just Projects) — read path for EoD chart + future balance/scoping. → **Decided: A3 — EoD focus chart only** (no per-row Today changes); the existing chart already aggregates per-task and now picks up manual entries via `started_at`.
+- **2.4** Confirm RLS/sync already cover it (they should). → ✅ Confirmed: `task_time_entries` is in `packages/sync` `SYNC_TABLES` + the SQLite mirror (no column drift); RLS scoped to `auth.uid()` for select/insert/update/delete. Derive (2.1) means **no sync changes needed**.
+- **2.5** Aggregations for the **end-of-week review** (plan §7.6): time-per-category and time-per-project roll-ups from `task_time_entries` joined to `tasks.category` / `tasks.project_id`. → **PR2** (decided **B2** — data layer + a thin read-only weekly summary card). (The "% progress toward completion" metric is a Projects concern — define a project/phase completion calc in §9, fed by Top-3-weighted task counts.)
 
-**Acceptance:** starting a focus block on any task logs a time entry; entries queryable per task and per category.
+**Acceptance:** starting a focus block on any task logs a time entry ✅; entries queryable per task (✅ PR1) and per category (PR2 roll-ups).
 
 ---
 
@@ -207,6 +208,14 @@ The `inferCategoryFromTitle` seam is an **embeddings nearest-prototype** classif
 - **4.10** RLS on both new tables; SQLite mirror + offline occurrence generation; sync of rules + overrides.
 
 **Acceptance:** define a recurrence; occurrences appear in Today/Week; complete/skip one; "edit all future" splits cleanly; offline-consistent.
+
+**Resolved (Jun 22) — full sub-phase spec in `kash-3.0-data-spine-build-spec.md` §Phase 4 (4A–4G):**
+
+- **4.1 / 4.2 (Jun 16):** RRULE via rrule.js; ends = date / count / never.
+- **4.8 Occurrence model: VIRTUAL** — one template task row + occurrences computed on read + a `task_occurrence_overrides` table for exceptions (no row-per-occurrence).
+- **4.6 / 4.7 Single-occurrence: FULL control** — complete / skip / reschedule / edit any one occurrence as an override; the series continues. "Edit all future" = update the rule in place (forward); past overrides stay valid.
+- **Entry point:** a task-detail **Repeat picker** + a **composer shorthand** ("water plants; every tue" → rule).
+- **4.5 Generation:** one shared pure util (`src/lib/recurrence/expand.ts`) on server + client (offline).
 
 ---
 
