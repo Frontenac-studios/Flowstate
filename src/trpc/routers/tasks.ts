@@ -4,7 +4,8 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { syncTaskRow } from "@/db/record-sync-mutation";
-import { phases, projects, tasks } from "@/db/tables";
+import { phases, projects, taskDependencies, tasks } from "@/db/tables";
+import { computeDependencyState } from "@/lib/tasks/dependencies/blocked";
 import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
@@ -86,7 +87,32 @@ export const tasksRouter = createTRPCRouter({
       .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)))
       .orderBy(desc(tasks.priority), asc(tasks.createdAt));
 
-    return rows;
+    // Phase 3: surface live dependency state (isBlocked drives RDM-skip, unblocksCount
+    // drives blocker weight). Both endpoints of an edge are within `rows` (incomplete
+    // tasks) — a completed blocker is absent and so no longer blocks.
+    const edges = await db
+      .select({
+        blockerTaskId: taskDependencies.blockerTaskId,
+        blockedTaskId: taskDependencies.blockedTaskId,
+        expiresAt: taskDependencies.expiresAt,
+      })
+      .from(taskDependencies)
+      .where(eq(taskDependencies.userId, ctx.userId));
+
+    const depState = computeDependencyState(
+      edges,
+      rows.map((r) => r.id)
+    );
+
+    return rows.map((row) => {
+      const state = depState.get(row.id);
+      return {
+        ...row,
+        isBlocked: state?.isBlocked ?? false,
+        blockedByIds: state?.blockedByIds ?? [],
+        unblocksCount: state?.unblocksCount ?? 0,
+      };
+    });
   }),
 
   listToday: protectedProcedure.query(async ({ ctx }) => {
