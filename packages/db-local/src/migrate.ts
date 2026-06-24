@@ -61,6 +61,19 @@ CREATE TABLE IF NOT EXISTS task_time_entries (
   updated_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS task_dependencies (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  blocker_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  blocked_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  expires_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS task_dependencies_user_blocker_blocked_idx ON task_dependencies (user_id, blocker_task_id, blocked_task_id);
+CREATE INDEX IF NOT EXISTS task_dependencies_blocked_idx ON task_dependencies (user_id, blocked_task_id);
+CREATE INDEX IF NOT EXISTS task_dependencies_blocker_idx ON task_dependencies (user_id, blocker_task_id);
+
 CREATE TABLE IF NOT EXISTS focus_blocks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

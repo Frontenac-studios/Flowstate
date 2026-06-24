@@ -12,6 +12,7 @@ import {
   taskBulkImportItems as pgTaskBulkImportItems,
   taskBulkImports as pgTaskBulkImports,
 } from "./schema/task-bulk-imports";
+import { taskDependencies as pgTaskDependencies } from "./schema/task-dependencies";
 import { tasks as pgTasks } from "./schema/tasks";
 import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
 
@@ -30,6 +31,9 @@ export const taskBulkImportItems = (
 export const taskTimeEntries = (
   isSqliteMode() ? sqliteSchema.taskTimeEntries : pgTaskTimeEntries
 ) as typeof pgTaskTimeEntries;
+export const taskDependencies = (
+  isSqliteMode() ? sqliteSchema.taskDependencies : pgTaskDependencies
+) as typeof pgTaskDependencies;
 export const chatMessages = (
   isSqliteMode() ? sqliteSchema.chatMessages : pgChatMessages
 ) as typeof pgChatMessages;

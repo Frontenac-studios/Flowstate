@@ -3,6 +3,7 @@ export const SYNC_TABLES = [
   "phases",
   "tasks",
   "task_time_entries",
+  "task_dependencies",
   "chat_messages",
   "day_reviews",
   "app_settings",
