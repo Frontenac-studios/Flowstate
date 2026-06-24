@@ -20,5 +20,6 @@ export const chatMessages = pgTable(
       table.threadId,
       table.createdAt
     ),
+    index("chat_messages_user_id_updated_at_idx").on(table.userId, table.updatedAt),
   ]
 );

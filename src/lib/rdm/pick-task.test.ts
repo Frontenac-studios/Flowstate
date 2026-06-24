@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { pickRdmTask, type PickRdmResult, type RdmPickTask } from "./pick-task";
+import { pickRdmTask, rdmWeight, type PickRdmResult, type RdmPickTask } from "./pick-task";
 
 describe("pickRdmTask", () => {
   it("returns null for an empty pool", () => {
@@ -82,5 +82,47 @@ describe("pickRdmTask", () => {
     } finally {
       vi.restoreAllMocks();
     }
+  });
+
+  it("hard-skips blocked tasks (3.c)", () => {
+    const tasks: RdmPickTask[] = [
+      { id: "blocked", title: "Blocked", isTop3: true, completedAt: null, isBlocked: true },
+      { id: "open", title: "Open", isTop3: false, completedAt: null },
+    ];
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      expect(pickRdmTask(tasks)?.id).toBe("open");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("returns null when every eligible task is blocked", () => {
+    const tasks: RdmPickTask[] = [
+      { id: "a", title: "A", isTop3: false, completedAt: null, isBlocked: true },
+      { id: "b", title: "B", isTop3: true, completedAt: null, isBlocked: true },
+    ];
+    expect(pickRdmTask(tasks)).toBeNull();
+  });
+});
+
+describe("rdmWeight", () => {
+  it("returns the base Top-3 interleave weight with no dependents", () => {
+    expect(rdmWeight({ isTop3: true }, false)).toBe(3);
+    expect(rdmWeight({ isTop3: false }, false)).toBe(1);
+    expect(rdmWeight({ isTop3: true }, true)).toBe(1);
+    expect(rdmWeight({ isTop3: false }, true)).toBe(3);
+  });
+
+  it("scales weight up with unblocksCount", () => {
+    // base 1 * (1 + 0.5*2) = 2
+    expect(rdmWeight({ isTop3: false, unblocksCount: 2 }, false)).toBe(2);
+    // base 3 * (1 + 0.5*1) = 4.5
+    expect(rdmWeight({ isTop3: true, unblocksCount: 1 }, false)).toBe(4.5);
+  });
+
+  it("caps the dependent bonus at the soft cap", () => {
+    // bonus capped at 8 dependents: 1 * (1 + 0.5*8) = 5
+    expect(rdmWeight({ isTop3: false, unblocksCount: 99 }, false)).toBe(5);
   });
 });

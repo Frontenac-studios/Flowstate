@@ -22,6 +22,7 @@ export const taskBulkImports = pgTable(
       table.projectId,
       table.createdAt
     ),
+    index("task_bulk_imports_user_id_updated_at_idx").on(table.userId, table.updatedAt),
   ]
 );
 

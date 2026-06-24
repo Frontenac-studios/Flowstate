@@ -10,7 +10,7 @@
 | 1     | Category on tasks         | ✅ spec'd (1A–1G) · resolver reconciled to Model C | 🟡 spine + AI built (schema, resolver, tRPC, composer accent, task-row stripe, sync, enum-rename, settings router+editor, task-detail field, AI inference provider, loose-task backfill); **only `tasks.category` NOT NULL migration remains** |
 | 2     | Time-tracking on any task | ✅ spec'd (2A–2E)                                  | ⬜                                                                                                                                                                                                                                             |
 | 3     | Task dependencies         | ✅ spec'd (3A–3E)                                  | ⬜                                                                                                                                                                                                                                             |
-| 4     | Recurrence                | ⬜ to spec                                         | ⬜                                                                                                                                                                                                                                             |
+| 4     | Recurrence                | ✅ spec'd (4A–4G)                                  | ⬜                                                                                                                                                                                                                                             |
 
 **Overall build order:** `1 → 2 → 3 → 4` (by risk). Phases 2 (after 2A) and 3 are largely independent of 1; Design Tokens runs in parallel (only category _colors_ depend on it).
 
@@ -175,4 +175,49 @@ Capture is **already built** (`timeEntries.start({taskId})` works on any task; `
 
 # Phase 4 — Recurrence
 
-> ⬜ **To spec next.** Decisions locked (`kash-3.0-data-spine.md` §Phase 4): RRULE via rrule.js behind a friendly picker; ends on date / after N / never; `task_recurrence` + `task_occurrence_overrides` tables; on-the-fly occurrence generation; "edit this vs all future" = split rule at date; one task row as template, occurrences virtual. Sub-phases 4A–4x to be written when we reach it.
+Recurring tasks via **RRULE (rrule.js)** behind a friendly Repeat picker. Decisions: ends = date/count/never · **virtual occurrences** (one template + computed dates + overrides) · **full single-occurrence control** (complete/skip/reschedule/edit one) · entry via **Repeat picker + composer shorthand**.
+
+### 4A — Schema
+
+- New `src/db/schema/task-recurrence.ts`: `id, user_id, task_id → tasks(id) on delete cascade` (unique — a task IS the template), `rrule text` (e.g. `FREQ=WEEKLY;BYDAY=TU;UNTIL=…` — end is encoded in the rule), `start_date`, `created_at, updated_at`.
+- New `src/db/schema/task-occurrence-overrides.ts`: `id, user_id, recurrence_id → task_recurrence(id) on delete cascade, occurrence_date date, status` enum `completed | skipped | rescheduled | edited`, `moved_to_date date NULL` (rescheduled), `patch jsonb NULL` (edited fields), `completed_at NULL`, `created_at`. Unique `(recurrence_id, occurrence_date)`.
+- "Is this task recurring?" = join `task_recurrence` (no denormalized flag). A recurring template's own `scheduled_date` is unused — dates come from the rule.
+- RLS `auth.uid()` on both. `db:generate` → review → commit.
+- **Accept:** a task can hold one recurrence rule; overrides table exists; both RLS-scoped.
+
+### 4B — Occurrence generation (shared pure util)
+
+- `src/lib/recurrence/expand.ts`: `expandOccurrences(rrule, startDate, window)` → occurrence dates in a window via **rrule.js**, then **merge overrides** (drop skipped, move rescheduled, apply edited patches, mark completed). `nextOccurrence(rrule, from)` for reminders.
+- Runs on **server** (Today/Week/calendar queries) and **client** (offline) — rrule.js works in both.
+- **Tests:** weekly/monthly/interval, UNTIL/COUNT/never, overrides applied, month-end/DST (rrule.js handles).
+- **Accept:** rule + window → correct dates with overrides; identical online/offline.
+
+### 4C — Rendering in Today / Week
+
+- Today/Week/calendar queries **expand templates into virtual occurrence rows** for the visible range (4B), each rendered like a normal task with a small **↻ recurring badge**, carrying the template's category/priority/project + the occurrence date.
+- Occurrences are **date-anchored** to the rule (or an override's `moved_to_date`); they sort alongside normal `scheduled_date` tasks. You don't free-bucket them — but you can reschedule a single one (4D).
+- **Accept:** a weekly task shows on its days with a ↻ badge; completing/skipping affects only that date.
+
+### 4D — Single-occurrence actions (full)
+
+- From an occurrence's row/menu: **complete** → override `completed` (+ `completed_at`); **skip** → override `skipped`; **reschedule** → override `rescheduled` + `moved_to_date`; **edit this** → override `edited` + `patch`.
+- The series is untouched; the next occurrence appears on its date.
+- **Accept:** each action persists as one override and renders correctly; series unaffected.
+
+### 4E — Recurrence editing (picker; this vs all-future)
+
+- The **Repeat picker** (task detail) sets/edits the rule (frequency · interval · byday · ends).
+- **"Edit all future"** = update the rule in place (forward-looking); past overrides stay valid (they're keyed by date). _(The decision-log "split the rule" intent is realized simply as in-place forward update for v1, since one task = one rule; a true two-series split is a later refinement.)_ **"Edit this only"** = an override (4D).
+- **Accept:** changing the picker updates future occurrences; past completions unaffected.
+
+### 4F — Composer shorthand
+
+- Parser (`parse-quick-input.ts`): recognize a recurrence phrase in a `;` segment ("every tue", "daily", "every other week", "monthly on the 1st") → an RRULE (rrule.js text parsing + a small phrase map); render a ↻ chip in the preview; on create, attach a `task_recurrence`.
+- **Accept:** `water plants; every tue` creates a task with a weekly-Tue rule.
+
+### 4G — Sync, RLS, verification
+
+- Sync `task_recurrence` + `task_occurrence_overrides` (`packages/db-local`, `packages/sync`); the expand util (pure) runs offline.
+- **Tests:** expansion (4B), single-occurrence overrides (4D), shorthand parse (4F), edit-all-future (4E). Manual QA: create via picker + shorthand; complete/skip/move one; offline parity. Gates: typecheck, lint, RLS audit.
+
+**Order:** `4A → 4B → 4C → (4D ∥ 4E ∥ 4F) → 4G`. Independent of Phases 1–3.

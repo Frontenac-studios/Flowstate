@@ -482,11 +482,51 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **4. Promotion path:** one move to pull an Abyss item into Today / Week / a Project / an annual goal (§8 bingo card).
 
-**Remaining open questions:**
+### Phase 1 — Purpose & identity (resolved Jun 16)
 
-- Abyss review cadence: weekly, monthly, or user-set?
-- Does Drop ever auto-expire from the Abyss (e.g., archive after a year untouched), or stay forever?
-- Capture entry point: a global shortcut (like ⌘D for Decide), the right chat rail, or both?
+- **Metaphor: a cosmic void / starfield.** Items are points of light; the AI theme-clusters render as **constellations** (recurring ideas group visually), and a higher resurface count **brightens** a star. The metaphor and §10's pattern-tracking reinforce each other.
+- **Emotional intent flexes by moment:** reassuring when you drop something in, a little delightful when something resurfaces, understated while browsing.
+- **Scope:** actionable backburner **+ ideas + inspiration / reference** (quotes, links, images) — not only to-dos.
+- **Item model:** a few **soft types** — _idea / task / reference_ (lightly distinguished; can render as different stars). **Two capture modes:** a _quick line_ (title only) or a _full item_ (type + note + links/images). Category stays optional at capture.
+- **Permanence: auto-archive after long inactivity** — old untouched items leave the main sky into a **retrievable archive**, keeping the field uncluttered. The system never hard-deletes (only your explicit Delete does).
+- _(Confirmed from §10: Drop→Abyss + explicit Delete · category-tag · AI theme clusters + resurface counts · periodic-review resurfacing · one-move promotion.)_
+
+### Phase 2 — UX flows (resolved Jun 16)
+
+- **Capture — both entry points.** A **global shortcut** (⌘⇧A, TBD) pops a **quick-capture overlay** over anything you're doing, opening in **quick mode** (title only) with a toggle to **full** (type + note + links/images); **and** the **right chat rail** ("park this…"), where Claude auto-tags type/category. Capture never interrupts flow.
+- **Review ritual — monthly, curated.** A **monthly** "stargazing" review that **leads with your brightest constellations** — strongest theme-clusters and most-parked ideas first ("here's what keeps calling you"). Calm, not a nag. _(The Abyss is also a rail destination you can open and browse anytime; the monthly review is the guided layer on top.)_
+- **Promotion — one tap, item stays.** Tap an item → pick a target (Today / Week / a Project / a §8 annual goal). The promoted item **stays in the Abyss marked "active,"** preserving its resurface history; if you don't finish it, it **quietly returns to the field**. Explicit per-item **Delete** remains the only true removal.
+
+### Phase 3 — UI & layout (resolved Jun 16)
+
+- **Layout: Hybrid — Sky + List**, switchable via an in-page switcher. **Sky** = browse + the monthly review; **List** = scan + act.
+- **Sky:** stars stay **neutral / cosmic white** (no category color); **type = star style** (idea = glow · task = ring · reference = glint); **resurface count = brightness**; AI theme-clusters render as **constellations** (connected stars + a small label & count); pan / zoom; tap a star → the item (promote / edit); age **dims** a star toward archive.
+- **List:** **switchable grouping** — by pattern ("keeps calling you" → recent), by category, or flat + sortable. Rows show type · title · a category dot · resurface count.
+- **Filters / controls (both views):** **search, category, type, age/recency**. Filtering **highlights** matching stars in the Sky.
+- **Empty state:** a calm empty sky + a gentle first-capture prompt (default; refine in copy).
+
+### Phase 4 — Animations (resolved Jun 16)
+
+- **Character: calm baseline + delightful punctuation.** Resting state is **subtle & calm** (gentle twinkle, slow parallax drift); the signature _moments_ get **lively, delightful** motion. Always respects `prefers-reduced-motion` (drops to minimal/instant).
+- **Signature moments — all four animated:**
+  - **Capture (hero)** — the item **visibly travels into the sky** and settles as a star (the "I let it go" release). It's the most-used gesture.
+  - **Resurface** — a constellation/star **brightens and pulses** as it comes up in the monthly review.
+  - **Promote** — the star **rises out** of the sky toward its destination.
+  - **Archive** — an old, untouched star **drifts away and fades** into deep space.
+
+### Phase 5 — Icon & identity (resolved Jun 16)
+
+- **Name: "the Abyss"** (kept — reads fine as a dark cosmic void; no churn).
+- **Rail icon: a constellation** — a few connected stars (on-theme: literally the pattern-clusters). Needs a small-size (20px) legible form.
+- **Visual mood: a distinct dark, immersive space.** You "descend" into a dark cosmic room — a deliberate shift from the app's calm light surfaces. **Both the Sky and the List are dark-themed.** The Abyss gets its own dark surface tokens (defined in the Design Tokens phase).
+
+### Phases 6–8 — Engineering (resolved Jun 16; detailed in `kash-3.0-abyss-build-spec.md`)
+
+- **Data model: its own `abyss_items` entity** (not a flavor of task). Different lifecycle + most items aren't tasks; promoting a _task_-type item spawns/links a real task while the Abyss item stays with its history.
+- **AI: reuse the category-inference embeddings** for semantic theme clustering (constellations); resurface-count tracking; the **monthly review is owned by the Reflection & care guide** voice (brightest constellations first).
+- **Integration & build** drafted in the build-spec doc — Drop/triage wiring (§6), capture entry points, promotion targets, sync/RLS, the §15 monthly-review reminder, dark theming, and the build sub-phase order.
+
+**Minor open (settle during build):** archive threshold, _idea/task/reference_ taxonomy confirm, the constellation icon's exact 20px form, Abyss dark surface tokens (Design Tokens phase).
 
 ---
 
@@ -533,11 +573,40 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 
 **Per-surface roles** (carried/expanded from current build): Today narrates picks + flags stalled Top-3; Week/Plan draft & rebalance; Projects scope/template from time data (§9); Abyss resurfaces patterns; Reviews reflect & celebrate.
 
-**Remaining open questions:**
+### Persona layer (resolved Jun 16) — refines the "specialized modes" above
 
-- Confirm the 3 mode names (Planner / Focus coach / Reflection & care guide).
-- Do modes get distinct visual identity (color/avatar), or just a tonal shift?
-- About-me doc: AI auto-drafts updates for approval, or only edits when asked?
+The persona-definition session **tempered the three-modes framing**: they are **implicit registers of one Kash**, not distinct characters.
+
+- **Persona model: one Kash, subtle tonal shifts** — always the same voice, slightly warmer at reflection / crisper when planning. Not a cast of characters.
+- **Tone: neutral, efficient, professional** — restrained personality; the reflection register is _slightly_ warmer but still understated (matches "encouragement, not guilt" without being chatty).
+- **Three registers (by context, not user-switched):**
+  - **Planning** (default) — chat rail + arranging: everyday chat, week, Plan, projects, the balance-pass. Crisp, operational.
+  - **Focus** — the focus session only: RDM narration + quiet check-ins. Minimal, non-distracting.
+  - **Reflection** — reviews + self-care: daily EoD, weekly/monthly reviews, 3 Daily Wins, the Abyss monthly review. Slightly warmer.
+- **Presence: not shown** — no avatars, no labels, no surfaced "mode." Register is chosen automatically by surface; the shift is implicit. (Maps cleanly onto the existing `system-prompts.ts` functional modes.)
+- **Subsections 2 (mode model) & 3 (presence/identity) are therefore settled** by these choices — no manual switching, no per-persona identity to build.
+
+### Proactivity & autonomy (resolved Jun 16)
+
+- **Proactivity: minimal & essential.** Kash answers when asked; unprompted, only a few essentials — a stalled Top-3 flag, the gentle self-care / walk prompts, and the monthly Abyss/Planning review. Quiet by default.
+- **Autonomy: conservative.** The only fully-auto tier is **surfacing / suggesting** (no data change). **Anything that changes state is confirmed** — reschedules, week/project rearrangement, category edits, About-me edits. (Calibrates §11's tiered autonomy to its cautious end; the auto tier is narrow.)
+- **Transparency: confirms only.** Because Kash confirms almost everything, there's little silent auto-action — no separate activity log needed. The confirm step _is_ the transparency.
+
+### About-me doc (partially resolved Jun 16)
+
+- **Structure: hybrid** — fixed sections (Values, Working hours & constraints, Preferences) + a **free-form notes area** for the rest.
+- **Update mechanism: DEFERRED** — being defined elsewhere (§13 / a separate effort); **circle back.** (Leaning, per conservative autonomy: Kash proposes, you approve — not locked.)
+- **Editing UX: a dedicated editable page** as the baseline (read/edit the whole doc); chat-add optional. _(No strong preference stated — default, revisit.)_
+
+### Tool / action catalog (resolved Jun 16; detailed in `kash-3.0-ai-persona-build-spec.md`)
+
+- **Capable agent, confirm-gated.** Kash can perform **any** action you can — create / edit / reschedule / complete / **delete** tasks, set Top-3, draft & arrange the week, rebalance, scope/replan projects, capture & promote Abyss items, set protected blocks / priorities, edit the About-me doc.
+- **No hard limits** — even destructive actions are allowed, because **every state-changing action is confirmed** (the confirm-card pattern). **Reads & suggestions are auto;** writes surface a confirmable proposal.
+
+**Remaining open (persona layer):**
+
+- **About-me update mechanism** — circle back (defined elsewhere).
+- **Architecture + integration** detail → `kash-3.0-ai-persona-build-spec.md` (subsections 7–8).
 - (From §13) Values ranked 1–5 or flat? Do context edits reshape past suggestions or only future?
 
 ---
@@ -603,11 +672,66 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 - Exact touchpoint times for the in-day prompt.
 - Win attribution display (show what counted, tap to correct) — follows from "fully editable."
 
-**Remaining open questions (Care):**
+### Care — Phase 1: Purpose & capabilities (resolved Jun 22)
 
-- Breathing visualization style → defer to the Design Tokens + animation passes (§5, final phase).
-- Garden art direction and "growth" rules → its own design spike when Phase 2 begins.
-- Reflection ritual cadence/prompts: reuse §11 Reflection guide, or scripted templates?
+- **Primary mode: both** — a deliberate destination (a place to reflect, tend things, check in) _and_ an ambient layer woven into Today. Not a light backstop.
+- **Guidance: adaptive, Finch-modeled** — light structure you can always ignore or freeform. The model is **Finch's self-care tasks**: a **library of small self-care practices** you can **adopt (suggested) or create your own**, do, and build gentle habits around.
+- **Connection: hybrid — aware, never a scoreboard.** Care reflects your balance (the garden feeds on it; soft "Body & Mind has been quiet") but is designed so self-care never feels like a metric to optimize.
+- **Capabilities (the Care hub holds):**
+  - **Self-care tasks** — the Finch-style library (adopt or create).
+  - **The garden + stats** — grows from self-care + balance (stats-first, garden-later).
+  - **3 Daily Wins** — physical / mental / spiritual (cross-cutting, auto-detected — see above).
+  - **Breathing** — guided, grounding visual.
+  - **Reflection rituals** — daily / weekly / monthly (Reflection register, §11).
+  - **Walks** — gentle reminders.
+  - **"What lifts me"** _(new)_ — Care learns which **tasks actually make you feel better** (when done, or done regularly) and nudges you to repeat them. A wellbeing-pattern layer over your task completions.
+  - **Travel-planning** — **kept in Care**, framed as planning restorative outside-time around work.
+
+### Care — Phase 2: Garden growth model (resolved Jun 22)
+
+- **Uniform garden** — any self-care act grows **one shared garden** (not category-mapped). The garden stays gentle; it never shows a neglected life-area as bare. _(Category-balance honesty lives in the **stats**, not the garden — this cleanly splits "hybrid, never a scoreboard": garden = warm/uniform/encouraging · stats = the honest mirror.)_
+- **Seasonal cycle** — a fresh garden each season/month; a natural rhythm and clean slate, low long-term "keep-it-up" pressure.
+- **Neglect → gently dormant, then revives** — softly dims when you've been away, brightens the moment you return. **Never dies, never punishes.**
+- **Nourishment:** each self-care act feeds it a little; all 3 Daily Wins in a day = a small bonus (§12).
+
+### Care — Phase 3: Garden art (resolved Jun 22)
+
+- **Detailed · illustrative** (petals/leaves, real character) — a deliberate lush world, like the Abyss is a deliberate dark one. _Detailed generative-asset work = a design spike that ships after the stats substrate._
+
+### Care — Phase 4: Breathing (resolved Jun 22)
+
+- **Visualization: a pulsing orb** — soft, abstract, calm; scales with the breath.
+- **Pattern: a few presets** (Box 4-4-4-4 · 4-7-8 relax · simple in-out), **defaulting to Box 4-4-4-4.**
+- **Offered: on-demand + a gentle offer during stressful stretches** — never forced. (Stress signals defined in the data/integration phase.)
+- A completed session counts as a self-care act (feeds the garden; a mental/spiritual win).
+
+### Care — Phase 5: Reflection rituals (resolved Jun 22)
+
+- **Prompt style: hybrid** — a small consistent frame (a win · a drain · a forward note) that the AI **Reflection register** (§11) personalizes to your actual day.
+- **Input: both** — a gentle prompt to start + a free-text open space.
+- **Mood: captured, but kept SEPARATE from tasks** — a light one-tap mood after reflecting, for your own trends; **not paired to tasks** (keeps self-care from feeling like optimization).
+- **Cadences:** daily (EoD celebration), weekly, monthly — the warm/celebratory layer of the existing reviews (§6 / §7.6 / §8), owned by the Reflection register.
+- **Consequence:** because mood isn't tied to tasks, **"what lifts me" can't auto-learn from mood↔task pairing** — it needs an explicit / regularity-based signal (see below).
+
+### Care — "What lifts me" (resolved Jun 22)
+
+- **Learns from both** — Care auto-notices self-care you do **regularly** ("you do this often") AND lets you **explicitly heart** activities; you curate the list. (Your framing: things that help "when you do them, or do them regularly.")
+- **Surfacing: a list in Care + gentle, occasional nudges** ("it's been a week since a morning walk"). Present, never naggy (minimal proactivity, §11).
+- Relies on **regularity + explicit marks** (not mood-inference, since mood is task-separate).
+
+### Care — Phase 6: Stats (resolved Jun 22)
+
+- **Shows: self-care frequency · daily-wins hit rate · mood trend.** **Not life-balance** — category balance lives in the planning/review surfaces (§7.6 weekly review, Today/Week bars), _not_ Care. Care stats are wellbeing-specific (Care = your _practice_ tracker, not a balance dashboard).
+- **Tone: gentle-informative with light motivating touches** — soft language, a wins hit-rate, "steady" framing; **no streaks-to-break, goals-to-miss, or red.** Honest without judgment.
+- **Placement: a stats area in Care + the numbers feed the §7.6 weekly review.**
+
+### Care — Phases 7–8: Engineering (resolved Jun 22; detailed in `kash-3.0-care-build-spec.md`)
+
+- **Data model:** a **`care_activities`** entity (the Finch library + the "lifts me" flag; doing one spawns a Body & Mind task), `care_events` (logged self-care), `reflections` (prompt + body + **mood, kept off tasks**), minimal computed `garden_state`. Wins computed (§12).
+- **Breathing stress signal:** **activity + mood** (long focus block / heavy day, factoring a recent low mood) → a gentle, dismissible offer.
+- **Build order: stats-first** — data model → library + what-lifts-me → reflection → **stats** → breathing → walks/Today prompts → **the garden last** (the illustrative design spike).
+
+_Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits the build._
 
 ---
 
@@ -680,6 +804,8 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 - `task_dependencies` (new)
 - generalize `task_time_entries` scope
 
+**Backend foundations every new table inherits** (from the Jun 24 optimization pass — full spec in `kash-3.0-backend-optimization-spec.md`): each new **synced** table ships with a `(user_id, updated_at)` composite index (sync + RLS hot path) and respects the optimized sync model from day one — **batched push** (one upsert per table per flush), **keyset-paginated pull** (`(updated_at, id)`, never a full-table re-pull), and **outbox prune** (`sync_mutations` stores changed columns only, acked rows pruned). This is a standing cross-phase requirement, not a retrofit — see data-spine §5/§7.
+
 **Remaining open questions:**
 
 - ✅ Blocked task: **hidden until unblocked**, and the blocking task gets a **boosted RDM weight** to surface sooner (decided Jun 16, see data-spine doc).
@@ -695,12 +821,13 @@ Three context-tuned voices, but **one shared memory** (the About-me doc) and **o
 
 ## 15. System-wide mechanics
 
-> **Status: MOSTLY RESOLVED (Jun 2026) by reference** — the feature sessions settled most of this. One real platform limitation remains open (web background reminders).
+> **Status: RESOLVED (Jun 22 2026).** The web-closed-reminder fork, notification controls, and the gamification question are now decided.
 
-- **Notifications & DND** — settled by §6/§12: focus blocks **auto-enable DND**; reminders go **OS-level on Tauri desktop, in-app on web**. Build one shared delivery abstraction with a desktop adapter (real OS DND + notifications) and a web adapter (in-app + best-effort Web Notifications). **Open:** web reminders when the app is _closed_ are unreliable — decide a fallback (email digest? desktop-only? accept the gap).
+- **Notifications & DND** — focus blocks **auto-enable DND**; reminders go **OS-level on Tauri desktop, in-app on web**, via one shared delivery abstraction (desktop adapter = real OS DND + notifications · web adapter = in-app + best-effort Web Notifications). **Web-closed fallback: the desktop app.** Web reminders fire only while the tab's open; for reliable always-on reminders, point web users to the **Tauri desktop app** (no PWA push / email fallback for v1 — keeps it simple and honest).
+- **Notification controls — simple:** a **global on/off** + the focus-block DND. No per-type toggles for v1 (calm, minimal settings).
 - **Time-tracking as the data spine** — settled by §14: optional on **any** task; feeds §9 scoping, EoD charts, the §2 time-based balance upgrade. Keep capture frictionless (Focus timer + manual).
-- **Gamification engine** — settled by §12: one shared dataset (self-care events + balance), rendered **stats-first, then generative garden**. Surfaced lightly in Today and in Care. Encouragement-only (no punitive states).
-- **Offline + sync** — existing Tauri SQLite + Supabase sync. All new tables (category on tasks, recurrence, dependencies, abyss, planning/goals, values/About-me, self-care events) must respect the sync model.
+- **Gamification** — **Care's garden + stats** (§12) are the only _persistent_ layer, **plus light ephemeral celebration moments app-wide** (a vanishing flourish when all 3 Top tasks land, or after a good focus block) — **nothing scored or stored**, no points/badges/streaks. Encouragement without a tally.
+- **Offline + sync** — existing Tauri SQLite + Supabase sync. All new tables (category on tasks, recurrence, dependencies, abyss, planning/goals, values/About-me, self-care events) must respect the sync model. **Optimized model (Jun 24 pass — `kash-3.0-backend-optimization-spec.md`):** batched push + keyset-paginated pull (the unbounded full-table re-pull cliff is killed), outbox prune, and a `(user_id, updated_at)` index per synced table. Desktop surfaces sync state as a **status dot + expandable detail panel** (synced/syncing/offline · last-synced · pending count · manual sync · conflicts), collapsed by default to stay calm. Runs as a **parallel track** (fix-as-you-touch), with the sync push/pull + indexing core riding the Phase 3 dependencies data-layer PR.
 - **RLS & privacy** — every new table scoped to `auth.uid()` per repo conventions; the §13 About-me doc is especially sensitive (transparent, user-editable, never logged).
 
 ---
@@ -716,6 +843,8 @@ This is a _vision_ doc, so treat sequencing as a sketch, not a commitment. A sen
 5. **Self-Care + Values + Context doc** (§12, §13) — the emotional core of 3.0.
 6. **Planning Mode** (§8) — the long-horizon layer; biggest net-new surface.
 7. **AI scope expansion** (§11) — rides on top of categories, time data, and planning being in place.
+
+**Parallel track — Backend & latency optimization** (`kash-3.0-backend-optimization-spec.md`, decided Jun 24): not a numbered step — runs _alongside_ the above, fixed as each feature phase touches the relevant code. The high-leverage core (sync batching + bounded pull that kills the full-table re-pull cliff + the `(user_id, updated_at)` indexing pass) should ride the **Phase 3 dependencies data-layer PR**, which already touches sync + adds a synced table. UX-touching items land with the surface they serve (create-shimmer with the composer/Design Tokens, chat windowing with the §11 rail, the desktop sync panel with the shell). Each OPT item re-audits the codebase at build time, since code drifts under the plan.
 
 ---
 
@@ -735,6 +864,7 @@ Decisions to resolve as sections get expanded (collected from above):
 - **Self-care:** ✅ RESOLVED (§12) — generative garden (stats-first), nourished by self-care + balance, both-channel reminders.
 - **Values:** ranked or flat? retroactive context edits?
 - **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task. _Remaining:_ blocked-task RDM behavior, tags timing, recurrence-end options.
+- **Backend optimization:** ✅ RESOLVED (`kash-3.0-backend-optimization-spec.md`, Jun 24) — parallel-track pass; sync batching + bounded pull (cliff killed), indexing standing-req, outbox prune, timestamp-seam normalization; UX calls D1 create-shimmer / D2 sync panel / D3 chat windowing. _Remaining:_ D1 shimmer motion + duration (Design Tokens / animation pass), D2 panel placement (settings vs shell status bar — §4 Nav), OPT-1 coalescing semantics for delete-after-update on the same offline row (confirm at re-audit).
 
 ---
 

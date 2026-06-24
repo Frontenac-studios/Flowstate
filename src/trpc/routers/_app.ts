@@ -4,6 +4,7 @@ import { baseProcedure, createTRPCRouter } from "../init";
 import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
 import { dayReviewsRouter } from "./day-reviews";
+import { dependenciesRouter } from "./dependencies";
 import { focusBlocksRouter } from "./focus-blocks";
 import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   categorySettings: categorySettingsRouter,
   chat: chatRouter,
   dayReviews: dayReviewsRouter,
+  dependencies: dependenciesRouter,
   focusBlocks: focusBlocksRouter,
   healthChecks: healthChecksRouter,
   me: meRouter,
