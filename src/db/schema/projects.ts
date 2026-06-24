@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const projectCategory = pgEnum("project_category", [
   "professional",
@@ -19,5 +19,8 @@ export const projects = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("projects_user_id_slug_idx").on(table.userId, table.slug)]
+  (table) => [
+    uniqueIndex("projects_user_id_slug_idx").on(table.userId, table.slug),
+    index("projects_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+  ]
 );

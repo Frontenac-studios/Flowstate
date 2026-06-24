@@ -30,5 +30,8 @@ export const tasks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [index("tasks_user_id_scheduled_date_idx").on(table.userId, table.scheduledDate)]
+  (table) => [
+    index("tasks_user_id_scheduled_date_idx").on(table.userId, table.scheduledDate),
+    index("tasks_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+  ]
 );

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS projects (
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS projects_user_id_slug_idx ON projects (user_id, slug);
+CREATE INDEX IF NOT EXISTS projects_user_id_updated_at_idx ON projects (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS phases (
   id TEXT PRIMARY KEY NOT NULL,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS phases (
 );
 CREATE INDEX IF NOT EXISTS phases_user_id_project_id_idx ON phases (user_id, project_id);
 CREATE INDEX IF NOT EXISTS phases_parent_phase_id_idx ON phases (parent_phase_id);
+CREATE INDEX IF NOT EXISTS phases_user_id_updated_at_idx ON phases (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY NOT NULL,
@@ -49,6 +51,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS tasks_user_id_scheduled_date_idx ON tasks (user_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS tasks_user_id_updated_at_idx ON tasks (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS task_time_entries (
   id TEXT PRIMARY KEY NOT NULL,
@@ -60,6 +63,7 @@ CREATE TABLE IF NOT EXISTS task_time_entries (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS task_time_entries_user_id_updated_at_idx ON task_time_entries (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS task_dependencies (
   id TEXT PRIMARY KEY NOT NULL,
@@ -73,6 +77,7 @@ CREATE TABLE IF NOT EXISTS task_dependencies (
 CREATE UNIQUE INDEX IF NOT EXISTS task_dependencies_user_blocker_blocked_idx ON task_dependencies (user_id, blocker_task_id, blocked_task_id);
 CREATE INDEX IF NOT EXISTS task_dependencies_blocked_idx ON task_dependencies (user_id, blocked_task_id);
 CREATE INDEX IF NOT EXISTS task_dependencies_blocker_idx ON task_dependencies (user_id, blocker_task_id);
+CREATE INDEX IF NOT EXISTS task_dependencies_user_id_updated_at_idx ON task_dependencies (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS focus_blocks (
   id TEXT PRIMARY KEY NOT NULL,
@@ -99,6 +104,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 CREATE INDEX IF NOT EXISTS chat_messages_user_id_thread_id_created_at_idx
   ON chat_messages (user_id, thread_id, created_at);
+CREATE INDEX IF NOT EXISTS chat_messages_user_id_updated_at_idx ON chat_messages (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS day_reviews (
   id TEXT PRIMARY KEY NOT NULL,
@@ -112,6 +118,7 @@ CREATE TABLE IF NOT EXISTS day_reviews (
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS day_reviews_user_id_date_idx ON day_reviews (user_id, date);
+CREATE INDEX IF NOT EXISTS day_reviews_user_id_updated_at_idx ON day_reviews (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS app_settings (
   user_id TEXT PRIMARY KEY NOT NULL,
@@ -134,6 +141,7 @@ CREATE TABLE IF NOT EXISTS category_settings (
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (user_id, category)
 );
+CREATE INDEX IF NOT EXISTS category_settings_user_id_updated_at_idx ON category_settings (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS nudge_events (
   id TEXT PRIMARY KEY NOT NULL,
@@ -146,6 +154,7 @@ CREATE TABLE IF NOT EXISTS nudge_events (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS nudge_events_user_id_kind_local_date_idx
   ON nudge_events (user_id, kind, local_date);
+CREATE INDEX IF NOT EXISTS nudge_events_user_id_updated_at_idx ON nudge_events (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS task_bulk_imports (
   id TEXT PRIMARY KEY NOT NULL,
@@ -158,6 +167,7 @@ CREATE TABLE IF NOT EXISTS task_bulk_imports (
 );
 CREATE INDEX IF NOT EXISTS task_bulk_imports_user_id_project_id_created_at_idx
   ON task_bulk_imports (user_id, project_id, created_at);
+CREATE INDEX IF NOT EXISTS task_bulk_imports_user_id_updated_at_idx ON task_bulk_imports (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS task_bulk_import_items (
   import_id TEXT NOT NULL REFERENCES task_bulk_imports(id) ON DELETE CASCADE,

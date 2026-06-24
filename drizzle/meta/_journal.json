@@ -92,6 +92,13 @@
       "when": 1782319126128,
       "tag": "0012_fixed_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1782322236040,
+      "tag": "0013_sticky_blackheart",
+      "breakpoints": true
     }
   ]
 }

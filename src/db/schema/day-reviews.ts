@@ -1,4 +1,13 @@
-import { date, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  date,
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const dayReviews = pgTable(
   "day_reviews",
@@ -13,5 +22,8 @@ export const dayReviews = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("day_reviews_user_id_date_idx").on(table.userId, table.reviewDate)]
+  (table) => [
+    uniqueIndex("day_reviews_user_id_date_idx").on(table.userId, table.reviewDate),
+    index("day_reviews_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+  ]
 );

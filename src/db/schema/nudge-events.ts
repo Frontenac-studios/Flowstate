@@ -1,4 +1,13 @@
-import { date, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  date,
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const nudgeEventKinds = ["top3_stall"] as const;
 export type NudgeEventKind = (typeof nudgeEventKinds)[number];
@@ -20,5 +29,6 @@ export const nudgeEvents = pgTable(
       table.kind,
       table.localDate
     ),
+    index("nudge_events_user_id_updated_at_idx").on(table.userId, table.updatedAt),
   ]
 );

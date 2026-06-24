@@ -37,5 +37,6 @@ export const taskDependencies = pgTable(
     // Reverse lookups: a task's blockers (is-blocked) and a task's dependents (weight).
     index("task_dependencies_blocked_idx").on(table.userId, table.blockedTaskId),
     index("task_dependencies_blocker_idx").on(table.userId, table.blockerTaskId),
+    index("task_dependencies_user_id_updated_at_idx").on(table.userId, table.updatedAt),
   ]
 );

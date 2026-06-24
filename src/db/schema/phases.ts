@@ -37,5 +37,6 @@ export const phases = pgTable(
     }).onDelete("cascade"),
     index("phases_user_id_project_id_idx").on(table.userId, table.projectId),
     index("phases_parent_phase_id_idx").on(table.parentPhaseId),
+    index("phases_user_id_updated_at_idx").on(table.userId, table.updatedAt),
   ]
 );

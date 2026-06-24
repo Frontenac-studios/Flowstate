@@ -1,23 +1,46 @@
 import type { SqliteDb } from "@kash/db-local";
 import {
   appSettings,
+  categorySettings,
   chatMessages,
   dayReviews,
   nudgeEvents,
+  phases,
   projects,
   syncWatermarks,
   taskBulkImportItems,
   taskBulkImports,
+  taskDependencies,
   taskTimeEntries,
   tasks,
 } from "@kash/db-local/schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { and, eq } from "drizzle-orm";
 
+import { coalesceMutations } from "./coalesce-mutations";
 import { pickNewerRow } from "./conflict";
-import { listPendingMutations, markMutationSynced } from "./mutation-log";
+import { listPendingMutations, markMutationsSynced } from "./mutation-log";
 import { mapPayloadToRemote, mapRemoteRow } from "./row-mapper";
 import { SYNC_TABLES, type SyncTable } from "./tables";
+
+/** Max rows fetched per pull page. Bounds payload size and kills the old full-table re-pull. */
+const PULL_PAGE_SIZE = 500;
+
+/**
+ * Secondary sort column for keyset-ordered pull paging, by table. Most tables key on
+ * `id`; the composite-PK tables order by a PK member instead (they have no `id`).
+ */
+const PULL_TIEBREAK: Partial<Record<SyncTable, string>> = {
+  category_settings: "category",
+  task_bulk_import_items: "task_id",
+};
+
+/** Tables whose remote rows are not addressable by a single `id` column (composite PK). */
+const NON_ID_DELETE_TABLES = new Set<SyncTable>([
+  "app_settings",
+  "category_settings",
+  "task_bulk_import_items",
+]);
 
 type SyncResult = {
   pulled: number;
@@ -32,17 +55,13 @@ export async function runSync(params: {
 }): Promise<SyncResult> {
   const result: SyncResult = { pulled: 0, pushed: 0, errors: [] };
 
-  try {
-    result.pulled = await pullRemoteChanges(params);
-  } catch (e) {
-    result.errors.push(`pull: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  const pull = await pullRemoteChanges(params);
+  result.pulled = pull.count;
+  result.errors.push(...pull.errors);
 
-  try {
-    result.pushed = await pushPendingMutations(params);
-  } catch (e) {
-    result.errors.push(`push: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  const push = await pushPendingMutations(params);
+  result.pushed = push.count;
+  result.errors.push(...push.errors);
 
   return result;
 }
@@ -77,34 +96,55 @@ async function pullRemoteChanges(params: {
   db: SqliteDb;
   supabase: SupabaseClient;
   userId: string;
-}): Promise<number> {
+}): Promise<{ count: number; errors: string[] }> {
   let count = 0;
+  const errors: string[] = [];
   const now = new Date();
 
   for (const table of SYNC_TABLES) {
-    const since = await getWatermark(params.db, table);
-    let query = params.supabase.from(table).select("*");
+    try {
+      // app_settings is a single row per user — no watermark filter, no paging.
+      if (table === "app_settings") {
+        const { data, error } = await params.supabase
+          .from(table)
+          .select("*")
+          .eq("user_id", params.userId);
+        if (error) throw error;
+        count += await applyRemoteRows(params.db, table, data ?? []);
+        await setWatermark(params.db, table, now);
+        continue;
+      }
 
-    if (table === "app_settings") {
-      query = query.eq("user_id", params.userId);
-    } else {
-      query = query.eq("user_id", params.userId).gte("updated_at", since.toISOString());
+      const since = await getWatermark(params.db, table);
+      const tiebreak = PULL_TIEBREAK[table] ?? "id";
+
+      // Page through changes since the watermark over a stable (updated_at, tiebreak)
+      // order, draining every page. A failure aborts THIS table only (watermark left
+      // intact so the next sync resumes) — never a full-table re-pull.
+      for (let from = 0; ; from += PULL_PAGE_SIZE) {
+        const { data, error } = await params.supabase
+          .from(table)
+          .select("*")
+          .eq("user_id", params.userId)
+          .gte("updated_at", since.toISOString())
+          .order("updated_at", { ascending: true })
+          .order(tiebreak, { ascending: true })
+          .range(from, from + PULL_PAGE_SIZE - 1);
+        if (error) throw error;
+
+        const rows = data ?? [];
+        count += await applyRemoteRows(params.db, table, rows);
+        if (rows.length < PULL_PAGE_SIZE) break;
+      }
+
+      // Only advance the watermark once the table has fully drained without error.
+      await setWatermark(params.db, table, now);
+    } catch (e) {
+      errors.push(`pull ${table}: ${e instanceof Error ? e.message : String(e)}`);
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      const fallback = await params.supabase.from(table).select("*").eq("user_id", params.userId);
-      if (fallback.error) throw fallback.error;
-      count += await applyRemoteRows(params.db, table, fallback.data ?? []);
-    } else {
-      count += await applyRemoteRows(params.db, table, data ?? []);
-    }
-
-    await setWatermark(params.db, table, now);
   }
 
-  return count;
+  return { count, errors };
 }
 
 async function upsertRow(
@@ -135,6 +175,58 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(tasks.id, id));
       else await db.insert(tasks).values(mapped as never);
+      return true;
+    }
+    case "phases": {
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(phases).where(eq(phases.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(phases)
+          .set(mapped as never)
+          .where(eq(phases.id, id));
+      else await db.insert(phases).values(mapped as never);
+      return true;
+    }
+    case "task_dependencies": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(taskDependencies)
+        .where(eq(taskDependencies.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskDependencies)
+          .set(mapped as never)
+          .where(eq(taskDependencies.id, id));
+      else await db.insert(taskDependencies).values(mapped as never);
+      return true;
+    }
+    case "category_settings": {
+      const userId = mapped.userId as string;
+      const category = mapped.category as string;
+      const [existing] = await db
+        .select()
+        .from(categorySettings)
+        .where(
+          and(eq(categorySettings.userId, userId), eq(categorySettings.category, category as never))
+        )
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(categorySettings)
+          .set(mapped as never)
+          .where(
+            and(
+              eq(categorySettings.userId, userId),
+              eq(categorySettings.category, category as never)
+            )
+          );
+      else await db.insert(categorySettings).values(mapped as never);
       return true;
     }
     case "task_time_entries": {
@@ -268,37 +360,76 @@ async function pushPendingMutations(params: {
   db: SqliteDb;
   supabase: SupabaseClient;
   userId: string;
-}): Promise<number> {
+}): Promise<{ count: number; errors: string[] }> {
   const pending = await listPendingMutations(params.db);
-  let pushed = 0;
+  const coalesced = coalesceMutations(pending);
+  let count = 0;
+  const errors: string[] = [];
 
-  for (const mutation of pending) {
-    const table = mutation.tableName as SyncTable;
-    const payload = JSON.parse(mutation.payloadJson) as Record<string, unknown>;
-    const remotePayload = mapPayloadToRemote(table, payload);
-
-    if (mutation.op === "delete") {
-      const { error } = await params.supabase
-        .from(table)
-        .delete()
-        .eq("id", mutation.rowId)
-        .eq("user_id", params.userId);
-      if (error) throw error;
-    } else if (mutation.op === "insert") {
-      const { error } = await params.supabase.from(table).upsert(remotePayload);
-      if (error) throw error;
-    } else {
-      const { error } = await params.supabase
-        .from(table)
-        .update(remotePayload)
-        .eq("id", mutation.rowId)
-        .eq("user_id", params.userId);
-      if (error) throw error;
-    }
-
-    await markMutationSynced(params.db, mutation.id);
-    pushed++;
+  // Group the last-write-per-row units by table so each table flushes in one or two
+  // network calls (a batched upsert + a batched delete) instead of one call per mutation.
+  const byTable = new Map<SyncTable, typeof coalesced>();
+  for (const unit of coalesced) {
+    const list = byTable.get(unit.table);
+    if (list) list.push(unit);
+    else byTable.set(unit.table, [unit]);
   }
 
-  return pushed;
+  for (const [table, units] of Array.from(byTable.entries())) {
+    const upserts = units.filter((u) => u.op === "upsert");
+    const deletes = units.filter((u) => u.op === "delete");
+
+    try {
+      if (upserts.length > 0) {
+        // insert and update are equivalent here — the outbox payload is the full row,
+        // so a single batched upsert (keyed on the table PK) covers both.
+        const rows = upserts.map((u) =>
+          mapPayloadToRemote(table, u.payload as Record<string, unknown>)
+        );
+        const { error } = await params.supabase.from(table).upsert(rows);
+        if (error) throw error;
+        await markMutationsSynced(
+          params.db,
+          upserts.flatMap((u) => u.mutationIds)
+        );
+        count += upserts.length;
+      }
+
+      if (deletes.length > 0) {
+        if (NON_ID_DELETE_TABLES.has(table)) {
+          // Composite-PK tables have no single `id` to batch on — delete per row.
+          for (const unit of deletes) {
+            const { error } = await params.supabase
+              .from(table)
+              .delete()
+              .eq("id", unit.rowId)
+              .eq("user_id", params.userId);
+            if (error) throw error;
+            await markMutationsSynced(params.db, unit.mutationIds);
+            count += 1;
+          }
+        } else {
+          const { error } = await params.supabase
+            .from(table)
+            .delete()
+            .in(
+              "id",
+              deletes.map((u) => u.rowId)
+            )
+            .eq("user_id", params.userId);
+          if (error) throw error;
+          await markMutationsSynced(
+            params.db,
+            deletes.flatMap((u) => u.mutationIds)
+          );
+          count += deletes.length;
+        }
+      }
+    } catch (e) {
+      // Leave this table's mutations pending; the next sync retries. Other tables proceed.
+      errors.push(`push ${table}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  return { count, errors };
 }

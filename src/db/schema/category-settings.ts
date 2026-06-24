@@ -1,4 +1,4 @@
-import { integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { projectCategory } from "./projects";
 
@@ -20,5 +20,8 @@ export const categorySettings = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.category] })]
+  (table) => [
+    primaryKey({ columns: [table.userId, table.category] }),
+    index("category_settings_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+  ]
 );
