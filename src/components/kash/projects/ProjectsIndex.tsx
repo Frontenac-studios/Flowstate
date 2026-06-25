@@ -50,8 +50,7 @@ export default function ProjectsIndex() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="glass-panel-opaque h-24 animate-pulse rounded-kash"
-              style={{ border: "2px solid var(--kash-glass-border)" }}
+              className="border-subtle h-24 animate-pulse rounded-card border bg-surface-2"
             />
           ))}
         </div>
