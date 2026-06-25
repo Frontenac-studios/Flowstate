@@ -162,7 +162,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Do now",
     items: [
       { href: "/today", label: "Today", icon: SunIcon, match: ["/today"] },
-      { href: "/this-week", label: "This Week", icon: WeekIcon, match: ["/this-week"] },
+      { href: "/this-week", label: "Week", icon: WeekIcon, match: ["/this-week"] },
       { href: "/projects", label: "Projects", icon: ProjectsIcon, match: ["/projects"] },
     ],
   },
