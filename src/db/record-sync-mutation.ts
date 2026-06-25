@@ -35,6 +35,22 @@ export async function syncOccurrenceOverrideRow(
   await recordSyncMutation({ table: "task_occurrence_overrides", rowId, op, payload });
 }
 
+export async function syncProtectedBlockRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "protected_blocks", rowId, op, payload });
+}
+
+export async function syncProtectedBlockTemplateRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "protected_block_templates", rowId, op, payload });
+}
+
 export async function syncProjectRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "projects", rowId, op, payload });
 }

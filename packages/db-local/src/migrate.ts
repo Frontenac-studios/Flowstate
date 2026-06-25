@@ -108,6 +108,40 @@ CREATE UNIQUE INDEX IF NOT EXISTS task_occurrence_overrides_recurrence_date_idx
 CREATE INDEX IF NOT EXISTS task_occurrence_overrides_user_id_updated_at_idx
   ON task_occurrence_overrides (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS protected_block_templates (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  iso_weekday INTEGER NOT NULL,
+  label TEXT,
+  start_min INTEGER,
+  end_min INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS protected_block_templates_user_id_updated_at_idx
+  ON protected_block_templates (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS protected_block_templates_user_id_iso_weekday_idx
+  ON protected_block_templates (user_id, iso_weekday);
+
+CREATE TABLE IF NOT EXISTS protected_blocks (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  scheduled_date TEXT NOT NULL,
+  label TEXT,
+  start_min INTEGER,
+  end_min INTEGER,
+  template_id TEXT REFERENCES protected_block_templates(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'confirmed',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS protected_blocks_user_id_scheduled_date_idx
+  ON protected_blocks (user_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS protected_blocks_user_id_updated_at_idx
+  ON protected_blocks (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS focus_blocks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

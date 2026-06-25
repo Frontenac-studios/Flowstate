@@ -8,6 +8,8 @@ import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { nudgeEvents as pgNudgeEvents } from "./schema/nudge-events";
 import { phases as pgPhases } from "./schema/phases";
 import { projects as pgProjects } from "./schema/projects";
+import { protectedBlockTemplates as pgProtectedBlockTemplates } from "./schema/protected-block-templates";
+import { protectedBlocks as pgProtectedBlocks } from "./schema/protected-blocks";
 import {
   taskBulkImportItems as pgTaskBulkImportItems,
   taskBulkImports as pgTaskBulkImports,
@@ -63,3 +65,9 @@ export const nudgeEvents = (
 export const focusBlocks = (
   isSqliteMode() ? sqliteSchema.focusBlocks : pgFocusBlocks
 ) as typeof pgFocusBlocks;
+export const protectedBlockTemplates = (
+  isSqliteMode() ? sqliteSchema.protectedBlockTemplates : pgProtectedBlockTemplates
+) as typeof pgProtectedBlockTemplates;
+export const protectedBlocks = (
+  isSqliteMode() ? sqliteSchema.protectedBlocks : pgProtectedBlocks
+) as typeof pgProtectedBlocks;

@@ -1,6 +1,8 @@
 export const SYNC_TABLES = [
   "projects",
   "phases",
+  "protected_block_templates",
+  "protected_blocks",
   "tasks",
   "task_time_entries",
   "task_dependencies",

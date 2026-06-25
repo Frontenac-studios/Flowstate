@@ -25,6 +25,8 @@ import { WeekColumn } from "./WeekColumn";
 import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
 import { WeekLaterBacklog } from "./WeekLaterBacklog";
+import ProtectedWeekBar from "./ProtectedWeekBar";
+import type { ProtectedBlockRow } from "./ProtectedBlockChip";
 
 /** Inverted week track (Kash 3.0): soft-gray surface the day columns sit on. */
 const WEEK_TRACK_BG = "color-mix(in srgb, var(--ink) 4%, var(--surface))";
@@ -53,12 +55,29 @@ export function WeekCanvas() {
   const columnWidthPercent = 100 / dayCount;
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const weekQueryInput = useMemo(() => ({ anchorDate: todayIso }), [todayIso]);
+  const { data: protectedBlocks = [] } = useQuery(
+    trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
+  );
+
+  const protectedByDate = useMemo(() => {
+    const map: Record<string, ProtectedBlockRow[]> = {};
+    for (const block of protectedBlocks) {
+      const list = map[block.scheduledDate] ?? [];
+      list.push(block);
+      map[block.scheduledDate] = list;
+    }
+    return map;
+  }, [protectedBlocks]);
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, now), [tasks, now]);
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
-  }, [queryClient, trpc.tasks.listIncomplete]);
+    void queryClient.invalidateQueries({
+      queryKey: trpc.protectedBlocks.listForWeek.queryKey(weekQueryInput),
+    });
+  }, [queryClient, trpc.tasks.listIncomplete, trpc.protectedBlocks.listForWeek, weekQueryInput]);
 
   const scheduleMutation = useMutation(
     trpc.tasks.scheduleToDate.mutationOptions({
@@ -80,6 +99,15 @@ export function WeekCanvas() {
 
   const skipOccurrenceMutation = useMutation(
     trpc.recurrence.skipOccurrence.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+      },
+    })
+  );
+
+  const removeProtectedMutation = useMutation(
+    trpc.protectedBlocks.remove.mutationOptions({
       onSuccess: () => {
         touchActivity();
         invalidatePlan();
@@ -246,6 +274,8 @@ export function WeekCanvas() {
             }
           />
 
+          <ProtectedWeekBar anchorDate={todayIso} />
+
           <div
             ref={dayScrollRef}
             className="border-subtle mt-4 overflow-x-auto rounded-card border p-2"
@@ -267,8 +297,10 @@ export function WeekCanvas() {
                     isToday={isToday}
                     columnWidthPercent={columnWidthPercent}
                     tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
+                    protectedBlocks={protectedByDate[iso] ?? []}
                     onComplete={pushComplete}
                     onDelete={pushDelete}
+                    onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
                   />
                 );
               })}

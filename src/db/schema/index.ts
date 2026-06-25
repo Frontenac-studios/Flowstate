@@ -8,6 +8,8 @@ export * from "./health-checks";
 export * from "./nudge-events";
 export * from "./phases";
 export * from "./projects";
+export * from "./protected-block-templates";
+export * from "./protected-blocks";
 export * from "./task-time-entries";
 export * from "./tasks";
 export * from "./task-bulk-imports";

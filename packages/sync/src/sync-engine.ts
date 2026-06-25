@@ -7,6 +7,8 @@ import {
   nudgeEvents,
   phases,
   projects,
+  protectedBlockTemplates,
+  protectedBlocks,
   syncWatermarks,
   taskBulkImportItems,
   taskBulkImports,
@@ -237,6 +239,38 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(taskOccurrenceOverrides.id, id));
       else await db.insert(taskOccurrenceOverrides).values(mapped as never);
+      return true;
+    }
+    case "protected_block_templates": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(protectedBlockTemplates)
+        .where(eq(protectedBlockTemplates.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(protectedBlockTemplates)
+          .set(mapped as never)
+          .where(eq(protectedBlockTemplates.id, id));
+      else await db.insert(protectedBlockTemplates).values(mapped as never);
+      return true;
+    }
+    case "protected_blocks": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(protectedBlocks)
+        .where(eq(protectedBlocks.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(protectedBlocks)
+          .set(mapped as never)
+          .where(eq(protectedBlocks.id, id));
+      else await db.insert(protectedBlocks).values(mapped as never);
       return true;
     }
     case "category_settings": {

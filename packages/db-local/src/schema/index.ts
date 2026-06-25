@@ -7,6 +7,8 @@ export * from "./focus-blocks";
 export * from "./nudge-events";
 export * from "./phases";
 export * from "./projects";
+export * from "./protected-block-templates";
+export * from "./protected-blocks";
 export * from "./sync-mutations";
 export * from "./task-dependencies";
 export * from "./task-recurrence";
