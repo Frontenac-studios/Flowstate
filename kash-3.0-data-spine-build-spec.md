@@ -4,17 +4,18 @@
 
 **Phase status**
 
-| Phase | Scope                     | Spec                                                                         | Build                                                                                                                                                                                                                                                                                                                                                |
-| ----- | ------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | Decisions/confirmations   | ✅ logged                                                                    | n/a                                                                                                                                                                                                                                                                                                                                                  |
-| 1     | Category on tasks         | ✅ spec'd (1A–1G) · resolver reconciled to Model C                           | ✅ **built** — incl. `tasks.category` NOT NULL (shipped; the "pending" note below is stale)                                                                                                                                                                                                                                                          |
-| 2     | Time-tracking on any task | ✅ spec'd (2A–2E)                                                            | 🟡 **substantially built** — `task_time_entries`, `weeklyRollup` query, `aggregate-week.ts` (category + project roll-up), `WeeklySummaryCard`. Tail: wire `project-progress.ts` completion % into the projects router (overlaps projects WIP).                                                                                                       |
-| 3     | Task dependencies         | ⚠️ **superseded** — built to a revised design (3.g–3.l), not the 3A–3E below | ✅ **built (revised)** — `task_dependencies` join table (many-blockers, project/window edges + `expires_at` sweep), `dependencies` router, `lib/tasks/dependencies/blocked.ts`, RDM `pick-task` integration. 3A–3E below are the old blocked-by-one design and are obsolete.                                                                         |
-| 4     | Recurrence                | ✅ spec'd (4A–4G)                                                            | 🏗️ **in progress (Jun 25)** — **4A schema + RLS committed** (`task_recurrence`, `task_occurrence_overrides`, RLS; typecheck-clean). ⏳ **migration SQL not yet generated** — run `npm run db:generate` locally (drizzle-kit can't run in the build sandbox: Node-version + arch gate). 4B–4G pending local env (needs `npm install rrule`, Node 20). |
+| Phase | Scope                      | Spec                                                                         | Build                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----- | -------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Decisions/confirmations    | ✅ logged                                                                    | n/a                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 1     | Category on tasks          | ✅ spec'd (1A–1G) · resolver reconciled to Model C                           | ✅ **built** — incl. `tasks.category` NOT NULL (shipped; the "pending" note below is stale)                                                                                                                                                                                                                                                                                                                                                                               |
+| 2     | Time-tracking on any task  | ✅ spec'd (2A–2E)                                                            | 🟡 **substantially built** — `task_time_entries`, `weeklyRollup` query, `aggregate-week.ts` (category + project roll-up), `WeeklySummaryCard`. Tail: wire `project-progress.ts` completion % into the projects router (overlaps projects WIP).                                                                                                                                                                                                                            |
+| 3     | Task dependencies          | ⚠️ **superseded** — built to a revised design (3.g–3.l), not the 3A–3E below | ✅ **built (revised)** — `task_dependencies` join table (many-blockers, project/window edges + `expires_at` sweep), `dependencies` router, `lib/tasks/dependencies/blocked.ts`, RDM `pick-task` integration. 3A–3E below are the old blocked-by-one design and are obsolete.                                                                                                                                                                                              |
+| 4     | Recurrence                 | ✅ spec'd (4A–4G)                                                            | ✅ **built (Jun 25)** — migration `0014_vengeful_randall.sql`; `task_recurrence` + `task_occurrence_overrides`; `src/lib/recurrence/` (expand, parse-phrase, occurrence-id); tRPC `recurrence` router; virtual occurrences merged into `tasks.listIncomplete`; composer shorthand + ↻ chip; task-detail Repeat presets (`TaskRepeatSection`); week drag reschedule/skip; sync + RLS. _Tail:_ full Repeat picker (custom ends/interval), `editOccurrence` UI on plan rows. |
+| W     | Week protected blocks (§7) | ✅ spec'd (plan §7 + below)                                                  | 🟡 **partial (Jun 25)** — migration `0015_yummy_moondragon.sql`; `protected_block_templates` + `protected_blocks`; tRPC `protected-blocks` router; Week chips + add flow; Today all-day chips. _Left:_ Settings template editor, timed blocks on Today timeline, over-commit load, per-column tally, AI week-draft integration.                                                                                                                                           |
 
-> **Re-baselined Jun 25** against the actual code: Phases 1–3 are built (Phase 3 under a revised many-blockers design that supersedes 3A–3E). **Phase 4 (Recurrence) is the only un-started phase** — the active build target.
+> **Re-baselined Jun 25** against the actual code: Phases 1–4 of the data spine are **built**. Week protected blocks are a **§7 extension** (not a numbered spine phase) — data layer + basic UI shipped; polish remains.
 
-**Overall build order:** originally `1 → 2 → 3 → 4` (by risk). Phases 1–3 done; **Phase 4 is what remains.**
+**Overall build order:** originally `1 → 2 → 3 → 4` (by risk). **Spine complete.** Active Week polish + parallel feature tracks (Values, Abyss, Planning Mode, Care, AI persona).
 
 ---
 
@@ -223,3 +224,39 @@ Recurring tasks via **RRULE (rrule.js)** behind a friendly Repeat picker. Decisi
 - **Tests:** expansion (4B), single-occurrence overrides (4D), shorthand parse (4F), edit-all-future (4E). Manual QA: create via picker + shorthand; complete/skip/move one; offline parity. Gates: typecheck, lint, RLS audit.
 
 **Order:** `4A → 4B → 4C → (4D ∥ 4E ∥ 4F) → 4G`. Independent of Phases 1–3.
+
+**Built (Jun 25):** all sub-phases shipped on `feat/projects-index-bw-progress`. Migrations: `drizzle/0014_vengeful_randall.sql`. Key paths: `src/lib/recurrence/`, `src/trpc/routers/recurrence.ts`, `src/server/tasks/merge-recurring-into-plan-list.ts`, `TaskRepeatSection`, `ParsePreviewChips` ↻ chip, `WeekCanvas` occurrence drag. RLS: `supabase/rls/20260625120000_task_recurrence_rls.sql`.
+
+---
+
+# Week protected blocks (§7 extension)
+
+Not a numbered spine phase — implements plan §7 protected blocks + the template+weekly-confirm recurrence model (separate from task recurrence).
+
+### W1 — Schema
+
+- `protected_block_templates`: `user_id`, `category`, `iso_weekday` (0=Mon…6=Sun), optional `label`, optional `start_min`/`end_min` (null = all-day).
+- `protected_blocks`: `user_id`, `category`, `scheduled_date`, optional `label`, optional `start_min`/`end_min`, optional `template_id`, `status` enum `proposed` | `confirmed`.
+- RLS `auth.uid()` on both; `(user_id, updated_at)` index per sync conventions.
+- **Accept:** templates define a default week; instances anchor to a calendar date.
+
+### W2 — tRPC + weekly ritual hooks
+
+- CRUD for templates and instances; `listForWeek`, `listForDate`.
+- `proposeFromTemplates` — materialize `proposed` rows from templates for a target ISO week.
+- `confirmProposedForWeek` — flip `proposed` → `confirmed` for that week.
+- **Accept:** a planning session can propose then confirm a default week without silent autopilot.
+
+### W3 — Week + Today UI
+
+- Week: category-colored chips per day column; add-protected-block control; wired into `WeekCanvas` / `WeekColumn`.
+- Today: all-day chips (`startMin` null) pinned above the timeline; timed blocks deferred.
+- **Accept:** a no-clock-time block is visible all day on Today and in the week grid.
+
+### W4 — Sync + RLS
+
+- Mirror both tables in `packages/db-local` + `packages/sync` `SYNC_TABLES`.
+- RLS: `supabase/rls/20260625140000_protected_blocks_rls.sql`.
+- **Accept:** offline CRUD parity.
+
+**Built (Jun 25):** W1–W4 shipped (`drizzle/0015_yummy_moondragon.sql`, `src/trpc/routers/protected-blocks.ts`, `ProtectedBlockChip`, `ProtectedWeekBar`, `TimelinePane` all-day chips). **Not yet:** Settings template editor, timed timeline placement, over-commit load counting, per-column tally on hover/tap, AI week-draft respecting protected blocks.

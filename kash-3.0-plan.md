@@ -316,7 +316,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 
 **Purpose:** Plan and balance the week — what's happening each day, and whether the week is balanced across categories.
 
-**Current state:** `Built` — week canvas, 7-day columns, inbox rail, AI week draft.
+**Current state:** `Built (core + protected blocks)` — week canvas, 7-day columns, inbox rail, AI week draft, protected-block chips (Week + Today all-day). _Left:_ tally-on-demand, over-commit warning, EoW review chip, Settings template editor, timed protected blocks on Today timeline, AI week-draft respecting protected blocks.
 
 **Vision (additions):**
 
@@ -333,9 +333,9 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - Blocking time for a category (e.g. "Thu eve — Relationships") creates a **visible placeholder block on that day** — a promise to yourself you can later fill with a real task.
 - It is **also a soft constraint** the Planner respects when arranging the week (won't pile work over it; treats it as spoken-for).
 - **No fixed clock time required** — "sometime Thursday" is valid; can be made time-specific if you want. _Rejected:_ rigid timed calendar events; invisible constraint-only blocks.
-- **Recurrence _(Resolved Jun 25)_:** a **recurring template + weekly confirm** — you keep a "default week" of protected blocks that is **proposed** each weekly-planning session for you to accept or adjust. Routine without autopilot (never silent wallpaper). _Depends on:_ the weekly planning ritual + the §14 Phase-4 recurrence engine. _Rejected:_ fresh-every-week (re-entry friction) and silent auto-recurrence (becomes invisible).
+- **Recurrence _(Resolved Jun 25)_:** a **recurring template + weekly confirm** — you keep a "default week" of protected blocks (`protected_block_templates`) that is **proposed** each weekly-planning session for you to accept or adjust (`proposeFromTemplates` → `confirmProposedForWeek`). Routine without autopilot (never silent wallpaper). _Implementation note:_ this is **separate from** §14 task recurrence (`task_recurrence`); protected blocks have their own template table. _Rejected:_ fresh-every-week (re-entry friction) and silent auto-recurrence (becomes invisible).
 - **On Today _(Resolved Jun 25)_:** a no-clock-time protected block renders on Today's Calendar as an **all-day pinned chip** above the timeline (e.g. "⬚ Relationships · protected"), untethered to an hour — visible all day, never blocking the grid.
-- **Data model note:** no `protected_blocks` table exists in the data-spine yet — the build spec must add one (category, day/week scope, optional time, recurring-template flag).
+- **Data model _(built Jun 25)_:** `protected_block_templates` (default week: category, `iso_weekday` 0=Mon…6=Sun, optional `start_min`/`end_min`, optional label) + `protected_blocks` (day instances: category, `scheduled_date`, optional clock window, `template_id`, `status` `proposed` | `confirmed`). tRPC: CRUD, `proposeFromTemplates`, `confirmProposedForWeek`. Sync + RLS shipped. Week column chips + Today all-day chips (null `startMin`) live.
 
 **2. Balance visualization — category-colored task borders:**
 
@@ -362,7 +362,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - **Protected-block recurrence:** recurring template + weekly confirm (a "default week" proposed each planning session); depends on the weekly ritual + §14 Phase-4 recurrence.
 - **Protected block on Today:** no-clock-time blocks render as an all-day pinned chip above the Calendar timeline.
 - **EoW review trigger:** soft chip at a configurable week wind-down (default Sun eve), never auto-opens.
-- **Build-spec flags:** add a `protected_blocks` data model (none exists yet); the over-commit learned model + drift-flag lean on the §11 reflection layer.
+- **Build-spec flags:** `protected_blocks` data model ✅ built (`data-spine-build-spec.md` §Week protected blocks); over-commit learned model + drift-flag still lean on the §11 reflection layer.
 
 ---
 
@@ -419,7 +419,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 
 ## 9. Projects
 
-> **Status: RESOLVED (Jun 2026).** New capabilities (similarity, templating, nesting) decided. Core (phases, Miller, Gantt/calendar, time entries) already built.
+> **Status: RESOLVED (Jun 2026; open questions closed Jun 25, 2026).** New capabilities (similarity, templating, nesting) decided. Core (phases, Miller, Gantt/calendar, time entries) already built.
 
 **Purpose:** Plan and execute multi-step work with phases, visualized over time, with AI that learns how long things actually take.
 
@@ -443,6 +443,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - Bounded hierarchy that maps cleanly to Miller columns and the calendar; easy to visualize and timeline. _Rejected:_ arbitrary recursive nesting (invites over-nesting, hard to plan dates for).
 - **Drag tasks** between phases/subphases and across the calendar.
 - Views (built): Miller columns · calendar of phase date ranges · multi-project calendar.
+- **Multi-project calendar coloring _(Resolved Jun 25)_: category/project toggle, default category.** The calendar opens in **category color** (honoring the locked "color = category stripe only" rule) and can **toggle to per-project hues** as an opt-in exception for tracking one project across the grid. _Build-spec flag:_ project-mode needs a distinct project-hue set that does **not** collide with the five category Apple hexes (define in Design Tokens). _Rejected:_ project-color as the default (makes the palette-exception the resting state).
 
 **2. Category (settled by §2):** every project carries exactly one category; its tasks inherit it with override allowed. A project is single-category, but its task mix can span categories.
 
@@ -454,14 +455,19 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 
 - A template captures phases/subphases, their task lists, **and typical durations learned from past similar projects** — so creating a new project auto-drafts a realistic timeline.
 - Leans on the time-tracking spine (§14, now on any task) and feeds the AI-scoping dream.
+- **Creation model _(Resolved Jun 25)_: explicit + AI-suggested (A+C hybrid).** A **"Save as template"** action is always available so you curate the library deliberately; **on project completion the AI offers a one-tap "this looks reusable — save it?"** so good structures aren't lost to forgetfulness. _Note:_ duration-learning draws from **all** past similar projects regardless of what's saved — a template just captures reusable structure. _Rejected:_ auto-save-all (clutters with one-offs) and templateless-only (no editable artifact).
+- **Estimate confidence _(Resolved Jun 25)_: silent until enough history.** No duration estimate is shown until the sample crosses a threshold (**default N = 3, tunable**); below it the field reads "learning…". _Rejected:_ always-show-with-confidence-label, narrowing-range, and graduated tiers (a thin-sample number can still anchor/mislead).
 
 **5. Re-planning (settled by §11):** when a project slips, the Planner **proposes** a date re-plan from real time data; you confirm (high-stakes → confirm-first). Never silently reshuffles.
 
-**Remaining open questions:**
+**6. Completion metric — % progress _(Resolved Jun 25)_:** project/phase % progress = **completed task-weight ÷ total task-weight**, using the same **Top-3 large/small weighting** locked in §2 (big task = large, others = small). Honest about big unfinished work, needs no time data, and is one metric across the app. Rolls up identically at **phase** level (Miller/timeline) and **project** level (index cards + the §7.6 weekly review). _This closes the "define a project/phase completion calc in §9" item the data-spine (§2.5) and §7.6 point here._ _Rejected:_ simple task count (overstates), time-based (blank until estimates exist), phase-count (too jumpy).
 
-- Templating: auto-save a finished project as a template, or explicit "save as template"?
-- How much history before duration estimates are trustworthy (min sample size)?
-- Multi-project calendar: color by category, by project, or toggle?
+**Resolved (Jun 25, 2026):**
+
+- **Templating creation:** explicit "Save as template" + AI suggestion at completion (A+C hybrid).
+- **Estimate confidence:** silent until N≈3 samples (tunable); "learning…" below threshold.
+- **Multi-project calendar:** category/project toggle, default category; project-hues must not collide with category hexes (Design Tokens flag).
+- **Completion metric:** weighted task-weight ratio (§2 weighting), rolled up at phase + project level.
 
 ---
 
@@ -780,7 +786,7 @@ _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits
 
 **Purpose:** The properties and relationships every other feature depends on.
 
-**Current state:** `Built (core)` — tasks with parser-driven properties (date, project, priority), Top 3, buckets; projects + phases; time entries. **Missing globally:** category, recurrence, dependencies.
+**Current state:** `Built (core + spine)` — tasks with parser-driven properties (date, project, priority, **category**), Top 3, buckets; projects + phases; time entries on any task; **recurrence** (virtual occurrences + overrides); **dependencies** (many-blockers); **protected blocks** (Week §7). _Missing globally:_ tags (timing open).
 
 ### Detail — resolved task & data model
 
@@ -881,7 +887,7 @@ Decisions to resolve as sections get expanded (collected from above):
 - **AI:** ✅ RESOLVED (§11) — tiered autonomy, specialized modes (Planner / Focus coach / Reflection & care guide) sharing one brain, single editable About-me doc. _Remaining:_ mode visual identity, About-me auto-draft behavior.
 - **Self-care:** ✅ RESOLVED (§12) — generative garden (stats-first), nourished by self-care + balance, both-channel reminders.
 - **Values:** ranked or flat? retroactive context edits?
-- **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task. _Remaining:_ blocked-task RDM behavior, tags timing, recurrence-end options.
+- **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task, category on tasks. _Remaining:_ tags timing, recurrence Repeat-picker polish (custom ends/interval UI), blocked-task RDM polish if any gaps remain.
 - **Backend optimization:** ✅ RESOLVED (`kash-3.0-backend-optimization-spec.md`, Jun 24) — parallel-track pass; sync batching + bounded pull (cliff killed), indexing standing-req, outbox prune, timestamp-seam normalization; UX calls D1 create-shimmer / D2 sync panel / D3 chat windowing. _Remaining:_ D1 shimmer motion + duration (Design Tokens / animation pass), D2 panel placement (settings vs shell status bar — §4 Nav), OPT-1 coalescing semantics for delete-after-update on the same offline row (confirm at re-audit).
 
 ---
