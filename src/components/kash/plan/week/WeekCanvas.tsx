@@ -24,6 +24,10 @@ import type { PlanTaskRow } from "../TaskRow";
 import { WeekColumn } from "./WeekColumn";
 import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
+import { WeekLaterBacklog } from "./WeekLaterBacklog";
+
+/** Inverted week track (Kash 3.0): soft-gray surface the day columns sit on. */
+const WEEK_TRACK_BG = "color-mix(in srgb, var(--ink) 4%, var(--surface))";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const VISIBLE_DAY_COUNT = 4;
@@ -73,6 +77,11 @@ export function WeekCanvas() {
     projectSlug: task.projectSlug,
     projectName: task.projectName,
     isTop3: task.isTop3,
+    category: task.category,
+    categoryUnresolved: task.categoryUnresolved,
+    scheduledDate: task.scheduledDate,
+    phaseName: task.phaseName,
+    phaseSortOrder: task.phaseSortOrder,
   });
 
   const taskTitleById = useMemo(
@@ -197,7 +206,11 @@ export function WeekCanvas() {
             }
           />
 
-          <div ref={dayScrollRef} className="mt-4 overflow-x-auto pb-4">
+          <div
+            ref={dayScrollRef}
+            className="border-subtle mt-4 overflow-x-auto rounded-card border p-2"
+            style={{ backgroundColor: WEEK_TRACK_BG }}
+          >
             <div
               className="flex gap-2"
               style={{ width: `${(dayCount / VISIBLE_DAY_COUNT) * 100}%` }}
@@ -221,6 +234,12 @@ export function WeekCanvas() {
               })}
             </div>
           </div>
+
+          <WeekLaterBacklog
+            tasks={partitioned.later.map(toRow)}
+            onComplete={pushComplete}
+            onDelete={pushDelete}
+          />
         </>
       )}
     </DndContext>
