@@ -22,6 +22,10 @@ export function mapRemoteRow(
     delete base.task_ids;
   }
 
+  if (table === "task_occurrence_overrides" && base.patch != null) {
+    base.patch = typeof base.patch === "string" ? base.patch : JSON.stringify(base.patch);
+  }
+
   const dateFields = [
     "created_at",
     "updated_at",
@@ -84,6 +88,9 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   createdAt: "created_at",
   updatedAt: "updated_at",
   taskId: "task_id",
+  recurrenceId: "recurrence_id",
+  occurrenceDate: "occurrence_date",
+  movedToDate: "moved_to_date",
   threadId: "thread_id",
   reviewDate: "date",
   reflectionText: "reflection_text",
@@ -127,12 +134,24 @@ export function mapPayloadToRemote(
     out.task_ids = JSON.parse(out.task_ids as string);
   }
 
+  if (table === "task_occurrence_overrides" && typeof out.patch === "string") {
+    try {
+      out.patch = JSON.parse(out.patch as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
   if (table === "tasks" && typeof out.is_top_3 === "number") {
     out.is_top_3 = out.is_top_3 === 1;
   }
 
   if (table === "tasks" && typeof out.category_unresolved === "number") {
     out.category_unresolved = out.category_unresolved === 1;
+  }
+
+  if (table === "task_occurrence_overrides" && typeof out.patch === "object" && out.patch) {
+    out.patch = JSON.stringify(out.patch);
   }
 
   return out;

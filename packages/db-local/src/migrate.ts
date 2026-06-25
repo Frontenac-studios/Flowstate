@@ -79,6 +79,35 @@ CREATE INDEX IF NOT EXISTS task_dependencies_blocked_idx ON task_dependencies (u
 CREATE INDEX IF NOT EXISTS task_dependencies_blocker_idx ON task_dependencies (user_id, blocker_task_id);
 CREATE INDEX IF NOT EXISTS task_dependencies_user_id_updated_at_idx ON task_dependencies (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS task_recurrence (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  rrule TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS task_recurrence_task_id_idx ON task_recurrence (task_id);
+CREATE INDEX IF NOT EXISTS task_recurrence_user_id_updated_at_idx ON task_recurrence (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS task_occurrence_overrides (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  recurrence_id TEXT NOT NULL REFERENCES task_recurrence(id) ON DELETE CASCADE,
+  occurrence_date TEXT NOT NULL,
+  status TEXT NOT NULL,
+  moved_to_date TEXT,
+  patch TEXT,
+  completed_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS task_occurrence_overrides_recurrence_date_idx
+  ON task_occurrence_overrides (recurrence_id, occurrence_date);
+CREATE INDEX IF NOT EXISTS task_occurrence_overrides_user_id_updated_at_idx
+  ON task_occurrence_overrides (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS focus_blocks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

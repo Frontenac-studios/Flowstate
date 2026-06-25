@@ -69,6 +69,24 @@ export function WeekCanvas() {
     })
   );
 
+  const rescheduleOccurrenceMutation = useMutation(
+    trpc.recurrence.rescheduleOccurrence.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+      },
+    })
+  );
+
+  const skipOccurrenceMutation = useMutation(
+    trpc.recurrence.skipOccurrence.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+      },
+    })
+  );
+
   const toRow = (task: (typeof tasks)[number]): PlanTaskRow => ({
     id: task.id,
     title: task.title,
@@ -82,7 +100,13 @@ export function WeekCanvas() {
     scheduledDate: task.scheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,
+    isRecurringOccurrence: task.isRecurringOccurrence,
+    recurrenceId: task.recurrenceId,
+    occurrenceDate: task.occurrenceDate,
+    templateTaskId: task.templateTaskId,
   });
+
+  const findTaskById = (taskId: string) => tasks.find((t) => t.id === taskId);
 
   const taskTitleById = useMemo(
     () => Object.fromEntries(tasks.map((t) => [t.id, t.title])),
@@ -99,14 +123,30 @@ export function WeekCanvas() {
     if (!activeId.startsWith("task:")) return;
 
     const taskId = activeId.slice("task:".length);
+    const task = findTaskById(taskId);
 
     if (overId === "week-inbox") {
+      if (task?.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+        skipOccurrenceMutation.mutate({
+          recurrenceId: task.recurrenceId,
+          occurrenceDate: task.occurrenceDate,
+        });
+        return;
+      }
       scheduleMutation.mutate({ id: taskId, scheduledDate: null });
       return;
     }
 
     if (overId.startsWith("week-day:")) {
       const iso = overId.slice("week-day:".length);
+      if (task?.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+        rescheduleOccurrenceMutation.mutate({
+          recurrenceId: task.recurrenceId,
+          occurrenceDate: task.occurrenceDate,
+          movedToDate: iso,
+        });
+        return;
+      }
       scheduleMutation.mutate({ id: taskId, scheduledDate: iso });
     }
   };

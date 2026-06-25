@@ -34,6 +34,13 @@ describe("parseQuickInput", () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it("parses recurrence shorthand in semicolon mode", () => {
+    const result = parseQuickInput("water plants; every tue", ctx);
+    expect(result.title).toBe("water plants");
+    expect(result.rrule).toBe("FREQ=WEEKLY;BYDAY=TU");
+    expect(result.recurrenceLabel).toBe("Every Tue");
+  });
+
   it("warns on unrecognized semicolon property segments", () => {
     const result = parseQuickInput("broken; not a date; rdm", ctx);
     expect(result.title).toBe("broken");

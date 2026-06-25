@@ -19,6 +19,22 @@ export async function syncTaskRow(rowId: string, op: SyncOp, payload: unknown): 
   await recordSyncMutation({ table: "tasks", rowId, op, payload });
 }
 
+export async function syncRecurrenceRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "task_recurrence", rowId, op, payload });
+}
+
+export async function syncOccurrenceOverrideRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "task_occurrence_overrides", rowId, op, payload });
+}
+
 export async function syncProjectRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "projects", rowId, op, payload });
 }

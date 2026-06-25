@@ -13,6 +13,8 @@ import {
   taskBulkImports as pgTaskBulkImports,
 } from "./schema/task-bulk-imports";
 import { taskDependencies as pgTaskDependencies } from "./schema/task-dependencies";
+import { taskOccurrenceOverrides as pgTaskOccurrenceOverrides } from "./schema/task-occurrence-overrides";
+import { taskRecurrence as pgTaskRecurrence } from "./schema/task-recurrence";
 import { tasks as pgTasks } from "./schema/tasks";
 import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
 
@@ -34,6 +36,12 @@ export const taskTimeEntries = (
 export const taskDependencies = (
   isSqliteMode() ? sqliteSchema.taskDependencies : pgTaskDependencies
 ) as typeof pgTaskDependencies;
+export const taskRecurrence = (
+  isSqliteMode() ? sqliteSchema.taskRecurrence : pgTaskRecurrence
+) as typeof pgTaskRecurrence;
+export const taskOccurrenceOverrides = (
+  isSqliteMode() ? sqliteSchema.taskOccurrenceOverrides : pgTaskOccurrenceOverrides
+) as typeof pgTaskOccurrenceOverrides;
 export const chatMessages = (
   isSqliteMode() ? sqliteSchema.chatMessages : pgChatMessages
 ) as typeof pgChatMessages;

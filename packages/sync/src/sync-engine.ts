@@ -11,6 +11,8 @@ import {
   taskBulkImportItems,
   taskBulkImports,
   taskDependencies,
+  taskOccurrenceOverrides,
+  taskRecurrence,
   taskTimeEntries,
   tasks,
 } from "@kash/db-local/schema";
@@ -203,6 +205,38 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(taskDependencies.id, id));
       else await db.insert(taskDependencies).values(mapped as never);
+      return true;
+    }
+    case "task_recurrence": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(taskRecurrence)
+        .where(eq(taskRecurrence.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskRecurrence)
+          .set(mapped as never)
+          .where(eq(taskRecurrence.id, id));
+      else await db.insert(taskRecurrence).values(mapped as never);
+      return true;
+    }
+    case "task_occurrence_overrides": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(taskOccurrenceOverrides)
+        .where(eq(taskOccurrenceOverrides.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskOccurrenceOverrides)
+          .set(mapped as never)
+          .where(eq(taskOccurrenceOverrides.id, id));
+      else await db.insert(taskOccurrenceOverrides).values(mapped as never);
       return true;
     }
     case "category_settings": {

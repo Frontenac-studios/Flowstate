@@ -10,6 +10,7 @@ import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
 import { phasesRouter } from "./phases";
 import { projectsRouter } from "./projects";
+import { recurrenceRouter } from "./recurrence";
 import { settingsRouter } from "./settings";
 import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
@@ -30,6 +31,7 @@ export const appRouter = createTRPCRouter({
   me: meRouter,
   phases: phasesRouter,
   projects: projectsRouter,
+  recurrence: recurrenceRouter,
   settings: settingsRouter,
   sync: syncRouter,
   taskBulkImports: taskBulkImportsRouter,

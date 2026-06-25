@@ -4,6 +4,8 @@ export const SYNC_TABLES = [
   "tasks",
   "task_time_entries",
   "task_dependencies",
+  "task_recurrence",
+  "task_occurrence_overrides",
   "chat_messages",
   "day_reviews",
   "app_settings",

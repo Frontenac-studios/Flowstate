@@ -5,6 +5,7 @@ import { parsePriorityWord } from "@/lib/tasks/priority";
 
 import { matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
+import { parseRecurrencePhrase } from "@/lib/recurrence/parse-phrase";
 
 export type ParseWarning =
   | {
@@ -34,6 +35,10 @@ export type ParseResult = {
   priority: 0 | 1 | 2 | 3;
   /** Explicit category from a `;` segment (1.4b layer 1). null = let the resolver decide. */
   category: ProjectCategory | null;
+  /** RRULE body when a recurrence phrase is parsed (Phase 4). */
+  rrule: string | null;
+  /** Chip label for recurrence preview (Phase 4). */
+  recurrenceLabel: string | null;
   warnings: ParseWarning[];
   suggestions: ProjectSuggestion[];
 };
@@ -142,6 +147,8 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
   let projectSlug: string | null = null;
   let priority: 0 | 1 | 2 | 3 = 0;
   let category: ProjectCategory | null = null;
+  let rrule: string | null = null;
+  let recurrenceLabel: string | null = null;
   const warnings: ParseWarning[] = [];
   let suggestions: ProjectSuggestion[] = [];
 
@@ -174,6 +181,13 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
       continue;
     }
 
+    const recurrenceMatch = parseRecurrencePhrase(segment);
+    if (recurrenceMatch) {
+      rrule = recurrenceMatch.rrule;
+      recurrenceLabel = recurrenceMatch.label;
+      continue;
+    }
+
     const slugCandidate = extractProjectSlugToken(segment);
     if (slugCandidate) {
       projectSlug = slugCandidate;
@@ -203,6 +217,8 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     projectSlug,
     priority,
     category,
+    rrule,
+    recurrenceLabel,
     warnings,
     suggestions,
   };
@@ -245,6 +261,8 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     projectSlug: null,
     priority: 0,
     category: null,
+    rrule: null,
+    recurrenceLabel: null,
     warnings: [],
     suggestions: [],
   };
