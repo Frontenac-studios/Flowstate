@@ -22,7 +22,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: "⌘Return", description: "Mark current focus task done" },
   { keys: "Esc", description: "Exit Focus mode (or leave triage keyboard mode)" },
   { keys: "⌘K", description: "Open the command palette (search & navigate)" },
-  { keys: "⌘J", description: "Toggle Claude chat side rail" },
+  { keys: "⌘/", description: "Toggle Claude chat side rail" },
   { keys: "⌘Z", description: "Undo complete, delete, or triage drop (this session)" },
   { keys: "⌘Enter", description: "Submit all composer lines" },
   { keys: "?", description: "Open this shortcuts reference" },
