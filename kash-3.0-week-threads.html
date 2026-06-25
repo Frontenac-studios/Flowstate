@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week §7 · Loose threads 1–3</title>
+<style>
+  :root{
+    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
+    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
+    --c-pro:#0A84FF; --c-rel:#FF2D55; --c-body:#34C759; --c-adult:#FF9500;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:28px}
+  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 4px}
+  .intro{color:var(--muted);font-size:12.5px;margin:0 0 22px;max-width:920px}
+  .sec{max-width:980px;margin:0 0 26px}
+  .sh{font-size:14px;font-weight:600;margin:0 0 2px;letter-spacing:-.01em}
+  .sd{font-size:12px;color:var(--muted);margin:0 0 12px}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:820px){.row{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:13px 14px}
+  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .tag{font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .rec .tag{color:var(--ink)}
+  h3{font-size:12.5px;margin:1px 0 7px;letter-spacing:-.01em}
+  .body{font-size:11px;color:var(--muted)}
+  .body b{color:var(--ink)}
+  .pros{margin:7px 0 0;padding:0;list-style:none;font-size:10.5px}
+  .pros li{position:relative;padding-left:13px;margin:2px 0;color:var(--muted)}
+  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
+  .pros li.n::before{content:"–";position:absolute;left:1px;color:#c23a3a;font-weight:700}
+  /* sketches */
+  .sk{height:62px;border:1px solid var(--hair2);border-radius:8px;margin:0 0 8px;position:relative;
+    background:var(--bg);overflow:hidden}
+  .wstrip{position:absolute;inset:8px;display:flex;gap:3px}
+  .wd{flex:1;border-radius:3px;background:#fff;border:1px solid var(--hair2);position:relative}
+  .chip{position:absolute;font-size:8px;border-radius:5px;padding:1px 5px;background:var(--ink);color:#fff;white-space:nowrap}
+  .softchip{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+  .bar{position:absolute;left:8px;right:8px;height:9px;border-radius:4px;display:flex;overflow:hidden;border:1px solid var(--hair)}
+  .bar i{height:100%}
+  .lbl{position:absolute;font-size:8px;color:var(--faint)}
+  .tl{position:absolute;left:30px;top:6px;bottom:6px;right:8px;border-left:1px solid var(--hair)}
+  .blk{position:absolute;left:4px;right:6px;border-radius:4px;font-size:8px;padding:1px 4px;border:1px solid var(--hair);border-left-width:3px;background:#fff}
+  .pbband{position:absolute;left:4px;right:6px;border:1px dashed var(--c-rel);background:rgba(255,45,85,.07);border-radius:4px;font-size:8px;color:var(--muted);padding:1px 4px}
+  .pin{position:absolute;left:4px;right:6px;top:2px;border:1px dashed var(--c-rel);background:rgba(255,45,85,.07);border-radius:4px;font-size:8px;color:var(--ink);padding:1px 4px}
+  .intent{position:absolute;left:4px;top:3px;border:1px dashed var(--c-rel);background:#fff;border-radius:10px;font-size:8px;color:var(--ink);padding:1px 6px}
+  .arrow{position:absolute;font-size:8px;color:var(--faint)}
+</style>
+</head>
+<body>
+  <h1>Week §7 · Loose threads — narrowed &amp; verified</h1>
+  <p class="intro">Each was checked against the other specs. <b>Thread 1</b>: the weekly review’s surface/content/AI voice are already spec’d (data-spine §2D, AI-persona register) — only its <b>trigger</b> is open. <b>Threads 2 &amp; 3</b>: fully open (note: no protected-block data model exists in the data-spine yet — flagged for the build spec). Three options each since these are tighter than the main forks.</p>
+
+  <!-- THREAD 1 -->
+  <div class="sec">
+    <div class="sh">Thread 1 · End-of-week review — trigger only</div>
+    <div class="sd">When does the weekly review surface? (Content already built.) EoD precedent = soft chip at a configurable wind-down, never auto-opens.</div>
+    <div class="row">
+      <div class="card rec">
+        <span class="tag">1A · Sunday-eve soft nudge</span>
+        <h3>Mirror EoD at week scale</h3>
+        <div class="sk">
+          <div class="wstrip">
+            <div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div>
+            <div class="wd"><span class="chip softchip" style="right:-2px;bottom:14px">○ Review?</span></div>
+          </div>
+          <span class="lbl" style="right:10px;bottom:2px">Sun ~6pm</span>
+        </div>
+        <div class="body">Soft chip at a configurable <b>week wind-down</b> (default Sun eve); always one tap away.</div>
+        <ul class="pros"><li class="y">Consistent with EoD</li><li class="y">Closes the week before rest</li><li class="n">Sun-eve can feel like “homework”</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">1B · Monday-morning</span>
+        <h3>Review while planning the new week</h3>
+        <div class="sk">
+          <div class="wstrip">
+            <div class="wd"><span class="chip softchip" style="left:-2px;bottom:14px">○ Recap</span></div>
+            <div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div><div class="wd"></div>
+          </div>
+          <span class="lbl" style="left:10px;bottom:2px">Mon am</span>
+        </div>
+        <div class="body">Last week’s recap pairs with drafting the next — reflection feeds planning.</div>
+        <ul class="pros"><li class="y">Action-oriented; flows into planning</li><li class="n">Splits “close” from “plan” worse</li><li class="n">Off the EoD pattern</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">1C · Configurable day+time</span>
+        <h3>You pick the moment</h3>
+        <div class="sk">
+          <div class="bar" style="top:14px"><i style="width:100%;background:var(--gray-pill)"></i></div>
+          <span class="lbl" style="left:10px;top:30px">Sun ▼  6:00pm ▼  · soft nudge</span>
+        </div>
+        <div class="body">Default Sun eve, but set any day/time; same soft-chip behavior.</div>
+        <ul class="pros"><li class="y">Fits any rhythm</li><li class="y">Superset of 1A/1B</li><li class="n">One more setting</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- THREAD 2 -->
+  <div class="sec">
+    <div class="sh">Thread 2 · Do protected blocks count toward over-commit load?</div>
+    <div class="sd">A protected block is spoken-for time. Should it add to a day’s load (so over-protecting can trip the warning), or sit outside it? Wellbeing wrinkle: most protected blocks are restorative (Relationships, Body &amp; Mind) — counting them could discourage protecting them.</div>
+    <div class="row">
+      <div class="card">
+        <span class="tag">2A · Count fully</span>
+        <h3>Protected time fills the day</h3>
+        <div class="sk">
+          <div class="bar" style="top:24px"><i style="width:45%;background:#c9ccd1"></i><i style="width:30%;background:var(--c-rel)"></i></div>
+          <span class="lbl" style="left:10px;top:8px">tasks + protected = load</span>
+          <span class="lbl" style="right:10px;top:38px">nears threshold</span>
+        </div>
+        <div class="body">Total commitment = tasks + protected. Protect too much → warned.</div>
+        <ul class="pros"><li class="y">True “how full is my day”</li><li class="n">Penalizes protecting wellbeing time</li></ul>
+      </div>
+      <div class="card rec">
+        <span class="tag">2B · Reduced weight</span>
+        <h3>Counts, but lighter than work</h3>
+        <div class="sk">
+          <div class="bar" style="top:24px"><i style="width:45%;background:#c9ccd1"></i><i style="width:15%;background:var(--c-rel)"></i></div>
+          <span class="lbl" style="left:10px;top:8px">protected = ½ weight</span>
+          <span class="lbl" style="right:10px;top:38px">room to spare</span>
+        </div>
+        <div class="body">Protected time consumes some capacity (it’s real) but at reduced weight, so it rarely trips the warning alone.</div>
+        <ul class="pros"><li class="y">Honest about capacity</li><li class="y">Doesn’t punish self-care</li><li class="n">A weight factor to pick</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">2C · Excluded</span>
+        <h3>Over-commit = tasks only</h3>
+        <div class="sk">
+          <div class="bar" style="top:24px"><i style="width:45%;background:#c9ccd1"></i></div>
+          <span class="lbl" style="left:10px;top:8px">protected ignored</span>
+          <span class="lbl" style="right:10px;top:38px">well clear</span>
+        </div>
+        <div class="body">Warning measures only task load; protected blocks never contribute.</div>
+        <ul class="pros"><li class="y">Simplest; encourages protecting</li><li class="n">Can over-protect + pile work, no warning</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- THREAD 3 -->
+  <div class="sec">
+    <div class="sh">Thread 3 · A no-clock-time protected block on Today’s Calendar</div>
+    <div class="sd">When “sometime Thursday — Relationships” becomes today, how does a <i>timeless intention</i> render on the adaptive Calendar (built around timed blocks + completion markers)?</div>
+    <div class="row">
+      <div class="card">
+        <span class="tag">3A · All-day pinned chip</span>
+        <h3>Banner row atop the timeline</h3>
+        <div class="sk">
+          <div class="pin">⬚ Relationships · protected (anytime)</div>
+          <div class="tl" style="top:20px"><div class="blk pro" style="top:6px;height:14px">Deep work</div></div>
+          <span class="lbl" style="left:6px;top:22px">9a</span>
+        </div>
+        <div class="body">Sits as a pinned all-day chip above the hours; always visible, untethered to a time.</div>
+        <ul class="pros"><li class="y">Clear, never blocks the grid</li><li class="n">Easy to ignore as a header</li></ul>
+      </div>
+      <div class="card rec">
+        <span class="tag">3D · Draggable intent chip</span>
+        <h3>Place it when you act on it</h3>
+        <div class="sk">
+          <div class="intent" style="top:4px">⬚ Relationships ⤓</div>
+          <div class="tl" style="top:4px"><div class="blk pro" style="top:6px;height:14px">Deep work</div><div class="pbband" style="top:30px;height:14px;border-style:dotted">drop to place →</div></div>
+        </div>
+        <div class="body">Lives as an unscheduled chip in a “today’s intentions” strip; drag onto the timeline to give it a time (becomes a real block) — matches the living-record “fills as it happens” model.</div>
+        <ul class="pros"><li class="y">Fits the living-record ethos</li><li class="y">Stays a gentle prompt till acted on</li><li class="n">Needs the intent strip + drag</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">3C · List-only prompt</span>
+        <h3>Not on the timeline at all</h3>
+        <div class="sk">
+          <div class="pin" style="border-style:solid;background:#fff;color:var(--muted)">List ▸ “Protected: Relationships today”</div>
+          <div class="tl" style="top:20px"><div class="blk pro" style="top:6px;height:14px">Deep work</div></div>
+        </div>
+        <div class="body">Appears only as a reminder in List view; the Calendar stays purely timed.</div>
+        <ul class="pros"><li class="y">Keeps Calendar clean</li><li class="n">Out of sight in the view meant to defend it</li></ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

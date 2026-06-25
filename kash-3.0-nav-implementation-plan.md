@@ -76,7 +76,7 @@ No Bingo code exists yet. Ensure the Plan horizon switcher (`PlanHorizonView`) r
 - **Phase 2** — "Ask Claude" chip + `⌘/` toggle. ✅ **committed** (`feat(chat): ask-claude chip…`; rebound from ⌘J; updated shortcuts modal).
 - **Phase 3** — rename label "This Week" → "Week" (label only). ✅ **committed** (`feat(nav): rename rail label…`).
 - **Phase 4** — Settings → top tab bar (7 tabs, placeholders for unbuilt). ✅ **committed** (`feat(settings): top tab bar…`).
-- **Phase 5** — mobile left-nav hamburger drawer. ⏳ next — Phase 0 did not confirm a left-nav drawer (the rail is expand-on-hover; the _chat_ rail has the drawer). Needs a closer look.
+- **Phase 5** — mobile left-nav hamburger drawer. ✅ **committed** (`feat(nav): mobile hamburger drawer…`). Desktop rail now `hidden lg:block`; a header hamburger (`lg:hidden`) dispatches a window event; the drawer mirrors ChatRail's scrim/Esc/close-on-navigate pattern. Shared `NavSections` extracted.
 - **Phase 6** — _guardrail only:_ keep Bingo out of the rail; wire the Plan tab during the Bingo build. (deferred)
 
-**Status (Jun 25): Phases 1–4 implemented, committed, typecheck + lint clean, pre-commit hooks passed.** Vitest couldn't run in-sandbox (native-binary arch mismatch) — run `npm test` locally. Commits are stacked on `main`; HEAD currently on `feat/projects-index-bw-progress` (contains all four).
+**Status (Jun 25): Phases 1–5 implemented & committed, typecheck + lint clean, pre-commit hooks passed.** Vitest couldn't run in-sandbox (native-binary arch mismatch) — run `npm test` locally. Six commits stacked on `main`, HEAD on `feat/projects-index-bw-progress`. Only Phase 6 (deferred to the Bingo build) remains in this plan.

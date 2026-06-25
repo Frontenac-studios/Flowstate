@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects §9 · Q1 — Template creation model</title>
+<style>
+  :root{
+    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
+    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
+    --c-proj:#AF52DE;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:28px}
+  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px;max-width:900px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:920px}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
+  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .rec .tag{color:var(--ink)}
+  h2{font-size:13.5px;margin:1px 0 0;letter-spacing:-.01em}
+  /* flow sketch */
+  .flow{display:flex;align-items:center;gap:6px;margin:13px 0 4px;flex-wrap:wrap}
+  .node{border:1px solid var(--hair);border-radius:8px;padding:5px 8px;font-size:10px;background:#fff;text-align:center;line-height:1.3}
+  .node.done{border-color:var(--ink)}
+  .node.tmpl{border-color:var(--c-proj);background:rgba(175,82,222,.06)}
+  .node.muted{color:var(--faint)}
+  .arr{color:var(--faint);font-size:12px}
+  .badge{display:inline-block;font-size:8px;font-weight:600;border-radius:4px;padding:1px 4px;margin-top:3px}
+  .badge.user{background:var(--ink);color:#fff}
+  .badge.auto{background:var(--gray-pill);color:var(--muted)}
+  .lib{display:flex;gap:4px;margin:9px 0 2px;flex-wrap:wrap}
+  .lib .t{font-size:9px;border:1px solid var(--hair2);border-radius:6px;padding:2px 6px;background:#fff;color:var(--muted)}
+  .lib .t.on{border-color:var(--c-proj);color:var(--ink)}
+  .body{font-size:11.5px;color:var(--muted);margin:8px 0 0}
+  .body b{color:var(--ink)}
+  .pros{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 0;font-size:11px;border-top:1px solid var(--hair2);padding-top:8px}
+  .pros ul{margin:0;padding:0;list-style:none}
+  .pros li{position:relative;padding-left:14px;margin:2px 0;color:var(--muted)}
+  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
+  .pros li.n::before{content:"–";position:absolute;left:2px;color:#c23a3a;font-weight:700}
+</style>
+</head>
+<body>
+  <h1>Projects §9 · Q1 — How are templates created?</h1>
+  <p class="sub">A template = phases/subphases + task lists + durations learned from similar past projects. The question is who builds the library.</p>
+
+  <div class="grid">
+
+    <!-- A -->
+    <div class="card">
+      <span class="tag">A · Explicit “Save as template”</span>
+      <h2>You curate the library</h2>
+      <div class="flow">
+        <span class="node done">Project<br>finishes</span><span class="arr">→</span>
+        <span class="node">you click<br>“Save as template”<span class="badge user">you</span></span><span class="arr">→</span>
+        <span class="node tmpl">Template</span>
+      </div>
+      <div class="lib"><span class="t on">Client onboarding</span><span class="t on">Book launch</span></div>
+      <div class="body">Only the projects you deliberately save become templates.</div>
+      <div class="pros">
+        <ul><li class="y">Curated, no clutter</li><li class="y">Clear mental model</li></ul>
+        <ul><li class="n">Easy to forget; good structures never saved</li></ul>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="card">
+      <span class="tag">B · Auto-save every finished project</span>
+      <h2>System saves them all</h2>
+      <div class="flow">
+        <span class="node done">Project<br>finishes</span><span class="arr">→</span>
+        <span class="node tmpl">Template<br>(auto)<span class="badge auto">auto</span></span>
+      </div>
+      <div class="lib"><span class="t on">Client onboarding</span><span class="t">untitled #7</span><span class="t">one-off cleanup</span><span class="t on">Book launch</span></div>
+      <div class="body">Every completed project becomes reusable material automatically.</div>
+      <div class="pros">
+        <ul><li class="y">Nothing lost; AI always has data</li></ul>
+        <ul><li class="n">Library clutters with one-offs</li><li class="n">Noise to sift when starting new</li></ul>
+      </div>
+    </div>
+
+    <!-- C recommended -->
+    <div class="card rec">
+      <span class="tag">C · Auto-suggest → confirm</span>
+      <h2>Prompted, but you decide</h2>
+      <div class="flow">
+        <span class="node done">Project<br>finishes</span><span class="arr">→</span>
+        <span class="node">AI: “reusable —<br>save as template?”</span><span class="arr">→</span>
+        <span class="node tmpl">Template<span class="badge user">confirm</span></span>
+      </div>
+      <div class="lib"><span class="t on">Client onboarding</span><span class="t on">Book launch</span><span class="t on">Sprint kit</span></div>
+      <div class="body">On completion the AI proposes saving (esp. when it spots reusable structure); one tap to keep. Matches the §11 confirm-first ethos.</div>
+      <div class="pros">
+        <ul><li class="y">Curated <i>and</i> nothing forgotten</li><li class="y">Consistent with confirm-first AI</li></ul>
+        <ul><li class="n">One extra prompt at project end</li></ul>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="card">
+      <span class="tag">D · Templateless (on-the-fly)</span>
+      <h2>No template object at all</h2>
+      <div class="flow">
+        <span class="node muted">all past<br>similar projects</span><span class="arr">→</span>
+        <span class="node">AI synthesizes<br>a draft live</span><span class="arr">→</span>
+        <span class="node done">New project</span>
+      </div>
+      <div class="body">“Templating” = the AI drafts a new project on demand from <b>all</b> similar past projects (§9.3 similarity). No library to manage or edit.</div>
+      <div class="pros">
+        <ul><li class="y">Zero curation; always current</li><li class="y">Simplest surface</li></ul>
+        <ul><li class="n">No editable/named template artifact</li><li class="n">Less predictable; hard to tweak-and-reuse</li></ul>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

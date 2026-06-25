@@ -312,7 +312,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 
 ## 7. Week View
 
-> **Status: RESOLVED (Jun 2026).** Protected blocks, balance visualization, and over-commit behavior decided. Reuses Today's patterns (switcher, category colors, contextual inbox).
+> **Status: RESOLVED (Jun 2026; open questions closed Jun 25, 2026).** Protected blocks, balance visualization, and over-commit behavior decided. Reuses Today's patterns (switcher, category colors, contextual inbox).
 
 **Purpose:** Plan and balance the week — what's happening each day, and whether the week is balanced across categories.
 
@@ -333,27 +333,36 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - Blocking time for a category (e.g. "Thu eve — Relationships") creates a **visible placeholder block on that day** — a promise to yourself you can later fill with a real task.
 - It is **also a soft constraint** the Planner respects when arranging the week (won't pile work over it; treats it as spoken-for).
 - **No fixed clock time required** — "sometime Thursday" is valid; can be made time-specific if you want. _Rejected:_ rigid timed calendar events; invisible constraint-only blocks.
+- **Recurrence _(Resolved Jun 25)_:** a **recurring template + weekly confirm** — you keep a "default week" of protected blocks that is **proposed** each weekly-planning session for you to accept or adjust. Routine without autopilot (never silent wallpaper). _Depends on:_ the weekly planning ritual + the §14 Phase-4 recurrence engine. _Rejected:_ fresh-every-week (re-entry friction) and silent auto-recurrence (becomes invisible).
+- **On Today _(Resolved Jun 25)_:** a no-clock-time protected block renders on Today's Calendar as an **all-day pinned chip** above the timeline (e.g. "⬚ Relationships · protected"), untethered to an hour — visible all day, never blocking the grid.
+- **Data model note:** no `protected_blocks` table exists in the data-spine yet — the build spec must add one (category, day/week scope, optional time, recurring-template flag).
 
 **2. Balance visualization — category-colored task borders:**
 
 - Every task in the 7-day grid carries its **category color** as a border/accent; the week's mix is read by scanning the colors. Lightweight (no aggregate bars in the columns).
-- _Note vs Today:_ Today shows an aggregate balance bar; Week conveys mix through colored borders. (Open question: optionally add a small per-column category tally later.)
+- _Note vs Today:_ Today shows an aggregate balance bar; Week conveys mix through colored borders.
+- **Per-column tally _(Resolved Jun 25)_: tally on demand.** Borders stay the clean default; a proportional category tally (the same visual language as Today's balance bar) appears on **hover/tap of a day**. On touch/mobile the trigger is an explicit tap on the day header. _Rejected:_ always-on per-column bars (7 columns = noise) and borders-only (mix stays implicit).
 
 **3. Per-day priorities:** up to **3 priorities per day**, set ahead of time — mirrors the Top-3 mechanic at week scale.
 
 **4. Over-commit — soft warning:**
 
-- A **gentle, non-blocking flag** when a single day exceeds a load threshold (by task count/weight). Catches over-planning early without policing. Threshold tunable.
+- A **gentle, non-blocking flag** when a single day exceeds a load threshold (in the §2 Top-3-weighted units). Catches over-planning early without policing.
+- **Threshold _(Resolved Jun 25)_: learned / adaptive** — the threshold tracks _your typical day_ so the warning means "more than usual **for you**." **Cold-start:** a fixed sane default for the first ~3–4 weeks, then it switches to learned. **Drift guard:** the threshold stays fully learned (no cap), and the **§11 reflection layer names a rising baseline** ("your typical day has grown 30% in 6 weeks — intended?") so chronic overload is caught by reflection, not normalized. _Depends on:_ the §11 reflection layer. _Rejected:_ a permanent fixed/tunable number (arbitrary), a user-set capacity slider (self-assessment is unreliable), and an uncapped pure-learned line with no drift guard (blesses burnout).
+- **Protected blocks count fully toward the load _(Resolved Jun 25)_** — a protected block is spoken-for time, so protecting too much can itself trip the warning (true "how full is my day"). _Chosen over_ reduced-weight / excluded.
 
 **5. AI week arrangement:** extends the existing week-draft to respect **category balance + protected blocks** (Planner mode; high-stakes → confirm-first per §11).
 
-**6. End-of-week review** _(added Jun 16)_: a weekly reflection surfacing **time spent per category**, **time spent per project**, and **% progress toward completion** (per project/phase). Reuses the reflection pattern (daily EoD §6, monthly/quarterly §8, Care rituals §12) at week scale; the Reflection & care AI voice (§11) narrates wins. **Depends on the data spine:** time-per-category needs category (§2) + generalized time-tracking (§14 Phase 2); % progress needs a project-completion metric (completed vs total task weight per project/phase — define in §9).
+**6. End-of-week review** _(added Jun 16)_: a weekly reflection surfacing **time spent per category**, **time spent per project**, and **% progress toward completion** (per project/phase). Reuses the reflection pattern (daily EoD §6, monthly/quarterly §8, Care rituals §12) at week scale; the Reflection & care AI voice (§11) narrates wins. **Depends on the data spine:** time-per-category needs category (§2) + generalized time-tracking (§14 Phase 2); % progress needs a project-completion metric (completed vs total task weight per project/phase — define in §9). **Trigger _(Resolved Jun 25)_:** a **soft, dismissible chip at a configurable "week wind-down" (default Sunday evening)** — always one tap away in the switcher, never auto-opens (mirrors the §6 EoD model at week scale). _Rejected:_ Monday-morning-only and hard auto-open at the week boundary.
 
-**Remaining open questions:**
+**Resolved (Jun 25, 2026):**
 
-- Per-column category tally in addition to colored borders, or borders alone?
-- Over-commit threshold: fixed default, or learned from your typical week?
-- Do protected blocks recur (every week) or get set fresh each week?
+- **Per-column tally:** tally on demand (borders default; proportional tally on hover/tap; explicit tap on mobile).
+- **Over-commit threshold:** learned/adaptive in Top-3-weighted units; fixed default for ~3–4 wks → learned; drift guarded by the §11 reflection layer naming a rising baseline (no hard cap); protected blocks count fully toward the load.
+- **Protected-block recurrence:** recurring template + weekly confirm (a "default week" proposed each planning session); depends on the weekly ritual + §14 Phase-4 recurrence.
+- **Protected block on Today:** no-clock-time blocks render as an all-day pinned chip above the Calendar timeline.
+- **EoW review trigger:** soft chip at a configurable week wind-down (default Sun eve), never auto-opens.
+- **Build-spec flags:** add a `protected_blocks` data model (none exists yet); the over-commit learned model + drift-flag lean on the §11 reflection layer.
 
 ---
 
