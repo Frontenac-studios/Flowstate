@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import type { BucketMode } from "@/lib/settings/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
@@ -31,9 +31,36 @@ const BUCKET_OPTIONS: { value: BucketMode; title: string; description: string }[
   },
 ];
 
+type TabId = "account" | "categories" | "about" | "notifications" | "preferences" | "ai" | "data";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "account", label: "Account" },
+  { id: "categories", label: "Categories" },
+  { id: "about", label: "About me" },
+  { id: "notifications", label: "Notifications" },
+  { id: "preferences", label: "Preferences" },
+  { id: "ai", label: "AI / Kash" },
+  { id: "data", label: "Data & sync" },
+];
+
+/** Placeholder panel for sections whose underlying feature is not built yet. */
+function ComingSoon({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+      <h2 className="text-sm font-semibold text-kash-ink">{title}</h2>
+      <p className="mt-2 text-sm text-kash-ink-muted">{children}</p>
+      <p className="text-kash-ink-faint mt-2 text-xs font-medium uppercase tracking-wide">
+        Coming soon
+      </p>
+    </section>
+  );
+}
+
 export function SettingsForm() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+
+  const [tab, setTab] = useState<TabId>("preferences");
 
   const { data, isLoading } = useQuery(trpc.settings.get.queryOptions());
   const bucketMode = data?.bucketMode ?? "relative";
@@ -74,137 +101,205 @@ export function SettingsForm() {
     <section className="glass-panel-opaque space-y-6 px-6 py-8">
       <h1 className="text-lg font-semibold text-kash-ink">Settings</h1>
 
-      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-        <h2 className="text-sm font-semibold text-kash-ink">Day view bucket style</h2>
-        <p className="mt-1 text-sm text-kash-ink-muted">
-          Week view always uses Mon–Sun columns and an inbox, regardless of this setting.
-        </p>
-        <fieldset className="mt-4 space-y-2" disabled={isLoading || updateMutation.isPending}>
-          <legend className="sr-only">Bucket style</legend>
-          {BUCKET_OPTIONS.map((opt) => {
-            const checked = bucketMode === opt.value;
-            return (
-              <label
-                key={opt.value}
-                className={`glass-panel flex cursor-pointer gap-3 rounded-[var(--kash-radius-chip)] p-3 transition ${
-                  checked ? "ring-1 ring-kash-accent" : ""
-                }`}
+      <div
+        role="tablist"
+        aria-label="Settings sections"
+        className="inline-flex flex-wrap gap-0.5 rounded-[var(--kash-radius-control)] bg-[var(--surface-selected)] p-0.5"
+      >
+        {TABS.map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`settings-tab-${t.id}`}
+              aria-selected={active}
+              aria-controls={`settings-panel-${t.id}`}
+              onClick={() => setTab(t.id)}
+              className={`rounded-[6px] px-3 py-1.5 text-sm transition ${
+                active
+                  ? "bg-[var(--surface)] font-medium text-kash-ink shadow-sm"
+                  : "text-kash-ink-muted hover:text-kash-ink"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        role="tabpanel"
+        id={`settings-panel-${tab}`}
+        aria-labelledby={`settings-tab-${tab}`}
+        className="space-y-6"
+      >
+        {tab === "account" ? (
+          <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+            <h2 className="text-sm font-semibold text-kash-ink">Account</h2>
+            <p className="mt-1 text-sm text-kash-ink-muted">
+              Profile and account management arrive with a later release. For now you can sign out.
+            </p>
+            <form action="/auth/signout" method="post" className="mt-4">
+              <button type="submit" className="glass-btn-ghost text-sm">
+                Sign out
+              </button>
+            </form>
+          </section>
+        ) : null}
+
+        {tab === "categories" ? <CategorySettingsSection /> : null}
+
+        {tab === "about" ? (
+          <ComingSoon title="About me">
+            Your values, work, life, and constraints — the context Kash uses to plan with you.
+          </ComingSoon>
+        ) : null}
+
+        {tab === "notifications" ? (
+          <ComingSoon title="Notifications">
+            Global notification controls and Do Not Disturb preferences.
+          </ComingSoon>
+        ) : null}
+
+        {tab === "preferences" ? (
+          <>
+            <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+              <h2 className="text-sm font-semibold text-kash-ink">Day view bucket style</h2>
+              <p className="mt-1 text-sm text-kash-ink-muted">
+                Week view always uses Mon–Sun columns and an inbox, regardless of this setting.
+              </p>
+              <fieldset className="mt-4 space-y-2" disabled={isLoading || updateMutation.isPending}>
+                <legend className="sr-only">Bucket style</legend>
+                {BUCKET_OPTIONS.map((opt) => {
+                  const checked = bucketMode === opt.value;
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`glass-panel flex cursor-pointer gap-3 rounded-[var(--kash-radius-chip)] p-3 transition ${
+                        checked ? "ring-1 ring-kash-accent" : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="bucketMode"
+                        value={opt.value}
+                        checked={checked}
+                        onChange={() => handleBucketChange(opt.value)}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="text-sm font-medium text-kash-ink">{opt.title}</span>
+                        <span className="mt-0.5 block text-sm text-kash-ink-muted">
+                          {opt.description}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </fieldset>
+              {updateMutation.isError ? (
+                <p className="mt-2 text-sm text-red-600" role="alert">
+                  Could not save bucket style. Try again.
+                </p>
+              ) : null}
+            </section>
+
+            <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+              <h2 className="text-sm font-semibold text-kash-ink">Working hours</h2>
+              <p className="mt-1 text-sm text-kash-ink-muted">
+                Sets the time range shown on the Today timeline.
+              </p>
+              <fieldset
+                className="mt-4 flex flex-wrap items-end gap-4"
+                disabled={isLoading || hoursMutation.isPending}
               >
-                <input
-                  type="radio"
-                  name="bucketMode"
-                  value={opt.value}
-                  checked={checked}
-                  onChange={() => handleBucketChange(opt.value)}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="text-sm font-medium text-kash-ink">{opt.title}</span>
-                  <span className="mt-0.5 block text-sm text-kash-ink-muted">
-                    {opt.description}
-                  </span>
-                </span>
-              </label>
-            );
-          })}
-        </fieldset>
-        {updateMutation.isError ? (
-          <p className="mt-2 text-sm text-red-600" role="alert">
-            Could not save bucket style. Try again.
-          </p>
+                <legend className="sr-only">Working hours</legend>
+                <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
+                  Start
+                  <select
+                    className="glass-input"
+                    value={startHour}
+                    onChange={(e) => handleHoursChange(Number(e.target.value), endHour)}
+                  >
+                    {HOUR_VALUES.map((h) => (
+                      <option key={h} value={h}>
+                        {hourLabel(h)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
+                  End
+                  <select
+                    className="glass-input"
+                    value={endHour}
+                    onChange={(e) => handleHoursChange(startHour, Number(e.target.value))}
+                  >
+                    {HOUR_VALUES.map((h) => (
+                      <option key={h} value={h}>
+                        {hourLabel(h)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </fieldset>
+              {hoursInvalid ? (
+                <p className="mt-2 text-sm text-red-600" role="alert">
+                  Start must be before end.
+                </p>
+              ) : null}
+              {hoursMutation.isError ? (
+                <p className="mt-2 text-sm text-red-600" role="alert">
+                  Could not save working hours. Try again.
+                </p>
+              ) : null}
+            </section>
+
+            <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+              <h2 className="text-sm font-semibold text-kash-ink">Accessibility</h2>
+              <p className="mt-2 text-sm text-kash-ink-muted">
+                Kash follows your system preferences for motion and transparency. On macOS, adjust
+                these in System Settings → Accessibility → Display (Reduce motion, Reduce
+                transparency).
+              </p>
+              <p className="mt-2 text-sm text-kash-ink-muted">
+                There are no in-app overrides in v1 — when reduced motion or transparency is on,
+                Kash disables gradient animation and uses more opaque panels instead of heavy blur.
+              </p>
+            </section>
+          </>
         ) : null}
-      </section>
 
-      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-        <h2 className="text-sm font-semibold text-kash-ink">Working hours</h2>
-        <p className="mt-1 text-sm text-kash-ink-muted">
-          Sets the time range shown on the Today timeline.
-        </p>
-        <fieldset
-          className="mt-4 flex flex-wrap items-end gap-4"
-          disabled={isLoading || hoursMutation.isPending}
-        >
-          <legend className="sr-only">Working hours</legend>
-          <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
-            Start
-            <select
-              className="glass-input"
-              value={startHour}
-              onChange={(e) => handleHoursChange(Number(e.target.value), endHour)}
-            >
-              {HOUR_VALUES.map((h) => (
-                <option key={h} value={h}>
-                  {hourLabel(h)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
-            End
-            <select
-              className="glass-input"
-              value={endHour}
-              onChange={(e) => handleHoursChange(startHour, Number(e.target.value))}
-            >
-              {HOUR_VALUES.map((h) => (
-                <option key={h} value={h}>
-                  {hourLabel(h)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </fieldset>
-        {hoursInvalid ? (
-          <p className="mt-2 text-sm text-red-600" role="alert">
-            Start must be before end.
-          </p>
+        {tab === "ai" ? (
+          <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
+            <h2 className="text-sm font-semibold text-kash-ink">Claude (AI companion)</h2>
+            <p className="mt-2 text-sm text-kash-ink-muted">
+              Kash uses Claude for chat and focus narration. In v1 the API key is set by your
+              deployment environment, not in this UI.
+            </p>
+            <p className="mt-2 text-sm text-kash-ink-muted">
+              Add <code className="text-kash-ink">ANTHROPIC_API_KEY</code> to{" "}
+              <code className="text-kash-ink">.env.local</code> (see{" "}
+              <code className="text-kash-ink">.env.example</code>). Optional:{" "}
+              <code className="text-kash-ink">ANTHROPIC_MODEL</code> to override the default model.
+            </p>
+          </section>
         ) : null}
-        {hoursMutation.isError ? (
-          <p className="mt-2 text-sm text-red-600" role="alert">
-            Could not save working hours. Try again.
-          </p>
+
+        {tab === "data" ? (
+          <ComingSoon title="Data & sync">
+            Offline sync status, export, and account data controls.
+          </ComingSoon>
         ) : null}
-      </section>
-
-      <CategorySettingsSection />
-
-      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-        <h2 className="text-sm font-semibold text-kash-ink">Accessibility</h2>
-        <p className="mt-2 text-sm text-kash-ink-muted">
-          Kash follows your system preferences for motion and transparency. On macOS, adjust these
-          in System Settings → Accessibility → Display (Reduce motion, Reduce transparency).
-        </p>
-        <p className="mt-2 text-sm text-kash-ink-muted">
-          There are no in-app overrides in v1 — when reduced motion or transparency is on, Kash
-          disables gradient animation and uses more opaque panels instead of heavy blur.
-        </p>
-      </section>
-
-      <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-        <h2 className="text-sm font-semibold text-kash-ink">Claude (AI companion)</h2>
-        <p className="mt-2 text-sm text-kash-ink-muted">
-          Kash uses Claude for chat and focus narration. In v1 the API key is set by your deployment
-          environment, not in this UI.
-        </p>
-        <p className="mt-2 text-sm text-kash-ink-muted">
-          Add <code className="text-kash-ink">ANTHROPIC_API_KEY</code> to{" "}
-          <code className="text-kash-ink">.env.local</code> (see{" "}
-          <code className="text-kash-ink">.env.example</code>). Optional:{" "}
-          <code className="text-kash-ink">ANTHROPIC_MODEL</code> to override the default model.
-        </p>
-      </section>
-
-      <form action="/auth/signout" method="post">
-        <button type="submit" className="glass-btn-ghost text-sm">
-          Sign out
-        </button>
-      </form>
+      </div>
 
       <Link
         href="/today"
         className="glass-pill inline-block px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
       >
-        Back to plan
+        Back to Today
       </Link>
     </section>
   );
