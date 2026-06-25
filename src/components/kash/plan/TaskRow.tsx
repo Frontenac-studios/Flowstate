@@ -11,11 +11,8 @@ import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
-import {
-  categoryLabel,
-  PROJECT_CATEGORY_META,
-  type ProjectCategory,
-} from "@/lib/projects/categories";
+import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
@@ -97,11 +94,13 @@ export function TaskRow({
   const lensReveal = useReveal();
   const activeReveal = reveal ?? lensReveal;
 
-  // 1.4b/1.4d life-area stripe: category color when resolved, neutral marker when
-  // unresolved. Lens-gated (VF-1) — the stripe is the category channel only.
+  // Life-area stripe (Kash 3.0): an always-on category channel. Colour comes from
+  // the --cat-*-solid token (so user category-colour overrides apply); a neutral
+  // marker shows when the category is unresolved. The richer category treatments
+  // (list grouping, fills) stay lens-gated — only the stripe is persistent.
   const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
   const stripeColor = resolvedCategory
-    ? PROJECT_CATEGORY_META[resolvedCategory].color
+    ? categorySolidVar(resolvedCategory)
     : NEUTRAL_CATEGORY_STRIPE;
   const stripeLabel = resolvedCategory ? categoryLabel(resolvedCategory) : "No category yet";
 
@@ -259,10 +258,9 @@ export function TaskRow({
         >
           <span
             className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full"
-            style={{ backgroundColor: activeReveal.category ? stripeColor : "transparent" }}
-            aria-label={activeReveal.category ? stripeLabel : undefined}
-            title={activeReveal.category ? stripeLabel : undefined}
-            aria-hidden={!activeReveal.category}
+            style={{ backgroundColor: stripeColor }}
+            aria-label={stripeLabel}
+            title={stripeLabel}
           />
 
           {task.isTop3 ? (
