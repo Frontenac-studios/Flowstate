@@ -26,18 +26,29 @@ import { pickRdmTask } from "@/lib/rdm/pick-task";
 import type { BucketMode } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
+import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
 import { DECIDE_EVENT } from "../CommandPalette";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
-import { PlanBuckets } from "./PlanBuckets";
-import { PlanBucketsNamedDays } from "./PlanBucketsNamedDays";
+import { BalanceBar } from "./BalanceBar";
+import { LensControlBar } from "./LensControlBar";
 import { TimelinePane } from "./TimelinePane";
 import { TodayList } from "./TodayList";
+import { TodayReviewPanel } from "./TodayReviewPanel";
 import { Top3ReplacePicker } from "./Top3ReplacePicker";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
+
+/** Today's main-area views (VF redesign): the list, the full-width schedule, or the day review. */
+type TodayView = "list" | "calendar" | "review";
+
+const VIEW_OPTIONS: ReadonlyArray<SwitcherOption<TodayView>> = [
+  { value: "list", label: "List" },
+  { value: "calendar", label: "Calendar" },
+  { value: "review", label: "Review" },
+];
 
 function firstFreeSlot(pinnedBySlot: Map<number, Top3SlotTask>): 1 | 2 | 3 | null {
   for (const slot of [1, 2, 3] as const) {
@@ -61,6 +72,7 @@ export function DayPlanCanvas() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [replacePickerTaskId, setReplacePickerTaskId] = useState<string | null>(null);
   const [top3Highlighted, setTop3Highlighted] = useState(false);
+  const [view, setView] = useState<TodayView>("list");
   const top3HighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
@@ -71,6 +83,8 @@ export function DayPlanCanvas() {
 
   /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
   const now = useMemo(() => new Date(), []);
+  const weekdayLabel = now.toLocaleDateString(undefined, { weekday: "long" });
+  const monthDayLabel = now.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   const localDate = useLocalCalendarDate();
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const top3QueryInput = useMemo(
@@ -109,10 +123,8 @@ export function DayPlanCanvas() {
     [bucketMode, now, triggerPulse]
   );
 
-  useEffect(() => {
-    quickInputRef.current?.focus();
-  }, []);
-
+  // The composer is pinned at the bottom now, so don't auto-focus on mount —
+  // that would scroll the summary band out of view on load. "/" still focuses it.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -413,13 +425,23 @@ export function DayPlanCanvas() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="min-w-0 flex-1 lg:basis-0">
-          <QuickInput
-            ref={quickInputRef}
-            draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
-            onTaskCreated={handleTaskCreated}
-          />
+      <div className="flex flex-col gap-4">
+        <section
+          className="border-subtle flex flex-col gap-4 rounded-card border bg-surface px-5 py-4"
+          aria-label="Today summary"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-h1 font-medium text-ink">
+              {weekdayLabel} <span className="text-ink-faint">· {monthDayLabel}</span>
+            </h1>
+            <InPageSwitcher
+              options={VIEW_OPTIONS}
+              value={view}
+              onChange={setView}
+              ariaLabel="Today view"
+            />
+          </div>
+
           <Top3Slots
             ref={top3SectionRef}
             pinnedBySlot={pinnedBySlot}
@@ -434,48 +456,51 @@ export function DayPlanCanvas() {
               onDismiss={() => setReplacePickerTaskId(null)}
             />
           ) : null}
-          <TodayList
-            pulse={pulseTarget === "today"}
-            tasks={todayTasks.map(toRow)}
-            isLoading={isLoading}
-            selectedTaskId={selectedTaskId}
-            onSelectTask={setSelectedTaskId}
-            onActivateTask={handleActivateTask}
-            onComplete={pushComplete}
-            onDelete={pushDelete}
-            onPin={handlePinFromToday}
+
+          {todayTasks.length > 0 ? (
+            <div className="flex items-center gap-3">
+              <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
+                Balance
+              </span>
+              <BalanceBar tasks={todayTasks} />
+            </div>
+          ) : null}
+        </section>
+
+        {view === "review" ? (
+          <TodayReviewPanel localDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
+        ) : (
+          <div className="flex flex-col gap-4 lg:flex-row">
+            {view === "list" ? (
+              <div className="min-w-0 flex-1 lg:basis-0">
+                <div className="mb-3">
+                  <LensControlBar />
+                </div>
+                <TodayList
+                  pulse={pulseTarget === "today"}
+                  tasks={todayTasks.map(toRow)}
+                  isLoading={isLoading}
+                  selectedTaskId={selectedTaskId}
+                  onSelectTask={setSelectedTaskId}
+                  onActivateTask={handleActivateTask}
+                  onComplete={pushComplete}
+                  onDelete={pushDelete}
+                  onPin={handlePinFromToday}
+                />
+              </div>
+            ) : null}
+            <div className="min-w-0 flex-1 lg:basis-0">
+              <TimelinePane />
+            </div>
+          </div>
+        )}
+
+        <div className="sticky bottom-0 z-10 border-t border-border bg-surface pb-1 pt-3">
+          <QuickInput
+            ref={quickInputRef}
+            draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
+            onTaskCreated={handleTaskCreated}
           />
-          {bucketMode === "named_days" ? (
-            <PlanBucketsNamedDays
-              tasks={{
-                tomorrow: partitionedNamed.tomorrow.map(toRow),
-                byWeekdayIso: Object.fromEntries(
-                  Object.entries(partitionedNamed.byWeekdayIso).map(([iso, list]) => [
-                    iso,
-                    list.map(toRow),
-                  ])
-                ),
-                later: partitionedNamed.later.map(toRow),
-              }}
-              pulseTarget={pulseTarget}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-            />
-          ) : (
-            <PlanBuckets
-              tasks={{
-                tomorrow: partitionedRelative.tomorrow.map(toRow),
-                thisWeek: partitionedRelative.thisWeek.map(toRow),
-                later: partitionedRelative.later.map(toRow),
-              }}
-              pulseTarget={pulseTarget}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-            />
-          )}
-        </div>
-        <div className="min-w-0 flex-1 lg:basis-0">
-          <TimelinePane />
         </div>
       </div>
     </DndContext>
