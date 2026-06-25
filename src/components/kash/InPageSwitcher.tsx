@@ -52,7 +52,7 @@ export function InPageSwitcher<T extends string>({
   };
 
   return (
-    <div className="glass-pill flex text-sm" role="group" aria-label={ariaLabel}>
+    <div className="seg-track text-sm" role="group" aria-label={ariaLabel}>
       {options.map((option, index) => (
         <button
           key={option.value}
@@ -63,11 +63,7 @@ export function InPageSwitcher<T extends string>({
           onClick={() => onChange(option.value)}
           onKeyDown={(e) => onKeyDown(e, index)}
           aria-pressed={value === option.value}
-          className={`rounded-full px-3 py-1 transition ${
-            value === option.value
-              ? "bg-kash-accent text-white"
-              : "text-kash-ink-muted hover:text-kash-ink"
-          }`}
+          className="seg-option"
         >
           {option.label}
         </button>

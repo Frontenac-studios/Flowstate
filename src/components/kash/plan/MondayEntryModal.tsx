@@ -24,7 +24,7 @@ export function MondayEntryModal() {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             type="button"
-            className="glass-pill bg-kash-accent px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+            className="glass-pill border-[1.5px] border-kash-ink px-6 py-2.5 text-sm font-medium text-kash-ink transition hover:bg-[var(--kash-accent-soft)]"
             onClick={() => resolveMondayChoice("week")}
           >
             Plan the week

@@ -97,6 +97,7 @@ export default function ConfirmDialog({
                 ? {
                     backgroundColor: "var(--status-critical)",
                     borderColor: "var(--status-critical)",
+                    color: "var(--on-accent)",
                   }
                 : undefined
             }
