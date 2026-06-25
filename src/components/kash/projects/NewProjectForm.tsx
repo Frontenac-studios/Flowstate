@@ -4,10 +4,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
-  PROJECT_CATEGORIES,
-  PROJECT_CATEGORY_META,
-  type ProjectCategory,
-} from "@/lib/projects/categories";
+  categoryFillVar,
+  categorySeedLabel,
+  categorySolidVar,
+  categoryTextVar,
+} from "@/lib/projects/category-tokens";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
@@ -75,7 +77,6 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
         </legend>
         <div className="flex flex-wrap gap-2">
           {PROJECT_CATEGORIES.map((value) => {
-            const meta = PROJECT_CATEGORY_META[value];
             const selected = category === value;
             return (
               <button
@@ -83,23 +84,24 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
                 type="button"
                 onClick={() => setCategory(value)}
                 aria-pressed={selected}
-                className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition"
+                className={`flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition ${
+                  selected ? "border-transparent" : "border-subtle text-ink-muted hover:text-ink"
+                }`}
                 style={
                   selected
-                    ? { backgroundColor: meta.color, borderColor: meta.color, color: "#fff" }
-                    : {
-                        backgroundColor: `${meta.color}1f`,
-                        borderColor: "transparent",
-                        color: meta.color,
+                    ? {
+                        backgroundColor: categoryFillVar(value),
+                        color: categoryTextVar(value),
                       }
+                    : undefined
                 }
               >
                 <span
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: selected ? "#fff" : meta.color }}
+                  style={{ backgroundColor: categorySolidVar(value) }}
                   aria-hidden
                 />
-                {meta.label}
+                {categorySeedLabel(value)}
               </button>
             );
           })}
