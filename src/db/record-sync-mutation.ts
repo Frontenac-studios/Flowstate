@@ -74,3 +74,21 @@ export async function syncTaskBulkImportItemRow(
 ): Promise<void> {
   await recordSyncMutation({ table: "task_bulk_import_items", rowId, op, payload });
 }
+
+type PlanningSyncTable =
+  | "bingo_cards"
+  | "goals"
+  | "goal_milestones"
+  | "quarter_themes"
+  | "month_intentions"
+  | "reserved_days"
+  | "planning_suggestions";
+
+export async function syncPlanningRow(
+  table: PlanningSyncTable,
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table, rowId, op, payload });
+}

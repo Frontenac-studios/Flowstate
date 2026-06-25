@@ -1,14 +1,21 @@
 import type { SqliteDb } from "@kash/db-local";
 import {
   appSettings,
+  bingoCards,
   categorySettings,
   chatMessages,
   dayReviews,
+  goalMilestones,
+  goals,
+  monthIntentions,
   nudgeEvents,
   phases,
+  planningSuggestions,
   projects,
   protectedBlockTemplates,
   protectedBlocks,
+  quarterThemes,
+  reservedDays,
   syncWatermarks,
   taskBulkImportItems,
   taskBulkImports,
@@ -404,6 +411,34 @@ async function upsertRow(
             and(eq(taskBulkImportItems.importId, importId), eq(taskBulkImportItems.taskId, taskId))
           );
       else await db.insert(taskBulkImportItems).values(mapped as never);
+      return true;
+    }
+    case "bingo_cards":
+    case "goals":
+    case "goal_milestones":
+    case "quarter_themes":
+    case "month_intentions":
+    case "reserved_days":
+    case "planning_suggestions": {
+      const tableMap = {
+        bingo_cards: bingoCards,
+        goals,
+        goal_milestones: goalMilestones,
+        quarter_themes: quarterThemes,
+        month_intentions: monthIntentions,
+        reserved_days: reservedDays,
+        planning_suggestions: planningSuggestions,
+      } as const;
+      const sqliteTable = tableMap[table];
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(sqliteTable).where(eq(sqliteTable.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(sqliteTable)
+          .set(mapped as never)
+          .where(eq(sqliteTable.id, id));
+      else await db.insert(sqliteTable).values(mapped as never);
       return true;
     }
     default:

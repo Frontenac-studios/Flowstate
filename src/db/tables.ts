@@ -1,5 +1,12 @@
 import * as sqliteSchema from "@kash/db-local/schema";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
+import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
+import { goalMilestones as pgGoalMilestones } from "./schema/goal-milestones";
+import { goals as pgGoals } from "./schema/goals";
+import { monthIntentions as pgMonthIntentions } from "./schema/month-intentions";
+import { planningSuggestions as pgPlanningSuggestions } from "./schema/planning-suggestions";
+import { quarterThemes as pgQuarterThemes } from "./schema/quarter-themes";
+import { reservedDays as pgReservedDays } from "./schema/reserved-days";
 import { categorySettings as pgCategorySettings } from "./schema/category-settings";
 import { chatCustomSuggestions as pgChatCustomSuggestions } from "./schema/chat-custom-suggestions";
 import { chatMessages as pgChatMessages } from "./schema/chat-messages";
@@ -71,3 +78,22 @@ export const protectedBlockTemplates = (
 export const protectedBlocks = (
   isSqliteMode() ? sqliteSchema.protectedBlocks : pgProtectedBlocks
 ) as typeof pgProtectedBlocks;
+export const bingoCards = (
+  isSqliteMode() ? sqliteSchema.bingoCards : pgBingoCards
+) as typeof pgBingoCards;
+export const goals = (isSqliteMode() ? sqliteSchema.goals : pgGoals) as typeof pgGoals;
+export const goalMilestones = (
+  isSqliteMode() ? sqliteSchema.goalMilestones : pgGoalMilestones
+) as typeof pgGoalMilestones;
+export const quarterThemes = (
+  isSqliteMode() ? sqliteSchema.quarterThemes : pgQuarterThemes
+) as typeof pgQuarterThemes;
+export const monthIntentions = (
+  isSqliteMode() ? sqliteSchema.monthIntentions : pgMonthIntentions
+) as typeof pgMonthIntentions;
+export const reservedDays = (
+  isSqliteMode() ? sqliteSchema.reservedDays : pgReservedDays
+) as typeof pgReservedDays;
+export const planningSuggestions = (
+  isSqliteMode() ? sqliteSchema.planningSuggestions : pgPlanningSuggestions
+) as typeof pgPlanningSuggestions;
