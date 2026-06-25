@@ -11,3 +11,5 @@ export * from "./projects";
 export * from "./task-time-entries";
 export * from "./tasks";
 export * from "./task-bulk-imports";
+export * from "./task-recurrence";
+export * from "./task-occurrence-overrides";
