@@ -72,6 +72,36 @@
   box-shadow: var(--shadow-none);
 }
 
+/* Segmented control (InPageSwitcher) — iOS-style: an inset white pill rides a
+ * soft-gray track. The active pill's subtle shadow is a deliberate, documented
+ * exception to the flat/no-shadow rule (kash-3.0-visual-redesign.md, Jun 24). */
+.seg-track {
+  display: inline-flex;
+  gap: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  padding: 2px;
+}
+
+.seg-option {
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.75rem;
+  color: var(--ink-muted);
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.seg-option:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+}
+
+.seg-option[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(22, 24, 29, 0.14);
+}
+
 .glass-input {
   border-radius: var(--radius-control);
   border: 1px solid var(--border);
@@ -94,12 +124,12 @@
 
 .glass-btn-primary {
   border-radius: var(--radius-control);
-  border: 1px solid var(--accent);
-  background: var(--accent);
+  border: 1.5px solid var(--ink);
+  background: transparent;
   padding: 0.5rem 1rem;
   font-size: var(--density-base);
   font-weight: var(--weight-medium);
-  color: var(--on-accent);
+  color: var(--ink);
   box-shadow: var(--shadow-none);
   transition:
     transform 0.12s ease,
@@ -108,8 +138,7 @@
 }
 
 .glass-btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .glass-btn-primary:active:not(:disabled) {
