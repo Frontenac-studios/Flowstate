@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { FocusChat } from "@/components/kash/chat/FocusChat";
-import { TypedNarration } from "@/components/kash/chat/TypedNarration";
-import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
-import { useRdmNarration } from "@/hooks/useRdmNarration";
+import {
+  categoryFillVar,
+  categorySeedLabel,
+  categorySolidVar,
+  categoryTextVar,
+} from "@/lib/projects/category-tokens";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { priorityMeta } from "@/lib/tasks/priority";
@@ -51,6 +53,7 @@ export function FocusCanvas() {
 
   const lastWasLargeRef = useRef(false);
   const [seconds, setSeconds] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [doneFlash, setDoneFlash] = useState<string | null>(null);
 
   const { mutateAsync: startTimeEntry } = useMutation(trpc.timeEntries.start.mutationOptions());
@@ -61,6 +64,7 @@ export function FocusCanvas() {
   const resetSessionUi = useCallback(() => {
     setSeconds(0);
     setDoneFlash(null);
+    setIsPaused(false);
   }, []);
 
   const entryIdRef = useFocusTimeEntry({
@@ -71,6 +75,8 @@ export function FocusCanvas() {
 
   const endSession = useCallback(
     async (reason: ExitReason) => {
+      // When paused there is no running entry — the prior segment is already
+      // closed, so we just complete the exit without ending anything.
       if (!entryIdRef.current) return;
       await endTimeEntry({ entryId: entryIdRef.current, reason });
       entryIdRef.current = null;
@@ -78,23 +84,29 @@ export function FocusCanvas() {
     [endTimeEntry, entryIdRef]
   );
 
-  const { narration, loading: narrationLoading } = useRdmNarration(
-    task
-      ? {
-          id: task.id,
-          title: task.title,
-          isTop3: task.isTop3,
-          priority: task.priority,
-          projectSlug: task.projectSlug,
-        }
-      : null
-  );
-
+  // The clock only advances while a segment is running.
   useEffect(() => {
-    if (!taskId) return;
+    if (!taskId || isPaused) return;
     const id = window.setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, [taskId]);
+  }, [taskId, isPaused]);
+
+  const handlePause = useCallback(async () => {
+    if (doneFlash || isPaused || !taskId) return;
+    setIsPaused(true);
+    if (entryIdRef.current) {
+      const id = entryIdRef.current;
+      entryIdRef.current = null;
+      await endTimeEntry({ entryId: id, reason: "pause" });
+    }
+  }, [doneFlash, isPaused, taskId, endTimeEntry, entryIdRef]);
+
+  const handleResume = useCallback(async () => {
+    if (doneFlash || !isPaused || !taskId) return;
+    setIsPaused(false);
+    const { entryId } = await startTimeEntry({ taskId });
+    entryIdRef.current = entryId;
+  }, [doneFlash, isPaused, taskId, startTimeEntry, entryIdRef]);
 
   const rollNext = useCallback(
     async (excludeTaskId?: string) => {
@@ -189,13 +201,13 @@ export function FocusCanvas() {
 
   if (!taskId || !task) {
     return (
-      <section className="glass-panel-opaque p-6 text-center">
-        <h2 className="text-lg font-semibold text-kash-ink">Focus mode</h2>
-        <p className="mt-2 text-kash-ink-muted">Task not found. Returning to your plan.</p>
+      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
+        <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
+        <p className="mt-2 text-ink-muted">Task not found. Returning to your plan.</p>
         <div className="mt-5">
           <button
             type="button"
-            className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+            className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
             onClick={() => router.push("/today")}
           >
             Back to plan
@@ -205,75 +217,111 @@ export function FocusCanvas() {
     );
   }
 
+  const showCategory = !task.categoryUnresolved;
+
   return (
-    <section className="glass-panel-opaque relative mx-auto w-full max-w-xl p-6 sm:p-8">
-      <div>
-        <h1 className="text-2xl font-semibold leading-tight text-kash-ink">{task.title}</h1>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {task.projectSlug ? (
-            task.projectId ? (
-              <Link
-                href={`/projects/${task.projectId}`}
-                className="glass-pill px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+    <section className="relative overflow-hidden rounded-card border border-subtle bg-surface">
+      <div className="flex min-h-[440px] flex-col sm:flex-row">
+        <div className="flex flex-1 flex-col p-7 sm:p-8">
+          <span className="text-caption text-ink-faint">Focus session</span>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span
+              className="h-4 w-[3px] shrink-0 rounded-full"
+              style={{ backgroundColor: showCategory ? categorySolidVar(task.category) : "var(--ink-faint)" }}
+              aria-hidden
+            />
+            {showCategory ? (
+              <span
+                className="rounded-chip px-2 py-0.5 text-caption"
+                style={{
+                  backgroundColor: categoryFillVar(task.category),
+                  color: categoryTextVar(task.category),
+                }}
               >
-                #{task.projectSlug}
-              </Link>
-            ) : (
-              <span className="glass-pill px-2 py-0.5 text-xs text-kash-ink-muted">
-                #{task.projectSlug}
+                {categorySeedLabel(task.category)}
               </span>
-            )
-          ) : null}
-          {task.priority > 0 ? priorityDots(task.priority) : null}
-          {task.isTop3 ? (
-            <span className="glass-pill px-2 py-0.5 text-xs text-kash-accent" aria-label="Top 3">
-              ★ Top 3
-            </span>
-          ) : null}
+            ) : null}
+            {task.isTop3 ? (
+              <span
+                className="rounded-chip border border-subtle px-2 py-0.5 text-caption text-ink"
+                aria-label="Top 3"
+              >
+                ★ Top 3
+              </span>
+            ) : null}
+          </div>
+
+          <h1 className="mt-4 text-2xl font-medium leading-snug text-ink">{task.title}</h1>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-meta text-ink-muted">
+            {task.projectSlug ? (
+              task.projectId ? (
+                <Link
+                  href={`/projects/${task.projectId}`}
+                  className="transition hover:text-ink"
+                >
+                  #{task.projectSlug}
+                </Link>
+              ) : (
+                <span>#{task.projectSlug}</span>
+              )
+            ) : null}
+            {task.priority > 0 ? priorityDots(task.priority) : null}
+          </div>
+
+          <div className="mt-auto flex items-center gap-3 pt-8">
+            <button
+              type="button"
+              onClick={() => void handleDone()}
+              className="rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+              disabled={doneFlash !== null}
+            >
+              Done
+              <span className="sr-only"> (Cmd+Enter)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void handlePark()}
+              className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+              disabled={doneFlash !== null}
+            >
+              Park
+            </button>
+          </div>
         </div>
-      </div>
 
-      <TypedNarration text={narration} loading={narrationLoading} />
-
-      <FocusChat taskId={task.id} />
-
-      <div className="mt-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-col items-center justify-center gap-5 border-t border-subtle bg-surface-2 p-8 sm:w-[46%] sm:border-l sm:border-t-0">
+          <span className="text-caption tracking-[0.12em] text-ink-faint">
+            {isPaused ? "PAUSED" : "FOCUSING · DND ON"}
+          </span>
+          <div className="font-mono text-6xl font-medium tabular-nums text-ink">
+            {timeString(seconds)}
+          </div>
           <button
             type="button"
-            onClick={() => void handleDone()}
-            className="glass-pill px-4 py-2 text-sm font-medium text-kash-ink transition hover:text-kash-accent"
+            onClick={() => void (isPaused ? handleResume() : handlePause())}
             disabled={doneFlash !== null}
+            aria-label={isPaused ? "Resume" : "Pause"}
+            className="flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-ink text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
           >
-            Done
-            <span className="sr-only"> (Cmd+Enter)</span>
+            {isPaused ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <path d="M5 3.5v9l7-4.5z" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <rect x="4.5" y="3.5" width="2.5" height="9" rx="0.5" />
+                <rect x="9" y="3.5" width="2.5" height="9" rx="0.5" />
+              </svg>
+            )}
           </button>
-          <button
-            type="button"
-            onClick={() => void handlePark()}
-            className="glass-pill px-4 py-2 text-sm font-medium text-kash-ink-muted transition hover:text-kash-ink"
-            disabled={doneFlash !== null}
-          >
-            Park
-          </button>
-        </div>
-        <div className="text-right">
-          <div className="text-xs text-kash-ink-muted">Time on task</div>
-          <div className="mt-1 font-mono text-2xl text-kash-ink">{timeString(seconds)}</div>
+          <span className="text-caption text-ink-faint">Esc to exit</span>
         </div>
       </div>
-
-      <details className="mt-6 border-t border-[var(--border-subtle)] pt-4">
-        <summary className="cursor-pointer list-none text-xs text-kash-ink-muted transition hover:text-kash-ink">
-          Edit times
-        </summary>
-        <div className="mt-3">
-          <TaskTimeEntries taskId={task.id} />
-        </div>
-      </details>
 
       {doneFlash ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-kash-accent">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-ink">
           {doneFlash}
         </div>
       ) : null}

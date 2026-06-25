@@ -24,6 +24,7 @@ const REASON_LABEL: Record<string, string> = {
   done: "done",
   park: "parked",
   esc: "stopped",
+  pause: "paused",
   start: "running",
 };
 
