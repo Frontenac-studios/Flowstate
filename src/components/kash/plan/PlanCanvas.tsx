@@ -8,10 +8,9 @@ import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
 import { usePlanMode } from "./PlanProvider";
 import { DayPlanCanvas } from "./DayPlanCanvas";
-import { WeekCanvas } from "./week/WeekCanvas";
 
 export function PlanCanvas() {
-  const { mode, mondayBlocked } = usePlanMode();
+  const { mondayBlocked } = usePlanMode();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const searchParams = useSearchParams();
 
@@ -43,7 +42,7 @@ export function PlanCanvas() {
 
   return (
     <>
-      {mode === "week" ? <WeekCanvas /> : <DayPlanCanvas />}
+      <DayPlanCanvas />
       <KeyboardShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </>
   );
