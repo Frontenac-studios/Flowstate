@@ -3,6 +3,7 @@
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
 import { OPEN_PALETTE_EVENT } from "./CommandPalette";
+import { NAV_DRAWER_TOGGLE_EVENT } from "./LeftNavRail";
 import { ChatToggleButton } from "./chat/ChatToggleButton";
 
 /**
@@ -19,6 +20,25 @@ export function AppHeader() {
       data-tauri-drag-region
       className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink"
     >
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent(NAV_DRAWER_TOGGLE_EVENT))}
+        className="glass-icon-btn text-kash-ink-muted lg:hidden"
+        aria-label="Open navigation"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
       <span className="font-semibold tracking-tight">Kash</span>
       <span className="text-kash-ink-muted" aria-hidden>
         ·
