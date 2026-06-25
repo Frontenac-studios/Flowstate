@@ -9,15 +9,15 @@
 
 ## 0. Guardrails (locked before this session — do not reopen)
 
-- A **"Plan"** rail item with a **zoom switcher: Week ↔ Month ↔ Quarter ↔ Year** (NAV-1).
-  **Bingo is its own top-level rail item** (NAV-6), separate from Plan.
-  _(Revised Jun 22: the original single Plan switcher that included Bingo is superseded — see §8.)_
+- A **"Plan"** rail item with a **zoom switcher: Week ↔ Month ↔ Quarter ↔ Year ↔ Bingo** (NAV-1, Jun 25).
+  **Bingo is the 5th Plan sub-tab**, not a separate rail item.
+  _(Jun 22 NAV-6 rail placement superseded Jun 25 — see `kash-3.0-plan.md` §4.)_
 - Bingo/annual goals are **category-tagged** (each goal exactly one of the 5 categories).
   _(Revised Jun 22 gap-pass: the Bingo is now a literal **5×5 card** — fixed 25-cell total but
   **free category mix** per cell, so no per-category quota. See §7.)_
 - Cadence is **nested**: quarterly themes set direction, monthly intentions make them concrete.
 - The **balance pass** is a soft, optional closing step that suggests — **never forces**.
-- The **AI** drafts horizons, rolls goals down into weeks, and references the **Top 5 Values** (§13).
+- The **AI** drafts horizons, rolls goals down into weeks, and references **core values (3–7, flat)** (§13).
 
 ## 1. The decomposition spine (the through-line)
 
@@ -44,7 +44,7 @@ Every page owns one link. Two structural consequences emerged and apply app-wide
 | ------ | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | PM-A   | Year-view form               | Quarter cards; **clicking a quarter zooms into the Quarter view** (holds the week scroll, NAV-2); heatmap **merged in** |
 | PM1-1  | Goal: obligation vs desire   | Soft **optional** flag                                                                                                  |
-| PM1-2  | Goal: value link             | **Optional** link to a Top-5 Value (§13)                                                                                |
+| PM1-2  | Goal: value link             | **Optional** link to a core value (§13, 3–7 flat set)                                                                   |
 | PM1-3  | Goal: progress model         | **Hybrid** — milestones, each auto-completed by linked tasks                                                            |
 | PM1-4  | Goal: target horizon         | Starts **"this year"**; horizons assigned later at Check-ins                                                            |
 | PM1-5  | Goal: progress reach         | Everywhere, but **Year view hides it by default** (drill-in); goal + Check-in show it directly                          |
@@ -83,7 +83,7 @@ Every page owns one link. Two structural consequences emerged and apply app-wide
 
 - **Purpose:** top of the funnel — keep _desires_ alive beside _obligations_ across all 5 categories.
 - **Goal anatomy:** title · 1 category (drives balance) · optional obligation/desire flag · optional
-  Top-5 Value link · hybrid progress (milestones → linked tasks) · target horizon (starts "this year").
+  core-value link · hybrid progress (milestones → linked tasks) · target horizon (starts "this year").
 - **Layout:** a **list** of category-colored rows; a **balance bar + gap nudge** on top
   ("Body & Mind looks light").
 - **Reward:** completing one goal in _every_ category = a gentle **balance bingo** (feeds §12 garden).
@@ -169,16 +169,14 @@ New/extended tables implied by the above (RLS-scoped, SQLite-mirrored per the cr
 - `reserved_days` — month, type (outside/personal), resolved date (nullable while flexible) → emit
   suggested protected blocks.
 
-## 6. Open / deferred (out of this session's scope)
+## 6. Build dependencies (not open design)
 
-- **Reward/celebration mechanics + garden growth** → §12 Care.
-- **Abyss as a balance-pass source** → depends on §10 The Abyss.
-- **Values ranking + the About-me doc** → §13 / §11.
-- **AI persona (modes, prompts, tool catalog)** → §11.
-- **AA contrast / exact colors** → handled globally in `kash-3.0-design-tokens.md`.
-- **Still-open UX flows** (next gap-pass rounds): navigation/transitions Year↔Quarter↔Month↔Week,
-  the ghosted-accept interaction pattern, quarter-theme & month-intention entry UI, reserved-day
-  confirmation, empty/first-run states.
+- **Reward/celebration mechanics + garden growth** → §12 Care (stub `recordBingoReward()` until Care ships).
+- **Abyss as a balance-pass source** → §10 (stub empty tray until Abyss ships).
+- **Values picker on goals** → §13 (`value_id` nullable until Values PR lands).
+- **AI persona (modes, prompts, tool catalog)** → §11 (mock ghost payloads until persona refactor).
+- **AA contrast / exact colors** → `kash-3.0-design-tokens.md`.
+- **Transition motion** → animation pass (NAV-4); breadcrumb/zoom model is locked.
 
 ---
 
@@ -238,10 +236,9 @@ continue all year. Tapping a (locked) cell opens:
 
 ## 8. Navigation & transitions (gap-pass)
 
-- **NAV-1 · Switcher = a zoom axis.** Plan is **Week ↔ Month ↔ Quarter ↔ Year** as one zoom scale,
-  not flat tabs. (Bingo is not on this axis.)
-- **NAV-6 · Bingo is its own top-level rail item** (§4), separate from Plan. _(Updates §4: the rail
-  gains a Bingo entry; the Plan switcher drops Bingo.)_
+- **NAV-1 · Switcher = a zoom axis.** Plan is **Week ↔ Month ↔ Quarter ↔ Year ↔ Bingo** as one
+  in-page switcher on `/plan` (Jun 25). Bingo is the 5th tab, not a rail item.
+- **NAV-6 · ~~Bingo rail item~~ superseded Jun 25** — Bingo lives in the Plan switcher only.
 - **NAV-2 · Click a period = zoom in (replace).** Clicking a quarter/month/week opens that period's
   view, scoped to it (supersedes PM-A's inline expand).
 - **NAV-3 · Full breadcrumb path.** The selected period carries down (Year › Q3 › Aug › wk34);
@@ -311,3 +308,44 @@ pass (PM-6), milestone breakdown (GP4-2), Check-in (PM-7), and reserved-day conf
 > entry UIs, onboarding, rollover, capacity, reward). Remaining items are **build dependencies**, not
 > open design: Phase 2 time-tracking aggregation (heatmap + capacity), and the cross-feature hooks to
 > §10 Abyss, §11 AI persona, §12 Care, §13 Values.
+
+---
+
+## 12. Foundation build contract (Jun 25 — for PR1+ parallel fan-out)
+
+Implementation contracts for the planning data spine. Parallel PRs branch from this foundation.
+
+### 12.1 Tables & enums
+
+| Table                  | Purpose                                                                                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bingo_cards`          | One row per user × calendar year; `status` (`draft` \| `final`), `finalized_at`                                                                                |
+| `goals`                | Title, category, optional value/project links, bingo `cell_index` (0–24, **12 = FREE**), `state` (`active` \| `done` \| `backburnered`), target horizon fields |
+| `goal_milestones`      | Ordered milestones per goal; completion derived from linked tasks                                                                                              |
+| `quarter_themes`       | `year`, `quarter` (1–4), `phrase`, `focus_categories` (JSON array of category enums)                                                                           |
+| `month_intentions`     | One row per user × year × month × category                                                                                                                     |
+| `reserved_days`        | Flexible month slots → `resolved_date` → suggested protected blocks                                                                                            |
+| `planning_suggestions` | Persist ghosted AI suggestions (GA-4): `surface`, `payload` JSON, `status`                                                                                     |
+
+**Task extensions:** `milestone_id` (nullable FK → `goal_milestones`), `time_estimate_minutes` (nullable, PM11.3 capacity).
+
+**Enums:** `bingo_card_status`, `goal_state`, `obligation_desire`, `target_horizon`, `reserved_day_type`, `planning_suggestion_surface`, `planning_suggestion_status`.
+
+### 12.2 Sync & RLS
+
+Every table: `user_id`, `updated_at`, index `(user_id, updated_at)`, RLS owner-scoped, registered in `packages/sync/src/tables.ts` + SQLite mirror in `packages/db-local`.
+
+### 12.3 Stub seams (empty OK until integration PR)
+
+- `recordBingoReward()` — no-op until §12 Care
+- `fetchAbyssBalanceCandidates()` — returns `[]` until §10 Abyss
+- Values picker — `value_id` nullable; disabled until §13 Values
+- AI ghosts — `planning_suggestions` + mock payloads until §11 persona refactor
+
+### 12.4 Plan shell (PR1)
+
+- Route: `/plan`
+- Switcher: **Week · Month · Quarter · Year · Bingo**
+- Breadcrumb: Year › Q3 › Aug › wkN (NAV-3); resume last view (NAV-5, localStorage)
+- Shared **`GhostedAccept`** component (§9 GA-1–GA-5)
+- Placeholder panels per horizon until parallel PRs land (ON-2 copy)

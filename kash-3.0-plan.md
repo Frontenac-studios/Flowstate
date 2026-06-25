@@ -368,7 +368,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 
 ## 8. Planning Mode (Month / Quarter / Year)
 
-> **Status: RESOLVED (Jun 2026).** Bingo card, cadence, and the intentions→execution "balance pass" decided. Year-visualization form still open (needs a mockup).
+> **Status: RESOLVED (Jun 2026; gap-pass Jun 22; nav revised Jun 25).** Bingo card, cadence, balance pass, breadcrumb zoom, and ghosted-accept are fully specified in `kash-3.0-planning-mode.md`.
 
 **Purpose:** The long-horizon layer the app completely lacks today. Plan by weeks, months, quarters; set annual goals; keep "what I _wanted_ to do" alive alongside "what I _must_ do."
 
@@ -381,7 +381,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - **Annual goals as a "bingo card":** a visual grid of yearly goals you map out and adjust through the year, tracking both obligations and desires.
 - **Balance over time:** heatmap of category attention across the year; spot the neglected category early.
 - **AI as planning partner:** helps draft the month/quarter, rolls big goals down into weeks, and revisits/adjusts as reality shifts.
-- **Tie-in to Values (§11):** annual goals reference your Top 5 Values so the year reflects what matters, not just what's urgent.
+- **Tie-in to Values (§13):** annual goals optionally reference a **core value** (3–7 flat set) so the year reflects what matters, not just what's urgent.
 
 ### Detail — resolved Planning Mode
 
@@ -407,13 +407,13 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 
 **4. Balance over time:** a year **heatmap** of category attention to spot a neglected category early. (Form — see open question.)
 
-**5. AI planning partner:** drafts the month/quarter, rolls big goals down into weeks, revisits/adjusts; references **Top 5 Values** (§13) so the year reflects what matters, not just what's urgent.
+**5. AI planning partner:** drafts the month/quarter, rolls big goals down into weeks, revisits/adjusts; references **core values (§13)** so the year reflects what matters, not just what's urgent.
 
-**Remaining open questions:**
+**Resolved (gap-pass Jun 22):**
 
-- Year-visualization form: vertical months-scroll (expand to weeks) vs a 52-week grid vs quarter cards — resolve with a mockup.
-- Bingo card shape: a true 5×5 grid, or an open list? Does completing a "line" carry a reward (ties to §12 gamification)?
-- Does the balance pass suggest from the existing backlog/Abyss, generate new tasks, or both?
+- **Year view:** 2×2 quarter cards + merged heatmap (dominant-color week dots); click quarter to zoom in (breadcrumb).
+- **Bingo:** literal 5×5 grid (24 goal cells + free center); line bingo reward; draft → finalize → locked lifecycle.
+- **Balance pass:** two-tier floor + target gap; suggests from backlog/Abyss **and** newly generated ideas (ghosted-accept).
 
 ---
 

@@ -50,11 +50,12 @@ Going element-by-element, 4+ options each, shown in real page context:
 - **Split layout: task on the LEFT, timer on the RIGHT** (full-height, prominent timer — not a corner chip).
 - Done / Park live on the task side. `Esc` exits. Flat (no backdrop blur).
 
-### Plan (Planning Mode) — RESOLVED (Jun 24)
+### Plan (Planning Mode) — RESOLVED (Jun 24, nav revised Jun 25)
 
-- **Horizon nav: a segmented control** (Week / Month / Quarter / Year) in the header — jump to any horizon directly. (Breadcrumb zoom rejected.)
+- **Horizon nav:** in-page switcher **Week · Month · Quarter · Year · Bingo** on `/plan`, plus **breadcrumb zoom** (Year › Q3 › Aug › wk34). Click a period to zoom in; breadcrumb segments zoom out (NAV-2/3).
 - **Year view: 2×2 quarter cards** — theme + proportional balance bar + per-week dominant-color dots; click a quarter to zoom in; drag a goal onto a quarter to set its horizon (per planning-mode.md PM-2).
 - Quarter → Month → Week views per the planning-mode spec; B&W treatment applies.
+- **Plan → Week tab** embeds the same Week canvas as `/this-week` with **plan mode ON** (planning rail + AI draft). Rail Week stays execution-focused.
 
 ### Bingo (Annual Goals) — RESOLVED (Jun 24) · **supersedes planning-mode PM-1**
 

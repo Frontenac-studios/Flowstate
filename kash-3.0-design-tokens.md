@@ -102,15 +102,15 @@ and **text** (a darkened shade for text on the fill, meeting AA on the light fil
 
 Enum mapping (the DB `project_category` values → tokens):
 
-| Enum value      | Category          | Token prefix            |
-| --------------- | ----------------- | ----------------------- |
-| `professional`  | Professional      | `--cat-professional-*`  |
-| `personal`\*    | Personal Projects | `--cat-personal-*`      |
-| `relationships` | Relationships     | `--cat-relationships-*` |
-| `adulting`      | Adulting          | `--cat-adulting-*`      |
-| `body_mind`     | Body & Mind       | `--cat-body-mind-*`     |
+| Enum value          | Category          | Token prefix            |
+| ------------------- | ----------------- | ----------------------- |
+| `professional`      | Professional      | `--cat-professional-*`  |
+| `personal_projects` | Personal Projects | `--cat-personal-*`      |
+| `relationships`     | Relationships     | `--cat-relationships-*` |
+| `adulting`          | Adulting          | `--cat-adulting-*`      |
+| `body_mind`         | Body & Mind       | `--cat-body-mind-*`     |
 
-\* confirm the exact existing enum value for Personal Projects against `src/db/schema/projects.ts`.
+_Enum verified Jun 25 against `src/db/schema/projects.ts`: `["professional", "personal_projects", "relationships", "body_mind", "adulting"]`. Note the token prefix is `--cat-personal-*` while the enum value is `personal_projects` — the build must map enum → prefix, not assume they're identical._
 
 The `category-settings` table already stores a per-category `color` override (Phase 1, decision 1.2).
 These tokens are the **defaults**; user overrides replace `--cat-*-solid` at runtime, with fill/text
