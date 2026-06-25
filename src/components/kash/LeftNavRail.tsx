@@ -44,10 +44,12 @@ const WeekIcon = (
     stroke="currentColor"
     strokeWidth="1.8"
     strokeLinecap="round"
+    strokeLinejoin="round"
     aria-hidden
   >
     <rect x="3" y="4" width="18" height="17" rx="2" />
     <path d="M3 9h18M8 2v4M16 2v4" />
+    <path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" />
   </svg>
 );
 
@@ -79,35 +81,43 @@ const PlanIcon = (
     strokeLinejoin="round"
     aria-hidden
   >
-    <circle cx="5" cy="6" r="1" />
-    <circle cx="5" cy="12" r="1" />
-    <circle cx="5" cy="18" r="1" />
-    <path d="M9 6h11M9 12h11M9 18h11" />
+    <circle cx="12" cy="12" r="9" />
+    <path d="M15.6 8.4l-2.2 5.2-5.2 2.2 2.2-5.2z" />
   </svg>
 );
 
 const AbyssIcon = (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden>
-    <polygon points="9,4.5 10.26,7.74 13.5,9 10.26,10.26 9,13.5 7.74,10.26 4.5,9 7.74,7.74" />
-    <polygon points="17,4 17.84,6.16 20,7 17.84,7.84 17,10 16.16,7.84 14,7 16.16,6.16" />
-    <polygon points="15,14.6 15.67,16.33 17.4,17 15.67,17.67 15,19.4 14.33,17.67 12.6,17 14.33,16.33" />
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden
+  >
+    <path d="M12 3l1.6 4L18 8.6l-4.4 1.6L12 14l-1.6-3.8L6 8.6 10.4 7z" />
+    <path d="M18.4 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
   </svg>
 );
 
 const CareIcon = (
-  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      d="M11 20 C7 16 4 13 4 9.5 A3.5 3.5 0 0 1 11 8 A3.5 3.5 0 0 1 18 9.5 C18 13 15 16 11 20 Z"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-    />
-    <g fill="currentColor">
-      <polygon points="4,3 4.56,4.44 6,5 4.56,5.56 4,7 3.44,5.56 2,5 3.44,4.44" />
-      <polygon points="19,3.6 19.67,5.33 21.4,6 19.67,6.67 19,8.4 18.33,6.67 16.6,6 18.33,5.33" />
-      <polygon points="19,14.2 19.5,15.5 20.8,16 19.5,16.5 19,17.8 18.5,16.5 17.2,16 18.5,15.5" />
-    </g>
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden
+  >
+    <path d="M12 21v-8" />
+    <path d="M12 13c0-3.3 2.2-5.5 5.5-5.5C17.5 10.8 15.3 13 12 13z" />
+    <path d="M12 15c0-2.5-2-4-5-4 0 2.5 2 4 5 4z" />
   </svg>
 );
 
@@ -123,8 +133,10 @@ const SettingsIcon = (
     strokeLinejoin="round"
     aria-hidden
   >
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    <path d="M4 7h8M16 7h4M4 12h2M10 12h10M4 17h7M15 17h5" />
+    <circle cx="14" cy="7" r="2" />
+    <circle cx="8" cy="12" r="2" />
+    <circle cx="13" cy="17" r="2" />
   </svg>
 );
 
@@ -188,7 +200,7 @@ function NavLink({
       title={item.label}
       className={`flex h-12 items-center rounded-[var(--kash-radius-control)] pr-2 transition ${
         active
-          ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+          ? "bg-[var(--surface-selected)] text-kash-ink"
           : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
       }`}
     >
@@ -265,7 +277,7 @@ export function LeftNavRail() {
               expanded ? "opacity-100" : "pointer-events-none opacity-0"
             } ${
               pinned
-                ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                ? "bg-[var(--surface-selected)] text-kash-ink"
                 : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
             }`}
           >
