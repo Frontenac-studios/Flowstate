@@ -70,7 +70,7 @@ export function KeyboardShortcutsModal({ open, onClose }: Props) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" aria-hidden />
+      <div className="absolute inset-0 bg-black/20" aria-hidden />
       <div
         ref={dialogRef}
         role="dialog"

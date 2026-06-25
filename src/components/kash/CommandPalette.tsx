@@ -129,11 +129,7 @@ export function CommandPalette() {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"
-        aria-hidden
-        onMouseDown={close}
-      />
+      <div className="absolute inset-0 bg-black/20" aria-hidden onMouseDown={close} />
       <div className="glass-panel-strong relative z-10 w-full max-w-lg overflow-hidden p-2">
         <input
           ref={inputRef}
