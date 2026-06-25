@@ -190,7 +190,7 @@ export function EodReviewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
       <button
         type="button"
-        className="bg-kash-ink/20 absolute inset-0 backdrop-blur-md"
+        className="bg-kash-ink/20 absolute inset-0"
         aria-label="Close review"
         onClick={onClose}
       />

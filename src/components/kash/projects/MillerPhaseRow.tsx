@@ -60,7 +60,7 @@ export default function MillerPhaseRow({
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
       className={`flex cursor-grab items-start gap-2 rounded-kash px-2 py-1.5 transition active:cursor-grabbing ${
-        isOpen || selected ? "bg-kash-accent/15" : "hover:bg-white/40"
+        isOpen || selected ? "bg-kash-accent/15" : "hover:bg-[var(--surface)]"
       } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
       } ${isOver ? "border-t-2 border-kash-accent" : "border-t-2 border-transparent"}`}

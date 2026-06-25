@@ -189,7 +189,7 @@ function NavLink({
       className={`flex h-12 items-center rounded-[var(--kash-radius-control)] pr-2 transition ${
         active
           ? "bg-[var(--kash-accent-soft)] text-kash-accent"
-          : "text-kash-ink-muted hover:bg-white/40 hover:text-kash-ink"
+          : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
       }`}
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center">{item.icon}</span>
@@ -266,7 +266,7 @@ export function LeftNavRail() {
             } ${
               pinned
                 ? "bg-[var(--kash-accent-soft)] text-kash-accent"
-                : "text-kash-ink-muted hover:bg-white/40 hover:text-kash-ink"
+                : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
             }`}
           >
             {PinIcon}
@@ -281,7 +281,7 @@ export function LeftNavRail() {
                   {group.label}
                 </span>
               ) : index > 0 ? (
-                <div className="mx-2 h-px bg-white/30" />
+                <div className="mx-2 h-px bg-[var(--border-subtle)]" />
               ) : null}
             </div>
             {group.items.map((item) => (
