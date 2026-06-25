@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element 2 · Segmented control — in context (Plan page)</title>
+<style>
+  :root{
+    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#9aa0ad;
+    --line:#ededed; --line-2:#f4f4f4; --bg:#ffffff; --gray:#f1f1f2;
+    --cat-prof:#009ddc; --cat-pers:#973d97; --cat-rel:#e03a3e; --cat-adult:#f6821f; --cat-body:#61bb47;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:#f6f6f7;color:var(--ink);padding:22px;}
+  h1{font-size:19px;margin:0 0 4px;}
+  .sub{font-size:13px;color:var(--ink-muted);margin-bottom:8px;max-width:820px;}
+  .settled{font-size:12px;color:var(--ink-muted);background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:20px;max-width:820px;}
+  .settled b{color:var(--ink);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:1060px;}
+  .variant .vlabel{font-size:13px;font-weight:600;margin-bottom:8px;}
+  .variant .vlabel small{font-weight:400;color:var(--ink-faint);}
+
+  /* app shell */
+  .app{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-height:340px;}
+  .rail{width:66px;border-right:1px solid var(--line-2);padding:11px 6px;display:flex;flex-direction:column;gap:2px;}
+  .logo{font-size:15px;font-weight:600;text-align:center;margin-bottom:7px;}
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:8px;color:var(--ink-faint);font-size:8px;}
+  .navitem .ic{font-size:14px;line-height:1;}
+  .navitem.active{background:var(--gray);color:var(--ink);} /* SETTLED: soft gray fill */
+  .navgroup{font-size:7px;color:var(--ink-faint);text-align:center;margin:6px 0 1px;}
+  .navspace{flex:1;}
+  .main{flex:1;padding:16px 18px;min-width:0;}
+  .phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .phead h2{font-size:16px;margin:0;}
+
+  /* segmented base */
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:11px;}
+  .seg span{padding:5px 11px;color:var(--ink-muted);border-left:1px solid var(--line);}
+  .seg span:first-child{border-left:none;}
+
+  /* quarter cards */
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .qcard{border:1px solid var(--line);border-radius:11px;padding:11px;}
+  .qcard .top{display:flex;align-items:baseline;justify-content:space-between;}
+  .qcard .qn{font-size:13px;font-weight:600;}
+  .qcard .th{font-size:11px;color:var(--ink-muted);}
+  .qbar{display:flex;height:6px;border-radius:4px;overflow:hidden;margin-top:9px;}
+</style>
+</head>
+<body>
+<h1>Element 2 · Segmented control — shown in the Plan page</h1>
+<div class="sub">Same page four times. The only thing that changes is the <b>Week·Month·Quarter·Year</b> switcher (Year active). Everything else reflects decisions already made.</div>
+<div class="settled">Settled & applied here: &nbsp;<b>Element 1 nav rail = soft gray fill</b> (see the rail — “Plan” is the gray pill). &nbsp;•&nbsp; primary buttons = outline &nbsp;•&nbsp; white surfaces, category = left stripe.</div>
+
+<div class="grid">
+
+  <!-- E gray fill -->
+  <div class="variant">
+    <div class="vlabel">E · Gray fill <small>— matches your nav-rail choice</small></div>
+    <div class="app">
+      <div class="rail">
+        <div class="logo">K</div>
+        <div class="navgroup">Do now</div>
+        <div class="navitem"><span class="ic">☀</span>Today</div>
+        <div class="navitem"><span class="ic">▦</span>Week</div>
+        <div class="navitem"><span class="ic">🗂</span>Proj</div>
+        <div class="navgroup">Reflect</div>
+        <div class="navitem active"><span class="ic">◷</span>Plan</div>
+        <div class="navitem"><span class="ic">✦</span>Abyss</div>
+        <div class="navitem"><span class="ic">♡</span>Care</div>
+        <div class="navspace"></div>
+        <div class="navitem"><span class="ic">⚙</span>Set</div>
+      </div>
+      <div class="main">
+        <div class="phead"><h2>2026</h2>
+          <div class="seg"><span>W</span><span>M</span><span>Q</span><span style="background:var(--gray);color:var(--ink);font-weight:600;">Year</span></div>
+        </div>
+        <div class="qgrid">
+          <div class="qcard"><div class="top"><span class="qn">Q1</span><span class="th">Foundations</span></div><div class="qbar"><span style="width:50%;background:var(--cat-prof)"></span><span style="width:25%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-adult)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q2</span><span class="th">Build & ship</span></div><div class="qbar"><span style="width:60%;background:var(--cat-prof)"></span><span style="width:20%;background:var(--cat-pers)"></span><span style="width:20%;background:var(--cat-body)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q3</span><span class="th">Rest & rel.</span></div><div class="qbar"><span style="width:40%;background:var(--cat-rel)"></span><span style="width:35%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-prof)"></span></div></div>
+          <div class="qcard" style="border-style:dashed;"><div class="top"><span class="qn">Q4</span><span class="th" style="color:var(--ink-faint)">untitled</span></div><div style="font-size:10px;color:var(--ink-faint);margin-top:10px;">drag a goal here</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C underline -->
+  <div class="variant">
+    <div class="vlabel">C · Underline tab <small>— matches Today’s List/Cal/Review switcher</small></div>
+    <div class="app">
+      <div class="rail">
+        <div class="logo">K</div>
+        <div class="navgroup">Do now</div>
+        <div class="navitem"><span class="ic">☀</span>Today</div>
+        <div class="navitem"><span class="ic">▦</span>Week</div>
+        <div class="navitem"><span class="ic">🗂</span>Proj</div>
+        <div class="navgroup">Reflect</div>
+        <div class="navitem active"><span class="ic">◷</span>Plan</div>
+        <div class="navitem"><span class="ic">✦</span>Abyss</div>
+        <div class="navitem"><span class="ic">♡</span>Care</div>
+        <div class="navspace"></div>
+        <div class="navitem"><span class="ic">⚙</span>Set</div>
+      </div>
+      <div class="main">
+        <div class="phead"><h2>2026</h2>
+          <div style="display:inline-flex;gap:14px;font-size:11px;">
+            <span style="color:var(--ink-muted);">Week</span><span style="color:var(--ink-muted);">Month</span><span style="color:var(--ink-muted);">Quarter</span><span style="color:var(--ink);font-weight:600;border-bottom:2px solid var(--ink);padding-bottom:3px;">Year</span>
+          </div>
+        </div>
+        <div class="qgrid">
+          <div class="qcard"><div class="top"><span class="qn">Q1</span><span class="th">Foundations</span></div><div class="qbar"><span style="width:50%;background:var(--cat-prof)"></span><span style="width:25%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-adult)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q2</span><span class="th">Build & ship</span></div><div class="qbar"><span style="width:60%;background:var(--cat-prof)"></span><span style="width:20%;background:var(--cat-pers)"></span><span style="width:20%;background:var(--cat-body)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q3</span><span class="th">Rest & rel.</span></div><div class="qbar"><span style="width:40%;background:var(--cat-rel)"></span><span style="width:35%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-prof)"></span></div></div>
+          <div class="qcard" style="border-style:dashed;"><div class="top"><span class="qn">Q4</span><span class="th" style="color:var(--ink-faint)">untitled</span></div><div style="font-size:10px;color:var(--ink-faint);margin-top:10px;">drag a goal here</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B inset white -->
+  <div class="variant">
+    <div class="vlabel">B · Inset white pill <small>— iOS-style, gray track</small></div>
+    <div class="app">
+      <div class="rail">
+        <div class="logo">K</div>
+        <div class="navgroup">Do now</div>
+        <div class="navitem"><span class="ic">☀</span>Today</div>
+        <div class="navitem"><span class="ic">▦</span>Week</div>
+        <div class="navitem"><span class="ic">🗂</span>Proj</div>
+        <div class="navgroup">Reflect</div>
+        <div class="navitem active"><span class="ic">◷</span>Plan</div>
+        <div class="navitem"><span class="ic">✦</span>Abyss</div>
+        <div class="navitem"><span class="ic">♡</span>Care</div>
+        <div class="navspace"></div>
+        <div class="navitem"><span class="ic">⚙</span>Set</div>
+      </div>
+      <div class="main">
+        <div class="phead"><h2>2026</h2>
+          <div style="display:inline-flex;background:var(--gray);border-radius:8px;padding:2px;font-size:11px;">
+            <span style="padding:4px 10px;color:var(--ink-muted);">W</span><span style="padding:4px 10px;color:var(--ink-muted);">M</span><span style="padding:4px 10px;color:var(--ink-muted);">Q</span><span style="padding:4px 10px;background:#fff;border-radius:6px;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12);">Year</span>
+          </div>
+        </div>
+        <div class="qgrid">
+          <div class="qcard"><div class="top"><span class="qn">Q1</span><span class="th">Foundations</span></div><div class="qbar"><span style="width:50%;background:var(--cat-prof)"></span><span style="width:25%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-adult)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q2</span><span class="th">Build & ship</span></div><div class="qbar"><span style="width:60%;background:var(--cat-prof)"></span><span style="width:20%;background:var(--cat-pers)"></span><span style="width:20%;background:var(--cat-body)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q3</span><span class="th">Rest & rel.</span></div><div class="qbar"><span style="width:40%;background:var(--cat-rel)"></span><span style="width:35%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-prof)"></span></div></div>
+          <div class="qcard" style="border-style:dashed;"><div class="top"><span class="qn">Q4</span><span class="th" style="color:var(--ink-faint)">untitled</span></div><div style="font-size:10px;color:var(--ink-faint);margin-top:10px;">drag a goal here</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A black fill -->
+  <div class="variant">
+    <div class="vlabel">A · Black fill <small>— current</small></div>
+    <div class="app">
+      <div class="rail">
+        <div class="logo">K</div>
+        <div class="navgroup">Do now</div>
+        <div class="navitem"><span class="ic">☀</span>Today</div>
+        <div class="navitem"><span class="ic">▦</span>Week</div>
+        <div class="navitem"><span class="ic">🗂</span>Proj</div>
+        <div class="navgroup">Reflect</div>
+        <div class="navitem active"><span class="ic">◷</span>Plan</div>
+        <div class="navitem"><span class="ic">✦</span>Abyss</div>
+        <div class="navitem"><span class="ic">♡</span>Care</div>
+        <div class="navspace"></div>
+        <div class="navitem"><span class="ic">⚙</span>Set</div>
+      </div>
+      <div class="main">
+        <div class="phead"><h2>2026</h2>
+          <div class="seg"><span>W</span><span>M</span><span>Q</span><span style="background:var(--ink);color:#fff;">Year</span></div>
+        </div>
+        <div class="qgrid">
+          <div class="qcard"><div class="top"><span class="qn">Q1</span><span class="th">Foundations</span></div><div class="qbar"><span style="width:50%;background:var(--cat-prof)"></span><span style="width:25%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-adult)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q2</span><span class="th">Build & ship</span></div><div class="qbar"><span style="width:60%;background:var(--cat-prof)"></span><span style="width:20%;background:var(--cat-pers)"></span><span style="width:20%;background:var(--cat-body)"></span></div></div>
+          <div class="qcard"><div class="top"><span class="qn">Q3</span><span class="th">Rest & rel.</span></div><div class="qbar"><span style="width:40%;background:var(--cat-rel)"></span><span style="width:35%;background:var(--cat-body)"></span><span style="width:25%;background:var(--cat-prof)"></span></div></div>
+          <div class="qcard" style="border-style:dashed;"><div class="top"><span class="qn">Q4</span><span class="th" style="color:var(--ink-faint)">untitled</span></div><div style="font-size:10px;color:var(--ink-faint);margin-top:10px;">drag a goal here</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

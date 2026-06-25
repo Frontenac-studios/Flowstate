@@ -5,6 +5,8 @@
 > hand it to a build session to replace the legacy `kash-*` glass tokens in `src/styles/glass.css`
 >
 > - `tailwind.config.ts`. Companions: `kash-3.0-plan.md` (§5), `kash-3.0-build-breakdown.md` (§5).
+>
+> **⚠ REVISED Jun 24 — black-and-white redesign.** The original "flat-calm" palette read **too gray**. This doc now reflects the B&W direction (see `kash-3.0-visual-redesign.md`): **pure white** surfaces, near-black ink `#16181d`, hairline borders, **accent = black** with **outline** primary buttons — no gray backdrop, no graphite. Color stays reserved for categories (the Apple hexes in §2.2), shown as a 3px left stripe. The Abyss (dark) and Care garden (lush) remain deliberate exceptions.
 
 ---
 
@@ -12,8 +14,8 @@
 
 | #     | Decision         | Choice                                                                                                                                  |
 | ----- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| DT-1  | Aesthetic        | **Flat calm** — solid surfaces, no glassmorphism/blur                                                                                   |
-| DT-2  | Accent           | **Neutral graphite** — all saturation reserved for category meaning                                                                     |
+| DT-1  | Aesthetic        | **Black-and-white, flat** (revised Jun 24) — pure white surfaces, near-black ink, hairline borders, no glass/gray-backdrop              |
+| DT-2  | Accent           | **Black** `#16181d` (revised Jun 24, was graphite) — **outline** primary buttons; all saturation reserved for category meaning          |
 | DT-3  | Category palette | **Apple set**: Blue=Professional · Purple=Personal Projects · Red=Relationships · Orange=Adulting · Green=Body & Mind · Yellow reserved |
 | DT-3b | Semantics        | **Icon-led + graphite**; color used only for genuinely critical alerts                                                                  |
 | DT-4  | Theming          | **Light only** for v1; tokens structured so a dark theme drops in later without rework                                                  |
@@ -42,22 +44,23 @@ only saturated thing on screen**, so the eye goes straight to "which life area."
 
 ```css
 :root {
-  /* surfaces */
-  --bg: #f5f6f8; /* app backdrop */
+  /* surfaces — pure white, minimal gray (B&W redesign, Jun 24) */
+  --bg: #ffffff; /* app backdrop — WHITE, not the old gray #f5f6f8 */
   --surface: #ffffff; /* cards, panels */
-  --surface-2: #f7f8fa; /* row fill, inset */
-  /* borders (firm, per DT-5c) */
-  --border: #dcdfe5; /* default firm border */
-  --border-subtle: #e7e9ee; /* dividers, low-emphasis */
-  /* ink */
-  --ink: #1f2430; /* primary text */
+  --surface-2: #fafafa; /* subtle inset only */
+  /* borders — hairline, not firm */
+  --border: #ececec; /* hairline border */
+  --border-subtle: #f4f4f4; /* low-emphasis dividers */
+  /* ink — crisp near-black */
+  --ink: #16181d; /* primary text */
   --ink-muted: #6b7280; /* secondary text, meta */
   --ink-faint: #9aa0ad; /* hints, disabled */
-  /* accent = graphite (DT-2) */
-  --accent: #2b3140; /* primary buttons, active, links */
-  --accent-hover: #3a4150;
+  /* accent = BLACK (DT-2 revised — black, not graphite) */
+  --accent: #16181d; /* active nav (black pill), links */
+  --accent-hover: #000000;
   --on-accent: #ffffff;
-  --focus-ring: rgba(43, 49, 64, 0.35);
+  /* NOTE: primary buttons are OUTLINE — border 1.5px var(--ink), no fill, ink text */
+  --focus-ring: rgba(22, 24, 29, 0.35);
 }
 ```
 

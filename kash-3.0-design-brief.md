@@ -33,6 +33,10 @@ Category, priority (`!`/`!!`/`!!!`), due date, **recurrence** (repeat badge), **
 
 A **Care** hub plus inline prompts: walks, breathing, reflection, and a generative **garden** (stats-first). **The 3 Daily Wins** — a gentle physical / mental / spiritual tracker (three rings; "2 of 3 — a little reflection would round out the day"), auto-detected, encouragement-only.
 
+## Visual style (revised Jun 24 — black-and-white)
+
+**Pure black-and-white, flat.** Pure white surfaces, crisp near-black ink (`#16181d`), hairline borders, generous whitespace — Pinterest-clean. **Color is reserved entirely for life-category meaning** (a thin 3px left stripe on task rows; Apple hexes). **Accent = black**; primary buttons are **outline**, the active nav item a black pill. No glass, blur, gray backdrops, or brand color. Two deliberate exceptions: **the Abyss is dark/immersive**, and **the Care garden is lush/illustrative**.
+
 ## Design principles
 
 Calm, low-chrome, **keyboard-first**. Category color makes balance visible everywhere. AI is a companion, never a gatekeeper. **Encouragement, never guilt** (this is a wellbeing tool). Decisions are reversible.

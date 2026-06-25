@@ -91,7 +91,7 @@ The five categories (names editable; concepts fixed). **A `project_category` Pos
 **Remaining open questions:**
 
 - Confirm final default labels, or rename now (esp. "Adulting", "Body & Mind").
-- Balance weighting: pure count, or the Top-3 weighting noted above (leaning: weighting).
+- ✅ **Balance weighting — LOCKED (Jun 25): Top-3 weighting** (Top-3 = large, others = small). Locked via the §6 Today balance-bar decision; Today and Categories share one metric. Upgrades to time-based later without reworking views.
 - Backfill: triage existing loose tasks via a bulk AI pass, or manually?
 
 ---
@@ -142,7 +142,7 @@ So the plan is grounded, here is what is actually built today:
 └────┴──────────────────────────┴──────────────┘
 ```
 
-Navigation lives on the **left rail** only. Claude moves to a **persistent right rail** (matching the original v1 brief's intent). The **bottom dock is retired.** Inbox/triage becomes a **contextual panel** inside planning surfaces, not a global place.
+Navigation lives on the **left rail** only. Claude moves to a **right-side chat rail** that is **collapsed by default** — summoned by a soft-gray "Ask Claude" chip (top-right, `⌘/`) and opening as a **push panel** (no permanent right strip). The **bottom dock is retired.** Inbox/triage becomes a **contextual panel** inside planning surfaces, not a global place.
 
 ### Detail — resolved navigation spec
 
@@ -151,18 +151,18 @@ Navigation lives on the **left rail** only. Claude moves to a **persistent right
 - **Behavior:** slim icon rail that **expands on hover/click to reveal labels** (collapsible labels). Icon + label is the legible default once expanded.
 - **Grouped, all visible** (nothing hidden behind overflow — keeps Care & Abyss prominent, which is on-brand):
 
-  | Group              | Destinations | Route (current → proposed)           |
-  | ------------------ | ------------ | ------------------------------------ |
-  | **Do now**         | Today        | `/plan` (Today's daily loop)         |
-  |                    | Week         | `/this-week`                         |
-  |                    | Projects     | `/projects`                          |
-  | _(divider)_        |              |                                      |
-  | **Reflect & plan** | Plan         | `/planning` _(new — see route note)_ |
-  |                    | Abyss        | `/abyss` _(new)_                     |
-  |                    | Care         | `/care` _(new)_                      |
-  | **Pinned bottom**  | Settings     | `/settings`                          |
+  | Group              | Destinations | Route (current → proposed)      |
+  | ------------------ | ------------ | ------------------------------- |
+  | **Do now**         | Today        | `/today` _(moved from `/plan`)_ |
+  |                    | Week         | `/this-week`                    |
+  |                    | Projects     | `/projects`                     |
+  | _(divider)_        |              |                                 |
+  | **Reflect & plan** | Plan         | `/plan` _(new)_                 |
+  |                    | Abyss        | `/abyss` _(new)_                |
+  |                    | Care         | `/care` _(new)_                 |
+  | **Pinned bottom**  | Settings     | `/settings`                     |
 
-- **Route note:** "Today" currently owns `/plan`, which collides with the long-horizon "Plan" name. Cheapest fix: keep Today at `/plan`, put Planning Mode at `/planning`. (Alternative: rename Today → `/today` and give Plan the cleaner `/plan`.) Pick one before building.
+- **Route note (resolved Jun 25):** Today moves to **`/today`** and Planning Mode takes the clean **`/plan`**. Add a redirect from legacy `/plan` → `/today` and update internal links.
 
 **2. Right chat rail (Claude)**
 
@@ -203,13 +203,17 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 6. Build one **segmented in-page switcher** component; apply to Today, Plan, Care.
 7. Resolve the **`/plan` route collision** (Today vs Planning Mode).
 
-**Remaining open questions:**
+**Resolved (Jun 25) — all nav open questions closed:**
 
-- Route naming: Today keeps `/plan` (Plan → `/planning`), or Today → `/today` (Plan → `/plan`)?
-- Right chat rail default: open or collapsed? remembered per session?
-- Chat-toggle keybinding: keep current `⌃J`, or align to the `⌘`-family?
-- Mobile / Tauri desktop parity: identical rail, or collapse to a bottom tab bar on narrow widths?
-- Care's final sub-view list.
+- **Bingo placement:** a **sub-view of Plan** (5th tab in the horizon switcher: Week·Month·Quarter·Year·Bingo). _Not_ a separate rail item. Rail = 6 destinations + Settings.
+- **Route naming:** **Today → `/today`, Plan → `/plan`** (the cleaner scheme). Needs a redirect from the legacy `/plan`→Today + internal-link updates.
+- **Right chat rail:** **collapsed by default.** Opened from a **soft-gray "Ask Claude" chip** at the top-right of each page (no persistent right strip). Opens as a **push panel** (content shrinks; nothing covered). Keybinding **`⌘/`** (joins ⌘D/⌘K; avoids the ⌘J "downloads" collision in the web build).
+- **Mobile / Tauri parity:** desktop keeps the rail as designed; on narrow/phone widths it collapses to a **hamburger drawer** (full grouped list slides in). Bottom-tab-bar and collapsed-icon-rail rejected.
+- **Rail icons (Lucide line set):** Today = **sun** · Week = **calendar-days** · Projects = **folder** · Plan = **compass** · Abyss = **sparkles** · Care = **sprout** · Settings = **sliders**. (Replaces the old emoji glyphs.)
+- **Settings layout:** **top tab bar** (not a left section-nav); active tab = inset-white pill.
+- **Care's sub-views:** resolved in the redesign — Garden · Tasks · Breathing · Reflection · Stats · Travel.
+
+Active/selected-state treatments (from the B&W redesign): nav-rail active = **soft gray pill** · segmented controls & Settings tabs = **inset white pill** · Week "today" = gray week + white today column. See `kash-3.0-visual-redesign.md`.
 
 ---
 
@@ -217,7 +221,7 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **Purpose:** Fix "not the best styling" and "task visualization not good." Establish a calm, legible, consistent visual language — and make category balance _visible at a glance_.
 
-**Current state:** `Partial` — there's a Tailwind config with `kash-*` tokens, a `glass-panel` aesthetic, and Geist fonts. But no documented design system, and task/visualization quality is inconsistent across views.
+**Current state:** `Direction resolved, rollout pending` — the legacy `glass-panel` aesthetic is **retired.** The visual language is now a documented **black-and-white** system (Jun 24–25): pure-white surfaces, near-black ink `#16181d`, hairline borders, **black accent + outline buttons**, color reserved for category meaning (3px left stripe). Canonical specs: `kash-3.0-design-tokens.md` (tokens), `kash-3.0-visual-redesign.md` (per-page wireframes + active-states), `design-brief.md` / `design-system-starter.md` (Claude Design kit). Tokens still need the gray→B&W swap in code.
 
 **Vision:**
 
@@ -232,17 +236,19 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **Motion language** — gentle, grounding (ties into breathing/self-care tone), never frantic.
 - **Accessibility pass** — contrast, focus rings, keyboard reachability (run the `accessibility-review` skill before handoff).
 
-**Open questions:**
+**Resolved (Jun 24–25):**
 
-- Keep the glassmorphism direction, or move to a flatter/calmer aesthetic?
-- Light/dark/both? Any time-of-day adaptive theming (calmer at night)?
-- Reference apps for the _feel_ you want (Finch for warmth; what for structure)?
+- **Aesthetic:** flat **black-and-white** (glassmorphism rejected). Pure-white canvas, near-black ink, hairline borders, no blur/shadow (one documented shadow exception: the inset-white segmented pill).
+- **Theming:** **light-first** for v1; tokens structured so dark drops in later. Deliberate exceptions: the **Abyss is dark/immersive**, the **Care garden is lush/illustrative**.
+- **Active/selected states:** nav-rail = soft gray pill · segmented controls & Settings tabs = inset white pill · Week "today" = gray week + white today column.
+- **Reference feel:** **Pinterest** (clean B&W structure) + **Finch** (warmth).
+- _Still open (minor, finish anytime):_ checkbox-checked, Top-3 star, link styling, focus-ring treatments; the final motion/animation pass.
 
 ---
 
 ## 6. Today (Daily Loop)
 
-> **Status: RESOLVED (Jun 2026).** Core UX decided via the Today design session (day timeline, Top-3 deadline, DND, self-care). Spec below.
+> **Status: RESOLVED (Jun 2026; open questions closed Jun 25, 2026).** Core UX decided via the Today design session (day timeline, Top-3 deadline, DND, self-care). Spec below.
 
 **Purpose:** The core "finish one visible thing" engine. What needs doing today, surfaced one decision at a time.
 
@@ -265,15 +271,16 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 **1. Day Calendar view — "living record now, opt-in auto-draft later":**
 
 - The timeline is **not** pre-planned. It fills in as the day happens: external calendar events render as blocks; starting a focus session (via Decide ⌘D or a task's focus action) **drops a 45-min block onto the timeline at the current time** and starts the timer.
-- Completed blocks stay visible with their actual duration ("✓ 38m") — the day becomes a colored record of what you did.
+- Completed blocks stay visible with their actual duration ("✓ 38m") — the day becomes a colored record of what you did. Tasks completed **without** a timer appear as a thin **completion marker** (a category-colored tick at completion time) — no fabricated duration, so the future time-based balance stays clean. _(Resolved Jun 25.)_
 - **Category color** on each block's left edge; a day **balance bar** at the bottom shows category load at a glance.
+- **Default window & scroll _(Resolved Jun 25)_:** **adaptive fit** — the visible window auto-sizes to the day's actual content (earliest event → latest block, + padding) and **auto-scrolls to "now"** on open (with a "jump to now" control). Before any blocks exist (empty / early morning) it shows a **rolling next-6h forward window** from now; the **full day stays scrollable** both directions — the 6h is the parked position, not a clamp. _Rejected:_ fixed 7am–9pm / 6am–midnight frames (waste space, clip odd hours) and now-anchored compression (loses whole-day overview).
 - Self-care prompts (walks/breathing) appear as gentle dashed rows in the gaps between blocks (see §4 below).
 - **Roadmap (later, opt-in):** a confirm-first "draft my day" button that auto-lays-out blocks (Planner mode). Deferred until real time-tracking data exists to make placement accurate — Option A _generates the fuel_ auto-scheduling needs. Build A first.
 - _Rejected:_ manual time-blocking (re-introduces morning-arranging friction RDM removes) and day-one auto-scheduling (inaccurate without time data, surprises break trust).
 
 **2. Top-3 discipline — soft escalating nudges:**
 
-- Target: Top 3 done by 5pm. Each Top-3 auto-gets a 45-min focus block; spaced with simpler tasks between them.
+- Target: Top 3 done by the **Top-3 deadline**, which derives from a single configurable **wind-down time** (default 6pm) as wind-down − 1h — so 5pm by default. _(Resolved Jun 25: one wind-down anchor drives both the Top-3 deadline and the EoD nudge; calmest UI, always coherent.)_ Each Top-3 auto-gets a 45-min focus block; spaced with simpler tasks between them.
 - Enforcement is **soft and escalating**, never blocking: afternoon chip → chat note → Focus-coach mention as 5pm nears. Urgency without guilt (ADHD-friendly, self-compassion preserved).
 - Completed Top-3 stays visible (crossed out) as proof of progress; multi-day slips get flagged by the Reflection guide (§11).
 
@@ -288,16 +295,18 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **5. Missed-task handling & Review:**
 
-- **Review view / EoD:** celebrate wins, replay what got done, reflect (extend the existing EoD review toward Finch-style self-compassion), then triage leftovers.
+- **Review view / EoD:** celebrate wins, replay what got done, reflect (extend the existing EoD review toward Finch-style self-compassion), then triage leftovers. **Trigger _(Resolved Jun 25)_:** Review is **always one tap away** in the view switcher; at the **wind-down time** (default 6pm) a **gentle, dismissible nudge chip** appears — it never auto-opens or seizes the screen (matches the soft, escalating, never-blocking ethos). Smart/adaptive timing for the nudge (fire when the day actually winds down) can layer on later.
 - Incomplete tasks → reschedule later in the week or drop into the Abyss (§10). No silent auto-rollover; morning triage (§4 contextual inbox) is the catch-all.
 
-**6. Category-aware Today:** the balance bar warns (gently) if the whole day is one category — the first place "balance is the product" becomes visible.
+**6. Category-aware Today:** the day **balance bar** warns (gently) if the whole day is one category — the first place "balance is the product" becomes visible. _(Resolved Jun 25)_ It counts the **whole planned day** (all of today's tasks, not just completed) so the lopsided-day warning can fire in the morning while you can still rebalance. Load is **Top-3-weighted** (Top-3 = large, others = small), matching §2; the same bar component is built to **swap its input to real focus-minutes** later once time-tracking is trusted (the §2 time-based upgrade).
 
-**Remaining open questions:**
+**Resolved (Jun 25, 2026):**
 
-- Default Calendar window (e.g. 7am–9pm) and whether it auto-scrolls to "now."
-- Does the balance bar weight by Top-3 (large/small) here too, matching §2?
-- EoD Review trigger time — keep 6pm, or make it configurable?
+- **Calendar window:** adaptive fit + auto-scroll to "now"; rolling next-6h forward default on empty/early days; full day always scrollable.
+- **Balance bar:** Top-3-weighted now → time-based later; counts the whole planned day (planned population).
+- **EoD / Top-3 timing:** a single configurable **wind-down time** (default 6pm) drives both — EoD nudge fires at wind-down (soft, dismissible, never auto-opens), Top-3 deadline = wind-down − 1h.
+- **Untimed completions:** shown on the Calendar as thin category-colored completion markers (no fabricated duration).
+- _Deferred to §10/§11 (Care):_ self-care prompt cadence — walk/breathing frequency and walk-vs-breathing selection logic.
 
 ---
 
@@ -853,8 +862,8 @@ This is a _vision_ doc, so treat sequencing as a sketch, not a commitment. A sen
 Decisions to resolve as sections get expanded (collected from above):
 
 - **Categories:** ✅ RESOLVED (§2) — fixed 5, rename/recolor only, strict MECE, inherit-with-override, task-count balance. _Remaining:_ final labels, balance weighting, backfill method.
-- **Navigation:** ✅ RESOLVED (§4) — three-column shell, grouped left rail, right chat rail, contextual inbox, in-page switchers. _Remaining:_ `/plan` route naming, right-rail default state, chat keybinding, mobile/Tauri parity.
-- **Design:** glass vs. flat? light/dark? reference apps for feel?
+- **Navigation:** ✅ FULLY RESOLVED (§4, Jun 25) — three-column shell, grouped left rail (new Lucide icons), contextual inbox, in-page switchers. Routes Today `/today` + Plan `/plan`; Bingo = Plan sub-view; chat collapsed → "Ask Claude" chip + `⌘/` + push panel; mobile = hamburger drawer; Settings = top tab bar. _Nothing outstanding._
+- **Design:** ✅ RESOLVED (§5, Jun 24–25) — flat **black-and-white** (glass rejected), light-first (Abyss dark + garden lush exceptions), Pinterest+Finch feel. _Remaining:_ minor accent states (checkbox/star/link/focus-ring) + animation pass.
 - **Today:** ✅ RESOLVED (§6) — living-record timeline (+auto-draft later), soft Top-3 nudges, auto-DND, gentle self-care prompts.
 - **Week:** ✅ RESOLVED (§7) — placeholder+constraint protected blocks, colored task borders, soft over-commit warning.
 - **Planning:** ✅ RESOLVED (§8) — category-tagged bingo card, monthly+quarterly cadence, soft balance-pass closing step. _Remaining:_ year-viz form.

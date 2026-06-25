@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kash 3.0 — Active/selected state options (replacing black fills)</title>
+<style>
+  :root{
+    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#9aa0ad;
+    --line:#ededed; --line-2:#f4f4f4; --bg:#ffffff; --gray:#f1f1f2;
+    --cat-prof:#009ddc; --cat-pers:#973d97; --cat-rel:#e03a3e; --cat-adult:#f6821f; --cat-body:#61bb47;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:#f6f6f7;color:var(--ink);padding:24px;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .sub{font-size:13px;color:var(--ink-muted);margin-bottom:24px;max-width:760px;}
+  .elem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:20px;max-width:980px;}
+  .elem h2{font-size:15px;margin:0 0 2px;}
+  .elem .desc{font-size:12px;color:var(--ink-muted);margin-bottom:16px;}
+  .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .opt{border:1px solid var(--line-2);border-radius:10px;padding:12px 10px;}
+  .opt .demo{min-height:96px;display:flex;align-items:center;justify-content:center;}
+  .opt .name{font-size:12px;font-weight:600;margin-top:8px;}
+  .opt .blurb{font-size:11px;color:var(--ink-faint);line-height:1.3;}
+
+  /* mini nav rail */
+  .mrail{width:62px;border:1px solid var(--line);border-radius:10px;padding:7px 5px;display:flex;flex-direction:column;gap:3px;background:#fff;}
+  .mnav{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:8px;font-size:8px;color:var(--ink-faint);position:relative;}
+  .mnav .ic{font-size:14px;}
+  /* segmented */
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:10px;}
+  .seg span{padding:5px 8px;color:var(--ink-muted);border-left:1px solid var(--line);}
+  .seg span:first-child{border-left:none;}
+  /* settings list */
+  .mset{width:130px;display:flex;flex-direction:column;gap:2px;font-size:11px;}
+  .mset div{padding:6px 9px;border-radius:7px;color:var(--ink-muted);}
+  /* week day header */
+  .mday{width:78px;border:1px solid var(--line);border-radius:9px;padding:7px 6px;}
+  .mday .h{font-size:10px;text-align:center;color:var(--ink-faint);}
+  .mday .t{font-size:9px;color:var(--ink-muted);margin-top:6px;display:flex;align-items:center;gap:3px;}
+  .mday .t span.s{width:3px;height:9px;border-radius:2px;background:var(--cat-prof);}
+</style>
+</head>
+<body>
+<h1>Active / selected-state options</h1>
+<div class="sub">Everywhere we currently fill with <b>solid black</b> is a “this is selected/active” signal. Since black is now the accent and buttons went outline, here are 5 ways to render each. Option <b>A is the current black fill</b> in every row, for comparison. Pick one per element — they can match for consistency or differ.</div>
+
+<!-- 1. NAV RAIL -->
+<div class="elem">
+  <h2>1 · Active nav-rail item</h2>
+  <div class="desc">The left rail’s current page (Today shown active). Today / Week / Projects / Plan / Abyss / Care.</div>
+  <div class="opts">
+    <!-- A black pill -->
+    <div class="opt"><div class="demo"><div class="mrail">
+      <div class="mnav" style="background:var(--ink);color:#fff;"><span class="ic">☀</span>Today</div>
+      <div class="mnav"><span class="ic">▦</span>Week</div>
+      <div class="mnav"><span class="ic">🗂</span>Proj</div>
+    </div></div><div class="name">A · Black pill</div><div class="blurb">current — solid fill, white icon</div></div>
+    <!-- B left bar -->
+    <div class="opt"><div class="demo"><div class="mrail">
+      <div class="mnav" style="color:var(--ink);"><span style="position:absolute;left:-5px;top:6px;bottom:6px;width:3px;background:var(--ink);border-radius:2px;"></span><span class="ic">☀</span>Today</div>
+      <div class="mnav"><span class="ic">▦</span>Week</div>
+      <div class="mnav"><span class="ic">🗂</span>Proj</div>
+    </div></div><div class="name">B · Left edge bar</div><div class="blurb">black bar + darkened icon, no fill</div></div>
+    <!-- C gray fill -->
+    <div class="opt"><div class="demo"><div class="mrail">
+      <div class="mnav" style="background:var(--gray);color:var(--ink);"><span class="ic">☀</span>Today</div>
+      <div class="mnav"><span class="ic">▦</span>Week</div>
+      <div class="mnav"><span class="ic">🗂</span>Proj</div>
+    </div></div><div class="name">C · Soft gray fill</div><div class="blurb">light pill, black icon</div></div>
+    <!-- D ink text only -->
+    <div class="opt"><div class="demo"><div class="mrail">
+      <div class="mnav" style="color:var(--ink);font-weight:700;"><span class="ic">☀</span>Today</div>
+      <div class="mnav"><span class="ic">▦</span>Week</div>
+      <div class="mnav"><span class="ic">🗂</span>Proj</div>
+    </div></div><div class="name">D · Ink + weight</div><div class="blurb">no container; just dark + bold</div></div>
+    <!-- E icon chip -->
+    <div class="opt"><div class="demo"><div class="mrail">
+      <div class="mnav" style="color:var(--ink);"><span class="ic" style="background:var(--ink);color:#fff;border-radius:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">☀</span>Today</div>
+      <div class="mnav"><span class="ic">▦</span>Week</div>
+      <div class="mnav"><span class="ic">🗂</span>Proj</div>
+    </div></div><div class="name">E · Filled icon chip</div><div class="blurb">only the icon fills; label stays text</div></div>
+  </div>
+</div>
+
+<!-- 2. SEGMENTED -->
+<div class="elem">
+  <h2>2 · Active segmented-control segment</h2>
+  <div class="desc">Projects Miller/Timeline toggle and Plan’s Week·Month·Quarter·Year switcher (Year shown active).</div>
+  <div class="opts">
+    <div class="opt"><div class="demo"><div class="seg">
+      <span>W</span><span>M</span><span>Q</span><span style="background:var(--ink);color:#fff;">Year</span>
+    </div></div><div class="name">A · Black fill</div><div class="blurb">current — solid active segment</div></div>
+    <div class="opt"><div class="demo"><div class="seg" style="background:var(--gray);border-color:var(--gray);">
+      <span style="border-left:none;">W</span><span>M</span><span>Q</span><span style="background:#fff;color:var(--ink);border-radius:6px;margin:2px;border-left:none;">Year</span>
+    </div></div><div class="name">B · Inset white</div><div class="blurb">gray track, white raised pill (iOS-style)</div></div>
+    <div class="opt"><div class="demo"><div class="seg" style="border:none;gap:10px;">
+      <span style="border:none;">W</span><span style="border:none;">M</span><span style="border:none;">Q</span><span style="border:none;color:var(--ink);font-weight:600;border-bottom:2px solid var(--ink);border-radius:0;">Year</span>
+    </div></div><div class="name">C · Underline tab</div><div class="blurb">no box; black underline marks active</div></div>
+    <div class="opt"><div class="demo"><div class="seg">
+      <span>W</span><span>M</span><span>Q</span><span style="color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--ink);border-radius:6px;">Year</span>
+    </div></div><div class="name">D · Outline segment</div><div class="blurb">active segment gets a black border</div></div>
+    <div class="opt"><div class="demo"><div class="seg">
+      <span>W</span><span>M</span><span>Q</span><span style="background:var(--gray);color:var(--ink);font-weight:600;">Year</span>
+    </div></div><div class="name">E · Gray fill</div><div class="blurb">light fill instead of black</div></div>
+  </div>
+</div>
+
+<!-- 3. SETTINGS NAV -->
+<div class="elem">
+  <h2>3 · Settings section-nav active item</h2>
+  <div class="desc">The left section list in Settings (Categories shown active).</div>
+  <div class="opts">
+    <div class="opt"><div class="demo"><div class="mset">
+      <div>Account</div><div style="background:var(--ink);color:#fff;">Categories</div><div>About me</div>
+    </div></div><div class="name">A · Black pill</div><div class="blurb">current — solid fill</div></div>
+    <div class="opt"><div class="demo"><div class="mset">
+      <div>Account</div><div style="color:var(--ink);position:relative;padding-left:13px;"><span style="position:absolute;left:2px;top:6px;bottom:6px;width:3px;background:var(--ink);border-radius:2px;"></span>Categories</div><div>About me</div>
+    </div></div><div class="name">B · Left edge bar</div><div class="blurb">black bar + dark text, no fill</div></div>
+    <div class="opt"><div class="demo"><div class="mset">
+      <div>Account</div><div style="background:var(--gray);color:var(--ink);">Categories</div><div>About me</div>
+    </div></div><div class="name">C · Soft gray fill</div><div class="blurb">light pill, black text</div></div>
+    <div class="opt"><div class="demo"><div class="mset">
+      <div>Account</div><div style="color:var(--ink);font-weight:700;">Categories</div><div>About me</div>
+    </div></div><div class="name">D · Ink + weight</div><div class="blurb">no container; just dark + bold</div></div>
+    <div class="opt"><div class="demo"><div class="mset">
+      <div>Account</div><div style="color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--ink);">Categories</div><div>About me</div>
+    </div></div><div class="name">E · Outline pill</div><div class="blurb">black border, no fill</div></div>
+  </div>
+</div>
+
+<!-- 4. TODAY MARKER -->
+<div class="elem">
+  <h2>4 · Week grid “today” marker</h2>
+  <div class="desc">How the current day stands out in the 7-day grid. (This is a <i>date</i> indicator, not a click-selection — so subtler options work.)</div>
+  <div class="opts">
+    <div class="opt"><div class="demo"><div class="mday">
+      <div class="h" style="background:var(--ink);color:#fff;border-radius:6px;padding:2px 0;">Tue 23</div>
+      <div class="t"><span class="s"></span>PR review</div>
+    </div></div><div class="name">A · Black pill</div><div class="blurb">current — header fully filled</div></div>
+    <div class="opt"><div class="demo"><div class="mday">
+      <div class="h" style="color:var(--ink);font-weight:700;">Tue <span style="background:var(--ink);color:#fff;border-radius:50%;padding:1px 5px;">23</span></div>
+      <div class="t"><span class="s"></span>PR review</div>
+    </div></div><div class="name">B · Filled day number</div><div class="blurb">only “23” circled (calendar-style)</div></div>
+    <div class="opt"><div class="demo"><div class="mday" style="border-color:var(--ink);border-width:1.5px;">
+      <div class="h" style="color:var(--ink);font-weight:700;">Tue 23</div>
+      <div class="t"><span class="s"></span>PR review</div>
+    </div></div><div class="name">C · Outlined column</div><div class="blurb">whole day boxed in black</div></div>
+    <div class="opt"><div class="demo"><div class="mday">
+      <div class="h" style="color:var(--ink);font-weight:700;">Tue 23</div>
+      <div style="height:2px;background:var(--ink);border-radius:2px;margin-top:4px;"></div>
+      <div class="t"><span class="s"></span>PR review</div>
+    </div></div><div class="name">D · Underline</div><div class="blurb">bold date + black rule under header</div></div>
+    <div class="opt"><div class="demo"><div class="mday" style="background:var(--gray);border-color:var(--gray);">
+      <div class="h" style="color:var(--ink);font-weight:700;">Tue 23</div>
+      <div class="t"><span class="s"></span>PR review</div>
+    </div></div><div class="name">E · Gray column tint</div><div class="blurb">soft gray fills the whole column</div></div>
+  </div>
+</div>
+
+</body>
+</html>

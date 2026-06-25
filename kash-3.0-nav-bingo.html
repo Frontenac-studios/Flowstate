@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nav decision · Bingo placement</title>
+<style>
+  :root{
+    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#9aa0ad;
+    --line:#ededed; --line-2:#f4f4f4; --bg:#ffffff; --gray:#f1f1f2;
+    --cat-prof:#009ddc; --cat-pers:#973d97; --cat-rel:#e03a3e; --cat-adult:#f6821f; --cat-body:#61bb47;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:#f6f6f7;color:var(--ink);padding:22px;}
+  h1{font-size:19px;margin:0 0 4px;}
+  .sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;max-width:840px;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:980px;}
+  .vlabel{font-size:13px;font-weight:600;margin-bottom:8px;}
+  .vlabel small{font-weight:400;color:var(--ink-faint);}
+  .hint{font-size:11px;color:var(--ink-faint);margin-top:8px;}
+
+  .app{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-height:320px;}
+  .rail{width:78px;border-right:1px solid var(--line-2);padding:11px 7px;display:flex;flex-direction:column;gap:2px;}
+  .logo{font-size:15px;font-weight:600;text-align:center;margin-bottom:7px;}
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:8px;color:var(--ink-faint);font-size:9px;}
+  .navitem .ic{font-size:15px;line-height:1;}
+  .navitem.active{background:var(--gray);color:var(--ink);}
+  .navgroup{font-size:8px;color:var(--ink-faint);text-align:center;margin:7px 0 1px;}
+  .navspace{flex:1;}
+  .main{flex:1;padding:16px 18px;min-width:0;}
+  .phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .phead h2{font-size:16px;margin:0;}
+  .seg{display:inline-flex;background:#f1f1f2;border-radius:8px;padding:2px;font-size:11px;}
+  .seg span{padding:5px 10px;color:var(--ink-muted);border-radius:6px;}
+  .seg span.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .bcard{border:1px solid var(--line);border-radius:11px;padding:14px;font-size:12px;color:var(--ink-muted);}
+</style>
+</head>
+<body>
+<h1>Decision 1 · Where does Bingo live?</h1>
+<div class="sub">Your annual 5×5 goals card. The plan §8 treats it as a <b>sub-view of Plan</b> (Week·Month·Quarter·Year·Bingo); the build tracker says <b>its own rail item</b>. Pick one so the two docs agree.</div>
+
+<div class="twocol">
+
+  <!-- A: rail item -->
+  <div>
+    <div class="vlabel">A · Its own rail item <small>— top-level destination</small></div>
+    <div class="app">
+      <div class="rail">
+        <div class="logo">K</div>
+        <div class="navgroup">Do now</div>
+        <div class="navitem"><span class="ic">☀</span>Today</div>
+        <div class="navitem"><span class="ic">▦</span>Week</div>
+        <div class="navitem"><span class="ic">🗂</span>Projects</div>
+        <div class="navgroup">Reflect</div>
+        <div class="navitem"><span class="ic">◷</span>Plan</div>
+        <div class="navitem active"><span class="ic">▦</span>Bingo</div>
+        <div class="navitem"><span class="ic">✦</span>Abyss</div>
+        <div class="navitem"><span class="ic">♡</span>Care</div>
+        <div class="navspace"></div>
+        <div class="navitem"><span class="ic">⚙</span>Settings</div>
+      </div>
+      <div class="main">
+        <div class="phead"><h2>2026 · Bingo</h2></div>
+        <div class="bcard">The 5×5 card opens directly — one click from anywhere. Always visible in the rail as a year-long motivator.</div>
+      </div>
+    </div>
+    <div class="hint">Pro: always one click, feels special/motivating. Con: adds a 7th rail item; Bingo + Plan both about long horizons can feel redundant.</div>
+  </div>
+
+  <!-- B: plan sub-view -->
+  <div>
+    <div class="vlabel">B · Sub-view inside Plan <small>— the Year’s sibling</small></div>
+    <div class="app">
+      <div class="rail">
+        <div class="logo">K</div>
+        <div class="navgroup">Do now</div>
+        <div class="navitem"><span class="ic">☀</span>Today</div>
+        <div class="navitem"><span class="ic">▦</span>Week</div>
+        <div class="navitem"><span class="ic">🗂</span>Projects</div>
+        <div class="navgroup">Reflect</div>
+        <div class="navitem active"><span class="ic">◷</span>Plan</div>
+        <div class="navitem"><span class="ic">✦</span>Abyss</div>
+        <div class="navitem"><span class="ic">♡</span>Care</div>
+        <div class="navspace"></div>
+        <div class="navitem"><span class="ic">⚙</span>Settings</div>
+      </div>
+      <div class="main">
+        <div class="phead"><h2>2026</h2>
+          <div class="seg"><span>Week</span><span>Month</span><span>Quarter</span><span>Year</span><span class="on">Bingo</span></div>
+        </div>
+        <div class="bcard">Bingo is the 5th tab of the Plan horizon switcher — sits next to Year, where annual goals naturally belong.</div>
+      </div>
+    </div>
+    <div class="hint">Pro: leaner rail (6 items), Bingo logically grouped with horizons. Con: one extra click; slightly less “special.”</div>
+  </div>
+
+</div>
+</body>
+</html>
