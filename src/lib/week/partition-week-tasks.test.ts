@@ -24,10 +24,19 @@ describe("partitionWeekTasks", () => {
     expect(result.inbox).toHaveLength(0);
   });
 
-  it("excludes tasks scheduled outside current week", () => {
+  it("puts tasks scheduled after this week into the later backlog", () => {
     const result = partitionWeekTasks([{ id: "next", scheduledDate: "2026-06-02" }], wed);
 
+    expect(result.later.map((t) => t.id)).toEqual(["next"]);
     expect(result.inbox).toHaveLength(0);
+    expect(Object.values(result.byDate).every((col) => col.length === 0)).toBe(true);
+  });
+
+  it("excludes past-dated (overdue) tasks from every group", () => {
+    const result = partitionWeekTasks([{ id: "old", scheduledDate: "2026-05-01" }], wed);
+
+    expect(result.inbox).toHaveLength(0);
+    expect(result.later).toHaveLength(0);
     expect(Object.values(result.byDate).every((col) => col.length === 0)).toBe(true);
   });
 });
