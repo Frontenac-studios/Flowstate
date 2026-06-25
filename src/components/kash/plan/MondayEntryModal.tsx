@@ -9,7 +9,7 @@ export function MondayEntryModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="monday-entry-title"

@@ -72,7 +72,7 @@ export default function ConfirmDialog({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-md" aria-hidden />
+      <div className="absolute inset-0 bg-black/20" aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
