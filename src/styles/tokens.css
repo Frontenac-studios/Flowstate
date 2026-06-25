@@ -1,33 +1,35 @@
 /* Kash 3.0 — Design Tokens (source of truth)
- * Spec: kash-3.0-design-tokens.md. Flat-calm aesthetic (DT-1), graphite accent (DT-2),
- * Apple category palette (DT-3), icon-led semantics (DT-3b), light theme only (DT-4),
- * compact density (DT-5a), Figtree (DT-5b), crisp/flat finish (DT-5c).
+ * Spec: kash-3.0-design-tokens.md + kash-3.0-visual-redesign.md. Black-and-white
+ * aesthetic (DT-1, B&W revision Jun 24): pure-white surfaces, near-black ink,
+ * hairline borders. Accent = black (DT-2 revised), Apple category palette (DT-3),
+ * icon-led semantics (DT-3b), light theme only (DT-4), compact density (DT-5a),
+ * Figtree (DT-5b), crisp/flat finish (DT-5c).
  *
  * Theming: every value here is a semantic variable. A dark theme = one extra
  * :root[data-theme="dark"] block remapping these same names. No component references
  * a raw hex — only these tokens (legacy --kash-* names are aliased in glass.css).
  */
 :root {
-  /* ---- surfaces ---- */
-  --bg: #f5f6f8;
+  /* ---- surfaces — pure white, minimal gray (B&W redesign, Jun 24) ---- */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f7f8fa;
+  --surface-2: #fafafa;
 
-  /* ---- borders (firm, DT-5c) ---- */
-  --border: #dcdfe5;
-  --border-subtle: #e7e9ee;
+  /* ---- borders (hairline, B&W redesign) ---- */
+  --border: #ececec;
+  --border-subtle: #f4f4f4;
 
-  /* ---- ink ---- */
-  --ink: #1f2430;
+  /* ---- ink — crisp near-black ---- */
+  --ink: #16181d;
   --ink-muted: #6b7280;
   --ink-faint: #9aa0ad;
 
-  /* ---- accent = graphite (DT-2) ---- */
-  --accent: #2b3140;
-  --accent-hover: #3a4150;
+  /* ---- accent = black (DT-2 revised Jun 24, was graphite) ---- */
+  --accent: #16181d;
+  --accent-hover: #000000;
   --on-accent: #ffffff;
-  --accent-soft: rgba(43, 49, 64, 0.16);
-  --focus-ring: rgba(43, 49, 64, 0.35);
+  --accent-soft: rgba(22, 24, 29, 0.12);
+  --focus-ring: rgba(22, 24, 29, 0.35);
 
   /* ---- category palette (DT-3, Apple set): fill / solid / text ---- */
   --cat-professional-fill: #e5f5fc;
