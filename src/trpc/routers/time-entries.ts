@@ -1,9 +1,11 @@
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, isNull, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { taskTimeEntries, tasks } from "@/db/tables";
+import { projects, taskTimeEntries, tasks } from "@/db/tables";
+import { aggregateWeek } from "@/lib/time/aggregate-week";
+import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -177,6 +179,44 @@ export const timeEntriesRouter = createTRPCRouter({
       }
 
       return { entryId: row.id };
+    }),
+
+  /**
+   * End-of-week roll-up (Phase 2.5): focus seconds for the current browser-local
+   * week, grouped by derived category and by project. Read-only; category comes
+   * from the joined task (decision 2.1 — never snapshotted).
+   */
+  weeklyRollup: protectedProcedure
+    .input(z.object({ tzOffsetMinutes: z.number().int().min(-720).max(840) }))
+    .query(async ({ ctx, input }) => {
+      const { start, end } = localWeekUtcBounds(new Date(), input.tzOffsetMinutes);
+
+      const rows = await db
+        .select({
+          startedAt: taskTimeEntries.startedAt,
+          endedAt: taskTimeEntries.endedAt,
+          category: tasks.category,
+          projectId: tasks.projectId,
+          projectName: projects.name,
+        })
+        .from(taskTimeEntries)
+        .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+        .leftJoin(projects, eq(tasks.projectId, projects.id))
+        .where(
+          and(
+            eq(taskTimeEntries.userId, ctx.userId),
+            gte(taskTimeEntries.startedAt, start),
+            lt(taskTimeEntries.startedAt, end)
+          )
+        );
+
+      const rollup = aggregateWeek({ entries: rows });
+
+      return {
+        weekStart: start,
+        weekEnd: end,
+        ...rollup,
+      };
     }),
 
   delete: protectedProcedure
