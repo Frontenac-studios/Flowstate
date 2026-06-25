@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { InPageSwitcher } from "../InPageSwitcher";
 import CategoryBadge from "./CategoryBadge";
-import ImportHistoryPanel from "./ImportHistoryPanel";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
 type Props = {
@@ -40,8 +39,13 @@ export default function ProjectWorkspaceHeader({
         <CategoryBadge category={project.category} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <ImportHistoryPanel projectId={project.id} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={`/projects/${project.id}/imports`}
+          className="text-sm text-ink-muted transition hover:text-ink"
+        >
+          Import history →
+        </Link>
         <InPageSwitcher
           options={VIEW_MODES}
           value={viewMode}
