@@ -757,6 +757,8 @@ The persona-definition session **tempered the three-modes framing**: they are **
 
 _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits the build._
 
+> **Library slice — build plan (Jun 25):** the Tasks-tab Finch library has a detailed, approved build plan in `kash-3.0-care-library-build-plan.md` (decisions D0–D6; see `care-build-spec.md` addendum). Practices live in Care, pinnable to Today; thematic (Move/Calm/Connect/Rest/Nourish/Reflect); static seed catalog; cadence pre-fills recurrence. Build (CL1–CL5) not yet started; branch off `main`.
+
 ---
 
 ## 13. Account, Values & Personal Context

@@ -1,114 +1,239 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Today §6 · Thread 1 — Top-3 deadline wiring</title>
-<style>
-  :root{
-    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
-    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;padding:28px}
-  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 20px;max-width:880px}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:880px}
-  @media(max-width:760px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
-  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec .tag{color:var(--ink)}
-  h2{font-size:13.5px;margin:1px 0 0;letter-spacing:-.01em}
-  /* settings mock */
-  .set{margin:12px 0 4px;border:1px solid var(--hair2);border-radius:9px;overflow:hidden}
-  .set .r{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;font-size:12px}
-  .set .r+.r{border-top:1px solid var(--hair2)}
-  .set .r .k{color:var(--muted)}
-  .pill{background:var(--gray-pill);border-radius:6px;padding:2px 9px;font-size:11.5px;font-weight:600;color:var(--ink)}
-  .pill.locked{background:#f3f4f6;color:var(--faint);font-weight:500}
-  .pill.derived{background:#fff;border:1px dashed var(--faint);color:var(--muted);font-weight:500}
-  .body{font-size:11.5px;color:var(--muted);margin:9px 0 0}
-  .pros{margin:8px 0 0;padding:0;list-style:none;font-size:11.5px}
-  .pros li{position:relative;padding-left:15px;margin:3px 0}
-  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
-  .pros li.n::before{content:"–";position:absolute;left:2px;color:#c23a3a;font-weight:700}
-</style>
-</head>
-<body>
-  <h1>Today §6 · Thread 1 — Top-3 deadline, and how it relates to EoD</h1>
-  <p class="sub">You’ve made the EoD nudge configurable (default 6pm). The Top-3 “done by 5pm” target should move too — the question is whether it’s its <b>own</b> setting, <b>derived</b> from EoD, or both.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Today §6 · Thread 1 — Top-3 deadline wiring</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+        max-width: 880px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 880px;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      /* settings mock */
+      .set {
+        margin: 12px 0 4px;
+        border: 1px solid var(--hair2);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .set .r {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+      .set .r + .r {
+        border-top: 1px solid var(--hair2);
+      }
+      .set .r .k {
+        color: var(--muted);
+      }
+      .pill {
+        background: var(--gray-pill);
+        border-radius: 6px;
+        padding: 2px 9px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .pill.locked {
+        background: #f3f4f6;
+        color: var(--faint);
+        font-weight: 500;
+      }
+      .pill.derived {
+        background: #fff;
+        border: 1px dashed var(--faint);
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 9px 0 0;
+      }
+      .pros {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 11.5px;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 15px;
+        margin: 3px 0;
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Today §6 · Thread 1 — Top-3 deadline, and how it relates to EoD</h1>
+    <p class="sub">
+      You’ve made the EoD nudge configurable (default 6pm). The Top-3 “done by 5pm” target should
+      move too — the question is whether it’s its <b>own</b> setting, <b>derived</b> from EoD, or
+      both.
+    </p>
 
-  <div class="grid">
-
-    <!-- A -->
-    <div class="card">
-      <span class="tag">A · Status quo</span>
-      <h2>Fixed 5pm</h2>
-      <div class="set">
-        <div class="r"><span class="k">Top-3 target</span><span class="pill locked">5:00p · fixed</span></div>
-        <div class="r"><span class="k">EoD nudge</span><span class="pill">6:00p</span></div>
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <span class="tag">A · Status quo</span>
+        <h2>Fixed 5pm</h2>
+        <div class="set">
+          <div class="r">
+            <span class="k">Top-3 target</span><span class="pill locked">5:00p · fixed</span>
+          </div>
+          <div class="r"><span class="k">EoD nudge</span><span class="pill">6:00p</span></div>
+        </div>
+        <p class="body">Leave the deadline hard-coded.</p>
+        <ul class="pros">
+          <li class="y">Zero work</li>
+          <li class="n">Mismatch: configurable review but rigid deadline</li>
+          <li class="n">Wrong for non-9–5 days</li>
+        </ul>
       </div>
-      <p class="body">Leave the deadline hard-coded.</p>
-      <ul class="pros">
-        <li class="y">Zero work</li>
-        <li class="n">Mismatch: configurable review but rigid deadline</li>
-        <li class="n">Wrong for non-9–5 days</li>
-      </ul>
-    </div>
 
-    <!-- B -->
-    <div class="card">
-      <span class="tag">B · Two independent settings</span>
-      <h2>Set each separately</h2>
-      <div class="set">
-        <div class="r"><span class="k">Top-3 target</span><span class="pill">5:00p</span></div>
-        <div class="r"><span class="k">EoD nudge</span><span class="pill">6:00p</span></div>
+      <!-- B -->
+      <div class="card">
+        <span class="tag">B · Two independent settings</span>
+        <h2>Set each separately</h2>
+        <div class="set">
+          <div class="r"><span class="k">Top-3 target</span><span class="pill">5:00p</span></div>
+          <div class="r"><span class="k">EoD nudge</span><span class="pill">6:00p</span></div>
+        </div>
+        <p class="body">Full granularity — pick any time for each.</p>
+        <ul class="pros">
+          <li class="y">Maximum control</li>
+          <li class="n">Two knobs to tend; easy to set them incoherently</li>
+          <li class="n">More settings clutter</li>
+        </ul>
       </div>
-      <p class="body">Full granularity — pick any time for each.</p>
-      <ul class="pros">
-        <li class="y">Maximum control</li>
-        <li class="n">Two knobs to tend; easy to set them incoherently</li>
-        <li class="n">More settings clutter</li>
-      </ul>
-    </div>
 
-    <!-- C -->
-    <div class="card">
-      <span class="tag">C · One wind-down anchor</span>
-      <h2>Single knob drives both</h2>
-      <div class="set">
-        <div class="r"><span class="k">Wind-down time</span><span class="pill">6:00p</span></div>
-        <div class="r"><span class="k">Top-3 target</span><span class="pill derived">5:00p · wind-down −1h</span></div>
-        <div class="r"><span class="k">EoD nudge</span><span class="pill derived">6:00p · = wind-down</span></div>
+      <!-- C -->
+      <div class="card">
+        <span class="tag">C · One wind-down anchor</span>
+        <h2>Single knob drives both</h2>
+        <div class="set">
+          <div class="r"><span class="k">Wind-down time</span><span class="pill">6:00p</span></div>
+          <div class="r">
+            <span class="k">Top-3 target</span
+            ><span class="pill derived">5:00p · wind-down −1h</span>
+          </div>
+          <div class="r">
+            <span class="k">EoD nudge</span><span class="pill derived">6:00p · = wind-down</span>
+          </div>
+        </div>
+        <p class="body">You set when your day ends; both targets derive from it.</p>
+        <ul class="pros">
+          <li class="y">One setting, always coherent</li>
+          <li class="y">Calmest UI</li>
+          <li class="n">Can’t decouple (no “deadline 3h before review”)</li>
+        </ul>
       </div>
-      <p class="body">You set when your day ends; both targets derive from it.</p>
-      <ul class="pros">
-        <li class="y">One setting, always coherent</li>
-        <li class="y">Calmest UI</li>
-        <li class="n">Can’t decouple (no “deadline 3h before review”)</li>
-      </ul>
-    </div>
 
-    <!-- D recommended -->
-    <div class="card rec">
-      <span class="tag">D · Derived default, override allowed</span>
-      <h2>Smart default + escape hatch</h2>
-      <div class="set">
-        <div class="r"><span class="k">EoD nudge</span><span class="pill">6:00p</span></div>
-        <div class="r"><span class="k">Top-3 target</span><span class="pill derived">5:00p · auto (EoD −1h)</span></div>
-        <div class="r"><span class="k">↳ override</span><span class="pill">edit</span></div>
+      <!-- D recommended -->
+      <div class="card rec">
+        <span class="tag">D · Derived default, override allowed</span>
+        <h2>Smart default + escape hatch</h2>
+        <div class="set">
+          <div class="r"><span class="k">EoD nudge</span><span class="pill">6:00p</span></div>
+          <div class="r">
+            <span class="k">Top-3 target</span
+            ><span class="pill derived">5:00p · auto (EoD −1h)</span>
+          </div>
+          <div class="r"><span class="k">↳ override</span><span class="pill">edit</span></div>
+        </div>
+        <p class="body">Top-3 target auto-tracks EoD −1h, but you can pin a custom time anytime.</p>
+        <ul class="pros">
+          <li class="y">Coherent by default, no setup needed</li>
+          <li class="y">Still fully overridable when you want</li>
+          <li class="n">Slightly more logic than C</li>
+        </ul>
       </div>
-      <p class="body">Top-3 target auto-tracks EoD −1h, but you can pin a custom time anytime.</p>
-      <ul class="pros">
-        <li class="y">Coherent by default, no setup needed</li>
-        <li class="y">Still fully overridable when you want</li>
-        <li class="n">Slightly more logic than C</li>
-      </ul>
     </div>
-
-  </div>
-</body>
+  </body>
 </html>

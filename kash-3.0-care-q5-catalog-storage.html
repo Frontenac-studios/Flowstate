@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Q5 — where the suggested catalog lives</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --surface: #fff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --border-subtle: #f4f4f4;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --accent: #16181d;
+        --bm: #3aaa35;
+        --bm-fill: #e9f6e8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f4f4;
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        padding: 28px 16px;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--ink-muted);
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+      .opts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .opt {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+      }
+      .opt.rec {
+        border-color: var(--bm);
+        box-shadow: 0 0 0 1px var(--bm);
+      }
+      .tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--bm);
+        letter-spacing: 0.04em;
+      }
+      .opt.rec .tag::after {
+        content: " · suggested for a personal app";
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+      .opt h3 {
+        margin: 4px 0 12px;
+        font-size: 15.5px;
+      }
+      pre {
+        background: #0f1118;
+        color: #e8eaf2;
+        border-radius: 9px;
+        padding: 11px 12px;
+        font-size: 11.5px;
+        line-height: 1.5;
+        overflow-x: auto;
+        margin: 0 0 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      pre .k {
+        color: #7fd1ff;
+      }
+      pre .s {
+        color: #b5e8a0;
+      }
+      pre .c {
+        color: #6b7280;
+      }
+      .flow {
+        font-size: 12.5px;
+        color: var(--ink-muted);
+        background: var(--surface-2);
+        border-radius: 8px;
+        padding: 9px 11px;
+        margin-bottom: 12px;
+      }
+      .flow b {
+        color: var(--ink);
+      }
+      .meta div {
+        font-size: 12.5px;
+        margin-bottom: 4px;
+      }
+      .pro {
+        color: #1f7a1b;
+      }
+      .con {
+        color: #9a4e08;
+      }
+      @media (max-width: 700px) {
+        .opts {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Where does the suggested catalog physically live?</h1>
+      <p class="sub">
+        Your <b>own</b> practices always live in a table (<code>care_activities</code>). The only
+        question is the ~23 <i>suggested</i> seeds: a code list, or their own DB table.
+      </p>
+
+      <div class="opts">
+        <div class="opt rec">
+          <div class="tag">OPTION A</div>
+          <h3>Static seed in code</h3>
+          <pre><span class="c">// src/lib/care/seed-catalog.ts</span>
+<span class="k">export const</span> CATALOG = [
+  { title: <span class="s">"10-minute walk"</span>, theme: <span class="s">"move"</span> },
+  { title: <span class="s">"Drink a glass of water"</span>, theme: <span class="s">"nourish"</span> },
+  <span class="c">// …~23 entries</span>
+];</pre>
+          <div class="flow">
+            <b>Adopt</b> → copies the entry into your <code>care_activities</code> row
+            (<code>source:"suggested"</code>). The catalog itself never hits the DB.
+          </div>
+          <div class="meta">
+            <div class="pro">+ One table total; no catalog migration/RLS</div>
+            <div class="pro">+ Edit seeds in code, ships with the app</div>
+            <div class="pro">+ Perfect for a curated, single-user list</div>
+            <div class="con">– Catalog changes need an app deploy</div>
+            <div class="con">– Reworded seeds don't update already-adopted copies</div>
+          </div>
+        </div>
+
+        <div class="opt">
+          <div class="tag">OPTION B</div>
+          <h3>DB catalog table</h3>
+          <pre><span class="c">// a global table, no user_id</span>
+care_catalog (
+  id, title, theme, kind
+)
+care_activities (
+  …, catalog_id <span class="c">→ ref</span>
+)</pre>
+          <div class="flow">
+            <b>Adopt</b> → inserts a <code>care_activities</code> row referencing the catalog id.
+            Catalog is real data you can edit without shipping code.
+          </div>
+          <div class="meta">
+            <div class="pro">+ Edit catalog without a deploy (admin/SQL)</div>
+            <div class="pro">+ Room to grow: localize, A/B, share sets</div>
+            <div class="con">– Extra table + read-RLS for a global table</div>
+            <div class="con">– Seeded via migration; more moving parts</div>
+            <div class="con">– Overkill for ~23 static, personal entries</div>
+          </div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top: 16px">
+        Reversible either way: you can promote a code list into a table later without changing how
+        <code>care_activities</code> works. So this is a "right-sized for now" call, not a one-way
+        door.
+      </p>
+    </div>
+  </body>
+</html>

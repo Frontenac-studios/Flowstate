@@ -1,123 +1,293 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projects §9 · Thread — Completion metric</title>
-<style>
-  :root{
-    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
-    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
-    --c-proj:#AF52DE; --fill:#16181d;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;padding:28px}
-  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 18px;max-width:900px}
-  .proj{max-width:900px;background:var(--surface);border:1px solid var(--hair);border-radius:12px;
-    padding:12px 15px;margin:0 0 20px;font-size:11.5px;color:var(--muted)}
-  .proj b{color:var(--ink)}
-  .tasks{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-  .tk{font-size:10px;border:1px solid var(--hair);border-radius:6px;padding:2px 7px;background:#fff}
-  .tk.big{border-left:3px solid var(--c-proj);font-weight:600}
-  .tk.done{color:var(--faint);text-decoration:line-through;background:#fafbfc}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:900px}
-  @media(max-width:780px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
-  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec .tag{color:var(--ink)}
-  h2{font-size:13.5px;margin:1px 0 6px;letter-spacing:-.01em}
-  .pct{display:flex;align-items:baseline;gap:9px;margin:6px 0 4px}
-  .big-pct{font-size:30px;font-weight:700;letter-spacing:-.02em}
-  .bar{height:9px;border-radius:5px;background:var(--gray-pill);overflow:hidden;margin:2px 0 0}
-  .bar i{display:block;height:100%;background:var(--fill)}
-  .calc{font-size:10.5px;color:var(--faint);margin:6px 0 0}
-  .body{font-size:11.5px;color:var(--muted);margin:8px 0 0}
-  .body b{color:var(--ink)}
-  .pros{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 0;font-size:11px;border-top:1px solid var(--hair2);padding-top:8px}
-  .pros ul{margin:0;padding:0;list-style:none}
-  .pros li{position:relative;padding-left:14px;margin:2px 0;color:var(--muted)}
-  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
-  .pros li.n::before{content:"–";position:absolute;left:2px;color:#c23a3a;font-weight:700}
-</style>
-</head>
-<body>
-  <h1>Projects §9 · Thread — How is % progress calculated?</h1>
-  <p class="sub">One project, the same state, four metrics. Watch the headline number swing.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Projects §9 · Thread — Completion metric</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+        --c-proj: #af52de;
+        --fill: #16181d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 18px;
+        max-width: 900px;
+      }
+      .proj {
+        max-width: 900px;
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 12px;
+        padding: 12px 15px;
+        margin: 0 0 20px;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .proj b {
+        color: var(--ink);
+      }
+      .tasks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 8px;
+      }
+      .tk {
+        font-size: 10px;
+        border: 1px solid var(--hair);
+        border-radius: 6px;
+        padding: 2px 7px;
+        background: #fff;
+      }
+      .tk.big {
+        border-left: 3px solid var(--c-proj);
+        font-weight: 600;
+      }
+      .tk.done {
+        color: var(--faint);
+        text-decoration: line-through;
+        background: #fafbfc;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 900px;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 6px;
+        letter-spacing: -0.01em;
+      }
+      .pct {
+        display: flex;
+        align-items: baseline;
+        gap: 9px;
+        margin: 6px 0 4px;
+      }
+      .big-pct {
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .bar {
+        height: 9px;
+        border-radius: 5px;
+        background: var(--gray-pill);
+        overflow: hidden;
+        margin: 2px 0 0;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--fill);
+      }
+      .calc {
+        font-size: 10.5px;
+        color: var(--faint);
+        margin: 6px 0 0;
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 8px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Projects §9 · Thread — How is % progress calculated?</h1>
+    <p class="sub">One project, the same state, four metrics. Watch the headline number swing.</p>
 
-  <div class="proj">
-    <b>“Book launch”</b> — 2 big tasks (★, one done), 8 small tasks (6 done). Big tasks ≈ most of the real work. Est. hours: bigs 20h each, smalls 1h each (40h done of 48h… or is it?).
-    <div class="tasks">
-      <span class="tk big done">★ Write manuscript</span>
-      <span class="tk big">★ Edit &amp; proof</span>
-      <span class="tk done">cover brief</span><span class="tk done">blurb</span><span class="tk done">ISBN</span>
-      <span class="tk done">author bio</span><span class="tk done">pick printer</span><span class="tk done">set price</span>
-      <span class="tk">launch email</span><span class="tk">store listing</span>
-    </div>
-  </div>
-
-  <div class="grid">
-
-    <!-- 1 -->
-    <div class="card">
-      <span class="tag">1 · Simple task count</span>
-      <h2>completed ÷ total tasks</h2>
-      <div class="pct"><span class="big-pct">70%</span></div>
-      <div class="bar"><i style="width:70%"></i></div>
-      <div class="calc">7 of 10 tasks done</div>
-      <div class="body">Treats every task as equal.</div>
-      <div class="pros">
-        <ul><li class="y">Dead simple; no extra data</li></ul>
-        <ul><li class="n">Overstates — the big “Edit” task is most of the work</li></ul>
+    <div class="proj">
+      <b>“Book launch”</b> — 2 big tasks (★, one done), 8 small tasks (6 done). Big tasks ≈ most of
+      the real work. Est. hours: bigs 20h each, smalls 1h each (40h done of 48h… or is it?).
+      <div class="tasks">
+        <span class="tk big done">★ Write manuscript</span>
+        <span class="tk big">★ Edit &amp; proof</span>
+        <span class="tk done">cover brief</span><span class="tk done">blurb</span
+        ><span class="tk done">ISBN</span> <span class="tk done">author bio</span
+        ><span class="tk done">pick printer</span><span class="tk done">set price</span>
+        <span class="tk">launch email</span><span class="tk">store listing</span>
       </div>
     </div>
 
-    <!-- 2 recommended -->
-    <div class="card rec">
-      <span class="tag">2 · Weighted task count · matches §2</span>
-      <h2>completed weight ÷ total weight</h2>
-      <div class="pct"><span class="big-pct">52%</span></div>
-      <div class="bar"><i style="width:52%"></i></div>
-      <div class="calc">big=3, small=1 → (3+6) ÷ (6+8) = 9/14</div>
-      <div class="body">Uses the same <b>Top-3 / large-small weighting</b> we locked for balance. Big unfinished work pulls the number down honestly.</div>
-      <div class="pros">
-        <ul><li class="y">Honest without needing time data</li><li class="y">One metric across the app</li></ul>
-        <ul><li class="n">Weights are coarse (just large/small)</li></ul>
+    <div class="grid">
+      <!-- 1 -->
+      <div class="card">
+        <span class="tag">1 · Simple task count</span>
+        <h2>completed ÷ total tasks</h2>
+        <div class="pct"><span class="big-pct">70%</span></div>
+        <div class="bar"><i style="width: 70%"></i></div>
+        <div class="calc">7 of 10 tasks done</div>
+        <div class="body">Treats every task as equal.</div>
+        <div class="pros">
+          <ul>
+            <li class="y">Dead simple; no extra data</li>
+          </ul>
+          <ul>
+            <li class="n">Overstates — the big “Edit” task is most of the work</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2 recommended -->
+      <div class="card rec">
+        <span class="tag">2 · Weighted task count · matches §2</span>
+        <h2>completed weight ÷ total weight</h2>
+        <div class="pct"><span class="big-pct">52%</span></div>
+        <div class="bar"><i style="width: 52%"></i></div>
+        <div class="calc">big=3, small=1 → (3+6) ÷ (6+8) = 9/14</div>
+        <div class="body">
+          Uses the same <b>Top-3 / large-small weighting</b> we locked for balance. Big unfinished
+          work pulls the number down honestly.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Honest without needing time data</li>
+            <li class="y">One metric across the app</li>
+          </ul>
+          <ul>
+            <li class="n">Weights are coarse (just large/small)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="card">
+        <span class="tag">3 · Time-based</span>
+        <h2>hours done ÷ estimated total</h2>
+        <div class="pct"><span class="big-pct">46%</span></div>
+        <div class="bar"><i style="width: 46%"></i></div>
+        <div class="calc">(20h + 6×1h) ÷ 48h est.</div>
+        <div class="body">
+          Truest effort picture — but leans on duration estimates, which are
+          <b>silent until n≥3</b> (Q2), so it’s blank early.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Most accurate when data exists</li>
+          </ul>
+          <ul>
+            <li class="n">Unavailable early; depends on estimates</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="card">
+        <span class="tag">4 · Phase-based</span>
+        <h2>completed phases ÷ total phases</h2>
+        <div class="pct"><span class="big-pct">50%</span></div>
+        <div class="bar"><i style="width: 50%"></i></div>
+        <div class="calc">1 of 2 phases (Write ✓ · Launch ◻)</div>
+        <div class="body">Coarse milestone view.</div>
+        <div class="pros">
+          <ul>
+            <li class="y">Maps to the phase structure; intuitive</li>
+          </ul>
+          <ul>
+            <li class="n">Jumpy (0→50→100); ignores within-phase progress</li>
+          </ul>
+        </div>
       </div>
     </div>
-
-    <!-- 3 -->
-    <div class="card">
-      <span class="tag">3 · Time-based</span>
-      <h2>hours done ÷ estimated total</h2>
-      <div class="pct"><span class="big-pct">46%</span></div>
-      <div class="bar"><i style="width:46%"></i></div>
-      <div class="calc">(20h + 6×1h) ÷ 48h est.</div>
-      <div class="body">Truest effort picture — but leans on duration estimates, which are <b>silent until n≥3</b> (Q2), so it’s blank early.</div>
-      <div class="pros">
-        <ul><li class="y">Most accurate when data exists</li></ul>
-        <ul><li class="n">Unavailable early; depends on estimates</li></ul>
-      </div>
-    </div>
-
-    <!-- 4 -->
-    <div class="card">
-      <span class="tag">4 · Phase-based</span>
-      <h2>completed phases ÷ total phases</h2>
-      <div class="pct"><span class="big-pct">50%</span></div>
-      <div class="bar"><i style="width:50%"></i></div>
-      <div class="calc">1 of 2 phases (Write ✓ · Launch ◻)</div>
-      <div class="body">Coarse milestone view.</div>
-      <div class="pros">
-        <ul><li class="y">Maps to the phase structure; intuitive</li></ul>
-        <ul><li class="n">Jumpy (0→50→100); ignores within-phase progress</li></ul>
-      </div>
-    </div>
-
-  </div>
-  <p class="sub" style="margin-top:16px">Note: whichever is chosen can roll up the same way at <b>phase</b> level (for the Miller/timeline views) and <b>project</b> level (cards + §7.6 weekly review).</p>
-</body>
+    <p class="sub" style="margin-top: 16px">
+      Note: whichever is chosen can roll up the same way at <b>phase</b> level (for the
+      Miller/timeline views) and <b>project</b> level (cards + §7.6 weekly review).
+    </p>
+  </body>
 </html>

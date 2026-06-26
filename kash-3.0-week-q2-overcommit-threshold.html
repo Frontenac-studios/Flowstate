@@ -1,143 +1,420 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Week §7 · Q2 — Over-commit threshold</title>
-<style>
-  :root{
-    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
-    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
-    --bar:#d6d9dd; --bar-over:#16181d;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;padding:28px}
-  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 22px;max-width:900px}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:920px}
-  @media(max-width:780px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
-  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec .tag{color:var(--ink)}
-  h2{font-size:13.5px;margin:1px 0 0;letter-spacing:-.01em}
-  /* chart */
-  .chart{position:relative;height:110px;margin:16px 0 2px;border-bottom:1px solid var(--hair);
-    display:flex;align-items:flex-end;gap:8px;padding:0 2px}
-  .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
-  .bar{width:62%;background:var(--bar);border-radius:4px 4px 0 0}
-  .bar.over{background:var(--bar-over)}
-  .dlabel{font-size:9px;color:var(--faint);margin-top:3px}
-  .thr{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);height:0}
-  .thr span{position:absolute;right:0;top:-13px;font-size:9px;font-weight:600;color:var(--ink);
-    background:var(--surface);padding:0 4px}
-  .thr.learned{border-top-style:solid;border-color:var(--c-acc,#16181d)}
-  .flags{font-size:11px;color:var(--muted);margin:9px 0 0}
-  .flags b{color:var(--ink)}
-  .slider{display:flex;align-items:center;gap:8px;margin:9px 0 0;font-size:10.5px;color:var(--muted)}
-  .track{flex:1;height:5px;border-radius:3px;background:var(--gray-pill);position:relative}
-  .knob{position:absolute;top:50%;left:64%;transform:translate(-50%,-50%);width:13px;height:13px;
-    border-radius:50%;background:#fff;border:2px solid var(--ink)}
-  .pros{display:flex;gap:20px;flex-wrap:wrap;margin:9px 0 0;font-size:11px;border-top:1px solid var(--hair2);padding-top:9px}
-  .pros ul{margin:0;padding:0;list-style:none}
-  .pros li{position:relative;padding-left:14px;margin:2px 0;color:var(--muted)}
-  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
-  .pros li.n::before{content:"–";position:absolute;left:2px;color:#c23a3a;font-weight:700}
-</style>
-</head>
-<body>
-  <h1>Week §7 · Q2 — Over-commit threshold: fixed or learned?</h1>
-  <p class="sub">Bars = each day’s planned load (Top-3-weighted units). Dashed/solid line = the over-commit threshold; black bars = days that trip the warning. Same week in all four.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Week §7 · Q2 — Over-commit threshold</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+        --bar: #d6d9dd;
+        --bar-over: #16181d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 22px;
+        max-width: 900px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 920px;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      /* chart */
+      .chart {
+        position: relative;
+        height: 110px;
+        margin: 16px 0 2px;
+        border-bottom: 1px solid var(--hair);
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        padding: 0 2px;
+      }
+      .col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        height: 100%;
+      }
+      .bar {
+        width: 62%;
+        background: var(--bar);
+        border-radius: 4px 4px 0 0;
+      }
+      .bar.over {
+        background: var(--bar-over);
+      }
+      .dlabel {
+        font-size: 9px;
+        color: var(--faint);
+        margin-top: 3px;
+      }
+      .thr {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 2px dashed var(--ink);
+        height: 0;
+      }
+      .thr span {
+        position: absolute;
+        right: 0;
+        top: -13px;
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--ink);
+        background: var(--surface);
+        padding: 0 4px;
+      }
+      .thr.learned {
+        border-top-style: solid;
+        border-color: var(--c-acc, #16181d);
+      }
+      .flags {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 9px 0 0;
+      }
+      .flags b {
+        color: var(--ink);
+      }
+      .slider {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 9px 0 0;
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .track {
+        flex: 1;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--gray-pill);
+        position: relative;
+      }
+      .knob {
+        position: absolute;
+        top: 50%;
+        left: 64%;
+        transform: translate(-50%, -50%);
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin: 9px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 9px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Week §7 · Q2 — Over-commit threshold: fixed or learned?</h1>
+    <p class="sub">
+      Bars = each day’s planned load (Top-3-weighted units). Dashed/solid line = the over-commit
+      threshold; black bars = days that trip the warning. Same week in all four.
+    </p>
 
-  <div class="grid">
-
-    <!-- A -->
-    <div class="card">
-      <span class="tag">A · Fixed default</span>
-      <h2>Warn above a set number (tunable)</h2>
-      <div class="chart">
-        <div class="thr" style="bottom:78%"><span>10 · fixed</span></div>
-        <div class="col"><div class="bar" style="height:45%"></div><div class="dlabel">M</div></div>
-        <div class="col"><div class="bar" style="height:60%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar over" style="height:92%"></div><div class="dlabel">W</div></div>
-        <div class="col"><div class="bar" style="height:50%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar" style="height:38%"></div><div class="dlabel">F</div></div>
-        <div class="col"><div class="bar" style="height:25%"></div><div class="dlabel">S</div></div>
-        <div class="col"><div class="bar" style="height:18%"></div><div class="dlabel">S</div></div>
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <span class="tag">A · Fixed default</span>
+        <h2>Warn above a set number (tunable)</h2>
+        <div class="chart">
+          <div class="thr" style="bottom: 78%"><span>10 · fixed</span></div>
+          <div class="col">
+            <div class="bar" style="height: 45%"></div>
+            <div class="dlabel">M</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 60%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar over" style="height: 92%"></div>
+            <div class="dlabel">W</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 50%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 38%"></div>
+            <div class="dlabel">F</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 25%"></div>
+            <div class="dlabel">S</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 18%"></div>
+            <div class="dlabel">S</div>
+          </div>
+        </div>
+        <p class="flags">
+          Flags <b>Wed</b> only. Same line for everyone; you can nudge it in settings.
+        </p>
+        <div class="pros">
+          <ul>
+            <li class="y">Predictable, transparent</li>
+            <li class="y">Works day one, no data</li>
+          </ul>
+          <ul>
+            <li class="n">Arbitrary — “10” fits no one exactly</li>
+            <li class="n">Static as your capacity changes</li>
+          </ul>
+        </div>
       </div>
-      <p class="flags">Flags <b>Wed</b> only. Same line for everyone; you can nudge it in settings.</p>
-      <div class="pros">
-        <ul><li class="y">Predictable, transparent</li><li class="y">Works day one, no data</li></ul>
-        <ul><li class="n">Arbitrary — “10” fits no one exactly</li><li class="n">Static as your capacity changes</li></ul>
+
+      <!-- B -->
+      <div class="card">
+        <span class="tag">B · Learned / adaptive</span>
+        <h2>Threshold = your typical day × factor</h2>
+        <div class="chart">
+          <div class="thr learned" style="bottom: 62%"><span>~8 · learned</span></div>
+          <div class="col">
+            <div class="bar" style="height: 45%"></div>
+            <div class="dlabel">M</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 60%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar over" style="height: 92%"></div>
+            <div class="dlabel">W</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 50%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 38%"></div>
+            <div class="dlabel">F</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 25%"></div>
+            <div class="dlabel">S</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 18%"></div>
+            <div class="dlabel">S</div>
+          </div>
+        </div>
+        <p class="flags">
+          “More than <b>usual for you</b>” — line tracks your rolling median (~8 here).
+        </p>
+        <div class="pros">
+          <ul>
+            <li class="y">Personalized, meaningful</li>
+            <li class="y">Adapts as capacity shifts</li>
+          </ul>
+          <ul>
+            <li class="n">Needs weeks of history; opaque “why?”</li>
+            <li class="n">Chronic overload → learns to tolerate it</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C recommended -->
+      <div class="card rec">
+        <span class="tag">C · Fixed now → learned later</span>
+        <h2>Ship fixed default, upgrade with data</h2>
+        <div class="chart">
+          <div class="thr" style="bottom: 78%"><span>10 · default</span></div>
+          <div class="thr learned" style="bottom: 62%; opacity: 0.45">
+            <span style="opacity: 0.6">→ ~8 later</span>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 45%"></div>
+            <div class="dlabel">M</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 60%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar over" style="height: 92%"></div>
+            <div class="dlabel">W</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 50%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 38%"></div>
+            <div class="dlabel">F</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 25%"></div>
+            <div class="dlabel">S</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 18%"></div>
+            <div class="dlabel">S</div>
+          </div>
+        </div>
+        <p class="flags">
+          Same fixed line today; quietly retunes to your real pattern once history exists — mirrors
+          the §6/§2 “upgrade later” path.
+        </p>
+        <div class="pros">
+          <ul>
+            <li class="y">Works day one + gets personal</li>
+            <li class="y">Consistent with balance-bar hybrid</li>
+          </ul>
+          <ul>
+            <li class="n">Must define the learned model eventually</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="card">
+        <span class="tag">D · User-set capacity</span>
+        <h2>You declare your daily capacity</h2>
+        <div class="chart">
+          <div class="thr" style="bottom: 70%"><span>your 9</span></div>
+          <div class="col">
+            <div class="bar" style="height: 45%"></div>
+            <div class="dlabel">M</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 60%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar over" style="height: 92%"></div>
+            <div class="dlabel">W</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 50%"></div>
+            <div class="dlabel">T</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 38%"></div>
+            <div class="dlabel">F</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 25%"></div>
+            <div class="dlabel">S</div>
+          </div>
+          <div class="col">
+            <div class="bar" style="height: 18%"></div>
+            <div class="dlabel">S</div>
+          </div>
+        </div>
+        <div class="slider">
+          capacity
+          <div class="track"><div class="knob"></div></div>
+          9
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Personal, transparent, no ML</li>
+          </ul>
+          <ul>
+            <li class="n">Self-assessment — ADHD users often misjudge</li>
+            <li class="n">A setting people set once and forget</li>
+          </ul>
+        </div>
       </div>
     </div>
-
-    <!-- B -->
-    <div class="card">
-      <span class="tag">B · Learned / adaptive</span>
-      <h2>Threshold = your typical day × factor</h2>
-      <div class="chart">
-        <div class="thr learned" style="bottom:62%"><span>~8 · learned</span></div>
-        <div class="col"><div class="bar" style="height:45%"></div><div class="dlabel">M</div></div>
-        <div class="col"><div class="bar" style="height:60%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar over" style="height:92%"></div><div class="dlabel">W</div></div>
-        <div class="col"><div class="bar" style="height:50%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar" style="height:38%"></div><div class="dlabel">F</div></div>
-        <div class="col"><div class="bar" style="height:25%"></div><div class="dlabel">S</div></div>
-        <div class="col"><div class="bar" style="height:18%"></div><div class="dlabel">S</div></div>
-      </div>
-      <p class="flags">“More than <b>usual for you</b>” — line tracks your rolling median (~8 here).</p>
-      <div class="pros">
-        <ul><li class="y">Personalized, meaningful</li><li class="y">Adapts as capacity shifts</li></ul>
-        <ul><li class="n">Needs weeks of history; opaque “why?”</li><li class="n">Chronic overload → learns to tolerate it</li></ul>
-      </div>
-    </div>
-
-    <!-- C recommended -->
-    <div class="card rec">
-      <span class="tag">C · Fixed now → learned later</span>
-      <h2>Ship fixed default, upgrade with data</h2>
-      <div class="chart">
-        <div class="thr" style="bottom:78%"><span>10 · default</span></div>
-        <div class="thr learned" style="bottom:62%;opacity:.45"><span style="opacity:.6">→ ~8 later</span></div>
-        <div class="col"><div class="bar" style="height:45%"></div><div class="dlabel">M</div></div>
-        <div class="col"><div class="bar" style="height:60%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar over" style="height:92%"></div><div class="dlabel">W</div></div>
-        <div class="col"><div class="bar" style="height:50%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar" style="height:38%"></div><div class="dlabel">F</div></div>
-        <div class="col"><div class="bar" style="height:25%"></div><div class="dlabel">S</div></div>
-        <div class="col"><div class="bar" style="height:18%"></div><div class="dlabel">S</div></div>
-      </div>
-      <p class="flags">Same fixed line today; quietly retunes to your real pattern once history exists — mirrors the §6/§2 “upgrade later” path.</p>
-      <div class="pros">
-        <ul><li class="y">Works day one + gets personal</li><li class="y">Consistent with balance-bar hybrid</li></ul>
-        <ul><li class="n">Must define the learned model eventually</li></ul>
-      </div>
-    </div>
-
-    <!-- D -->
-    <div class="card">
-      <span class="tag">D · User-set capacity</span>
-      <h2>You declare your daily capacity</h2>
-      <div class="chart">
-        <div class="thr" style="bottom:70%"><span>your 9</span></div>
-        <div class="col"><div class="bar" style="height:45%"></div><div class="dlabel">M</div></div>
-        <div class="col"><div class="bar" style="height:60%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar over" style="height:92%"></div><div class="dlabel">W</div></div>
-        <div class="col"><div class="bar" style="height:50%"></div><div class="dlabel">T</div></div>
-        <div class="col"><div class="bar" style="height:38%"></div><div class="dlabel">F</div></div>
-        <div class="col"><div class="bar" style="height:25%"></div><div class="dlabel">S</div></div>
-        <div class="col"><div class="bar" style="height:18%"></div><div class="dlabel">S</div></div>
-      </div>
-      <div class="slider">capacity <div class="track"><div class="knob"></div></div> 9</div>
-      <div class="pros">
-        <ul><li class="y">Personal, transparent, no ML</li></ul>
-        <ul><li class="n">Self-assessment — ADHD users often misjudge</li><li class="n">A setting people set once and forget</li></ul>
-      </div>
-    </div>
-
-  </div>
-</body>
+  </body>
 </html>

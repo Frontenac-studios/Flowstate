@@ -1,128 +1,428 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chat toggle — v2 options in-page</title>
-<style>
-  :root{
-    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#9aa0ad;
-    --line:#ededed; --line-2:#f4f4f4; --bg:#ffffff; --gray:#f1f1f2;
-    --cat-prof:#009ddc; --cat-rel:#e03a3e; --cat-body:#61bb47; --cat-adult:#f6821f;
-  }
-  *{box-sizing:border-box;}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:#f6f6f7;color:var(--ink);padding:22px;}
-  h1{font-size:19px;margin:0 0 4px;}
-  .sub{font-size:13px;color:var(--ink-muted);margin-bottom:18px;max-width:880px;}
-  .opt{margin-bottom:16px;max-width:1000px;}
-  .name{font-size:13px;font-weight:600;margin-bottom:6px;}
-  .name small{font-weight:400;color:var(--ink-faint);}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat toggle — v2 options in-page</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --line: #ededed;
+        --line-2: #f4f4f4;
+        --bg: #ffffff;
+        --gray: #f1f1f2;
+        --cat-prof: #009ddc;
+        --cat-rel: #e03a3e;
+        --cat-body: #61bb47;
+        --cat-adult: #f6821f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        background: #f6f6f7;
+        color: var(--ink);
+        padding: 22px;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 18px;
+        max-width: 880px;
+      }
+      .opt {
+        margin-bottom: 16px;
+        max-width: 1000px;
+      }
+      .name {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .name small {
+        font-weight: 400;
+        color: var(--ink-faint);
+      }
 
-  /* a Today page slice: rail + band */
-  .app{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .rail{width:46px;border-right:1px solid var(--line-2);padding:8px 5px;display:flex;flex-direction:column;gap:3px;}
-  .logo{font-size:12px;font-weight:600;text-align:center;margin-bottom:4px;}
-  .ni{height:18px;border-radius:5px;background:var(--line-2);margin:0 2px;}
-  .ni.on{background:var(--gray);}
-  .main{flex:1;min-width:0;position:relative;}
-  .band{display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--line);}
-  .date{font-size:16px;font-weight:600;}
-  .switch{display:flex;gap:12px;font-size:12px;}
-  .switch span{color:var(--ink-faint);}
-  .switch span.on{color:var(--ink);border-bottom:2px solid var(--ink);padding-bottom:3px;}
-  .spacer{flex:1;}
-  .tasks{padding:8px 14px;}
-  .trow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;overflow:hidden;}
-  .st{width:3px;height:15px;border-radius:2px;}
-  .tt{font-size:12px;}
+      /* a Today page slice: rail + band */
+      .app {
+        display: flex;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .rail {
+        width: 46px;
+        border-right: 1px solid var(--line-2);
+        padding: 8px 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .logo {
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .ni {
+        height: 18px;
+        border-radius: 5px;
+        background: var(--line-2);
+        margin: 0 2px;
+      }
+      .ni.on {
+        background: var(--gray);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+      }
+      .band {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .date {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .switch {
+        display: flex;
+        gap: 12px;
+        font-size: 12px;
+      }
+      .switch span {
+        color: var(--ink-faint);
+      }
+      .switch span.on {
+        color: var(--ink);
+        border-bottom: 2px solid var(--ink);
+        padding-bottom: 3px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .tasks {
+        padding: 8px 14px;
+      }
+      .trow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        overflow: hidden;
+      }
+      .st {
+        width: 3px;
+        height: 15px;
+        border-radius: 2px;
+      }
+      .tt {
+        font-size: 12px;
+      }
 
-  /* controls */
-  .c-gray{font-size:12px;background:var(--gray);border-radius:8px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;}
-  .c-bar{width:230px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:12px;color:var(--ink-faint);display:flex;align-items:center;justify-content:space-between;}
-  .kbd{font-size:10px;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--ink-muted);background:#fafafa;}
-  .c-ghost{font-size:18px;color:var(--ink);}
-  .c-dot{font-size:12px;display:inline-flex;align-items:center;gap:6px;}
-  .dot{width:7px;height:7px;border-radius:50%;background:#61bb47;}
-  .c-kbd{font-size:12px;border:1.5px solid var(--ink);border-radius:8px;padding:4px 9px;display:inline-flex;align-items:center;gap:6px;}
-  .tab-handle{position:absolute;top:50%;right:0;transform:translateY(-50%);writing-mode:vertical-rl;background:var(--gray);border:1px solid var(--line);border-right:none;border-radius:8px 0 0 8px;padding:10px 4px;font-size:10px;letter-spacing:.04em;color:var(--ink-muted);}
-</style>
-</head>
-<body>
-<h1>Chat toggle — 6 fresh options, in the page</h1>
-<div class="sub">Chat is collapsed by default and opens as a <b>push panel</b>. Below, each option is the control that opens it, shown in a real Today header. Sparkle (✦) is a placeholder glyph — icon choice is a separate step.</div>
-
-<!-- 1 gray chip -->
-<div class="opt">
-  <div class="name">1 · Soft-gray chip <small>— matches your nav-pill / selection language</small></div>
-  <div class="app">
-    <div class="rail"><div class="logo">K</div><div class="ni on"></div><div class="ni"></div><div class="ni"></div><div class="ni"></div></div>
-    <div class="main">
-      <div class="band"><span class="date">Tue Jun 24</span><div class="switch"><span class="on">List</span><span>Calendar</span><span>Review</span></div><span class="spacer"></span><span class="c-gray">✦ Ask Claude</span></div>
-      <div class="tasks"><div class="trow"><span class="st" style="background:var(--cat-prof)"></span><span class="tt">Review onboarding PR</span></div><div class="trow"><span class="st" style="background:var(--cat-rel)"></span><span class="tt">Call Mom</span></div></div>
+      /* controls */
+      .c-gray {
+        font-size: 12px;
+        background: var(--gray);
+        border-radius: 8px;
+        padding: 6px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .c-bar {
+        width: 230px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 7px 11px;
+        font-size: 12px;
+        color: var(--ink-faint);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .kbd {
+        font-size: 10px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 5px;
+        color: var(--ink-muted);
+        background: #fafafa;
+      }
+      .c-ghost {
+        font-size: 18px;
+        color: var(--ink);
+      }
+      .c-dot {
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #61bb47;
+      }
+      .c-kbd {
+        font-size: 12px;
+        border: 1.5px solid var(--ink);
+        border-radius: 8px;
+        padding: 4px 9px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .tab-handle {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+        writing-mode: vertical-rl;
+        background: var(--gray);
+        border: 1px solid var(--line);
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        padding: 10px 4px;
+        font-size: 10px;
+        letter-spacing: 0.04em;
+        color: var(--ink-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Chat toggle — 6 fresh options, in the page</h1>
+    <div class="sub">
+      Chat is collapsed by default and opens as a <b>push panel</b>. Below, each option is the
+      control that opens it, shown in a real Today header. Sparkle (✦) is a placeholder glyph — icon
+      choice is a separate step.
     </div>
-  </div>
-</div>
 
-<!-- 2 command bar -->
-<div class="opt">
-  <div class="name">2 · Ask bar <small>— a slim input that opens chat (doubles as a prompt field)</small></div>
-  <div class="app">
-    <div class="rail"><div class="logo">K</div><div class="ni on"></div><div class="ni"></div><div class="ni"></div><div class="ni"></div></div>
-    <div class="main">
-      <div class="band"><span class="date">Tue Jun 24</span><span class="spacer"></span><div class="c-bar"><span>Ask Claude…</span><span class="kbd">⌃J</span></div></div>
-      <div class="tasks"><div class="trow"><span class="st" style="background:var(--cat-prof)"></span><span class="tt">Review onboarding PR</span></div><div class="trow"><span class="st" style="background:var(--cat-rel)"></span><span class="tt">Call Mom</span></div></div>
+    <!-- 1 gray chip -->
+    <div class="opt">
+      <div class="name">
+        1 · Soft-gray chip <small>— matches your nav-pill / selection language</small>
+      </div>
+      <div class="app">
+        <div class="rail">
+          <div class="logo">K</div>
+          <div class="ni on"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+        </div>
+        <div class="main">
+          <div class="band">
+            <span class="date">Tue Jun 24</span>
+            <div class="switch">
+              <span class="on">List</span><span>Calendar</span><span>Review</span>
+            </div>
+            <span class="spacer"></span><span class="c-gray">✦ Ask Claude</span>
+          </div>
+          <div class="tasks">
+            <div class="trow">
+              <span class="st" style="background: var(--cat-prof)"></span
+              ><span class="tt">Review onboarding PR</span>
+            </div>
+            <div class="trow">
+              <span class="st" style="background: var(--cat-rel)"></span
+              ><span class="tt">Call Mom</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- 3 ghost glyph -->
-<div class="opt">
-  <div class="name">3 · Ghost glyph <small>— borderless icon, maximal calm</small></div>
-  <div class="app">
-    <div class="rail"><div class="logo">K</div><div class="ni on"></div><div class="ni"></div><div class="ni"></div><div class="ni"></div></div>
-    <div class="main">
-      <div class="band"><span class="date">Tue Jun 24</span><div class="switch"><span class="on">List</span><span>Calendar</span><span>Review</span></div><span class="spacer"></span><span class="c-ghost">✦</span></div>
-      <div class="tasks"><div class="trow"><span class="st" style="background:var(--cat-prof)"></span><span class="tt">Review onboarding PR</span></div><div class="trow"><span class="st" style="background:var(--cat-rel)"></span><span class="tt">Call Mom</span></div></div>
+    <!-- 2 command bar -->
+    <div class="opt">
+      <div class="name">
+        2 · Ask bar <small>— a slim input that opens chat (doubles as a prompt field)</small>
+      </div>
+      <div class="app">
+        <div class="rail">
+          <div class="logo">K</div>
+          <div class="ni on"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+        </div>
+        <div class="main">
+          <div class="band">
+            <span class="date">Tue Jun 24</span><span class="spacer"></span>
+            <div class="c-bar"><span>Ask Claude…</span><span class="kbd">⌃J</span></div>
+          </div>
+          <div class="tasks">
+            <div class="trow">
+              <span class="st" style="background: var(--cat-prof)"></span
+              ><span class="tt">Review onboarding PR</span>
+            </div>
+            <div class="trow">
+              <span class="st" style="background: var(--cat-rel)"></span
+              ><span class="tt">Call Mom</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- 4 status dot text -->
-<div class="opt">
-  <div class="name">4 · Status-dot text <small>— “Claude” with a presence dot (dot brightens when it has a suggestion)</small></div>
-  <div class="app">
-    <div class="rail"><div class="logo">K</div><div class="ni on"></div><div class="ni"></div><div class="ni"></div><div class="ni"></div></div>
-    <div class="main">
-      <div class="band"><span class="date">Tue Jun 24</span><div class="switch"><span class="on">List</span><span>Calendar</span><span>Review</span></div><span class="spacer"></span><span class="c-dot"><span class="dot"></span>Claude</span></div>
-      <div class="tasks"><div class="trow"><span class="st" style="background:var(--cat-prof)"></span><span class="tt">Review onboarding PR</span></div><div class="trow"><span class="st" style="background:var(--cat-rel)"></span><span class="tt">Call Mom</span></div></div>
+    <!-- 3 ghost glyph -->
+    <div class="opt">
+      <div class="name">3 · Ghost glyph <small>— borderless icon, maximal calm</small></div>
+      <div class="app">
+        <div class="rail">
+          <div class="logo">K</div>
+          <div class="ni on"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+        </div>
+        <div class="main">
+          <div class="band">
+            <span class="date">Tue Jun 24</span>
+            <div class="switch">
+              <span class="on">List</span><span>Calendar</span><span>Review</span>
+            </div>
+            <span class="spacer"></span><span class="c-ghost">✦</span>
+          </div>
+          <div class="tasks">
+            <div class="trow">
+              <span class="st" style="background: var(--cat-prof)"></span
+              ><span class="tt">Review onboarding PR</span>
+            </div>
+            <div class="trow">
+              <span class="st" style="background: var(--cat-rel)"></span
+              ><span class="tt">Call Mom</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- 5 keyboard chip -->
-<div class="opt">
-  <div class="name">5 · Outline + shortcut <small>— teaches the keybinding as you use it</small></div>
-  <div class="app">
-    <div class="rail"><div class="logo">K</div><div class="ni on"></div><div class="ni"></div><div class="ni"></div><div class="ni"></div></div>
-    <div class="main">
-      <div class="band"><span class="date">Tue Jun 24</span><div class="switch"><span class="on">List</span><span>Calendar</span><span>Review</span></div><span class="spacer"></span><span class="c-kbd">✦ Claude <span class="kbd">⌃J</span></span></div>
-      <div class="tasks"><div class="trow"><span class="st" style="background:var(--cat-prof)"></span><span class="tt">Review onboarding PR</span></div><div class="trow"><span class="st" style="background:var(--cat-rel)"></span><span class="tt">Call Mom</span></div></div>
+    <!-- 4 status dot text -->
+    <div class="opt">
+      <div class="name">
+        4 · Status-dot text
+        <small>— “Claude” with a presence dot (dot brightens when it has a suggestion)</small>
+      </div>
+      <div class="app">
+        <div class="rail">
+          <div class="logo">K</div>
+          <div class="ni on"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+        </div>
+        <div class="main">
+          <div class="band">
+            <span class="date">Tue Jun 24</span>
+            <div class="switch">
+              <span class="on">List</span><span>Calendar</span><span>Review</span>
+            </div>
+            <span class="spacer"></span><span class="c-dot"><span class="dot"></span>Claude</span>
+          </div>
+          <div class="tasks">
+            <div class="trow">
+              <span class="st" style="background: var(--cat-prof)"></span
+              ><span class="tt">Review onboarding PR</span>
+            </div>
+            <div class="trow">
+              <span class="st" style="background: var(--cat-rel)"></span
+              ><span class="tt">Call Mom</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- 6 edge handle -->
-<div class="opt">
-  <div class="name">6 · Edge handle <small>— a small pull-tab on the content’s right edge (not a full rail)</small></div>
-  <div class="app">
-    <div class="rail"><div class="logo">K</div><div class="ni on"></div><div class="ni"></div><div class="ni"></div><div class="ni"></div></div>
-    <div class="main">
-      <div class="band"><span class="date">Tue Jun 24</span><div class="switch"><span class="on">List</span><span>Calendar</span><span>Review</span></div><span class="spacer"></span></div>
-      <div class="tasks"><div class="trow"><span class="st" style="background:var(--cat-prof)"></span><span class="tt">Review onboarding PR</span></div><div class="trow"><span class="st" style="background:var(--cat-rel)"></span><span class="tt">Call Mom</span></div></div>
-      <div class="tab-handle">✦ Claude</div>
+    <!-- 5 keyboard chip -->
+    <div class="opt">
+      <div class="name">
+        5 · Outline + shortcut <small>— teaches the keybinding as you use it</small>
+      </div>
+      <div class="app">
+        <div class="rail">
+          <div class="logo">K</div>
+          <div class="ni on"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+        </div>
+        <div class="main">
+          <div class="band">
+            <span class="date">Tue Jun 24</span>
+            <div class="switch">
+              <span class="on">List</span><span>Calendar</span><span>Review</span>
+            </div>
+            <span class="spacer"></span
+            ><span class="c-kbd">✦ Claude <span class="kbd">⌃J</span></span>
+          </div>
+          <div class="tasks">
+            <div class="trow">
+              <span class="st" style="background: var(--cat-prof)"></span
+              ><span class="tt">Review onboarding PR</span>
+            </div>
+            <div class="trow">
+              <span class="st" style="background: var(--cat-rel)"></span
+              ><span class="tt">Call Mom</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-</body>
+    <!-- 6 edge handle -->
+    <div class="opt">
+      <div class="name">
+        6 · Edge handle
+        <small>— a small pull-tab on the content’s right edge (not a full rail)</small>
+      </div>
+      <div class="app">
+        <div class="rail">
+          <div class="logo">K</div>
+          <div class="ni on"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+          <div class="ni"></div>
+        </div>
+        <div class="main">
+          <div class="band">
+            <span class="date">Tue Jun 24</span>
+            <div class="switch">
+              <span class="on">List</span><span>Calendar</span><span>Review</span>
+            </div>
+            <span class="spacer"></span>
+          </div>
+          <div class="tasks">
+            <div class="trow">
+              <span class="st" style="background: var(--cat-prof)"></span
+              ><span class="tt">Review onboarding PR</span>
+            </div>
+            <div class="trow">
+              <span class="st" style="background: var(--cat-rel)"></span
+              ><span class="tt">Call Mom</span>
+            </div>
+          </div>
+          <div class="tab-handle">✦ Claude</div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

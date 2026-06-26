@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Q1 — where does a practice show up?</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --surface: #fff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --border-subtle: #f4f4f4;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --accent: #16181d;
+        --bm: #3aaa35;
+        --bm-fill: #e9f6e8;
+        --blue: #009ddc;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f4f4;
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        padding: 28px 16px;
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--ink-muted);
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+      .opt {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+      }
+      .opt.rec {
+        border-color: var(--bm);
+        box-shadow: 0 0 0 1px var(--bm);
+      }
+      .head {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+      .tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--bm);
+        letter-spacing: 0.04em;
+      }
+      .opt.rec .tag::after {
+        content: " · spec";
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+      .head h3 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .oneline {
+        font-size: 13.5px;
+        color: var(--ink-muted);
+        margin: 0 0 14px;
+      }
+      .screens {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .screen {
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        overflow: hidden;
+      }
+      .screen .cap {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 8px 12px;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--surface-2);
+      }
+      .screen .body {
+        padding: 10px 12px;
+        min-height: 96px;
+      }
+      .line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        padding: 5px 0;
+      }
+      .line .d {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+      }
+      .d.blue {
+        background: var(--blue);
+      }
+      .d.green {
+        background: var(--bm);
+      }
+      .walk {
+        background: var(--bm-fill);
+        border: 1px solid #cfe9cd;
+        border-radius: 7px;
+        padding: 5px 9px;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #1f7a1b;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .walk .d {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--bm);
+      }
+      .empty {
+        color: var(--ink-faint);
+        font-size: 12.5px;
+        font-style: italic;
+        padding-top: 8px;
+      }
+      .opt-in {
+        margin-top: 10px;
+        font-size: 12.5px;
+        color: var(--ink-muted);
+        border-top: 1px dashed var(--border);
+        padding-top: 9px;
+      }
+      .opt-in b {
+        color: var(--ink);
+      }
+      @media (max-width: 620px) {
+        .screens {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>You adopt "10-minute walk." Where does it appear?</h1>
+      <p class="sub">
+        Two screens in your app: <b>Today</b> (your main to-do list, mostly work/life tasks) and
+        <b>Care</b> (the self-care corner). Watch where the green walk shows up.
+      </p>
+
+      <!-- C -->
+      <div class="opt">
+        <div class="head">
+          <span class="tag">OPTION C</span>
+          <h3>Stays in Care only</h3>
+        </div>
+        <p class="oneline">
+          Self-care never touches your main list. You open Care to tick practices off.
+        </p>
+        <div class="screens">
+          <div class="screen">
+            <div class="cap">Today — your list</div>
+            <div class="body">
+              <div class="line"><span class="d blue"></span>Finish Q3 deck</div>
+              <div class="line"><span class="d blue"></span>Email landlord</div>
+              <div class="empty">— no walk here —</div>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="cap">Care — Tasks tab</div>
+            <div class="body">
+              <span class="walk"><span class="d"></span>10-minute walk ✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="opt">
+        <div class="head">
+          <span class="tag">OPTION B</span>
+          <h3>Always on your main list</h3>
+        </div>
+        <p class="oneline">
+          Every practice you adopt auto-appears on Today as a recurring to-do, next to work tasks.
+        </p>
+        <div class="screens">
+          <div class="screen">
+            <div class="cap">Today — your list</div>
+            <div class="body">
+              <div class="line"><span class="d blue"></span>Finish Q3 deck</div>
+              <div class="line"><span class="d blue"></span>Email landlord</div>
+              <div class="line">
+                <span class="d green"></span><b>10-minute walk</b> &nbsp;<span
+                  style="color: var(--ink-faint); font-size: 12px"
+                  >(auto, daily)</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="cap">Care — Tasks tab</div>
+            <div class="body">
+              <span class="walk"><span class="d"></span>10-minute walk</span>
+              <div class="opt-in" style="border: 0; padding-top: 8px">
+                Same item, mirrored. Tick in either place.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A -->
+      <div class="opt rec">
+        <div class="head">
+          <span class="tag">OPTION A</span>
+          <h3>In Care by default — pin to your day when you want</h3>
+        </div>
+        <p class="oneline">
+          Like C normally. But each practice has an "Add to my day" button that puts it on Today
+          (once, or as a repeat) only when you choose.
+        </p>
+        <div class="screens">
+          <div class="screen">
+            <div class="cap">Today — your list</div>
+            <div class="body">
+              <div class="line"><span class="d blue"></span>Finish Q3 deck</div>
+              <div class="line"><span class="d blue"></span>Email landlord</div>
+              <div class="empty">— walk appears here only if you pin it —</div>
+            </div>
+          </div>
+          <div class="screen">
+            <div class="cap">Care — Tasks tab</div>
+            <div class="body">
+              <span class="walk"><span class="d"></span>10-minute walk ✓</span>
+              <div class="opt-in">
+                <b>＋ Add to my day</b> → then (and only then) it shows on Today, once or repeating.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="sub" style="margin-top: 6px">
+        In one sentence each: <b>C</b> = self-care stays separate · <b>B</b> = self-care is always
+        on your to-do list · <b>A</b> = separate by default, but you can pin any practice to your
+        day/calendar.
+      </p>
+    </div>
+  </body>
+</html>

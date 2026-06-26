@@ -62,3 +62,20 @@ Drizzle one-table-per-file; RLS `auth.uid()` on every table (SQL in `supabase/rl
 - Stress-signal thresholds (how long a focus block, how "heavy" a day).
 - Breathing visualization motion detail → animation pass.
 - Self-care-task ↔ recurrence interplay (a daily walk = a recurring care_activity).
+
+---
+
+## Library slice — detailed build plan (resolved Jun 25)
+
+The **Tasks-tab library** (build step 2) now has a full build plan: **`kash-3.0-care-library-build-plan.md`** (+ visuals `kash-3.0-care-*.html`). Decisions locked this session:
+
+- **D0** Scope = the Care _Tasks_ tab (Finch library); Abyss parked as next.
+- **D1** Slice = library only (no garden/stats/breathing/reflection tabs yet).
+- **D2** Practices live **separate in Care, pinnable** to Today/calendar ("Add to my day", one-off/repeating).
+- **D3** Organization = **thematic, by need.**
+- **D4** **6 themes** — Move · Calm · Connect · Rest · Nourish · Reflect (~23 seeds).
+- **D5** Suggested catalog = **static seed in code** (reversible to a DB table).
+- **D6** Cadence = optional, **pre-fills scheduling** via the recurrence engine.
+- Approval confirms: keep nullable **`kind`**; **soft-remove** (`archived_at`); pin link = **`tasks.care_activity_id`** column; build branch **off `main`**.
+
+Resolves the "self-care-task ↔ recurrence interplay" open item above for the library slice. Build (CL1–CL5) not yet started.

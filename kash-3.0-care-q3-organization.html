@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Q3 — how is the library organized?</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --surface: #fff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --border-subtle: #f4f4f4;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --accent: #16181d;
+        --bm: #3aaa35;
+        --bm-fill: #e9f6e8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f4f4;
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        padding: 28px 16px;
+      }
+      .wrap {
+        max-width: 940px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--ink-muted);
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+      .opts {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      .opt {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+      }
+      .opt.rec {
+        border-color: var(--bm);
+        box-shadow: 0 0 0 1px var(--bm);
+      }
+      .tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--bm);
+        letter-spacing: 0.04em;
+        margin-bottom: 5px;
+      }
+      .opt.rec .tag::after {
+        content: " · suggested";
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+      .opt h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .group {
+        margin-bottom: 9px;
+      }
+      .gname {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 4px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .chip {
+        font-size: 11.5px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 3px 9px;
+        color: var(--ink-muted);
+      }
+      .chip.g {
+        background: var(--bm-fill);
+        border-color: #cfe9cd;
+        color: #1f7a1b;
+      }
+      .desc {
+        font-size: 12.5px;
+        color: var(--ink-muted);
+        margin: 10px 0 0;
+        border-top: 1px solid var(--border-subtle);
+        padding-top: 9px;
+      }
+      .desc .pro {
+        color: #1f7a1b;
+        display: block;
+      }
+      .desc .con {
+        color: #9a4e08;
+        display: block;
+        margin-top: 3px;
+      }
+      .note {
+        margin-top: 18px;
+        font-size: 12.5px;
+        color: var(--ink-faint);
+        background: #fff;
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .note b {
+        color: var(--ink);
+      }
+      @media (max-width: 780px) {
+        .opts {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>How should the self-care library be organized?</h1>
+      <p class="sub">
+        The "categories" you mentioned. This decides the browse layout, the seed catalog's shape,
+        and whether a practice carries a grouping field in the data.
+      </p>
+
+      <div class="opts">
+        <!-- A thematic -->
+        <div class="opt rec">
+          <div class="tag">OPTION A</div>
+          <h3>Thematic — by need/mood</h3>
+          <div class="group">
+            <div class="gname">Move</div>
+            <div class="chips">
+              <span class="chip g">Walk</span><span class="chip">Stretch</span
+              ><span class="chip">Dance</span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="gname">Calm</div>
+            <div class="chips">
+              <span class="chip">Breathe</span><span class="chip">Unplug</span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="gname">Connect</div>
+            <div class="chips"><span class="chip">Text a friend</span></div>
+          </div>
+          <div class="group">
+            <div class="gname">Rest</div>
+            <div class="chips"><span class="chip">Early night</span></div>
+          </div>
+          <div class="group">
+            <div class="gname">Nourish</div>
+            <div class="chips">
+              <span class="chip">Water</span><span class="chip">Real meal</span>
+            </div>
+          </div>
+          <p class="desc">
+            Browse by what you need right now.
+            <span class="pro">+ Warm, human; great for discovery</span>
+            <span class="con">– We invent &amp; maintain the groupings</span>
+          </p>
+        </div>
+
+        <!-- B by type -->
+        <div class="opt">
+          <div class="tag">OPTION B</div>
+          <h3>By practice type</h3>
+          <div class="group">
+            <div class="gname">Movement</div>
+            <div class="chips">
+              <span class="chip g">Walk</span><span class="chip">Stretch</span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="gname">Breathing</div>
+            <div class="chips"><span class="chip">Box breath</span></div>
+          </div>
+          <div class="group">
+            <div class="gname">Reflection</div>
+            <div class="chips"><span class="chip">Journal</span></div>
+          </div>
+          <div class="group">
+            <div class="gname">Other</div>
+            <div class="chips"><span class="chip">Water</span><span class="chip">Friend</span></div>
+          </div>
+          <p class="desc">
+            Matches the data model's <code>kind</code> field.
+            <span class="pro">+ Clean 1:1 with the schema</span>
+            <span class="con"
+              >– Overlaps the separate Breathing &amp; Reflection tabs; feels mechanical</span
+            >
+          </p>
+        </div>
+
+        <!-- C flat -->
+        <div class="opt">
+          <div class="tag">OPTION C</div>
+          <h3>Flat list + search</h3>
+          <div class="chips" style="flex-direction: column; align-items: flex-start; gap: 6px">
+            <span class="chip g">Walk</span><span class="chip">Stretch</span
+            ><span class="chip">Box breath</span> <span class="chip">Journal</span
+            ><span class="chip">Water</span><span class="chip">Text a friend</span>
+          </div>
+          <p class="desc" style="margin-top: 14px">
+            One scrollable list, filter/search to find things.
+            <span class="pro">+ Simplest to build; no taxonomy to maintain</span>
+            <span class="con">– Weakest discovery; long lists feel flat</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Considered &amp; likely rejected:</b> organizing by your 5 life categories (Professional
+        / Personal / Relationships / Adulting / Body&nbsp;&amp;&nbsp;Mind). Self-care is almost all
+        <b>Body&nbsp;&amp;&nbsp;Mind</b>, so that grouping collapses into one bucket — not useful
+        here. (Spawned tasks still land in Body&nbsp;&amp;&nbsp;Mind regardless.) Flagging so you
+        can veto or rescue it.
+      </div>
+    </div>
+  </body>
+</html>

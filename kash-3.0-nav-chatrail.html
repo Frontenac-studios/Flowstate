@@ -1,87 +1,252 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nav decision · Chat rail default</title>
-<style>
-  :root{
-    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#9aa0ad;
-    --line:#ededed; --line-2:#f4f4f4; --bg:#ffffff; --gray:#f1f1f2;
-    --cat-prof:#009ddc; --cat-rel:#e03a3e; --cat-body:#61bb47;
-  }
-  *{box-sizing:border-box;}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:#f6f6f7;color:var(--ink);padding:22px;}
-  h1{font-size:19px;margin:0 0 4px;}
-  .sub{font-size:13px;color:var(--ink-muted);margin-bottom:16px;max-width:840px;}
-  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:1000px;}
-  .vlabel{font-size:13px;font-weight:600;margin-bottom:8px;}
-  .vlabel small{font-weight:400;color:var(--ink-faint);}
-  .hint{font-size:11px;color:var(--ink-faint);margin-top:8px;}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nav decision · Chat rail default</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --line: #ededed;
+        --line-2: #f4f4f4;
+        --bg: #ffffff;
+        --gray: #f1f1f2;
+        --cat-prof: #009ddc;
+        --cat-rel: #e03a3e;
+        --cat-body: #61bb47;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        background: #f6f6f7;
+        color: var(--ink);
+        padding: 22px;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 16px;
+        max-width: 840px;
+      }
+      .twocol {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        max-width: 1000px;
+      }
+      .vlabel {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .vlabel small {
+        font-weight: 400;
+        color: var(--ink-faint);
+      }
+      .hint {
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 8px;
+      }
 
-  .app{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-height:300px;}
-  .rail{width:60px;border-right:1px solid var(--line-2);padding:11px 6px;display:flex;flex-direction:column;gap:3px;}
-  .logo{font-size:14px;font-weight:600;text-align:center;margin-bottom:6px;}
-  .navitem{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;border-radius:8px;color:var(--ink-faint);font-size:8px;}
-  .navitem .ic{font-size:13px;}
-  .navitem.active{background:var(--gray);color:var(--ink);}
-  .main{flex:1;padding:14px 16px;min-width:0;}
-  .date{font-size:16px;font-weight:600;}
-  .row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:8px;overflow:hidden;}
-  .stripe{width:3px;height:16px;border-radius:2px;}
-  .row .t{font-size:12px;}
-  /* chat rail open */
-  .chatopen{width:200px;flex:none;border-left:1px solid var(--line);background:#fbfbfb;padding:12px;display:flex;flex-direction:column;}
-  .bubble{font-size:11px;border-radius:9px;padding:8px 10px;margin-bottom:7px;}
-  .bubble.k{background:#fff;border:1px solid var(--line);}
-  .bubble.u{background:var(--gray);align-self:flex-end;}
-  .cinput{margin-top:auto;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:11px;color:var(--ink-faint);}
-  /* chat rail collapsed */
-  .chatclosed{width:30px;flex:none;border-left:1px solid var(--line);background:#fbfbfb;display:flex;align-items:flex-start;justify-content:center;padding-top:12px;font-size:13px;color:var(--ink-faint);}
-</style>
-</head>
-<body>
-<h1>Decision 3 · Chat rail default state</h1>
-<div class="sub">The right rail is Claude (toggle with the chat key). Should it start open or collapsed — and should the app remember how you left it?</div>
+      .app {
+        display: flex;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        overflow: hidden;
+        min-height: 300px;
+      }
+      .rail {
+        width: 60px;
+        border-right: 1px solid var(--line-2);
+        padding: 11px 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .logo {
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+      .navitem {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        padding: 6px 0;
+        border-radius: 8px;
+        color: var(--ink-faint);
+        font-size: 8px;
+      }
+      .navitem .ic {
+        font-size: 13px;
+      }
+      .navitem.active {
+        background: var(--gray);
+        color: var(--ink);
+      }
+      .main {
+        flex: 1;
+        padding: 14px 16px;
+        min-width: 0;
+      }
+      .date {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 9px 11px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .stripe {
+        width: 3px;
+        height: 16px;
+        border-radius: 2px;
+      }
+      .row .t {
+        font-size: 12px;
+      }
+      /* chat rail open */
+      .chatopen {
+        width: 200px;
+        flex: none;
+        border-left: 1px solid var(--line);
+        background: #fbfbfb;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+      }
+      .bubble {
+        font-size: 11px;
+        border-radius: 9px;
+        padding: 8px 10px;
+        margin-bottom: 7px;
+      }
+      .bubble.k {
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+      .bubble.u {
+        background: var(--gray);
+        align-self: flex-end;
+      }
+      .cinput {
+        margin-top: auto;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: var(--ink-faint);
+      }
+      /* chat rail collapsed */
+      .chatclosed {
+        width: 30px;
+        flex: none;
+        border-left: 1px solid var(--line);
+        background: #fbfbfb;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 12px;
+        font-size: 13px;
+        color: var(--ink-faint);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Decision 3 · Chat rail default state</h1>
+    <div class="sub">
+      The right rail is Claude (toggle with the chat key). Should it start open or collapsed — and
+      should the app remember how you left it?
+    </div>
 
-<div class="twocol">
-
-  <div>
-    <div class="vlabel">Open <small>— Claude present, content narrower</small></div>
-    <div class="app">
-      <div class="rail"><div class="logo">K</div><div class="navitem active"><span class="ic">☀</span>Today</div><div class="navitem"><span class="ic">▦</span>Week</div><div class="navitem"><span class="ic">🗂</span>Proj</div><div class="navitem"><span class="ic">◷</span>Plan</div></div>
-      <div class="main">
-        <div class="date">Tue Jun 24</div>
-        <div class="row"><span class="stripe" style="background:var(--cat-prof)"></span><span class="t">Review onboarding PR</span></div>
-        <div class="row"><span class="stripe" style="background:var(--cat-rel)"></span><span class="t">Call Mom</span></div>
-        <div class="row"><span class="stripe" style="background:var(--cat-body)"></span><span class="t">30-min walk</span></div>
+    <div class="twocol">
+      <div>
+        <div class="vlabel">Open <small>— Claude present, content narrower</small></div>
+        <div class="app">
+          <div class="rail">
+            <div class="logo">K</div>
+            <div class="navitem active"><span class="ic">☀</span>Today</div>
+            <div class="navitem"><span class="ic">▦</span>Week</div>
+            <div class="navitem"><span class="ic">🗂</span>Proj</div>
+            <div class="navitem"><span class="ic">◷</span>Plan</div>
+          </div>
+          <div class="main">
+            <div class="date">Tue Jun 24</div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-prof)"></span
+              ><span class="t">Review onboarding PR</span>
+            </div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-rel)"></span
+              ><span class="t">Call Mom</span>
+            </div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-body)"></span
+              ><span class="t">30-min walk</span>
+            </div>
+          </div>
+          <div class="chatopen">
+            <div class="bubble k">Want me to draft your top 3?</div>
+            <div class="bubble u">yes</div>
+            <div class="bubble k">Done — pinned PR review, Q3 deck, walk.</div>
+            <div class="cinput">message Claude…</div>
+          </div>
+        </div>
+        <div class="hint">Companion-forward; costs ~200px of width on every screen.</div>
       </div>
-      <div class="chatopen">
-        <div class="bubble k">Want me to draft your top 3?</div>
-        <div class="bubble u">yes</div>
-        <div class="bubble k">Done — pinned PR review, Q3 deck, walk.</div>
-        <div class="cinput">message Claude…</div>
+
+      <div>
+        <div class="vlabel">Collapsed <small>— max content, open on demand</small></div>
+        <div class="app">
+          <div class="rail">
+            <div class="logo">K</div>
+            <div class="navitem active"><span class="ic">☀</span>Today</div>
+            <div class="navitem"><span class="ic">▦</span>Week</div>
+            <div class="navitem"><span class="ic">🗂</span>Proj</div>
+            <div class="navitem"><span class="ic">◷</span>Plan</div>
+          </div>
+          <div class="main">
+            <div class="date">Tue Jun 24</div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-prof)"></span
+              ><span class="t">Review onboarding PR</span>
+            </div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-rel)"></span
+              ><span class="t">Call Mom</span>
+            </div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-body)"></span
+              ><span class="t">30-min walk</span>
+            </div>
+            <div class="row">
+              <span class="stripe" style="background: var(--cat-prof)"></span
+              ><span class="t">Reply to recruiter</span>
+            </div>
+          </div>
+          <div class="chatclosed">💬</div>
+        </div>
+        <div class="hint">Calm and roomy; Claude is one keystroke away but out of sight.</div>
       </div>
     </div>
-    <div class="hint">Companion-forward; costs ~200px of width on every screen.</div>
-  </div>
-
-  <div>
-    <div class="vlabel">Collapsed <small>— max content, open on demand</small></div>
-    <div class="app">
-      <div class="rail"><div class="logo">K</div><div class="navitem active"><span class="ic">☀</span>Today</div><div class="navitem"><span class="ic">▦</span>Week</div><div class="navitem"><span class="ic">🗂</span>Proj</div><div class="navitem"><span class="ic">◷</span>Plan</div></div>
-      <div class="main">
-        <div class="date">Tue Jun 24</div>
-        <div class="row"><span class="stripe" style="background:var(--cat-prof)"></span><span class="t">Review onboarding PR</span></div>
-        <div class="row"><span class="stripe" style="background:var(--cat-rel)"></span><span class="t">Call Mom</span></div>
-        <div class="row"><span class="stripe" style="background:var(--cat-body)"></span><span class="t">30-min walk</span></div>
-        <div class="row"><span class="stripe" style="background:var(--cat-prof)"></span><span class="t">Reply to recruiter</span></div>
-      </div>
-      <div class="chatclosed">💬</div>
-    </div>
-    <div class="hint">Calm and roomy; Claude is one keystroke away but out of sight.</div>
-  </div>
-
-</div>
-</body>
+  </body>
 </html>

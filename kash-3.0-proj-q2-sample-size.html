@@ -1,125 +1,354 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projects §9 · Q2 — Duration estimate confidence</title>
-<style>
-  :root{
-    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
-    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
-    --c-proj:#AF52DE;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;padding:28px}
-  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 22px;max-width:900px}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:920px}
-  @media(max-width:780px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
-  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec .tag{color:var(--ink)}
-  h2{font-size:13.5px;margin:1px 0 0;letter-spacing:-.01em}
-  /* sample rows */
-  .rows{margin:12px 0 2px;border:1px solid var(--hair2);border-radius:9px;overflow:hidden}
-  .rw{display:flex;align-items:center;gap:10px;padding:7px 11px;font-size:11px}
-  .rw+.rw{border-top:1px solid var(--hair2)}
-  .n{width:42px;color:var(--faint);font-size:10px;flex-shrink:0}
-  .est{font-weight:600;color:var(--ink);min-width:96px}
-  .est.dim{color:var(--faint);font-weight:500}
-  .conf{margin-left:auto;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
-    border-radius:5px;padding:1px 6px}
-  .conf.lo{background:#fbeaea;color:#b23a3a}
-  .conf.mid{background:var(--gray-pill);color:var(--muted)}
-  .conf.hi{background:#e7f4ec;color:#1f8a4d}
-  .conf.none{background:transparent;color:var(--faint);font-weight:500}
-  /* range bar */
-  .range{flex:1;height:8px;border-radius:4px;background:var(--gray-pill);position:relative;min-width:70px;max-width:150px}
-  .range i{position:absolute;top:0;bottom:0;background:var(--c-proj);opacity:.4;border-radius:4px}
-  .range b{position:absolute;top:-2px;width:2px;height:12px;background:var(--ink)}
-  .body{font-size:11.5px;color:var(--muted);margin:9px 0 0}
-  .body b{color:var(--ink)}
-  .pros{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 0;font-size:11px;border-top:1px solid var(--hair2);padding-top:8px}
-  .pros ul{margin:0;padding:0;list-style:none}
-  .pros li{position:relative;padding-left:14px;margin:2px 0;color:var(--muted)}
-  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
-  .pros li.n::before{content:"–";position:absolute;left:2px;color:#c23a3a;font-weight:700}
-</style>
-</head>
-<body>
-  <h1>Projects §9 · Q2 — When are duration estimates trustworthy?</h1>
-  <p class="sub">Each card shows the estimate for the same task ("write docs") at <b>n=1, n=3, n=8</b> past samples. The fork is how each model treats thin data.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Projects §9 · Q2 — Duration estimate confidence</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+        --c-proj: #af52de;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 22px;
+        max-width: 900px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 920px;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      /* sample rows */
+      .rows {
+        margin: 12px 0 2px;
+        border: 1px solid var(--hair2);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .rw {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 11px;
+        font-size: 11px;
+      }
+      .rw + .rw {
+        border-top: 1px solid var(--hair2);
+      }
+      .n {
+        width: 42px;
+        color: var(--faint);
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+      .est {
+        font-weight: 600;
+        color: var(--ink);
+        min-width: 96px;
+      }
+      .est.dim {
+        color: var(--faint);
+        font-weight: 500;
+      }
+      .conf {
+        margin-left: auto;
+        font-size: 9px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border-radius: 5px;
+        padding: 1px 6px;
+      }
+      .conf.lo {
+        background: #fbeaea;
+        color: #b23a3a;
+      }
+      .conf.mid {
+        background: var(--gray-pill);
+        color: var(--muted);
+      }
+      .conf.hi {
+        background: #e7f4ec;
+        color: #1f8a4d;
+      }
+      .conf.none {
+        background: transparent;
+        color: var(--faint);
+        font-weight: 500;
+      }
+      /* range bar */
+      .range {
+        flex: 1;
+        height: 8px;
+        border-radius: 4px;
+        background: var(--gray-pill);
+        position: relative;
+        min-width: 70px;
+        max-width: 150px;
+      }
+      .range i {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: var(--c-proj);
+        opacity: 0.4;
+        border-radius: 4px;
+      }
+      .range b {
+        position: absolute;
+        top: -2px;
+        width: 2px;
+        height: 12px;
+        background: var(--ink);
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 9px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 8px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Projects §9 · Q2 — When are duration estimates trustworthy?</h1>
+    <p class="sub">
+      Each card shows the estimate for the same task ("write docs") at <b>n=1, n=3, n=8</b> past
+      samples. The fork is how each model treats thin data.
+    </p>
 
-  <div class="grid">
-
-    <!-- A -->
-    <div class="card">
-      <span class="tag">A · Silent until N (≈3)</span>
-      <h2>Withhold until trustworthy</h2>
-      <div class="rows">
-        <div class="rw"><span class="n">n=1</span><span class="est dim">— no estimate</span><span class="conf none">learning…</span></div>
-        <div class="rw"><span class="n">n=3</span><span class="est">~4h</span><span class="conf mid">shown</span></div>
-        <div class="rw"><span class="n">n=8</span><span class="est">~3.5h</span><span class="conf hi">shown</span></div>
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <span class="tag">A · Silent until N (≈3)</span>
+        <h2>Withhold until trustworthy</h2>
+        <div class="rows">
+          <div class="rw">
+            <span class="n">n=1</span><span class="est dim">— no estimate</span
+            ><span class="conf none">learning…</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=3</span><span class="est">~4h</span
+            ><span class="conf mid">shown</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=8</span><span class="est">~3.5h</span
+            ><span class="conf hi">shown</span>
+          </div>
+        </div>
+        <div class="body">Nothing appears until the sample crosses the threshold.</div>
+        <div class="pros">
+          <ul>
+            <li class="y">Never misleads with thin data</li>
+            <li class="y">Simple rule</li>
+          </ul>
+          <ul>
+            <li class="n">No help in the early days when you’d value it</li>
+          </ul>
+        </div>
       </div>
-      <div class="body">Nothing appears until the sample crosses the threshold.</div>
-      <div class="pros">
-        <ul><li class="y">Never misleads with thin data</li><li class="y">Simple rule</li></ul>
-        <ul><li class="n">No help in the early days when you’d value it</li></ul>
+
+      <!-- B recommended -->
+      <div class="card rec">
+        <span class="tag">B · Always show + confidence label</span>
+        <h2>Transparent from sample one</h2>
+        <div class="rows">
+          <div class="rw">
+            <span class="n">n=1</span><span class="est">~3h</span
+            ><span class="conf lo">low · 1</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=3</span><span class="est">~4h</span
+            ><span class="conf mid">fair · 3</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=8</span><span class="est">~3.5h</span
+            ><span class="conf hi">good · 8</span>
+          </div>
+        </div>
+        <div class="body">
+          Estimate always shown, tagged with confidence + sample count so you weight it yourself.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Useful immediately; honest about uncertainty</li>
+            <li class="y">Teaches you to read confidence</li>
+          </ul>
+          <ul>
+            <li class="n">A low-confidence number can still anchor</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="card">
+        <span class="tag">C · Graduated tiers</span>
+        <h2>“Rough” → “estimate” → “confident”</h2>
+        <div class="rows">
+          <div class="rw">
+            <span class="n">n=1</span><span class="est dim">rough: ~3h</span
+            ><span class="conf lo">rough</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=3</span><span class="est">est: ~4h</span
+            ><span class="conf mid">estimate</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=8</span><span class="est">~3.5h</span
+            ><span class="conf hi">confident</span>
+          </div>
+        </div>
+        <div class="body">
+          Same as B but confidence is expressed in <b>words/styling</b> rather than a count.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Plain-language; gentle on numbers</li>
+          </ul>
+          <ul>
+            <li class="n">Fuzzier than an explicit n; tiers to define</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="card">
+        <span class="tag">D · Always a range, narrowing</span>
+        <h2>No false-precision single number</h2>
+        <div class="rows">
+          <div class="rw">
+            <span class="n">n=1</span
+            ><span class="range" style=""
+              ><i style="left: 8%; right: 8%"></i><b style="left: 40%"></b></span
+            ><span class="conf lo">2–6h</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=3</span
+            ><span class="range"
+              ><i style="left: 24%; right: 22%"></i><b style="left: 52%"></b></span
+            ><span class="conf mid">3–5h</span>
+          </div>
+          <div class="rw">
+            <span class="n">n=8</span
+            ><span class="range"
+              ><i style="left: 40%; right: 36%"></i><b style="left: 50%"></b></span
+            ><span class="conf hi">~3.5h</span>
+          </div>
+        </div>
+        <div class="body">
+          Always a band that <b>tightens</b> with data; collapses to a point only when confident.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Visually honest; resists false precision</li>
+            <li class="y">Useful from n=1</li>
+          </ul>
+          <ul>
+            <li class="n">Ranges are harder to schedule/sum against</li>
+          </ul>
+        </div>
       </div>
     </div>
-
-    <!-- B recommended -->
-    <div class="card rec">
-      <span class="tag">B · Always show + confidence label</span>
-      <h2>Transparent from sample one</h2>
-      <div class="rows">
-        <div class="rw"><span class="n">n=1</span><span class="est">~3h</span><span class="conf lo">low · 1</span></div>
-        <div class="rw"><span class="n">n=3</span><span class="est">~4h</span><span class="conf mid">fair · 3</span></div>
-        <div class="rw"><span class="n">n=8</span><span class="est">~3.5h</span><span class="conf hi">good · 8</span></div>
-      </div>
-      <div class="body">Estimate always shown, tagged with confidence + sample count so you weight it yourself.</div>
-      <div class="pros">
-        <ul><li class="y">Useful immediately; honest about uncertainty</li><li class="y">Teaches you to read confidence</li></ul>
-        <ul><li class="n">A low-confidence number can still anchor</li></ul>
-      </div>
-    </div>
-
-    <!-- C -->
-    <div class="card">
-      <span class="tag">C · Graduated tiers</span>
-      <h2>“Rough” → “estimate” → “confident”</h2>
-      <div class="rows">
-        <div class="rw"><span class="n">n=1</span><span class="est dim">rough: ~3h</span><span class="conf lo">rough</span></div>
-        <div class="rw"><span class="n">n=3</span><span class="est">est: ~4h</span><span class="conf mid">estimate</span></div>
-        <div class="rw"><span class="n">n=8</span><span class="est">~3.5h</span><span class="conf hi">confident</span></div>
-      </div>
-      <div class="body">Same as B but confidence is expressed in <b>words/styling</b> rather than a count.</div>
-      <div class="pros">
-        <ul><li class="y">Plain-language; gentle on numbers</li></ul>
-        <ul><li class="n">Fuzzier than an explicit n; tiers to define</li></ul>
-      </div>
-    </div>
-
-    <!-- D -->
-    <div class="card">
-      <span class="tag">D · Always a range, narrowing</span>
-      <h2>No false-precision single number</h2>
-      <div class="rows">
-        <div class="rw"><span class="n">n=1</span><span class="range" style=""><i style="left:8%;right:8%"></i><b style="left:40%"></b></span><span class="conf lo">2–6h</span></div>
-        <div class="rw"><span class="n">n=3</span><span class="range"><i style="left:24%;right:22%"></i><b style="left:52%"></b></span><span class="conf mid">3–5h</span></div>
-        <div class="rw"><span class="n">n=8</span><span class="range"><i style="left:40%;right:36%"></i><b style="left:50%"></b></span><span class="conf hi">~3.5h</span></div>
-      </div>
-      <div class="body">Always a band that <b>tightens</b> with data; collapses to a point only when confident.</div>
-      <div class="pros">
-        <ul><li class="y">Visually honest; resists false precision</li><li class="y">Useful from n=1</li></ul>
-        <ul><li class="n">Ranges are harder to schedule/sum against</li></ul>
-      </div>
-    </div>
-
-  </div>
-  <p class="sub" style="margin-top:18px">Note: the threshold N (≈3 shown here) is a <b>tunable default</b>, not the fork — the fork is which <i>presentation</i> above. We can set/confirm N once the model is chosen.</p>
-</body>
+    <p class="sub" style="margin-top: 18px">
+      Note: the threshold N (≈3 shown here) is a <b>tunable default</b>, not the fork — the fork is
+      which <i>presentation</i> above. We can set/confirm N once the model is chosen.
+    </p>
+  </body>
 </html>
