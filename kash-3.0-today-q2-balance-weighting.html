@@ -1,132 +1,317 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Today §6 · Q2 — Balance bar weighting</title>
-<style>
-  :root{
-    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
-    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8;
-    --c-pro:#0A84FF; --c-proj:#AF52DE; --c-rel:#FF2D55; --c-adult:#FF9500; --c-body:#34C759;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;padding:28px}
-  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 18px;max-width:880px}
-  .day{background:var(--surface);border:1px solid var(--hair);border-radius:12px;
-    padding:13px 16px;max-width:880px;margin:0 0 22px;font-size:12px;color:var(--muted)}
-  .day b{color:var(--ink)}
-  .day .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--hair);
-    border-radius:999px;padding:2px 9px;font-size:11px;color:var(--ink);background:#fff}
-  .chip i{width:8px;height:8px;border-radius:2px}
-  .chip.t3{border-color:var(--ink);font-weight:600}
-  .chip.t3::after{content:"★";font-size:9px;color:var(--faint)}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:880px}
-  @media(max-width:760px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
-  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .card h2{font-size:13.5px;margin:0 0 2px;letter-spacing:-.01em}
-  .card .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec .tag{color:var(--ink)}
-  .bar{display:flex;height:26px;border-radius:7px;overflow:hidden;margin:13px 0 6px;border:1px solid var(--hair)}
-  .seg{height:100%}
-  .seg.pro{background:var(--c-pro)} .seg.proj{background:var(--c-proj)}
-  .seg.rel{background:var(--c-rel)} .seg.adult{background:var(--c-adult)}
-  .seg.body{background:var(--c-body)}
-  .reads{font-size:11.5px;color:var(--muted);margin:6px 0 0}
-  .reads b{color:var(--ink)}
-  .note{font-size:11.5px;color:var(--muted);margin:9px 0 0;border-top:1px solid var(--hair2);padding-top:9px}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;max-width:880px;margin:18px 0 0;font-size:11px;color:var(--muted)}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-</style>
-</head>
-<body>
-  <h1>Today §6 · Q2 — Balance bar weighting (same day, four models)</h1>
-  <p class="sub">The point of the bar is to reveal a lopsided day. Watch how the <b>same tasks</b> produce very different “balance” depending on what we count.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Today §6 · Q2 — Balance bar weighting</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --c-pro: #0a84ff;
+        --c-proj: #af52de;
+        --c-rel: #ff2d55;
+        --c-adult: #ff9500;
+        --c-body: #34c759;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 18px;
+        max-width: 880px;
+      }
+      .day {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 12px;
+        padding: 13px 16px;
+        max-width: 880px;
+        margin: 0 0 22px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .day b {
+        color: var(--ink);
+      }
+      .day .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--hair);
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 11px;
+        color: var(--ink);
+        background: #fff;
+      }
+      .chip i {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+      }
+      .chip.t3 {
+        border-color: var(--ink);
+        font-weight: 600;
+      }
+      .chip.t3::after {
+        content: "★";
+        font-size: 9px;
+        color: var(--faint);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 880px;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .card h2 {
+        font-size: 13.5px;
+        margin: 0 0 2px;
+        letter-spacing: -0.01em;
+      }
+      .card .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      .bar {
+        display: flex;
+        height: 26px;
+        border-radius: 7px;
+        overflow: hidden;
+        margin: 13px 0 6px;
+        border: 1px solid var(--hair);
+      }
+      .seg {
+        height: 100%;
+      }
+      .seg.pro {
+        background: var(--c-pro);
+      }
+      .seg.proj {
+        background: var(--c-proj);
+      }
+      .seg.rel {
+        background: var(--c-rel);
+      }
+      .seg.adult {
+        background: var(--c-adult);
+      }
+      .seg.body {
+        background: var(--c-body);
+      }
+      .reads {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 6px 0 0;
+      }
+      .reads b {
+        color: var(--ink);
+      }
+      .note {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 9px 0 0;
+        border-top: 1px solid var(--hair2);
+        padding-top: 9px;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        max-width: 880px;
+        margin: 18px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Today §6 · Q2 — Balance bar weighting (same day, four models)</h1>
+    <p class="sub">
+      The point of the bar is to reveal a lopsided day. Watch how the <b>same tasks</b> produce very
+      different “balance” depending on what we count.
+    </p>
 
-  <div class="day">
-    <b>Example day</b> — ★ = Top-3 (deep work), plain = small task. Durations = actual focus-block time the Calendar records.
-    <div class="row">
-      <span class="chip t3"><i style="background:var(--c-pro)"></i>Pro: ship deck <small>&nbsp;90m</small></span>
-      <span class="chip"><i style="background:var(--c-pro)"></i>Pro: 2 emails <small>&nbsp;12m</small></span>
-      <span class="chip t3"><i style="background:var(--c-proj)"></i>Proj: prototype <small>&nbsp;45m</small></span>
-      <span class="chip"><i style="background:var(--c-adult)"></i>Adult: renew reg <small>&nbsp;8m</small></span>
-      <span class="chip"><i style="background:var(--c-adult)"></i>Adult: pay bill <small>&nbsp;6m</small></span>
-      <span class="chip"><i style="background:var(--c-adult)"></i>Adult: schedule dentist <small>&nbsp;5m</small></span>
-      <span class="chip"><i style="background:var(--c-body)"></i>Body: walk <small>&nbsp;18m</small></span>
-    </div>
-  </div>
-
-  <div class="grid">
-
-    <!-- A pure count -->
-    <div class="card">
-      <span class="tag">A · Pure count</span>
-      <h2>Every task = 1</h2>
-      <div class="bar">
-        <div class="seg pro"   style="width:28.6%"></div>
-        <div class="seg proj"  style="width:14.3%"></div>
-        <div class="seg adult" style="width:42.8%"></div>
-        <div class="seg body"  style="width:14.3%"></div>
+    <div class="day">
+      <b>Example day</b> — ★ = Top-3 (deep work), plain = small task. Durations = actual focus-block
+      time the Calendar records.
+      <div class="row">
+        <span class="chip t3"
+          ><i style="background: var(--c-pro)"></i>Pro: ship deck <small>&nbsp;90m</small></span
+        >
+        <span class="chip"
+          ><i style="background: var(--c-pro)"></i>Pro: 2 emails <small>&nbsp;12m</small></span
+        >
+        <span class="chip t3"
+          ><i style="background: var(--c-proj)"></i>Proj: prototype <small>&nbsp;45m</small></span
+        >
+        <span class="chip"
+          ><i style="background: var(--c-adult)"></i>Adult: renew reg <small>&nbsp;8m</small></span
+        >
+        <span class="chip"
+          ><i style="background: var(--c-adult)"></i>Adult: pay bill <small>&nbsp;6m</small></span
+        >
+        <span class="chip"
+          ><i style="background: var(--c-adult)"></i>Adult: schedule dentist
+          <small>&nbsp;5m</small></span
+        >
+        <span class="chip"
+          ><i style="background: var(--c-body)"></i>Body: walk <small>&nbsp;18m</small></span
+        >
       </div>
-      <p class="reads">Counts: Pro 2 · Proj 1 · <b>Adult 3</b> · Body 1 &nbsp;→&nbsp; <b>errands look like the biggest part of the day.</b></p>
-      <p class="note">Simplest, but a pile of 5-minute errands can outweigh a 90-min deliverable. Misleads on an ADHD day where small tasks multiply.</p>
     </div>
 
-    <!-- B top-3 weighted -->
-    <div class="card rec">
-      <span class="tag">B · Top-3 weighted · matches §2 v1 ✓</span>
-      <h2>Top-3 = 3 units, small = 1</h2>
-      <div class="bar">
-        <div class="seg pro"   style="width:40%"></div>
-        <div class="seg proj"  style="width:25%"></div>
-        <div class="seg adult" style="width:25%"></div>
-        <div class="seg body"  style="width:10%"></div>
+    <div class="grid">
+      <!-- A pure count -->
+      <div class="card">
+        <span class="tag">A · Pure count</span>
+        <h2>Every task = 1</h2>
+        <div class="bar">
+          <div class="seg pro" style="width: 28.6%"></div>
+          <div class="seg proj" style="width: 14.3%"></div>
+          <div class="seg adult" style="width: 42.8%"></div>
+          <div class="seg body" style="width: 14.3%"></div>
+        </div>
+        <p class="reads">
+          Counts: Pro 2 · Proj 1 · <b>Adult 3</b> · Body 1 &nbsp;→&nbsp;
+          <b>errands look like the biggest part of the day.</b>
+        </p>
+        <p class="note">
+          Simplest, but a pile of 5-minute errands can outweigh a 90-min deliverable. Misleads on an
+          ADHD day where small tasks multiply.
+        </p>
       </div>
-      <p class="reads">Weighted: Pro 4 · Proj 3 · Adult 3 · Body 1 &nbsp;→&nbsp; <b>deep work leads; errands shrink to their real weight.</b></p>
-      <p class="note">Same metric as §2, so Today and Categories agree. No new data needed — uses the Top-3 flag you already set. Upgrade path to time-based stays open.</p>
-    </div>
 
-    <!-- C time-based -->
-    <div class="card">
-      <span class="tag">C · Time-based (actual minutes)</span>
-      <h2>Use recorded focus durations</h2>
-      <div class="bar">
-        <div class="seg pro"   style="width:53.7%"></div>
-        <div class="seg proj"  style="width:24.5%"></div>
-        <div class="seg adult" style="width:10.3%"></div>
-        <div class="seg body"  style="width:9.8%"></div>
+      <!-- B top-3 weighted -->
+      <div class="card rec">
+        <span class="tag">B · Top-3 weighted · matches §2 v1 ✓</span>
+        <h2>Top-3 = 3 units, small = 1</h2>
+        <div class="bar">
+          <div class="seg pro" style="width: 40%"></div>
+          <div class="seg proj" style="width: 25%"></div>
+          <div class="seg adult" style="width: 25%"></div>
+          <div class="seg body" style="width: 10%"></div>
+        </div>
+        <p class="reads">
+          Weighted: Pro 4 · Proj 3 · Adult 3 · Body 1 &nbsp;→&nbsp;
+          <b>deep work leads; errands shrink to their real weight.</b>
+        </p>
+        <p class="note">
+          Same metric as §2, so Today and Categories agree. No new data needed — uses the Top-3 flag
+          you already set. Upgrade path to time-based stays open.
+        </p>
       </div>
-      <p class="reads">Minutes: Pro 102 · Proj 45 · Adult 19 · Body 18 &nbsp;→&nbsp; <b>truest picture of where the day actually went.</b></p>
-      <p class="note">Today uniquely has this data (the Calendar records durations). But it’s a <i>record</i>, not a <i>plan</i> — early in the day the bar is near-empty, and untimed tasks don’t register. §2 defers time-based balance globally.</p>
-    </div>
 
-    <!-- D hybrid -->
-    <div class="card">
-      <span class="tag">D · Hybrid (weighted now → time later)</span>
-      <h2>Ship B, designed to swap to C</h2>
-      <div class="bar">
-        <div class="seg pro"   style="width:40%"></div>
-        <div class="seg proj"  style="width:25%"></div>
-        <div class="seg adult" style="width:25%"></div>
-        <div class="seg body"  style="width:10%"></div>
+      <!-- C time-based -->
+      <div class="card">
+        <span class="tag">C · Time-based (actual minutes)</span>
+        <h2>Use recorded focus durations</h2>
+        <div class="bar">
+          <div class="seg pro" style="width: 53.7%"></div>
+          <div class="seg proj" style="width: 24.5%"></div>
+          <div class="seg adult" style="width: 10.3%"></div>
+          <div class="seg body" style="width: 9.8%"></div>
+        </div>
+        <p class="reads">
+          Minutes: Pro 102 · Proj 45 · Adult 19 · Body 18 &nbsp;→&nbsp;
+          <b>truest picture of where the day actually went.</b>
+        </p>
+        <p class="note">
+          Today uniquely has this data (the Calendar records durations). But it’s a <i>record</i>,
+          not a <i>plan</i> — early in the day the bar is near-empty, and untimed tasks don’t
+          register. §2 defers time-based balance globally.
+        </p>
       </div>
-      <p class="reads">Renders as B today; same component swaps its input to minutes once time-tracking is trusted (the §2 “upgrade later” path).</p>
-      <p class="note">Lowest-risk: ships now with no new data, keeps the door open to C without reworking the view. Slightly more build scaffolding.</p>
+
+      <!-- D hybrid -->
+      <div class="card">
+        <span class="tag">D · Hybrid (weighted now → time later)</span>
+        <h2>Ship B, designed to swap to C</h2>
+        <div class="bar">
+          <div class="seg pro" style="width: 40%"></div>
+          <div class="seg proj" style="width: 25%"></div>
+          <div class="seg adult" style="width: 25%"></div>
+          <div class="seg body" style="width: 10%"></div>
+        </div>
+        <p class="reads">
+          Renders as B today; same component swaps its input to minutes once time-tracking is
+          trusted (the §2 “upgrade later” path).
+        </p>
+        <p class="note">
+          Lowest-risk: ships now with no new data, keeps the door open to C without reworking the
+          view. Slightly more build scaffolding.
+        </p>
+      </div>
     </div>
 
-  </div>
-
-  <div class="legend">
-    <span><i style="background:var(--c-pro)"></i>Professional</span>
-    <span><i style="background:var(--c-proj)"></i>Personal Projects</span>
-    <span><i style="background:var(--c-rel)"></i>Relationships</span>
-    <span><i style="background:var(--c-adult)"></i>Adulting</span>
-    <span><i style="background:var(--c-body)"></i>Body &amp; Mind</span>
-  </div>
-</body>
+    <div class="legend">
+      <span><i style="background: var(--c-pro)"></i>Professional</span>
+      <span><i style="background: var(--c-proj)"></i>Personal Projects</span>
+      <span><i style="background: var(--c-rel)"></i>Relationships</span>
+      <span><i style="background: var(--c-adult)"></i>Adulting</span>
+      <span><i style="background: var(--c-body)"></i>Body &amp; Mind</span>
+    </div>
+  </body>
 </html>

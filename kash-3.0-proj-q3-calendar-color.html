@@ -1,142 +1,412 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projects §9 · Q3 — Multi-project calendar color</title>
-<style>
-  :root{
-    --ink:#16181d; --muted:#6b6f76; --faint:#9aa0a8;
-    --surface:#ffffff; --hair:#e6e7ea; --hair2:#eef0f2; --bg:#f6f7f8; --gray-pill:#eceef0;
-    --c-pro:#0A84FF; --c-proj:#AF52DE; --c-rel:#FF2D55; --c-adult:#FF9500; --c-body:#34C759;
-    /* arbitrary per-project hues (only for the 'by project' demo) */
-    --p1:#5856D6; --p2:#FF9500; --p3:#30B0C7;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;padding:28px}
-  h1{font-size:18px;letter-spacing:-.01em;margin:0 0 2px}
-  .sub{color:var(--muted);font-size:13px;margin:0 0 16px;max-width:920px}
-  .flag{max-width:920px;background:#fff;border:1px solid var(--ink);border-radius:10px;padding:10px 13px;
-    margin:0 0 20px;font-size:12px;color:var(--muted)}
-  .flag b{color:var(--ink)}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:920px}
-  @media(max-width:780px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px}
-  .card.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .card.warn{border-color:#d9b38a}
-  .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec .tag{color:var(--ink)} .warn .tag{color:#9a6a2f}
-  h2{font-size:13.5px;margin:1px 0 0;letter-spacing:-.01em}
-  /* gantt */
-  .gantt{margin:13px 0 4px}
-  .grow{display:flex;align-items:center;gap:7px;margin:4px 0}
-  .glabel{width:74px;font-size:9px;color:var(--muted);text-align:right;flex-shrink:0;line-height:1.15}
-  .track{flex:1;height:16px;border-radius:4px;background:var(--bg);border:1px solid var(--hair2);position:relative}
-  .seg{position:absolute;top:2px;bottom:2px;border-radius:3px;border-left:3px solid;font-size:0}
-  /* category-colored */
-  .cat-pro{background:rgba(10,132,255,.18);border-left-color:var(--c-pro)}
-  .cat-proj{background:rgba(175,82,222,.18);border-left-color:var(--c-proj)}
-  .cat-body{background:rgba(52,199,89,.18);border-left-color:var(--c-body)}
-  .cat-rel{background:rgba(255,45,85,.18);border-left-color:var(--c-rel)}
-  /* project-colored */
-  .pr1{background:rgba(88,86,214,.20);border-left-color:var(--p1)}
-  .pr2{background:rgba(255,149,0,.20);border-left-color:var(--p2)}
-  .pr3{background:rgba(48,176,199,.20);border-left-color:var(--p3)}
-  .lane{font-size:8.5px;color:var(--faint);margin:8px 0 2px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
-  .body{font-size:11.5px;color:var(--muted);margin:8px 0 0}
-  .body b{color:var(--ink)}
-  .pros{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 0;font-size:11px;border-top:1px solid var(--hair2);padding-top:8px}
-  .pros ul{margin:0;padding:0;list-style:none}
-  .pros li{position:relative;padding-left:14px;margin:2px 0;color:var(--muted)}
-  .pros li.y::before{content:"+";position:absolute;left:0;color:#1f9d4d;font-weight:700}
-  .pros li.n::before{content:"–";position:absolute;left:2px;color:#c23a3a;font-weight:700}
-  .legend{display:flex;gap:13px;flex-wrap:wrap;max-width:920px;margin:16px 0 0;font-size:10.5px;color:var(--muted)}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
-</style>
-</head>
-<body>
-  <h1>Projects §9 · Q3 — Multi-project calendar coloring</h1>
-  <p class="sub">Three projects (Client site · Book · Marathon) with phases laid across the same weeks. Same calendar, four coloring schemes.</p>
-  <div class="flag"><b>Locked-palette flag:</b> your global rule is <b>“color = category stripe only.”</b> Schemes that color by <i>project</i> (B, and C when toggled) break that rule — choosing them is a deliberate exception for this view.</div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Projects §9 · Q3 — Multi-project calendar color</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+        --c-pro: #0a84ff;
+        --c-proj: #af52de;
+        --c-rel: #ff2d55;
+        --c-adult: #ff9500;
+        --c-body: #34c759;
+        /* arbitrary per-project hues (only for the 'by project' demo) */
+        --p1: #5856d6;
+        --p2: #ff9500;
+        --p3: #30b0c7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 16px;
+        max-width: 920px;
+      }
+      .flag {
+        max-width: 920px;
+        background: #fff;
+        border: 1px solid var(--ink);
+        border-radius: 10px;
+        padding: 10px 13px;
+        margin: 0 0 20px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .flag b {
+        color: var(--ink);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 920px;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .card.warn {
+        border-color: #d9b38a;
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      .warn .tag {
+        color: #9a6a2f;
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      /* gantt */
+      .gantt {
+        margin: 13px 0 4px;
+      }
+      .grow {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 4px 0;
+      }
+      .glabel {
+        width: 74px;
+        font-size: 9px;
+        color: var(--muted);
+        text-align: right;
+        flex-shrink: 0;
+        line-height: 1.15;
+      }
+      .track {
+        flex: 1;
+        height: 16px;
+        border-radius: 4px;
+        background: var(--bg);
+        border: 1px solid var(--hair2);
+        position: relative;
+      }
+      .seg {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        border-radius: 3px;
+        border-left: 3px solid;
+        font-size: 0;
+      }
+      /* category-colored */
+      .cat-pro {
+        background: rgba(10, 132, 255, 0.18);
+        border-left-color: var(--c-pro);
+      }
+      .cat-proj {
+        background: rgba(175, 82, 222, 0.18);
+        border-left-color: var(--c-proj);
+      }
+      .cat-body {
+        background: rgba(52, 199, 89, 0.18);
+        border-left-color: var(--c-body);
+      }
+      .cat-rel {
+        background: rgba(255, 45, 85, 0.18);
+        border-left-color: var(--c-rel);
+      }
+      /* project-colored */
+      .pr1 {
+        background: rgba(88, 86, 214, 0.2);
+        border-left-color: var(--p1);
+      }
+      .pr2 {
+        background: rgba(255, 149, 0, 0.2);
+        border-left-color: var(--p2);
+      }
+      .pr3 {
+        background: rgba(48, 176, 199, 0.2);
+        border-left-color: var(--p3);
+      }
+      .lane {
+        font-size: 8.5px;
+        color: var(--faint);
+        margin: 8px 0 2px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 8px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+      .legend {
+        display: flex;
+        gap: 13px;
+        flex-wrap: wrap;
+        max-width: 920px;
+        margin: 16px 0 0;
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 4px;
+        vertical-align: -1px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Projects §9 · Q3 — Multi-project calendar coloring</h1>
+    <p class="sub">
+      Three projects (Client site · Book · Marathon) with phases laid across the same weeks. Same
+      calendar, four coloring schemes.
+    </p>
+    <div class="flag">
+      <b>Locked-palette flag:</b> your global rule is <b>“color = category stripe only.”</b> Schemes
+      that color by <i>project</i> (B, and C when toggled) break that rule — choosing them is a
+      deliberate exception for this view.
+    </div>
 
-  <div class="grid">
-
-    <!-- A recommended -->
-    <div class="card rec">
-      <span class="tag">A · By category · honors locked palette</span>
-      <h2>Phases colored by life category</h2>
-      <div class="gantt">
-        <div class="grow"><span class="glabel">Client site</span><div class="track"><div class="seg cat-pro" style="left:4%;width:46%"></div><div class="seg cat-pro" style="left:52%;width:40%"></div></div></div>
-        <div class="grow"><span class="glabel">Book</span><div class="track"><div class="seg cat-proj" style="left:14%;width:60%"></div></div></div>
-        <div class="grow"><span class="glabel">Marathon</span><div class="track"><div class="seg cat-body" style="left:30%;width:64%"></div></div></div>
+    <div class="grid">
+      <!-- A recommended -->
+      <div class="card rec">
+        <span class="tag">A · By category · honors locked palette</span>
+        <h2>Phases colored by life category</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">Client site</span>
+            <div class="track">
+              <div class="seg cat-pro" style="left: 4%; width: 46%"></div>
+              <div class="seg cat-pro" style="left: 52%; width: 40%"></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Book</span>
+            <div class="track"><div class="seg cat-proj" style="left: 14%; width: 60%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Marathon</span>
+            <div class="track"><div class="seg cat-body" style="left: 30%; width: 64%"></div></div>
+          </div>
+        </div>
+        <div class="body">
+          Each project sits in its category color (Client=Pro, Book=Projects, Marathon=Body).
+          <b>Cross-project category balance is instantly visible.</b>
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Consistent with the whole app</li>
+            <li class="y">Shows where your time-categories cluster</li>
+          </ul>
+          <ul>
+            <li class="n">Two same-category projects look alike</li>
+          </ul>
+        </div>
       </div>
-      <div class="body">Each project sits in its category color (Client=Pro, Book=Projects, Marathon=Body). <b>Cross-project category balance is instantly visible.</b></div>
-      <div class="pros">
-        <ul><li class="y">Consistent with the whole app</li><li class="y">Shows where your time-categories cluster</li></ul>
-        <ul><li class="n">Two same-category projects look alike</li></ul>
+
+      <!-- B -->
+      <div class="card warn">
+        <span class="tag">B · By project · ⚠ breaks palette</span>
+        <h2>Each project a distinct hue</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">Client site</span>
+            <div class="track">
+              <div class="seg pr1" style="left: 4%; width: 46%"></div>
+              <div class="seg pr1" style="left: 52%; width: 40%"></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Book</span>
+            <div class="track"><div class="seg pr2" style="left: 14%; width: 60%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Marathon</span>
+            <div class="track"><div class="seg pr3" style="left: 30%; width: 64%"></div></div>
+          </div>
+        </div>
+        <div class="body">
+          Each project gets an arbitrary hue — easiest to trace one project across the calendar.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Best single-project tracking</li>
+          </ul>
+          <ul>
+            <li class="n">Breaks “color = category” language</li>
+            <li class="n">Needs an arbitrary per-project palette</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="card">
+        <span class="tag">C · Toggle</span>
+        <h2>Switch category ⇄ project</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">category ▾</span>
+            <div class="track">
+              <div class="seg cat-pro" style="left: 4%; width: 46%"></div>
+              <div class="seg cat-proj" style="left: 52%; width: 40%"></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">⇄</span>
+            <div class="track" style="border-style: dashed"></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">project ▾</span>
+            <div class="track">
+              <div class="seg pr1" style="left: 4%; width: 46%"></div>
+              <div class="seg pr2" style="left: 52%; width: 40%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          User flips coloring. Flexible, but the “project” mode still breaks the palette, plus you
+          must pick a default.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Both readings on demand</li>
+          </ul>
+          <ul>
+            <li class="n">Project mode still breaks palette</li>
+            <li class="n">A control + a default to choose</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="card">
+        <span class="tag">D · Category color + project lanes</span>
+        <h2>Color = category; project = grouping</h2>
+        <div class="gantt">
+          <div class="lane">▸ Client site</div>
+          <div class="grow">
+            <span class="glabel">Design</span>
+            <div class="track"><div class="seg cat-pro" style="left: 4%; width: 46%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Build</span>
+            <div class="track"><div class="seg cat-pro" style="left: 30%; width: 50%"></div></div>
+          </div>
+          <div class="lane">▸ Book</div>
+          <div class="grow">
+            <span class="glabel">Draft</span>
+            <div class="track"><div class="seg cat-proj" style="left: 14%; width: 60%"></div></div>
+          </div>
+        </div>
+        <div class="body">
+          Keeps category color everywhere; distinguishes projects by
+          <b>grouped lanes / labels</b> instead of hue.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Honors palette <i>and</i> separates projects</li>
+            <li class="y">Scales to many projects</li>
+          </ul>
+          <ul>
+            <li class="n">Taller; grouping ≠ instant single-bar trace</li>
+          </ul>
+        </div>
       </div>
     </div>
 
-    <!-- B -->
-    <div class="card warn">
-      <span class="tag">B · By project · ⚠ breaks palette</span>
-      <h2>Each project a distinct hue</h2>
-      <div class="gantt">
-        <div class="grow"><span class="glabel">Client site</span><div class="track"><div class="seg pr1" style="left:4%;width:46%"></div><div class="seg pr1" style="left:52%;width:40%"></div></div></div>
-        <div class="grow"><span class="glabel">Book</span><div class="track"><div class="seg pr2" style="left:14%;width:60%"></div></div></div>
-        <div class="grow"><span class="glabel">Marathon</span><div class="track"><div class="seg pr3" style="left:30%;width:64%"></div></div></div>
-      </div>
-      <div class="body">Each project gets an arbitrary hue — easiest to trace one project across the calendar.</div>
-      <div class="pros">
-        <ul><li class="y">Best single-project tracking</li></ul>
-        <ul><li class="n">Breaks “color = category” language</li><li class="n">Needs an arbitrary per-project palette</li></ul>
-      </div>
+    <div class="legend">
+      <span><i style="background: var(--c-pro)"></i>Professional</span>
+      <span><i style="background: var(--c-proj)"></i>Personal Projects</span>
+      <span><i style="background: var(--c-body)"></i>Body &amp; Mind</span>
+      <span style="margin-left: 10px">project hues (B/C only):</span>
+      <span><i style="background: var(--p1)"></i>P1</span
+      ><span><i style="background: var(--p2)"></i>P2</span
+      ><span><i style="background: var(--p3)"></i>P3</span>
     </div>
-
-    <!-- C -->
-    <div class="card">
-      <span class="tag">C · Toggle</span>
-      <h2>Switch category ⇄ project</h2>
-      <div class="gantt">
-        <div class="grow"><span class="glabel">category ▾</span><div class="track"><div class="seg cat-pro" style="left:4%;width:46%"></div><div class="seg cat-proj" style="left:52%;width:40%"></div></div></div>
-        <div class="grow"><span class="glabel">⇄</span><div class="track" style="border-style:dashed"></div></div>
-        <div class="grow"><span class="glabel">project ▾</span><div class="track"><div class="seg pr1" style="left:4%;width:46%"></div><div class="seg pr2" style="left:52%;width:40%"></div></div></div>
-      </div>
-      <div class="body">User flips coloring. Flexible, but the “project” mode still breaks the palette, plus you must pick a default.</div>
-      <div class="pros">
-        <ul><li class="y">Both readings on demand</li></ul>
-        <ul><li class="n">Project mode still breaks palette</li><li class="n">A control + a default to choose</li></ul>
-      </div>
-    </div>
-
-    <!-- D -->
-    <div class="card">
-      <span class="tag">D · Category color + project lanes</span>
-      <h2>Color = category; project = grouping</h2>
-      <div class="gantt">
-        <div class="lane">▸ Client site</div>
-        <div class="grow"><span class="glabel">Design</span><div class="track"><div class="seg cat-pro" style="left:4%;width:46%"></div></div></div>
-        <div class="grow"><span class="glabel">Build</span><div class="track"><div class="seg cat-pro" style="left:30%;width:50%"></div></div></div>
-        <div class="lane">▸ Book</div>
-        <div class="grow"><span class="glabel">Draft</span><div class="track"><div class="seg cat-proj" style="left:14%;width:60%"></div></div></div>
-      </div>
-      <div class="body">Keeps category color everywhere; distinguishes projects by <b>grouped lanes / labels</b> instead of hue.</div>
-      <div class="pros">
-        <ul><li class="y">Honors palette <i>and</i> separates projects</li><li class="y">Scales to many projects</li></ul>
-        <ul><li class="n">Taller; grouping ≠ instant single-bar trace</li></ul>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="legend">
-    <span><i style="background:var(--c-pro)"></i>Professional</span>
-    <span><i style="background:var(--c-proj)"></i>Personal Projects</span>
-    <span><i style="background:var(--c-body)"></i>Body &amp; Mind</span>
-    <span style="margin-left:10px">project hues (B/C only):</span>
-    <span><i style="background:var(--p1)"></i>P1</span><span><i style="background:var(--p2)"></i>P2</span><span><i style="background:var(--p3)"></i>P3</span>
-  </div>
-</body>
+  </body>
 </html>
