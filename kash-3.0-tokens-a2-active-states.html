@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tokens · A2 — Active-state grays</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b7280;
+        --faint: #9aa0ad;
+        --surface: #ffffff;
+        --hair: #ececec;
+        --hair2: #f4f4f4;
+        --bg: #fafafa;
+        --c-pro: #009ddc;
+        --c-personal: #973d97;
+        --c-adult: #f6821f;
+        --c-body: #61bb47;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          13px/1.45 "Figtree",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+        max-width: 920px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        max-width: 1080px;
+      }
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      .hex {
+        font-size: 10px;
+        color: var(--faint);
+        margin: 2px 0 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .demo {
+        margin: 12px 0 0;
+      }
+      .dl {
+        font-size: 9px;
+        color: var(--faint);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin: 11px 0 4px;
+      }
+      /* nav rail */
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        width: 118px;
+      }
+      .ni {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 8px;
+        border-radius: 9999px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .ni .ic {
+        width: 13px;
+        height: 13px;
+        border-radius: 3px;
+        background: currentColor;
+        opacity: 0.5;
+      }
+      .ni.on {
+        color: var(--ink);
+        font-weight: 500;
+      }
+      /* segmented */
+      .seg {
+        display: inline-flex;
+        border-radius: 9px;
+        padding: 2px;
+        gap: 2px;
+      }
+      .si {
+        padding: 3px 11px;
+        border-radius: 7px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .si.on {
+        color: var(--ink);
+        font-weight: 500;
+        background: #fff;
+      }
+      /* week */
+      .wk {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--hair);
+      }
+      .wd {
+        padding: 5px 0;
+        text-align: center;
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .wd .num {
+        display: block;
+        font-size: 11px;
+        color: var(--ink);
+        margin-top: 2px;
+      }
+      .wd.today {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .body {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 12px 0 0;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .note {
+        max-width: 1080px;
+        margin: 20px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+        background: #fff;
+        border: 1px solid var(--hair);
+        border-radius: 10px;
+        padding: 11px 14px;
+      }
+      .note b {
+        color: var(--ink);
+      }
+
+      /* intensity themes */
+      .whisper {
+        --g: #f3f4f6;
+        --gtrack: #f3f4f6;
+        --gweek: #f3f4f6;
+        --pillborder: #e9eaee;
+      }
+      .soft {
+        --g: #eceef1;
+        --gtrack: #e9ebef;
+        --gweek: #eceef1;
+        --pillborder: #e2e4e8;
+      }
+      .medium {
+        --g: #e2e5ea;
+        --gtrack: #dfe2e7;
+        --gweek: #e2e5ea;
+        --pillborder: #d4d7dd;
+      }
+      .twostep {
+        --g: #eceef1;
+        --gtrack: #e9ebef;
+        --gweek: #f5f6f8;
+        --pillborder: #e2e4e8;
+      }
+      .ni.on {
+        background: var(--g);
+      }
+      .seg {
+        background: var(--gtrack);
+      }
+      .si.on {
+        box-shadow: 0 1px 2px rgba(20, 28, 40, 0.1);
+        border: 1px solid var(--pillborder);
+      }
+      .wk .wd {
+        background: var(--gweek);
+      }
+      .wk .wd.today {
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tokens · A2 — Active-state grays (nav pill · segmented · week today)</h1>
+    <p class="sub">
+      Same three locked states rendered at four gray intensities. The white "today" column and white
+      segment pill read as raised <i>against</i> the gray.
+    </p>
+
+    <div class="grid">
+      <!-- whisper -->
+      <div class="card whisper">
+        <span class="tag">A · Whisper</span>
+        <div class="hex">pill/week #f3f4f6</div>
+        <div class="dl">nav rail</div>
+        <div class="nav">
+          <div class="ni on"><span class="ic"></span>Today</div>
+          <div class="ni"><span class="ic"></span>Plan</div>
+          <div class="ni"><span class="ic"></span>Projects</div>
+        </div>
+        <div class="dl">segmented</div>
+        <div class="seg">
+          <span class="si on">List</span><span class="si">Calendar</span
+          ><span class="si">Review</span>
+        </div>
+        <div class="dl">week</div>
+        <div class="wk">
+          <div class="wd">M<span class="num">9</span></div>
+          <div class="wd">T<span class="num">10</span></div>
+          <div class="wd today">W<span class="num">11</span></div>
+          <div class="wd">T<span class="num">12</span></div>
+          <div class="wd">F<span class="num">13</span></div>
+          <div class="wd">S<span class="num">14</span></div>
+          <div class="wd">S<span class="num">15</span></div>
+        </div>
+        <div class="body">Barely-there. Calmest, but active state is easy to miss.</div>
+      </div>
+
+      <!-- soft recommended -->
+      <div class="card soft rec">
+        <span class="tag">B · Soft · recommended</span>
+        <div class="hex">pill #eceef1 · track #e9ebef</div>
+        <div class="dl">nav rail</div>
+        <div class="nav">
+          <div class="ni on"><span class="ic"></span>Today</div>
+          <div class="ni"><span class="ic"></span>Plan</div>
+          <div class="ni"><span class="ic"></span>Projects</div>
+        </div>
+        <div class="dl">segmented</div>
+        <div class="seg">
+          <span class="si on">List</span><span class="si">Calendar</span
+          ><span class="si">Review</span>
+        </div>
+        <div class="dl">week</div>
+        <div class="wk">
+          <div class="wd">M<span class="num">9</span></div>
+          <div class="wd">T<span class="num">10</span></div>
+          <div class="wd today">W<span class="num">11</span></div>
+          <div class="wd">T<span class="num">12</span></div>
+          <div class="wd">F<span class="num">13</span></div>
+          <div class="wd">S<span class="num">14</span></div>
+          <div class="wd">S<span class="num">15</span></div>
+        </div>
+        <div class="body">
+          Clear but gentle — matches "soft gray pill." Active state legible, stays calm.
+        </div>
+      </div>
+
+      <!-- medium -->
+      <div class="card medium">
+        <span class="tag">C · Medium</span>
+        <div class="hex">pill #e2e5ea · track #dfe2e7</div>
+        <div class="dl">nav rail</div>
+        <div class="nav">
+          <div class="ni on"><span class="ic"></span>Today</div>
+          <div class="ni"><span class="ic"></span>Plan</div>
+          <div class="ni"><span class="ic"></span>Projects</div>
+        </div>
+        <div class="dl">segmented</div>
+        <div class="seg">
+          <span class="si on">List</span><span class="si">Calendar</span
+          ><span class="si">Review</span>
+        </div>
+        <div class="dl">week</div>
+        <div class="wk">
+          <div class="wd">M<span class="num">9</span></div>
+          <div class="wd">T<span class="num">10</span></div>
+          <div class="wd today">W<span class="num">11</span></div>
+          <div class="wd">T<span class="num">12</span></div>
+          <div class="wd">F<span class="num">13</span></div>
+          <div class="wd">S<span class="num">14</span></div>
+          <div class="wd">S<span class="num">15</span></div>
+        </div>
+        <div class="body">
+          Strongest, most obvious — but heavier; the gray competes with content.
+        </div>
+      </div>
+
+      <!-- twostep -->
+      <div class="card twostep">
+        <span class="tag">D · Two-step</span>
+        <div class="hex">pills #eceef1 · week #f5f6f8</div>
+        <div class="dl">nav rail</div>
+        <div class="nav">
+          <div class="ni on"><span class="ic"></span>Today</div>
+          <div class="ni"><span class="ic"></span>Plan</div>
+          <div class="ni"><span class="ic"></span>Projects</div>
+        </div>
+        <div class="dl">segmented</div>
+        <div class="seg">
+          <span class="si on">List</span><span class="si">Calendar</span
+          ><span class="si">Review</span>
+        </div>
+        <div class="dl">week</div>
+        <div class="wk">
+          <div class="wd">M<span class="num">9</span></div>
+          <div class="wd">T<span class="num">10</span></div>
+          <div class="wd today">W<span class="num">11</span></div>
+          <div class="wd">T<span class="num">12</span></div>
+          <div class="wd">F<span class="num">13</span></div>
+          <div class="wd">S<span class="num">14</span></div>
+          <div class="wd">S<span class="num">15</span></div>
+        </div>
+        <div class="body">
+          Soft gray for small pills, one step <b>lighter</b> for the large week area so it doesn't
+          feel heavy.
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Inset white pill treatment:</b> the white segment pill and white today-column read as
+      "raised" against the gray track via a 1px border + a whisper shadow (<code
+        >0 1px 2px rgba(20,28,40,.10)</code
+      >). This is the one sanctioned small shadow beyond <code>--shadow-overlay</code> — or we keep
+      it border-only to stay strictly flat. Recommend the whisper shadow for the segmented pill
+      (it's what sells "inset"), border-only for the week column. Your call on whether to allow it.
+    </div>
+  </body>
+</html>

@@ -192,6 +192,9 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       projectId: resolveProjectId(line),
       priority: line.parse.priority,
       category: line.parse.category ?? undefined,
+      rrule: line.parse.rrule ?? undefined,
+      recurrenceStartDate:
+        line.parse.rrule && line.parse.scheduledDate ? line.parse.scheduledDate : undefined,
     });
     persistProjectSlug(line.parse.projectSlug);
   };

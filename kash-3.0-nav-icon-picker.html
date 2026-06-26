@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nav icon picker — per destination</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --line: #ededed;
+        --gray: #f1f1f2;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        background: #f6f6f7;
+        color: var(--ink);
+        padding: 22px;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 18px;
+        max-width: 880px;
+      }
+      .destrow {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        max-width: 760px;
+      }
+      .dest {
+        width: 90px;
+        flex: none;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .tiles {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .tile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 12px;
+        min-width: 70px;
+      }
+      .tile .nm {
+        font-size: 10px;
+        color: var(--ink-faint);
+      }
+      .tile .opt {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--ink-muted);
+      }
+      svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Build your icon set — pick one per destination</h1>
+    <div class="sub">
+      Each row shows the candidates (labeled A/B/C, plus an extra where useful). Tell me the letter
+      for each destination, e.g. “Today A · Week B · Projects A · Plan D · Abyss C · Care B ·
+      Settings gear”.
+    </div>
+
+    <!-- TODAY -->
+    <div class="destrow">
+      <div class="dest">Today</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 18h18" />
+            <path d="M7 18a5 5 0 0 1 10 0" />
+            <path d="M12 3v4" />
+            <path d="M5.5 9.5 7 11" />
+            <path d="M18.5 9.5 17 11" /></svg
+          ><span class="opt">A</span><span class="nm">sunrise</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <circle cx="12" cy="12" r="2.3" fill="currentColor" stroke="none" /></svg
+          ><span class="opt">B</span><span class="nm">circle-dot</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"
+            /></svg
+          ><span class="opt">C</span><span class="nm">sun</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4.5" width="18" height="16" rx="2" />
+            <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+            <path d="m8.5 14.5 2 2 4-4" /></svg
+          ><span class="opt">D</span><span class="nm">cal-check</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK -->
+    <div class="destrow">
+      <div class="dest">Week</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4.5" width="18" height="16" rx="2" />
+            <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+            <path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" /></svg
+          ><span class="opt">A</span><span class="nm">cal-days</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" />
+            <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
+            <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
+            <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" /></svg
+          ><span class="opt">B</span><span class="nm">grid</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4.5" width="18" height="16" rx="2" />
+            <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+            <path d="M7 14h6" /></svg
+          ><span class="opt">C</span><span class="nm">cal-range</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3.5" width="18" height="17" rx="2" />
+            <path d="M9 3.5v17M15 3.5v17" /></svg
+          ><span class="opt">D</span><span class="nm">columns</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="destrow">
+      <div class="dest">Projects</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M3 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+            /></svg
+          ><span class="opt">A</span><span class="nm">folder</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2.5 3 7l9 4.5L21 7z" />
+            <path d="M3 12l9 4.5L21 12" />
+            <path d="M3 17l9 4.5L21 17" /></svg
+          ><span class="opt">B</span><span class="nm">layers</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="6" cy="5" r="2" />
+            <circle cx="6" cy="19" r="2" />
+            <circle cx="18" cy="8" r="2" />
+            <path d="M6 7v10" />
+            <path d="M18 10a6 6 0 0 1-6 6H8" /></svg
+          ><span class="opt">C</span><span class="nm">git-branch</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3.5" width="18" height="17" rx="2" />
+            <path d="M8 7v7M13 7v10M18 7v5" /></svg
+          ><span class="opt">D</span><span class="nm">kanban</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="destrow">
+      <div class="dest">Plan</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 13l9-3 2.5 4.5-9 3z" />
+            <path d="M13 10l2-3.4 3 1.7-1.8 3.2" />
+            <path d="M6.6 16 4 21" />
+            <path d="M11 14.7 9 20.2" /></svg
+          ><span class="opt">A</span><span class="nm">telescope</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M15.6 8.4l-2.2 5.2-5.2 2.2 2.2-5.2z" /></svg
+          ><span class="opt">B</span><span class="nm">compass</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z" />
+            <path d="M9 4v14M15 6v14" /></svg
+          ><span class="opt">C</span><span class="nm">map</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <circle cx="12" cy="12" r="5" />
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /></svg
+          ><span class="opt">D</span><span class="nm">target</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABYSS -->
+    <div class="destrow">
+      <div class="dest">Abyss</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3l1.6 4L18 8.6l-4.4 1.6L12 14l-1.6-3.8L6 8.6 10.4 7z" />
+            <path d="M18.4 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></svg
+          ><span class="opt">A</span><span class="nm">sparkles</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 13.5A7.5 7.5 0 1 1 9.6 5 6 6 0 0 0 18 13.5z" />
+            <path d="M18.6 4l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6L16.4 6.2l1.6-.6z" /></svg
+          ><span class="opt">B</span><span class="nm">moon-star</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 8c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0" />
+            <path d="M2 13c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0" />
+            <path d="M2 18c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0" /></svg
+          ><span class="opt">C</span><span class="nm">waves</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+            <ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(-22 12 12)" />
+            <circle cx="20" cy="8.5" r="1.5" fill="currentColor" stroke="none" /></svg
+          ><span class="opt">D</span><span class="nm">orbit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARE -->
+    <div class="destrow">
+      <div class="dest">Care</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 20.3 4.2 12.5a4.8 4.8 0 0 1 6.8-6.8l1 1 1-1a4.8 4.8 0 0 1 6.8 6.8z" /></svg
+          ><span class="opt">A</span><span class="nm">heart</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="2.7" />
+            <circle cx="12" cy="6.1" r="2.5" />
+            <circle cx="12" cy="17.9" r="2.5" />
+            <circle cx="6.1" cy="12" r="2.5" />
+            <circle cx="17.9" cy="12" r="2.5" /></svg
+          ><span class="opt">B</span><span class="nm">flower</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 21v-8" />
+            <path d="M12 13c0-3.3 2.2-5.5 5.5-5.5C17.5 10.8 15.3 13 12 13z" />
+            <path d="M12 15c0-2.5-2-4-5-4 0 2.5 2 4 5 4z" /></svg
+          ><span class="opt">C</span><span class="nm">sprout</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 20C4 11 11 4 20 4c0 9-7 16-16 16z" />
+            <path d="M4 20C8 16 12 12 16 9" /></svg
+          ><span class="opt">D</span><span class="nm">leaf</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="destrow">
+      <div class="dest">Settings</div>
+      <div class="tiles">
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 7h8" />
+            <path d="M16 7h4" />
+            <circle cx="14" cy="7" r="2" />
+            <path d="M4 12h2" />
+            <path d="M10 12h10" />
+            <circle cx="8" cy="12" r="2" />
+            <path d="M4 17h7" />
+            <path d="M15 17h5" />
+            <circle cx="13" cy="17" r="2" /></svg
+          ><span class="opt">A</span><span class="nm">sliders</span>
+        </div>
+        <div class="tile">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3.2" />
+            <path
+              d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19"
+            /></svg
+          ><span class="opt">B</span><span class="nm">gear</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
+import TaskRepeatSection from "@/components/kash/projects/TaskRepeatSection";
 import { PROJECT_CATEGORIES, type ProjectCategory, categoryColor } from "@/lib/projects/categories";
 import { defaultCategoryLabel } from "@/lib/projects/category-settings";
 import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
@@ -132,6 +133,8 @@ export default function TaskDetail({
           })}
         </div>
       </div>
+
+      <TaskRepeatSection taskId={task.id} disabled={pending} />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="task-detail-category" className="text-sm font-medium text-kash-ink">

@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Week §7 · Q3 — Protected block recurrence</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+        --c-rel: #ff2d55;
+        --c-body: #34c759;
+        --c-proj: #af52de;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 22px;
+        max-width: 900px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 940px;
+      }
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      /* create control mock */
+      .ctl {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 11px 0 4px;
+        font-size: 10.5px;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+      .chip {
+        border: 1px solid var(--hair);
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 10px;
+        color: var(--ink);
+        background: #fff;
+      }
+      .chip.on {
+        background: var(--ink);
+        color: #fff;
+        border-color: var(--ink);
+      }
+      .tog {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .sw {
+        width: 24px;
+        height: 14px;
+        border-radius: 8px;
+        background: var(--gray-pill);
+        position: relative;
+      }
+      .sw.on {
+        background: var(--ink);
+      }
+      .sw::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .sw.on::after {
+        left: 12px;
+      }
+      /* filmstrip */
+      .strip {
+        display: flex;
+        gap: 7px;
+        margin: 10px 0 2px;
+      }
+      .wk {
+        flex: 1;
+        border: 1px solid var(--hair2);
+        border-radius: 8px;
+        padding: 5px;
+        background: var(--bg);
+      }
+      .wl {
+        font-size: 8.5px;
+        color: var(--faint);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .mini {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+      }
+      .d {
+        height: 26px;
+        border-radius: 3px;
+        background: #fff;
+        border: 1px solid var(--hair2);
+        position: relative;
+      }
+      .pb {
+        border: 1px dashed var(--c-rel);
+        background: rgba(255, 45, 85, 0.07);
+      }
+      .pb.body {
+        border-color: var(--c-body);
+        background: rgba(52, 199, 89, 0.08);
+      }
+      .pb.solid {
+        border-style: solid;
+      }
+      .pb.skip {
+        opacity: 0.35;
+      }
+      .pb.confirm {
+        border-style: dotted;
+      }
+      .q {
+        position: absolute;
+        top: 1px;
+        right: 2px;
+        font-size: 7px;
+        color: var(--faint);
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 9px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 8px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+      .legend {
+        font-size: 11px;
+        color: var(--muted);
+        max-width: 940px;
+        margin: 14px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Week §7 · Q3 — Do protected blocks recur, or get set fresh each week?</h1>
+    <p class="sub">
+      Filmstrip = 3 consecutive weeks. Dashed cells = protected blocks (red = Relationships, green =
+      Body &amp; Mind). Each model shows how a block you set in Week 1 behaves in Weeks 2–3.
+    </p>
+
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <span class="tag">A · Fresh each week</span>
+        <h2>No recurrence — set during weekly planning</h2>
+        <div class="ctl">New block: <span class="chip on">one-off</span></div>
+        <div class="strip">
+          <div class="wk">
+            <div class="wl">Wk 1</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 2</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 3</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">Blocks vanish next week unless you re-add them.</div>
+        <div class="pros">
+          <ul>
+            <li class="y">Always intentional, never stale</li>
+            <li class="y">Simplest model</li>
+          </ul>
+          <ul>
+            <li class="n">Re-entering stable routines weekly = friction</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="card">
+        <span class="tag">B · Recurring</span>
+        <h2>Set once, repeats weekly</h2>
+        <div class="ctl">
+          New block: <span class="chip on">repeats weekly</span>
+          <span class="tog"><span class="sw on"></span>recurs</span>
+        </div>
+        <div class="strip">
+          <div class="wk">
+            <div class="wl">Wk 1</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb solid"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body solid"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 2</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb solid"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body solid"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 3</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb solid"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body skip"></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          Auto-appears every week (Wk 3 shows one skipped). Needs easy per-week skip/edit.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Zero re-entry for routines</li>
+          </ul>
+          <ul>
+            <li class="n">Can become invisible wallpaper</li>
+            <li class="n">Stale blocks linger if life changes</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="card">
+        <span class="tag">C · Both (per-block toggle)</span>
+        <h2>Mark each block one-off or recurring</h2>
+        <div class="ctl">
+          New block: <span class="chip">one-off</span> <span class="chip on">recurring</span>
+          <span class="tog"><span class="sw on"></span></span>
+        </div>
+        <div class="strip">
+          <div class="wk">
+            <div class="wl">Wk 1</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body solid"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 2</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body solid"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 3</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body solid"></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          Sunday workout (solid) recurs; Thu dinner (dashed, one-off) doesn’t. Matches how routines
+          &amp; ad-hoc intentions actually differ.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Most flexible; fits real life</li>
+            <li class="y">Reuses Phase-4 recurrence engine</li>
+          </ul>
+          <ul>
+            <li class="n">A choice on every block; more UI</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D recommended -->
+      <div class="card rec">
+        <span class="tag">D · Recurring template + weekly confirm</span>
+        <h2>A “default week” you confirm each planning</h2>
+        <div class="ctl">
+          Default week: <span class="chip on">Thu · Rel</span>
+          <span class="chip on">Sun · Body</span> → <span class="chip">confirm in planning</span>
+        </div>
+        <div class="strip">
+          <div class="wk">
+            <div class="wl">Wk 1</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb solid"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body solid"></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 2 · proposed</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb confirm"><span class="q">?</span></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body confirm"><span class="q">?</span></div>
+            </div>
+          </div>
+          <div class="wk">
+            <div class="wl">Wk 3 · proposed</div>
+            <div class="mini">
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb confirm"><span class="q">?</span></div>
+              <div class="d"></div>
+              <div class="d"></div>
+              <div class="d pb body confirm"><span class="q">?</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          Your routine is <b>proposed</b> each week (dotted = awaiting confirm) during the weekly
+          planning ritual — you accept or adjust. Routine without autopilot.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">No re-entry, yet stays intentional</li>
+            <li class="y">Ties protection to the planning ritual; never wallpaper</li>
+          </ul>
+          <ul>
+            <li class="n">Adds a confirm step; needs the weekly ritual</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <p class="legend">
+      Note: any recurring option (B/C/D) reuses the §14 Phase-4 recurrence engine — so this also
+      signals whether protected-block recurrence rides on that build.
+    </p>
+  </body>
+</html>

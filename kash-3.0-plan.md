@@ -91,7 +91,7 @@ The five categories (names editable; concepts fixed). **A `project_category` Pos
 **Remaining open questions:**
 
 - Confirm final default labels, or rename now (esp. "Adulting", "Body & Mind").
-- Balance weighting: pure count, or the Top-3 weighting noted above (leaning: weighting).
+- ✅ **Balance weighting — LOCKED (Jun 25): Top-3 weighting** (Top-3 = large, others = small). Locked via the §6 Today balance-bar decision; Today and Categories share one metric. Upgrades to time-based later without reworking views.
 - Backfill: triage existing loose tasks via a bulk AI pass, or manually?
 
 ---
@@ -142,7 +142,7 @@ So the plan is grounded, here is what is actually built today:
 └────┴──────────────────────────┴──────────────┘
 ```
 
-Navigation lives on the **left rail** only. Claude moves to a **persistent right rail** (matching the original v1 brief's intent). The **bottom dock is retired.** Inbox/triage becomes a **contextual panel** inside planning surfaces, not a global place.
+Navigation lives on the **left rail** only. Claude moves to a **right-side chat rail** that is **collapsed by default** — summoned by a soft-gray "Ask Claude" chip (top-right, `⌘/`) and opening as a **push panel** (no permanent right strip). The **bottom dock is retired.** Inbox/triage becomes a **contextual panel** inside planning surfaces, not a global place.
 
 ### Detail — resolved navigation spec
 
@@ -151,18 +151,18 @@ Navigation lives on the **left rail** only. Claude moves to a **persistent right
 - **Behavior:** slim icon rail that **expands on hover/click to reveal labels** (collapsible labels). Icon + label is the legible default once expanded.
 - **Grouped, all visible** (nothing hidden behind overflow — keeps Care & Abyss prominent, which is on-brand):
 
-  | Group              | Destinations | Route (current → proposed)           |
-  | ------------------ | ------------ | ------------------------------------ |
-  | **Do now**         | Today        | `/plan` (Today's daily loop)         |
-  |                    | Week         | `/this-week`                         |
-  |                    | Projects     | `/projects`                          |
-  | _(divider)_        |              |                                      |
-  | **Reflect & plan** | Plan         | `/planning` _(new — see route note)_ |
-  |                    | Abyss        | `/abyss` _(new)_                     |
-  |                    | Care         | `/care` _(new)_                      |
-  | **Pinned bottom**  | Settings     | `/settings`                          |
+  | Group              | Destinations | Route (current → proposed)      |
+  | ------------------ | ------------ | ------------------------------- |
+  | **Do now**         | Today        | `/today` _(moved from `/plan`)_ |
+  |                    | Week         | `/this-week`                    |
+  |                    | Projects     | `/projects`                     |
+  | _(divider)_        |              |                                 |
+  | **Reflect & plan** | Plan         | `/plan` _(new)_                 |
+  |                    | Abyss        | `/abyss` _(new)_                |
+  |                    | Care         | `/care` _(new)_                 |
+  | **Pinned bottom**  | Settings     | `/settings`                     |
 
-- **Route note:** "Today" currently owns `/plan`, which collides with the long-horizon "Plan" name. Cheapest fix: keep Today at `/plan`, put Planning Mode at `/planning`. (Alternative: rename Today → `/today` and give Plan the cleaner `/plan`.) Pick one before building.
+- **Route note (resolved Jun 25):** Today moves to **`/today`** and Planning Mode takes the clean **`/plan`**. Add a redirect from legacy `/plan` → `/today` and update internal links.
 
 **2. Right chat rail (Claude)**
 
@@ -203,13 +203,17 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 6. Build one **segmented in-page switcher** component; apply to Today, Plan, Care.
 7. Resolve the **`/plan` route collision** (Today vs Planning Mode).
 
-**Remaining open questions:**
+**Resolved (Jun 25) — all nav open questions closed:**
 
-- Route naming: Today keeps `/plan` (Plan → `/planning`), or Today → `/today` (Plan → `/plan`)?
-- Right chat rail default: open or collapsed? remembered per session?
-- Chat-toggle keybinding: keep current `⌃J`, or align to the `⌘`-family?
-- Mobile / Tauri desktop parity: identical rail, or collapse to a bottom tab bar on narrow widths?
-- Care's final sub-view list.
+- **Bingo placement:** a **sub-view of Plan** (5th tab in the horizon switcher: Week·Month·Quarter·Year·Bingo). _Not_ a separate rail item. Rail = 6 destinations + Settings.
+- **Route naming:** **Today → `/today`, Plan → `/plan`** (the cleaner scheme). Needs a redirect from the legacy `/plan`→Today + internal-link updates.
+- **Right chat rail:** **collapsed by default.** Opened from a **soft-gray "Ask Claude" chip** at the top-right of each page (no persistent right strip). Opens as a **push panel** (content shrinks; nothing covered). Keybinding **`⌘/`** (joins ⌘D/⌘K; avoids the ⌘J "downloads" collision in the web build).
+- **Mobile / Tauri parity:** desktop keeps the rail as designed; on narrow/phone widths it collapses to a **hamburger drawer** (full grouped list slides in). Bottom-tab-bar and collapsed-icon-rail rejected.
+- **Rail icons (Lucide line set):** Today = **sun** · Week = **calendar-days** · Projects = **folder** · Plan = **compass** · Abyss = **sparkles** · Care = **sprout** · Settings = **sliders**. (Replaces the old emoji glyphs.)
+- **Settings layout:** **top tab bar** (not a left section-nav); active tab = inset-white pill.
+- **Care's sub-views:** resolved in the redesign — Garden · Tasks · Breathing · Reflection · Stats · Travel.
+
+Active/selected-state treatments (from the B&W redesign): nav-rail active = **soft gray pill** · segmented controls & Settings tabs = **inset white pill** · Week "today" = gray week + white today column. See `kash-3.0-visual-redesign.md`.
 
 ---
 
@@ -217,7 +221,7 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **Purpose:** Fix "not the best styling" and "task visualization not good." Establish a calm, legible, consistent visual language — and make category balance _visible at a glance_.
 
-**Current state:** `Partial` — there's a Tailwind config with `kash-*` tokens, a `glass-panel` aesthetic, and Geist fonts. But no documented design system, and task/visualization quality is inconsistent across views.
+**Current state:** `Direction resolved, rollout pending` — the legacy `glass-panel` aesthetic is **retired.** The visual language is now a documented **black-and-white** system (Jun 24–25): pure-white surfaces, near-black ink `#16181d`, hairline borders, **black accent + outline buttons**, color reserved for category meaning (3px left stripe). Canonical specs: `kash-3.0-design-tokens.md` (tokens), `kash-3.0-visual-redesign.md` (per-page wireframes + active-states), `design-brief.md` / `design-system-starter.md` (Claude Design kit). Tokens still need the gray→B&W swap in code.
 
 **Vision:**
 
@@ -232,17 +236,19 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **Motion language** — gentle, grounding (ties into breathing/self-care tone), never frantic.
 - **Accessibility pass** — contrast, focus rings, keyboard reachability (run the `accessibility-review` skill before handoff).
 
-**Open questions:**
+**Resolved (Jun 24–25):**
 
-- Keep the glassmorphism direction, or move to a flatter/calmer aesthetic?
-- Light/dark/both? Any time-of-day adaptive theming (calmer at night)?
-- Reference apps for the _feel_ you want (Finch for warmth; what for structure)?
+- **Aesthetic:** flat **black-and-white** (glassmorphism rejected). Pure-white canvas, near-black ink, hairline borders, no blur/shadow (one documented shadow exception: the inset-white segmented pill).
+- **Theming:** **light-first** for v1; tokens structured so dark drops in later. Deliberate exceptions: the **Abyss is dark/immersive**, the **Care garden is lush/illustrative**.
+- **Active/selected states:** nav-rail = soft gray pill · segmented controls & Settings tabs = inset white pill · Week "today" = gray week + white today column.
+- **Reference feel:** **Pinterest** (clean B&W structure) + **Finch** (warmth).
+- _Still open (minor, finish anytime):_ checkbox-checked, Top-3 star, link styling, focus-ring treatments; the final motion/animation pass.
 
 ---
 
 ## 6. Today (Daily Loop)
 
-> **Status: RESOLVED (Jun 2026).** Core UX decided via the Today design session (day timeline, Top-3 deadline, DND, self-care). Spec below.
+> **Status: RESOLVED (Jun 2026; open questions closed Jun 25, 2026).** Core UX decided via the Today design session (day timeline, Top-3 deadline, DND, self-care). Spec below.
 
 **Purpose:** The core "finish one visible thing" engine. What needs doing today, surfaced one decision at a time.
 
@@ -265,15 +271,16 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 **1. Day Calendar view — "living record now, opt-in auto-draft later":**
 
 - The timeline is **not** pre-planned. It fills in as the day happens: external calendar events render as blocks; starting a focus session (via Decide ⌘D or a task's focus action) **drops a 45-min block onto the timeline at the current time** and starts the timer.
-- Completed blocks stay visible with their actual duration ("✓ 38m") — the day becomes a colored record of what you did.
+- Completed blocks stay visible with their actual duration ("✓ 38m") — the day becomes a colored record of what you did. Tasks completed **without** a timer appear as a thin **completion marker** (a category-colored tick at completion time) — no fabricated duration, so the future time-based balance stays clean. _(Resolved Jun 25.)_
 - **Category color** on each block's left edge; a day **balance bar** at the bottom shows category load at a glance.
+- **Default window & scroll _(Resolved Jun 25)_:** **adaptive fit** — the visible window auto-sizes to the day's actual content (earliest event → latest block, + padding) and **auto-scrolls to "now"** on open (with a "jump to now" control). Before any blocks exist (empty / early morning) it shows a **rolling next-6h forward window** from now; the **full day stays scrollable** both directions — the 6h is the parked position, not a clamp. _Rejected:_ fixed 7am–9pm / 6am–midnight frames (waste space, clip odd hours) and now-anchored compression (loses whole-day overview).
 - Self-care prompts (walks/breathing) appear as gentle dashed rows in the gaps between blocks (see §4 below).
 - **Roadmap (later, opt-in):** a confirm-first "draft my day" button that auto-lays-out blocks (Planner mode). Deferred until real time-tracking data exists to make placement accurate — Option A _generates the fuel_ auto-scheduling needs. Build A first.
 - _Rejected:_ manual time-blocking (re-introduces morning-arranging friction RDM removes) and day-one auto-scheduling (inaccurate without time data, surprises break trust).
 
 **2. Top-3 discipline — soft escalating nudges:**
 
-- Target: Top 3 done by 5pm. Each Top-3 auto-gets a 45-min focus block; spaced with simpler tasks between them.
+- Target: Top 3 done by the **Top-3 deadline**, which derives from a single configurable **wind-down time** (default 6pm) as wind-down − 1h — so 5pm by default. _(Resolved Jun 25: one wind-down anchor drives both the Top-3 deadline and the EoD nudge; calmest UI, always coherent.)_ Each Top-3 auto-gets a 45-min focus block; spaced with simpler tasks between them.
 - Enforcement is **soft and escalating**, never blocking: afternoon chip → chat note → Focus-coach mention as 5pm nears. Urgency without guilt (ADHD-friendly, self-compassion preserved).
 - Completed Top-3 stays visible (crossed out) as proof of progress; multi-day slips get flagged by the Reflection guide (§11).
 
@@ -288,26 +295,28 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **5. Missed-task handling & Review:**
 
-- **Review view / EoD:** celebrate wins, replay what got done, reflect (extend the existing EoD review toward Finch-style self-compassion), then triage leftovers.
+- **Review view / EoD:** celebrate wins, replay what got done, reflect (extend the existing EoD review toward Finch-style self-compassion), then triage leftovers. **Trigger _(Resolved Jun 25)_:** Review is **always one tap away** in the view switcher; at the **wind-down time** (default 6pm) a **gentle, dismissible nudge chip** appears — it never auto-opens or seizes the screen (matches the soft, escalating, never-blocking ethos). Smart/adaptive timing for the nudge (fire when the day actually winds down) can layer on later.
 - Incomplete tasks → reschedule later in the week or drop into the Abyss (§10). No silent auto-rollover; morning triage (§4 contextual inbox) is the catch-all.
 
-**6. Category-aware Today:** the balance bar warns (gently) if the whole day is one category — the first place "balance is the product" becomes visible.
+**6. Category-aware Today:** the day **balance bar** warns (gently) if the whole day is one category — the first place "balance is the product" becomes visible. _(Resolved Jun 25)_ It counts the **whole planned day** (all of today's tasks, not just completed) so the lopsided-day warning can fire in the morning while you can still rebalance. Load is **Top-3-weighted** (Top-3 = large, others = small), matching §2; the same bar component is built to **swap its input to real focus-minutes** later once time-tracking is trusted (the §2 time-based upgrade).
 
-**Remaining open questions:**
+**Resolved (Jun 25, 2026):**
 
-- Default Calendar window (e.g. 7am–9pm) and whether it auto-scrolls to "now."
-- Does the balance bar weight by Top-3 (large/small) here too, matching §2?
-- EoD Review trigger time — keep 6pm, or make it configurable?
+- **Calendar window:** adaptive fit + auto-scroll to "now"; rolling next-6h forward default on empty/early days; full day always scrollable.
+- **Balance bar:** Top-3-weighted now → time-based later; counts the whole planned day (planned population).
+- **EoD / Top-3 timing:** a single configurable **wind-down time** (default 6pm) drives both — EoD nudge fires at wind-down (soft, dismissible, never auto-opens), Top-3 deadline = wind-down − 1h.
+- **Untimed completions:** shown on the Calendar as thin category-colored completion markers (no fabricated duration).
+- _Deferred to §10/§11 (Care):_ self-care prompt cadence — walk/breathing frequency and walk-vs-breathing selection logic.
 
 ---
 
 ## 7. Week View
 
-> **Status: RESOLVED (Jun 2026).** Protected blocks, balance visualization, and over-commit behavior decided. Reuses Today's patterns (switcher, category colors, contextual inbox).
+> **Status: RESOLVED (Jun 2026; open questions closed Jun 25, 2026).** Protected blocks, balance visualization, and over-commit behavior decided. Reuses Today's patterns (switcher, category colors, contextual inbox).
 
 **Purpose:** Plan and balance the week — what's happening each day, and whether the week is balanced across categories.
 
-**Current state:** `Built` — week canvas, 7-day columns, inbox rail, AI week draft.
+**Current state:** `Built (core + protected blocks)` — week canvas, 7-day columns, inbox rail, AI week draft, protected-block chips (Week + Today all-day). _Left:_ tally-on-demand, over-commit warning, EoW review chip, Settings template editor, timed protected blocks on Today timeline, AI week-draft respecting protected blocks.
 
 **Vision (additions):**
 
@@ -324,33 +333,42 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - Blocking time for a category (e.g. "Thu eve — Relationships") creates a **visible placeholder block on that day** — a promise to yourself you can later fill with a real task.
 - It is **also a soft constraint** the Planner respects when arranging the week (won't pile work over it; treats it as spoken-for).
 - **No fixed clock time required** — "sometime Thursday" is valid; can be made time-specific if you want. _Rejected:_ rigid timed calendar events; invisible constraint-only blocks.
+- **Recurrence _(Resolved Jun 25)_:** a **recurring template + weekly confirm** — you keep a "default week" of protected blocks (`protected_block_templates`) that is **proposed** each weekly-planning session for you to accept or adjust (`proposeFromTemplates` → `confirmProposedForWeek`). Routine without autopilot (never silent wallpaper). _Implementation note:_ this is **separate from** §14 task recurrence (`task_recurrence`); protected blocks have their own template table. _Rejected:_ fresh-every-week (re-entry friction) and silent auto-recurrence (becomes invisible).
+- **On Today _(Resolved Jun 25)_:** a no-clock-time protected block renders on Today's Calendar as an **all-day pinned chip** above the timeline (e.g. "⬚ Relationships · protected"), untethered to an hour — visible all day, never blocking the grid.
+- **Data model _(built Jun 25)_:** `protected_block_templates` (default week: category, `iso_weekday` 0=Mon…6=Sun, optional `start_min`/`end_min`, optional label) + `protected_blocks` (day instances: category, `scheduled_date`, optional clock window, `template_id`, `status` `proposed` | `confirmed`). tRPC: CRUD, `proposeFromTemplates`, `confirmProposedForWeek`. Sync + RLS shipped. Week column chips + Today all-day chips (null `startMin`) live.
 
 **2. Balance visualization — category-colored task borders:**
 
 - Every task in the 7-day grid carries its **category color** as a border/accent; the week's mix is read by scanning the colors. Lightweight (no aggregate bars in the columns).
-- _Note vs Today:_ Today shows an aggregate balance bar; Week conveys mix through colored borders. (Open question: optionally add a small per-column category tally later.)
+- _Note vs Today:_ Today shows an aggregate balance bar; Week conveys mix through colored borders.
+- **Per-column tally _(Resolved Jun 25)_: tally on demand.** Borders stay the clean default; a proportional category tally (the same visual language as Today's balance bar) appears on **hover/tap of a day**. On touch/mobile the trigger is an explicit tap on the day header. _Rejected:_ always-on per-column bars (7 columns = noise) and borders-only (mix stays implicit).
 
 **3. Per-day priorities:** up to **3 priorities per day**, set ahead of time — mirrors the Top-3 mechanic at week scale.
 
 **4. Over-commit — soft warning:**
 
-- A **gentle, non-blocking flag** when a single day exceeds a load threshold (by task count/weight). Catches over-planning early without policing. Threshold tunable.
+- A **gentle, non-blocking flag** when a single day exceeds a load threshold (in the §2 Top-3-weighted units). Catches over-planning early without policing.
+- **Threshold _(Resolved Jun 25)_: learned / adaptive** — the threshold tracks _your typical day_ so the warning means "more than usual **for you**." **Cold-start:** a fixed sane default for the first ~3–4 weeks, then it switches to learned. **Drift guard:** the threshold stays fully learned (no cap), and the **§11 reflection layer names a rising baseline** ("your typical day has grown 30% in 6 weeks — intended?") so chronic overload is caught by reflection, not normalized. _Depends on:_ the §11 reflection layer. _Rejected:_ a permanent fixed/tunable number (arbitrary), a user-set capacity slider (self-assessment is unreliable), and an uncapped pure-learned line with no drift guard (blesses burnout).
+- **Protected blocks count fully toward the load _(Resolved Jun 25)_** — a protected block is spoken-for time, so protecting too much can itself trip the warning (true "how full is my day"). _Chosen over_ reduced-weight / excluded.
 
 **5. AI week arrangement:** extends the existing week-draft to respect **category balance + protected blocks** (Planner mode; high-stakes → confirm-first per §11).
 
-**6. End-of-week review** _(added Jun 16)_: a weekly reflection surfacing **time spent per category**, **time spent per project**, and **% progress toward completion** (per project/phase). Reuses the reflection pattern (daily EoD §6, monthly/quarterly §8, Care rituals §12) at week scale; the Reflection & care AI voice (§11) narrates wins. **Depends on the data spine:** time-per-category needs category (§2) + generalized time-tracking (§14 Phase 2); % progress needs a project-completion metric (completed vs total task weight per project/phase — define in §9).
+**6. End-of-week review** _(added Jun 16)_: a weekly reflection surfacing **time spent per category**, **time spent per project**, and **% progress toward completion** (per project/phase). Reuses the reflection pattern (daily EoD §6, monthly/quarterly §8, Care rituals §12) at week scale; the Reflection & care AI voice (§11) narrates wins. **Depends on the data spine:** time-per-category needs category (§2) + generalized time-tracking (§14 Phase 2); % progress needs a project-completion metric (completed vs total task weight per project/phase — define in §9). **Trigger _(Resolved Jun 25)_:** a **soft, dismissible chip at a configurable "week wind-down" (default Sunday evening)** — always one tap away in the switcher, never auto-opens (mirrors the §6 EoD model at week scale). _Rejected:_ Monday-morning-only and hard auto-open at the week boundary.
 
-**Remaining open questions:**
+**Resolved (Jun 25, 2026):**
 
-- Per-column category tally in addition to colored borders, or borders alone?
-- Over-commit threshold: fixed default, or learned from your typical week?
-- Do protected blocks recur (every week) or get set fresh each week?
+- **Per-column tally:** tally on demand (borders default; proportional tally on hover/tap; explicit tap on mobile).
+- **Over-commit threshold:** learned/adaptive in Top-3-weighted units; fixed default for ~3–4 wks → learned; drift guarded by the §11 reflection layer naming a rising baseline (no hard cap); protected blocks count fully toward the load.
+- **Protected-block recurrence:** recurring template + weekly confirm (a "default week" proposed each planning session); depends on the weekly ritual + §14 Phase-4 recurrence.
+- **Protected block on Today:** no-clock-time blocks render as an all-day pinned chip above the Calendar timeline.
+- **EoW review trigger:** soft chip at a configurable week wind-down (default Sun eve), never auto-opens.
+- **Build-spec flags:** `protected_blocks` data model ✅ built (`data-spine-build-spec.md` §Week protected blocks); over-commit learned model + drift-flag still lean on the §11 reflection layer.
 
 ---
 
 ## 8. Planning Mode (Month / Quarter / Year)
 
-> **Status: RESOLVED (Jun 2026).** Bingo card, cadence, and the intentions→execution "balance pass" decided. Year-visualization form still open (needs a mockup).
+> **Status: RESOLVED (Jun 2026; gap-pass Jun 22; nav revised Jun 25).** Bingo card, cadence, balance pass, breadcrumb zoom, and ghosted-accept are fully specified in `kash-3.0-planning-mode.md`.
 
 **Purpose:** The long-horizon layer the app completely lacks today. Plan by weeks, months, quarters; set annual goals; keep "what I _wanted_ to do" alive alongside "what I _must_ do."
 
@@ -363,7 +381,7 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - **Annual goals as a "bingo card":** a visual grid of yearly goals you map out and adjust through the year, tracking both obligations and desires.
 - **Balance over time:** heatmap of category attention across the year; spot the neglected category early.
 - **AI as planning partner:** helps draft the month/quarter, rolls big goals down into weeks, and revisits/adjusts as reality shifts.
-- **Tie-in to Values (§11):** annual goals reference your Top 5 Values so the year reflects what matters, not just what's urgent.
+- **Tie-in to Values (§13):** annual goals optionally reference a **core value** (3–7 flat set) so the year reflects what matters, not just what's urgent.
 
 ### Detail — resolved Planning Mode
 
@@ -389,19 +407,19 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 **4. Balance over time:** a year **heatmap** of category attention to spot a neglected category early. (Form — see open question.)
 
-**5. AI planning partner:** drafts the month/quarter, rolls big goals down into weeks, revisits/adjusts; references **Top 5 Values** (§13) so the year reflects what matters, not just what's urgent.
+**5. AI planning partner:** drafts the month/quarter, rolls big goals down into weeks, revisits/adjusts; references **core values (§13)** so the year reflects what matters, not just what's urgent.
 
-**Remaining open questions:**
+**Resolved (gap-pass Jun 22):**
 
-- Year-visualization form: vertical months-scroll (expand to weeks) vs a 52-week grid vs quarter cards — resolve with a mockup.
-- Bingo card shape: a true 5×5 grid, or an open list? Does completing a "line" carry a reward (ties to §12 gamification)?
-- Does the balance pass suggest from the existing backlog/Abyss, generate new tasks, or both?
+- **Year view:** 2×2 quarter cards + merged heatmap (dominant-color week dots); click quarter to zoom in (breadcrumb).
+- **Bingo:** literal 5×5 grid (24 goal cells + free center); line bingo reward; draft → finalize → locked lifecycle.
+- **Balance pass:** two-tier floor + target gap; suggests from backlog/Abyss **and** newly generated ideas (ghosted-accept).
 
 ---
 
 ## 9. Projects
 
-> **Status: RESOLVED (Jun 2026).** New capabilities (similarity, templating, nesting) decided. Core (phases, Miller, Gantt/calendar, time entries) already built.
+> **Status: RESOLVED (Jun 2026; open questions closed Jun 25, 2026).** New capabilities (similarity, templating, nesting) decided. Core (phases, Miller, Gantt/calendar, time entries) already built.
 
 **Purpose:** Plan and execute multi-step work with phases, visualized over time, with AI that learns how long things actually take.
 
@@ -425,6 +443,7 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 - Bounded hierarchy that maps cleanly to Miller columns and the calendar; easy to visualize and timeline. _Rejected:_ arbitrary recursive nesting (invites over-nesting, hard to plan dates for).
 - **Drag tasks** between phases/subphases and across the calendar.
 - Views (built): Miller columns · calendar of phase date ranges · multi-project calendar.
+- **Multi-project calendar coloring _(Resolved Jun 25)_: category/project toggle, default category.** The calendar opens in **category color** (honoring the locked "color = category stripe only" rule) and can **toggle to per-project hues** as an opt-in exception for tracking one project across the grid. _Build-spec flag:_ project-mode needs a distinct project-hue set that does **not** collide with the five category Apple hexes (define in Design Tokens). _Rejected:_ project-color as the default (makes the palette-exception the resting state).
 
 **2. Category (settled by §2):** every project carries exactly one category; its tasks inherit it with override allowed. A project is single-category, but its task mix can span categories.
 
@@ -436,14 +455,19 @@ Date, the current section's in-page switcher (when relevant), and global-action 
 
 - A template captures phases/subphases, their task lists, **and typical durations learned from past similar projects** — so creating a new project auto-drafts a realistic timeline.
 - Leans on the time-tracking spine (§14, now on any task) and feeds the AI-scoping dream.
+- **Creation model _(Resolved Jun 25)_: explicit + AI-suggested (A+C hybrid).** A **"Save as template"** action is always available so you curate the library deliberately; **on project completion the AI offers a one-tap "this looks reusable — save it?"** so good structures aren't lost to forgetfulness. _Note:_ duration-learning draws from **all** past similar projects regardless of what's saved — a template just captures reusable structure. _Rejected:_ auto-save-all (clutters with one-offs) and templateless-only (no editable artifact).
+- **Estimate confidence _(Resolved Jun 25)_: silent until enough history.** No duration estimate is shown until the sample crosses a threshold (**default N = 3, tunable**); below it the field reads "learning…". _Rejected:_ always-show-with-confidence-label, narrowing-range, and graduated tiers (a thin-sample number can still anchor/mislead).
 
 **5. Re-planning (settled by §11):** when a project slips, the Planner **proposes** a date re-plan from real time data; you confirm (high-stakes → confirm-first). Never silently reshuffles.
 
-**Remaining open questions:**
+**6. Completion metric — % progress _(Resolved Jun 25)_:** project/phase % progress = **completed task-weight ÷ total task-weight**, using the same **Top-3 large/small weighting** locked in §2 (big task = large, others = small). Honest about big unfinished work, needs no time data, and is one metric across the app. Rolls up identically at **phase** level (Miller/timeline) and **project** level (index cards + the §7.6 weekly review). _This closes the "define a project/phase completion calc in §9" item the data-spine (§2.5) and §7.6 point here._ _Rejected:_ simple task count (overstates), time-based (blank until estimates exist), phase-count (too jumpy).
 
-- Templating: auto-save a finished project as a template, or explicit "save as template"?
-- How much history before duration estimates are trustworthy (min sample size)?
-- Multi-project calendar: color by category, by project, or toggle?
+**Resolved (Jun 25, 2026):**
+
+- **Templating creation:** explicit "Save as template" + AI suggestion at completion (A+C hybrid).
+- **Estimate confidence:** silent until N≈3 samples (tunable); "learning…" below threshold.
+- **Multi-project calendar:** category/project toggle, default category; project-hues must not collide with category hexes (Design Tokens flag).
+- **Completion metric:** weighted task-weight ratio (§2 weighting), rolled up at phase + project level.
 
 ---
 
@@ -733,6 +757,8 @@ The persona-definition session **tempered the three-modes framing**: they are **
 
 _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits the build._
 
+> **Library slice — build plan (Jun 25):** the Tasks-tab Finch library has a detailed, approved build plan in `kash-3.0-care-library-build-plan.md` (decisions D0–D6; see `care-build-spec.md` addendum). Practices live in Care, pinnable to Today; thematic (Move/Calm/Connect/Rest/Nourish/Reflect); static seed catalog; cadence pre-fills recurrence. Build (CL1–CL5) not yet started; branch off `main`.
+
 ---
 
 ## 13. Account, Values & Personal Context
@@ -762,7 +788,7 @@ _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits
 
 **Purpose:** The properties and relationships every other feature depends on.
 
-**Current state:** `Built (core)` — tasks with parser-driven properties (date, project, priority), Top 3, buckets; projects + phases; time entries. **Missing globally:** category, recurrence, dependencies.
+**Current state:** `Built (core + spine)` — tasks with parser-driven properties (date, project, priority, **category**), Top 3, buckets; projects + phases; time entries on any task; **recurrence** (virtual occurrences + overrides); **dependencies** (many-blockers); **protected blocks** (Week §7). _Missing globally:_ tags (timing open).
 
 ### Detail — resolved task & data model
 
@@ -853,8 +879,8 @@ This is a _vision_ doc, so treat sequencing as a sketch, not a commitment. A sen
 Decisions to resolve as sections get expanded (collected from above):
 
 - **Categories:** ✅ RESOLVED (§2) — fixed 5, rename/recolor only, strict MECE, inherit-with-override, task-count balance. _Remaining:_ final labels, balance weighting, backfill method.
-- **Navigation:** ✅ RESOLVED (§4) — three-column shell, grouped left rail, right chat rail, contextual inbox, in-page switchers. _Remaining:_ `/plan` route naming, right-rail default state, chat keybinding, mobile/Tauri parity.
-- **Design:** glass vs. flat? light/dark? reference apps for feel?
+- **Navigation:** ✅ FULLY RESOLVED (§4, Jun 25) — three-column shell, grouped left rail (new Lucide icons), contextual inbox, in-page switchers. Routes Today `/today` + Plan `/plan`; Bingo = Plan sub-view; chat collapsed → "Ask Claude" chip + `⌘/` + push panel; mobile = hamburger drawer; Settings = top tab bar. _Nothing outstanding._
+- **Design:** ✅ RESOLVED (§5, Jun 24–25) — flat **black-and-white** (glass rejected), light-first (Abyss dark + garden lush exceptions), Pinterest+Finch feel. _Remaining:_ minor accent states (checkbox/star/link/focus-ring) + animation pass.
 - **Today:** ✅ RESOLVED (§6) — living-record timeline (+auto-draft later), soft Top-3 nudges, auto-DND, gentle self-care prompts.
 - **Week:** ✅ RESOLVED (§7) — placeholder+constraint protected blocks, colored task borders, soft over-commit warning.
 - **Planning:** ✅ RESOLVED (§8) — category-tagged bingo card, monthly+quarterly cadence, soft balance-pass closing step. _Remaining:_ year-viz form.
@@ -863,7 +889,7 @@ Decisions to resolve as sections get expanded (collected from above):
 - **AI:** ✅ RESOLVED (§11) — tiered autonomy, specialized modes (Planner / Focus coach / Reflection & care guide) sharing one brain, single editable About-me doc. _Remaining:_ mode visual identity, About-me auto-draft behavior.
 - **Self-care:** ✅ RESOLVED (§12) — generative garden (stats-first), nourished by self-care + balance, both-channel reminders.
 - **Values:** ranked or flat? retroactive context edits?
-- **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task. _Remaining:_ blocked-task RDM behavior, tags timing, recurrence-end options.
+- **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task, category on tasks. _Remaining:_ tags timing, recurrence Repeat-picker polish (custom ends/interval UI), blocked-task RDM polish if any gaps remain.
 - **Backend optimization:** ✅ RESOLVED (`kash-3.0-backend-optimization-spec.md`, Jun 24) — parallel-track pass; sync batching + bounded pull (cliff killed), indexing standing-req, outbox prune, timestamp-seam normalization; UX calls D1 create-shimmer / D2 sync panel / D3 chat windowing. _Remaining:_ D1 shimmer motion + duration (Design Tokens / animation pass), D2 panel placement (settings vs shell status bar — §4 Nav), OPT-1 coalescing semantics for delete-after-update on the same offline row (confirm at re-audit).
 
 ---

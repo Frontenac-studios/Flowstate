@@ -44,10 +44,12 @@ const WeekIcon = (
     stroke="currentColor"
     strokeWidth="1.8"
     strokeLinecap="round"
+    strokeLinejoin="round"
     aria-hidden
   >
     <rect x="3" y="4" width="18" height="17" rx="2" />
     <path d="M3 9h18M8 2v4M16 2v4" />
+    <path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01" />
   </svg>
 );
 
@@ -79,35 +81,43 @@ const PlanIcon = (
     strokeLinejoin="round"
     aria-hidden
   >
-    <circle cx="5" cy="6" r="1" />
-    <circle cx="5" cy="12" r="1" />
-    <circle cx="5" cy="18" r="1" />
-    <path d="M9 6h11M9 12h11M9 18h11" />
+    <circle cx="12" cy="12" r="9" />
+    <path d="M15.6 8.4l-2.2 5.2-5.2 2.2 2.2-5.2z" />
   </svg>
 );
 
 const AbyssIcon = (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden>
-    <polygon points="9,4.5 10.26,7.74 13.5,9 10.26,10.26 9,13.5 7.74,10.26 4.5,9 7.74,7.74" />
-    <polygon points="17,4 17.84,6.16 20,7 17.84,7.84 17,10 16.16,7.84 14,7 16.16,6.16" />
-    <polygon points="15,14.6 15.67,16.33 17.4,17 15.67,17.67 15,19.4 14.33,17.67 12.6,17 14.33,16.33" />
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden
+  >
+    <path d="M12 3l1.6 4L18 8.6l-4.4 1.6L12 14l-1.6-3.8L6 8.6 10.4 7z" />
+    <path d="M18.4 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
   </svg>
 );
 
 const CareIcon = (
-  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      d="M11 20 C7 16 4 13 4 9.5 A3.5 3.5 0 0 1 11 8 A3.5 3.5 0 0 1 18 9.5 C18 13 15 16 11 20 Z"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinejoin="round"
-    />
-    <g fill="currentColor">
-      <polygon points="4,3 4.56,4.44 6,5 4.56,5.56 4,7 3.44,5.56 2,5 3.44,4.44" />
-      <polygon points="19,3.6 19.67,5.33 21.4,6 19.67,6.67 19,8.4 18.33,6.67 16.6,6 18.33,5.33" />
-      <polygon points="19,14.2 19.5,15.5 20.8,16 19.5,16.5 19,17.8 18.5,16.5 17.2,16 18.5,15.5" />
-    </g>
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden
+  >
+    <path d="M12 21v-8" />
+    <path d="M12 13c0-3.3 2.2-5.5 5.5-5.5C17.5 10.8 15.3 13 12 13z" />
+    <path d="M12 15c0-2.5-2-4-5-4 0 2.5 2 4 5 4z" />
   </svg>
 );
 
@@ -123,8 +133,10 @@ const SettingsIcon = (
     strokeLinejoin="round"
     aria-hidden
   >
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    <path d="M4 7h8M16 7h4M4 12h2M10 12h10M4 17h7M15 17h5" />
+    <circle cx="14" cy="7" r="2" />
+    <circle cx="8" cy="12" r="2" />
+    <circle cx="13" cy="17" r="2" />
   </svg>
 );
 
@@ -150,7 +162,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Do now",
     items: [
       { href: "/today", label: "Today", icon: SunIcon, match: ["/today"] },
-      { href: "/this-week", label: "This Week", icon: WeekIcon, match: ["/this-week"] },
+      { href: "/this-week", label: "Week", icon: WeekIcon, match: ["/this-week"] },
       { href: "/projects", label: "Projects", icon: ProjectsIcon, match: ["/projects"] },
     ],
   },
@@ -171,24 +183,30 @@ const SETTINGS_ITEM: NavItem = {
   match: ["/settings"],
 };
 
+/** Window event the header hamburger dispatches to toggle the mobile nav drawer. */
+export const NAV_DRAWER_TOGGLE_EVENT = "kash:nav-drawer-toggle";
+
 function NavLink({
   item,
   active,
   expanded,
+  onClick,
 }: {
   item: NavItem;
   active: boolean;
   expanded: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Link
       href={item.href}
+      onClick={onClick}
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
       title={item.label}
       className={`flex h-12 items-center rounded-[var(--kash-radius-control)] pr-2 transition ${
         active
-          ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+          ? "bg-[var(--surface-selected)] text-kash-ink"
           : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
       }`}
     >
@@ -204,14 +222,83 @@ function NavLink({
   );
 }
 
+/** The grouped destinations + pinned Settings — shared by the desktop rail and the mobile drawer. */
+function NavSections({
+  expanded,
+  isActive,
+  onNavigate,
+}: {
+  expanded: boolean;
+  isActive: (item: NavItem) => boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      {NAV_GROUPS.map((group, index) => (
+        <Fragment key={group.label}>
+          <div className="px-1 pb-1 pt-2">
+            {expanded ? (
+              <span className="px-1 text-[10px] font-semibold uppercase tracking-wide text-kash-ink-muted">
+                {group.label}
+              </span>
+            ) : index > 0 ? (
+              <div className="mx-2 h-px bg-[var(--border-subtle)]" />
+            ) : null}
+          </div>
+          {group.items.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              active={isActive(item)}
+              expanded={expanded}
+              onClick={onNavigate}
+            />
+          ))}
+        </Fragment>
+      ))}
+      <div className="mt-auto">
+        <NavLink
+          item={SETTINGS_ITEM}
+          active={isActive(SETTINGS_ITEM)}
+          expanded={expanded}
+          onClick={onNavigate}
+        />
+      </div>
+    </>
+  );
+}
+
 export function LeftNavRail() {
   const pathname = usePathname();
   const [pinned, setPinned] = useState(false);
   const [peek, setPeek] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     setPinned(readNavRailPinned());
   }, []);
+
+  // The header hamburger (lg:hidden) dispatches a window event to toggle the
+  // mobile drawer. Close on route change and on Escape. The desktop rail is
+  // unaffected — it's simply hidden below lg.
+  useEffect(() => {
+    const onToggle = () => setMobileOpen((open) => !open);
+    window.addEventListener(NAV_DRAWER_TOGGLE_EVENT, onToggle);
+    return () => window.removeEventListener(NAV_DRAWER_TOGGLE_EVENT, onToggle);
+  }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
 
   const expanded = pinned || peek;
 
@@ -227,73 +314,91 @@ export function LeftNavRail() {
   };
 
   return (
-    <div
-      className={`sticky top-6 z-30 h-[calc(100vh-3rem)] shrink-0 transition-[width] duration-200 ${
-        pinned ? "w-44" : "w-16"
-      }`}
-    >
-      <nav
-        aria-label="Primary"
-        onMouseEnter={() => setPeek(true)}
-        onMouseLeave={() => setPeek(false)}
-        onFocus={() => setPeek(true)}
-        onBlur={() => setPeek(false)}
-        className={`absolute inset-y-0 left-0 z-20 flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
-          expanded ? "w-44" : "w-16"
-        } ${
-          // When peeked-but-not-pinned the rail floats over the content column;
-          // use an opaque surface + elevation so labels don't bleed through. The
-          // pinned/collapsed rail reserves its own width (no overlap), so the
-          // lighter glass is fine there.
-          expanded && !pinned ? "glass-panel-opaque shadow-xl" : "glass-panel"
+    <>
+      {/* Desktop rail — expand-on-hover, hidden below lg (mobile uses the drawer). */}
+      <div
+        className={`sticky top-6 z-30 hidden h-[calc(100vh-3rem)] shrink-0 transition-[width] duration-200 lg:block ${
+          pinned ? "w-44" : "w-16"
         }`}
       >
-        <div className="mb-1 flex h-8 items-center px-1">
-          <span
-            className="select-none text-base font-semibold tracking-tight text-kash-ink"
+        <nav
+          aria-label="Primary"
+          onMouseEnter={() => setPeek(true)}
+          onMouseLeave={() => setPeek(false)}
+          onFocus={() => setPeek(true)}
+          onBlur={() => setPeek(false)}
+          className={`absolute inset-y-0 left-0 z-20 flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
+            expanded ? "w-44" : "w-16"
+          } ${
+            // When peeked-but-not-pinned the rail floats over the content column;
+            // use an opaque surface + elevation so labels don't bleed through. The
+            // pinned/collapsed rail reserves its own width (no overlap), so the
+            // lighter glass is fine there.
+            expanded && !pinned ? "glass-panel-opaque shadow-xl" : "glass-panel"
+          }`}
+        >
+          <div className="mb-1 flex h-8 items-center px-1">
+            <span
+              className="select-none text-base font-semibold tracking-tight text-kash-ink"
+              aria-hidden
+            >
+              K
+            </span>
+            <button
+              type="button"
+              onClick={togglePinned}
+              aria-pressed={pinned}
+              aria-label={pinned ? "Unpin navigation" : "Pin navigation"}
+              title={pinned ? "Unpin navigation" : "Pin navigation"}
+              className={`ml-auto flex h-8 w-8 items-center justify-center rounded-[var(--kash-radius-control)] transition ${
+                expanded ? "opacity-100" : "pointer-events-none opacity-0"
+              } ${
+                pinned
+                  ? "bg-[var(--surface-selected)] text-kash-ink"
+                  : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
+              }`}
+            >
+              {PinIcon}
+            </button>
+          </div>
+
+          <NavSections expanded={expanded} isActive={isActive} />
+        </nav>
+      </div>
+
+      {/* Mobile drawer — slides in over the content below lg. */}
+      {mobileOpen ? (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
             aria-hidden
+            onClick={() => setMobileOpen(false)}
+          />
+          <nav
+            aria-label="Primary"
+            className="glass-panel-strong fixed inset-y-3 left-3 z-50 flex w-44 flex-col gap-1 overflow-y-auto p-3 lg:hidden"
           >
-            K
-          </span>
-          <button
-            type="button"
-            onClick={togglePinned}
-            aria-pressed={pinned}
-            aria-label={pinned ? "Unpin navigation" : "Pin navigation"}
-            title={pinned ? "Unpin navigation" : "Pin navigation"}
-            className={`ml-auto flex h-8 w-8 items-center justify-center rounded-[var(--kash-radius-control)] transition ${
-              expanded ? "opacity-100" : "pointer-events-none opacity-0"
-            } ${
-              pinned
-                ? "bg-[var(--kash-accent-soft)] text-kash-accent"
-                : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
-            }`}
-          >
-            {PinIcon}
-          </button>
-        </div>
-
-        {NAV_GROUPS.map((group, index) => (
-          <Fragment key={group.label}>
-            <div className="px-1 pb-1 pt-2">
-              {expanded ? (
-                <span className="px-1 text-[10px] font-semibold uppercase tracking-wide text-kash-ink-muted">
-                  {group.label}
-                </span>
-              ) : index > 0 ? (
-                <div className="mx-2 h-px bg-[var(--border-subtle)]" />
-              ) : null}
+            <div className="mb-1 flex h-8 items-center px-1">
+              <span
+                className="select-none text-base font-semibold tracking-tight text-kash-ink"
+                aria-hidden
+              >
+                K
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="glass-icon-btn ml-auto text-kash-ink-muted"
+                aria-label="Close navigation"
+              >
+                ✕
+              </button>
             </div>
-            {group.items.map((item) => (
-              <NavLink key={item.href} item={item} active={isActive(item)} expanded={expanded} />
-            ))}
-          </Fragment>
-        ))}
 
-        <div className="mt-auto">
-          <NavLink item={SETTINGS_ITEM} active={isActive(SETTINGS_ITEM)} expanded={expanded} />
-        </div>
-      </nav>
-    </div>
+            <NavSections expanded isActive={isActive} onNavigate={() => setMobileOpen(false)} />
+          </nav>
+        </>
+      ) : null}
+    </>
   );
 }

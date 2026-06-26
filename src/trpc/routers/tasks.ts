@@ -3,8 +3,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncTaskRow } from "@/db/record-sync-mutation";
-import { phases, projects, taskDependencies, tasks } from "@/db/tables";
+import { syncRecurrenceRow, syncTaskRow } from "@/db/record-sync-mutation";
+import {
+  phases,
+  projects,
+  taskDependencies,
+  taskOccurrenceOverrides,
+  taskRecurrence,
+  tasks,
+} from "@/db/tables";
 import { computeDependencyState } from "@/lib/tasks/dependencies/blocked";
 import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
@@ -13,6 +20,8 @@ import {
   resolveTaskCategoryForUser,
   setLastUsedCategory,
 } from "@/server/tasks/resolve-task-category";
+import { mergeRecurringIntoPlanList } from "@/server/tasks/merge-recurring-into-plan-list";
+import type { OccurrenceOverrideInput } from "@/lib/recurrence/types";
 import { isExpiredTop3, isTop3ActiveForLocalDate } from "@/lib/tasks/top3-local-day";
 import {
   validateWeekDraftAssignments,
@@ -87,9 +96,96 @@ export const tasksRouter = createTRPCRouter({
       .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)))
       .orderBy(desc(tasks.priority), asc(tasks.createdAt));
 
+    const recurrenceRows = await db
+      .select({
+        recurrenceId: taskRecurrence.id,
+        taskId: taskRecurrence.taskId,
+        rrule: taskRecurrence.rrule,
+        startDate: taskRecurrence.startDate,
+        title: tasks.title,
+        priority: tasks.priority,
+        bucketOverride: tasks.bucketOverride,
+        projectId: tasks.projectId,
+        phaseId: tasks.phaseId,
+        isTop3: tasks.isTop3,
+        top3Order: tasks.top3Order,
+        completedAt: tasks.completedAt,
+        createdAt: tasks.createdAt,
+        category: tasks.category,
+        categoryUnresolved: tasks.categoryUnresolved,
+        projectSlug: projects.slug,
+        projectName: projects.name,
+        phaseName: phases.name,
+        phaseSortOrder: phases.sortOrder,
+      })
+      .from(taskRecurrence)
+      .innerJoin(tasks, eq(taskRecurrence.taskId, tasks.id))
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .leftJoin(phases, eq(tasks.phaseId, phases.id))
+      .where(and(eq(taskRecurrence.userId, ctx.userId), isNull(tasks.completedAt)));
+
+    const recurrenceIds = recurrenceRows.map((r) => r.recurrenceId);
+    const overrideRows =
+      recurrenceIds.length === 0
+        ? []
+        : await db
+            .select({
+              recurrenceId: taskOccurrenceOverrides.recurrenceId,
+              occurrenceDate: taskOccurrenceOverrides.occurrenceDate,
+              status: taskOccurrenceOverrides.status,
+              movedToDate: taskOccurrenceOverrides.movedToDate,
+              patch: taskOccurrenceOverrides.patch,
+              completedAt: taskOccurrenceOverrides.completedAt,
+            })
+            .from(taskOccurrenceOverrides)
+            .where(
+              and(
+                eq(taskOccurrenceOverrides.userId, ctx.userId),
+                inArray(taskOccurrenceOverrides.recurrenceId, recurrenceIds)
+              )
+            );
+
+    const overridesByRecurrence = new Map<string, OccurrenceOverrideInput[]>();
+    for (const override of overrideRows) {
+      const list = overridesByRecurrence.get(override.recurrenceId) ?? [];
+      list.push({
+        occurrenceDate: override.occurrenceDate,
+        status: override.status,
+        movedToDate: override.movedToDate,
+        patch: (override.patch as Record<string, unknown> | null) ?? null,
+        completedAt: override.completedAt,
+      });
+      overridesByRecurrence.set(override.recurrenceId, list);
+    }
+
+    const mergedRows = mergeRecurringIntoPlanList({
+      rows,
+      templates: recurrenceRows.map((r) => ({
+        recurrenceId: r.recurrenceId,
+        taskId: r.taskId,
+        rrule: r.rrule,
+        startDate: r.startDate,
+        title: r.title,
+        priority: r.priority,
+        bucketOverride: r.bucketOverride,
+        projectId: r.projectId,
+        phaseId: r.phaseId,
+        isTop3: r.isTop3,
+        top3Order: r.top3Order,
+        completedAt: r.completedAt,
+        createdAt: r.createdAt,
+        category: r.category,
+        categoryUnresolved: r.categoryUnresolved,
+        projectSlug: r.projectSlug,
+        projectName: r.projectName,
+        phaseName: r.phaseName,
+        phaseSortOrder: r.phaseSortOrder,
+      })),
+      overridesByRecurrence,
+    });
+
     // Phase 3: surface live dependency state (isBlocked drives RDM-skip, unblocksCount
-    // drives blocker weight). Both endpoints of an edge are within `rows` (incomplete
-    // tasks) — a completed blocker is absent and so no longer blocks.
+    // drives blocker weight). Dependency ids use template task ids for occurrences.
     const edges = await db
       .select({
         blockerTaskId: taskDependencies.blockerTaskId,
@@ -99,13 +195,12 @@ export const tasksRouter = createTRPCRouter({
       .from(taskDependencies)
       .where(eq(taskDependencies.userId, ctx.userId));
 
-    const depState = computeDependencyState(
-      edges,
-      rows.map((r) => r.id)
-    );
+    const depTaskIds = mergedRows.map((r) => r.templateTaskId ?? r.id);
+    const depState = computeDependencyState(edges, depTaskIds);
 
-    return rows.map((row) => {
-      const state = depState.get(row.id);
+    return mergedRows.map((row) => {
+      const depId = row.templateTaskId ?? row.id;
+      const state = depState.get(depId);
       return {
         ...row,
         isBlocked: state?.isBlocked ?? false,
@@ -484,12 +579,25 @@ export const tasksRouter = createTRPCRouter({
         phaseId: z.string().uuid().nullable().optional(),
         priority: z.number().int().min(0).max(3).default(0),
         category: categorySchema.optional(),
+        /** RRULE body (without `RRULE:` prefix) — Phase 4 composer / picker. */
+        rrule: z.string().min(1).max(2000).optional(),
+        recurrenceStartDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const todayIso = toISODateString(startOfLocalDay());
-      const scheduledDate =
-        input.bucketOverride === "later" ? null : (input.scheduledDate ?? todayIso);
+      const hasRecurrence = Boolean(input.rrule);
+      const recurrenceStart =
+        input.recurrenceStartDate ??
+        (input.scheduledDate && input.bucketOverride !== "later" ? input.scheduledDate : todayIso);
+      const scheduledDate = hasRecurrence
+        ? null
+        : input.bucketOverride === "later"
+          ? null
+          : (input.scheduledDate ?? todayIso);
       const title = input.title.trim();
 
       // Phase 1 (1.4a): run the shared resolver ladder for every create.
@@ -525,6 +633,23 @@ export const tasksRouter = createTRPCRouter({
       }
 
       await syncTaskRow(row.id, "insert", row);
+
+      if (input.rrule) {
+        const [recurrence] = await db
+          .insert(taskRecurrence)
+          .values({
+            userId: ctx.userId,
+            taskId: row.id,
+            rrule: input.rrule,
+            startDate: recurrenceStart,
+          })
+          .returning();
+
+        if (recurrence) {
+          await syncRecurrenceRow(recurrence.id, "insert", recurrence);
+        }
+      }
+
       return row;
     }),
 

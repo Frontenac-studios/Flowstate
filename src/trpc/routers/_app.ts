@@ -9,7 +9,10 @@ import { focusBlocksRouter } from "./focus-blocks";
 import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
 import { phasesRouter } from "./phases";
+import { planningRouter } from "./planning";
 import { projectsRouter } from "./projects";
+import { protectedBlocksRouter } from "./protected-blocks";
+import { recurrenceRouter } from "./recurrence";
 import { settingsRouter } from "./settings";
 import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
@@ -29,7 +32,10 @@ export const appRouter = createTRPCRouter({
   healthChecks: healthChecksRouter,
   me: meRouter,
   phases: phasesRouter,
+  planning: planningRouter,
   projects: projectsRouter,
+  protectedBlocks: protectedBlocksRouter,
+  recurrence: recurrenceRouter,
   settings: settingsRouter,
   sync: syncRouter,
   taskBulkImports: taskBulkImportsRouter,

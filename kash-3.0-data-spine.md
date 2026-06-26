@@ -15,12 +15,15 @@ Five pieces make up the spine:
 4. **Task dependencies** — A blocks B, project-scoped (§14).
 5. **Recurrence** — rule + generated occurrences + overrides (§14).
 
-**Verified against the code (Jun 2026):**
+**Verified against the code (Jun 25 2026):**
 
-- `tasks` has `id, user_id, project_id (nullable), phase_id, title, priority, scheduled_date, bucket_override, sort_order, is_top_3, top_3_order, top_3_pinned_at, completed_at, …` — **no `category`**. Clean column add.
-- `task_time_entries.task_id` already references **any** `tasks.id` (not project-scoped). So #3 is mostly **UI/wiring, not schema** — a pleasant surprise.
-- `project_category` enum already exists (5 categories) on `projects`. We reuse it for tasks.
-- No `task_recurrence`, `task_occurrence_overrides`, `task_dependencies`, or `category_settings` tables exist.
+- `tasks` has `category project_category NOT NULL`, plus `category_unresolved`, Top-3 fields, `scheduled_date`, buckets, etc.
+- `category_settings` table exists (user label/sort overrides).
+- `task_time_entries.task_id` references **any** `tasks.id` — Focus timer + manual CRUD wired; `weeklyRollup` aggregation shipped.
+- `task_dependencies` join table exists (revised many-blockers design — project/window edges, `expires_at` sweep).
+- `task_recurrence` + `task_occurrence_overrides` exist — RRULE templates, virtual occurrences, per-date overrides; sync + offline expand util.
+- `protected_block_templates` + `protected_blocks` exist (Week §7 — separate from task recurrence).
+- `project_category` enum uses `body_mind` (renamed from `health_wellness`).
 
 ## 2. Build order rationale
 
@@ -236,6 +239,8 @@ Kind is **decided automatically by project-match at creation** and **frozen on t
 - **4.6 / 4.7 Single-occurrence: FULL control** — complete / skip / reschedule / edit any one occurrence as an override; the series continues. "Edit all future" = update the rule in place (forward); past overrides stay valid.
 - **Entry point:** a task-detail **Repeat picker** + a **composer shorthand** ("water plants; every tue" → rule).
 - **4.5 Generation:** one shared pure util (`src/lib/recurrence/expand.ts`) on server + client (offline).
+
+**Built (Jun 25):** Phase 4 complete — see `kash-3.0-data-spine-build-spec.md` §Phase 4. Migrations `0014_vengeful_randall.sql`. All acceptance criteria met for v1; tail polish: full Repeat picker UI, `editOccurrence` on plan rows.
 
 ---
 

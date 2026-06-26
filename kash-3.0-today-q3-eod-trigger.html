@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Today §6 · Q3 — EoD Review trigger</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --c-pro: #0a84ff;
+        --gray-pill: #eceef0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+        max-width: 880px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 920px;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .card h2 {
+        font-size: 13.5px;
+        margin: 0 0 1px;
+        letter-spacing: -0.01em;
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      /* day strip */
+      .strip {
+        position: relative;
+        height: 54px;
+        margin: 16px 2px 4px;
+        border-bottom: 1px solid var(--hair);
+      }
+      .strip .t {
+        position: absolute;
+        bottom: -1px;
+        width: 1px;
+        height: 7px;
+        background: var(--hair);
+      }
+      .strip .lbl {
+        position: absolute;
+        bottom: -18px;
+        font-size: 9px;
+        color: var(--faint);
+        transform: translateX(-50%);
+      }
+      .t3 {
+        position: absolute;
+        bottom: 8px;
+        font-size: 9px;
+        color: var(--faint);
+        transform: translateX(-50%);
+      }
+      .t3::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -8px;
+        width: 1px;
+        height: 8px;
+        background: var(--faint);
+      }
+      .fire {
+        position: absolute;
+        bottom: 8px;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .fire .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+      .fire .dot.soft {
+        background: #fff;
+        border: 2px solid var(--ink);
+      }
+      .fire .ft {
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 3px;
+        white-space: nowrap;
+      }
+      .fire .stem {
+        width: 1px;
+        height: 8px;
+        background: var(--ink);
+      }
+      .win {
+        position: absolute;
+        bottom: 8px;
+        height: 11px;
+        border-radius: 6px;
+        background: rgba(22, 24, 29, 0.1);
+        border: 1px dashed var(--faint);
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 10px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 11.5px;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 15px;
+        margin: 3px 0;
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+      .key {
+        max-width: 920px;
+        margin: 18px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .key .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        display: inline-block;
+        vertical-align: -2px;
+        margin-right: 5px;
+      }
+      .key .filled {
+        background: var(--ink);
+      }
+      .key .open {
+        background: #fff;
+        border: 2px solid var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Today §6 · Q3 — EoD Review trigger time &amp; forcefulness</h1>
+    <p class="sub">
+      Strip = a day, 8a → 10p. <b>★ 5p</b> = Top-3 target. <b>● filled dot</b> = review
+      <i>auto-opens</i> the view; <b>○ open dot</b> = a soft, dismissible nudge (you tap to enter).
+      Dashed band = an adaptive window.
+    </p>
+
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <span class="tag">A · Current</span>
+        <h2>Fixed 6pm · auto-surfaces</h2>
+        <div class="strip">
+          <div class="t3" style="left: 64%">★5p</div>
+          <div class="fire" style="left: 71%">
+            <span class="ft">●6:00</span><span class="stem"></span><span class="dot"></span>
+          </div>
+          <span class="t" style="left: 0%"></span><span class="lbl" style="left: 0%">8a</span>
+          <span class="t" style="left: 50%"></span><span class="lbl" style="left: 50%">3p</span>
+          <span class="t" style="left: 100%"></span><span class="lbl" style="left: 100%">10p</span>
+        </div>
+        <p class="body">One hard time for everyone, view switches itself.</p>
+        <ul class="pros">
+          <li class="y">Dead simple; nothing to configure</li>
+          <li class="n">6pm is wrong for early/late/shift days</li>
+          <li class="n">Auto-switching can interrupt mid-task</li>
+        </ul>
+      </div>
+
+      <!-- B -->
+      <div class="card">
+        <span class="tag">B · Configurable time</span>
+        <h2>You set the time · default 6pm</h2>
+        <div class="strip">
+          <div class="t3" style="left: 64%">★5p</div>
+          <div class="fire" style="left: 57%">
+            <span class="ft">●4:30</span><span class="stem"></span><span class="dot"></span>
+          </div>
+          <span class="t" style="left: 0%"></span><span class="lbl" style="left: 0%">8a</span>
+          <span class="t" style="left: 50%"></span><span class="lbl" style="left: 50%">3p</span>
+          <span class="t" style="left: 100%"></span><span class="lbl" style="left: 100%">10p</span>
+        </div>
+        <p class="body">Same as A but you pick the hour (here 4:30p). Defaults to 6pm.</p>
+        <ul class="pros">
+          <li class="y">Fits your actual schedule</li>
+          <li class="y">Tiny build — one setting</li>
+          <li class="n">Static — a fixed hour still misfires on irregular days</li>
+        </ul>
+      </div>
+
+      <!-- C -->
+      <div class="card">
+        <span class="tag">C · Adaptive</span>
+        <h2>Day-wind-down signals + fallback</h2>
+        <div class="strip">
+          <div class="t3" style="left: 64%">★5p</div>
+          <div class="win" style="left: 64%; width: 26%"></div>
+          <div class="fire" style="left: 82%">
+            <span class="ft">●~6:40</span><span class="stem"></span><span class="dot"></span>
+          </div>
+          <span class="t" style="left: 0%"></span><span class="lbl" style="left: 0%">8a</span>
+          <span class="t" style="left: 50%"></span><span class="lbl" style="left: 50%">3p</span>
+          <span class="t" style="left: 100%"></span><span class="lbl" style="left: 100%">10p</span>
+        </div>
+        <p class="body">
+          Fires after the day winds down — last calendar event ends / Top-3 done / focus activity
+          stops — with a hard fallback time.
+        </p>
+        <ul class="pros">
+          <li class="y">Always lands when you’re actually done</li>
+          <li class="n">Least predictable; “when will it fire?”</li>
+          <li class="n">Most build + needs trusted activity signals</li>
+        </ul>
+      </div>
+
+      <!-- D recommended -->
+      <div class="card rec">
+        <span class="tag">D · Soft nudge + always-available · fits §6 ethos</span>
+        <h2>Configurable nudge, never auto-opens</h2>
+        <div class="strip">
+          <div class="t3" style="left: 64%">★5p</div>
+          <div class="fire" style="left: 71%">
+            <span class="ft">○6:00</span><span class="stem"></span><span class="dot soft"></span>
+          </div>
+          <span class="t" style="left: 0%"></span><span class="lbl" style="left: 0%">8a</span>
+          <span class="t" style="left: 50%"></span><span class="lbl" style="left: 50%">3p</span>
+          <span class="t" style="left: 100%"></span><span class="lbl" style="left: 100%">10p</span>
+        </div>
+        <p class="body">
+          Review is <b>always one tap away</b> in the switcher. At your set time (default 6pm) a
+          <b>gentle, dismissible chip</b> appears — never seizes the screen.
+        </p>
+        <ul class="pros">
+          <li class="y">Matches “soft, escalating, never blocking”</li>
+          <li class="y">Configurable time + you’re always in control</li>
+          <li class="y">Can later gain C’s smart timing for the nudge</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="key">
+      <span><span class="dot filled"></span>auto-opens the Review view</span>
+      <span><span class="dot open"></span>soft dismissible nudge (tap to enter)</span>
+    </div>
+  </body>
+</html>

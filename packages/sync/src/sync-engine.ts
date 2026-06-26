@@ -1,16 +1,27 @@
 import type { SqliteDb } from "@kash/db-local";
 import {
   appSettings,
+  bingoCards,
   categorySettings,
   chatMessages,
   dayReviews,
+  goalMilestones,
+  goals,
+  monthIntentions,
   nudgeEvents,
   phases,
+  planningSuggestions,
   projects,
+  protectedBlockTemplates,
+  protectedBlocks,
+  quarterThemes,
+  reservedDays,
   syncWatermarks,
   taskBulkImportItems,
   taskBulkImports,
   taskDependencies,
+  taskOccurrenceOverrides,
+  taskRecurrence,
   taskTimeEntries,
   tasks,
 } from "@kash/db-local/schema";
@@ -205,6 +216,70 @@ async function upsertRow(
       else await db.insert(taskDependencies).values(mapped as never);
       return true;
     }
+    case "task_recurrence": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(taskRecurrence)
+        .where(eq(taskRecurrence.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskRecurrence)
+          .set(mapped as never)
+          .where(eq(taskRecurrence.id, id));
+      else await db.insert(taskRecurrence).values(mapped as never);
+      return true;
+    }
+    case "task_occurrence_overrides": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(taskOccurrenceOverrides)
+        .where(eq(taskOccurrenceOverrides.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(taskOccurrenceOverrides)
+          .set(mapped as never)
+          .where(eq(taskOccurrenceOverrides.id, id));
+      else await db.insert(taskOccurrenceOverrides).values(mapped as never);
+      return true;
+    }
+    case "protected_block_templates": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(protectedBlockTemplates)
+        .where(eq(protectedBlockTemplates.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(protectedBlockTemplates)
+          .set(mapped as never)
+          .where(eq(protectedBlockTemplates.id, id));
+      else await db.insert(protectedBlockTemplates).values(mapped as never);
+      return true;
+    }
+    case "protected_blocks": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(protectedBlocks)
+        .where(eq(protectedBlocks.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(protectedBlocks)
+          .set(mapped as never)
+          .where(eq(protectedBlocks.id, id));
+      else await db.insert(protectedBlocks).values(mapped as never);
+      return true;
+    }
     case "category_settings": {
       const userId = mapped.userId as string;
       const category = mapped.category as string;
@@ -336,6 +411,34 @@ async function upsertRow(
             and(eq(taskBulkImportItems.importId, importId), eq(taskBulkImportItems.taskId, taskId))
           );
       else await db.insert(taskBulkImportItems).values(mapped as never);
+      return true;
+    }
+    case "bingo_cards":
+    case "goals":
+    case "goal_milestones":
+    case "quarter_themes":
+    case "month_intentions":
+    case "reserved_days":
+    case "planning_suggestions": {
+      const tableMap = {
+        bingo_cards: bingoCards,
+        goals,
+        goal_milestones: goalMilestones,
+        quarter_themes: quarterThemes,
+        month_intentions: monthIntentions,
+        reserved_days: reservedDays,
+        planning_suggestions: planningSuggestions,
+      } as const;
+      const sqliteTable = tableMap[table];
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(sqliteTable).where(eq(sqliteTable.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(sqliteTable)
+          .set(mapped as never)
+          .where(eq(sqliteTable.id, id));
+      else await db.insert(sqliteTable).values(mapped as never);
       return true;
     }
     default:

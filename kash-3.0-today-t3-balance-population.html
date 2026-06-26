@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Today §6 · Thread 3 — Balance bar population</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --c-pro: #0a84ff;
+        --c-proj: #af52de;
+        --c-rel: #ff2d55;
+        --c-adult: #ff9500;
+        --c-body: #34c759;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+        max-width: 880px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 880px;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      .when {
+        font-size: 11px;
+        color: var(--faint);
+        margin: 1px 0 0;
+      }
+      .bar {
+        display: flex;
+        height: 28px;
+        border-radius: 7px;
+        overflow: hidden;
+        margin: 13px 0 4px;
+        border: 1px solid var(--hair);
+        background: #fff;
+      }
+      .seg {
+        height: 100%;
+        position: relative;
+      }
+      .seg.pro {
+        background: var(--c-pro);
+      }
+      .seg.proj {
+        background: var(--c-proj);
+      }
+      .seg.rel {
+        background: var(--c-rel);
+      }
+      .seg.adult {
+        background: var(--c-adult);
+      }
+      .seg.body {
+        background: var(--c-body);
+      }
+      /* planned-as-ghost variant */
+      .ghost {
+        background-image: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 4px,
+          rgba(0, 0, 0, 0.05) 4px,
+          rgba(0, 0, 0, 0.05) 8px
+        );
+      }
+      .seg .done {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0);
+      }
+      .barwrap {
+        position: relative;
+      }
+      .emptybar {
+        display: flex;
+        height: 28px;
+        border: 1px dashed var(--faint);
+        border-radius: 7px;
+        margin: 13px 0 4px;
+        align-items: center;
+        justify-content: center;
+        color: var(--faint);
+        font-size: 11px;
+        font-style: italic;
+      }
+      .reads {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 7px 0 0;
+      }
+      .reads b {
+        color: var(--ink);
+      }
+      .warn {
+        font-size: 11px;
+        margin: 7px 0 0;
+        padding: 6px 9px;
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+        background: #fbfbfc;
+        color: var(--muted);
+      }
+      .warn b {
+        color: var(--ink);
+      }
+      .pros {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 11.5px;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 15px;
+        margin: 3px 0;
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        max-width: 880px;
+        margin: 18px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      .legend .hatch {
+        background-image: repeating-linear-gradient(45deg, #ddd, #ddd 3px, #fff 3px, #fff 6px);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Today §6 · Thread 3 — What population does the balance bar count?</h1>
+    <p class="sub">
+      Same day, viewed at <b>~11am</b>: planned = 1 Top-3 Pro + 2 Pro emails + 1 Top-3 Proj + 3
+      Adulting errands + 1 walk. So far only the <b>Pro deck + 1 errand</b> are done. (Weighting =
+      Top-3 hybrid, from Q2.)
+    </p>
+
+    <div class="grid">
+      <!-- A planned -->
+      <div class="card rec">
+        <span class="tag">A · Planned (all of today) · recommended</span>
+        <h2>Counts everything scheduled today</h2>
+        <p class="when">Full from the morning</p>
+        <div class="bar">
+          <div class="seg pro" style="width: 36%"></div>
+          <div class="seg proj" style="width: 23%"></div>
+          <div class="seg adult" style="width: 23%"></div>
+          <div class="seg body" style="width: 9%"></div>
+          <div
+            class="seg rel"
+            style="
+              width: 9%;
+              background: repeating-linear-gradient(45deg, #eee, #eee 4px, #fff 4px, #fff 8px);
+            "
+          ></div>
+        </div>
+        <p class="reads">
+          Reflects intentions. <b>Relationships empty (hatched) → warning can fire at 9am.</b>
+        </p>
+        <div class="warn"><b>⚠ Lopsided:</b> heavy on work, no Relationships planned today.</div>
+        <ul class="pros">
+          <li class="y">Warning is actionable while you can still rebalance</li>
+          <li class="y">Stable through the day</li>
+          <li class="n">Shows plan, not what actually happened</li>
+        </ul>
+      </div>
+
+      <!-- B completed -->
+      <div class="card">
+        <span class="tag">B · Completed only</span>
+        <h2>Counts only what’s done</h2>
+        <p class="when">Grows through the day · near-empty at 9am</p>
+        <div class="bar">
+          <div class="seg pro" style="width: 72%"></div>
+          <div class="seg adult" style="width: 28%"></div>
+        </div>
+        <p class="reads">
+          Matches the living-record ethos. <b>At 11am only deck + 1 errand show.</b>
+        </p>
+        <div class="warn">
+          No early warning — looks “all Professional” simply because that’s what’s done so far.
+        </div>
+        <ul class="pros">
+          <li class="y">Truthful record of reality</li>
+          <li class="n">Empty/misleading early; warning fires too late</li>
+          <li class="n">Penalizes a back-loaded day</li>
+        </ul>
+      </div>
+
+      <!-- C both -->
+      <div class="card">
+        <span class="tag">C · Both (plan ghost + done fill)</span>
+        <h2>Planned outline, completed filled</h2>
+        <p class="when">See plan vs progress at once</p>
+        <div class="bar">
+          <div class="seg pro ghost" style="width: 36%">
+            <div style="position: absolute; inset: 0; width: 75%; background: var(--c-pro)"></div>
+          </div>
+          <div class="seg proj ghost" style="width: 23%"></div>
+          <div class="seg adult ghost" style="width: 23%">
+            <div style="position: absolute; inset: 0; width: 34%; background: var(--c-adult)"></div>
+          </div>
+          <div class="seg body ghost" style="width: 9%"></div>
+          <div class="seg ghost" style="width: 9%"></div>
+        </div>
+        <p class="reads">
+          Solid = done, hatched = still planned.
+          <b>Both the warning and your progress are visible.</b>
+        </p>
+        <div class="warn"><b>⚠ Lopsided</b> (from plan) + a live progress read in one bar.</div>
+        <ul class="pros">
+          <li class="y">Richest: intention + reality together</li>
+          <li class="y">Doubles as a motivating progress meter</li>
+          <li class="n">Densest to read; most build</li>
+        </ul>
+      </div>
+
+      <!-- D toggle -->
+      <div class="card">
+        <span class="tag">D · Toggle</span>
+        <h2>Switch Planned ⇄ Done</h2>
+        <p class="when">You choose per glance</p>
+        <div class="bar">
+          <div class="seg pro" style="width: 36%"></div>
+          <div class="seg proj" style="width: 23%"></div>
+          <div class="seg adult" style="width: 23%"></div>
+          <div class="seg body" style="width: 9%"></div>
+          <div
+            class="seg"
+            style="
+              width: 9%;
+              background: repeating-linear-gradient(45deg, #eee, #eee 4px, #fff 4px, #fff 8px);
+            "
+          ></div>
+        </div>
+        <p class="reads">A small Planned/Done switch above the bar.</p>
+        <ul class="pros">
+          <li class="y">Flexible — both views available</li>
+          <li class="n">Adds a control; decision punted to you each time</li>
+          <li class="n">Default still has to be picked anyway</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background: var(--c-pro)"></i>Professional</span>
+      <span><i style="background: var(--c-proj)"></i>Personal Projects</span>
+      <span><i style="background: var(--c-rel)"></i>Relationships</span>
+      <span><i style="background: var(--c-adult)"></i>Adulting</span>
+      <span><i style="background: var(--c-body)"></i>Body &amp; Mind</span>
+      <span><i class="hatch"></i>planned / not yet done</span>
+    </div>
+  </body>
+</html>

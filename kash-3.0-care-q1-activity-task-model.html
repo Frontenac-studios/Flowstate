@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Care Q1 — activity ↔ task relationship</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --surface: #fff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --border-subtle: #f4f4f4;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --accent: #16181d;
+        --on-accent: #fff;
+        --bm: #3aaa35;
+        --bm-fill: #e9f6e8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f4f4;
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        padding: 30px 18px;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--ink-muted);
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+      .q {
+        font-size: 14px;
+        background: var(--bm-fill);
+        color: #1f7a1b;
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: inline-block;
+        margin-bottom: 22px;
+        font-weight: 600;
+      }
+      .opts {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+      }
+      .opt {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+      }
+      .opt.rec {
+        border-color: var(--bm);
+        box-shadow: 0 0 0 1px var(--bm);
+      }
+      .lbl {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--bm);
+        margin-bottom: 6px;
+      }
+      .opt.rec .lbl::after {
+        content: " · spec-leaning";
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+      .opt h3 {
+        margin: 0 0 10px;
+        font-size: 15.5px;
+      }
+      /* flow */
+      .flow {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0 0 12px;
+      }
+      .node {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 12.5px;
+        background: var(--surface-2);
+      }
+      .node b {
+        font-weight: 600;
+      }
+      .node.bm {
+        background: var(--bm-fill);
+        border-color: #cfe9cd;
+        color: #1f7a1b;
+      }
+      .node.today {
+        background: #16181d;
+        color: #fff;
+        border-color: #16181d;
+      }
+      .arrow {
+        font-size: 11px;
+        color: var(--ink-faint);
+        text-align: center;
+        line-height: 1;
+      }
+      .desc {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin: 0 0 12px;
+        flex: 1;
+      }
+      .meta {
+        border-top: 1px solid var(--border-subtle);
+        padding-top: 10px;
+        font-size: 12px;
+      }
+      .meta div {
+        margin-bottom: 4px;
+      }
+      .pro {
+        color: #1f7a1b;
+      }
+      .con {
+        color: #9a4e08;
+      }
+      .data {
+        font-size: 11.5px;
+        color: var(--ink-faint);
+        margin-top: 8px;
+      }
+      @media (max-width: 780px) {
+        .opts {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Care Library — Q1 of the plan</h1>
+      <p class="sub">
+        This is the foundational fork: it decides the data model <i>and</i> how the library wires
+        into the task spine you already shipped. The spec flags it as open ("self-care-task ↔
+        recurrence interplay").
+      </p>
+      <div class="q">How does a self-care activity relate to a task?</div>
+
+      <div class="opts">
+        <!-- A -->
+        <div class="opt rec">
+          <div class="lbl">OPTION A</div>
+          <h3>Template → spawns a task</h3>
+          <div class="flow">
+            <div class="node"><b>Library item</b> (definition)</div>
+            <div class="arrow">▼ adopt = save to your shelf</div>
+            <div class="node">Your library</div>
+            <div class="arrow">▼ "do / schedule"</div>
+            <div class="node bm">spawns a Body&nbsp;&amp;&nbsp;Mind task</div>
+            <div class="arrow">▼</div>
+            <div class="node today">+ logs a care_event</div>
+          </div>
+          <p class="desc">
+            The library is a <b>shelf of definitions</b>, not your to-do list. Doing one creates a
+            real task (one-off or recurring) and logs the act.
+          </p>
+          <div class="meta">
+            <div class="pro">+ Matches the spec exactly ("spawns a B&amp;M task, linked back")</div>
+            <div class="pro">+ Library stays calm; tasks only when you choose</div>
+            <div class="con">– Two concepts to learn: definition vs. spawned task</div>
+            <div class="data">
+              care_activities (template) · care_events (log) · optional task link
+            </div>
+          </div>
+        </div>
+        <!-- B -->
+        <div class="opt">
+          <div class="lbl">OPTION B</div>
+          <h3>Library item <i>is</i> a recurring task</h3>
+          <div class="flow">
+            <div class="node"><b>Library item</b></div>
+            <div class="arrow">▼ adopt</div>
+            <div class="node bm">creates a recurring B&amp;M task now</div>
+            <div class="arrow">▼ appears automatically</div>
+            <div class="node today">shows in Today / Week</div>
+            <div class="arrow">▼ check off occurrence</div>
+            <div class="node">done = care_event</div>
+          </div>
+          <p class="desc">
+            Adopting <b>immediately</b> creates a recurring task via the shipped recurrence engine.
+            The library is a curated way to make wellness tasks.
+          </p>
+          <div class="meta">
+            <div class="pro">+ Maximum reuse of the recurrence spine you just built</div>
+            <div class="pro">+ Self-care shows up in Today without extra steps</div>
+            <div class="con">– Can flood Today; less "calm shelf," more obligation</div>
+            <div class="data">care_activities ≈ thin wrapper over task_recurrence</div>
+          </div>
+        </div>
+        <!-- C -->
+        <div class="opt">
+          <div class="lbl">OPTION C</div>
+          <h3>Self-contained — no tasks</h3>
+          <div class="flow">
+            <div class="node"><b>Library item</b></div>
+            <div class="arrow">▼ adopt</div>
+            <div class="node">Your library</div>
+            <div class="arrow">▼ "I did this"</div>
+            <div class="node bm">logs a care_event only</div>
+            <div class="arrow">·</div>
+            <div class="node" style="opacity: 0.4">(never enters task system)</div>
+          </div>
+          <p class="desc">
+            Self-care lives in <b>its own world</b>. Doing a practice just logs it — nothing lands
+            in Today/Week. Keeps the task list clean.
+          </p>
+          <div class="meta">
+            <div class="pro">+ Simplest; zero task-system coupling</div>
+            <div class="pro">+ Self-care never feels like a chore queue</div>
+            <div class="con">– Loses "put a walk on my calendar" scheduling</div>
+            <div class="con">– Diverges from the spec's "spawns a task"</div>
+            <div class="data">care_activities · care_events · no task link</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

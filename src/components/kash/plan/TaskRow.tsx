@@ -39,6 +39,12 @@ export type PlanTaskRow = {
   // sortOrder drives the phase-ramp dot color.
   phaseName?: string | null;
   phaseSortOrder?: number | null;
+  /** Virtual recurring occurrence (Phase 4). */
+  isRecurringOccurrence?: boolean;
+  recurrenceId?: string;
+  occurrenceDate?: string;
+  templateTaskId?: string;
+  recurringLabel?: string;
 };
 
 const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
@@ -143,6 +149,15 @@ export function TaskRow({
     })
   );
 
+  const completeOccurrenceMutation = useMutation(
+    trpc.recurrence.completeOccurrence.mutationOptions({
+      onSuccess: () => {
+        onComplete(task.id, null);
+        invalidatePlan();
+      },
+    })
+  );
+
   const updateMutation = useMutation(
     trpc.tasks.update.mutationOptions({
       onSuccess: () => {
@@ -155,6 +170,15 @@ export function TaskRow({
     })
   );
 
+  const skipOccurrenceMutation = useMutation(
+    trpc.recurrence.skipOccurrence.mutationOptions({
+      onSuccess: () => {
+        hide();
+        invalidatePlan();
+      },
+    })
+  );
+
   const deleteMutation = useMutation(
     trpc.tasks.delete.mutationOptions({
       onSuccess: (data) => {
@@ -164,6 +188,17 @@ export function TaskRow({
       },
     })
   );
+
+  const handleDelete = () => {
+    if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+      skipOccurrenceMutation.mutate({
+        recurrenceId: task.recurrenceId,
+        occurrenceDate: task.occurrenceDate,
+      });
+      return;
+    }
+    deleteMutation.mutate({ id: task.id });
+  };
 
   const saveTitle = () => {
     const trimmed = editTitle.trim();
@@ -182,6 +217,19 @@ export function TaskRow({
     updateMutation.mutate({ id: task.id, title: trimmed });
   };
 
+  const handleComplete = () => {
+    if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+      completeOccurrenceMutation.mutate({
+        recurrenceId: task.recurrenceId,
+        occurrenceDate: task.occurrenceDate,
+      });
+      return;
+    }
+    completeMutation.mutate({ id: task.id });
+  };
+
+  const isCompleting = completeMutation.isPending || completeOccurrenceMutation.isPending;
+
   const cancelEdit = () => {
     setEditing(false);
     setEditError(null);
@@ -189,6 +237,7 @@ export function TaskRow({
   };
 
   const startEdit = () => {
+    if (task.isRecurringOccurrence) return;
     hide();
     setEditTitle(task.title);
     setEditError(null);
@@ -239,7 +288,7 @@ export function TaskRow({
             className="glass-panel-opaque flex w-[4.5rem] items-center justify-center text-sm text-kash-ink-muted"
             onClick={(e) => {
               e.stopPropagation();
-              deleteMutation.mutate({ id: task.id });
+              handleDelete();
             }}
           >
             Delete
@@ -269,13 +318,23 @@ export function TaskRow({
             </span>
           ) : null}
 
+          {task.isRecurringOccurrence ? (
+            <span
+              className="mt-0.5 shrink-0 text-xs text-kash-ink-muted"
+              title="Recurring"
+              aria-label="Recurring task"
+            >
+              ↻
+            </span>
+          ) : null}
+
           <input
             type="checkbox"
             className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 accent-kash-accent"
             aria-label={`Complete ${task.title}`}
-            disabled={completeMutation.isPending}
+            disabled={isCompleting}
             onClick={(e) => e.stopPropagation()}
-            onChange={() => completeMutation.mutate({ id: task.id })}
+            onChange={handleComplete}
           />
 
           <div className="min-w-0 flex-1">

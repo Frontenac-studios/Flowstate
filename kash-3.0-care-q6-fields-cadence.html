@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Q6 — practice fields + cadence</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --surface: #fff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --border-subtle: #f4f4f4;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --accent: #16181d;
+        --bm: #3aaa35;
+        --bm-fill: #e9f6e8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f4f4;
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        padding: 28px 16px;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--ink-muted);
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      /* form mock */
+      .form {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+      }
+      .form .ft {
+        font-weight: 600;
+        font-size: 14px;
+        margin: 0 0 14px;
+      }
+      .field {
+        margin-bottom: 13px;
+      }
+      .lab {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-faint);
+        font-weight: 700;
+        margin-bottom: 5px;
+        display: block;
+      }
+      .inp {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 13.5px;
+        color: var(--ink);
+        background: #fff;
+      }
+      .inp.ph {
+        color: var(--ink-faint);
+      }
+      .req {
+        color: var(--bm);
+      }
+      .themes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .th {
+        font-size: 11.5px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 3px 9px;
+        color: var(--ink-muted);
+      }
+      .th.sel {
+        background: var(--bm);
+        color: #fff;
+        border-color: var(--bm);
+      }
+      .cad {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .save {
+        margin-top: 6px;
+        background: #16181d;
+        color: #fff;
+        border-radius: 8px;
+        padding: 9px;
+        text-align: center;
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      /* options */
+      .opts {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .opt {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .opt.rec {
+        border-color: var(--bm);
+        box-shadow: 0 0 0 1px var(--bm);
+      }
+      .opt .tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--bm);
+        letter-spacing: 0.04em;
+      }
+      .opt.rec .tag::after {
+        content: " · suggested";
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+      .opt h3 {
+        margin: 3px 0 6px;
+        font-size: 15px;
+      }
+      .opt p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--ink-muted);
+      }
+      .opt .ex {
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 7px;
+      }
+      @media (max-width: 720px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>What's on a practice — and does it carry a cadence?</h1>
+      <p class="sub">
+        Left: the "create your own" form (same fields a suggested practice has). Right: the one open
+        choice — whether a practice has an intended rhythm, and what that rhythm <i>does</i>.
+      </p>
+
+      <div class="layout">
+        <div class="form">
+          <p class="ft">Create a practice</p>
+          <div class="field">
+            <span class="lab">Title <span class="req">*</span></span>
+            <div class="inp ph">e.g. Evening walk with the dog</div>
+          </div>
+          <div class="field">
+            <span class="lab">Theme <span class="req">*</span></span>
+            <div class="themes">
+              <span class="th sel">Move</span><span class="th">Calm</span
+              ><span class="th">Connect</span><span class="th">Rest</span
+              ><span class="th">Nourish</span><span class="th">Reflect</span>
+            </div>
+          </div>
+          <div class="field">
+            <span class="lab">Note <span style="color: var(--ink-faint)">optional</span></span>
+            <div class="inp ph">why it helps / how to do it</div>
+          </div>
+          <div class="field">
+            <span class="lab">Cadence <span style="color: var(--ink-faint)">optional</span></span>
+            <div class="cad">
+              <span class="th sel">Most days</span><span class="th">Daily</span
+              ><span class="th">Weekly</span><span class="th">When needed</span>
+            </div>
+          </div>
+          <div class="save">Save practice</div>
+        </div>
+
+        <div class="opts">
+          <div class="opt">
+            <div class="tag">OPTION 1</div>
+            <h3>No cadence — title + theme only</h3>
+            <p>
+              Practices are just named acts. You check them off whenever. Simplest possible model.
+            </p>
+            <p class="ex">Drop the Cadence field entirely.</p>
+          </div>
+          <div class="opt rec">
+            <div class="tag">OPTION 2</div>
+            <h3>Soft cadence label</h3>
+            <p>
+              An optional rhythm shown as a gentle hint under the practice ("most days"). Purely
+              descriptive — never nags, never scores.
+            </p>
+            <p class="ex">
+              Stores a label; powers display only. Sets up "what lifts me" later (option B) without
+              committing now.
+            </p>
+          </div>
+          <div class="opt">
+            <div class="tag">OPTION 3</div>
+            <h3>Cadence that pre-fills scheduling</h3>
+            <p>
+              The same field, but when you "Add to my day," the cadence pre-fills the repeat rule (a
+              "daily" practice → a daily repeat) via your recurrence engine.
+            </p>
+            <p class="ex">
+              Most reuse of the spine; a touch more wiring. Still just a default you can override.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

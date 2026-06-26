@@ -79,6 +79,69 @@ CREATE INDEX IF NOT EXISTS task_dependencies_blocked_idx ON task_dependencies (u
 CREATE INDEX IF NOT EXISTS task_dependencies_blocker_idx ON task_dependencies (user_id, blocker_task_id);
 CREATE INDEX IF NOT EXISTS task_dependencies_user_id_updated_at_idx ON task_dependencies (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS task_recurrence (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  rrule TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS task_recurrence_task_id_idx ON task_recurrence (task_id);
+CREATE INDEX IF NOT EXISTS task_recurrence_user_id_updated_at_idx ON task_recurrence (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS task_occurrence_overrides (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  recurrence_id TEXT NOT NULL REFERENCES task_recurrence(id) ON DELETE CASCADE,
+  occurrence_date TEXT NOT NULL,
+  status TEXT NOT NULL,
+  moved_to_date TEXT,
+  patch TEXT,
+  completed_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS task_occurrence_overrides_recurrence_date_idx
+  ON task_occurrence_overrides (recurrence_id, occurrence_date);
+CREATE INDEX IF NOT EXISTS task_occurrence_overrides_user_id_updated_at_idx
+  ON task_occurrence_overrides (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS protected_block_templates (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  iso_weekday INTEGER NOT NULL,
+  label TEXT,
+  start_min INTEGER,
+  end_min INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS protected_block_templates_user_id_updated_at_idx
+  ON protected_block_templates (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS protected_block_templates_user_id_iso_weekday_idx
+  ON protected_block_templates (user_id, iso_weekday);
+
+CREATE TABLE IF NOT EXISTS protected_blocks (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  scheduled_date TEXT NOT NULL,
+  label TEXT,
+  start_min INTEGER,
+  end_min INTEGER,
+  template_id TEXT REFERENCES protected_block_templates(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'confirmed',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS protected_blocks_user_id_scheduled_date_idx
+  ON protected_blocks (user_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS protected_blocks_user_id_updated_at_idx
+  ON protected_blocks (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS focus_blocks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
@@ -194,6 +257,108 @@ CREATE TABLE IF NOT EXISTS chat_custom_suggestions (
 CREATE UNIQUE INDEX IF NOT EXISTS chat_custom_suggestions_user_id_normalized_text_idx
   ON chat_custom_suggestions (user_id, normalized_text);
 
+CREATE TABLE IF NOT EXISTS bingo_cards (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  card_year INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  finalized_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS bingo_cards_user_id_card_year_idx ON bingo_cards (user_id, card_year);
+CREATE INDEX IF NOT EXISTS bingo_cards_user_id_updated_at_idx ON bingo_cards (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS goals (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  bingo_card_id TEXT REFERENCES bingo_cards(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  obligation_desire TEXT,
+  value_id TEXT,
+  target_horizon TEXT,
+  target_year INTEGER,
+  target_quarter INTEGER,
+  target_month INTEGER,
+  project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+  cell_index INTEGER,
+  state TEXT NOT NULL DEFAULT 'active',
+  completed_at INTEGER,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS goals_user_id_updated_at_idx ON goals (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS goals_bingo_card_id_idx ON goals (bingo_card_id);
+CREATE UNIQUE INDEX IF NOT EXISTS goals_bingo_card_cell_idx ON goals (bingo_card_id, cell_index);
+
+CREATE TABLE IF NOT EXISTS goal_milestones (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS goal_milestones_goal_id_idx ON goal_milestones (goal_id);
+CREATE INDEX IF NOT EXISTS goal_milestones_user_id_updated_at_idx ON goal_milestones (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS quarter_themes (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  quarter INTEGER NOT NULL,
+  phrase TEXT,
+  focus_categories TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS quarter_themes_user_year_quarter_idx ON quarter_themes (user_id, year, quarter);
+CREATE INDEX IF NOT EXISTS quarter_themes_user_id_updated_at_idx ON quarter_themes (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS month_intentions (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  text TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS month_intentions_user_year_month_category_idx
+  ON month_intentions (user_id, year, month, category);
+CREATE INDEX IF NOT EXISTS month_intentions_user_id_updated_at_idx ON month_intentions (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS reserved_days (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  label TEXT,
+  resolved_date TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS reserved_days_user_year_month_idx ON reserved_days (user_id, year, month);
+CREATE INDEX IF NOT EXISTS reserved_days_user_id_updated_at_idx ON reserved_days (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS planning_suggestions (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  surface TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS planning_suggestions_user_surface_status_idx
+  ON planning_suggestions (user_id, surface, status);
+CREATE INDEX IF NOT EXISTS planning_suggestions_user_id_updated_at_idx ON planning_suggestions (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,
@@ -218,6 +383,8 @@ CREATE TABLE IF NOT EXISTS sync_watermarks (
 const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: string }> = [
   { table: "tasks", column: "category", definition: "TEXT" },
   { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
+  { table: "tasks", column: "milestone_id", definition: "TEXT" },
+  { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },
   { table: "app_settings", column: "last_used_category", definition: "TEXT" },
 ];
 

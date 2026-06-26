@@ -2,30 +2,32 @@
 
 > Paste/adapt into Claude Design → **Create design system**. Grounded in decisions made so far. **Three items aren't finalized yet** (flagged below) — set them however you like in the tool; everything else is settled.
 
-## Not yet finalized (your call)
+## Direction — black-and-white (revised Jun 24)
 
-- **Aesthetic:** hybrid (flat content surfaces + glass chrome) vs full glass vs fully flat. _Leaning hybrid._
-- **Global accent:** soften the current hot-pink (`#ff2d55`) to a calmer neutral so the category colors lead.
-- **Light/dark:** both, with a calmer night palette, vs light-first.
+- **Aesthetic: pure black-and-white, flat.** No glass, no blur, no warm-stone gray. Pure white surfaces, crisp near-black ink, generous whitespace — Pinterest-clean. **Color is reserved entirely for life-category meaning** (a thin left stripe).
+- **Accent: black** (`#16181d`). **No brand color.** Primary buttons are **outline** (black border, no fill); the active nav item is a black pill.
+- **Light-first.** The Abyss is a deliberate **dark** exception; the Care garden a **lush illustrative** exception.
 
 ## Brand & neutrals
 
-- **Backdrop:** warm stone, ~`#EEEEEE` — calm, low-contrast.
-- **Ink:** `#1A1D26`. **Muted ink:** `#5C6370`.
-- **Surfaces:** translucent glass for _chrome_ (nav rail, header, chat rail, modals); flat opaque white for _dense content_ (lists, calendars, boards) — legibility first.
-- **Accent:** proposed to soften from `#ff2d55` (TBD).
+- **Surfaces:** `#ffffff` (pure white) everywhere; **hairline borders** `#ececec`. Minimal gray.
+- **Ink:** `#16181d` (near-black). **Muted:** `#6b7280`. **Faint:** `#9aa0ad`.
+- **Accent:** black `#16181d` — outline buttons, active nav, links. (No hot-pink, no graphite.)
+- Depth comes from whitespace + hairline borders, **not** shadow or glass.
 
 ## Life-category colors — the core palette
 
 Used everywhere as left stripes, chips, and balance bars. User-editable in-app; these are the defaults.
 
+_The Apple system hexes (matches the built tokens). Used mainly as a 3px left stripe per task row; the app is otherwise black-and-white._
+
 | Category          | Stripe / solid | Light fill | Dark text |
 | ----------------- | -------------- | ---------- | --------- |
-| Professional      | `#378ADD`      | `#E6F1FB`  | `#185FA5` |
-| Personal Projects | `#7F77DD`      | `#EEEDFE`  | `#534AB7` |
-| Relationships     | `#D4537E`      | `#FBEAF0`  | `#993556` |
-| Adulting          | `#BA7517`      | `#FAEEDA`  | `#854F0B` |
-| Body & Mind       | `#1D9E75`      | `#E1F5EE`  | `#0F6E56` |
+| Professional      | `#009ddc`      | `#e5f5fc`  | `#0a6a93` |
+| Personal Projects | `#973d97`      | `#f4e8f4`  | `#6e2c6e` |
+| Relationships     | `#e03a3e`      | `#fce8e9`  | `#962427` |
+| Adulting          | `#f6821f`      | `#fdeede`  | `#9a4e08` |
+| Body & Mind       | `#61bb47`      | `#ecf6e8`  | `#3a7026` |
 
 ## Typography
 

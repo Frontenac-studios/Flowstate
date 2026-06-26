@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Today §6 · Q1 — Calendar window + auto-scroll</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --gray-pill: #eceef0;
+        /* Apple category hexes */
+        --c-pro: #0a84ff; /* Professional */
+        --c-proj: #af52de; /* Personal Projects */
+        --c-rel: #ff2d55; /* Relationships */
+        --c-adult: #ff9500; /* Adulting */
+        --c-body: #34c759; /* Body & Mind */
+        --now: #16181d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 22px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        max-width: 1180px;
+      }
+      @media (max-width: 1000px) {
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .card h2 {
+        font-size: 13px;
+        margin: 0;
+        padding: 13px 14px 4px;
+        letter-spacing: -0.01em;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0 14px 9px;
+      }
+      .body {
+        padding: 0 14px 14px;
+        color: var(--muted);
+        font-size: 12px;
+        border-top: 1px solid var(--hair2);
+        margin-top: 6px;
+        padding-top: 11px;
+      }
+      .body b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .pros {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 11.5px;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 15px;
+        margin: 3px 0;
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+
+      /* timeline mock */
+      .tl {
+        position: relative;
+        margin: 10px 14px 0;
+        border-left: 1px solid var(--hair);
+        height: 300px;
+        overflow: hidden;
+      }
+      .tl.scrollish {
+        box-shadow:
+          inset 0 -14px 12px -12px rgba(0, 0, 0, 0.12),
+          inset 0 14px 12px -12px rgba(0, 0, 0, 0.12);
+      }
+      .hr {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 1px dashed var(--hair2);
+        height: 0;
+      }
+      .hr span {
+        position: absolute;
+        left: -2px;
+        top: -7px;
+        font-size: 9px;
+        color: var(--faint);
+        background: var(--surface);
+        padding: 0 4px;
+        transform: translateX(-100%);
+        left: auto;
+        right: calc(100% - 30px);
+      }
+      .htick {
+        position: absolute;
+        left: 6px;
+        font-size: 9px;
+        color: var(--faint);
+      }
+      .blk {
+        position: absolute;
+        left: 34px;
+        right: 8px;
+        border-radius: 6px;
+        background: #fafbfc;
+        border: 1px solid var(--hair);
+        padding: 4px 7px;
+        font-size: 10.5px;
+        color: var(--ink);
+        border-left-width: 3px;
+        overflow: hidden;
+      }
+      .blk small {
+        color: var(--faint);
+        font-size: 9px;
+        display: block;
+      }
+      .pro {
+        border-left-color: var(--c-pro);
+      }
+      .proj {
+        border-left-color: var(--c-proj);
+      }
+      .rel {
+        border-left-color: var(--c-rel);
+      }
+      .adult {
+        border-left-color: var(--c-adult);
+      }
+      .body2 {
+        border-left-color: var(--c-body);
+      }
+      .nowline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 0;
+        border-top: 2px solid var(--now);
+      }
+      .nowline::after {
+        content: "now 2:15";
+        position: absolute;
+        right: 6px;
+        top: -14px;
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--now);
+      }
+      .nowline::before {
+        content: "";
+        position: absolute;
+        left: -4px;
+        top: -3px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--now);
+      }
+      .winband {
+        position: absolute;
+        left: 34px;
+        right: 8px;
+        border: 1px dashed var(--faint);
+        border-radius: 6px;
+        background: rgba(10, 132, 255, 0.04);
+      }
+      .winlbl {
+        position: absolute;
+        right: 10px;
+        font-size: 9px;
+        color: var(--faint);
+        font-style: italic;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        max-width: 1180px;
+        margin: 18px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      .note {
+        max-width: 1180px;
+        margin: 20px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--hair);
+        padding-top: 14px;
+      }
+      .note b {
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Today §6 · Q1 — Default Calendar window + auto-scroll to “now”</h1>
+    <p class="sub">
+      The Calendar view is a <b>living record</b> — it fills as the day happens. Question: what
+      hours does it show by default, and where does it sit when you open it? (4 window options
+      below; auto-scroll is a paired toggle — see note.)
+    </p>
+
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <h2>A · Fixed 7am–9pm</h2>
+        <span class="tag">14h · predictable</span>
+        <div class="tl">
+          <div class="htick" style="top: 2px">7a</div>
+          <div class="htick" style="top: 104px">12p</div>
+          <div class="htick" style="top: 208px">5p</div>
+          <div class="htick" style="top: 288px">9p</div>
+          <div class="blk pro" style="top: 46px; height: 34px">Standup <small>✓ 22m</small></div>
+          <div class="blk proj" style="top: 120px; height: 46px">
+            Deep work <small>● 45m focus</small>
+          </div>
+          <div class="nowline" style="top: 158px"></div>
+          <div class="blk adult" style="top: 230px; height: 26px">Renew reg.</div>
+        </div>
+        <div class="body">
+          Same frame every day. Whole work-span visible without scrolling on most days.
+          <ul class="pros">
+            <li class="y">Stable mental map — blocks never jump scale</li>
+            <li class="y">No scroll on a normal day</li>
+            <li class="n">Early-riser / night-owl work falls outside the frame</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="card">
+        <h2>B · Fixed 6am–midnight</h2>
+        <span class="tag">18h · generous</span>
+        <div class="tl scrollish">
+          <div class="htick" style="top: 2px">6a</div>
+          <div class="htick" style="top: 80px">11a</div>
+          <div class="htick" style="top: 150px">3p</div>
+          <div class="htick" style="top: 230px">8p</div>
+          <div class="htick" style="top: 288px">12a</div>
+          <div class="blk body2" style="top: 24px; height: 24px">Walk <small>✓ 18m</small></div>
+          <div class="blk pro" style="top: 70px; height: 30px">Standup</div>
+          <div class="blk proj" style="top: 120px; height: 40px">Deep work</div>
+          <div class="nowline" style="top: 150px"></div>
+          <div class="blk rel" style="top: 250px; height: 28px">Call mum</div>
+        </div>
+        <div class="body">
+          Captures everything from dawn workouts to late sessions.
+          <ul class="pros">
+            <li class="y">Nothing ever falls outside the frame</li>
+            <li class="n">Taller — more scroll; blocks render smaller</li>
+            <li class="n">Empty pre-dawn / late hours waste space</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="card">
+        <h2>C · Adaptive fit</h2>
+        <span class="tag">content-driven · grows</span>
+        <div class="tl">
+          <div class="winband" style="top: 20px; bottom: 30px"></div>
+          <div class="winlbl" style="top: 6px">fits 8:40a→</div>
+          <div class="htick" style="top: 24px">8:40a</div>
+          <div class="htick" style="top: 150px">1p</div>
+          <div class="htick" style="top: 262px">now</div>
+          <div class="blk pro" style="top: 40px; height: 40px">Standup <small>✓ 22m</small></div>
+          <div class="blk proj" style="top: 120px; height: 60px">
+            Deep work <small>● focus</small>
+          </div>
+          <div class="nowline" style="top: 248px"></div>
+        </div>
+        <div class="body">
+          Window = earliest event → latest block (+ padding). Expands as the day fills.
+          <ul class="pros">
+            <li class="y">Zero wasted space; blocks always large/legible</li>
+            <li class="n">Scale shifts as blocks land — can feel unstable</li>
+            <li class="n">Early-morning empty day looks oddly zoomed-in</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="card">
+        <h2>D · Now-anchored</h2>
+        <span class="tag">rolling · −2h → EOD</span>
+        <div class="tl scrollish">
+          <div class="winlbl" style="top: 6px">past compressed ↑</div>
+          <div class="htick" style="top: 2px">12:15</div>
+          <div class="htick" style="top: 60px">1:15</div>
+          <div class="htick" style="top: 150px">now</div>
+          <div class="htick" style="top: 240px">4p</div>
+          <div class="htick" style="top: 288px">9p</div>
+          <div class="blk proj" style="top: 26px; height: 34px; opacity: 0.55">
+            Deep work <small>✓ 45m</small>
+          </div>
+          <div class="nowline" style="top: 150px"></div>
+          <div class="blk adult" style="top: 200px; height: 26px">Renew reg.</div>
+          <div class="blk rel" style="top: 250px; height: 26px">Call mum</div>
+        </div>
+        <div class="body">
+          Opens centered on now (≈last 2h + rest of day); morning is scrolled-up/condensed.
+          <ul class="pros">
+            <li class="y">“What now / next” is always front-and-center</li>
+            <li class="y">Minimal scrolling — a glance answers the live question</li>
+            <li class="n">Loses the whole-day overview at a glance</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background: var(--c-pro)"></i>Professional</span>
+      <span><i style="background: var(--c-proj)"></i>Personal Projects</span>
+      <span><i style="background: var(--c-rel)"></i>Relationships</span>
+      <span><i style="background: var(--c-adult)"></i>Adulting</span>
+      <span><i style="background: var(--c-body)"></i>Body &amp; Mind</span>
+    </div>
+
+    <p class="note">
+      <b>Paired toggle — auto-scroll to “now”:</b> independent of the window choice. For a living
+      record that updates through the day, opening already parked at the current time (so the next
+      thing is in view) is the natural default. A &amp; B especially benefit (they have off-screen
+      hours); C &amp; D effectively bake it in.
+      <b>Recommend: auto-scroll ON, with a “jump to now” affordance if you scroll away.</b> You
+      decide.
+    </p>
+  </body>
+</html>

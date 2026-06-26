@@ -5,22 +5,26 @@
 > hand it to a build session to replace the legacy `kash-*` glass tokens in `src/styles/glass.css`
 >
 > - `tailwind.config.ts`. Companions: `kash-3.0-plan.md` (§5), `kash-3.0-build-breakdown.md` (§5).
+>
+> **⚠ REVISED Jun 24 — black-and-white redesign.** The original "flat-calm" palette read **too gray**. This doc now reflects the B&W direction (see `kash-3.0-visual-redesign.md`): **pure white** surfaces, near-black ink `#16181d`, hairline borders, **accent = black** with **outline** primary buttons — no gray backdrop, no graphite. Color stays reserved for categories (the Apple hexes in §2.2), shown as a 3px left stripe. The Abyss (dark) and Care garden (lush) remain deliberate exceptions.
 
 ---
 
 ## 0. Decision log
 
-| #     | Decision         | Choice                                                                                                                                  |
-| ----- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| DT-1  | Aesthetic        | **Flat calm** — solid surfaces, no glassmorphism/blur                                                                                   |
-| DT-2  | Accent           | **Neutral graphite** — all saturation reserved for category meaning                                                                     |
-| DT-3  | Category palette | **Apple set**: Blue=Professional · Purple=Personal Projects · Red=Relationships · Orange=Adulting · Green=Body & Mind · Yellow reserved |
-| DT-3b | Semantics        | **Icon-led + graphite**; color used only for genuinely critical alerts                                                                  |
-| DT-4  | Theming          | **Light only** for v1; tokens structured so a dark theme drops in later without rework                                                  |
-| DT-5a | Density          | **Compact** (~30px rows, 13px base text)                                                                                                |
-| DT-5b | Typeface         | **Figtree**                                                                                                                             |
-| DT-5c | Surface finish   | **Crisp + structured** — 8px cards / 5px rows, firm border, no shadow (one shadow token for overlays only)                              |
-| DT-6  | Components       | Canonical inventory locked (24 components, ~13 net-new) — see §7                                                                        |
+| #     | Decision           | Choice                                                                                                                                                                                                                           |
+| ----- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DT-1  | Aesthetic          | **Black-and-white, flat** (revised Jun 24) — pure white surfaces, near-black ink, hairline borders, no glass/gray-backdrop                                                                                                       |
+| DT-2  | Accent             | **Black** `#16181d` (revised Jun 24, was graphite) — **outline** primary buttons; all saturation reserved for category meaning                                                                                                   |
+| DT-3  | Category palette   | **Kash category set** (curated hexes — _not_ Apple's iOS system colors, despite "Apple" in older docs): Blue=Professional · Purple=Personal Projects · Red=Relationships · Orange=Adulting · Green=Body & Mind · Yellow reserved |
+| DT-3b | Semantics          | **Icon-led + graphite**; color used only for genuinely critical alerts                                                                                                                                                           |
+| DT-4  | Theming            | **Light only** for v1; tokens structured so a dark theme drops in later without rework                                                                                                                                           |
+| DT-5a | Density            | **Compact** (~30px rows, 13px base text)                                                                                                                                                                                         |
+| DT-5b | Typeface           | **Figtree**                                                                                                                                                                                                                      |
+| DT-5c | Surface finish     | **Crisp + structured** — 8px cards / 5px rows, firm border, no shadow (one shadow token for overlays only)                                                                                                                       |
+| DT-6  | Components         | Canonical inventory locked (24 components, ~13 net-new) — see §7                                                                                                                                                                 |
+| DT-7  | Active states      | **Soft unified gray** `--active-surface` #eceef1 (nav pill · segmented track · Week gray); white pill/today-column raised **border-only, no shadow** (Jun 25)                                                                    |
+| DT-8  | Project-mode color | Multi-project calendar project-mode **cycles the existing 6 category hexes** (no new hues); explicit toggle relabels color "project," legend required (Jun 25)                                                                   |
 
 ---
 
@@ -42,31 +46,55 @@ only saturated thing on screen**, so the eye goes straight to "which life area."
 
 ```css
 :root {
-  /* surfaces */
-  --bg: #f5f6f8; /* app backdrop */
+  /* surfaces — pure white, minimal gray (B&W redesign, Jun 24) */
+  --bg: #ffffff; /* app backdrop — WHITE, not the old gray #f5f6f8 */
   --surface: #ffffff; /* cards, panels */
-  --surface-2: #f7f8fa; /* row fill, inset */
-  /* borders (firm, per DT-5c) */
-  --border: #dcdfe5; /* default firm border */
-  --border-subtle: #e7e9ee; /* dividers, low-emphasis */
-  /* ink */
-  --ink: #1f2430; /* primary text */
+  --surface-2: #fafafa; /* subtle inset only */
+  /* borders — hairline, not firm */
+  --border: #ececec; /* hairline border */
+  --border-subtle: #f4f4f4; /* low-emphasis dividers */
+  /* ink — crisp near-black */
+  --ink: #16181d; /* primary text */
   --ink-muted: #6b7280; /* secondary text, meta */
   --ink-faint: #9aa0ad; /* hints, disabled */
-  /* accent = graphite (DT-2) */
-  --accent: #2b3140; /* primary buttons, active, links */
-  --accent-hover: #3a4150;
+  /* accent = BLACK (DT-2 revised — black, not graphite) */
+  --accent: #16181d; /* active nav (black pill), links */
+  --accent-hover: #000000;
   --on-accent: #ffffff;
-  --focus-ring: rgba(43, 49, 64, 0.35);
+  /* NOTE: primary buttons are OUTLINE — border 1.5px var(--ink), no fill, ink text */
+  --focus-ring: rgba(22, 24, 29, 0.35);
+
+  /* active states (A2, decided Jun 25) — soft unified gray, strictly flat (border only) */
+  --active-surface: #eceef1; /* nav active pill · segmented track · Week gray background */
+  --active-raised: #ffffff; /* inset white pill · Week "today" column — raised, not filled */
+  --active-raised-border: #e2e4e8; /* hairline that sells the raised pill; NO shadow (kept flat) */
 }
 ```
 
+> **`--ink-faint` AA caveat (Jun 25):** `#9aa0ad` is 2.62:1 on white — **below AA for text.** Use it only
+> for genuinely disabled / decorative text (WCAG-exempt); never for information a user must read.
+
+> **Active states render flat:** the white pill / today-column read as "raised" purely via
+> `--active-raised-border` against `--active-surface` — no shadow (DT-5c flat-elevation rule preserved;
+> `--shadow-overlay` stays overlay-only).
+
 ### 2.2 Category palette (DT-3)
 
-Five life areas mapped to the Apple set. Each category exposes three tokens: a **fill** (light tint
-for pills / selected backgrounds), a **solid** (the stripe, dot, balance-bar segment — the Apple hex),
-and **text** (a darkened shade for text on the fill, meeting AA on the light fill). Yellow is reserved
-(not a category) for status/highlight use.
+Five life areas mapped to the **Kash category set** (the canonical hexes below — informally "Apple hexes"
+in earlier docs, but these are a curated set, not Apple's iOS system palette). Each category exposes three
+tokens: a **fill** (light tint for pills / selected backgrounds), a **solid** (the stripe, dot, balance-bar
+segment — the category hex), and **text** (a darkened shade for text on the fill, meeting AA on the light
+fill). Yellow is reserved (not a category) for status/highlight use.
+
+> **Canonical hexes (do not substitute):** Professional `#009ddc` · Personal Projects `#973d97` ·
+> Relationships `#e03a3e` · Adulting `#f6821f` · Body & Mind `#61bb47`. These match the built tokens.
+> _(Mockups that used iOS system hexes like `#0A84FF` are off-palette.)_
+
+> **AA notes (verified Jun 25):** All five `-text`/`-fill` pairs pass WCAG AA (5.3–7.9:1). **Caveat:**
+> the Adulting (`#f6821f`, 2.58:1) and Body & Mind (`#61bb47`, 2.41:1) **solids** fall below the 3:1
+> non-text threshold against white — acceptable only because a category mark is _always_ paired with a
+> text label (color is never the sole signal). If a future surface shows a category by color alone,
+> darken those two solids there.
 
 ```css
 :root {
@@ -99,19 +127,33 @@ and **text** (a darkened shade for text on the fill, meeting AA on the light fil
 
 Enum mapping (the DB `project_category` values → tokens):
 
-| Enum value      | Category          | Token prefix            |
-| --------------- | ----------------- | ----------------------- |
-| `professional`  | Professional      | `--cat-professional-*`  |
-| `personal`\*    | Personal Projects | `--cat-personal-*`      |
-| `relationships` | Relationships     | `--cat-relationships-*` |
-| `adulting`      | Adulting          | `--cat-adulting-*`      |
-| `body_mind`     | Body & Mind       | `--cat-body-mind-*`     |
+| Enum value          | Category          | Token prefix            |
+| ------------------- | ----------------- | ----------------------- |
+| `professional`      | Professional      | `--cat-professional-*`  |
+| `personal_projects` | Personal Projects | `--cat-personal-*`      |
+| `relationships`     | Relationships     | `--cat-relationships-*` |
+| `adulting`          | Adulting          | `--cat-adulting-*`      |
+| `body_mind`         | Body & Mind       | `--cat-body-mind-*`     |
 
-\* confirm the exact existing enum value for Personal Projects against `src/db/schema/projects.ts`.
+_Enum verified Jun 25 against `src/db/schema/projects.ts`: `["professional", "personal_projects", "relationships", "body_mind", "adulting"]`. Note the token prefix is `--cat-personal-*` while the enum value is `personal_projects` — the build must map enum → prefix, not assume they're identical._
 
 The `category-settings` table already stores a per-category `color` override (Phase 1, decision 1.2).
 These tokens are the **defaults**; user overrides replace `--cat-*-solid` at runtime, with fill/text
 derived from it.
+
+### 2.2b Multi-project calendar — project-mode coloring (A1, decided Jun 25)
+
+The multi-project calendar (§9) has a **category ⇄ project** color toggle, default **category**. In
+**project-mode** it does **not** introduce new hues — it **cycles the existing six** `--cat-*-solid` +
+`--reserved-yellow-solid` values to distinguish projects. Because the mode is an explicit toggle, color is
+**relabeled** "project, not category" while it's active. Requirements:
+
+- The toggle's **active state must be unmistakable** (so a blue bar isn't misread as "Professional"), and
+  project-mode shows a **legend**.
+- The cycle **repeats after 6 projects** (7th reuses the first hex) — disambiguated by the row label.
+- _No new color tokens are added_; project-mode is purely a re-mapping of the existing palette.
+- _Rejected:_ tertiary/new hues (the wheel is already claimed), neutral value/pattern ramps, and
+  category-hue-plus-tint (the user chose maximal distinctness via the known palette).
 
 ### 2.3 Semantics (DT-3b)
 
@@ -120,11 +162,16 @@ Color appears only for genuinely critical alerts.
 
 ```css
 :root {
+  --crimson: #b3122a; /* single source — deep crimson, distinct from --cat-relationships-solid */
   --status-ink: var(--ink); /* default status text */
   --status-icon: var(--ink-muted); /* success/info/neutral icons */
-  --status-critical: #b3122a; /* deep crimson — reserved, distinct from --cat-relationships-solid */
+  --status-critical: var(--crimson); /* irreversible-danger / hard errors only */
 }
 ```
+
+> **One crimson, aliased (DRY fix, Jun 25):** `--crimson` is the single literal; `--status-critical`,
+> `--priority-high`, and `--due-overdue` (§7.5) all reference `var(--crimson)` — never re-hardcode `#b3122a`.
+> This is the VF4-R1 "one crimson" rule made literal.
 
 - Success / info / warning: icon + graphite text on `--surface`/`--surface-2`. No fill color.
 - Destructive actions: graphite button + trash icon (not red).
@@ -171,7 +218,7 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 
 ## 5. Spacing, radius, elevation, density
 
-### 5.1 Spacing — 4px grid
+### 5.1 Spacing — 2px-base grid
 
 ```css
 :root {
@@ -238,11 +285,12 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 Canonical token-consuming components. ⬛ = exists in code · 🆕 = net-new.
 
 **Core task surface** — `TaskRow` ⬛ · `Top3Slot` ⬛ · `FocusBlock` ⬛(partial)
-**Category system** — `CategoryStripe` ⬛ · `CategoryDot` ⬛ · `CategoryBadge` ⬛ · `BalanceBar` 🆕
+**Category system** — `CategoryStripe` ⬛ · `CategoryDot` ⬛ · `CategoryBadge` ⬛ · `BalanceBar` 🆕 (Today; planned-population, Top-3-weighted, lopsided-warning state, empty-category hatch; built to swap to time-based later)
 **Inputs & controls** — `Composer` ⬛ · `Button` set 🆕 (graphite primary, ghost, icon-led destructive) · `Chip`/filter 🆕 · `LensControlBar` 🆕 (VF-2)
-**Containers & nav** — `Card`/`Panel` ⬛ (glass→flat) · `InPageSwitcher` ⬛ · `NavRailItem` ⬛ · `CommandPaletteRow` ⬛
-**Overlays & feedback** — `Modal`/`Popover`/`Menu` ⬛(partial; gets `--shadow-overlay`) · `Toast` 🆕 (icon-led) · `InlineValidation` 🆕 · `Tooltip` 🆕
-**Data-viz & states** — `HeatmapCell` 🆕 · `ProgressBar` 🆕 · `EmptyState` 🆕 · `LoadingSkeleton` 🆕 · `ErrorState` 🆕
+**Containers & nav** — `Card`/`Panel` ⬛ (glass→flat) · `InPageSwitcher` ⬛ (uses `--active-surface` track + `--active-raised` pill) · `NavRailItem` ⬛ (active = `--active-surface` pill) · `CommandPaletteRow` ⬛
+**Overlays & feedback** — `Modal`/`Popover`/`Menu` ⬛(partial; gets `--shadow-overlay`) · `Toast` 🆕 (icon-led) · `InlineValidation` 🆕 · `Tooltip` 🆕 · `ReviewNudgeChip` 🆕 (soft dismissible EoD/EoW chip, never auto-opens)
+**Data-viz & states** — `HeatmapCell` 🆕 · `ProgressBar` 🆕 (project/phase % progress = weighted task-weight ratio) · `EmptyState` 🆕 · `LoadingSkeleton` 🆕 · `ErrorState` 🆕
+**Today/Week additions (Jun 25)** — `CompletionMarker` 🆕 (untimed-task tick on the Calendar) · `AllDayProtectedChip` ⬛ (timeless protected block pinned above the timeline; built) · `ProtectedBlockChip` ⬛ (Week column placeholder; built) · `ColumnTallyPopover` 🆕 (Week per-day category tally on hover/tap) · `OverCommitFlag` 🆕 (gentle non-blocking day-overload warning) · `EstimateConfidence` 🆕 ("learning…" state until n≈3 samples) · `WindDownSetting` 🆕 (single wind-down time → EoD nudge + Top-3 deadline)
 
 ---
 
@@ -268,20 +316,20 @@ collides with category color (which owns saturation for _meaning_). Principle: l
 
 **Priority pips** (always 1/2/3 dots; `--priority-*`):
 
-| Level | Dots | Token             | Value             |
-| ----- | ---- | ----------------- | ----------------- |
-| None  | —    | (reserved width)  | —                 |
-| Low   | 1    | `--priority-low`  | `#c2c6cd`         |
-| Med   | 2    | `--priority-med`  | `#8a909b`         |
-| High  | 3    | `--priority-high` | crimson `#b3122a` |
+| Level | Dots | Token             | Value            |
+| ----- | ---- | ----------------- | ---------------- |
+| None  | —    | (reserved width)  | —                |
+| Low   | 1    | `--priority-low`  | `#c2c6cd`        |
+| Med   | 2    | `--priority-med`  | `#8a909b`        |
+| High  | 3    | `--priority-high` | `var(--crimson)` |
 
 **Due label** (trailing; suppressed on day-grouped surfaces; `--due-*`):
 
-| State            | Token           | Treatment                      |
-| ---------------- | --------------- | ------------------------------ |
-| Overdue          | `--due-overdue` | crimson label **+ bold title** |
-| Today / tomorrow | `--due-soon`    | graphite **bold** label        |
-| Beyond tomorrow  | `--due-future`  | muted (`--ink-faint`)          |
+| State            | Token                                | Treatment                      |
+| ---------------- | ------------------------------------ | ------------------------------ |
+| Overdue          | `--due-overdue` (`= var(--crimson)`) | crimson label **+ bold title** |
+| Today / tomorrow | `--due-soon`                         | graphite **bold** label        |
+| Beyond tomorrow  | `--due-future`                       | muted (`--ink-faint`)          |
 
 **Implementation (built on `feat/design-tokens`):**
 `src/lib/tasks/priority.ts` dot ramp → `bg-[var(--priority-*)]`; `src/lib/dates/format-relative-due.ts`
@@ -293,7 +341,7 @@ emphasis = `danger` (overdue) / `soon` (today+tomorrow) / `muted`, adds `"tomorr
 ## 8. Draftable (derivable, no decision needed)
 
 - Per-category fill/text values above are computed defaults — fine-tune for AA contrast during build.
-- Exact spacing applied per component (paddings/gaps) — derive from the 4px grid.
+- Exact spacing applied per component (paddings/gaps) — derive from the 2px-base grid.
 - Hover/active/disabled state values for `Button`/`Chip` — derive from `--accent` / `--ink` with alpha.
 - Focus-ring width + offset — 2px ring at `--focus-ring`, 2px offset.
 

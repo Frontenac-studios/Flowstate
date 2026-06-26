@@ -11,6 +11,8 @@ import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/con
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
 import { useTRPC } from "@/trpc/client";
 
+import ProtectedBlockChip from "@/components/kash/plan/week/ProtectedBlockChip";
+
 const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
 
@@ -248,10 +250,18 @@ export function TimelinePane() {
   );
 
   const { data: blocks = [] } = useQuery(trpc.focusBlocks.listForDate.queryOptions({ date }));
+  const { data: protectedBlocks = [] } = useQuery(
+    trpc.protectedBlocks.listForDate.queryOptions({ date })
+  );
+
+  const allDayProtected = protectedBlocks.filter((b) => b.startMin == null);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({
       queryKey: trpc.focusBlocks.listForDate.queryKey({ date }),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: trpc.protectedBlocks.listForDate.queryKey({ date }),
     });
   };
 
@@ -263,6 +273,10 @@ export function TimelinePane() {
   );
   const resizeMutation = useMutation(
     trpc.focusBlocks.resize.mutationOptions({ onSuccess: invalidate })
+  );
+
+  const removeProtectedMutation = useMutation(
+    trpc.protectedBlocks.remove.mutationOptions({ onSuccess: invalidate })
   );
 
   const laidOut = layoutBlocks(blocks as Block[]).filter(
@@ -292,6 +306,18 @@ export function TimelinePane() {
           sync ○ off
         </span>
       </header>
+
+      {allDayProtected.length > 0 ? (
+        <ul className="mb-3 space-y-1.5" aria-label="Protected time today">
+          {allDayProtected.map((block) => (
+            <ProtectedBlockChip
+              key={block.id}
+              block={block}
+              onRemove={(id) => removeProtectedMutation.mutate({ id })}
+            />
+          ))}
+        </ul>
+      ) : null}
 
       <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
         {hours.map((hour, i) => (

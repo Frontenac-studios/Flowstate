@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Today §6 · Thread 2 — Untimed completions on Calendar</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+        --c-pro: #0a84ff;
+        --c-proj: #af52de;
+        --c-adult: #ff9500;
+        --c-body: #34c759;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+        max-width: 880px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        max-width: 1120px;
+      }
+      @media (max-width: 940px) {
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .card h2 {
+        font-size: 12.5px;
+        margin: 0;
+        padding: 12px 13px 2px;
+        letter-spacing: -0.01em;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0 13px 9px;
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      .tl {
+        position: relative;
+        margin: 4px 13px 0;
+        border-left: 1px solid var(--hair);
+        height: 250px;
+      }
+      .htick {
+        position: absolute;
+        left: 5px;
+        font-size: 9px;
+        color: var(--faint);
+      }
+      .blk {
+        position: absolute;
+        left: 30px;
+        right: 8px;
+        border-radius: 6px;
+        background: #fafbfc;
+        border: 1px solid var(--hair);
+        border-left-width: 3px;
+        padding: 3px 6px;
+        font-size: 10px;
+      }
+      .blk small {
+        color: var(--faint);
+        font-size: 9px;
+      }
+      .pro {
+        border-left-color: var(--c-pro);
+      }
+      .proj {
+        border-left-color: var(--c-proj);
+      }
+      .adult {
+        border-left-color: var(--c-adult);
+      }
+      .body2 {
+        border-left-color: var(--c-body);
+      }
+      /* untimed treatments */
+      .tick {
+        position: absolute;
+        left: 30px;
+        right: 8px;
+        height: 0;
+        border-top: 2px dotted var(--ink);
+      }
+      .tick::before {
+        content: "✓";
+        position: absolute;
+        left: -22px;
+        top: -8px;
+        font-size: 10px;
+        color: var(--ink);
+      }
+      .tick span {
+        position: absolute;
+        left: 4px;
+        top: -8px;
+        font-size: 9.5px;
+        background: var(--surface);
+        padding: 0 3px;
+        color: var(--muted);
+      }
+      .mini {
+        position: absolute;
+        left: 30px;
+        right: 8px;
+        height: 15px;
+        border-radius: 5px;
+        background: #f4f5f6;
+        border: 1px solid var(--hair);
+        border-left-width: 3px;
+        font-size: 9px;
+        padding: 1px 6px;
+        color: var(--muted);
+      }
+      .lane {
+        position: absolute;
+        left: 30px;
+        right: 8px;
+        bottom: 6px;
+        border: 1px dashed var(--faint);
+        border-radius: 7px;
+        background: #fbfbfc;
+        padding: 5px 8px;
+        font-size: 9.5px;
+        color: var(--muted);
+      }
+      .lane b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .lane .dots {
+        margin-top: 3px;
+      }
+      .lane .dots i {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+        margin-right: 3px;
+      }
+      .body {
+        padding: 10px 13px 13px;
+        color: var(--muted);
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        margin-top: 8px;
+      }
+      .pros {
+        margin: 6px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 3px 0;
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Today §6 · Thread 2 — Untimed task completions on the Calendar</h1>
+    <p class="sub">
+      Each timeline has the <b>same day</b>: a focus block (timed) + an external event, plus three
+      tasks <b>checked off without a timer</b> (renew reg, pay bill, reply to Sam). Difference = how
+      those untimed checkoffs show up.
+    </p>
+
+    <div class="grid">
+      <!-- A -->
+      <div class="card">
+        <h2>A · Don’t show</h2>
+        <span class="tag">timed work only</span>
+        <div class="tl">
+          <div class="htick" style="top: 2px">9a</div>
+          <div class="htick" style="top: 120px">1p</div>
+          <div class="htick" style="top: 240px">5p</div>
+          <div class="blk pro" style="top: 30px; height: 40px">Ship deck <small>✓ 90m</small></div>
+          <div class="blk proj" style="top: 150px; height: 34px">Team sync <small>cal</small></div>
+        </div>
+        <div class="body">
+          Untimed checkoffs live only in List view.
+          <ul class="pros">
+            <li class="y">Cleanest timeline</li>
+            <li class="n">Calendar isn’t a full day record</li>
+            <li class="n">Errand-heavy days look empty</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B recommended -->
+      <div class="card rec">
+        <h2>B · Thin markers</h2>
+        <span class="tag">tick at completion time</span>
+        <div class="tl">
+          <div class="htick" style="top: 2px">9a</div>
+          <div class="htick" style="top: 120px">1p</div>
+          <div class="htick" style="top: 240px">5p</div>
+          <div class="blk pro" style="top: 30px; height: 40px">Ship deck <small>✓ 90m</small></div>
+          <div class="tick" style="top: 100px"><span>Renew reg</span></div>
+          <div class="blk proj" style="top: 150px; height: 34px">Team sync <small>cal</small></div>
+          <div class="tick" style="top: 205px"><span>Pay bill</span></div>
+          <div class="tick" style="top: 228px"><span>Reply Sam</span></div>
+        </div>
+        <div class="body">
+          Zero-height ticks mark when each was done.
+          <ul class="pros">
+            <li class="y">Complete record, minimal clutter</li>
+            <li class="y">No fake durations</li>
+            <li class="n">Many ticks can crowd a busy hour</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="card">
+        <h2>C · Default-duration blocks</h2>
+        <span class="tag">small fixed block</span>
+        <div class="tl">
+          <div class="htick" style="top: 2px">9a</div>
+          <div class="htick" style="top: 120px">1p</div>
+          <div class="htick" style="top: 240px">5p</div>
+          <div class="blk pro" style="top: 30px; height: 40px">Ship deck <small>✓ 90m</small></div>
+          <div class="mini adult" style="top: 100px">Renew reg · ~5m</div>
+          <div class="blk proj" style="top: 150px; height: 34px">Team sync <small>cal</small></div>
+          <div class="mini adult" style="top: 200px">Pay bill · ~5m</div>
+          <div class="mini pro" style="top: 222px">Reply Sam · ~5m</div>
+        </div>
+        <div class="body">
+          Render as a small ~5–10m block.
+          <ul class="pros">
+            <li class="y">Visually present, carries category color</li>
+            <li class="n">Invents a duration that’s not real</li>
+            <li class="n">Pollutes the time-based balance upgrade</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="card">
+        <h2>D · Collapsed “done” lane</h2>
+        <span class="tag">grouped, tap to expand</span>
+        <div class="tl">
+          <div class="htick" style="top: 2px">9a</div>
+          <div class="htick" style="top: 120px">1p</div>
+          <div class="htick" style="top: 240px">5p</div>
+          <div class="blk pro" style="top: 30px; height: 40px">Ship deck <small>✓ 90m</small></div>
+          <div class="blk proj" style="top: 150px; height: 34px">Team sync <small>cal</small></div>
+          <div class="lane">
+            <b>3 quick tasks done</b> ›
+            <div class="dots">
+              <i style="background: var(--c-adult)"></i><i style="background: var(--c-adult)"></i
+              ><i style="background: var(--c-pro)"></i>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          All untimed checkoffs collect in one lane.
+          <ul class="pros">
+            <li class="y">Complete record, timeline stays clean</li>
+            <li class="y">Category colors still readable</li>
+            <li class="n">Loses <i>when</i> each was done</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

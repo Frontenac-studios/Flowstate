@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat toggle — button + open behavior</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --line: #ededed;
+        --line-2: #f4f4f4;
+        --bg: #ffffff;
+        --gray: #f1f1f2;
+        --cat-prof: #009ddc;
+        --cat-rel: #e03a3e;
+        --cat-body: #61bb47;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        background: #f6f6f7;
+        color: var(--ink);
+        padding: 22px;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 24px 0 10px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 8px;
+        max-width: 860px;
+      }
+      .row4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        max-width: 1000px;
+      }
+      .twocol {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        max-width: 1000px;
+      }
+      .opt {
+        border: 1px solid var(--line-2);
+        border-radius: 10px;
+        padding: 12px;
+        background: #fff;
+      }
+      .name {
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      .blurb {
+        font-size: 11px;
+        color: var(--ink-faint);
+      }
+      .hint {
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 8px;
+      }
+
+      /* mini header */
+      .hd {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 9px 11px;
+        background: #fff;
+      }
+      .hd .date {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .tg-btn {
+        font-size: 11px;
+        border: 1.5px solid var(--ink);
+        border-radius: 8px;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .tg-icon {
+        font-size: 12px;
+        border: 1.5px solid var(--ink);
+        border-radius: 8px;
+        width: 28px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tg-link {
+        font-size: 12px;
+        color: var(--ink);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .tg-pill {
+        font-size: 11px;
+        background: var(--gray);
+        border-radius: 14px;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .av {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--ink);
+        color: #fff;
+        font-size: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* mini app for open-behavior */
+      .app {
+        display: flex;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        overflow: hidden;
+        min-height: 230px;
+        position: relative;
+      }
+      .rail {
+        width: 48px;
+        border-right: 1px solid var(--line-2);
+        padding: 9px 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .logo {
+        font-size: 13px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 5px;
+      }
+      .ni {
+        height: 20px;
+        border-radius: 6px;
+        background: var(--line-2);
+        margin: 0 2px;
+      }
+      .ni.on {
+        background: var(--gray);
+      }
+      .main {
+        flex: 1;
+        padding: 12px 14px;
+        min-width: 0;
+      }
+      .hbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .date2 {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .line {
+        height: 9px;
+        border-radius: 5px;
+        background: var(--line-2);
+        margin-bottom: 7px;
+      }
+      .panel {
+        width: 170px;
+        flex: none;
+        border-left: 1px solid var(--line);
+        background: #fbfbfb;
+        padding: 10px;
+      }
+      .bub {
+        font-size: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 8px;
+        margin-bottom: 6px;
+        background: #fff;
+      }
+      .overlay {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        bottom: 8px;
+        width: 180px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        box-shadow: -6px 0 22px rgba(0, 0, 0, 0.1);
+        padding: 10px;
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.05);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Chat toggle — opened from the top of the page</h1>
+    <div class="sub">
+      Chat starts collapsed (no right strip). A control at the top of each page opens it. Two things
+      to pick: <b>(a)</b> what the control looks like, <b>(b)</b> how the chat appears when opened.
+    </div>
+
+    <h2>a · The toggle control (top-right of the header)</h2>
+    <div class="row4">
+      <div class="opt">
+        <div class="hd">
+          <span class="date">Today</span><span class="tg-btn">✦ Ask Claude</span>
+        </div>
+        <div class="name">A · Labeled button</div>
+        <div class="blurb">
+          outline button + label; matches your outline buttons, most discoverable
+        </div>
+      </div>
+      <div class="opt">
+        <div class="hd"><span class="date">Today</span><span class="tg-icon">✦</span></div>
+        <div class="name">B · Icon-only button</div>
+        <div class="blurb">compact bordered square; clean but less obvious what it does</div>
+      </div>
+      <div class="opt">
+        <div class="hd">
+          <span class="date">Today</span><span class="tg-link">Ask Claude →</span>
+        </div>
+        <div class="name">C · Text link</div>
+        <div class="blurb">lightest touch; quietest, easy to miss</div>
+      </div>
+      <div class="opt">
+        <div class="hd">
+          <span class="date">Today</span><span class="tg-pill"><span class="av">K</span> Chat</span>
+        </div>
+        <div class="name">D · Avatar pill</div>
+        <div class="blurb">a “Claude” persona pill; friendly, a touch more chrome</div>
+      </div>
+    </div>
+
+    <h2>b · How it appears when opened</h2>
+    <div class="twocol">
+      <div>
+        <div class="opt">
+          <div class="app">
+            <div class="rail">
+              <div class="logo">K</div>
+              <div class="ni on"></div>
+              <div class="ni"></div>
+              <div class="ni"></div>
+              <div class="ni"></div>
+            </div>
+            <div class="main">
+              <div class="hbar">
+                <span class="date2">Today</span
+                ><span class="tg-btn" style="font-size: 10px; padding: 3px 8px">✦ Claude</span>
+              </div>
+              <div class="line" style="width: 80%"></div>
+              <div class="line" style="width: 65%"></div>
+              <div class="line" style="width: 72%"></div>
+            </div>
+            <div class="panel">
+              <div class="bub">Want your top 3?</div>
+              <div class="bub" style="background: var(--gray); border: none">yes</div>
+              <div class="bub">Pinned 3 ✓</div>
+            </div>
+          </div>
+        </div>
+        <div class="name" style="margin-top: 8px">Push panel</div>
+        <div class="blurb">
+          content shrinks to make room; both visible, nothing hidden. Same as before but only when
+          open.
+        </div>
+      </div>
+      <div>
+        <div class="opt">
+          <div class="app">
+            <div class="rail">
+              <div class="logo">K</div>
+              <div class="ni on"></div>
+              <div class="ni"></div>
+              <div class="ni"></div>
+              <div class="ni"></div>
+            </div>
+            <div class="main">
+              <div class="hbar">
+                <span class="date2">Today</span
+                ><span class="tg-btn" style="font-size: 10px; padding: 3px 8px">✦ Claude</span>
+              </div>
+              <div class="line" style="width: 80%"></div>
+              <div class="line" style="width: 65%"></div>
+              <div class="line" style="width: 72%"></div>
+            </div>
+            <div class="scrim"></div>
+            <div class="overlay">
+              <div class="bub">Want your top 3?</div>
+              <div class="bub" style="background: var(--gray); border: none">yes</div>
+              <div class="bub">Pinned 3 ✓</div>
+            </div>
+          </div>
+        </div>
+        <div class="name" style="margin-top: 8px">Overlay drawer</div>
+        <div class="blurb">
+          floats over the content (slight dim behind); content keeps its width, chat dismisses
+          easily.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

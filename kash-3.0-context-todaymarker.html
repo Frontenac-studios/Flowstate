@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Element 4 · Week "today" marker — in context</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --line: #ededed;
+        --line-2: #f4f4f4;
+        --bg: #ffffff;
+        --gray: #f1f1f2;
+        --cat-prof: #009ddc;
+        --cat-pers: #973d97;
+        --cat-rel: #e03a3e;
+        --cat-adult: #f6821f;
+        --cat-body: #61bb47;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        background: #f6f6f7;
+        color: var(--ink);
+        padding: 22px;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 8px;
+        max-width: 840px;
+      }
+      .settled {
+        font-size: 12px;
+        color: var(--ink-muted);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 20px;
+        max-width: 840px;
+      }
+      .settled b {
+        color: var(--ink);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        max-width: 1100px;
+      }
+      .vlabel {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .vlabel small {
+        font-weight: 400;
+        color: var(--ink-faint);
+      }
+
+      .app {
+        display: flex;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        overflow: hidden;
+      }
+      .rail {
+        width: 52px;
+        border-right: 1px solid var(--line-2);
+        padding: 10px 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .logo {
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+      .navitem {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        padding: 5px 0;
+        border-radius: 7px;
+        color: var(--ink-faint);
+        font-size: 7px;
+      }
+      .navitem .ic {
+        font-size: 12px;
+      }
+      .navitem.active {
+        background: var(--gray);
+        color: var(--ink);
+      }
+      .navspace {
+        flex: 1;
+      }
+      .wk {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+      }
+      .day {
+        border-right: 1px solid var(--line-2);
+        padding: 6px 4px;
+        min-height: 150px;
+      }
+      .day:last-child {
+        border-right: none;
+      }
+      .dh {
+        font-size: 9px;
+        text-align: center;
+        color: var(--ink-faint);
+      }
+      .task {
+        font-size: 9px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-top: 6px;
+      }
+      .task .s {
+        width: 3px;
+        height: 10px;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Element 4 · Week “today” marker — shown in the Week page</h1>
+    <div class="sub">
+      The current day (Tue 23) needs to stand out. Unlike the others, this is a
+      <b>date indicator</b>, not a click-selection — so it shouldn’t reuse the gray “selected” pill
+      (that would imply you clicked it).
+    </div>
+    <div class="settled">
+      Settled & applied: &nbsp;<b>rail = gray fill</b> (Week active) &nbsp;•&nbsp; segmented &
+      Settings = inset white pill &nbsp;•&nbsp; category = left stripe.
+    </div>
+
+    <div class="grid">
+      <!-- B filled day number -->
+      <div>
+        <div class="vlabel">B · Filled day number <small>— calendar-style “today”</small></div>
+        <div class="app">
+          <div class="rail">
+            <div class="logo">K</div>
+            <div class="navitem"><span class="ic">☀</span>Today</div>
+            <div class="navitem active"><span class="ic">▦</span>Week</div>
+            <div class="navitem"><span class="ic">🗂</span>Proj</div>
+            <div class="navspace"></div>
+            <div class="navitem"><span class="ic">⚙</span>Set</div>
+          </div>
+          <div class="wk">
+            <div class="day">
+              <div class="dh">Mon 22</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Standup
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh" style="color: var(--ink); font-weight: 700">
+                Tue
+                <span
+                  style="background: var(--ink); color: #fff; border-radius: 50%; padding: 1px 5px"
+                  >23</span
+                >
+              </div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>PR review
+              </div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Call Mom
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Wed 24</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-pers)"></span>Sketch
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Thu 25</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Deck
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Fri 26</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Dinner
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Sat 27</div>
+              <div class="task"><span class="s" style="background: var(--cat-body)"></span>Run</div>
+            </div>
+            <div class="day"><div class="dh">Sun 28</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D underline -->
+      <div>
+        <div class="vlabel">D · Underline <small>— bold date + black rule</small></div>
+        <div class="app">
+          <div class="rail">
+            <div class="logo">K</div>
+            <div class="navitem"><span class="ic">☀</span>Today</div>
+            <div class="navitem active"><span class="ic">▦</span>Week</div>
+            <div class="navitem"><span class="ic">🗂</span>Proj</div>
+            <div class="navspace"></div>
+            <div class="navitem"><span class="ic">⚙</span>Set</div>
+          </div>
+          <div class="wk">
+            <div class="day">
+              <div class="dh">Mon 22</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Standup
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh" style="color: var(--ink); font-weight: 700">Tue 23</div>
+              <div
+                style="height: 2px; background: var(--ink); border-radius: 2px; margin-top: 4px"
+              ></div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>PR review
+              </div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Call Mom
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Wed 24</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-pers)"></span>Sketch
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Thu 25</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Deck
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Fri 26</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Dinner
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Sat 27</div>
+              <div class="task"><span class="s" style="background: var(--cat-body)"></span>Run</div>
+            </div>
+            <div class="day"><div class="dh">Sun 28</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A black pill -->
+      <div>
+        <div class="vlabel">A · Black pill header <small>— current</small></div>
+        <div class="app">
+          <div class="rail">
+            <div class="logo">K</div>
+            <div class="navitem"><span class="ic">☀</span>Today</div>
+            <div class="navitem active"><span class="ic">▦</span>Week</div>
+            <div class="navitem"><span class="ic">🗂</span>Proj</div>
+            <div class="navspace"></div>
+            <div class="navitem"><span class="ic">⚙</span>Set</div>
+          </div>
+          <div class="wk">
+            <div class="day">
+              <div class="dh">Mon 22</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Standup
+              </div>
+            </div>
+            <div class="day">
+              <div
+                class="dh"
+                style="
+                  background: var(--ink);
+                  color: #fff;
+                  border-radius: 5px;
+                  padding: 2px 0;
+                  font-weight: 600;
+                "
+              >
+                Tue 23
+              </div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>PR review
+              </div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Call Mom
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Wed 24</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-pers)"></span>Sketch
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Thu 25</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Deck
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Fri 26</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Dinner
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Sat 27</div>
+              <div class="task"><span class="s" style="background: var(--cat-body)"></span>Run</div>
+            </div>
+            <div class="day"><div class="dh">Sun 28</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- E gray column tint -->
+      <div>
+        <div class="vlabel">E · Gray column tint <small>— soft fill whole column</small></div>
+        <div class="app">
+          <div class="rail">
+            <div class="logo">K</div>
+            <div class="navitem"><span class="ic">☀</span>Today</div>
+            <div class="navitem active"><span class="ic">▦</span>Week</div>
+            <div class="navitem"><span class="ic">🗂</span>Proj</div>
+            <div class="navspace"></div>
+            <div class="navitem"><span class="ic">⚙</span>Set</div>
+          </div>
+          <div class="wk">
+            <div class="day">
+              <div class="dh">Mon 22</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Standup
+              </div>
+            </div>
+            <div class="day" style="background: var(--gray)">
+              <div class="dh" style="color: var(--ink); font-weight: 700">Tue 23</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>PR review
+              </div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Call Mom
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Wed 24</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-pers)"></span>Sketch
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Thu 25</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-prof)"></span>Deck
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Fri 26</div>
+              <div class="task">
+                <span class="s" style="background: var(--cat-rel)"></span>Dinner
+              </div>
+            </div>
+            <div class="day">
+              <div class="dh">Sat 27</div>
+              <div class="task"><span class="s" style="background: var(--cat-body)"></span>Run</div>
+            </div>
+            <div class="day"><div class="dh">Sun 28</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

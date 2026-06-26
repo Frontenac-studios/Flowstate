@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kash 3.0 — Care scope confirmation</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --border-subtle: #f4f4f4;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --accent: #16181d;
+        --on-accent: #ffffff;
+        --bm: #3aaa35; /* Body & Mind green */
+        --bm-fill: #e9f6e8;
+        --abyss: #11131b;
+        --ok: #3aaa35;
+        --warn: #f6821f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f4f4;
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+        padding: 32px 18px;
+      }
+      .wrap {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 21px;
+        margin: 0 0 4px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--ink-muted);
+        margin: 0 0 26px;
+        font-size: 14px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-bottom: 18px;
+      }
+      .card h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-muted);
+        margin: 0 0 14px;
+        font-weight: 600;
+      }
+      /* baseline rows */
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 7px 0;
+        border-top: 1px solid var(--border-subtle);
+      }
+      .row:first-of-type {
+        border-top: 0;
+      }
+      .pill {
+        flex: 0 0 auto;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 2px 9px;
+        margin-top: 1px;
+        letter-spacing: 0.02em;
+      }
+      .built {
+        background: var(--bm-fill);
+        color: #1f7a1b;
+      }
+      .shell {
+        background: #fdeede;
+        color: #9a4e08;
+      }
+      .stale {
+        background: #eef0ff;
+        color: #3b4cca;
+      }
+      .row b {
+        font-weight: 600;
+      }
+      .row span {
+        color: var(--ink-muted);
+        font-size: 13.5px;
+      }
+      /* tab bar */
+      .tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 6px;
+        background: var(--surface-2);
+      }
+      .tab {
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        color: var(--ink-muted);
+        font-weight: 500;
+      }
+      .tab.active {
+        background: var(--accent);
+        color: var(--on-accent);
+        font-weight: 600;
+      }
+      .tab.hero {
+        position: relative;
+      }
+      .caption {
+        font-size: 12.5px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+      }
+      /* two-col vs */
+      .vs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .mini {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .mini.care {
+        border-left: 4px solid var(--bm);
+      }
+      .mini.abyss {
+        border-left: 4px solid #5b6cff;
+        background: #0f1118;
+        color: #e8eaf2;
+      }
+      .mini.abyss h3,
+      .mini.abyss .k {
+        color: #fff;
+      }
+      .mini h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+      .mini .k {
+        font-size: 12px;
+        color: var(--ink-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
+      .mini p {
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--ink-muted);
+      }
+      .mini.abyss p {
+        color: #aeb4c7;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 2px 8px;
+        margin-top: 10px;
+      }
+      .tag.this {
+        background: var(--bm);
+        color: #fff;
+      }
+      .tag.next {
+        background: #2a2f45;
+        color: #cdd3ea;
+      }
+      /* option cards */
+      .opts {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+      }
+      .opt {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+      }
+      .opt .lbl {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--bm);
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+      .opt h3 {
+        margin: 0 0 7px;
+        font-size: 15px;
+      }
+      .opt p {
+        margin: 0 0 11px;
+        font-size: 13px;
+        color: var(--ink-muted);
+        flex: 1;
+      }
+      .opt .scope {
+        font-size: 12px;
+        color: var(--ink-faint);
+        border-top: 1px solid var(--border-subtle);
+        padding-top: 9px;
+      }
+      .rec {
+        border-color: var(--bm);
+        box-shadow: 0 0 0 1px var(--bm);
+      }
+      .rec .lbl::after {
+        content: " · suggested";
+        color: var(--ink-faint);
+        font-weight: 500;
+      }
+      @media (max-width: 760px) {
+        .vs,
+        .opts {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Care — scope confirmation</h1>
+      <p class="sub">
+        Where the "Finch-style self-care library" lives, what's already in code, and how big to make
+        the first slice.
+      </p>
+
+      <div class="card">
+        <h2>Re-baseline — what's actually in code (vs the docs/heads-up)</h2>
+        <div class="row">
+          <span class="pill built">SHIPPED</span>
+          <div>
+            <b>Data spine is complete.</b>
+            <span
+              >Categories on tasks (5-enum, Body&nbsp;&amp;&nbsp;Mind = green), time-tracking,
+              dependencies, <b>and recurrence (Phase 4A–4G)</b> are all built &amp; synced.</span
+            >
+          </div>
+        </div>
+        <div class="row">
+          <span class="pill stale">UPDATE</span>
+          <div>
+            <b>Your heads-up is now stale (good news).</b>
+            <span
+              ><code>rrule</code> is installed (package.json + node_modules); recurrence 4B–4G
+              shipped per the Jun 25 build-breakdown — no <code>npm install rrule</code> / 4A
+              migration pending.</span
+            >
+          </div>
+        </div>
+        <div class="row">
+          <span class="pill stale">UPDATE</span>
+          <div>
+            <b>Branch moved on.</b>
+            <span
+              >HEAD is <code>feat/planning-foundation</code>; the
+              <code>projects-index-bw-progress</code> work is already merged into history.</span
+            >
+          </div>
+        </div>
+        <div class="row">
+          <span class="pill shell">SHELL</span>
+          <div>
+            <b><code>/care</code> &amp; <code>/abyss</code> are still shells.</b>
+            <span
+              ><code>CareView.tsx</code> = placeholder switcher; <b>no</b> care/garden/reflection
+              tables, <b>no</b> care tRPC router yet.</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Scope you mean — confirmed from the docs</h2>
+        <p style="margin: 0 0 12px; font-size: 14px; color: var(--ink-muted)">
+          Your "functional area of categories + seeded tasks, add your own" = the Care hub's
+          <b>Tasks</b> tab — explicitly the Finch self-care library (<i
+            >plan §12 · visual-redesign line 75</i
+          >). Not the Abyss.
+        </p>
+        <div class="tabs">
+          <div class="tab">Garden</div>
+          <div class="tab active hero">Tasks ◄ the Finch library</div>
+          <div class="tab">Breathing</div>
+          <div class="tab">Reflection</div>
+          <div class="tab">Stats</div>
+          <div class="tab">Travel</div>
+        </div>
+        <p class="caption">
+          The resolved Care hub top-tabs. "Tasks" = browse / adopt suggested / create your own /
+          check off → spawns a Body&nbsp;&amp;&nbsp;Mind task.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Care vs Abyss — the two are different surfaces</h2>
+        <div class="vs">
+          <div class="mini care">
+            <div class="k">§12 · light surface</div>
+            <h3>Care — self-care library</h3>
+            <p>
+              Small <i>practices</i> you adopt or create (walk, breathe, reflect, custom), do, and
+              build gentle habits around. Feeds the garden &amp; wins.
+            </p>
+            <span class="tag this">THIS build</span>
+          </div>
+          <div class="mini abyss">
+            <div class="k">§10 · dark surface</div>
+            <h3>The Abyss — idea void</h3>
+            <p>
+              A cosmic starfield for <i>backburner ideas / references</i> you parked. AI clusters
+              recurring themes; monthly "stargazing" review.
+            </p>
+            <span class="tag next">parked as NEXT</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Decision 1 — how big is the first slice?</h2>
+        <div class="opts">
+          <div class="opt rec">
+            <div class="lbl">OPTION A</div>
+            <h3>Library only</h3>
+            <p>
+              Categories + seeded catalog + adopt/create + check-off that spawns a B&amp;M task. The
+              tightest vertical slice — exactly what you described.
+            </p>
+            <div class="scope">
+              1 table (<code>care_activities</code>) + <code>care_events</code> for check-offs · 1
+              router · 1 tab UI
+            </div>
+          </div>
+          <div class="opt">
+            <div class="lbl">OPTION B</div>
+            <h3>Library + "what lifts me"</h3>
+            <p>
+              Option A plus the explicit ♥ "lifts me" flag &amp; regulars surfacing — the spec
+              already bundles <code>lifts_me</code> into the same table.
+            </p>
+            <div class="scope">Same tables + a flag &amp; a derived list · slightly more UI</div>
+          </div>
+          <div class="opt">
+            <div class="lbl">OPTION C</div>
+            <h3>Whole Care hub, phased</h3>
+            <p>
+              Plan all of §12 (library → reflection → stats → breathing → walks → garden), build
+              <b>library first</b> in the spec's stats-first order.
+            </p>
+            <div class="scope">4 tables now · multi-PR roadmap · garden ships last</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

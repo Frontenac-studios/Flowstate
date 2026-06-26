@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tokens · A1 (round 2) — Reuse existing colors</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b7280;
+        --faint: #9aa0ad;
+        --surface: #ffffff;
+        --hair: #ececec;
+        --hair2: #f4f4f4;
+        --bg: #fafafa;
+        --c-pro: #009ddc;
+        --c-personal: #973d97;
+        --c-rel: #e03a3e;
+        --c-adult: #f6821f;
+        --c-body: #61bb47;
+        --c-yellow: #fcb827;
+        /* light tints */
+        --c-pro-l: #7fcdec;
+        --c-pro-d: #0a6a93;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 "Figtree",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 18px;
+        max-width: 920px;
+      }
+      .scn {
+        max-width: 920px;
+        font-size: 11.5px;
+        color: var(--muted);
+        background: #fff;
+        border: 1px solid var(--hair);
+        border-radius: 10px;
+        padding: 9px 13px;
+        margin: 0 0 18px;
+      }
+      .scn b {
+        color: var(--ink);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 920px;
+      }
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      .gantt {
+        margin: 12px 0 4px;
+      }
+      .grow {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 4px 0;
+      }
+      .glabel {
+        width: 74px;
+        font-size: 9px;
+        color: var(--muted);
+        text-align: right;
+        flex-shrink: 0;
+        line-height: 1.15;
+      }
+      .track {
+        flex: 1;
+        height: 15px;
+        border-radius: 4px;
+        background: var(--bg);
+        border: 1px solid var(--hair2);
+        position: relative;
+      }
+      .seg {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        border-radius: 3px;
+      }
+      .pro {
+        background: var(--c-pro);
+      }
+      .personal {
+        background: var(--c-personal);
+      }
+      .rel {
+        background: var(--c-rel);
+      }
+      .adult {
+        background: var(--c-adult);
+      }
+      .body2 {
+        background: var(--c-body);
+      }
+      .yellow {
+        background: var(--c-yellow);
+      }
+      .pro-l {
+        background: var(--c-pro-l);
+      }
+      .pro-d {
+        background: var(--c-pro-d);
+      }
+      .pro-stripe {
+        background: repeating-linear-gradient(
+          45deg,
+          var(--c-pro),
+          var(--c-pro) 4px,
+          #bfe7f7 4px,
+          #bfe7f7 7px
+        );
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: 8px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f8a4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+      .legend {
+        display: flex;
+        gap: 13px;
+        flex-wrap: wrap;
+        max-width: 920px;
+        margin: 16px 0 0;
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 4px;
+        vertical-align: -1px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tokens · A1 (round 2) — Reuse the existing palette for projects</h1>
+    <p class="sub">
+      All four schemes reuse only colors already in the system — no new hues. They differ in whether
+      category meaning survives in project-mode.
+    </p>
+
+    <div class="scn">
+      <b>Scenario:</b> Client site <i>(Professional)</i> · Internal tool
+      <i>(Professional — same category!)</i> · Book <i>(Personal Projects)</i> · Marathon
+      <i>(Body &amp; Mind)</i>. Watch how each scheme handles the two Professional projects.
+    </div>
+
+    <div class="grid">
+      <!-- E -->
+      <div class="card">
+        <span class="tag">E · Cycle the 6 hexes</span>
+        <h2>Projects alternate through the palette</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">Client (Pro)</span>
+            <div class="track"><div class="seg pro" style="left: 4%; width: 50%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Internal (Pro)</span>
+            <div class="track"><div class="seg personal" style="left: 14%; width: 55%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Book (Pers)</span>
+            <div class="track"><div class="seg rel" style="left: 30%; width: 55%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Marathon (Body)</span>
+            <div class="track"><div class="seg adult" style="left: 40%; width: 48%"></div></div>
+          </div>
+        </div>
+        <div class="body">
+          Each project takes the next hex (blue, purple, red, orange…), ignoring category.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Max distinctness; reuses known colors</li>
+          </ul>
+          <ul>
+            <li class="n"><b>Category meaning is gone</b> — a Body project shows orange</li>
+            <li class="n">Actively misleading vs the rest of the app</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- F recommended -->
+      <div class="card rec">
+        <span class="tag">F · Category hue + tint alternation</span>
+        <h2>Category color stays; tints split same-category</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">Client (Pro)</span>
+            <div class="track"><div class="seg pro" style="left: 4%; width: 50%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Internal (Pro)</span>
+            <div class="track"><div class="seg pro-d" style="left: 14%; width: 55%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Book (Pers)</span>
+            <div class="track"><div class="seg personal" style="left: 30%; width: 55%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Marathon (Body)</span>
+            <div class="track"><div class="seg body2" style="left: 40%; width: 48%"></div></div>
+          </div>
+        </div>
+        <div class="body">
+          Each project keeps <b>its category hue</b>; multiple same-category projects alternate
+          <b>tint/shade</b> (Client = base blue, Internal = deep blue). Category still readable,
+          projects still separable.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Keeps category meaning <i>and</i> tells projects apart</li>
+            <li class="y">No new hues; consistent with whole app</li>
+          </ul>
+          <ul>
+            <li class="n">Tint shades subtle if many share one category</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- G -->
+      <div class="card">
+        <span class="tag">G · Category hue + pattern alternation</span>
+        <h2>Category color stays; texture splits same-category</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">Client (Pro)</span>
+            <div class="track"><div class="seg pro" style="left: 4%; width: 50%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Internal (Pro)</span>
+            <div class="track">
+              <div class="seg pro-stripe" style="left: 14%; width: 55%"></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Book (Pers)</span>
+            <div class="track"><div class="seg personal" style="left: 30%; width: 55%"></div></div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Marathon (Body)</span>
+            <div class="track"><div class="seg body2" style="left: 40%; width: 48%"></div></div>
+          </div>
+        </div>
+        <div class="body">
+          Same as F but same-category projects alternate <b>pattern</b> (Internal = striped blue)
+          instead of tint.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Keeps category meaning; colorblind-safe split</li>
+          </ul>
+          <ul>
+            <li class="n">Patterns busier on thin bars than tints</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- A+D for comparison -->
+      <div class="card">
+        <span class="tag">A+D · Neutral value × pattern (prev.)</span>
+        <h2>No category color at all</h2>
+        <div class="gantt">
+          <div class="grow">
+            <span class="glabel">Client</span>
+            <div class="track">
+              <div class="seg" style="left: 4%; width: 50%; background: #3a3d44"></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Internal</span>
+            <div class="track">
+              <div
+                class="seg"
+                style="
+                  left: 14%;
+                  width: 55%;
+                  background: repeating-linear-gradient(
+                    45deg,
+                    #70747c,
+                    #70747c 4px,
+                    #cfd2d7 4px,
+                    #cfd2d7 7px
+                  );
+                "
+              ></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Book</span>
+            <div class="track">
+              <div class="seg" style="left: 30%; width: 55%; background: #a8acb3"></div>
+            </div>
+          </div>
+          <div class="grow">
+            <span class="glabel">Marathon</span>
+            <div class="track">
+              <div
+                class="seg"
+                style="left: 40%; width: 48%; background: #fff; border: 1.5px dashed #a8acb3"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          Grayscale shade × texture; ignores category but never conflicts with it.
+        </div>
+        <div class="pros">
+          <ul>
+            <li class="y">Purest B&amp;W; fully palette-safe</li>
+          </ul>
+          <ul>
+            <li class="n">No category cue; needs a legend</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background: var(--c-pro)"></i>Professional</span>
+      <span><i style="background: var(--c-personal)"></i>Personal Projects</span>
+      <span><i style="background: var(--c-rel)"></i>Relationships</span>
+      <span><i style="background: var(--c-adult)"></i>Adulting</span>
+      <span><i style="background: var(--c-body)"></i>Body &amp; Mind</span>
+      <span><i style="background: var(--c-pro-d)"></i>Pro (deep tint, F)</span>
+    </div>
+  </body>
+</html>

@@ -199,6 +199,10 @@ export function DayPlanCanvas() {
     scheduledDate: task.scheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,
+    isRecurringOccurrence: task.isRecurringOccurrence,
+    recurrenceId: task.recurrenceId,
+    occurrenceDate: task.occurrenceDate,
+    templateTaskId: task.templateTaskId,
   });
 
   const pinnedBySlot = useMemo(() => {

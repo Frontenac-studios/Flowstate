@@ -1,5 +1,6 @@
 import { boolean, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+import { goalMilestones } from "./goal-milestones";
 import { phases } from "./phases";
 import { projectCategory, projects } from "./projects";
 
@@ -10,6 +11,7 @@ export const tasks = pgTable(
     userId: uuid("user_id").notNull(),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     phaseId: uuid("phase_id").references(() => phases.id, { onDelete: "set null" }),
+    milestoneId: uuid("milestone_id").references(() => goalMilestones.id, { onDelete: "set null" }),
     title: text("title").notNull(),
     // Phase 1 (1.1): added nullable, backfilled (1B), now NOT NULL. The resolver always
     // produces a value (the unresolved fallback stores `adulting` + category_unresolved=true),
@@ -26,6 +28,8 @@ export const tasks = pgTable(
     isTop3: boolean("is_top_3").notNull().default(false),
     top3Order: integer("top_3_order"),
     top3PinnedAt: timestamp("top_3_pinned_at", { withTimezone: true, mode: "date" }),
+    /** Estimated duration for planning capacity nudge (PM11.3). */
+    timeEstimateMinutes: integer("time_estimate_minutes"),
     completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),

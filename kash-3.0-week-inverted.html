@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Week — inverted: week grayed, today white</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #9aa0ad;
+        --line: #ededed;
+        --line-2: #f4f4f4;
+        --bg: #ffffff;
+        --gray: #f1f1f2;
+        --gray-day: #f4f4f5;
+        --cat-prof: #009ddc;
+        --cat-pers: #973d97;
+        --cat-rel: #e03a3e;
+        --cat-adult: #f6821f;
+        --cat-body: #61bb47;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+        background: #f6f6f7;
+        color: var(--ink);
+        padding: 22px;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 14px;
+        max-width: 880px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        max-width: 1080px;
+      }
+      .vlabel {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .vlabel small {
+        font-weight: 400;
+        color: var(--ink-faint);
+      }
+      .hint {
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 8px;
+      }
+
+      .scroller {
+        display: flex;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        scroll-snap-type: x mandatory;
+        background: var(--gray-day);
+      }
+      .day {
+        flex: 0 0 150px;
+        border-right: 1px solid var(--line);
+        padding: 10px 10px;
+        min-height: 165px;
+        scroll-snap-align: start;
+        background: var(--gray-day);
+      }
+      .day:last-child {
+        border-right: none;
+      }
+      .day.today {
+        background: #fff;
+        box-shadow: inset 0 0 0 1px var(--line);
+      }
+      .dh {
+        font-size: 10px;
+        text-align: center;
+        color: var(--ink-faint);
+      }
+      .day.today .dh {
+        color: var(--ink);
+        font-weight: 700;
+        font-size: 11px;
+      }
+      .task {
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 8px;
+        color: var(--ink-muted);
+      }
+      .day.today .task {
+        color: var(--ink);
+      }
+      .task .s {
+        width: 3px;
+        height: 11px;
+        border-radius: 2px;
+      }
+      .pill {
+        display: inline-block;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 2px 9px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Inverted: the week is grayed, today is white</h1>
+    <div class="sub">
+      Settled: rail = gray fill · segmented & Settings = inset white pill · horizontal-scroll week.
+      Now today stands out by being the only <b>white</b> column among soft-gray neighbors. Two ways
+      to mark the date itself — pick one (or say neither).
+    </div>
+
+    <div class="card">
+      <div class="vlabel">
+        A · Today = white column, bold plain date <small>— contrast does the work, no pill</small>
+      </div>
+      <div class="scroller">
+        <div class="day">
+          <div class="dh">Mon 22</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-prof)"></span>Standup notes
+          </div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-adult)"></span>Pay rent
+          </div>
+        </div>
+        <div class="day today">
+          <div class="dh">Tue 23 · today</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-prof)"></span>Onboarding PR
+          </div>
+          <div class="task"><span class="s" style="background: var(--cat-rel)"></span>Call Mom</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-body)"></span>30-min walk
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh">Wed 24</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-pers)"></span>Sketch landing
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh">Thu 25</div>
+          <div class="task"><span class="s" style="background: var(--cat-prof)"></span>Q3 deck</div>
+        </div>
+        <div class="day">
+          <div class="dh">Fri 26</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-rel)"></span>Dinner w/ Sam
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh">Sat 27</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-body)"></span>Long run
+          </div>
+        </div>
+        <div class="day"><div class="dh">Sun 28</div></div>
+      </div>
+      <div class="hint">
+        ↔ scrolls · cleanest — today reads instantly as “the live one,” nothing extra needed.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="vlabel">
+        B · Today = white column + white date pill
+        <small>— pill now reads (it sits on white against gray surroundings)</small>
+      </div>
+      <div class="scroller">
+        <div class="day">
+          <div class="dh">Mon 22</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-prof)"></span>Standup notes
+          </div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-adult)"></span>Pay rent
+          </div>
+        </div>
+        <div class="day today">
+          <div class="dh"><span class="pill">Tue 23</span></div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-prof)"></span>Onboarding PR
+          </div>
+          <div class="task"><span class="s" style="background: var(--cat-rel)"></span>Call Mom</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-body)"></span>30-min walk
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh">Wed 24</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-pers)"></span>Sketch landing
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh">Thu 25</div>
+          <div class="task"><span class="s" style="background: var(--cat-prof)"></span>Q3 deck</div>
+        </div>
+        <div class="day">
+          <div class="dh">Fri 26</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-rel)"></span>Dinner w/ Sam
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh">Sat 27</div>
+          <div class="task">
+            <span class="s" style="background: var(--cat-body)"></span>Long run
+          </div>
+        </div>
+        <div class="day"><div class="dh">Sun 28</div></div>
+      </div>
+      <div class="hint">
+        ↔ scrolls · the pill restates “today” but slightly competes with the column contrast already
+        doing that job.
+      </div>
+    </div>
+  </body>
+</html>

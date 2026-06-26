@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Week §7 · Q2b — Learned threshold: the drift guard</title>
+    <style>
+      :root {
+        --ink: #16181d;
+        --muted: #6b6f76;
+        --faint: #9aa0a8;
+        --surface: #ffffff;
+        --hair: #e6e7ea;
+        --hair2: #eef0f2;
+        --bg: #f6f7f8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 28px;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 20px;
+        max-width: 900px;
+      }
+      .lead {
+        max-width: 900px;
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 12px;
+        padding: 13px 15px;
+        margin: 0 0 18px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .lead b {
+        color: var(--ink);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        max-width: 900px;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 14px;
+        padding: 15px 16px;
+      }
+      .card.rec {
+        border-color: var(--ink);
+        box-shadow: 0 0 0 1px var(--ink);
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .rec .tag {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 13.5px;
+        margin: 1px 0 0;
+        letter-spacing: -0.01em;
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: 96px;
+        margin: 12px 0 2px;
+      }
+      .ax {
+        stroke: var(--hair);
+        stroke-width: 1;
+      }
+      .load {
+        stroke: #c9ccd1;
+        stroke-width: 2;
+        fill: none;
+      }
+      .thr {
+        stroke: var(--ink);
+        stroke-width: 2;
+        fill: none;
+      }
+      .ceil {
+        stroke: var(--ink);
+        stroke-width: 1.5;
+        stroke-dasharray: 3 3;
+        fill: none;
+      }
+      .cap {
+        font-size: 8.5px;
+        fill: var(--faint);
+      }
+      .body {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+      .body b {
+        color: var(--ink);
+      }
+      .pros {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 8px 0 0;
+        font-size: 11px;
+        border-top: 1px solid var(--hair2);
+        padding-top: 8px;
+      }
+      .pros ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pros li {
+        position: relative;
+        padding-left: 14px;
+        margin: 2px 0;
+        color: var(--muted);
+      }
+      .pros li.y::before {
+        content: "+";
+        position: absolute;
+        left: 0;
+        color: #1f9d4d;
+        font-weight: 700;
+      }
+      .pros li.n::before {
+        content: "–";
+        position: absolute;
+        left: 2px;
+        color: #c23a3a;
+        font-weight: 700;
+      }
+      .key {
+        max-width: 900px;
+        margin: 16px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .key i {
+        display: inline-block;
+        width: 16px;
+        height: 0;
+        border-top: 2px solid;
+        vertical-align: 3px;
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Week §7 · Q2b — Learned threshold: guarding against drift</h1>
+    <p class="sub">
+      Each chart spans ~12 weeks. <b>Gray line = your typical daily load (creeping up).</b>
+      <b>Black line = the learned over-commit threshold.</b> Watch what the threshold does as your
+      habits drift heavier.
+    </p>
+
+    <div class="lead">
+      You picked <b>B · learned/adaptive</b>. The threshold = your rolling typical day. If that
+      baseline rises (more work crammed in over time), an unguarded threshold rises too — so chronic
+      overload stops tripping any warning. For an ADHD <i>wellbeing</i> app, how should the learned
+      line behave when your habits drift up?
+    </div>
+
+    <div class="grid">
+      <!-- B1 -->
+      <div class="card">
+        <span class="tag">B1 · Pure learned (no guard)</span>
+        <h2>Line follows you, up or down</h2>
+        <svg viewBox="0 0 220 96" preserveAspectRatio="none">
+          <line class="ax" x1="6" y1="90" x2="214" y2="90" />
+          <polyline class="load" points="6,70 56,64 106,52 156,40 214,30" />
+          <polyline class="thr" points="6,58 56,52 106,40 156,28 214,18" />
+        </svg>
+        <p class="body">Threshold rises in lock-step with your habits.</p>
+        <div class="pros">
+          <ul>
+            <li class="y">Purest “normal for me”</li>
+          </ul>
+          <ul>
+            <li class="n">Normalizes overload; never warns on slow burnout</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B2 -->
+      <div class="card">
+        <span class="tag">B2 · Capped learned</span>
+        <h2>Learns, but not above a ceiling</h2>
+        <svg viewBox="0 0 220 96" preserveAspectRatio="none">
+          <line class="ax" x1="6" y1="90" x2="214" y2="90" />
+          <line class="ceil" x1="6" y1="34" x2="214" y2="34" />
+          <text class="cap" x="8" y="30">wellbeing ceiling</text>
+          <polyline class="load" points="6,70 56,64 106,52 156,40 214,30" />
+          <polyline class="thr" points="6,58 56,52 106,42 156,36 214,34" />
+        </svg>
+        <p class="body">
+          Personalizes downward freely, but flattens at a sane max — overload eventually trips it.
+        </p>
+        <div class="pros">
+          <ul>
+            <li class="y">Personal + a wellbeing backstop</li>
+            <li class="y">Simple rule</li>
+          </ul>
+          <ul>
+            <li class="n">Ceiling is itself a (gentler) fixed number to pick</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B3 recommended -->
+      <div class="card rec">
+        <span class="tag">B3 · Learned + reflection flag</span>
+        <h2>Adapts freely; reflection names the drift</h2>
+        <svg viewBox="0 0 220 96" preserveAspectRatio="none">
+          <line class="ax" x1="6" y1="90" x2="214" y2="90" />
+          <polyline class="load" points="6,70 56,64 106,52 156,40 214,30" />
+          <polyline class="thr" points="6,58 56,52 106,40 156,28 214,18" />
+          <circle cx="214" cy="18" r="4" fill="#16181d" />
+          <text class="cap" x="150" y="12">“up 30% in 6 wks”</text>
+        </svg>
+        <p class="body">
+          Threshold stays fully learned, but the weekly/monthly
+          <b>Reflection guide (§11)</b> surfaces a rising baseline: “your typical day has grown —
+          intended?”
+        </p>
+        <div class="pros">
+          <ul>
+            <li class="y">No arbitrary ceiling; respects autonomy</li>
+            <li class="y">Catches burnout via reflection, not nags</li>
+          </ul>
+          <ul>
+            <li class="n">Relies on the §11 reflection layer existing</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- B4 -->
+      <div class="card">
+        <span class="tag">B4 · Asymmetric (down fast, up slow)</span>
+        <h2>Eager to lower, reluctant to raise</h2>
+        <svg viewBox="0 0 220 96" preserveAspectRatio="none">
+          <line class="ax" x1="6" y1="90" x2="214" y2="90" />
+          <polyline class="load" points="6,70 56,64 106,52 156,40 214,30" />
+          <polyline class="thr" points="6,58 56,55 106,50 156,46 214,43" />
+        </svg>
+        <p class="body">
+          Drops quickly if you lighten up, but resists drifting upward — so creep still trips
+          warnings for a long while.
+        </p>
+        <div class="pros">
+          <ul>
+            <li class="y">Personal + built-in anti-creep bias</li>
+          </ul>
+          <ul>
+            <li class="n">Subtle/opaque (“why didn’t it adjust?”)</li>
+            <li class="n">Most logic to tune</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="key">
+      <span><i style="border-color: #c9ccd1"></i>your typical daily load</span>
+      <span><i style="border-color: #16181d"></i>learned threshold</span>
+      <span
+        ><i style="border-color: #16181d; border-top-style: dashed"></i>wellbeing ceiling (B2)</span
+      >
+    </div>
+  </body>
+</html>
