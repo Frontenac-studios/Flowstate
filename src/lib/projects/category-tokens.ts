@@ -18,6 +18,16 @@ export function categorySolidVar(category: ProjectCategory): string {
   return `var(--cat-${CATEGORY_TOKEN_SUFFIX[category]}-solid)`;
 }
 
+/** The `--cat-{suffix}-fill` CSS variable — the soft tint behind a category chip. */
+export function categoryFillVar(category: ProjectCategory): string {
+  return `var(--cat-${CATEGORY_TOKEN_SUFFIX[category]}-fill)`;
+}
+
+/** The `--cat-{suffix}-text` CSS variable — readable ink on the soft fill. */
+export function categoryTextVar(category: ProjectCategory): string {
+  return `var(--cat-${CATEGORY_TOKEN_SUFFIX[category]}-text)`;
+}
+
 /** Seed display label (pre-override fallback). */
 export function categorySeedLabel(category: ProjectCategory): string {
   return PROJECT_CATEGORY_META[category].label;

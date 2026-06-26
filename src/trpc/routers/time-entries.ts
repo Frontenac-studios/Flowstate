@@ -77,7 +77,15 @@ export const timeEntriesRouter = createTRPCRouter({
     }),
 
   end: protectedProcedure
-    .input(z.object({ entryId: z.string().uuid(), reason: z.enum(["done", "park", "esc"]) }))
+    .input(
+      z.object({
+        entryId: z.string().uuid(),
+        // "pause" ends the running segment without ending the focus session —
+        // resuming starts a fresh entry, so active time is the sum of segments
+        // and the paused gap is simply never recorded.
+        reason: z.enum(["done", "park", "esc", "pause"]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const endedAt = new Date();
 
