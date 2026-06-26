@@ -1,10 +1,10 @@
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { syncProjectRow } from "@/db/record-sync-mutation";
-import { projects } from "@/db/tables";
+import { projects, tasks } from "@/db/tables";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 
@@ -37,15 +37,21 @@ async function getOwnedProject(userId: string, projectId: string) {
 
 export const projectsRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
+    // Left join keeps projects with zero tasks; COUNT(column) ignores NULLs, so
+    // counting `completedAt` yields the completed-task tally per project.
     return db
       .select({
         id: projects.id,
         name: projects.name,
         slug: projects.slug,
         category: projects.category,
+        taskCount: count(tasks.id),
+        completedCount: count(tasks.completedAt),
       })
       .from(projects)
+      .leftJoin(tasks, eq(tasks.projectId, projects.id))
       .where(eq(projects.userId, ctx.userId))
+      .groupBy(projects.id)
       .orderBy(projects.name);
   }),
 
