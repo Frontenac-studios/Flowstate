@@ -108,7 +108,9 @@ describe("expandOccurrences", () => {
       start: "2026-06-22",
       end: "2026-06-26",
     });
-    expect(rows.map((r) => r.displayDate)).toEqual(["2026-06-22", "2026-06-23"]);
+    // UNTIL=...T120000 matches the local noon anchor of the June 24 occurrence,
+    // so it is inclusive. Result is timezone-stable (see localizeUntil in expand.ts).
+    expect(rows.map((r) => r.displayDate)).toEqual(["2026-06-22", "2026-06-23", "2026-06-24"]);
   });
 });
 

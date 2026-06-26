@@ -1,11 +1,35 @@
-import { rrulestr } from "rrule";
+import { RRule, rrulestr } from "rrule";
 
 import { endOfLocalIsoDay, formatLocalIsoDate, parseLocalIsoDate } from "./dates";
 import type { ExpandedOccurrence, OccurrenceOverrideInput, RecurrenceWindow } from "./types";
 
+/**
+ * rrule.js parses an UNTIL value as UTC, but we anchor occurrences to local
+ * wall-clock (noon, via parseLocalIsoDate). That mismatch makes the UNTIL
+ * boundary land a calendar day off depending on the runner's timezone. Re-read
+ * the UNTIL's calendar fields and rebuild it in local time so the comparison is
+ * timezone-stable everywhere (CI/Vercel run in UTC; dev machines do not).
+ */
+function localizeUntil(until: Date | null): Date | undefined {
+  if (!until) return undefined;
+  return new Date(
+    until.getUTCFullYear(),
+    until.getUTCMonth(),
+    until.getUTCDate(),
+    until.getUTCHours(),
+    until.getUTCMinutes(),
+    until.getUTCSeconds()
+  );
+}
+
 function buildRule(rruleText: string, startDate: string) {
-  return rrulestr(`RRULE:${rruleText}`, {
-    dtstart: parseLocalIsoDate(startDate),
+  const dtstart = parseLocalIsoDate(startDate);
+  const parsed = rrulestr(`RRULE:${rruleText}`, { dtstart });
+  if (!parsed.origOptions.until) return parsed;
+  return new RRule({
+    ...parsed.origOptions,
+    dtstart,
+    until: localizeUntil(parsed.origOptions.until),
   });
 }
 
