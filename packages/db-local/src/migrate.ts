@@ -359,6 +359,27 @@ CREATE INDEX IF NOT EXISTS planning_suggestions_user_surface_status_idx
   ON planning_suggestions (user_id, surface, status);
 CREATE INDEX IF NOT EXISTS planning_suggestions_user_id_updated_at_idx ON planning_suggestions (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS abyss_items (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'idea',
+  note TEXT,
+  links TEXT,
+  category TEXT,
+  source TEXT NOT NULL DEFAULT 'capture',
+  status TEXT NOT NULL DEFAULT 'active',
+  resurface_count INTEGER NOT NULL DEFAULT 0,
+  last_resurfaced_at INTEGER,
+  last_touched_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  promoted_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+  promoted_target TEXT
+);
+CREATE INDEX IF NOT EXISTS abyss_items_user_id_status_idx ON abyss_items (user_id, status);
+CREATE INDEX IF NOT EXISTS abyss_items_user_id_last_touched_at_idx ON abyss_items (user_id, last_touched_at);
+
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,

@@ -1,4 +1,5 @@
 import * as sqliteSchema from "@kash/db-local/schema";
+import { abyssItems as pgAbyssItems } from "./schema/abyss-items";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
 import { goalMilestones as pgGoalMilestones } from "./schema/goal-milestones";
@@ -81,6 +82,9 @@ export const protectedBlocks = (
 export const bingoCards = (
   isSqliteMode() ? sqliteSchema.bingoCards : pgBingoCards
 ) as typeof pgBingoCards;
+export const abyssItems = (
+  isSqliteMode() ? sqliteSchema.abyssItems : pgAbyssItems
+) as typeof pgAbyssItems;
 export const goals = (isSqliteMode() ? sqliteSchema.goals : pgGoals) as typeof pgGoals;
 export const goalMilestones = (
   isSqliteMode() ? sqliteSchema.goalMilestones : pgGoalMilestones

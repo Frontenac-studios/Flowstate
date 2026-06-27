@@ -1,3 +1,4 @@
+export * from "./abyss-items";
 export * from "./app-settings";
 export * from "./bingo-cards";
 export * from "./category-settings";
