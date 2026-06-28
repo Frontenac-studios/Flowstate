@@ -49,6 +49,8 @@ export function mapRemoteRow(
     "pulled_at",
     "undone_at",
     "finalized_at",
+    "occurred_at",
+    "archived_at",
   ];
 
   for (const key of dateFields) {
