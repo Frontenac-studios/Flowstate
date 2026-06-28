@@ -4,8 +4,10 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
 
 import { db } from "@/db";
-import { projects, tasks } from "@/db/tables";
+import { syncAbyssItemRow } from "@/db/record-sync-mutation";
+import { abyssItems, projects, tasks } from "@/db/tables";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { applyScheduleBatch } from "@/server/tasks/apply-schedule-batch";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -57,6 +59,30 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: "park_in_abyss",
+    description:
+      "Park a backburner idea or deferred task in the Abyss (a tended home for things to revisit later, not now). Use when the user says to 'park', 'shelve', 'someday', 'backburner', or 'save for later'. Not for actionable tasks they want scheduled — use reschedule_tasks for those.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short title of the idea or task to park" },
+        type: {
+          type: "string",
+          enum: ["idea", "task"],
+          description: "'idea' (default) for a thought; 'task' for a concrete deferred to-do",
+        },
+        category: {
+          type: "string",
+          enum: [...PROJECT_CATEGORIES],
+          description: "Optional life-area category if clear from context",
+        },
+        note: { type: "string", description: "Optional extra detail" },
+      },
+      required: ["title"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 type QueryTasksInput = {
@@ -68,6 +94,41 @@ type QueryTasksInput = {
 type RescheduleTasksInput = {
   assignments: { taskId: string; scheduledDate: string }[];
 };
+
+type ParkInAbyssInput = {
+  title?: string;
+  type?: "idea" | "task";
+  category?: string;
+  note?: string;
+};
+
+async function parkInAbyss(userId: string, input: ParkInAbyssInput) {
+  const title = input.title?.trim();
+  if (!title) return { ok: false as const, error: "title is required" };
+
+  const category =
+    input.category && (PROJECT_CATEGORIES as readonly string[]).includes(input.category)
+      ? (input.category as ProjectCategory)
+      : null;
+
+  const now = new Date();
+  const [row] = await db
+    .insert(abyssItems)
+    .values({
+      userId,
+      title: title.slice(0, 200),
+      type: input.type === "task" ? "task" : "idea",
+      category,
+      note: input.note?.trim() || null,
+      source: "capture",
+      lastTouchedAt: now,
+    })
+    .returning();
+
+  if (!row) return { ok: false as const, error: "failed to park item" };
+  await syncAbyssItemRow(row.id, "insert", row);
+  return { ok: true as const, id: row.id, title: row.title, type: row.type };
+}
 
 async function queryTasks(userId: string, input: QueryTasksInput) {
   if (input.scheduledFrom && !ISO_DATE.test(input.scheduledFrom)) {
@@ -166,6 +227,11 @@ export async function executeChatTool(
         }),
         mutatedTasks: applied > 0,
       };
+    }
+
+    if (name === "park_in_abyss") {
+      const result = await parkInAbyss(userId, (input ?? {}) as ParkInAbyssInput);
+      return { content: JSON.stringify(result), mutatedTasks: false };
     }
 
     return {

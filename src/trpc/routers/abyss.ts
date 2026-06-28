@@ -11,6 +11,7 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const typeSchema = z.enum(["idea", "task"]);
+const sourceSchema = z.enum(["capture", "drop"]);
 
 export const abyssRouter = createTRPCRouter({
   /** Everything still in the deep (archived items are retrievable separately, slice 8). */
@@ -22,7 +23,7 @@ export const abyssRouter = createTRPCRouter({
       .orderBy(desc(abyssItems.lastTouchedAt));
   }),
 
-  /** Minimal capture (the ⌘⇧A overlay + chat "park…" tool land in slice 8A). */
+  /** Capture an item. `source` distinguishes quick/chat capture from a triage Drop. */
   create: protectedProcedure
     .input(
       z.object({
@@ -30,6 +31,7 @@ export const abyssRouter = createTRPCRouter({
         type: typeSchema.default("idea"),
         category: categorySchema.nullish(),
         note: z.string().max(2000).nullish(),
+        source: sourceSchema.default("capture"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -42,7 +44,7 @@ export const abyssRouter = createTRPCRouter({
           type: input.type,
           category: input.category ?? null,
           note: input.note?.trim() || null,
-          source: "capture",
+          source: input.source,
           lastTouchedAt: now,
         })
         .returning();
