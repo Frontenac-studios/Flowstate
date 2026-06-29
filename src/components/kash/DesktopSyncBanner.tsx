@@ -17,7 +17,7 @@ function SyncDot({
     case "pending":
       return <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />;
     default:
-      return <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-kash-accent" aria-hidden />;
+      return <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" aria-hidden />;
   }
 }
 
@@ -29,7 +29,7 @@ export function DesktopSyncBanner() {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-2 z-20 flex justify-center">
       <div
-        className="glass-pill pointer-events-auto inline-flex items-center gap-1.5 px-3 py-1 text-xs text-kash-ink-muted"
+        className="pointer-events-auto inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-3 py-1 text-xs text-ink-muted"
         role="status"
         aria-live="polite"
       >

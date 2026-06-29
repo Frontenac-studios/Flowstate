@@ -45,7 +45,7 @@ function UserMessageRow({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
-          className="w-full resize-none text-sm text-kash-ink"
+          className="w-full resize-none text-sm text-ink"
           autoFocus
         />
         <div className="mt-1.5 flex justify-end gap-2">
@@ -55,7 +55,7 @@ function UserMessageRow({
               setDraft(message.content.text);
               setEditing(false);
             }}
-            className="glass-pill px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-ink"
+            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-ink"
           >
             Cancel
           </button>
@@ -66,7 +66,7 @@ function UserMessageRow({
               onEdit(message.id, draft.trim());
               setEditing(false);
             }}
-            className="glass-pill px-2 py-0.5 text-xs text-kash-accent"
+            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-accent"
           >
             Save & resend
           </button>
@@ -81,14 +81,14 @@ function UserMessageRow({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="absolute -left-7 top-1 rounded p-0.5 text-xs text-kash-ink-muted opacity-0 transition hover:text-kash-ink group-hover:opacity-100"
+          className="absolute -left-7 top-1 rounded p-0.5 text-xs text-ink-muted opacity-0 transition hover:text-ink group-hover:opacity-100"
           aria-label="Edit message"
           title="Edit & resend"
         >
           ✎
         </button>
       ) : null}
-      <div className="bg-kash-accent-soft rounded-[var(--kash-radius-inner)] px-3 py-2 text-sm text-kash-ink">
+      <div className="rounded-[var(--radius-row)] bg-accent-soft px-3 py-2 text-sm text-ink">
         <p className="whitespace-pre-wrap">{renderChatMessage(message.content.text)}</p>
       </div>
     </div>
@@ -109,7 +109,7 @@ export function MessageList({
 
   if (messages.length === 0 && !streamingText) {
     return (
-      <p className="px-1 py-4 text-sm text-kash-ink-muted">
+      <p className="px-1 py-4 text-sm text-ink-muted">
         Ask what&apos;s on deck, what to drop, or how to reshuffle today.
       </p>
     );
@@ -129,18 +129,18 @@ export function MessageList({
         return (
           <div key={m.id} className="mr-auto max-w-[95%]">
             {isNudge ? (
-              <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-kash-ink-muted">
+              <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-ink-muted">
                 Nudge
               </span>
             ) : null}
-            <div className="glass-pill rounded-[var(--kash-radius-inner)] px-3 py-2 text-sm text-kash-ink">
+            <div className="rounded-[var(--radius-row)] border border-border bg-surface px-3 py-2 text-sm text-ink">
               <p className="whitespace-pre-wrap">{renderChatMessage(m.content.text)}</p>
             </div>
           </div>
         );
       })}
       {streamingText ? (
-        <div className="glass-pill mr-auto max-w-[95%] rounded-[var(--kash-radius-inner)] px-3 py-2 text-sm text-kash-ink">
+        <div className="mr-auto max-w-[95%] rounded-[var(--radius-row)] border border-border bg-surface px-3 py-2 text-sm text-ink">
           <p className="whitespace-pre-wrap">{renderChatMessage(streamingText)}</p>
         </div>
       ) : null}

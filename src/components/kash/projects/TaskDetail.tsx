@@ -77,9 +77,7 @@ export default function TaskDetail({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
-          Task
-        </span>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Task</span>
         <Textarea
           className="w-full break-words"
           value={title}
@@ -110,7 +108,11 @@ export default function TaskDetail({
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-ink">Priority</span>
-        <div className="glass-pill flex w-fit text-sm" role="group" aria-label="Priority">
+        <div
+          className="flex w-fit rounded-pill border border-border bg-surface text-sm"
+          role="group"
+          aria-label="Priority"
+        >
           {PRIORITY_LEVELS.map((p) => {
             const meta = priorityMeta(p);
             const selected = task.priority === p;

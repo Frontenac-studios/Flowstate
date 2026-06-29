@@ -10,11 +10,11 @@ type Props = {
 export function EodReviewBanner({ variant, onOpen, onSnooze, onSkip }: Props) {
   return (
     <div
-      className="glass-panel mb-4 flex flex-wrap items-center gap-3 px-4 py-3"
+      className="mb-4 flex flex-wrap items-center gap-3 rounded-card border border-subtle bg-surface px-4 py-3"
       role="region"
       aria-label="End of day review"
     >
-      <p className="min-w-0 flex-1 text-sm text-kash-ink">
+      <p className="min-w-0 flex-1 text-sm text-ink">
         {variant === "saved"
           ? "Today's review is saved."
           : "End of day review — take 2 minutes to close the loop."}
@@ -22,7 +22,7 @@ export function EodReviewBanner({ variant, onOpen, onSnooze, onSkip }: Props) {
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          className="glass-pill px-3 py-1.5 text-sm font-medium"
+          className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm font-medium"
           onClick={onOpen}
         >
           {variant === "saved" ? "View" : "Open"}

@@ -19,7 +19,7 @@ export function AppHeader() {
       // header doubles as the drag region. Ignored by browsers; interactive
       // children (buttons) still receive their own clicks.
       data-tauri-drag-region
-      className="glass-panel-strong mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-kash-ink"
+      className="mb-6 flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface px-4 py-3 text-ink shadow-overlay"
     >
       <IconButton
         type="button"
@@ -41,10 +41,10 @@ export function AppHeader() {
         </svg>
       </IconButton>
       <span className="font-semibold tracking-tight">Kash</span>
-      <span className="text-kash-ink-muted" aria-hidden>
+      <span className="text-ink-muted" aria-hidden>
         ·
       </span>
-      <time className="text-kash-ink-muted" dateTime={new Date().toISOString().slice(0, 10)}>
+      <time className="text-ink-muted" dateTime={new Date().toISOString().slice(0, 10)}>
         {formatHeaderDate()}
       </time>
 
@@ -52,12 +52,12 @@ export function AppHeader() {
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent(OPEN_PALETTE_EVENT))}
-          className="glass-pill flex items-center gap-2 px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+          className="flex items-center gap-2 rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
           aria-label="Open command palette"
           title="Search & commands (⌘K)"
         >
           Search
-          <kbd className="font-mono text-[10px] text-kash-ink-muted" aria-hidden>
+          <kbd className="font-mono text-[10px] text-ink-muted" aria-hidden>
             ⌘K
           </kbd>
         </button>

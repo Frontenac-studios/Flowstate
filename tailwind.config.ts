@@ -59,12 +59,20 @@ const config: Config = {
           glass: "var(--kash-glass-bg)",
         },
       },
+      borderColor: {
+        // The flat `border` color key already yields `.border-border`; the hairline
+        // panel border needs `.border-subtle`, which the `border-subtle` color key
+        // would only expose as `.border-border-subtle`. Surface it under its expected
+        // name so `border-subtle` resolves to the token instead of the gray-200 default.
+        subtle: "var(--border-subtle)",
+      },
       borderRadius: {
         kash: "var(--kash-radius)",
         card: "var(--radius-card)",
         row: "var(--radius-row)",
         control: "var(--radius-control)",
         chip: "var(--radius-chip)",
+        pill: "var(--radius-pill)",
       },
       backdropBlur: {
         kash: "var(--kash-glass-blur)",

@@ -19,7 +19,7 @@ export default function ProjectComposerLineErrors({ lines }: Props) {
     <ul className="mt-1 space-y-1" role="alert">
       {invalidLines.map((line) => (
         <li key={line.lineIndex} className="text-xs">
-          <span className="font-medium text-kash-ink">{lineLabel(line)}</span>
+          <span className="font-medium text-ink">{lineLabel(line)}</span>
           <ProjectParseError warnings={line.parse.warnings} />
         </li>
       ))}

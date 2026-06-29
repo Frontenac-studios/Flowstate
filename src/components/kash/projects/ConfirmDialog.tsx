@@ -63,7 +63,9 @@ export default function ConfirmDialog({
 
   if (!open) return null;
 
-  const panelClass = opaque ? "glass-panel-opaque" : "glass-panel-strong";
+  const panelClass = opaque
+    ? "rounded-card border border-subtle bg-surface"
+    : "rounded-card border border-border bg-surface shadow-overlay";
   const widthClass = children ? "max-w-md" : "max-w-sm";
 
   return createPortal(
@@ -81,10 +83,10 @@ export default function ConfirmDialog({
         aria-labelledby="confirm-title"
         className={`${panelClass} relative z-10 w-full ${widthClass} p-6`}
       >
-        <h2 id="confirm-title" className="text-lg font-semibold text-kash-ink">
+        <h2 id="confirm-title" className="text-lg font-semibold text-ink">
           {title}
         </h2>
-        <p className="mt-2 text-sm text-kash-ink-muted">{message}</p>
+        <p className="mt-2 text-sm text-ink-muted">{message}</p>
         {children}
         <div className="mt-6 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>

@@ -46,10 +46,10 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
       ref={panelRef}
       role="dialog"
       aria-label="Replace a priority"
-      className="glass-panel-opaque fixed z-50 flex flex-col gap-2 p-3 shadow-lg"
+      className="fixed z-50 flex flex-col gap-2 rounded-card border border-subtle bg-surface p-3 shadow-lg"
       style={{ top, left, width: Math.min(width, 400) }}
     >
-      <p className="text-sm font-medium text-kash-ink">Replace a priority</p>
+      <p className="text-sm font-medium text-ink">Replace a priority</p>
       <div className="flex flex-col gap-1">
         {([1, 2, 3] as const).map((slot) => {
           const task = pinnedBySlot.get(slot);
@@ -58,10 +58,10 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
             <button
               key={slot}
               type="button"
-              className="glass-pill flex min-h-9 items-center gap-2 px-3 py-kash-task-y-compact text-left text-sm text-kash-ink hover:ring-2 hover:ring-[var(--kash-accent-soft)]"
+              className="flex min-h-9 items-center gap-2 rounded-pill border border-border bg-surface px-3 py-0.5 text-left text-sm text-ink hover:ring-2 hover:ring-[var(--accent-soft)]"
               onClick={() => onReplace(slot)}
             >
-              <span className="shrink-0 text-xs text-kash-accent" aria-hidden>
+              <span className="shrink-0 text-xs text-accent" aria-hidden>
                 {label}
               </span>
               <span className="min-w-0 flex-1 truncate">{task?.title ?? `Slot ${slot}`}</span>
@@ -71,7 +71,7 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
       </div>
       <button
         type="button"
-        className="mt-1 text-center text-xs text-kash-ink-muted hover:text-kash-ink"
+        className="mt-1 text-center text-xs text-ink-muted hover:text-ink"
         onClick={onDismiss}
       >
         Nevermind

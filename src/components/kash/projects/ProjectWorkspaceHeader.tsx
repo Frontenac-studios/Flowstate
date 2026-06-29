@@ -25,17 +25,17 @@ export default function ProjectWorkspaceHeader({
   showBackToProjects = false,
 }: Props) {
   return (
-    <header className="glass-panel-strong relative z-30 flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+    <header className="relative z-30 flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-overlay">
       <div className="flex flex-wrap items-center gap-3">
         {showBackToProjects ? (
           <Link
             href="/projects"
-            className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+            className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
           >
             ← Projects
           </Link>
         ) : null}
-        <h1 className="text-xl font-semibold text-kash-ink">{project.name}</h1>
+        <h1 className="text-xl font-semibold text-ink">{project.name}</h1>
         <CategoryBadge category={project.category} />
       </div>
 

@@ -205,10 +205,10 @@ function NavLink({
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
       title={item.label}
-      className={`flex h-12 items-center rounded-[var(--kash-radius-control)] pr-2 transition ${
+      className={`flex h-12 items-center rounded-[var(--radius-control)] pr-2 transition ${
         active
-          ? "bg-[var(--surface-selected)] text-kash-ink"
-          : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
+          ? "bg-[var(--surface-selected)] text-ink"
+          : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
       }`}
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center">{item.icon}</span>
@@ -239,7 +239,7 @@ function NavSections({
         <Fragment key={group.label}>
           <div className="px-1 pb-1 pt-2">
             {expanded ? (
-              <span className="px-1 text-[10px] font-semibold uppercase tracking-wide text-kash-ink-muted">
+              <span className="px-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
                 {group.label}
               </span>
             ) : index > 0 ? (
@@ -335,12 +335,14 @@ export function LeftNavRail() {
             // use an opaque surface + elevation so labels don't bleed through. The
             // pinned/collapsed rail reserves its own width (no overlap), so the
             // lighter glass is fine there.
-            expanded && !pinned ? "glass-panel-opaque shadow-xl" : "glass-panel"
+            expanded && !pinned
+              ? "rounded-card border border-subtle bg-surface shadow-xl"
+              : "rounded-card border border-subtle bg-surface"
           }`}
         >
           <div className="mb-1 flex h-8 items-center px-1">
             <span
-              className="select-none text-base font-semibold tracking-tight text-kash-ink"
+              className="select-none text-base font-semibold tracking-tight text-ink"
               aria-hidden
             >
               K
@@ -351,12 +353,12 @@ export function LeftNavRail() {
               aria-pressed={pinned}
               aria-label={pinned ? "Unpin navigation" : "Pin navigation"}
               title={pinned ? "Unpin navigation" : "Pin navigation"}
-              className={`ml-auto flex h-8 w-8 items-center justify-center rounded-[var(--kash-radius-control)] transition ${
+              className={`ml-auto flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] transition ${
                 expanded ? "opacity-100" : "pointer-events-none opacity-0"
               } ${
                 pinned
-                  ? "bg-[var(--surface-selected)] text-kash-ink"
-                  : "text-kash-ink-muted hover:bg-[var(--surface-2)] hover:text-kash-ink"
+                  ? "bg-[var(--surface-selected)] text-ink"
+                  : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
               }`}
             >
               {PinIcon}
@@ -377,11 +379,11 @@ export function LeftNavRail() {
           />
           <nav
             aria-label="Primary"
-            className="glass-panel-strong fixed inset-y-3 left-3 z-50 flex w-44 flex-col gap-1 overflow-y-auto p-3 lg:hidden"
+            className="fixed inset-y-3 left-3 z-50 flex w-44 flex-col gap-1 overflow-y-auto rounded-card border border-border bg-surface p-3 shadow-overlay lg:hidden"
           >
             <div className="mb-1 flex h-8 items-center px-1">
               <span
-                className="select-none text-base font-semibold tracking-tight text-kash-ink"
+                className="select-none text-base font-semibold tracking-tight text-ink"
                 aria-hidden
               >
                 K

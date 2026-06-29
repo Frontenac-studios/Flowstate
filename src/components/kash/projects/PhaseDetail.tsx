@@ -70,9 +70,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
-          Phase
-        </span>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Phase</span>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -86,7 +84,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-kash-ink">Description</label>
+        <label className="text-sm font-medium text-ink">Description</label>
         <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}

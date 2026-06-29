@@ -25,10 +25,10 @@ export function LensGroupSection({ group, onComplete, onDelete }: Props) {
           className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: group.color }}
         />
-        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
           {group.label}
         </span>
-        <span className="text-xs text-kash-ink-muted">({group.tasks.length})</span>
+        <span className="text-xs text-ink-muted">({group.tasks.length})</span>
       </div>
       <ul className="space-y-2">
         {group.tasks.map((task: PlanTaskRow) => (

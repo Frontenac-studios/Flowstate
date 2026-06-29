@@ -89,7 +89,7 @@ export const TaskDragHandle = forwardRef<HTMLButtonElement, Props>(function Task
     <button
       ref={ref}
       type="button"
-      className={`text-kash-ink-muted/25 hover:text-kash-ink-muted/50 flex h-3 w-2.5 shrink-0 cursor-grab items-center justify-center self-center active:cursor-grabbing ${
+      className={`text-ink-muted/25 hover:text-ink-muted/50 flex h-3 w-2.5 shrink-0 cursor-grab items-center justify-center self-center active:cursor-grabbing ${
         hoverReveal ? "opacity-0 group-hover:opacity-100" : ""
       } ${className}`.trim()}
       aria-label="Drag task"

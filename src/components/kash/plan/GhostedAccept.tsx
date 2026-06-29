@@ -43,15 +43,15 @@ export default function GhostedAccept({
           return (
             <li
               key={item.id}
-              className="border-kash-ink/25 bg-kash-ink/[0.02] flex items-start justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-sm"
+              className="border-ink/25 bg-ink/[0.02] flex items-start justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-sm"
             >
               <div className="min-w-0 flex-1">
-                <span className="mr-2 text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
+                <span className="mr-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
                   ✦ suggested
                 </span>
-                <span className={staged ? "text-kash-ink" : "text-kash-ink/70"}>{item.label}</span>
+                <span className={staged ? "text-ink" : "text-ink/70"}>{item.label}</span>
                 {item.detail ? (
-                  <p className="mt-0.5 text-xs text-kash-ink-muted">{item.detail}</p>
+                  <p className="mt-0.5 text-xs text-ink-muted">{item.detail}</p>
                 ) : null}
               </div>
               <div className="flex shrink-0 gap-1">
@@ -60,7 +60,7 @@ export default function GhostedAccept({
                   aria-label={`Accept suggestion: ${item.label}`}
                   aria-pressed={staged}
                   onClick={() => onStage(item.id)}
-                  className="hover:bg-kash-ink/5 rounded px-2 py-1 text-kash-ink"
+                  className="hover:bg-ink/5 rounded px-2 py-1 text-ink"
                 >
                   ✓
                 </button>
@@ -68,7 +68,7 @@ export default function GhostedAccept({
                   type="button"
                   aria-label={`Dismiss suggestion: ${item.label}`}
                   onClick={() => onDismiss(item.id)}
-                  className="hover:bg-kash-ink/5 rounded px-2 py-1 text-kash-ink-muted"
+                  className="hover:bg-ink/5 rounded px-2 py-1 text-ink-muted"
                 >
                   ✕
                 </button>

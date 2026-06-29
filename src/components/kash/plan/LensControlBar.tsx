@@ -56,7 +56,11 @@ export function LensControlBar() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="glass-pill flex items-center gap-1 text-sm" role="group" aria-label="Lenses">
+      <div
+        className="flex items-center gap-1 rounded-pill border border-border bg-surface text-sm"
+        role="group"
+        aria-label="Lenses"
+      >
         {lens.properties.map((prop) => {
           const meta = LENS_META[prop];
           const key = KEY_FOR_PROPERTY[prop];
@@ -70,7 +74,7 @@ export function LensControlBar() {
               title={`${meta.label} lens — press ${key}`}
               aria-label={`${meta.label} lens (${key})`}
               className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition ${
-                active ? "bg-kash-accent text-white" : "text-kash-ink-muted hover:text-kash-ink"
+                active ? "bg-accent text-white" : "text-ink-muted hover:text-ink"
               }`}
             >
               <span aria-hidden className="flex w-3 items-center justify-center">
@@ -85,11 +89,11 @@ export function LensControlBar() {
       {showApplyControls ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
           <div
-            className="glass-pill flex items-center gap-1"
+            className="flex items-center gap-1 rounded-pill border border-border bg-surface"
             role="group"
             aria-label="Group tasks by"
           >
-            <span className="px-1.5 text-kash-ink-muted">Group</span>
+            <span className="px-1.5 text-ink-muted">Group</span>
             <GroupChip
               label="None"
               active={state.group === null}
@@ -116,7 +120,7 @@ export function LensControlBar() {
                 role="group"
                 aria-label={`Filter by ${LENS_META[prop].label}`}
               >
-                <span className="text-kash-ink-muted">{LENS_META[prop].label}:</span>
+                <span className="text-ink-muted">{LENS_META[prop].label}:</span>
                 {options.map((opt) => (
                   <button
                     key={opt.value}
@@ -125,8 +129,8 @@ export function LensControlBar() {
                     aria-pressed={selected.includes(opt.value)}
                     className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition ${
                       selected.includes(opt.value)
-                        ? "border-kash-accent bg-kash-accent text-white"
-                        : "border-white/30 text-kash-ink-muted hover:text-kash-ink"
+                        ? "border-accent bg-accent text-white"
+                        : "border-white/30 text-ink-muted hover:text-ink"
                     }`}
                   >
                     <span
@@ -161,7 +165,7 @@ function GroupChip({
       onClick={onClick}
       aria-pressed={active}
       className={`rounded-full px-2.5 py-1 transition ${
-        active ? "bg-kash-accent text-white" : "text-kash-ink-muted hover:text-kash-ink"
+        active ? "bg-accent text-white" : "text-ink-muted hover:text-ink"
       }`}
     >
       {label}

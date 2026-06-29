@@ -23,7 +23,10 @@ function ChipRow({ chips }: { chips: string[] }) {
   return (
     <>
       {chips.map((chip) => (
-        <span key={chip} className="glass-pill shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted">
+        <span
+          key={chip}
+          className="shrink-0 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
+        >
           {chip}
         </span>
       ))}
@@ -56,7 +59,7 @@ export function MultiLineParsePreview({ lines }: MultiLineProps) {
         return (
           <li
             key={line.lineIndex}
-            className="flex min-w-0 items-center gap-2 text-xs text-kash-ink-muted"
+            className="flex min-w-0 items-center gap-2 text-xs text-ink-muted"
           >
             <span className="min-w-0 flex-1 truncate">{line.parse.title}</span>
             <span className="flex shrink-0 flex-wrap justify-end gap-1">

@@ -24,7 +24,10 @@ export default function ProjectParsePreview({ parse }: Props) {
   return (
     <div className="mt-1 flex flex-wrap gap-1" aria-live="polite">
       {chips.map((chip) => (
-        <span key={chip} className="glass-pill px-1.5 py-0.5 text-[10px] text-kash-ink-muted">
+        <span
+          key={chip}
+          className="rounded-pill border border-border bg-surface px-1.5 py-0.5 text-[10px] text-ink-muted"
+        >
           {chip}
         </span>
       ))}

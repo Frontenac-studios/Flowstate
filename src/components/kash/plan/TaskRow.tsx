@@ -248,7 +248,7 @@ export function TaskRow({
   return (
     <li
       ref={setNodeRef}
-      className={`relative overflow-hidden rounded-[var(--kash-radius)] ${
+      className={`relative overflow-hidden rounded-[var(--radius-card)] ${
         isDragging ? "opacity-60" : ""
       } ${isDragging ? "" : "transition-transform"}`}
       style={{ transform: CSS.Transform.toString(transform) }}
@@ -258,7 +258,7 @@ export function TaskRow({
           <div className="absolute inset-y-0 left-0 flex" aria-hidden={!isLeftOpen}>
             <button
               type="button"
-              className="glass-panel-opaque flex w-[4.5rem] flex-col items-center justify-center gap-0.5 text-sm text-kash-accent"
+              className="flex w-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-card border border-subtle bg-surface text-sm text-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 hide();
@@ -276,7 +276,7 @@ export function TaskRow({
         <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
           <button
             type="button"
-            className="glass-panel-opaque flex w-[4.5rem] items-center justify-center text-sm text-kash-ink"
+            className="flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
             onClick={(e) => {
               e.stopPropagation();
               startEdit();
@@ -286,7 +286,7 @@ export function TaskRow({
           </button>
           <button
             type="button"
-            className="glass-panel-opaque flex w-[4.5rem] items-center justify-center text-sm text-kash-ink-muted"
+            className="flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink-muted"
             onClick={(e) => {
               e.stopPropagation();
               handleDelete();
@@ -299,9 +299,9 @@ export function TaskRow({
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`glass-panel-opaque relative flex min-h-kash-row cursor-pointer items-start gap-2 px-3 py-kash-task-y transition-transform duration-150 ease-out ${
-            task.isTop3 ? "border-l-2 border-kash-accent" : ""
-          } ${selected ? "ring-2 ring-[var(--kash-accent-soft)]" : ""}`}
+          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] transition-transform duration-150 ease-out ${
+            task.isTop3 ? "border-l-2 border-accent" : ""
+          } ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
           style={{ transform: `translateX(${offset}px)` }}
           onClick={() => onSelect?.(task.id)}
           onDoubleClick={() => onActivate?.(task.id)}
@@ -314,14 +314,14 @@ export function TaskRow({
           />
 
           {task.isTop3 ? (
-            <span className="shrink-0 text-kash-accent" aria-label="Top 3">
+            <span className="shrink-0 text-accent" aria-label="Top 3">
               ★
             </span>
           ) : null}
 
           {task.isRecurringOccurrence ? (
             <span
-              className="mt-0.5 shrink-0 text-xs text-kash-ink-muted"
+              className="mt-0.5 shrink-0 text-xs text-ink-muted"
               title="Recurring"
               aria-label="Recurring task"
             >
@@ -331,7 +331,7 @@ export function TaskRow({
 
           <input
             type="checkbox"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 accent-kash-accent"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 accent-accent"
             aria-label={`Complete ${task.title}`}
             disabled={isCompleting}
             onClick={(e) => e.stopPropagation()}
@@ -361,13 +361,13 @@ export function TaskRow({
                   onBlur={saveTitle}
                 />
                 {editError ? (
-                  <p className="mt-1 text-sm text-red-600" role="alert">
+                  <p className="mt-1 text-sm text-critical" role="alert">
                     {editError}
                   </p>
                 ) : null}
               </>
             ) : (
-              <span className={`block break-words text-kash-ink ${isOverdue ? "font-medium" : ""}`}>
+              <span className={`block break-words text-ink ${isOverdue ? "font-medium" : ""}`}>
                 {task.title}
               </span>
             )}
@@ -376,7 +376,7 @@ export function TaskRow({
           {showProjectIndicator && task.projectId ? (
             <Link
               href={`/projects/${task.projectId}`}
-              className="mt-0.5 flex max-w-[11rem] shrink-0 items-center gap-1.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+              className="mt-0.5 flex max-w-[11rem] shrink-0 items-center gap-1.5 text-xs text-ink-muted hover:text-accent"
               onClick={(e) => e.stopPropagation()}
             >
               <span

@@ -51,7 +51,7 @@ export function animatePinToTop3({
   const ghost = document.createElement("div");
   ghost.setAttribute("aria-hidden", "true");
   ghost.className =
-    "glass-panel-opaque pointer-events-none fixed z-50 flex items-center gap-2 overflow-hidden px-3 py-2 text-sm text-kash-ink shadow-lg";
+    "rounded-card border border-subtle bg-surface pointer-events-none fixed z-50 flex items-center gap-2 overflow-hidden px-3 py-2 text-sm text-ink shadow-lg";
   ghost.style.top = `${sourceRect.top}px`;
   ghost.style.left = `${sourceRect.left}px`;
   ghost.style.width = `${sourceRect.width}px`;
@@ -59,7 +59,7 @@ export function animatePinToTop3({
   ghost.style.transition = `top ${DURATION_MS}ms ease-out, left ${DURATION_MS}ms ease-out, width ${DURATION_MS}ms ease-out, height ${DURATION_MS}ms ease-out, opacity ${DURATION_MS}ms ease-out`;
 
   const star = document.createElement("span");
-  star.className = "shrink-0 text-kash-accent";
+  star.className = "shrink-0 text-accent";
   star.textContent = "★";
 
   const titleEl = document.createElement("span");

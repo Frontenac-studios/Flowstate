@@ -65,31 +65,31 @@ export function ChatRail() {
     <>
       <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" aria-hidden onClick={closeRail} />
       <aside
-        className="glass-panel-strong fixed inset-y-3 right-3 z-50 flex w-[min(100%-1.5rem,22rem)] flex-col p-4 lg:sticky lg:inset-auto lg:top-6 lg:z-auto lg:h-[calc(100vh-3rem)] lg:w-[min(100%,22rem)] lg:shrink-0"
+        className="fixed inset-y-3 right-3 z-50 flex w-[min(100%-1.5rem,22rem)] flex-col rounded-card border border-border bg-surface p-4 shadow-overlay lg:sticky lg:inset-auto lg:top-6 lg:z-auto lg:h-[calc(100vh-3rem)] lg:w-[min(100%,22rem)] lg:shrink-0"
         aria-label="Claude chat"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-kash-ink">{title}</h2>
+          <h2 className="text-sm font-semibold text-ink">{title}</h2>
           <IconButton type="button" onClick={closeRail} aria-label="Close chat">
             ✕
           </IconButton>
         </div>
 
         {!configured ? (
-          <p className="bg-kash-accent-soft mb-3 rounded-lg px-3 py-2 text-xs text-kash-ink-muted">
-            Claude isn&apos;t configured — add{" "}
-            <code className="text-kash-ink">ANTHROPIC_API_KEY</code> to your environment.
+          <p className="mb-3 rounded-lg bg-accent-soft px-3 py-2 text-xs text-ink-muted">
+            Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code>{" "}
+            to your environment.
           </p>
         ) : null}
 
         {streamError ? (
-          <p className="mb-2 text-xs text-red-600" role="alert">
+          <p className="mb-2 text-xs text-critical" role="alert">
             {streamError}
           </p>
         ) : null}
 
         {isLoading ? (
-          <p className="text-sm text-kash-ink-muted">Loading…</p>
+          <p className="text-sm text-ink-muted">Loading…</p>
         ) : (
           <MessageList
             messages={messages}

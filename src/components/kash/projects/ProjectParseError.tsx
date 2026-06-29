@@ -38,7 +38,7 @@ export default function ProjectParseError({ warnings }: Props) {
         <p
           key={`${warning.code}-${index}`}
           className={`text-[10px] leading-snug ${
-            isBlockingWarning(warning) ? "text-red-600" : "text-kash-ink-muted"
+            isBlockingWarning(warning) ? "text-critical" : "text-ink-muted"
           }`}
         >
           {warningMessage(warning)}

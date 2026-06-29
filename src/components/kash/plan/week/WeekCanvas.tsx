@@ -247,7 +247,7 @@ export function WeekCanvas() {
       </div>
 
       {isLoading ? (
-        <p className="mt-4 px-2 text-sm text-kash-ink-muted">Loading…</p>
+        <p className="mt-4 px-2 text-sm text-ink-muted">Loading…</p>
       ) : (
         <>
           <WeekInbox
@@ -278,7 +278,7 @@ export function WeekCanvas() {
 
           <div
             ref={dayScrollRef}
-            className="border-subtle mt-4 overflow-x-auto rounded-card border p-2"
+            className="mt-4 overflow-x-auto rounded-card border border-subtle p-2"
             style={{ backgroundColor: WEEK_TRACK_BG }}
           >
             <div

@@ -55,7 +55,7 @@ export default function MillerTaskRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`flex items-start gap-2 rounded-kash px-2 py-kash-task-y-compact transition ${
+      className={`flex items-start gap-2 rounded-card px-2 py-0.5 transition ${
         selected ? "bg-[var(--surface-selected)]" : "hover:bg-surface"
       } ${focused ? "ring-2 ring-inset ring-[var(--accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""

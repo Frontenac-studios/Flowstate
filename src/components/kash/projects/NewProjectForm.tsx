@@ -57,9 +57,12 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel flex flex-col gap-4 p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-4"
+    >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="new-project-name" className="text-sm font-medium text-kash-ink">
+        <label htmlFor="new-project-name" className="text-sm font-medium text-ink">
           Name
         </label>
         <Input
@@ -73,8 +76,8 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
       </div>
 
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1 text-sm font-medium text-kash-ink">
-          Category <span className="text-kash-ink-muted">(required)</span>
+        <legend className="mb-1 text-sm font-medium text-ink">
+          Category <span className="text-ink-muted">(required)</span>
         </legend>
         <div className="flex flex-wrap gap-2">
           {PROJECT_CATEGORIES.map((value) => {

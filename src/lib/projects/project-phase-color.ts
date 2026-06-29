@@ -28,7 +28,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function phaseRampColor(projectId: string | null, phaseOrdinal?: number | null): string {
-  if (!projectId) return "var(--kash-ink-muted)";
+  if (!projectId) return "var(--ink-muted)";
   const hue = projectHue(projectId);
   if (phaseOrdinal == null) {
     return `hsl(${hue} 52% ${RAMP_BASE_LIGHTNESS}%)`;

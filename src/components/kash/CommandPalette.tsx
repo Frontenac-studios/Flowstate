@@ -131,7 +131,7 @@ export function CommandPalette() {
       }}
     >
       <div className="absolute inset-0 bg-black/20" aria-hidden onMouseDown={close} />
-      <div className="glass-panel-strong relative z-10 w-full max-w-lg overflow-hidden p-2">
+      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-card border border-border bg-surface p-2 shadow-overlay">
         <Input
           ref={inputRef}
           value={query}
@@ -157,7 +157,7 @@ export function CommandPalette() {
         />
         <ul className="mt-2 max-h-72 overflow-y-auto" role="listbox">
           {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-kash-ink-muted">No commands</li>
+            <li className="px-3 py-2 text-sm text-ink-muted">No commands</li>
           ) : (
             filtered.map((cmd, i) => (
               <li key={cmd.id} role="option" aria-selected={i === selected}>
@@ -165,14 +165,12 @@ export function CommandPalette() {
                   type="button"
                   onMouseEnter={() => setSelected(i)}
                   onClick={() => run(cmd)}
-                  className={`flex w-full items-center justify-between rounded-[var(--kash-radius-chip)] px-3 py-2 text-left text-sm transition ${
-                    i === selected ? "bg-[var(--kash-accent-soft)] text-kash-ink" : "text-kash-ink"
+                  className={`flex w-full items-center justify-between rounded-[var(--radius-chip)] px-3 py-2 text-left text-sm transition ${
+                    i === selected ? "bg-[var(--accent-soft)] text-ink" : "text-ink"
                   }`}
                 >
                   <span>{cmd.label}</span>
-                  {cmd.hint ? (
-                    <span className="text-xs text-kash-ink-muted">{cmd.hint}</span>
-                  ) : null}
+                  {cmd.hint ? <span className="text-xs text-ink-muted">{cmd.hint}</span> : null}
                 </button>
               </li>
             ))

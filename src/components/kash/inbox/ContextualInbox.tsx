@@ -26,28 +26,28 @@ export function ContextualInbox() {
 
   return (
     <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
-      <div className="glass-panel-strong mb-4 overflow-hidden">
+      <div className="mb-4 overflow-hidden rounded-card border border-border bg-surface shadow-overlay">
         {!open ? (
           <div className="flex items-center gap-2 px-4 py-2">
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex items-center gap-1.5 rounded-[var(--kash-radius-chip)] px-2 py-1 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+              className="flex items-center gap-1.5 rounded-[var(--radius-chip)] px-2 py-1 text-sm text-ink-muted transition hover:text-ink"
               title="Inbox (⌃I)"
             >
               📥 Inbox
               {inboxCount > 0 ? (
-                <span className="rounded-full bg-[var(--kash-accent-soft)] px-1.5 text-xs text-kash-accent">
+                <span className="rounded-full bg-[var(--accent-soft)] px-1.5 text-xs text-accent">
                   {inboxCount}
                 </span>
               ) : null}
             </button>
-            <span className="ml-auto hidden text-xs text-kash-ink-muted sm:block">⌃I inbox</span>
+            <span className="ml-auto hidden text-xs text-ink-muted sm:block">⌃I inbox</span>
           </div>
         ) : (
           <div className="flex max-h-[42vh] flex-col">
-            <div className="flex items-center gap-1 border-b border-[var(--kash-glass-border)] px-3 py-2">
-              <span className="rounded-[var(--kash-radius-chip)] bg-[var(--kash-accent-soft)] px-2.5 py-1 text-sm text-kash-accent">
+            <div className="flex items-center gap-1 border-b border-[var(--border)] px-3 py-2">
+              <span className="rounded-[var(--radius-chip)] bg-[var(--accent-soft)] px-2.5 py-1 text-sm text-accent">
                 {inboxCount > 0 ? `📥 Inbox ${inboxCount}` : "📥 Inbox"}
               </span>
               <IconButton
@@ -61,7 +61,7 @@ export function ContextualInbox() {
               </IconButton>
             </div>
 
-            <div className="border-b border-[var(--kash-glass-border)] px-3 py-2">
+            <div className="border-b border-[var(--border)] px-3 py-2">
               <LensControlBar />
             </div>
 

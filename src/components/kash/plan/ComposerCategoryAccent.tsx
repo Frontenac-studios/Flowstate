@@ -21,14 +21,14 @@ export function ComposerCategoryAccent({ preview, children }: Props) {
   return (
     <div
       style={{
-        borderLeft: `3px solid ${color ?? "var(--kash-hairline, rgba(120,120,120,0.35))"}`,
+        borderLeft: `3px solid ${color ?? "var(--border)"}`,
         borderRadius: 0,
         paddingLeft: 10,
       }}
     >
       {children}
       {preview ? (
-        <p className="mt-1 flex items-center justify-end gap-1.5 text-xs text-kash-ink-muted">
+        <p className="mt-1 flex items-center justify-end gap-1.5 text-xs text-ink-muted">
           {resolved ? (
             <>
               <span

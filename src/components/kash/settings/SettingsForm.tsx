@@ -48,12 +48,10 @@ const TABS: { id: TabId; label: string }[] = [
 /** Placeholder panel for sections whose underlying feature is not built yet. */
 function ComingSoon({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-      <h2 className="text-sm font-semibold text-kash-ink">{title}</h2>
-      <p className="mt-2 text-sm text-kash-ink-muted">{children}</p>
-      <p className="text-kash-ink-faint mt-2 text-xs font-medium uppercase tracking-wide">
-        Coming soon
-      </p>
+    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
+      <p className="mt-2 text-sm text-ink-muted">{children}</p>
+      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-ink-faint">Coming soon</p>
     </section>
   );
 }
@@ -100,13 +98,13 @@ export function SettingsForm() {
   };
 
   return (
-    <section className="glass-panel-opaque space-y-6 px-6 py-8">
-      <h1 className="text-lg font-semibold text-kash-ink">Settings</h1>
+    <section className="space-y-6 rounded-card border border-subtle bg-surface px-6 py-8">
+      <h1 className="text-lg font-semibold text-ink">Settings</h1>
 
       <div
         role="tablist"
         aria-label="Settings sections"
-        className="inline-flex flex-wrap gap-0.5 rounded-[var(--kash-radius-control)] bg-[var(--surface-selected)] p-0.5"
+        className="inline-flex flex-wrap gap-0.5 rounded-[var(--radius-control)] bg-[var(--surface-selected)] p-0.5"
       >
         {TABS.map((t) => {
           const active = tab === t.id;
@@ -121,8 +119,8 @@ export function SettingsForm() {
               onClick={() => setTab(t.id)}
               className={`rounded-[6px] px-3 py-1.5 text-sm transition ${
                 active
-                  ? "bg-[var(--surface)] font-medium text-kash-ink shadow-sm"
-                  : "text-kash-ink-muted hover:text-kash-ink"
+                  ? "bg-[var(--surface)] font-medium text-ink shadow-sm"
+                  : "text-ink-muted hover:text-ink"
               }`}
             >
               {t.label}
@@ -138,9 +136,9 @@ export function SettingsForm() {
         className="space-y-6"
       >
         {tab === "account" ? (
-          <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-            <h2 className="text-sm font-semibold text-kash-ink">Account</h2>
-            <p className="mt-1 text-sm text-kash-ink-muted">
+          <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+            <h2 className="text-sm font-semibold text-ink">Account</h2>
+            <p className="mt-1 text-sm text-ink-muted">
               Profile and account management arrive with a later release. For now you can sign out.
             </p>
             <form action="/auth/signout" method="post" className="mt-4">
@@ -167,9 +165,9 @@ export function SettingsForm() {
 
         {tab === "preferences" ? (
           <>
-            <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-              <h2 className="text-sm font-semibold text-kash-ink">Day view bucket style</h2>
-              <p className="mt-1 text-sm text-kash-ink-muted">
+            <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+              <h2 className="text-sm font-semibold text-ink">Day view bucket style</h2>
+              <p className="mt-1 text-sm text-ink-muted">
                 Week view always uses Mon–Sun columns and an inbox, regardless of this setting.
               </p>
               <fieldset className="mt-4 space-y-2" disabled={isLoading || updateMutation.isPending}>
@@ -179,8 +177,8 @@ export function SettingsForm() {
                   return (
                     <label
                       key={opt.value}
-                      className={`glass-panel flex cursor-pointer gap-3 rounded-[var(--kash-radius-chip)] p-3 transition ${
-                        checked ? "ring-1 ring-kash-accent" : ""
+                      className={`flex cursor-pointer gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3 transition ${
+                        checked ? "ring-1 ring-accent" : ""
                       }`}
                     >
                       <input
@@ -192,8 +190,8 @@ export function SettingsForm() {
                         className="mt-1"
                       />
                       <span>
-                        <span className="text-sm font-medium text-kash-ink">{opt.title}</span>
-                        <span className="mt-0.5 block text-sm text-kash-ink-muted">
+                        <span className="text-sm font-medium text-ink">{opt.title}</span>
+                        <span className="mt-0.5 block text-sm text-ink-muted">
                           {opt.description}
                         </span>
                       </span>
@@ -202,15 +200,15 @@ export function SettingsForm() {
                 })}
               </fieldset>
               {updateMutation.isError ? (
-                <p className="mt-2 text-sm text-red-600" role="alert">
+                <p className="mt-2 text-sm text-critical" role="alert">
                   Could not save bucket style. Try again.
                 </p>
               ) : null}
             </section>
 
-            <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-              <h2 className="text-sm font-semibold text-kash-ink">Working hours</h2>
-              <p className="mt-1 text-sm text-kash-ink-muted">
+            <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+              <h2 className="text-sm font-semibold text-ink">Working hours</h2>
+              <p className="mt-1 text-sm text-ink-muted">
                 Sets the time range shown on the Today timeline.
               </p>
               <fieldset
@@ -218,7 +216,7 @@ export function SettingsForm() {
                 disabled={isLoading || hoursMutation.isPending}
               >
                 <legend className="sr-only">Working hours</legend>
-                <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
+                <label className="flex flex-col gap-1 text-sm text-ink-muted">
                   Start
                   <Select
                     value={startHour}
@@ -231,7 +229,7 @@ export function SettingsForm() {
                     ))}
                   </Select>
                 </label>
-                <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
+                <label className="flex flex-col gap-1 text-sm text-ink-muted">
                   End
                   <Select
                     value={endHour}
@@ -246,25 +244,25 @@ export function SettingsForm() {
                 </label>
               </fieldset>
               {hoursInvalid ? (
-                <p className="mt-2 text-sm text-red-600" role="alert">
+                <p className="mt-2 text-sm text-critical" role="alert">
                   Start must be before end.
                 </p>
               ) : null}
               {hoursMutation.isError ? (
-                <p className="mt-2 text-sm text-red-600" role="alert">
+                <p className="mt-2 text-sm text-critical" role="alert">
                   Could not save working hours. Try again.
                 </p>
               ) : null}
             </section>
 
-            <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-              <h2 className="text-sm font-semibold text-kash-ink">Accessibility</h2>
-              <p className="mt-2 text-sm text-kash-ink-muted">
+            <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+              <h2 className="text-sm font-semibold text-ink">Accessibility</h2>
+              <p className="mt-2 text-sm text-ink-muted">
                 Kash follows your system preferences for motion and transparency. On macOS, adjust
                 these in System Settings → Accessibility → Display (Reduce motion, Reduce
                 transparency).
               </p>
-              <p className="mt-2 text-sm text-kash-ink-muted">
+              <p className="mt-2 text-sm text-ink-muted">
                 There are no in-app overrides in v1 — when reduced motion or transparency is on,
                 Kash disables gradient animation and uses more opaque panels instead of heavy blur.
               </p>
@@ -273,17 +271,17 @@ export function SettingsForm() {
         ) : null}
 
         {tab === "ai" ? (
-          <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-            <h2 className="text-sm font-semibold text-kash-ink">Claude (AI companion)</h2>
-            <p className="mt-2 text-sm text-kash-ink-muted">
+          <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+            <h2 className="text-sm font-semibold text-ink">Claude (AI companion)</h2>
+            <p className="mt-2 text-sm text-ink-muted">
               Kash uses Claude for chat and focus narration. In v1 the API key is set by your
               deployment environment, not in this UI.
             </p>
-            <p className="mt-2 text-sm text-kash-ink-muted">
-              Add <code className="text-kash-ink">ANTHROPIC_API_KEY</code> to{" "}
-              <code className="text-kash-ink">.env.local</code> (see{" "}
-              <code className="text-kash-ink">.env.example</code>). Optional:{" "}
-              <code className="text-kash-ink">ANTHROPIC_MODEL</code> to override the default model.
+            <p className="mt-2 text-sm text-ink-muted">
+              Add <code className="text-ink">ANTHROPIC_API_KEY</code> to{" "}
+              <code className="text-ink">.env.local</code> (see{" "}
+              <code className="text-ink">.env.example</code>). Optional:{" "}
+              <code className="text-ink">ANTHROPIC_MODEL</code> to override the default model.
             </p>
           </section>
         ) : null}
@@ -297,7 +295,7 @@ export function SettingsForm() {
 
       <Link
         href="/today"
-        className="glass-pill inline-block px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+        className="inline-block rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
       >
         Back to Today
       </Link>

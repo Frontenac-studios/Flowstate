@@ -51,7 +51,7 @@ export default function ProjectWorkspace({
       />
 
       {isLoading ? (
-        <p className="text-kash-ink-muted">Loading project…</p>
+        <p className="text-ink-muted">Loading project…</p>
       ) : viewMode === "columns" ? (
         <MillerColumnsView
           tree={tree}

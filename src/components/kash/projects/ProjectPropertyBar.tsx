@@ -34,7 +34,7 @@ export default function ProjectPropertyBar({ assist, visible }: Props) {
         return (
           <span key={item.key} className="inline-flex items-center gap-1">
             {index > 0 ? (
-              <span className="text-kash-ink-muted/40 text-[10px]" aria-hidden>
+              <span className="text-ink-muted/40 text-[10px]" aria-hidden>
                 ·
               </span>
             ) : null}
@@ -45,10 +45,10 @@ export default function ProjectPropertyBar({ assist, visible }: Props) {
                 pillClassName={[
                   "rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors",
                   isActive
-                    ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                    ? "bg-[var(--accent-soft)] text-accent"
                     : isFilled
-                      ? "text-kash-ink-muted"
-                      : "text-kash-ink-muted/45",
+                      ? "text-ink-muted"
+                      : "text-ink-muted/45",
                 ].join(" ")}
               />
             ) : (
@@ -58,10 +58,10 @@ export default function ProjectPropertyBar({ assist, visible }: Props) {
                 className={[
                   "rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors",
                   isActive
-                    ? "bg-[var(--kash-accent-soft)] text-kash-accent"
+                    ? "bg-[var(--accent-soft)] text-accent"
                     : isFilled
-                      ? "text-kash-ink-muted"
-                      : "text-kash-ink-muted/45",
+                      ? "text-ink-muted"
+                      : "text-ink-muted/45",
                 ].join(" ")}
               >
                 {LABELS[item.key]}

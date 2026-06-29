@@ -32,22 +32,22 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
       data-top3-pin
       data-top3-slot={slot}
       className={`relative transition-shadow ${
-        isOver ? "kash-section-drop-target rounded-[var(--kash-radius)]" : ""
+        isOver ? "kash-section-drop-target rounded-[var(--radius-card)]" : ""
       }`}
     >
       <div
-        className={`glass-pill flex min-h-kash-row items-start gap-2 border-l-[3px] border-kash-accent py-kash-task-y pl-3 pr-9 ${
+        className={`flex min-h-[var(--row-min-height)] items-start gap-2 rounded-pill border border-l-[3px] border-accent bg-surface py-[var(--row-py)] pl-3 pr-9 ${
           isCompleted ? "opacity-90" : ""
         }`}
       >
-        <span className="mt-0.5 shrink-0 text-xs text-kash-accent" aria-hidden>
+        <span className="mt-0.5 shrink-0 text-xs text-accent" aria-hidden>
           {label}
         </span>
-        <span className="mt-0.5 shrink-0 text-kash-accent" aria-hidden>
+        <span className="mt-0.5 shrink-0 text-accent" aria-hidden>
           ★
         </span>
         <span
-          className={`min-w-0 flex-1 break-words text-sm font-medium text-kash-ink ${
+          className={`min-w-0 flex-1 break-words text-sm font-medium text-ink ${
             isCompleted ? "line-through opacity-60" : ""
           }`}
         >
@@ -56,7 +56,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
         {task.projectSlug && task.projectId ? (
           <Link
             href={`/projects/${task.projectId}`}
-            className="glass-pill mt-0.5 shrink-0 px-2 py-0.5 text-xs text-kash-ink-muted hover:text-kash-accent"
+            className="mt-0.5 shrink-0 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-accent"
             onClick={(e) => e.stopPropagation()}
           >
             #{task.projectSlug}
@@ -64,7 +64,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
         ) : null}
         <button
           type="button"
-          className="absolute right-2 top-1 rounded-full px-1.5 text-sm leading-none text-kash-ink-muted hover:text-kash-ink"
+          className="absolute right-2 top-1 rounded-full px-1.5 text-sm leading-none text-ink-muted hover:text-ink"
           aria-label={`Unpin ${task.title}`}
           onClick={() => onUnpin(task.id)}
         >
@@ -82,10 +82,8 @@ function Top3HintDropZone() {
     <div
       ref={setNodeRef}
       data-top3-hint
-      className={`flex min-h-kash-row w-full items-center text-center text-xs text-kash-ink-muted transition ${
-        isOver
-          ? "kash-section-drop-target rounded-[var(--kash-radius)] ring-2 ring-kash-accent"
-          : ""
+      className={`flex min-h-[var(--row-min-height)] w-full items-center text-center text-xs text-ink-muted transition ${
+        isOver ? "kash-section-drop-target rounded-[var(--radius-card)] ring-2 ring-accent" : ""
       }`}
     >
       Swipe right on a task to your top three priorities for today
@@ -99,7 +97,7 @@ function Top3NextDropZone() {
   return (
     <div
       ref={setNodeRef}
-      className={`h-2 transition ${isOver ? "kash-section-drop-target rounded-[var(--kash-radius)]" : ""}`}
+      className={`h-2 transition ${isOver ? "kash-section-drop-target rounded-[var(--radius-card)]" : ""}`}
       aria-hidden
     />
   );
@@ -130,12 +128,12 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
     <section
       ref={ref}
       data-top3-section
-      className={`mt-4 ${highlighted ? "kash-section-pulse rounded-[var(--kash-radius)]" : ""}`}
+      className={`mt-4 ${highlighted ? "kash-section-pulse rounded-[var(--radius-card)]" : ""}`}
       aria-labelledby="top3-heading"
     >
       <h2
         id="top3-heading"
-        className="mb-3 text-sm font-medium uppercase tracking-wide text-kash-ink-muted"
+        className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-muted"
       >
         Today&apos;s Priorities
       </h2>
