@@ -57,7 +57,7 @@ export function InPageSwitcher<T extends string>({
 
   return (
     <div
-      className="rounded-pill inline-flex gap-[2px] bg-active-surface p-[2px] text-sm"
+      className="inline-flex gap-[2px] rounded-pill bg-active-surface p-[2px] text-sm"
       role="group"
       aria-label={ariaLabel}
     >
