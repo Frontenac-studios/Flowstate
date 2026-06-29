@@ -1,5 +1,6 @@
 import { boolean, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+import { careActivities } from "./care-activities";
 import { goalMilestones } from "./goal-milestones";
 import { phases } from "./phases";
 import { projectCategory, projects } from "./projects";
@@ -12,6 +13,11 @@ export const tasks = pgTable(
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     phaseId: uuid("phase_id").references(() => phases.id, { onDelete: "set null" }),
     milestoneId: uuid("milestone_id").references(() => goalMilestones.id, { onDelete: "set null" }),
+    // Links a task spawned from a self-care practice ("Add to my day") back to its
+    // care_activity. Null for every non-care task. (Care library, CL1.)
+    careActivityId: uuid("care_activity_id").references(() => careActivities.id, {
+      onDelete: "set null",
+    }),
     title: text("title").notNull(),
     // Phase 1 (1.1): added nullable, backfilled (1B), now NOT NULL. The resolver always
     // produces a value (the unresolved fallback stores `adulting` + category_unresolved=true),

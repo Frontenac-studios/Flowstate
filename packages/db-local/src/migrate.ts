@@ -367,6 +367,8 @@ CREATE TABLE IF NOT EXISTS abyss_items (
   note TEXT,
   links TEXT,
   category TEXT,
+  embedding TEXT,
+  tags TEXT,
   source TEXT NOT NULL DEFAULT 'capture',
   status TEXT NOT NULL DEFAULT 'active',
   resurface_count INTEGER NOT NULL DEFAULT 0,
@@ -379,6 +381,33 @@ CREATE TABLE IF NOT EXISTS abyss_items (
 );
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_status_idx ON abyss_items (user_id, status);
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_last_touched_at_idx ON abyss_items (user_id, last_touched_at);
+
+CREATE TABLE IF NOT EXISTS care_activities (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  theme TEXT NOT NULL,
+  kind TEXT,
+  cadence TEXT,
+  note TEXT,
+  source TEXT NOT NULL,
+  catalog_key TEXT,
+  archived_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS care_activities_user_id_updated_at_idx ON care_activities (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS care_events (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  activity_id TEXT REFERENCES care_activities(id) ON DELETE SET NULL,
+  occurred_at INTEGER NOT NULL,
+  duration_minutes INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS care_events_user_id_occurred_at_idx ON care_events (user_id, occurred_at);
+CREATE INDEX IF NOT EXISTS care_events_activity_id_idx ON care_events (activity_id);
 
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
@@ -406,6 +435,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "tasks", column: "milestone_id", definition: "TEXT" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },
+  { table: "tasks", column: "care_activity_id", definition: "TEXT" },
   { table: "app_settings", column: "last_used_category", definition: "TEXT" },
 ];
 

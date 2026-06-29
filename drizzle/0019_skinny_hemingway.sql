@@ -1,1 +1,0 @@
-ALTER TABLE "abyss_items" ADD COLUMN "tags" jsonb;

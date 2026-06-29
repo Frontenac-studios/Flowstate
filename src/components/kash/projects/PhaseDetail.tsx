@@ -68,9 +68,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
-          Phase
-        </span>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Phase</span>
         <input
           className="glass-input"
           value={name}
@@ -85,7 +83,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-kash-ink">Description</label>
+        <label className="text-sm font-medium text-ink">Description</label>
         <textarea
           className="glass-input glass-textarea"
           value={description}
@@ -98,12 +96,12 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-kash-ink">Dates</span>
+        <span className="text-sm font-medium text-ink">Dates</span>
         {isLeaf ? (
           <>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-kash-ink-muted">
+                <label className="text-xs text-ink-muted">
                   {dateSideLabel("Start", phase.startDate !== null)}
                 </label>
                 <input
@@ -115,9 +113,9 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
                   aria-label="Start date"
                 />
               </div>
-              <span className="pb-2 text-kash-ink-muted">→</span>
+              <span className="pb-2 text-ink-muted">→</span>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-kash-ink-muted">
+                <label className="text-xs text-ink-muted">
                   {dateSideLabel("End", phase.endDate !== null)}
                 </label>
                 <input
@@ -131,12 +129,12 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
               </div>
             </div>
             {effective.start && effective.end ? (
-              <p className="text-sm text-kash-ink-muted">
+              <p className="text-sm text-ink-muted">
                 Calendar: {effective.start} → {effective.end}
                 {!hasManualPhaseDate(phase) ? " (from scheduled tasks)" : null}
               </p>
             ) : (
-              <p className="text-sm text-kash-ink-muted">
+              <p className="text-sm text-ink-muted">
                 No calendar range yet — set dates or schedule tasks in this phase.
               </p>
             )}
@@ -145,14 +143,14 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
                 type="button"
                 onClick={clearAllDates}
                 disabled={pending}
-                className="self-start text-xs text-kash-ink-muted transition hover:text-kash-ink disabled:opacity-50"
+                className="self-start text-xs text-ink-muted transition hover:text-ink disabled:opacity-50"
               >
                 Clear all dates (use task schedules)
               </button>
             ) : null}
           </>
         ) : (
-          <p className="text-sm text-kash-ink-muted">
+          <p className="text-sm text-ink-muted">
             {effective.start && effective.end
               ? `${effective.start} → ${effective.end} (derived from sub-phases)`
               : "No dated sub-phases yet."}

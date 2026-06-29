@@ -56,6 +56,7 @@ export default function ProjectWorkspace({
         <MillerColumnsView
           tree={tree}
           projectId={initialProject.id}
+          category={project.category}
           phases={phasesQuery.data ?? []}
           tasks={tasksQuery.data ?? []}
           selectedPath={selectedPath}

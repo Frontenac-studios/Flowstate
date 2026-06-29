@@ -1,7 +1,10 @@
 "use client";
 
+import { Fragment, type ReactNode } from "react";
+
 import { useDroppable } from "@dnd-kit/core";
 
+import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
 
 import MillerPhaseRow from "./MillerPhaseRow";
@@ -17,17 +20,16 @@ export type DetailSelection = { type: "phase" | "task"; id: string } | null;
 type Props = {
   level: number;
   parentPhaseId: string | null;
+  category: ProjectCategory;
   items: ColumnItem[];
   openPhaseId: string | null;
   detail: DetailSelection;
-  selection: DetailSelection;
   focusIndex: number | null;
   isActive: boolean;
   shellClassName?: string;
   hint?: string;
+  renderDetail: (item: ColumnItem) => ReactNode;
   onOpenPhase: (node: Node) => void;
-  onOpenPhaseDetail: (node: Node) => void;
-  onHighlightTask: (task: ProjectTask) => void;
   onOpenTaskDetail: (task: ProjectTask) => void;
   onToggleTask: (task: ProjectTask) => void;
 };
@@ -35,17 +37,16 @@ type Props = {
 export default function MillerColumn({
   level,
   parentPhaseId,
+  category,
   items,
   openPhaseId,
   detail,
-  selection,
   focusIndex,
   isActive,
   shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
   hint,
+  renderDetail,
   onOpenPhase,
-  onOpenPhaseDetail,
-  onHighlightTask,
   onOpenTaskDetail,
   onToggleTask,
 }: Props) {
@@ -59,41 +60,60 @@ export default function MillerColumn({
       ref={setNodeRef}
       className={`miller-column-card p-2 transition ${shellClassName} ${
         isActive ? "miller-column-card-active" : ""
-      } ${isOver ? "bg-kash-accent/10" : ""}`}
+      } ${isOver ? "bg-[var(--surface-selected)]" : ""}`}
     >
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
         {items.map((item, index) => {
           const focused = focusIndex === index;
           if (item.kind === "phase") {
+            const expanded = detail?.type === "phase" && detail.id === item.node.phase.id;
             return (
-              <MillerPhaseRow
-                key={`p:${item.node.phase.id}`}
-                node={item.node}
-                parentPhaseId={parentPhaseId}
-                isOpen={openPhaseId === item.node.phase.id}
-                selected={detail?.type === "phase" && detail.id === item.node.phase.id}
-                focused={focused}
-                onOpen={() => onOpenPhase(item.node)}
-                onOpenDetail={() => onOpenPhaseDetail(item.node)}
-              />
+              <Fragment key={`p:${item.node.phase.id}`}>
+                <MillerPhaseRow
+                  node={item.node}
+                  parentPhaseId={parentPhaseId}
+                  category={category}
+                  isOpen={openPhaseId === item.node.phase.id}
+                  selected={expanded}
+                  focused={focused}
+                  onOpen={() => onOpenPhase(item.node)}
+                />
+                {expanded ? (
+                  <li
+                    data-miller-detail
+                    className="border-subtle mb-1 rounded-row border bg-surface-2 p-3"
+                  >
+                    {renderDetail(item)}
+                  </li>
+                ) : null}
+              </Fragment>
             );
           }
+          const expanded = detail?.type === "task" && detail.id === item.task.id;
           return (
-            <MillerTaskRow
-              key={`t:${item.task.id}`}
-              task={item.task}
-              parentPhaseId={parentPhaseId}
-              selected={selection?.type === "task" && selection.id === item.task.id}
-              focused={focused}
-              onHighlight={() => onHighlightTask(item.task)}
-              onOpenDetail={() => onOpenTaskDetail(item.task)}
-              onToggleComplete={() => onToggleTask(item.task)}
-            />
+            <Fragment key={`t:${item.task.id}`}>
+              <MillerTaskRow
+                task={item.task}
+                parentPhaseId={parentPhaseId}
+                selected={expanded}
+                focused={focused}
+                onOpenDetail={() => onOpenTaskDetail(item.task)}
+                onToggleComplete={() => onToggleTask(item.task)}
+              />
+              {expanded ? (
+                <li
+                  data-miller-detail
+                  className="border-subtle mb-1 rounded-row border bg-surface-2 p-3"
+                >
+                  {renderDetail(item)}
+                </li>
+              ) : null}
+            </Fragment>
           );
         })}
       </ul>
       {hint && items.length === 0 ? (
-        <p className="mt-1 px-2 text-xs text-kash-ink-muted">{hint}</p>
+        <p className="mt-1 px-2 text-xs text-ink-muted">{hint}</p>
       ) : null}
     </div>
   );
