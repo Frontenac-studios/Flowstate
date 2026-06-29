@@ -149,12 +149,15 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
       </div>
 
       {span === null ? (
-        <div className="glass-panel-opaque px-6 py-10 text-center text-ink-muted">
+        <div className="rounded-card border border-subtle bg-surface px-6 py-10 text-center text-ink-muted">
           No dated phases yet. Schedule tasks in a phase or set dates manually to plot it on the
           calendar.
         </div>
       ) : (
-        <div ref={scrollRef} className="glass-panel-opaque overflow-x-auto">
+        <div
+          ref={scrollRef}
+          className="overflow-x-auto rounded-card border border-subtle bg-surface"
+        >
           <div style={{ width: GANTT_LABEL_WIDTH + boardWidth }}>
             <GanttAxis ticks={ticks} pxPerDay={pxPerDay} boardWidth={boardWidth} />
             <div className="relative">
@@ -187,7 +190,7 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
       )}
 
       {undatedLeaves.length > 0 ? (
-        <div className="glass-panel-opaque p-4">
+        <div className="rounded-card border border-subtle bg-surface p-4">
           <h3 className="mb-2 text-sm font-medium text-ink">Undated phases</h3>
           <p className="mb-3 text-xs text-ink-muted">
             These leaf phases have no dates and no scheduled tasks. Click one to set manual dates

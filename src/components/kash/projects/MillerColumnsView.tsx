@@ -428,7 +428,10 @@ export default function MillerColumnsView({
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="flex min-h-0 flex-1 flex-col gap-3">
-          <div className="glass-panel-opaque shrink-0 p-4" data-miller-composer>
+          <div
+            className="shrink-0 rounded-card border border-subtle bg-surface p-4"
+            data-miller-composer
+          >
             {isBlank ? (
               <p className="mb-3 text-sm text-ink-muted">
                 Add tasks below — Parent//+ Child for subdirectories, or ;;; + Phase to create
@@ -457,7 +460,7 @@ export default function MillerColumnsView({
               tabIndex={0}
               onKeyDown={handleKeyDown}
               aria-label="Project columns"
-              className="glass-panel-opaque flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto rounded-card border border-subtle bg-surface p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {columns.map((col) => (
                 <MillerColumn
