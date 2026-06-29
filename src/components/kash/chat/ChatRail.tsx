@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import IconButton from "@/components/kash/ui/IconButton";
 import { useChatPanel } from "@/hooks/useChatPanel";
 import { useChatSuggestions } from "@/hooks/useChatSuggestions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
@@ -69,14 +70,9 @@ export function ChatRail() {
       >
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-kash-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={closeRail}
-            className="glass-icon-btn text-kash-ink-muted"
-            aria-label="Close chat"
-          >
+          <IconButton type="button" onClick={closeRail} aria-label="Close chat">
             ✕
-          </button>
+          </IconButton>
         </div>
 
         {!configured ? (

@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Input from "@/components/kash/ui/Input";
 import {
   categoryFillVar,
   categorySeedLabel,
@@ -60,9 +62,8 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
         <label htmlFor="new-project-name" className="text-sm font-medium text-kash-ink">
           Name
         </label>
-        <input
+        <Input
           id="new-project-name"
-          className="glass-input"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Q3 Marketing Refresh"
@@ -115,12 +116,12 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
       ) : null}
 
       <div className="flex items-center gap-2">
-        <button type="submit" className="glass-btn-primary" disabled={!canSubmit}>
+        <Button type="submit" disabled={!canSubmit}>
           {createMutation.isPending ? "Creating…" : "Create project"}
-        </button>
-        <button type="button" className="glass-btn-ghost" onClick={onCancel}>
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

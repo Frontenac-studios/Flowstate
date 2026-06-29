@@ -8,6 +8,8 @@ import {
   readEodStorage,
   setGenerateAttemptedForDate,
 } from "@/lib/eod/eod-storage";
+import Button from "@/components/kash/ui/Button";
+import Textarea from "@/components/kash/ui/Textarea";
 import { templateEodReview } from "@/lib/eod/template-eod-review";
 import { renderInlineBold } from "@/lib/markdown/inline-bold";
 import { useTRPC } from "@/trpc/client";
@@ -243,9 +245,9 @@ export function EodReviewModal({
                   <label className="block text-xs text-kash-ink-muted" htmlFor="eod-reflection">
                     Your answer (optional)
                   </label>
-                  <textarea
+                  <Textarea
                     id="eod-reflection"
-                    className="glass-input glass-textarea mt-1 w-full resize-y text-sm"
+                    className="mt-1 w-full resize-y text-sm"
                     rows={3}
                     value={reflection}
                     onChange={(e) => setReflection(e.target.value)}
@@ -264,28 +266,29 @@ export function EodReviewModal({
         ) : null}
 
         <div className="mt-6 flex flex-wrap gap-2">
-          <button
+          <Button
             type="button"
-            className="glass-btn-primary px-4 py-2 text-sm"
+            className="px-4 py-2 text-sm"
             disabled={payloadLoading || upsertMutation.isPending}
             onClick={() => void handleDone()}
           >
             Done
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="glass-btn-ghost text-sm"
+            variant="ghost"
+            className="text-sm"
             disabled={aiLoading}
             onClick={handleRegenerate}
           >
             Regenerate
-          </button>
-          <button type="button" className="glass-btn-ghost text-sm" onClick={onSnooze}>
+          </Button>
+          <Button type="button" variant="ghost" className="text-sm" onClick={onSnooze}>
             Not now
-          </button>
-          <button type="button" className="glass-btn-ghost text-sm" onClick={onSkip}>
+          </Button>
+          <Button type="button" variant="ghost" className="text-sm" onClick={onSkip}>
             Skip today
-          </button>
+          </Button>
         </div>
       </div>
     </div>

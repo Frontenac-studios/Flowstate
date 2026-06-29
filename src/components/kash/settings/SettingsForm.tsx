@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Select from "@/components/kash/ui/Select";
 import type { BucketMode } from "@/lib/settings/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
@@ -142,9 +144,9 @@ export function SettingsForm() {
               Profile and account management arrive with a later release. For now you can sign out.
             </p>
             <form action="/auth/signout" method="post" className="mt-4">
-              <button type="submit" className="glass-btn-ghost text-sm">
+              <Button type="submit" variant="ghost" className="text-sm">
                 Sign out
-              </button>
+              </Button>
             </form>
           </section>
         ) : null}
@@ -218,8 +220,7 @@ export function SettingsForm() {
                 <legend className="sr-only">Working hours</legend>
                 <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
                   Start
-                  <select
-                    className="glass-input"
+                  <Select
                     value={startHour}
                     onChange={(e) => handleHoursChange(Number(e.target.value), endHour)}
                   >
@@ -228,12 +229,11 @@ export function SettingsForm() {
                         {hourLabel(h)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-kash-ink-muted">
                   End
-                  <select
-                    className="glass-input"
+                  <Select
                     value={endHour}
                     onChange={(e) => handleHoursChange(startHour, Number(e.target.value))}
                   >
@@ -242,7 +242,7 @@ export function SettingsForm() {
                         {hourLabel(h)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
               </fieldset>
               {hoursInvalid ? (

@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Input from "@/components/kash/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
@@ -42,37 +44,37 @@ export function LoginForm() {
 
       <label className="block space-y-1">
         <span className="text-sm text-kash-ink-muted">Email</span>
-        <input
+        <Input
           type="email"
           required
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="glass-input w-full"
+          className="w-full"
         />
       </label>
 
       <label className="block space-y-1">
         <span className="text-sm text-kash-ink-muted">Password</span>
-        <input
+        <Input
           type="password"
           required
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="glass-input w-full"
+          className="w-full"
         />
       </label>
 
       {error ? (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-critical" role="alert">
           {error}
         </p>
       ) : null}
 
-      <button type="submit" disabled={loading} className="glass-btn-primary w-full text-sm">
+      <Button type="submit" disabled={loading} className="w-full text-sm">
         {loading ? "Please wait…" : "Sign in"}
-      </button>
+      </Button>
     </form>
   );
 }

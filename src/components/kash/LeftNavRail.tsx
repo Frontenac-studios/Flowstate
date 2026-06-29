@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, type ReactNode, useEffect, useState } from "react";
 
+import IconButton from "@/components/kash/ui/IconButton";
 import { readNavRailPinned, writeNavRailPinned } from "@/lib/nav/nav-rail-storage";
 
 type NavItem = {
@@ -385,14 +386,14 @@ export function LeftNavRail() {
               >
                 K
               </span>
-              <button
+              <IconButton
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="glass-icon-btn ml-auto text-kash-ink-muted"
+                className="ml-auto"
                 aria-label="Close navigation"
               >
                 ✕
-              </button>
+              </IconButton>
             </div>
 
             <NavSections expanded isActive={isActive} onNavigate={() => setMobileOpen(false)} />

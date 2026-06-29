@@ -2,6 +2,9 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Textarea from "@/components/kash/ui/Textarea";
+
 type Props = {
   disabled?: boolean;
   placeholder?: string;
@@ -32,7 +35,7 @@ export function ChatComposer({
   return (
     <div className="border-t border-[var(--kash-glass-border)] pt-3">
       {suggestions}
-      <textarea
+      <Textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -45,7 +48,7 @@ export function ChatComposer({
         rows={2}
         disabled={disabled || isStreaming}
         placeholder={placeholder}
-        className="glass-textarea glass-input w-full resize-none text-sm text-kash-ink"
+        className="w-full resize-none text-sm text-kash-ink"
       />
       <div className="mt-2 flex justify-end gap-2">
         {isStreaming && onStop ? (
@@ -57,14 +60,14 @@ export function ChatComposer({
             Stop
           </button>
         ) : null}
-        <button
+        <Button
           type="button"
           onClick={submit}
           disabled={disabled || isStreaming || !value.trim()}
-          className="glass-btn-primary px-3 py-1.5 text-sm"
+          className="px-3 py-1.5 text-sm"
         >
           Send
-        </button>
+        </Button>
       </div>
     </div>
   );

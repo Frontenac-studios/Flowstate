@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 
 import { useTRPC } from "@/trpc/client";
 
+import Button from "@/components/kash/ui/Button";
+
 import CategoryFilter, { type CategoryFilterValue } from "./CategoryFilter";
 import NewProjectForm from "./NewProjectForm";
 import ProjectCard from "./ProjectCard";
@@ -29,9 +31,9 @@ export default function ProjectsIndex() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-kash-ink">Projects</h1>
         {!formOpen ? (
-          <button type="button" className="glass-btn-primary" onClick={() => setFormOpen(true)}>
+          <Button type="button" onClick={() => setFormOpen(true)}>
             New project
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -61,13 +63,9 @@ export default function ProjectsIndex() {
             Create your first project to start planning phases and tasks.
           </p>
           {!formOpen ? (
-            <button
-              type="button"
-              className="glass-btn-primary mt-2"
-              onClick={() => setFormOpen(true)}
-            >
+            <Button type="button" className="mt-2" onClick={() => setFormOpen(true)}>
               New project
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : visible.length === 0 ? (

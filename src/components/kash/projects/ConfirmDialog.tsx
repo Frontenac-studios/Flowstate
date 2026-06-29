@@ -3,6 +3,8 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+import Button from "@/components/kash/ui/Button";
+
 type Props = {
   open: boolean;
   title: string;
@@ -85,27 +87,18 @@ export default function ConfirmDialog({
         <p className="mt-2 text-sm text-kash-ink-muted">{message}</p>
         {children}
         <div className="mt-6 flex justify-end gap-2">
-          <button type="button" className="glass-btn-ghost" onClick={onCancel}>
+          <Button type="button" variant="ghost" onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             ref={confirmRef}
             type="button"
-            className="glass-btn-primary"
-            style={
-              destructive
-                ? {
-                    backgroundColor: "var(--status-critical)",
-                    borderColor: "var(--status-critical)",
-                    color: "var(--on-accent)",
-                  }
-                : undefined
-            }
+            variant={destructive ? "destructive" : "primary"}
             disabled={confirmDisabled}
             onClick={onConfirm}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

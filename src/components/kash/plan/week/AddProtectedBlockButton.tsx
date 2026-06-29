@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Select from "@/components/kash/ui/Select";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
@@ -52,8 +54,8 @@ export default function AddProtectedBlockButton({ isoDate }: Props) {
     >
       <label className="block text-caption text-ink-muted">
         Category
-        <select
-          className="glass-input mt-1 w-full py-1 text-xs"
+        <Select
+          className="mt-1 w-full py-1 text-xs"
           value={category}
           onChange={(e) => setCategory(e.target.value as ProjectCategory)}
         >
@@ -62,23 +64,20 @@ export default function AddProtectedBlockButton({ isoDate }: Props) {
               {categoryLabel(c)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <div className="flex gap-1">
-        <button
-          type="submit"
-          className="glass-btn-primary flex-1 py-1 text-xs"
-          disabled={createMutation.isPending}
-        >
+        <Button type="submit" className="flex-1 py-1 text-xs" disabled={createMutation.isPending}>
           Add
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="glass-btn-ghost py-1 text-xs"
+          variant="ghost"
+          className="py-1 text-xs"
           onClick={() => setOpen(false)}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

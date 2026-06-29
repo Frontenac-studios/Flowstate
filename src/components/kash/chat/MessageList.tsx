@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import Textarea from "@/components/kash/ui/Textarea";
 import { renderChatMessage } from "@/lib/markdown/render-chat-message";
 
 type Message = {
@@ -40,11 +41,11 @@ function UserMessageRow({
   if (editing && onEdit) {
     return (
       <div className="ml-auto max-w-[95%]">
-        <textarea
+        <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
-          className="glass-textarea glass-input w-full resize-none text-sm text-kash-ink"
+          className="w-full resize-none text-sm text-kash-ink"
           autoFocus
         />
         <div className="mt-1.5 flex justify-end gap-2">

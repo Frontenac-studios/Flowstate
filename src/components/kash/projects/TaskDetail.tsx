@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import TaskRepeatSection from "@/components/kash/projects/TaskRepeatSection";
+import Select from "@/components/kash/ui/Select";
+import Textarea from "@/components/kash/ui/Textarea";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { defaultCategoryLabel } from "@/lib/projects/category-settings";
@@ -75,9 +77,11 @@ export default function TaskDetail({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Task</span>
-        <textarea
-          className="glass-input glass-textarea w-full break-words"
+        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
+          Task
+        </span>
+        <Textarea
+          className="w-full break-words"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={commitTitle}
@@ -151,9 +155,8 @@ export default function TaskDetail({
               boxShadow: task.categoryUnresolved ? "inset 0 0 0 1.5px var(--ink-muted)" : undefined,
             }}
           />
-          <select
+          <Select
             id="task-detail-category"
-            className="glass-input"
             value={task.category}
             onChange={(e) => onUpdate({ category: e.target.value as ProjectCategory })}
           >
@@ -162,7 +165,7 @@ export default function TaskDetail({
                 {opt.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         {task.categoryUnresolved ? (
           <p className="text-xs text-ink-muted">Auto-filed — pick a category to confirm.</p>

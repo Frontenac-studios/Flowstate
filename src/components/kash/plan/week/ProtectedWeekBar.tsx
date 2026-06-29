@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import Button from "@/components/kash/ui/Button";
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
@@ -40,28 +41,29 @@ export default function ProtectedWeekBar({ anchorDate }: Props) {
     <div className="border-subtle mt-4 flex flex-wrap items-center gap-2 rounded-card border bg-surface px-3 py-2 text-sm">
       <span className="text-ink-muted">Protected time</span>
       {templates.length > 0 ? (
-        <button
+        <Button
           type="button"
-          className="glass-btn-ghost text-xs"
+          variant="ghost"
+          className="text-xs"
           disabled={proposeMutation.isPending}
           onClick={() => proposeMutation.mutate(weekInput)}
         >
           Apply default week
-        </button>
+        </Button>
       ) : null}
       {proposedCount > 0 ? (
         <>
           <span className="text-xs text-ink-muted">
             {proposedCount} proposed block{proposedCount === 1 ? "" : "s"}
           </span>
-          <button
+          <Button
             type="button"
-            className="glass-btn-primary text-xs"
+            className="text-xs"
             disabled={confirmMutation.isPending}
             onClick={() => confirmMutation.mutate(weekInput)}
           >
             Confirm
-          </button>
+          </Button>
         </>
       ) : null}
     </div>

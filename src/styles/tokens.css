@@ -33,6 +33,11 @@
   --accent-soft: rgba(22, 24, 29, 0.12);
   --focus-ring: rgba(22, 24, 29, 0.35);
 
+  /* ---- active states (A2 / DT-7): soft unified gray, strictly flat (border only) ---- */
+  --active-surface: #eceef1; /* nav active pill · segmented track · Week gray background */
+  --active-raised: #ffffff; /* inset white pill · Week "today" column — raised, not filled */
+  --active-raised-border: #e2e4e8; /* hairline that sells the raised pill; NO shadow (kept flat) */
+
   /* ---- category palette (DT-3, Apple set): fill / solid / text ---- */
   --cat-professional-fill: #e5f5fc;
   --cat-professional-solid: #009ddc;
