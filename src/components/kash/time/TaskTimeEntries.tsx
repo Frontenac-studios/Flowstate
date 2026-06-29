@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
+import Input from "@/components/kash/ui/Input";
 import {
   applyClockToDate,
   formatDuration,
@@ -167,17 +168,17 @@ export default function TaskTimeEntries({ taskId }: Props) {
       )}
 
       <div className="flex flex-wrap items-center gap-2 pt-0.5">
-        <input
+        <Input
           type="text"
           inputMode="numeric"
           value={startInput}
           onChange={(e) => setStartInput(e.target.value)}
           placeholder="now"
           aria-label="Start time"
-          className="glass-input w-16 px-2 py-1 text-xs"
+          className="w-16 px-2 py-1 text-xs"
         />
         <span className="text-xs text-kash-ink-muted">+</span>
-        <input
+        <Input
           type="text"
           value={durationInput}
           onChange={(e) => setDurationInput(e.target.value)}
@@ -189,7 +190,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           }}
           placeholder="20m"
           aria-label="Duration"
-          className="glass-input w-16 px-2 py-1 text-xs"
+          className="w-16 px-2 py-1 text-xs"
         />
         <button
           type="button"

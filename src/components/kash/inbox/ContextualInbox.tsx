@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import IconButton from "@/components/kash/ui/IconButton";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { useTRPC } from "@/trpc/client";
 
@@ -49,15 +50,15 @@ export function ContextualInbox() {
               <span className="rounded-[var(--kash-radius-chip)] bg-[var(--kash-accent-soft)] px-2.5 py-1 text-sm text-kash-accent">
                 {inboxCount > 0 ? `📥 Inbox ${inboxCount}` : "📥 Inbox"}
               </span>
-              <button
+              <IconButton
                 type="button"
                 onClick={() => setOpen(false)}
-                className="glass-icon-btn ml-auto text-kash-ink-muted"
+                className="ml-auto"
                 aria-label="Collapse inbox"
                 title="Collapse"
               >
                 ⌄
-              </button>
+              </IconButton>
             </div>
 
             <div className="border-b border-[var(--kash-glass-border)] px-3 py-2">

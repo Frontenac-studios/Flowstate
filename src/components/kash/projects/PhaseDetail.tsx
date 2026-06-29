@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import Input from "@/components/kash/ui/Input";
+import Textarea from "@/components/kash/ui/Textarea";
 import {
   derivePhaseRangeFromTasks,
   hasManualPhaseDate,
@@ -71,8 +73,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
         <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
           Phase
         </span>
-        <input
-          className="glass-input"
+        <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={commitName}
@@ -86,8 +87,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-kash-ink">Description</label>
-        <textarea
-          className="glass-input glass-textarea"
+        <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onBlur={commitDescription}
@@ -106,9 +106,8 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
                 <label className="text-xs text-kash-ink-muted">
                   {dateSideLabel("Start", phase.startDate !== null)}
                 </label>
-                <input
+                <Input
                   type="date"
-                  className="glass-input"
                   value={phase.startDate ?? ""}
                   max={phase.endDate ?? taskSnap?.end ?? undefined}
                   onChange={(e) => onUpdate({ startDate: e.target.value || null })}
@@ -120,9 +119,8 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
                 <label className="text-xs text-kash-ink-muted">
                   {dateSideLabel("End", phase.endDate !== null)}
                 </label>
-                <input
+                <Input
                   type="date"
-                  className="glass-input"
                   value={phase.endDate ?? ""}
                   min={phase.startDate ?? taskSnap?.start ?? undefined}
                   onChange={(e) => onUpdate({ endDate: e.target.value || null })}

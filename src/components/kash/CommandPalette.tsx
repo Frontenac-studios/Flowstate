@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import Input from "@/components/kash/ui/Input";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
 /** Fired by other chrome (e.g. the header search pill) to open the palette. */
@@ -131,7 +132,7 @@ export function CommandPalette() {
     >
       <div className="absolute inset-0 bg-black/20" aria-hidden onMouseDown={close} />
       <div className="glass-panel-strong relative z-10 w-full max-w-lg overflow-hidden p-2">
-        <input
+        <Input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -151,7 +152,7 @@ export function CommandPalette() {
             }
           }}
           placeholder="Search commands…"
-          className="glass-input w-full"
+          className="w-full"
           aria-label="Search commands"
         />
         <ul className="mt-2 max-h-72 overflow-y-auto" role="listbox">

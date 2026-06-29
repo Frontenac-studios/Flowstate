@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import Select from "@/components/kash/ui/Select";
 import { formatRruleLabel } from "@/lib/recurrence/format-label";
 import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
 import { useTRPC } from "@/trpc/client";
@@ -63,9 +64,9 @@ export default function TaskRepeatSection({ taskId, disabled = false }: Props) {
       <label htmlFor={`task-repeat-${taskId}`} className="text-sm font-medium text-kash-ink">
         Repeat
       </label>
-      <select
+      <Select
         id={`task-repeat-${taskId}`}
-        className="glass-input w-full text-sm"
+        className="w-full text-sm"
         value={currentValue}
         disabled={disabled || pending}
         onChange={(e) => onChange(e.target.value)}
@@ -78,7 +79,7 @@ export default function TaskRepeatSection({ taskId, disabled = false }: Props) {
         {rule && !REPEAT_PRESETS.some((p) => p.rrule === rule.rrule) ? (
           <option value={rule.rrule}>{formatRruleLabel(rule.rrule)}</option>
         ) : null}
-      </select>
+      </Select>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import Button from "@/components/kash/ui/Button";
+
 type Props = {
   variant: "due" | "saved";
   onOpen: () => void;
@@ -27,12 +29,12 @@ export function EodReviewBanner({ variant, onOpen, onSnooze, onSkip }: Props) {
         </button>
         {variant === "due" ? (
           <>
-            <button type="button" className="glass-btn-ghost text-sm" onClick={onSnooze}>
+            <Button type="button" variant="ghost" className="text-sm" onClick={onSnooze}>
               Not now
-            </button>
-            <button type="button" className="glass-btn-ghost text-sm" onClick={onSkip}>
+            </Button>
+            <Button type="button" variant="ghost" className="text-sm" onClick={onSkip}>
               Skip today
-            </button>
+            </Button>
           </>
         ) : null}
       </div>

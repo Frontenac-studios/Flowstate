@@ -2,6 +2,8 @@
 
 import { useRef } from "react";
 
+import { cn } from "@/lib/cn";
+
 export type SwitcherOption<T extends string> = {
   value: T;
   label: string;
@@ -21,8 +23,10 @@ type Props<T extends string> = {
 };
 
 /**
- * The shared in-page segmented control: a glass pill of mutually-exclusive
- * options. Presentational and fully controlled — callers own the value and its
+ * The shared in-page segmented control: an inset white pill (the active option)
+ * riding a soft-gray `--active-surface` track (DT-7). The raised pill reads as
+ * raised purely via `--active-raised-border` — strictly flat, no shadow.
+ * Presentational and fully controlled — callers own the value and its
  * persistence — so it can back Today's Day/Week, the Projects view/zoom toggles,
  * and the Plan/Care sub-view switchers without bespoke markup each time.
  */
@@ -52,22 +56,34 @@ export function InPageSwitcher<T extends string>({
   };
 
   return (
-    <div className="seg-track text-sm" role="group" aria-label={ariaLabel}>
-      {options.map((option, index) => (
-        <button
-          key={option.value}
-          ref={(el) => {
-            buttonsRef.current[index] = el;
-          }}
-          type="button"
-          onClick={() => onChange(option.value)}
-          onKeyDown={(e) => onKeyDown(e, index)}
-          aria-pressed={value === option.value}
-          className="seg-option"
-        >
-          {option.label}
-        </button>
-      ))}
+    <div
+      className="rounded-pill inline-flex gap-[2px] bg-active-surface p-[2px] text-sm"
+      role="group"
+      aria-label={ariaLabel}
+    >
+      {options.map((option, index) => {
+        const pressed = value === option.value;
+        return (
+          <button
+            key={option.value}
+            ref={(el) => {
+              buttonsRef.current[index] = el;
+            }}
+            type="button"
+            onClick={() => onChange(option.value)}
+            onKeyDown={(e) => onKeyDown(e, index)}
+            aria-pressed={pressed}
+            className={cn(
+              "rounded-pill border px-3 py-1 transition-colors",
+              pressed
+                ? "border-active-raised-border bg-active-raised text-ink"
+                : "border-transparent bg-transparent text-ink-muted hover:text-ink"
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

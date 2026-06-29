@@ -8,6 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import Input from "@/components/kash/ui/Input";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
@@ -340,9 +341,9 @@ export function TaskRow({
           <div className="min-w-0 flex-1">
             {editing ? (
               <>
-                <input
+                <Input
                   type="text"
-                  className="glass-input w-full py-1 text-sm"
+                  className="w-full py-1 text-sm"
                   value={editTitle}
                   autoFocus
                   aria-invalid={editError != null}

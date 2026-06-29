@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
 import { addDays, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { categoryColor, type ProjectCategory } from "@/lib/projects/categories";
 import {
@@ -128,22 +129,22 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
           onChange={setGranularity}
           ariaLabel="Zoom granularity"
         />
-        <button type="button" className="glass-btn-ghost" onClick={() => setZoom(1 / 1.4)}>
+        <Button type="button" variant="ghost" onClick={() => setZoom(1 / 1.4)}>
           −
-        </button>
-        <button type="button" className="glass-btn-ghost" onClick={() => setZoom(1.4)}>
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setZoom(1.4)}>
           +
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="glass-btn-ghost"
+          variant="ghost"
           onClick={() => {
             setGranularityOverride("auto");
             setFitMode(true);
           }}
         >
           Fit
-        </button>
+        </Button>
       </div>
 
       {span === null ? (

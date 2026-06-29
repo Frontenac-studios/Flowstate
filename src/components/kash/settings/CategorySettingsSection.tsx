@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Input from "@/components/kash/ui/Input";
 import { categoryColor, type ProjectCategory } from "@/lib/projects/categories";
 import { MAX_CATEGORY_LABEL_LENGTH } from "@/lib/projects/category-settings";
 import { useTRPC } from "@/trpc/client";
@@ -66,8 +68,8 @@ export default function CategorySettingsSection() {
               className="h-4 w-4 shrink-0 rounded-full"
               style={{ backgroundColor: categoryColor(cat.category) }}
             />
-            <input
-              className="glass-input flex-1"
+            <Input
+              className="flex-1"
               value={drafts[cat.category] ?? ""}
               maxLength={MAX_CATEGORY_LABEL_LENGTH}
               disabled={updateMutation.isPending}
@@ -79,24 +81,26 @@ export default function CategorySettingsSection() {
               }}
             />
             <div className="flex shrink-0 gap-1">
-              <button
+              <Button
                 type="button"
-                className="glass-btn-ghost px-2 py-1 text-sm disabled:opacity-40"
+                variant="ghost"
+                className="px-2 py-1 text-sm disabled:opacity-40"
                 onClick={() => move(index, -1)}
                 disabled={busy || index === 0}
                 aria-label={`Move ${cat.label} up`}
               >
                 ↑
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="glass-btn-ghost px-2 py-1 text-sm disabled:opacity-40"
+                variant="ghost"
+                className="px-2 py-1 text-sm disabled:opacity-40"
                 onClick={() => move(index, 1)}
                 disabled={busy || index === (data?.length ?? 0) - 1}
                 aria-label={`Move ${cat.label} down`}
               >
                 ↓
-              </button>
+              </Button>
             </div>
           </li>
         ))}

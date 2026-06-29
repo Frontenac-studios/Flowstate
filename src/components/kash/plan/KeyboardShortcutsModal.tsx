@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import Button from "@/components/kash/ui/Button";
+
 type Shortcut = {
   keys: string;
   description: string;
@@ -91,9 +93,9 @@ export function KeyboardShortcutsModal({ open, onClose }: Props) {
             </div>
           ))}
         </dl>
-        <button type="button" className="glass-btn-ghost mt-6 text-sm" onClick={onClose}>
+        <Button type="button" variant="ghost" className="mt-6 text-sm" onClick={onClose}>
           Close
-        </button>
+        </Button>
       </div>
     </div>
   );
