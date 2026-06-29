@@ -127,6 +127,13 @@
       "when": 1782601666531,
       "tag": "0017_normal_nighthawk",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782755159763,
+      "tag": "0018_superb_warstar",
+      "breakpoints": true
     }
   ]
 }

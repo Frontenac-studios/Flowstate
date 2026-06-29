@@ -1,4 +1,5 @@
 export const SYNC_TABLES = [
+  "abyss_items",
   "projects",
   "phases",
   "protected_block_templates",

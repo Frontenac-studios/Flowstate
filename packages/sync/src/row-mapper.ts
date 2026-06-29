@@ -38,6 +38,19 @@ export function mapRemoteRow(
     base.payload = typeof base.payload === "string" ? base.payload : JSON.stringify(base.payload);
   }
 
+  if (table === "abyss_items" && base.links != null) {
+    base.links = typeof base.links === "string" ? base.links : JSON.stringify(base.links);
+  }
+
+  if (table === "abyss_items" && base.embedding != null) {
+    base.embedding =
+      typeof base.embedding === "string" ? base.embedding : JSON.stringify(base.embedding);
+  }
+
+  if (table === "abyss_items" && base.tags != null) {
+    base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
+  }
+
   const dateFields = [
     "created_at",
     "updated_at",
@@ -49,6 +62,8 @@ export function mapRemoteRow(
     "pulled_at",
     "undone_at",
     "finalized_at",
+    "last_resurfaced_at",
+    "last_touched_at",
     "occurred_at",
     "archived_at",
   ];
@@ -204,6 +219,30 @@ export function mapPayloadToRemote(
     }
   }
 
+  if (table === "abyss_items" && typeof out.links === "string") {
+    try {
+      out.links = JSON.parse(out.links as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
+  if (table === "abyss_items" && typeof out.embedding === "string") {
+    try {
+      out.embedding = JSON.parse(out.embedding as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
+  if (table === "abyss_items" && typeof out.tags === "string") {
+    try {
+      out.tags = JSON.parse(out.tags as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
   if (
     table === "quarter_themes" &&
     typeof out.focus_categories === "object" &&
@@ -214,6 +253,18 @@ export function mapPayloadToRemote(
 
   if (table === "planning_suggestions" && typeof out.payload === "object" && out.payload) {
     out.payload = JSON.stringify(out.payload);
+  }
+
+  if (table === "abyss_items" && typeof out.links === "object" && out.links) {
+    out.links = JSON.stringify(out.links);
+  }
+
+  if (table === "abyss_items" && typeof out.embedding === "object" && out.embedding) {
+    out.embedding = JSON.stringify(out.embedding);
+  }
+
+  if (table === "abyss_items" && typeof out.tags === "object" && out.tags) {
+    out.tags = JSON.stringify(out.tags);
   }
 
   return out;

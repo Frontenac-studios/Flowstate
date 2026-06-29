@@ -114,3 +114,44 @@
   --row-py: 3px;
   --density-base: 13px;
 }
+
+/* ---- The Abyss (dark aesthetic exception, kash-3.0-visual-redesign.md §Abyss) ----
+ * Page-scoped semantic tokens. Dark is the immersive default (near-black); light is
+ * the app's standard B&W (reuses the global tokens). The component sets
+ * data-abyss-theme on .abyss-root and remembers the choice. Dark mode also remaps
+ * --cat-*-solid to luminance-lifted variants so category colour stays legible on
+ * near-black — category-tokens.ts helpers keep resolving var(--cat-*-solid)
+ * unchanged. Light mode leaves --cat-*-solid inheriting the canonical palette. */
+.abyss-root[data-abyss-theme="dark"] {
+  --abyss-bg: #07090d;
+  --abyss-surface: #10131a;
+  --abyss-surface-2: #161a23;
+  --abyss-bar: rgba(255, 255, 255, 0.05);
+  --abyss-border: rgba(255, 255, 255, 0.1);
+  --abyss-border-strong: rgba(255, 255, 255, 0.16);
+  --abyss-ink: #e8eaf0;
+  --abyss-ink-muted: #9aa1b0;
+  --abyss-ink-faint: #5f6675;
+  --abyss-accent: #e8eaf0;
+  --abyss-on-accent: #07090d;
+
+  --cat-professional-solid: #3bb6e6;
+  --cat-personal-solid: #c06fc0;
+  --cat-relationships-solid: #f06366;
+  --cat-adulting-solid: #fb9d4b;
+  --cat-body-mind-solid: #83cf6c;
+}
+
+.abyss-root[data-abyss-theme="light"] {
+  --abyss-bg: var(--bg);
+  --abyss-surface: var(--surface);
+  --abyss-surface-2: var(--surface-2);
+  --abyss-bar: var(--surface-2);
+  --abyss-border: var(--border);
+  --abyss-border-strong: var(--border);
+  --abyss-ink: var(--ink);
+  --abyss-ink-muted: var(--ink-muted);
+  --abyss-ink-faint: var(--ink-faint);
+  --abyss-accent: var(--accent);
+  --abyss-on-accent: var(--on-accent);
+}

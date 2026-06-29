@@ -34,6 +34,20 @@ const config: Config = {
           adulting: "var(--cat-adulting-solid)",
           "body-mind": "var(--cat-body-mind-solid)",
         },
+        // The Abyss (dark aesthetic exception) — page-scoped tokens, tokens.css
+        abyss: {
+          bg: "var(--abyss-bg)",
+          surface: "var(--abyss-surface)",
+          "surface-2": "var(--abyss-surface-2)",
+          bar: "var(--abyss-bar)",
+          border: "var(--abyss-border)",
+          "border-strong": "var(--abyss-border-strong)",
+          ink: "var(--abyss-ink)",
+          "ink-muted": "var(--abyss-ink-muted)",
+          "ink-faint": "var(--abyss-ink-faint)",
+          accent: "var(--abyss-accent)",
+          "on-accent": "var(--abyss-on-accent)",
+        },
         // legacy aliases (back-compat)
         kash: {
           accent: "var(--kash-accent)",
