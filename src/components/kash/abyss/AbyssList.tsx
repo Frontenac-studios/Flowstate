@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import {
   ageInDays,
@@ -14,13 +14,31 @@ import {
   type AbyssGroupableItem,
   type AbyssItemType,
 } from "@/lib/abyss/grouping";
+import { decodePromotedTarget } from "@/lib/abyss/promotion";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
-import { IdeaIcon, SparkleIcon, TaskIcon, TrashIcon } from "./icons";
+import AbyssPromoteMenu from "./AbyssPromoteMenu";
+import { IdeaIcon, PromoteIcon, SparkleIcon, TaskIcon, TrashIcon } from "./icons";
 
 /** Row shape the List renders — the slice of the abyss_items row it needs. */
-export type AbyssListItem = AbyssGroupableItem;
+export type AbyssListItem = AbyssGroupableItem & { promotedTarget: string | null };
+
+/** Short, warm label for where a promoted item went (shown on its locked chip). */
+function promotedLabel(target: string | null): string {
+  switch (decodePromotedTarget(target)?.kind) {
+    case "today":
+      return "in Today";
+    case "week":
+      return "this week";
+    case "project":
+      return "a project";
+    case "goal":
+      return "a goal";
+    default:
+      return "promoted";
+  }
+}
 
 type Props = {
   items: AbyssListItem[];
@@ -42,6 +60,7 @@ function TypeGlyph({ type }: { type: AbyssItemType }) {
 function Row({ item, now }: { item: AbyssListItem; now: Date }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const [menuOpen, setMenuOpen] = useState(false);
   const deleteMutation = useMutation(
     trpc.abyss.delete.mutationOptions({
       onSuccess: () => {
@@ -51,10 +70,11 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
   );
 
   const dimming = isDimming(now, item);
+  const promoted = item.status === "promoted";
 
   return (
     <div
-      className={`group/row flex items-start gap-2.5 rounded-r-row py-2 pl-2.5 pr-2 transition-colors hover:bg-abyss-surface ${
+      className={`group/row relative flex items-start gap-2.5 rounded-r-row py-2 pl-2.5 pr-2 transition-colors hover:bg-abyss-surface ${
         dimming ? "opacity-60" : ""
       }`}
       style={{
@@ -72,7 +92,12 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {item.resurfaceCount > 0 ? (
+        {promoted ? (
+          <span className="rounded-pill inline-flex items-center gap-1 bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted">
+            <PromoteIcon size={12} />
+            {promotedLabel(item.promotedTarget)}
+          </span>
+        ) : item.resurfaceCount > 0 ? (
           <span className="rounded-pill bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted">
             parked {item.resurfaceCount}×
           </span>
@@ -81,6 +106,21 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
             {ageInDays(now, item.lastTouchedAt)}d
           </span>
         ) : null}
+
+        {promoted ? null : (
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={`Promote ${item.title}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${
+              menuOpen ? "text-abyss-ink opacity-100" : "opacity-0"
+            }`}
+          >
+            <PromoteIcon size={15} />
+          </button>
+        )}
 
         <button
           type="button"
@@ -92,6 +132,13 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
           <TrashIcon size={15} />
         </button>
       </div>
+
+      {menuOpen ? (
+        <AbyssPromoteMenu
+          item={{ id: item.id, category: item.category }}
+          onClose={() => setMenuOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
