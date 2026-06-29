@@ -43,17 +43,15 @@ export default function GanttRow({
   return (
     <div className="flex items-stretch" style={{ width: GANTT_LABEL_WIDTH + boardWidth }}>
       <div
-        className="sticky left-0 z-10 flex items-center border-b border-white/30 bg-[var(--kash-glass-bg-opaque)] text-sm"
+        className="border-subtle sticky left-0 z-10 flex items-center border-b bg-surface text-sm"
         style={{ width: GANTT_LABEL_WIDTH, paddingLeft: 8 + depth * 14, height: GANTT_ROW_HEIGHT }}
       >
-        <span
-          className={`truncate ${completed ? "text-kash-ink-muted line-through" : "text-kash-ink"}`}
-        >
+        <span className={`truncate ${completed ? "text-ink-muted line-through" : "text-ink"}`}>
           {node.phase.name}
         </span>
       </div>
       <div
-        className="relative border-b border-white/20"
+        className="border-subtle relative border-b"
         style={{ width: boardWidth, height: GANTT_ROW_HEIGHT }}
       >
         {hasBar ? (
