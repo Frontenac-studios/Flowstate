@@ -49,7 +49,7 @@ function TimelineSlot({ min, top }: { min: number; top: number }) {
   return (
     <div
       ref={setNodeRef}
-      className={`absolute left-11 right-1 ${isOver ? "rounded bg-[var(--kash-accent-soft)]" : ""}`}
+      className={`absolute left-11 right-1 ${isOver ? "rounded bg-[var(--accent-soft)]" : ""}`}
       style={{ top, height: (SLOT_MINUTES / 60) * HOUR_HEIGHT }}
     />
   );
@@ -129,7 +129,7 @@ function TimelineBlock({
   return (
     <div
       ref={setNodeRef}
-      className={`glass-pill absolute flex flex-col overflow-hidden border-l-[3px] border-kash-accent ${
+      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[3px] border-accent bg-surface ${
         done ? "opacity-50" : ""
       } ${isDragging ? "z-20 opacity-80" : ""}`}
       style={{
@@ -155,13 +155,13 @@ function TimelineBlock({
 
       <div className="flex items-center gap-1 px-2 py-1">
         <span
-          className={`min-w-0 flex-1 truncate text-xs font-medium text-kash-ink ${
+          className={`min-w-0 flex-1 truncate text-xs font-medium text-ink ${
             done ? "line-through" : ""
           }`}
         >
           {block.title}
         </span>
-        <span className="shrink-0 text-[10px] text-kash-ink-muted">{formatClock(startMin)}</span>
+        <span className="shrink-0 text-[10px] text-ink-muted">{formatClock(startMin)}</span>
         {!done ? (
           <button
             type="button"
@@ -170,7 +170,7 @@ function TimelineBlock({
               e.stopPropagation();
               onOpen(block.taskId, block.id);
             }}
-            className="shrink-0 rounded-full px-1 text-xs leading-none text-kash-ink-muted hover:text-kash-accent"
+            className="shrink-0 rounded-full px-1 text-xs leading-none text-ink-muted hover:text-accent"
             aria-label={`Start ${block.title}`}
             title="Start (focus)"
           >
@@ -185,7 +185,7 @@ function TimelineBlock({
               e.stopPropagation();
               onComplete(block.id);
             }}
-            className="shrink-0 rounded-full px-1 text-xs leading-none text-kash-ink-muted hover:text-kash-accent"
+            className="shrink-0 rounded-full px-1 text-xs leading-none text-ink-muted hover:text-accent"
             aria-label={`Mark ${block.title} done`}
             title="Mark done"
           >
@@ -199,7 +199,7 @@ function TimelineBlock({
             e.stopPropagation();
             onRemove(block.id);
           }}
-          className="shrink-0 rounded-full px-1 text-xs leading-none text-kash-ink-muted hover:text-kash-ink"
+          className="shrink-0 rounded-full px-1 text-xs leading-none text-ink-muted hover:text-ink"
           aria-label={`Remove block ${block.title}`}
         >
           ×
@@ -291,16 +291,17 @@ export function TimelinePane() {
   };
 
   return (
-    <section className="glass-panel-opaque flex flex-col p-4" aria-label="Today timeline">
+    <section
+      className="flex flex-col rounded-card border border-subtle bg-surface p-4"
+      aria-label="Today timeline"
+    >
       <header className="mb-3 flex items-center gap-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-kash-ink-muted">
-          Timeline
-        </h2>
-        <span className="text-xs text-kash-ink-muted">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-ink-muted">Timeline</h2>
+        <span className="text-xs text-ink-muted">
           · today · {formatHour(startHour)}–{formatHour(endHour)}
         </span>
         <span
-          className="glass-pill ml-auto px-2 py-0.5 text-xs text-kash-ink-muted"
+          className="ml-auto rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
           title="Calendar sync is coming in a later phase"
         >
           sync ○ off
@@ -326,10 +327,10 @@ export function TimelinePane() {
             className="absolute inset-x-0 flex items-start"
             style={{ top: i * HOUR_HEIGHT, height: HOUR_HEIGHT }}
           >
-            <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] tabular-nums text-kash-ink-muted">
+            <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] tabular-nums text-ink-muted">
               {formatHour(hour)}
             </span>
-            <div className="ml-2 flex-1 border-t border-dashed border-[var(--kash-glass-border)]" />
+            <div className="ml-2 flex-1 border-t border-dashed border-[var(--border)]" />
           </div>
         ))}
 
@@ -356,18 +357,16 @@ export function TimelinePane() {
             style={{ top: ((nowMinutes! - rangeStart) / 60) * HOUR_HEIGHT }}
             aria-hidden
           >
-            <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] font-medium text-kash-accent">
+            <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] font-medium text-accent">
               now
             </span>
-            <div className="ml-2 flex-1 border-t border-kash-accent" />
+            <div className="ml-2 flex-1 border-t border-accent" />
           </div>
         ) : null}
       </div>
 
       {blocks.length === 0 ? (
-        <p className="mt-3 text-center text-xs text-kash-ink-muted">
-          Drag a task here to block 45 min.
-        </p>
+        <p className="mt-3 text-center text-xs text-ink-muted">Drag a task here to block 45 min.</p>
       ) : null}
     </section>
   );

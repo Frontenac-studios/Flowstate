@@ -10,8 +10,8 @@ function parts(color: string): { hue: number; lightness: number } {
 
 describe("phaseRampColor", () => {
   it("returns a neutral marker when there is no project", () => {
-    expect(phaseRampColor(null)).toBe("var(--kash-ink-muted)");
-    expect(phaseRampColor(null, 2)).toBe("var(--kash-ink-muted)");
+    expect(phaseRampColor(null)).toBe("var(--ink-muted)");
+    expect(phaseRampColor(null, 2)).toBe("var(--ink-muted)");
   });
 
   it("gives a project a stable hue regardless of phase ordinal", () => {

@@ -21,20 +21,17 @@ export function ChatToggleButton({ threadId, className }: Props) {
     <button
       type="button"
       onClick={toggleRail}
-      className={`relative flex items-center gap-2 rounded-[var(--kash-radius-control)] bg-[var(--surface-selected)] px-3 py-1.5 text-sm text-kash-ink transition hover:bg-[var(--surface-2)] ${className ?? ""}`}
+      className={`relative flex items-center gap-2 rounded-[var(--radius-control)] bg-[var(--surface-selected)] px-3 py-1.5 text-sm text-ink transition hover:bg-[var(--surface-2)] ${className ?? ""}`}
       aria-pressed={railOpen}
       aria-label={hasUnread ? "Ask Claude (unread)" : "Ask Claude"}
       title="Ask Claude (⌘/)"
     >
       Ask Claude
-      <kbd className="font-mono text-[10px] text-kash-ink-muted" aria-hidden>
+      <kbd className="font-mono text-[10px] text-ink-muted" aria-hidden>
         ⌘/
       </kbd>
       {hasUnread ? (
-        <span
-          className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-kash-accent"
-          aria-hidden
-        />
+        <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-accent" aria-hidden />
       ) : null}
     </button>
   );

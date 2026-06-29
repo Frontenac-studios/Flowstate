@@ -29,7 +29,7 @@ export default function ProjectsIndex() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-kash-ink">Projects</h1>
+        <h1 className="text-xl font-semibold text-ink">Projects</h1>
         {!formOpen ? (
           <Button type="button" onClick={() => setFormOpen(true)}>
             New project
@@ -52,14 +52,14 @@ export default function ProjectsIndex() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="border-subtle h-24 animate-pulse rounded-card border bg-surface-2"
+              className="h-24 animate-pulse rounded-card border border-subtle bg-surface-2"
             />
           ))}
         </div>
       ) : !hasProjects ? (
-        <div className="glass-panel-opaque flex flex-col items-center gap-2 px-6 py-12 text-center">
-          <p className="font-medium text-kash-ink">No projects yet</p>
-          <p className="text-sm text-kash-ink-muted">
+        <div className="flex flex-col items-center gap-2 rounded-card border border-subtle bg-surface px-6 py-12 text-center">
+          <p className="font-medium text-ink">No projects yet</p>
+          <p className="text-sm text-ink-muted">
             Create your first project to start planning phases and tasks.
           </p>
           {!formOpen ? (
@@ -69,7 +69,7 @@ export default function ProjectsIndex() {
           ) : null}
         </div>
       ) : visible.length === 0 ? (
-        <p className="text-kash-ink-muted">No projects in this category.</p>
+        <p className="text-ink-muted">No projects in this category.</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((project) => (

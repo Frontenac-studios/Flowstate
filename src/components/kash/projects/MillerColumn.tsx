@@ -59,7 +59,7 @@ export default function MillerColumn({
       ref={setNodeRef}
       className={`miller-column-card p-2 transition ${shellClassName} ${
         isActive ? "miller-column-card-active" : ""
-      } ${isOver ? "bg-kash-accent/10" : ""}`}
+      } ${isOver ? "bg-accent/10" : ""}`}
     >
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
         {items.map((item, index) => {
@@ -93,7 +93,7 @@ export default function MillerColumn({
         })}
       </ul>
       {hint && items.length === 0 ? (
-        <p className="mt-1 px-2 text-xs text-kash-ink-muted">{hint}</p>
+        <p className="mt-1 px-2 text-xs text-ink-muted">{hint}</p>
       ) : null}
     </div>
   );

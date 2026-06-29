@@ -119,8 +119,8 @@ export default function TaskTimeEntries({ taskId }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <span className="text-sm font-medium text-kash-ink">Time</span>
-        <span className="text-xs text-kash-ink-muted">{formatDuration(totalSeconds)} total</span>
+        <span className="text-sm font-medium text-ink">Time</span>
+        <span className="text-xs text-ink-muted">{formatDuration(totalSeconds)} total</span>
       </div>
 
       {entries.length > 0 ? (
@@ -132,20 +132,20 @@ export default function TaskTimeEntries({ taskId }: Props) {
             return (
               <li
                 key={entry.id}
-                className="flex items-center gap-2 border-b border-[var(--border-subtle)] py-1.5 text-xs text-kash-ink-muted last:border-b-0"
+                className="flex items-center gap-2 border-b border-[var(--border-subtle)] py-1.5 text-xs text-ink-muted last:border-b-0"
               >
                 <span className="flex-1 tabular-nums">
                   {clockLabel(entry.startedAt)}
                   {entry.endedAt ? `–${clockLabel(entry.endedAt)}` : ""}
-                  <span className="text-kash-ink-muted/70 ml-1.5">
+                  <span className="text-ink-muted/70 ml-1.5">
                     {REASON_LABEL[entry.reason] ?? entry.reason}
                   </span>
                 </span>
-                <span className="tabular-nums text-kash-ink">{formatDuration(seconds)}</span>
+                <span className="tabular-nums text-ink">{formatDuration(seconds)}</span>
                 <button
                   type="button"
                   onClick={() => beginEdit(entry)}
-                  className="text-kash-ink-muted transition hover:text-kash-ink"
+                  className="text-ink-muted transition hover:text-ink"
                   aria-label="Edit entry"
                 >
                   Edit
@@ -154,7 +154,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
                   type="button"
                   onClick={() => deleteMutation.mutate({ entryId: entry.id })}
                   disabled={deleteMutation.isPending}
-                  className="text-kash-ink-muted transition hover:text-critical disabled:opacity-50"
+                  className="text-ink-muted transition hover:text-critical disabled:opacity-50"
                   aria-label="Delete entry"
                 >
                   Delete
@@ -164,7 +164,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           })}
         </ul>
       ) : (
-        <p className="text-xs text-kash-ink-muted">No time logged yet.</p>
+        <p className="text-xs text-ink-muted">No time logged yet.</p>
       )}
 
       <div className="flex flex-wrap items-center gap-2 pt-0.5">
@@ -177,7 +177,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           aria-label="Start time"
           className="w-16 px-2 py-1 text-xs"
         />
-        <span className="text-xs text-kash-ink-muted">+</span>
+        <span className="text-xs text-ink-muted">+</span>
         <Input
           type="text"
           value={durationInput}
@@ -196,7 +196,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           type="button"
           onClick={submit}
           disabled={pending}
-          className="glass-pill px-3 py-1 text-xs font-medium text-kash-ink transition hover:text-kash-accent disabled:opacity-50"
+          className="rounded-pill border border-border bg-surface px-3 py-1 text-xs font-medium text-ink transition hover:text-accent disabled:opacity-50"
         >
           {editingId ? "Save" : "Add time"}
         </button>
@@ -204,7 +204,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           <button
             type="button"
             onClick={resetForm}
-            className="text-xs text-kash-ink-muted transition hover:text-kash-ink"
+            className="text-xs text-ink-muted transition hover:text-ink"
           >
             Cancel
           </button>

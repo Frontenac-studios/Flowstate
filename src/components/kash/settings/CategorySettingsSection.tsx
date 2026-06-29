@@ -52,16 +52,16 @@ export default function CategorySettingsSection() {
   const busy = isLoading || reorderMutation.isPending;
 
   return (
-    <section className="glass-panel rounded-[var(--kash-radius-inner)] p-4">
-      <h2 className="text-sm font-semibold text-kash-ink">Categories</h2>
-      <p className="mt-1 text-sm text-kash-ink-muted">
+    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+      <h2 className="text-sm font-semibold text-ink">Categories</h2>
+      <p className="mt-1 text-sm text-ink-muted">
         Rename your life areas and set the order they appear in. Colors come from the theme.
       </p>
       <ul className="mt-4 space-y-2" aria-busy={busy}>
         {(data ?? []).map((cat, index) => (
           <li
             key={cat.category}
-            className="glass-panel flex items-center gap-3 rounded-[var(--kash-radius-chip)] p-3"
+            className="flex items-center gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3"
           >
             <span
               aria-hidden
@@ -106,7 +106,7 @@ export default function CategorySettingsSection() {
         ))}
       </ul>
       {updateMutation.isError || reorderMutation.isError ? (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <p className="mt-2 text-sm text-critical" role="alert">
           Could not save category settings. Try again.
         </p>
       ) : null}

@@ -69,14 +69,14 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
 
   if (!proposal) {
     return (
-      <div className="glass-panel mt-3 p-4">
-        <p className="text-sm text-kash-ink-muted">
+      <div className="mt-3 rounded-card border border-subtle bg-surface p-4">
+        <p className="text-sm text-ink-muted">
           {generateMutation.isPending
             ? "Drafting your week…"
             : "Kash will suggest how to spread your inbox across this week."}
         </p>
         {error ? (
-          <p className="mt-2 text-sm text-red-600" role="alert">
+          <p className="mt-2 text-sm text-critical" role="alert">
             {error}
           </p>
         ) : null}
@@ -84,7 +84,7 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
           {error ? (
             <button
               type="button"
-              className="glass-pill border-[1.5px] border-kash-ink px-4 py-2 text-sm font-medium text-kash-ink transition hover:bg-[var(--kash-accent-soft)]"
+              className="rounded-pill border-[1.5px] border-ink bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
               onClick={() => void runGenerate()}
             >
               Retry
@@ -92,7 +92,7 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
           ) : null}
           <button
             type="button"
-            className="glass-pill px-4 py-2 text-sm text-kash-ink-muted"
+            className="rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink-muted"
             onClick={onClose}
           >
             Dismiss
@@ -103,27 +103,27 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
   }
 
   return (
-    <div className="glass-panel mt-3 max-h-[50vh] overflow-y-auto p-4">
-      <p className="text-sm text-kash-ink">{renderInlineBold(proposal.summary)}</p>
+    <div className="mt-3 max-h-[50vh] overflow-y-auto rounded-card border border-subtle bg-surface p-4">
+      <p className="text-sm text-ink">{renderInlineBold(proposal.summary)}</p>
 
       <div className="mt-4 space-y-3">
         {grouped.map(({ iso, items }) => (
           <div key={iso}>
-            <p className="text-xs font-medium uppercase text-kash-ink-muted">
+            <p className="text-xs font-medium uppercase text-ink-muted">
               {parseISODateString(iso).toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
               })}
             </p>
-            <ul className="mt-1 space-y-1 text-sm text-kash-ink">
+            <ul className="mt-1 space-y-1 text-sm text-ink">
               {items.map((item) => {
                 const title = taskTitleById[item.taskId] ?? item.taskId;
                 return (
-                  <li key={item.taskId} className="text-kash-ink">
+                  <li key={item.taskId} className="text-ink">
                     {title}
                     {item.rationale ? (
-                      <span className="text-kash-ink-muted/80 block text-xs">{item.rationale}</span>
+                      <span className="text-ink-muted/80 block text-xs">{item.rationale}</span>
                     ) : null}
                   </li>
                 );
@@ -134,13 +134,13 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
       </div>
 
       {proposal.assignments.length === 0 ? (
-        <p className="mt-3 text-sm text-kash-ink-muted">No moves suggested — inbox may be empty.</p>
+        <p className="mt-3 text-sm text-ink-muted">No moves suggested — inbox may be empty.</p>
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          className="glass-pill border-[1.5px] border-kash-ink px-4 py-2 text-sm font-medium text-kash-ink transition hover:bg-[var(--kash-accent-soft)] disabled:opacity-50"
+          className="rounded-pill border-[1.5px] border-ink bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
           disabled={applyMutation.isPending || proposal.assignments.length === 0}
           onClick={() =>
             applyMutation.mutate({
@@ -155,7 +155,7 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
         </button>
         <button
           type="button"
-          className="glass-pill px-4 py-2 text-sm text-kash-ink-muted"
+          className="rounded-pill border border-border bg-surface px-4 py-2 text-sm text-ink-muted"
           onClick={onClose}
         >
           Dismiss

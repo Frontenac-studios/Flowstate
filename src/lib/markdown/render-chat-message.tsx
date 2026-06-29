@@ -35,7 +35,7 @@ export function parseChatMessageSegments(text: string): ChatMessageSegment[] {
 
 function TaskChip({ title }: { title: string }) {
   return (
-    <span className="mx-0.5 inline-flex max-w-full items-center rounded-[var(--kash-radius-chip)] border border-[var(--kash-glass-border)] bg-[var(--kash-accent-soft)] px-1.5 py-0.5 font-medium leading-snug text-kash-accent">
+    <span className="mx-0.5 inline-flex max-w-full items-center rounded-[var(--radius-chip)] border border-[var(--border)] bg-[var(--accent-soft)] px-1.5 py-0.5 font-medium leading-snug text-accent">
       {title}
     </span>
   );

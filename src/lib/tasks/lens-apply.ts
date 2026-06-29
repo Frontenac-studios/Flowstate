@@ -26,7 +26,7 @@ export type LensGroup = {
   tasks: PlanTaskRow[];
 };
 
-const NEUTRAL_COLOR = "var(--kash-ink-muted)";
+const NEUTRAL_COLOR = "var(--ink-muted)";
 
 const PRIORITY_COLOR: Record<string, string> = {
   "3": "var(--due-overdue, #ef4444)",

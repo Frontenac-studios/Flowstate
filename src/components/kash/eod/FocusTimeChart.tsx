@@ -13,26 +13,24 @@ function formatDuration(seconds: number): string {
 
 export function FocusTimeChart({ bars, overflowCount }: Props) {
   if (bars.length === 0) {
-    return <p className="text-sm text-kash-ink-muted">No focus time logged today.</p>;
+    return <p className="text-sm text-ink-muted">No focus time logged today.</p>;
   }
 
   const maxSeconds = Math.max(...bars.map((b) => b.seconds), 1);
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
-        Focus time today
-      </p>
+      <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Focus time today</p>
       <ul className="space-y-2" aria-label="Focus time by task">
         {bars.map((bar) => (
           <li key={bar.taskId} className="space-y-1">
             <div className="flex justify-between gap-2 text-sm">
-              <span className="truncate text-kash-ink">{bar.title}</span>
-              <span className="shrink-0 text-kash-ink-muted">{formatDuration(bar.seconds)}</span>
+              <span className="truncate text-ink">{bar.title}</span>
+              <span className="shrink-0 text-ink-muted">{formatDuration(bar.seconds)}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
               <div
-                className="h-full rounded-full bg-kash-accent transition-[width] duration-300 motion-reduce:transition-none"
+                className="h-full rounded-full bg-accent transition-[width] duration-300 motion-reduce:transition-none"
                 style={{ width: `${Math.round((bar.seconds / maxSeconds) * 100)}%` }}
               />
             </div>
@@ -40,7 +38,7 @@ export function FocusTimeChart({ bars, overflowCount }: Props) {
         ))}
       </ul>
       {overflowCount > 0 ? (
-        <p className="text-xs text-kash-ink-muted">+{overflowCount} more tasks with focus time</p>
+        <p className="text-xs text-ink-muted">+{overflowCount} more tasks with focus time</p>
       ) : null}
     </div>
   );

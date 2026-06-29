@@ -36,28 +36,30 @@ export function TodayList({
     <section
       ref={setNodeRef}
       className={`mt-6 ${
-        pulse ? "kash-section-pulse rounded-[var(--kash-radius)]" : ""
-      } ${isOver ? "kash-section-drop-target rounded-[var(--kash-radius)]" : ""}`}
+        pulse ? "kash-section-pulse rounded-[var(--radius-card)]" : ""
+      } ${isOver ? "kash-section-drop-target rounded-[var(--radius-card)]" : ""}`}
       aria-labelledby="today-heading"
     >
       <h2
         id="today-heading"
-        className="mb-3 text-sm font-medium uppercase tracking-wide text-kash-ink-muted"
+        className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-muted"
       >
         Today
         {tasks.length > 0 ? (
-          <span className="ml-2 font-normal normal-case text-kash-ink-muted">({tasks.length})</span>
+          <span className="ml-2 font-normal normal-case text-ink-muted">({tasks.length})</span>
         ) : null}
       </h2>
 
       {isLoading ? (
-        <p className="glass-panel px-4 py-8 text-center text-sm text-kash-ink-muted">Loading…</p>
+        <p className="rounded-card border border-subtle bg-surface px-4 py-8 text-center text-sm text-ink-muted">
+          Loading…
+        </p>
       ) : tasks.length === 0 ? (
-        <div className="glass-panel flex flex-col items-center gap-2 px-4 py-10 text-center">
-          <p className="text-sm text-kash-ink">Nothing on deck yet.</p>
-          <p className="text-xs text-kash-ink-muted">
+        <div className="flex flex-col items-center gap-2 rounded-card border border-subtle bg-surface px-4 py-10 text-center">
+          <p className="text-sm text-ink">Nothing on deck yet.</p>
+          <p className="text-xs text-ink-muted">
             Capture something above, or{" "}
-            <span className="text-kash-accent">ask Claude what to focus on</span>.
+            <span className="text-accent">ask Claude what to focus on</span>.
           </p>
         </div>
       ) : (

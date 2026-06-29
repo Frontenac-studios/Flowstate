@@ -79,17 +79,17 @@ export function KeyboardShortcutsModal({ open, onClose }: Props) {
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         tabIndex={-1}
-        className="glass-panel-strong relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
+        className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto rounded-card border border-border bg-surface p-6 shadow-overlay"
       >
-        <h2 id="shortcuts-title" className="text-lg font-semibold text-kash-ink">
+        <h2 id="shortcuts-title" className="text-lg font-semibold text-ink">
           Keyboard shortcuts
         </h2>
-        <p className="mt-1 text-sm text-kash-ink-muted">On the plan canvas only.</p>
+        <p className="mt-1 text-sm text-ink-muted">On the plan canvas only.</p>
         <dl className="mt-4 space-y-3">
           {SHORTCUTS.map((s) => (
             <div key={s.keys} className="flex items-start justify-between gap-4">
-              <dt className="shrink-0 font-mono text-sm text-kash-ink">{s.keys}</dt>
-              <dd className="text-right text-sm text-kash-ink-muted">{s.description}</dd>
+              <dt className="shrink-0 font-mono text-sm text-ink">{s.keys}</dt>
+              <dd className="text-right text-sm text-ink-muted">{s.description}</dd>
             </div>
           ))}
         </dl>

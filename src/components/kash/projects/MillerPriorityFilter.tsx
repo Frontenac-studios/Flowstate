@@ -18,7 +18,7 @@ type Props = {
 export default function MillerPriorityFilter({ value, onToggle }: Props) {
   return (
     <div className="flex items-center gap-1.5 text-xs" role="group" aria-label="Filter by priority">
-      <span className="text-kash-ink-muted">Priority</span>
+      <span className="text-ink-muted">Priority</span>
       {LEVELS.map((level) => {
         const meta = priorityMeta(level);
         const active = value.has(level);
@@ -30,8 +30,8 @@ export default function MillerPriorityFilter({ value, onToggle }: Props) {
             aria-pressed={active}
             className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition ${
               active
-                ? "border-kash-accent bg-kash-accent text-white"
-                : "border-white/30 text-kash-ink-muted hover:text-kash-ink"
+                ? "border-accent bg-accent text-white"
+                : "border-white/30 text-ink-muted hover:text-ink"
             }`}
           >
             {meta.dots > 0 ? (

@@ -17,15 +17,15 @@ export function Top3ReviewSummary({ top3Status }: Props) {
         return (
           <div
             key={slot.order}
-            className={`glass-pill flex min-h-[4rem] flex-col justify-center border-l-[3px] px-3 py-kash-task-y ${
-              slot.status === "empty" ? "border-transparent opacity-70" : "border-kash-accent"
+            className={`flex min-h-[4rem] flex-col justify-center rounded-pill border border-l-[3px] border-border bg-surface px-3 py-[var(--row-py)] ${
+              slot.status === "empty" ? "border-transparent opacity-70" : "border-accent"
             }`}
           >
-            <span className="text-xs text-kash-accent">{label}</span>
-            <span className="truncate text-sm font-medium text-kash-ink">
+            <span className="text-xs text-accent">{label}</span>
+            <span className="truncate text-sm font-medium text-ink">
               {slot.title ?? (slot.status === "empty" ? "—" : "Task")}
             </span>
-            <span className="text-xs text-kash-ink-muted">{statusLabel}</span>
+            <span className="text-xs text-ink-muted">{statusLabel}</span>
           </div>
         );
       })}

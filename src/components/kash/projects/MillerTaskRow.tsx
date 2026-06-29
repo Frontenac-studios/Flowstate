@@ -76,11 +76,11 @@ export default function MillerTaskRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`flex items-start gap-2 rounded-kash px-2 py-kash-task-y-compact transition ${
-        selected ? "bg-kash-accent/15" : "hover:bg-[var(--surface)]"
-      } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
+      className={`flex items-start gap-2 rounded-card px-2 py-0.5 transition ${
+        selected ? "bg-accent/15" : "hover:bg-[var(--surface)]"
+      } ${focused ? "ring-2 ring-inset ring-[var(--accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
-      } ${isOver ? "border-t-2 border-kash-accent" : "border-t-2 border-transparent"}`}
+      } ${isOver ? "border-t-2 border-accent" : "border-t-2 border-transparent"}`}
     >
       <input
         type="checkbox"
@@ -95,7 +95,7 @@ export default function MillerTaskRow({
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         className={`line-clamp-4 min-w-0 flex-1 break-words text-left text-sm ${
-          completed ? "text-kash-ink-muted line-through" : "text-kash-ink"
+          completed ? "text-ink-muted line-through" : "text-ink"
         }`}
       >
         {task.title}

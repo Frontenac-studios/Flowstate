@@ -24,24 +24,24 @@ export function MondayEntryModal() {
       aria-modal="true"
       aria-labelledby="monday-entry-title"
     >
-      <div className="glass-panel-strong max-w-md p-8 text-center shadow-lg">
-        <h2 id="monday-entry-title" className="text-xl font-semibold text-kash-ink">
+      <div className="max-w-md rounded-card border border-border bg-surface p-8 text-center shadow-lg shadow-overlay">
+        <h2 id="monday-entry-title" className="text-xl font-semibold text-ink">
           Good morning — plan the week or dive into today?
         </h2>
-        <p className="mt-3 text-sm text-kash-ink-muted">
+        <p className="mt-3 text-sm text-ink-muted">
           Choose how you want to start Monday. You can switch anytime from the sidebar.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             type="button"
-            className="glass-pill border-[1.5px] border-kash-ink px-6 py-2.5 text-sm font-medium text-kash-ink transition hover:bg-[var(--kash-accent-soft)]"
+            className="rounded-pill border-[1.5px] border-ink bg-surface px-6 py-2.5 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
             onClick={planTheWeek}
           >
             Plan the week
           </button>
           <button
             type="button"
-            className="glass-pill px-6 py-2.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+            className="rounded-pill border border-border bg-surface px-6 py-2.5 text-sm text-ink-muted transition hover:text-ink"
             onClick={() => resolveMondayChoice("today")}
           >
             Jump into today

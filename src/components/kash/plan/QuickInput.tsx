@@ -286,7 +286,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   }, [singleLineParse, categoryProjects, settings?.lastUsedCategory, aiInference]);
 
   return (
-    <section className="glass-panel-opaque p-4">
+    <section className="rounded-card border border-subtle bg-surface p-4">
       <label htmlFor="kash-quick-input" className="sr-only">
         Add tasks
       </label>
@@ -318,20 +318,20 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         />
       </ComposerCategoryAccent>
 
-      <p className="mt-1.5 text-xs text-kash-ink-muted">
+      <p className="mt-1.5 text-xs text-ink-muted">
         Enter for new line · ⌘↵ to add tasks
         {assist.suggestionSuffix ? " · ⇥ accept suggestion" : null}
         {createTaskMutation.isPending ? " · Adding…" : null}
       </p>
 
       {lineLimitWarning ? (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <p className="mt-2 text-sm text-critical" role="alert">
           Too many lines — add at most {MAX_COMPOSER_LINES} tasks at once.
         </p>
       ) : null}
 
       {submitError ? (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <p className="mt-2 text-sm text-critical" role="alert">
           {submitError}
         </p>
       ) : null}

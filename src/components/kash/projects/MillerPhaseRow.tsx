@@ -59,11 +59,11 @@ export default function MillerPhaseRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`flex cursor-grab items-start gap-2 rounded-kash px-2 py-1.5 transition active:cursor-grabbing ${
-        isOpen || selected ? "bg-kash-accent/15" : "hover:bg-[var(--surface)]"
-      } ${focused ? "ring-2 ring-inset ring-[var(--kash-accent-soft)]" : ""} ${
+      className={`flex cursor-grab items-start gap-2 rounded-card px-2 py-1.5 transition active:cursor-grabbing ${
+        isOpen || selected ? "bg-accent/15" : "hover:bg-[var(--surface)]"
+      } ${focused ? "ring-2 ring-inset ring-[var(--accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
-      } ${isOver ? "border-t-2 border-kash-accent" : "border-t-2 border-transparent"}`}
+      } ${isOver ? "border-t-2 border-accent" : "border-t-2 border-transparent"}`}
       {...listeners}
       {...dragAttributes}
     >
@@ -74,7 +74,7 @@ export default function MillerPhaseRow({
           e.preventDefault();
           onOpenDetail();
         }}
-        className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-kash-ink"
+        className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink"
       >
         <span className="flex min-w-0 flex-1 items-start gap-1.5">
           <span
@@ -85,9 +85,7 @@ export default function MillerPhaseRow({
           <span className="min-w-0 flex-1 break-words font-medium">{node.phase.name}</span>
         </span>
         {itemCount > 0 ? (
-          <span className="mt-0.5 shrink-0 text-xs tabular-nums text-kash-ink-muted">
-            {itemCount}
-          </span>
+          <span className="mt-0.5 shrink-0 text-xs tabular-nums text-ink-muted">{itemCount}</span>
         ) : null}
       </button>
     </li>

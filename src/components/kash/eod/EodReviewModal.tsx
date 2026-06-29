@@ -192,7 +192,7 @@ export function EodReviewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
       <button
         type="button"
-        className="bg-kash-ink/20 absolute inset-0"
+        className="bg-ink/20 absolute inset-0"
         aria-label="Close review"
         onClick={onClose}
       />
@@ -203,23 +203,23 @@ export function EodReviewModal({
         aria-labelledby="eod-review-title"
         aria-describedby={payload && !payloadLoading ? summarySectionId : undefined}
         tabIndex={-1}
-        className="glass-panel relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto p-6"
+        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-subtle bg-surface p-6"
       >
-        <h2 id="eod-review-title" className="text-lg font-semibold text-kash-ink">
+        <h2 id="eod-review-title" className="text-lg font-semibold text-ink">
           End of day review
         </h2>
 
         {payloadLoading || !payload ? (
-          <p className="mt-4 text-sm text-kash-ink-muted">Loading your day…</p>
+          <p className="mt-4 text-sm text-ink-muted">Loading your day…</p>
         ) : (
           <div id={summarySectionId} className="mt-4 space-y-5">
-            <p className="text-sm text-kash-ink">
+            <p className="text-sm text-ink">
               <span className="font-semibold">{payload.completionsToday}</span> task
               {payload.completionsToday === 1 ? "" : "s"} completed today
             </p>
 
             <section aria-label="Top 3 status">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
                 Top 3
               </p>
               <Top3ReviewSummary top3Status={payload.top3Status} />
@@ -228,21 +228,19 @@ export function EodReviewModal({
             <FocusTimeChart bars={payload.focusBars} overflowCount={payload.focusOverflowCount} />
 
             <section className="space-y-2" aria-label="Reflection">
-              <p className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
-                Summary
-              </p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Summary</p>
               {aiLoading ? (
-                <p className="text-sm text-kash-ink-muted">Claude is reflecting on your day…</p>
+                <p className="text-sm text-ink-muted">Claude is reflecting on your day…</p>
               ) : (
-                <p className="whitespace-pre-wrap text-sm text-kash-ink">
+                <p className="whitespace-pre-wrap text-sm text-ink">
                   {summary ? renderInlineBold(summary) : "—"}
                 </p>
               )}
 
               {reflectiveQuestion ? (
                 <>
-                  <p className="mt-3 text-sm font-medium text-kash-ink">{reflectiveQuestion}</p>
-                  <label className="block text-xs text-kash-ink-muted" htmlFor="eod-reflection">
+                  <p className="mt-3 text-sm font-medium text-ink">{reflectiveQuestion}</p>
+                  <label className="block text-xs text-ink-muted" htmlFor="eod-reflection">
                     Your answer (optional)
                   </label>
                   <Textarea
@@ -260,7 +258,7 @@ export function EodReviewModal({
         )}
 
         {saveError ? (
-          <p className="mt-4 text-sm text-red-700" role="alert">
+          <p className="mt-4 text-sm text-critical" role="alert">
             {saveError}
           </p>
         ) : null}

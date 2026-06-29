@@ -33,7 +33,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="border-t border-[var(--kash-glass-border)] pt-3">
+    <div className="border-t border-[var(--border)] pt-3">
       {suggestions}
       <Textarea
         ref={textareaRef}
@@ -48,14 +48,14 @@ export function ChatComposer({
         rows={2}
         disabled={disabled || isStreaming}
         placeholder={placeholder}
-        className="w-full resize-none text-sm text-kash-ink"
+        className="w-full resize-none text-sm text-ink"
       />
       <div className="mt-2 flex justify-end gap-2">
         {isStreaming && onStop ? (
           <button
             type="button"
             onClick={onStop}
-            className="glass-pill px-3 py-1.5 text-sm text-kash-ink-muted transition hover:text-kash-ink"
+            className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
           >
             Stop
           </button>

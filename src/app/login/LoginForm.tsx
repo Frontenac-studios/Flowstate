@@ -38,12 +38,15 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel mx-auto w-full max-w-sm space-y-4 p-6">
-      <h1 className="text-xl font-semibold text-kash-ink">Sign in to Kash</h1>
-      <p className="text-sm text-kash-ink-muted">Use your email and password.</p>
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto w-full max-w-sm space-y-4 rounded-card border border-subtle bg-surface p-6"
+    >
+      <h1 className="text-xl font-semibold text-ink">Sign in to Kash</h1>
+      <p className="text-sm text-ink-muted">Use your email and password.</p>
 
       <label className="block space-y-1">
-        <span className="text-sm text-kash-ink-muted">Email</span>
+        <span className="text-sm text-ink-muted">Email</span>
         <Input
           type="email"
           required
@@ -55,7 +58,7 @@ export function LoginForm() {
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm text-kash-ink-muted">Password</span>
+        <span className="text-sm text-ink-muted">Password</span>
         <Input
           type="password"
           required

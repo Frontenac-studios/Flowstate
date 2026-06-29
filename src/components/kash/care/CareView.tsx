@@ -29,7 +29,7 @@ export function CareView() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-lg font-semibold text-kash-ink">Care</h1>
+        <h1 className="text-lg font-semibold text-ink">Care</h1>
         <InPageSwitcher
           options={CARE_OPTIONS}
           value={activity}
@@ -37,7 +37,7 @@ export function CareView() {
           ariaLabel="Care activity"
         />
       </div>
-      <div className="glass-panel p-8 text-kash-ink-muted">
+      <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted">
         <p className="text-sm">{CARE_COPY[activity]} Coming soon.</p>
       </div>
     </div>

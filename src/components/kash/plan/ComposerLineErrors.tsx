@@ -32,13 +32,13 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
           >
             {projectWarnings.map((warning) => (
               <div key={warning.slug} className="space-y-2">
-                <p className="text-red-600">
+                <p className="text-critical">
                   Line {line.lineIndex + 1}: No project{" "}
                   <span className="font-mono">{warning.slug}</span>
-                  <span className="ml-2 text-kash-ink-muted">&ldquo;{line.raw}&rdquo;</span>
+                  <span className="ml-2 text-ink-muted">&ldquo;{line.raw}&rdquo;</span>
                 </p>
                 {line.parse.suggestions.length > 0 ? (
-                  <p className="text-kash-ink-muted">
+                  <p className="text-ink-muted">
                     Did you mean{" "}
                     {line.parse.suggestions.map((s, i) => (
                       <span key={s.slug}>
@@ -55,7 +55,7 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
                     ?
                   </p>
                 ) : null}
-                <p className="text-kash-ink-muted">
+                <p className="text-ink-muted">
                   Create it in{" "}
                   <Link href="/projects" className="glass-link font-medium">
                     Projects
@@ -68,7 +68,7 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
             {invalidPropertyWarnings.length > 0 ? (
               <div className="space-y-2">
                 {invalidPropertyWarnings.map((w, i) => (
-                  <p key={`${w.property}-${i}`} className="text-red-600">
+                  <p key={`${w.property}-${i}`} className="text-critical">
                     Line {line.lineIndex + 1}: Unrecognized property{" "}
                     <span className="font-mono">&ldquo;{w.property}&rdquo;</span>
                   </p>

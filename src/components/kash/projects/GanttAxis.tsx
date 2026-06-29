@@ -19,11 +19,11 @@ export default function GanttAxis({ ticks, pxPerDay, boardWidth }: Props) {
       style={{ width: GANTT_LABEL_WIDTH + boardWidth, height: AXIS_HEIGHT }}
     >
       <div
-        className="sticky left-0 z-30 border-b border-white/40 bg-[var(--kash-glass-bg-opaque)]"
+        className="sticky left-0 z-30 border-b border-white/40 bg-[var(--surface)]"
         style={{ width: GANTT_LABEL_WIDTH, height: AXIS_HEIGHT }}
       />
       <div
-        className="relative border-b border-white/40 bg-[var(--kash-glass-bg-opaque)]"
+        className="relative border-b border-white/40 bg-[var(--surface)]"
         style={{ width: boardWidth, height: AXIS_HEIGHT }}
       >
         {ticks.map((tick) => (
@@ -32,7 +32,7 @@ export default function GanttAxis({ ticks, pxPerDay, boardWidth }: Props) {
             className="absolute top-0 h-full border-l border-white/40"
             style={{ left: tick.dayOffset * pxPerDay }}
           >
-            <span className="whitespace-nowrap pl-1 text-[11px] leading-7 text-kash-ink-muted">
+            <span className="whitespace-nowrap pl-1 text-[11px] leading-7 text-ink-muted">
               {tick.label}
             </span>
           </div>

@@ -76,9 +76,7 @@ export default function TaskDetail({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
-          Task
-        </span>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Task</span>
         <Textarea
           className="w-full break-words"
           value={title}
@@ -96,20 +94,24 @@ export default function TaskDetail({
           aria-invalid={titleError != null}
         />
         {titleError ? (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-critical" role="alert">
             {titleError}
           </p>
         ) : null}
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-kash-ink">
+      <label className="flex items-center gap-2 text-sm text-ink">
         <input type="checkbox" checked={completed} onChange={onToggleComplete} />
         {completed ? "Completed" : "Mark complete"}
       </label>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-kash-ink">Priority</span>
-        <div className="glass-pill flex w-fit text-sm" role="group" aria-label="Priority">
+        <span className="text-sm font-medium text-ink">Priority</span>
+        <div
+          className="flex w-fit rounded-pill border border-border bg-surface text-sm"
+          role="group"
+          aria-label="Priority"
+        >
           {PRIORITY_LEVELS.map((p) => {
             const meta = priorityMeta(p);
             const selected = task.priority === p;
@@ -120,7 +122,7 @@ export default function TaskDetail({
                 onClick={() => onUpdate({ priority: p })}
                 aria-pressed={selected}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition ${
-                  selected ? "bg-kash-accent text-white" : "text-kash-ink-muted hover:text-kash-ink"
+                  selected ? "bg-accent text-white" : "text-ink-muted hover:text-ink"
                 }`}
               >
                 {Array.from({ length: meta.dots }, (_, i) => (
@@ -139,7 +141,7 @@ export default function TaskDetail({
       <TaskRepeatSection taskId={task.id} disabled={pending} />
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="task-detail-category" className="text-sm font-medium text-kash-ink">
+        <label htmlFor="task-detail-category" className="text-sm font-medium text-ink">
           Category
         </label>
         <div className="flex items-center gap-2">
@@ -151,9 +153,7 @@ export default function TaskDetail({
               backgroundColor: task.categoryUnresolved
                 ? "transparent"
                 : categoryColor(task.category),
-              boxShadow: task.categoryUnresolved
-                ? "inset 0 0 0 1.5px var(--kash-ink-muted)"
-                : undefined,
+              boxShadow: task.categoryUnresolved ? "inset 0 0 0 1.5px var(--ink-muted)" : undefined,
             }}
           />
           <Select
@@ -169,7 +169,7 @@ export default function TaskDetail({
           </Select>
         </div>
         {task.categoryUnresolved ? (
-          <p className="text-xs text-kash-ink-muted">Auto-filed — pick a category to confirm.</p>
+          <p className="text-xs text-ink-muted">Auto-filed — pick a category to confirm.</p>
         ) : null}
       </div>
 

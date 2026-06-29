@@ -99,14 +99,14 @@ export function InboxPanel({ active }: { active: boolean }) {
   }, [active, tasks.length, apply]);
 
   if (isLoading) {
-    return <p className="px-1 py-6 text-center text-sm text-kash-ink-muted">Loading…</p>;
+    return <p className="px-1 py-6 text-center text-sm text-ink-muted">Loading…</p>;
   }
 
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center gap-1 px-1 py-8 text-center">
-        <p className="text-sm text-kash-ink">Inbox zero.</p>
-        <p className="text-xs text-kash-ink-muted">Nothing overdue or unscheduled to triage.</p>
+        <p className="text-sm text-ink">Inbox zero.</p>
+        <p className="text-xs text-ink-muted">Nothing overdue or unscheduled to triage.</p>
       </div>
     );
   }
@@ -124,8 +124,8 @@ export function InboxPanel({ active }: { active: boolean }) {
             role="option"
             aria-selected={index === selected}
             onMouseEnter={() => setSelected(index)}
-            className={`glass-pill flex items-center gap-2 px-3 py-kash-task-y transition ${
-              index === selected ? "ring-2 ring-kash-accent" : ""
+            className={`flex items-center gap-2 rounded-pill border border-border bg-surface px-3 py-[var(--row-py)] transition ${
+              index === selected ? "ring-2 ring-accent" : ""
             }`}
           >
             {reveal.category ? (
@@ -135,11 +135,11 @@ export function InboxPanel({ active }: { active: boolean }) {
                 aria-hidden
               />
             ) : null}
-            <span className="min-w-0 flex-1 truncate text-sm font-medium text-kash-ink">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
               {task.title}
             </span>
             {reveal.project && task.projectName ? (
-              <span className="flex max-w-[10rem] shrink-0 items-center gap-1.5 text-xs text-kash-ink-muted">
+              <span className="flex max-w-[10rem] shrink-0 items-center gap-1.5 text-xs text-ink-muted">
                 <span
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: phaseRampColor(task.projectId, task.phaseSortOrder) }}
@@ -157,7 +157,7 @@ export function InboxPanel({ active }: { active: boolean }) {
                   key={action}
                   type="button"
                   onClick={() => apply(index, action)}
-                  className="glass-pill px-2 py-0.5 text-xs text-kash-ink-muted transition hover:bg-[var(--kash-accent-soft)] hover:text-kash-accent"
+                  className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted transition hover:bg-[var(--accent-soft)] hover:text-accent"
                 >
                   {label}
                   <span className="ml-1 opacity-60">{key}</span>

@@ -226,20 +226,20 @@ export default function NewItemRow({
         }}
       />
 
-      <p className="mt-1.5 text-xs text-kash-ink-muted">
+      <p className="mt-1.5 text-xs text-ink-muted">
         Enter for new line · ⌘↵ to add tasks
         {!cursorOnPlusParentDirLine && assist?.suggestionSuffix ? " · ⇥ accept suggestion" : null}
         {isBusy ? " · Adding…" : null}
       </p>
 
       {lineLimitWarning ? (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <p className="mt-2 text-sm text-critical" role="alert">
           Too many lines — add at most {MAX_COMPOSER_LINES} tasks at once.
         </p>
       ) : null}
 
       {submitError ? (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <p className="mt-2 text-sm text-critical" role="alert">
           {submitError}
         </p>
       ) : null}
