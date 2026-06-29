@@ -7,7 +7,8 @@ import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import TaskRepeatSection from "@/components/kash/projects/TaskRepeatSection";
 import Select from "@/components/kash/ui/Select";
 import Textarea from "@/components/kash/ui/Textarea";
-import { PROJECT_CATEGORIES, type ProjectCategory, categoryColor } from "@/lib/projects/categories";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { defaultCategoryLabel } from "@/lib/projects/category-settings";
 import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
 import { getTaskTitleError } from "@/lib/taskValidation";
@@ -96,19 +97,19 @@ export default function TaskDetail({
           aria-invalid={titleError != null}
         />
         {titleError ? (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-critical" role="alert">
             {titleError}
           </p>
         ) : null}
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-kash-ink">
+      <label className="flex items-center gap-2 text-sm text-ink">
         <input type="checkbox" checked={completed} onChange={onToggleComplete} />
         {completed ? "Completed" : "Mark complete"}
       </label>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-kash-ink">Priority</span>
+        <span className="text-sm font-medium text-ink">Priority</span>
         <div className="glass-pill flex w-fit text-sm" role="group" aria-label="Priority">
           {PRIORITY_LEVELS.map((p) => {
             const meta = priorityMeta(p);
@@ -120,13 +121,13 @@ export default function TaskDetail({
                 onClick={() => onUpdate({ priority: p })}
                 aria-pressed={selected}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition ${
-                  selected ? "bg-kash-accent text-white" : "text-kash-ink-muted hover:text-kash-ink"
+                  selected ? "text-on-accent bg-accent" : "text-ink-muted hover:text-ink"
                 }`}
               >
                 {Array.from({ length: meta.dots }, (_, i) => (
                   <span
                     key={i}
-                    className={`h-1.5 w-1.5 rounded-full ${selected ? "bg-white" : meta.dotClass}`}
+                    className={`h-1.5 w-1.5 rounded-full ${selected ? "bg-[var(--on-accent)]" : meta.dotClass}`}
                   />
                 ))}
                 {meta.label}
@@ -139,7 +140,7 @@ export default function TaskDetail({
       <TaskRepeatSection taskId={task.id} disabled={pending} />
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="task-detail-category" className="text-sm font-medium text-kash-ink">
+        <label htmlFor="task-detail-category" className="text-sm font-medium text-ink">
           Category
         </label>
         <div className="flex items-center gap-2">
@@ -150,10 +151,8 @@ export default function TaskDetail({
               // Unresolved (1.4d) renders as a neutral marker, never the placeholder's color.
               backgroundColor: task.categoryUnresolved
                 ? "transparent"
-                : categoryColor(task.category),
-              boxShadow: task.categoryUnresolved
-                ? "inset 0 0 0 1.5px var(--kash-ink-muted)"
-                : undefined,
+                : categorySolidVar(task.category),
+              boxShadow: task.categoryUnresolved ? "inset 0 0 0 1.5px var(--ink-muted)" : undefined,
             }}
           />
           <Select
@@ -169,7 +168,7 @@ export default function TaskDetail({
           </Select>
         </div>
         {task.categoryUnresolved ? (
-          <p className="text-xs text-kash-ink-muted">Auto-filed — pick a category to confirm.</p>
+          <p className="text-xs text-ink-muted">Auto-filed — pick a category to confirm.</p>
         ) : null}
       </div>
 

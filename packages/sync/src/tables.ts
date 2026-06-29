@@ -1,4 +1,5 @@
 export const SYNC_TABLES = [
+  "abyss_items",
   "projects",
   "phases",
   "protected_block_templates",
@@ -22,6 +23,8 @@ export const SYNC_TABLES = [
   "nudge_events",
   "task_bulk_imports",
   "task_bulk_import_items",
+  "care_activities",
+  "care_events",
 ] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];

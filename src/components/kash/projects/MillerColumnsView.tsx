@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import type { ProjectCategory } from "@/lib/projects/categories";
 import { defaultMillerPath, expandMillerPath } from "@/lib/projects/miller-path";
 import {
   filterTasksByPriority,
@@ -42,6 +43,7 @@ type Confirm = { kind: "phase-delete"; id: string } | { kind: "task-delete"; id:
 type Props = {
   tree: Tree;
   projectId: string;
+  category: ProjectCategory;
   phases: ProjectPhase[];
   tasks: ProjectTask[];
   selectedPath: string[];
@@ -60,18 +62,10 @@ function orderItems(phases: Node[], tasks: ProjectTask[]): ColumnItem[] {
   ];
 }
 
-function isMillerDismissTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  return (
-    target.closest("[data-miller-item]") !== null ||
-    target.closest("[data-miller-detail]") !== null ||
-    target.closest("[data-miller-composer]") !== null
-  );
-}
-
 export default function MillerColumnsView({
   tree,
   projectId,
+  category,
   phases,
   tasks,
   selectedPath,
@@ -79,8 +73,10 @@ export default function MillerColumnsView({
 }: Props) {
   const m = useProjectMutations(projectId);
 
+  // One inline-detail target across the whole workspace (phase or task). Opening a
+  // detail in any column moves it here; Escape clears it. (VF-Projects: docked panel +
+  // highlight + double-click model retired Jun 26.)
   const [detail, setDetail] = useState<DetailSelection>(null);
-  const [selection, setSelection] = useState<DetailSelection>(null);
   const [focus, setFocus] = useState({ col: 0, index: 0 });
   const [confirm, setConfirm] = useState<Confirm>(null);
 
@@ -172,44 +168,22 @@ export default function MillerColumnsView({
     });
   }, [columns]);
 
+  // Single-click a phase: drill into its child column AND expand its detail inline.
   const openPhase = useCallback(
     (level: number, node: Node) => {
       const userPath = selectedPath.slice(0, level).concat(node.phase.id);
       const expanded = expandMillerPath(tree, userPath, targetVisibleColumns);
       onSelectPath(expanded);
       setDetail({ type: "phase", id: node.phase.id });
-      setSelection(null);
       setFocus({ col: expanded.length, index: 0 });
     },
     [onSelectPath, selectedPath, tree, targetVisibleColumns]
   );
 
-  const openPhaseDetail = useCallback(
-    (level: number, node: Node) => {
-      const userPath = selectedPath.slice(0, level).concat(node.phase.id);
-      const expanded = expandMillerPath(tree, userPath, targetVisibleColumns);
-      if (expanded.join() !== selectedPath.join()) {
-        onSelectPath(expanded);
-      }
-      setDetail({ type: "phase", id: node.phase.id });
-      setSelection(null);
-      setFocus({ col: expanded.length, index: 0 });
-    },
-    [onSelectPath, selectedPath, tree, targetVisibleColumns]
-  );
-
-  const highlightTask = useCallback(
-    (level: number, task: ProjectTask) => {
-      onSelectPath(selectedPath.slice(0, level));
-      setSelection({ type: "task", id: task.id });
-    },
-    [onSelectPath, selectedPath]
-  );
-
+  // Single-click a task (a leaf): collapse any deeper drill and expand its detail inline.
   const openTaskDetail = useCallback(
     (level: number, task: ProjectTask) => {
       onSelectPath(selectedPath.slice(0, level));
-      setSelection({ type: "task", id: task.id });
       setDetail({ type: "task", id: task.id });
     },
     [onSelectPath, selectedPath]
@@ -362,15 +336,6 @@ export default function MillerColumnsView({
     [columns, focus, openPhase, openTaskDetail, detail]
   );
 
-  const handleWorkspacePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (!detail) return;
-      if (isMillerDismissTarget(e.target)) return;
-      setDetail(null);
-    },
-    [detail]
-  );
-
   const confirmConfig = useMemo(() => {
     if (!confirm) return null;
     if (confirm.kind === "phase-delete") {
@@ -399,7 +364,6 @@ export default function MillerColumnsView({
       m.deletePhase.mutate({ id: confirm.id });
     } else {
       setDetail(null);
-      setSelection(null);
       m.deleteTask.mutate({ id: confirm.id });
     }
     setConfirm(null);
@@ -410,8 +374,36 @@ export default function MillerColumnsView({
   const isBlank = columns.length === 1 && columns[0].items.length === 0;
   const composerParentPhaseId =
     selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
-  const detailNode = detail?.type === "phase" ? (nodeById.get(detail.id) ?? null) : null;
-  const detailTask = detail?.type === "task" ? (taskById.get(detail.id) ?? null) : null;
+
+  // Renders the inline detail editor under whichever row is the current detail target.
+  // Wires the same mutations the docked panel used; the column drops it in place.
+  const renderDetail = useCallback(
+    (item: ColumnItem) => {
+      if (item.kind === "phase") {
+        if (!(detail?.type === "phase" && detail.id === item.node.phase.id)) return null;
+        return (
+          <PhaseDetail
+            node={item.node}
+            pending={m.deletePhase.isPending}
+            onUpdate={(patch) => m.updatePhase.mutate({ id: item.node.phase.id, ...patch })}
+            onRequestDelete={() => setConfirm({ kind: "phase-delete", id: item.node.phase.id })}
+          />
+        );
+      }
+      if (!(detail?.type === "task" && detail.id === item.task.id)) return null;
+      return (
+        <TaskDetail
+          task={item.task}
+          pending={m.deleteTask.isPending}
+          saveError={m.updateTask.isError ? "Couldn't save your change — please try again." : null}
+          onUpdate={(patch) => m.updateTask.mutate({ id: item.task.id, ...patch })}
+          onToggleComplete={() => toggleTask(item.task)}
+          onRequestDelete={() => setConfirm({ kind: "task-delete", id: item.task.id })}
+        />
+      );
+    },
+    [detail, m, toggleTask]
+  );
 
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
     await executeComposerSubmit({
@@ -435,13 +427,10 @@ export default function MillerColumnsView({
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div
-          className="flex min-h-0 flex-1 flex-col gap-3"
-          onPointerDown={handleWorkspacePointerDown}
-        >
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="glass-panel-opaque shrink-0 p-4" data-miller-composer>
             {isBlank ? (
-              <p className="mb-3 text-sm text-kash-ink-muted">
+              <p className="mb-3 text-sm text-ink-muted">
                 Add tasks below — Parent//+ Child for subdirectories, or ;;; + Phase to create
                 directories only.
               </p>
@@ -468,23 +457,22 @@ export default function MillerColumnsView({
               tabIndex={0}
               onKeyDown={handleKeyDown}
               aria-label="Project columns"
-              className="glass-panel-opaque flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-kash-accent"
+              className="glass-panel-opaque flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {columns.map((col) => (
                 <MillerColumn
                   key={col.level}
                   level={col.level}
                   parentPhaseId={col.parentPhaseId}
+                  category={category}
                   items={col.items}
                   openPhaseId={selectedPath[col.level] ?? null}
                   detail={detail}
-                  selection={selection}
                   focusIndex={focus.col === col.level ? focus.index : null}
                   isActive={col.level === activeColumnLevel}
                   shellClassName={millerColumnShellClass(widthClassName)}
+                  renderDetail={renderDetail}
                   onOpenPhase={(node) => openPhase(col.level, node)}
-                  onOpenPhaseDetail={(node) => openPhaseDetail(col.level, node)}
-                  onHighlightTask={(task) => highlightTask(col.level, task)}
                   onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
                   onToggleTask={toggleTask}
                 />
@@ -496,38 +484,6 @@ export default function MillerColumnsView({
                 />
               ))}
             </div>
-
-            {detail ? (
-              <aside
-                data-miller-detail
-                className="glass-panel-opaque min-h-60 w-72 shrink-0 self-stretch overflow-y-auto p-4"
-                aria-label={detail.type === "phase" ? "Phase details" : "Task details"}
-              >
-                {detailNode ? (
-                  <PhaseDetail
-                    node={detailNode}
-                    pending={m.deletePhase.isPending}
-                    onUpdate={(patch) =>
-                      m.updatePhase.mutate({ id: detailNode.phase.id, ...patch })
-                    }
-                    onRequestDelete={() =>
-                      setConfirm({ kind: "phase-delete", id: detailNode.phase.id })
-                    }
-                  />
-                ) : detailTask ? (
-                  <TaskDetail
-                    task={detailTask}
-                    pending={m.deleteTask.isPending}
-                    saveError={
-                      m.updateTask.isError ? "Couldn't save your change — please try again." : null
-                    }
-                    onUpdate={(patch) => m.updateTask.mutate({ id: detailTask.id, ...patch })}
-                    onToggleComplete={() => toggleTask(detailTask)}
-                    onRequestDelete={() => setConfirm({ kind: "task-delete", id: detailTask.id })}
-                  />
-                ) : null}
-              </aside>
-            ) : null}
           </div>
         </div>
       </DndContext>
