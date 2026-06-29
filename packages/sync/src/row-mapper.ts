@@ -42,6 +42,11 @@ export function mapRemoteRow(
     base.links = typeof base.links === "string" ? base.links : JSON.stringify(base.links);
   }
 
+  if (table === "abyss_items" && base.embedding != null) {
+    base.embedding =
+      typeof base.embedding === "string" ? base.embedding : JSON.stringify(base.embedding);
+  }
+
   const dateFields = [
     "created_at",
     "updated_at",
@@ -216,6 +221,14 @@ export function mapPayloadToRemote(
     }
   }
 
+  if (table === "abyss_items" && typeof out.embedding === "string") {
+    try {
+      out.embedding = JSON.parse(out.embedding as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
   if (
     table === "quarter_themes" &&
     typeof out.focus_categories === "object" &&
@@ -230,6 +243,10 @@ export function mapPayloadToRemote(
 
   if (table === "abyss_items" && typeof out.links === "object" && out.links) {
     out.links = JSON.stringify(out.links);
+  }
+
+  if (table === "abyss_items" && typeof out.embedding === "object" && out.embedding) {
+    out.embedding = JSON.stringify(out.embedding);
   }
 
   return out;

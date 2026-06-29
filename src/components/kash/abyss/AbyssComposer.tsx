@@ -8,6 +8,7 @@ import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
 import { IdeaIcon, PlusIcon, TaskIcon } from "./icons";
+import { useAbyssEmbedding } from "./useAbyssEmbedding";
 
 type AbyssType = "idea" | "task";
 
@@ -23,10 +24,15 @@ export default function AbyssComposer() {
   const [type, setType] = useState<AbyssType>("idea");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
 
+  const embedAndStore = useAbyssEmbedding();
+
   const createMutation = useMutation(
     trpc.abyss.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (row, variables) => {
         void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+        // Embed the freshly-parked title client-side; a near-duplicate resurfaces what
+        // you already had (§7A).
+        void embedAndStore(row.id, variables.title, true);
         setTitle("");
         setCategory(null);
       },

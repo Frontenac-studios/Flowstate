@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, like, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, like, ne, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -16,6 +16,7 @@ import {
   scheduledDateForLane,
   selectCameBack,
 } from "@/lib/abyss/promotion";
+import { selectNearDuplicates } from "@/lib/abyss/resurface";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import {
@@ -146,6 +147,69 @@ export const abyssRouter = createTRPCRouter({
 
       await syncAbyssItemRow(row.id, "insert", row);
       return row;
+    }),
+
+  /**
+   * Store a title's embedding, computed client-side (the model never runs server-side —
+   * §7A). Sets the vector only if absent, never clobbering. When `checkDuplicates` is set
+   * (a fresh capture, not a quiet backfill of legacy rows), near-duplicate active items
+   * are resurfaced — their `resurface_count` bumps so re-parking an idea brightens the
+   * one you already had. Returns the ids that were bumped.
+   */
+  backfillEmbedding: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        embedding: z.array(z.number()).min(1).max(4096),
+        checkDuplicates: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [updated] = await db
+        .update(abyssItems)
+        .set({ embedding: input.embedding, updatedAt: now })
+        .where(
+          and(
+            eq(abyssItems.id, input.id),
+            eq(abyssItems.userId, ctx.userId),
+            isNull(abyssItems.embedding)
+          )
+        )
+        .returning();
+
+      // No row → the item already had an embedding (or isn't ours): nothing to do.
+      if (!updated) return { id: input.id, duplicatesBumped: [] as string[] };
+      await syncAbyssItemRow(updated.id, "update", updated);
+
+      if (!input.checkDuplicates) return { id: input.id, duplicatesBumped: [] as string[] };
+
+      const others = await db
+        .select({ id: abyssItems.id, embedding: abyssItems.embedding })
+        .from(abyssItems)
+        .where(
+          and(
+            eq(abyssItems.userId, ctx.userId),
+            eq(abyssItems.status, "active"),
+            ne(abyssItems.id, input.id)
+          )
+        );
+
+      const duplicatesBumped = selectNearDuplicates(input.embedding, others);
+      for (const dupId of duplicatesBumped) {
+        const [bumped] = await db
+          .update(abyssItems)
+          .set({
+            resurfaceCount: sql`${abyssItems.resurfaceCount} + 1`,
+            lastResurfacedAt: now,
+            lastTouchedAt: now,
+            updatedAt: now,
+          })
+          .where(and(eq(abyssItems.id, dupId), eq(abyssItems.userId, ctx.userId)))
+          .returning();
+        if (bumped) await syncAbyssItemRow(bumped.id, "update", bumped);
+      }
+      return { id: input.id, duplicatesBumped };
     }),
 
   /**

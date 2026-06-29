@@ -9,6 +9,7 @@ import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
 import { IdeaIcon, MoonIcon, TaskIcon } from "./icons";
+import { useAbyssEmbedding } from "./useAbyssEmbedding";
 
 /** Fired by other chrome to open quick-capture (mirrors OPEN_PALETTE_EVENT). */
 export const OPEN_ABYSS_CAPTURE_EVENT = "kash:open-abyss-capture";
@@ -41,10 +42,13 @@ export default function AbyssQuickCapture() {
     setExpanded(false);
   }, []);
 
+  const embedAndStore = useAbyssEmbedding();
+
   const createMutation = useMutation(
     trpc.abyss.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (row, variables) => {
         void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+        void embedAndStore(row.id, variables.title, true);
         close();
       },
     })

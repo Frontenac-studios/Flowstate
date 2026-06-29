@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/grouping";
 import { readAbyssTheme, writeAbyssTheme, type AbyssTheme } from "@/lib/abyss/theme-storage";
@@ -10,6 +10,7 @@ import { useTRPC } from "@/trpc/client";
 import AbyssComposer from "./AbyssComposer";
 import AbyssFloatingBar, { type AbyssView } from "./AbyssFloatingBar";
 import AbyssList, { type AbyssListItem } from "./AbyssList";
+import { useAbyssEmbedding } from "./useAbyssEmbedding";
 
 function SkyPlaceholder() {
   return (
@@ -44,6 +45,20 @@ function SkyPlaceholder() {
 export default function AbyssRoot() {
   const trpc = useTRPC();
   const { data, isLoading } = useQuery(trpc.abyss.list.queryOptions());
+
+  // Backfill embeddings for items captured server-side (chat "park…", Drop) or before
+  // §7A. Quiet (no duplicate-check) and attempted once per id per session.
+  const embedAndStore = useAbyssEmbedding();
+  const embedAttempted = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!data) return;
+    for (const item of data) {
+      const hasEmbedding = Array.isArray(item.embedding) && item.embedding.length > 0;
+      if (hasEmbedding || embedAttempted.current.has(item.id)) continue;
+      embedAttempted.current.add(item.id);
+      void embedAndStore(item.id, item.title, false);
+    }
+  }, [data, embedAndStore]);
 
   const [theme, setTheme] = useState<AbyssTheme>("dark");
   const [view, setView] = useState<AbyssView>("list");

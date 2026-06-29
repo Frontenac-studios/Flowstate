@@ -37,6 +37,13 @@ export const abyssItems = pgTable(
     links: jsonb("links").$type<AbyssLink[]>(),
     /** Optional at capture; reuses the 5-category enum. */
     category: projectCategory("category"),
+    /**
+     * MiniLM title embedding (384-float unit vector) for near-duplicate resurfacing and
+     * tag/constellation clustering (§7A). Stored as a JSON array — the model only ever
+     * runs client-side (onnxruntime-node is excluded from serverless bundles); the server
+     * does vector math on the stored arrays. Null until backfilled.
+     */
+    embedding: jsonb("embedding").$type<number[]>(),
     source: abyssItemSource("source").notNull().default("capture"),
     status: abyssItemStatus("status").notNull().default("active"),
     resurfaceCount: integer("resurface_count").notNull().default(0),
