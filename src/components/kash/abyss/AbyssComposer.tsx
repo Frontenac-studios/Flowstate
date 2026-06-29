@@ -7,8 +7,9 @@ import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/p
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
-import { IdeaIcon, PlusIcon, TaskIcon } from "./icons";
+import { CloseIcon, HashIcon, IdeaIcon, PlusIcon, TaskIcon } from "./icons";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
+import { useAbyssTagSuggest } from "./useAbyssTagSuggest";
 
 type AbyssType = "idea" | "task";
 
@@ -23,8 +24,10 @@ export default function AbyssComposer() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<AbyssType>("idea");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
 
   const embedAndStore = useAbyssEmbedding();
+  const suggested = useAbyssTagSuggest(title, tags);
 
   const createMutation = useMutation(
     trpc.abyss.create.mutationOptions({
@@ -35,6 +38,7 @@ export default function AbyssComposer() {
         void embedAndStore(row.id, variables.title, true);
         setTitle("");
         setCategory(null);
+        setTags([]);
       },
     })
   );
@@ -45,7 +49,7 @@ export default function AbyssComposer() {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSubmit) return;
-    createMutation.mutate({ title: trimmed, type, category });
+    createMutation.mutate({ title: trimmed, type, category, tags });
   };
 
   const TypeToggle = ({
@@ -139,6 +143,40 @@ export default function AbyssComposer() {
           ))}
         </div>
       </div>
+
+      {tags.length > 0 || suggested.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-abyss-border pt-2">
+          {tags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setTags((current) => current.filter((t) => t !== tag))}
+              aria-label={`Remove tag ${tag}`}
+              className="rounded-pill flex items-center gap-1 bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink"
+            >
+              <HashIcon size={10} className="text-abyss-ink-faint" />
+              {tag}
+              <CloseIcon size={10} className="text-abyss-ink-faint" />
+            </button>
+          ))}
+          {suggested.length > 0 ? (
+            <>
+              <span className="text-caption text-abyss-ink-faint">looks like</span>
+              {suggested.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setTags((current) => [...current, tag])}
+                  className="rounded-pill flex items-center gap-1 border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink"
+                >
+                  <PlusIcon size={10} />
+                  {tag}
+                </button>
+              ))}
+            </>
+          ) : null}
+        </div>
+      ) : null}
     </form>
   );
 }

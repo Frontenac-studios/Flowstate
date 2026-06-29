@@ -15,14 +15,19 @@ import {
   type AbyssItemType,
 } from "@/lib/abyss/grouping";
 import { decodePromotedTarget } from "@/lib/abyss/promotion";
+import { distinctTags } from "@/lib/abyss/tags";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
 import AbyssPromoteMenu from "./AbyssPromoteMenu";
-import { IdeaIcon, PromoteIcon, SparkleIcon, TaskIcon, TrashIcon } from "./icons";
+import AbyssTagEditor from "./AbyssTagEditor";
+import { HashIcon, IdeaIcon, PromoteIcon, SparkleIcon, TaskIcon, TrashIcon } from "./icons";
 
 /** Row shape the List renders — the slice of the abyss_items row it needs. */
-export type AbyssListItem = AbyssGroupableItem & { promotedTarget: string | null };
+export type AbyssListItem = AbyssGroupableItem & {
+  promotedTarget: string | null;
+  embedding: number[] | null;
+};
 
 /** Short, warm label for where a promoted item went (shown on its locked chip). */
 function promotedLabel(target: string | null): string {
@@ -57,10 +62,10 @@ function TypeGlyph({ type }: { type: AbyssItemType }) {
   );
 }
 
-function Row({ item, now }: { item: AbyssListItem; now: Date }) {
+function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: string[] }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [openPopover, setOpenPopover] = useState<"promote" | "tags" | null>(null);
   const deleteMutation = useMutation(
     trpc.abyss.delete.mutationOptions({
       onSuccess: () => {
@@ -71,6 +76,7 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
 
   const dimming = isDimming(now, item);
   const promoted = item.status === "promoted";
+  const tags = item.tags ?? [];
 
   return (
     <div
@@ -89,6 +95,19 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
       <div className="min-w-0 flex-1">
         <p className="text-body text-abyss-ink">{item.title}</p>
         {item.note ? <p className="mt-0.5 text-meta text-abyss-ink-muted">{item.note}</p> : null}
+        {tags.length > 0 ? (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-pill inline-flex items-center gap-0.5 bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted"
+              >
+                <HashIcon size={9} className="text-abyss-ink-faint" />
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
@@ -107,15 +126,28 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
           </span>
         ) : null}
 
+        <button
+          type="button"
+          onClick={() => setOpenPopover((p) => (p === "tags" ? null : "tags"))}
+          aria-label={`Tag ${item.title}`}
+          aria-haspopup="dialog"
+          aria-expanded={openPopover === "tags"}
+          className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${
+            openPopover === "tags" ? "text-abyss-ink opacity-100" : "opacity-0"
+          }`}
+        >
+          <HashIcon size={15} />
+        </button>
+
         {promoted ? null : (
           <button
             type="button"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={() => setOpenPopover((p) => (p === "promote" ? null : "promote"))}
             aria-label={`Promote ${item.title}`}
             aria-haspopup="menu"
-            aria-expanded={menuOpen}
+            aria-expanded={openPopover === "promote"}
             className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${
-              menuOpen ? "text-abyss-ink opacity-100" : "opacity-0"
+              openPopover === "promote" ? "text-abyss-ink opacity-100" : "opacity-0"
             }`}
           >
             <PromoteIcon size={15} />
@@ -133,10 +165,17 @@ function Row({ item, now }: { item: AbyssListItem; now: Date }) {
         </button>
       </div>
 
-      {menuOpen ? (
+      {openPopover === "promote" ? (
         <AbyssPromoteMenu
           item={{ id: item.id, category: item.category }}
-          onClose={() => setMenuOpen(false)}
+          onClose={() => setOpenPopover(null)}
+        />
+      ) : null}
+      {openPopover === "tags" ? (
+        <AbyssTagEditor
+          item={{ id: item.id, tags: item.tags ?? null, embedding: item.embedding }}
+          allTags={allTags}
+          onClose={() => setOpenPopover(null)}
         />
       ) : null}
     </div>
@@ -160,6 +199,7 @@ export default function AbyssList({ items, groupMode, typeFilter, ageFilter, que
 
   const keepsCalling = useMemo(() => selectKeepsCalling(filtered), [filtered]);
   const groups = useMemo(() => groupItems(filtered, groupMode, now), [filtered, groupMode, now]);
+  const allTags = useMemo(() => distinctTags(items), [items]);
 
   if (items.length === 0) {
     return (
@@ -189,7 +229,7 @@ export default function AbyssList({ items, groupMode, typeFilter, ageFilter, que
             <span className="text-caption text-abyss-ink-faint">· {keepsCalling.length}</span>
           </div>
           {keepsCalling.map((item) => (
-            <Row key={`kc-${item.id}`} item={item} now={now} />
+            <Row key={`kc-${item.id}`} item={item} now={now} allTags={allTags} />
           ))}
         </section>
       ) : null}
@@ -198,7 +238,7 @@ export default function AbyssList({ items, groupMode, typeFilter, ageFilter, que
         <section key={group.key}>
           <GroupHeader label={group.label} count={group.items.length} />
           {group.items.map((item) => (
-            <Row key={item.id} item={item} now={now} />
+            <Row key={item.id} item={item} now={now} allTags={allTags} />
           ))}
         </section>
       ))}

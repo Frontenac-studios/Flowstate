@@ -17,8 +17,10 @@ import {
   selectCameBack,
 } from "@/lib/abyss/promotion";
 import { selectNearDuplicates } from "@/lib/abyss/resurface";
+import { normalizeTags, suggestTagsFromNeighbours } from "@/lib/abyss/tags";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
+import { suggestClusterName } from "@/server/abyss/suggest-cluster-name";
 import {
   resolveTaskCategoryForUser,
   setLastUsedCategory,
@@ -121,10 +123,12 @@ export const abyssRouter = createTRPCRouter({
         category: categorySchema.nullish(),
         note: z.string().max(2000).nullish(),
         source: sourceSchema.default("capture"),
+        tags: z.array(z.string()).max(32).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const now = new Date();
+      const tags = normalizeTags(input.tags ?? []);
       const [row] = await db
         .insert(abyssItems)
         .values({
@@ -134,6 +138,7 @@ export const abyssRouter = createTRPCRouter({
           category: input.category ?? null,
           note: input.note?.trim() || null,
           source: input.source,
+          tags: tags.length ? tags : null,
           lastTouchedAt: now,
         })
         .returning();
@@ -210,6 +215,58 @@ export const abyssRouter = createTRPCRouter({
         if (bumped) await syncAbyssItemRow(bumped.id, "update", bumped);
       }
       return { id: input.id, duplicatesBumped };
+    }),
+
+  /** Set an item's full tag list (§7A). Normalized server-side; null when empty. */
+  setTags: protectedProcedure
+    .input(z.object({ id: z.string().uuid(), tags: z.array(z.string()).max(32) }))
+    .mutation(async ({ ctx, input }) => {
+      const tags = normalizeTags(input.tags);
+      const [updated] = await db
+        .update(abyssItems)
+        .set({ tags: tags.length ? tags : null, updatedAt: new Date() })
+        .where(and(eq(abyssItems.id, input.id), eq(abyssItems.userId, ctx.userId)))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Item not found." });
+      }
+      await syncAbyssItemRow(updated.id, "update", updated);
+      return updated;
+    }),
+
+  /**
+   * Suggest tags for a title's embedding from its nearest *tagged* neighbours (§7A).
+   * Suggestion only — the client never auto-applies. `exclude` drops tags already on the
+   * item being tagged.
+   */
+  suggestTags: protectedProcedure
+    .input(
+      z.object({
+        embedding: z.array(z.number()).min(1).max(4096),
+        exclude: z.array(z.string()).max(32).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const neighbours = await db
+        .select({ embedding: abyssItems.embedding, tags: abyssItems.tags })
+        .from(abyssItems)
+        .where(and(eq(abyssItems.userId, ctx.userId), eq(abyssItems.status, "active")));
+
+      return suggestTagsFromNeighbours(input.embedding, neighbours, {
+        exclude: input.exclude ? normalizeTags(input.exclude) : undefined,
+      });
+    }),
+
+  /**
+   * Suggest a short tag name for an un-tagged emerging cluster (§7A) — one Haiku call,
+   * on explicit request only. Returns `{ name: null }` when the model abstains.
+   */
+  suggestClusterName: protectedProcedure
+    .input(z.object({ titles: z.array(z.string().min(1)).min(1).max(12) }))
+    .mutation(async ({ input }) => {
+      const name = await suggestClusterName(input.titles);
+      return { name };
     }),
 
   /**

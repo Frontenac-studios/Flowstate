@@ -1,13 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { selectEmergingCluster } from "@/lib/abyss/clustering";
 import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/grouping";
 import { readAbyssTheme, writeAbyssTheme, type AbyssTheme } from "@/lib/abyss/theme-storage";
 import { useTRPC } from "@/trpc/client";
 
 import AbyssComposer from "./AbyssComposer";
+import AbyssEmergingCard from "./AbyssEmergingCard";
 import AbyssFloatingBar, { type AbyssView } from "./AbyssFloatingBar";
 import AbyssList, { type AbyssListItem } from "./AbyssList";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
@@ -67,6 +69,30 @@ export default function AbyssRoot() {
   const [ageFilter, setAgeFilter] = useState<AbyssAgeFilter>("all");
   const [query, setQuery] = useState("");
   const [now] = useState(() => new Date());
+  const [dismissedCluster, setDismissedCluster] = useState<string | null>(null);
+
+  // Strongest cohesive cluster of un-tagged items → the "name this pattern" card.
+  const emerging = useMemo(() => {
+    const rows = data ?? [];
+    const untagged = rows
+      .filter(
+        (r) =>
+          r.status === "active" &&
+          (r.tags?.length ?? 0) === 0 &&
+          Array.isArray(r.embedding) &&
+          r.embedding.length > 0
+      )
+      .map((r) => ({ id: r.id, embedding: r.embedding as number[] }));
+    const cluster = selectEmergingCluster(untagged);
+    if (!cluster) return null;
+    const signature = [...cluster.ids].sort().join(",");
+    if (signature === dismissedCluster) return null;
+    const members = cluster.ids
+      .map((id) => rows.find((r) => r.id === id))
+      .filter((r): r is NonNullable<typeof r> => Boolean(r))
+      .map((r) => ({ id: r.id, title: r.title, tags: r.tags ?? null }));
+    return { signature, members };
+  }, [data, dismissedCluster]);
 
   useEffect(() => {
     setTheme(readAbyssTheme());
@@ -107,6 +133,12 @@ export default function AbyssRoot() {
       ) : (
         <>
           <AbyssComposer />
+          {emerging ? (
+            <AbyssEmergingCard
+              members={emerging.members}
+              onDismiss={() => setDismissedCluster(emerging.signature)}
+            />
+          ) : null}
           {isLoading ? (
             <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading the abyss">
               {Array.from({ length: 5 }).map((_, i) => (

@@ -20,6 +20,8 @@ export const abyssItems = sqliteTable(
     category: text("category"),
     // jsonb number[] in Postgres; stored as a JSON string here (see row-mapper).
     embedding: text("embedding"),
+    // jsonb string[] in Postgres; stored as a JSON string here (see row-mapper).
+    tags: text("tags"),
     source: text("source", { enum: ABYSS_ITEM_SOURCE }).notNull().default("capture"),
     status: text("status", { enum: ABYSS_ITEM_STATUS }).notNull().default("active"),
     resurfaceCount: integer("resurface_count").notNull().default(0),

@@ -35,6 +35,12 @@ export const abyssItems = pgTable(
     note: text("note"),
     /** URLs now, images later (capture slice wires Storage uploads). */
     links: jsonb("links").$type<AbyssLink[]>(),
+    /**
+     * User tags (§7A). Manually assigned, suggested from embedding-near neighbours but
+     * never auto-applied. A shared tag forms a constellation; "pattern" grouping and the
+     * Sky read off this. Stored normalized (lowercased, trimmed, deduped); null = none.
+     */
+    tags: jsonb("tags").$type<string[]>(),
     /** Optional at capture; reuses the 5-category enum. */
     category: projectCategory("category"),
     /**

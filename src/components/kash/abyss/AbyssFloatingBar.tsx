@@ -26,6 +26,7 @@ const GROUP_LABELS: Record<AbyssGroupMode, string> = {
   category: "Category",
   type: "Type",
   age: "Age",
+  pattern: "Pattern",
 };
 
 const AGE_LABELS: Record<AbyssAgeFilter, string> = {

@@ -140,4 +140,43 @@ describe("groupItems", () => {
     );
     expect(groups[0].items.map((i) => i.title)).toEqual(["bright", "dim"]);
   });
+
+  describe("pattern mode", () => {
+    it("groups by tag, biggest constellation first, untagged last", () => {
+      const groups = groupItems(
+        [
+          item({ title: "wc1", tags: ["watercolour"] }),
+          item({ title: "wc2", tags: ["watercolour"] }),
+          item({ title: "admin", tags: ["studio"] }),
+          item({ title: "loose", tags: null }),
+        ],
+        "pattern",
+        NOW
+      );
+      expect(groups.map((g) => g.key)).toEqual(["tag:watercolour", "tag:studio", "untagged"]);
+      expect(groups[0].label).toBe("watercolour");
+    });
+
+    it("lists a multi-tag item under each of its tags", () => {
+      const groups = groupItems(
+        [item({ title: "both", tags: ["a", "b"] }), item({ title: "just-b", tags: ["b"] })],
+        "pattern",
+        NOW
+      );
+      // "b" has 2 members so it sorts before "a"; "both" appears in both groups
+      expect(groups.map((g) => g.key)).toEqual(["tag:b", "tag:a"]);
+      expect(groups.find((g) => g.key === "tag:a")?.items.map((i) => i.title)).toEqual(["both"]);
+      expect(
+        groups
+          .find((g) => g.key === "tag:b")
+          ?.items.map((i) => i.title)
+          .sort()
+      ).toEqual(["both", "just-b"]);
+    });
+
+    it("drops the untagged group when everything is tagged", () => {
+      const groups = groupItems([item({ tags: ["x"] })], "pattern", NOW);
+      expect(groups.map((g) => g.key)).toEqual(["tag:x"]);
+    });
+  });
 });

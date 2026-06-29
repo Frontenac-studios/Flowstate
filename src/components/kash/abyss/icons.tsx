@@ -110,6 +110,22 @@ export function TargetIcon(props: IconProps) {
   );
 }
 
+export function HashIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M10 3 8 21M16 3l-2 18M4 9h16M3 15h16" />
+    </Svg>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <Svg {...props}>

@@ -19,9 +19,11 @@ export interface AbyssGroupableItem {
   status: AbyssItemStatus;
   resurfaceCount: number;
   lastTouchedAt: Date;
+  /** User tags (§7A); a shared tag is a constellation in "pattern" grouping. */
+  tags?: string[] | null;
 }
 
-export type AbyssGroupMode = "category" | "type" | "age";
+export type AbyssGroupMode = "category" | "type" | "age" | "pattern";
 export type AbyssAgeFilter = "all" | "fresh" | "dimming";
 
 export interface AbyssGroup<T extends AbyssGroupableItem = AbyssGroupableItem> {
@@ -152,6 +154,29 @@ export function groupItems<T extends AbyssGroupableItem>(
         items.filter((i) => i.type === type)
       );
     }
+    return groups;
+  }
+
+  if (mode === "pattern") {
+    // Group by tag (a shared tag = a constellation). Multi-tag items appear under each.
+    // Tag groups order by size, then name; untagged items fall to a trailing group.
+    const tagSet = new Set<string>();
+    for (const item of items) {
+      for (const tag of item.tags ?? []) tagSet.add(tag);
+    }
+    const byTag = Array.from(tagSet)
+      .map((tag) => ({ tag, items: items.filter((i) => i.tags?.includes(tag)) }))
+      .sort((a, b) => b.items.length - a.items.length || a.tag.localeCompare(b.tag));
+
+    for (const { tag, items: tagItems } of byTag) {
+      pushSorted(groups, `tag:${tag}`, tag, tagItems);
+    }
+    pushSorted(
+      groups,
+      "untagged",
+      "Untagged",
+      items.filter((i) => (i.tags?.length ?? 0) === 0)
+    );
     return groups;
   }
 
