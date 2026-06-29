@@ -1,5 +1,7 @@
 export * from "./app-settings";
 export * from "./bingo-cards";
+export * from "./care-activities";
+export * from "./care-events";
 export * from "./category-settings";
 export * from "./chat-custom-suggestions";
 export * from "./chat-messages";

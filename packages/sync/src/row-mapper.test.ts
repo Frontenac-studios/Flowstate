@@ -64,4 +64,48 @@ describe("row-mapper", () => {
     expect(remote.category).toBe("relationships");
     expect(remote.category_unresolved).toBe(true);
   });
+
+  it("converts care_events date fields to Date and camel-cases keys", () => {
+    const local = mapRemoteRow("care_events", {
+      id: "e1",
+      user_id: "u1",
+      activity_id: "a1",
+      occurred_at: "2026-06-27T09:00:00Z",
+      duration_minutes: 10,
+      created_at: "2026-06-27T09:00:00Z",
+    });
+    expect(local.userId).toBe("u1");
+    expect(local.activityId).toBe("a1");
+    expect(local.durationMinutes).toBe(10);
+    expect(local.occurredAt).toBeInstanceOf(Date);
+    expect(local.createdAt).toBeInstanceOf(Date);
+    expect(local).not.toHaveProperty("occurred_at");
+  });
+
+  it("round-trips a care_activities archive timestamp and keeps enum text", () => {
+    const local = mapRemoteRow("care_activities", {
+      id: "a1",
+      user_id: "u1",
+      title: "10-minute walk",
+      theme: "move",
+      source: "suggested",
+      catalog_key: "move_walk_10",
+      archived_at: "2026-06-27T09:00:00Z",
+      created_at: "2026-06-27T09:00:00Z",
+      updated_at: "2026-06-27T09:00:00Z",
+    });
+    expect(local.theme).toBe("move");
+    expect(local.catalogKey).toBe("move_walk_10");
+    expect(local.archivedAt).toBeInstanceOf(Date);
+
+    const remote = mapPayloadToRemote("care_activities", {
+      id: "a1",
+      userId: "u1",
+      catalogKey: "move_walk_10",
+      careActivityId: null,
+    });
+    expect(remote.user_id).toBe("u1");
+    expect(remote.catalog_key).toBe("move_walk_10");
+    expect(remote.care_activity_id).toBeNull();
+  });
 });

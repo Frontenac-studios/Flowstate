@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { careActivities } from "./care-activities";
 import { goalMilestones } from "./goal-milestones";
 import { phases } from "./phases";
 import { PROJECT_CATEGORIES, projects } from "./projects";
@@ -12,6 +13,9 @@ export const tasks = sqliteTable(
     projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
     phaseId: text("phase_id").references(() => phases.id, { onDelete: "set null" }),
     milestoneId: text("milestone_id").references(() => goalMilestones.id, { onDelete: "set null" }),
+    careActivityId: text("care_activity_id").references(() => careActivities.id, {
+      onDelete: "set null",
+    }),
     title: text("title").notNull(),
     priority: integer("priority").notNull().default(0),
     sortOrder: integer("sort_order").notNull().default(0),
