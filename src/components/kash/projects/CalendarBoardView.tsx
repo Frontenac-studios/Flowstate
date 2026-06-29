@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import { addDays, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
-import { categoryColor, type ProjectCategory } from "@/lib/projects/categories";
+import { type ProjectCategory } from "@/lib/projects/categories";
+import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
 import {
   buildTicks,
   computeProjectSpan,
@@ -49,7 +50,7 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
 
   const span = useMemo(() => computeProjectSpan(tree), [tree]);
   const rows = useMemo(() => flattenTree(tree), [tree]);
-  const color = categoryColor(category);
+  const color = categorySolidVar(category);
 
   const [pxPerDay, setPxPerDay] = useState(GRANULARITY_PX.day);
   const [granularityOverride, setGranularityOverride] = useState<GanttGranularity | "auto">("auto");
@@ -148,15 +149,12 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
       </div>
 
       {span === null ? (
-        <div className="rounded-card border border-subtle bg-surface px-6 py-10 text-center text-ink-muted">
+        <div className="glass-panel-opaque px-6 py-10 text-center text-ink-muted">
           No dated phases yet. Schedule tasks in a phase or set dates manually to plot it on the
           calendar.
         </div>
       ) : (
-        <div
-          ref={scrollRef}
-          className="overflow-x-auto rounded-card border border-subtle bg-surface"
-        >
+        <div ref={scrollRef} className="glass-panel-opaque overflow-x-auto">
           <div style={{ width: GANTT_LABEL_WIDTH + boardWidth }}>
             <GanttAxis ticks={ticks} pxPerDay={pxPerDay} boardWidth={boardWidth} />
             <div className="relative">
@@ -189,7 +187,7 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
       )}
 
       {undatedLeaves.length > 0 ? (
-        <div className="rounded-card border border-subtle bg-surface p-4">
+        <div className="glass-panel-opaque p-4">
           <h3 className="mb-2 text-sm font-medium text-ink">Undated phases</h3>
           <p className="mb-3 text-xs text-ink-muted">
             These leaf phases have no dates and no scheduled tasks. Click one to set manual dates
@@ -203,7 +201,10 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
                   onClick={() => seedDates(r.node.phase.id)}
                   disabled={m.updatePhase.isPending}
                   className="rounded-full border border-transparent px-3 py-1 text-sm font-medium transition disabled:opacity-50"
-                  style={{ backgroundColor: `${color}1f`, color }}
+                  style={{
+                    backgroundColor: categoryFillVar(category),
+                    color: categoryTextVar(category),
+                  }}
                 >
                   {r.node.phase.name}
                 </button>

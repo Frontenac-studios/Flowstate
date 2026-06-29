@@ -11,6 +11,7 @@ import {
 } from "@/lib/planning/horizon-storage";
 
 import { InPageSwitcher } from "../InPageSwitcher";
+import BingoCard from "./bingo/BingoCard";
 import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
 
@@ -119,7 +120,11 @@ export function PlanHorizonView() {
           ariaLabel="Planning horizon"
         />
       </div>
-      <PlanHorizonPlaceholder horizon={horizon} />
+      {horizon === "bingo" ? (
+        <BingoCard year={breadcrumb.year} />
+      ) : (
+        <PlanHorizonPlaceholder horizon={horizon} />
+      )}
     </div>
   );
 }

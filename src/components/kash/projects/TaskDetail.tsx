@@ -7,7 +7,8 @@ import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import TaskRepeatSection from "@/components/kash/projects/TaskRepeatSection";
 import Select from "@/components/kash/ui/Select";
 import Textarea from "@/components/kash/ui/Textarea";
-import { PROJECT_CATEGORIES, type ProjectCategory, categoryColor } from "@/lib/projects/categories";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { defaultCategoryLabel } from "@/lib/projects/category-settings";
 import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
 import { getTaskTitleError } from "@/lib/taskValidation";
@@ -76,7 +77,9 @@ export default function TaskDetail({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Task</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-kash-ink-muted">
+          Task
+        </span>
         <Textarea
           className="w-full break-words"
           value={title}
@@ -107,11 +110,7 @@ export default function TaskDetail({
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-ink">Priority</span>
-        <div
-          className="flex w-fit rounded-pill border border-border bg-surface text-sm"
-          role="group"
-          aria-label="Priority"
-        >
+        <div className="glass-pill flex w-fit text-sm" role="group" aria-label="Priority">
           {PRIORITY_LEVELS.map((p) => {
             const meta = priorityMeta(p);
             const selected = task.priority === p;
@@ -122,13 +121,13 @@ export default function TaskDetail({
                 onClick={() => onUpdate({ priority: p })}
                 aria-pressed={selected}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition ${
-                  selected ? "bg-accent text-white" : "text-ink-muted hover:text-ink"
+                  selected ? "text-on-accent bg-accent" : "text-ink-muted hover:text-ink"
                 }`}
               >
                 {Array.from({ length: meta.dots }, (_, i) => (
                   <span
                     key={i}
-                    className={`h-1.5 w-1.5 rounded-full ${selected ? "bg-white" : meta.dotClass}`}
+                    className={`h-1.5 w-1.5 rounded-full ${selected ? "bg-[var(--on-accent)]" : meta.dotClass}`}
                   />
                 ))}
                 {meta.label}
@@ -152,7 +151,7 @@ export default function TaskDetail({
               // Unresolved (1.4d) renders as a neutral marker, never the placeholder's color.
               backgroundColor: task.categoryUnresolved
                 ? "transparent"
-                : categoryColor(task.category),
+                : categorySolidVar(task.category),
               boxShadow: task.categoryUnresolved ? "inset 0 0 0 1.5px var(--ink-muted)" : undefined,
             }}
           />

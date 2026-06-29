@@ -54,5 +54,7 @@ Rescheduling: when the user asks to move, reschedule, or reassign task dates, us
 - query_tasks — filter by projectSlug and/or scheduledFrom/scheduledTo (YYYY-MM-DD) when scope is unclear.
 - reschedule_tasks — apply {taskId, scheduledDate} assignments using IDs from context or query_tasks.
 Dates may be this week, next week, or further out. Spread tasks across requested days when asked to disperse.
-After rescheduling, briefly confirm what moved and to which dates.`;
+After rescheduling, briefly confirm what moved and to which dates.
+
+Parking: when the user wants to set something aside for later rather than schedule it now ("park", "shelve", "someday", "backburner", "save for later"), use park_in_abyss with a short title (and type/category/note if clear). Confirm warmly that it's waiting in the Abyss.`;
 }

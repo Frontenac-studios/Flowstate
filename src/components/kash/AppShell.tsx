@@ -1,6 +1,7 @@
 import { AppHeader } from "./AppHeader";
 import { CommandPalette } from "./CommandPalette";
 import { LeftNavRail } from "./LeftNavRail";
+import AbyssQuickCapture from "./abyss/AbyssQuickCapture";
 import { ChatProvider } from "./chat/ChatProvider";
 import { ChatRail } from "./chat/ChatRail";
 import { ProactiveNudgesRunner } from "./nudges/ProactiveNudgesRunner";
@@ -25,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <ChatRail />
         </div>
         <CommandPalette />
+        <AbyssQuickCapture />
       </div>
     </ChatProvider>
   );
