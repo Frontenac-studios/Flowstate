@@ -25,6 +25,10 @@ export const SYNC_TABLES = [
   "task_bulk_import_items",
   "care_activities",
   "care_events",
+  "user_values",
+  "about_me_sections",
+  "user_constraints",
+  "about_me_suggestions",
 ] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];

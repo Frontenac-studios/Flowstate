@@ -134,6 +134,13 @@
       "when": 1782755159763,
       "tag": "0018_superb_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782784072750,
+      "tag": "0019_tired_wendigo",
+      "breakpoints": true
     }
   ]
 }

@@ -51,6 +51,15 @@ export function mapRemoteRow(
     base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
   }
 
+  if (table === "user_constraints" && base.schedule != null) {
+    base.schedule =
+      typeof base.schedule === "string" ? base.schedule : JSON.stringify(base.schedule);
+  }
+
+  if (table === "about_me_suggestions" && base.payload != null) {
+    base.payload = typeof base.payload === "string" ? base.payload : JSON.stringify(base.payload);
+  }
+
   const dateFields = [
     "created_at",
     "updated_at",
@@ -66,6 +75,7 @@ export function mapRemoteRow(
     "last_touched_at",
     "occurred_at",
     "archived_at",
+    "learned_at",
   ];
 
   for (const key of dateFields) {
@@ -243,6 +253,22 @@ export function mapPayloadToRemote(
     }
   }
 
+  if (table === "user_constraints" && typeof out.schedule === "string") {
+    try {
+      out.schedule = JSON.parse(out.schedule as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
+  if (table === "about_me_suggestions" && typeof out.payload === "string") {
+    try {
+      out.payload = JSON.parse(out.payload as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
   if (
     table === "quarter_themes" &&
     typeof out.focus_categories === "object" &&
@@ -265,6 +291,14 @@ export function mapPayloadToRemote(
 
   if (table === "abyss_items" && typeof out.tags === "object" && out.tags) {
     out.tags = JSON.stringify(out.tags);
+  }
+
+  if (table === "user_constraints" && typeof out.schedule === "object" && out.schedule) {
+    out.schedule = JSON.stringify(out.schedule);
+  }
+
+  if (table === "about_me_suggestions" && typeof out.payload === "object" && out.payload) {
+    out.payload = JSON.stringify(out.payload);
   }
 
   return out;
