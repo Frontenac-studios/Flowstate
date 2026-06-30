@@ -10,6 +10,7 @@ import type { BucketMode } from "@/lib/settings/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
+import AboutMeSection from "./about-me/AboutMeSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 
 const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
@@ -151,11 +152,7 @@ export function SettingsForm() {
 
         {tab === "categories" ? <CategorySettingsSection /> : null}
 
-        {tab === "about" ? (
-          <ComingSoon title="About me">
-            Your values, work, life, and constraints — the context Kash uses to plan with you.
-          </ComingSoon>
-        ) : null}
+        {tab === "about" ? <AboutMeSection /> : null}
 
         {tab === "notifications" ? (
           <ComingSoon title="Notifications">

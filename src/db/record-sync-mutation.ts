@@ -108,3 +108,18 @@ export async function syncPlanningRow(
 ): Promise<void> {
   await recordSyncMutation({ table, rowId, op, payload });
 }
+
+type AboutMeSyncTable =
+  | "user_values"
+  | "about_me_sections"
+  | "user_constraints"
+  | "about_me_suggestions";
+
+export async function syncAboutMeRow(
+  table: AboutMeSyncTable,
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table, rowId, op, payload });
+}

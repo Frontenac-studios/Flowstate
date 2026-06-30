@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
@@ -9,19 +10,24 @@ import {
   categoryTextVar,
 } from "@/lib/projects/category-tokens";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { useTRPC } from "@/trpc/client";
 
 type Props = {
   /** 1-based square number for the prompt (cellIndex + 1). */
   squareLabel: number;
   busy: boolean;
   error: string | null;
-  onSubmit: (title: string, category: ProjectCategory) => void;
+  onSubmit: (title: string, category: ProjectCategory, valueId: string | null) => void;
   onCancel: () => void;
 };
 
 export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCancel }: Props) {
+  const trpc = useTRPC();
+  const { data: values = [] } = useQuery(trpc.aboutMe.values.list.queryOptions());
+
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
+  const [valueId, setValueId] = useState<string | null>(null);
 
   const trimmed = title.trim();
   const canSubmit = trimmed.length > 0 && category !== null && !busy;
@@ -29,7 +35,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSubmit || category === null) return;
-    onSubmit(trimmed, category);
+    onSubmit(trimmed, category, valueId);
   };
 
   return (
@@ -86,6 +92,32 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
           })}
         </div>
       </fieldset>
+
+      {values.length > 0 ? (
+        <fieldset className="flex flex-col gap-1.5">
+          <legend className="mb-1 text-caption font-medium text-ink">Value (optional)</legend>
+          <div className="flex flex-wrap gap-2">
+            {values.map((v) => {
+              const selected = valueId === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setValueId(selected ? null : v.id)}
+                  aria-pressed={selected}
+                  className={`rounded-chip border px-3 py-1 text-caption font-medium transition ${
+                    selected
+                      ? "border-ink bg-ink text-accent-on"
+                      : "border-subtle text-ink-muted hover:text-ink"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-caption text-critical">

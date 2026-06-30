@@ -3,6 +3,7 @@ import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "dri
 import { bingoCards } from "./bingo-cards";
 import { goalState, obligationDesire, targetHorizon } from "./planning-enums";
 import { projectCategory, projects } from "./projects";
+import { userValues } from "./user-values";
 
 /** Annual / horizon goals — bingo cells or panel-only (§7, GP4). */
 export const goals = pgTable(
@@ -14,8 +15,8 @@ export const goals = pgTable(
     title: text("title").notNull(),
     category: projectCategory("category").notNull(),
     obligationDesire: obligationDesire("obligation_desire"),
-    /** Nullable until §13 Values ships — no FK yet. */
-    valueId: uuid("value_id"),
+    /** Optional value tag (§13 V1-4); clears if the value is deleted. */
+    valueId: uuid("value_id").references(() => userValues.id, { onDelete: "set null" }),
     targetHorizon: targetHorizon("target_horizon"),
     targetYear: integer("target_year"),
     targetQuarter: integer("target_quarter"),

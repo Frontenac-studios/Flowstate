@@ -1,3 +1,6 @@
+export * from "./about-me-enums";
+export * from "./about-me-sections";
+export * from "./about-me-suggestions";
 export * from "./abyss-items";
 export * from "./app-settings";
 export * from "./bingo-cards";
@@ -27,3 +30,5 @@ export * from "./tasks";
 export * from "./task-bulk-imports";
 export * from "./task-recurrence";
 export * from "./task-occurrence-overrides";
+export * from "./user-constraints";
+export * from "./user-values";

@@ -150,9 +150,15 @@ export default function BingoCard({ year }: Props) {
     setPendingGoalId(goal.id);
     removeGoalMutation.mutate({ id: goal.id });
   };
-  const handleAddSubmit = (title: string, category: ProjectCategory) => {
+  const handleAddSubmit = (title: string, category: ProjectCategory, valueId: string | null) => {
     if (addingCell === null || !bingoCardId) return;
-    createGoalMutation.mutate({ bingoCardId, cellIndex: addingCell, title, category });
+    createGoalMutation.mutate({
+      bingoCardId,
+      cellIndex: addingCell,
+      title,
+      category,
+      valueId,
+    });
   };
 
   return (

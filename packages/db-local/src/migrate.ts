@@ -382,6 +382,58 @@ CREATE TABLE IF NOT EXISTS abyss_items (
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_status_idx ON abyss_items (user_id, status);
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_last_touched_at_idx ON abyss_items (user_id, last_touched_at);
 
+CREATE TABLE IF NOT EXISTS user_values (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  source TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS user_values_user_id_updated_at_idx ON user_values (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS about_me_sections (
+  user_id TEXT NOT NULL,
+  section TEXT NOT NULL,
+  body TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, section)
+);
+
+CREATE TABLE IF NOT EXISTS user_constraints (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  label TEXT NOT NULL,
+  schedule TEXT,
+  severity TEXT NOT NULL,
+  author TEXT NOT NULL DEFAULT 'user',
+  source_text TEXT,
+  learned_at INTEGER,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS user_constraints_user_id_updated_at_idx ON user_constraints (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS about_me_suggestions (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  target_section TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  source_text TEXT,
+  learned_at INTEGER,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS about_me_suggestions_user_target_status_idx
+  ON about_me_suggestions (user_id, target_section, status);
+CREATE INDEX IF NOT EXISTS about_me_suggestions_user_id_updated_at_idx
+  ON about_me_suggestions (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS care_activities (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

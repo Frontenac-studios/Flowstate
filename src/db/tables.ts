@@ -1,5 +1,9 @@
 import * as sqliteSchema from "@kash/db-local/schema";
+import { aboutMeSections as pgAboutMeSections } from "./schema/about-me-sections";
+import { aboutMeSuggestions as pgAboutMeSuggestions } from "./schema/about-me-suggestions";
 import { abyssItems as pgAbyssItems } from "./schema/abyss-items";
+import { userConstraints as pgUserConstraints } from "./schema/user-constraints";
+import { userValues as pgUserValues } from "./schema/user-values";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
 import { careActivities as pgCareActivities } from "./schema/care-activities";
@@ -103,6 +107,18 @@ export const reservedDays = (
 export const planningSuggestions = (
   isSqliteMode() ? sqliteSchema.planningSuggestions : pgPlanningSuggestions
 ) as typeof pgPlanningSuggestions;
+export const userValues = (
+  isSqliteMode() ? sqliteSchema.userValues : pgUserValues
+) as typeof pgUserValues;
+export const aboutMeSections = (
+  isSqliteMode() ? sqliteSchema.aboutMeSections : pgAboutMeSections
+) as typeof pgAboutMeSections;
+export const userConstraints = (
+  isSqliteMode() ? sqliteSchema.userConstraints : pgUserConstraints
+) as typeof pgUserConstraints;
+export const aboutMeSuggestions = (
+  isSqliteMode() ? sqliteSchema.aboutMeSuggestions : pgAboutMeSuggestions
+) as typeof pgAboutMeSuggestions;
 export const careActivities = (
   isSqliteMode() ? sqliteSchema.careActivities : pgCareActivities
 ) as typeof pgCareActivities;
