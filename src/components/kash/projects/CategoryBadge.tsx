@@ -1,4 +1,5 @@
 import { PROJECT_CATEGORY_META, type ProjectCategory } from "@/lib/projects/categories";
+import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
 
 type Props = {
   category: ProjectCategory;
@@ -10,9 +11,13 @@ export default function CategoryBadge({ category, className = "" }: Props) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${className}`}
-      style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
+      style={{ backgroundColor: categoryFillVar(category), color: categoryTextVar(category) }}
     >
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} aria-hidden />
+      <span
+        className="h-2 w-2 rounded-full"
+        style={{ backgroundColor: categorySolidVar(category) }}
+        aria-hidden
+      />
       {meta.label}
     </span>
   );

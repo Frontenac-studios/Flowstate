@@ -1,10 +1,6 @@
 import { parseISODateString, startOfLocalDay } from "@/lib/dates/local-day";
-import {
-  categoryLabel,
-  PROJECT_CATEGORIES,
-  PROJECT_CATEGORY_META,
-  type ProjectCategory,
-} from "@/lib/projects/categories";
+import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { priorityMeta } from "@/lib/tasks/priority";
 
@@ -130,9 +126,7 @@ function groupLabel(prop: LensProperty, key: string, sample?: PlanTaskRow): stri
 function groupColor(prop: LensProperty, key: string): string {
   switch (prop) {
     case "category":
-      return key === LENS_NONE
-        ? NEUTRAL_COLOR
-        : PROJECT_CATEGORY_META[key as ProjectCategory].color;
+      return key === LENS_NONE ? NEUTRAL_COLOR : categorySolidVar(key as ProjectCategory);
     case "priority":
       return PRIORITY_COLOR[key] ?? NEUTRAL_COLOR;
     case "project":

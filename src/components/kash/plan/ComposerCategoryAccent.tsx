@@ -2,7 +2,8 @@
 
 import { type ReactNode } from "react";
 
-import { categoryLabel, PROJECT_CATEGORY_META } from "@/lib/projects/categories";
+import { categoryLabel } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { type ResolvedCategory } from "@/lib/tasks/resolveTaskCategory";
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 // preview (1.4d) shows a neutral marker, never the word Adulting.
 export function ComposerCategoryAccent({ preview, children }: Props) {
   const resolved = preview && !preview.unresolved ? preview.category : null;
-  const color = resolved ? PROJECT_CATEGORY_META[resolved].color : null;
+  const color = resolved ? categorySolidVar(resolved) : null;
 
   return (
     <div
