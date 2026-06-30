@@ -431,7 +431,7 @@ export function DayPlanCanvas() {
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div className="flex flex-col gap-4">
         <section
-          className="border-subtle flex flex-col gap-4 rounded-card border bg-surface px-5 py-4"
+          className="flex flex-col gap-4 rounded-card border border-subtle bg-surface px-5 py-4"
           aria-label="Today summary"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">

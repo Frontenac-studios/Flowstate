@@ -8,7 +8,7 @@ export function CareComingSoon({ tab }: { tab: Exclude<CareTab, "garden"> }) {
   const { title, copy, icon } = CARE_COMING_SOON[tab];
 
   return (
-    <div className="border-subtle flex flex-col items-center gap-3 rounded-card border bg-surface px-6 py-16 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-card border border-subtle bg-surface px-6 py-16 text-center">
       <span className="text-ink-faint" aria-hidden>
         {icon}
       </span>

@@ -6,6 +6,8 @@ import { userConstraints as pgUserConstraints } from "./schema/user-constraints"
 import { userValues as pgUserValues } from "./schema/user-values";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
+import { careActivities as pgCareActivities } from "./schema/care-activities";
+import { careEvents as pgCareEvents } from "./schema/care-events";
 import { goalMilestones as pgGoalMilestones } from "./schema/goal-milestones";
 import { goals as pgGoals } from "./schema/goals";
 import { monthIntentions as pgMonthIntentions } from "./schema/month-intentions";
@@ -117,3 +119,9 @@ export const userConstraints = (
 export const aboutMeSuggestions = (
   isSqliteMode() ? sqliteSchema.aboutMeSuggestions : pgAboutMeSuggestions
 ) as typeof pgAboutMeSuggestions;
+export const careActivities = (
+  isSqliteMode() ? sqliteSchema.careActivities : pgCareActivities
+) as typeof pgCareActivities;
+export const careEvents = (
+  isSqliteMode() ? sqliteSchema.careEvents : pgCareEvents
+) as typeof pgCareEvents;

@@ -25,7 +25,7 @@ export function WeekLaterBacklog({ tasks, onComplete, onDelete }: Props) {
 
   return (
     <section
-      className="border-subtle mt-3 rounded-card border bg-surface"
+      className="mt-3 rounded-card border border-subtle bg-surface"
       aria-label="Later backlog"
     >
       <button

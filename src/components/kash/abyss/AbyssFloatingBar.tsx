@@ -127,7 +127,7 @@ export default function AbyssFloatingBar(props: Props) {
       </button>
 
       <div
-        className="rounded-pill flex items-center gap-0.5 border border-abyss-border bg-abyss-surface p-0.5"
+        className="flex items-center gap-0.5 rounded-pill border border-abyss-border bg-abyss-surface p-0.5"
         role="group"
         aria-label="View"
       >

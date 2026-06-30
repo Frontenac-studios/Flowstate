@@ -3,6 +3,7 @@ import { z } from "zod";
 import { baseProcedure, createTRPCRouter } from "../init";
 import { aboutMeRouter } from "./about-me";
 import { abyssRouter } from "./abyss";
+import { careRouter } from "./care";
 import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
 import { dayReviewsRouter } from "./day-reviews";
@@ -28,6 +29,7 @@ export const appRouter = createTRPCRouter({
   }),
   aboutMe: aboutMeRouter,
   abyss: abyssRouter,
+  care: careRouter,
   categorySettings: categorySettingsRouter,
   chat: chatRouter,
   dayReviews: dayReviewsRouter,

@@ -38,7 +38,7 @@ export default function ProtectedWeekBar({ anchorDate }: Props) {
   if (templates.length === 0 && proposedCount === 0) return null;
 
   return (
-    <div className="border-subtle mt-4 flex flex-wrap items-center gap-2 rounded-card border bg-surface px-3 py-2 text-sm">
+    <div className="mt-4 flex flex-wrap items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2 text-sm">
       <span className="text-ink-muted">Protected time</span>
       {templates.length > 0 ? (
         <Button
