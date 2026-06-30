@@ -48,7 +48,7 @@ export function CompletedSection({ completions }: Props) {
         onClick={() => setCollapsed((v) => !v)}
       >
         <svg
-          className={`h-3.5 w-3.5 text-ink-faint transition-transform duration-150 motion-reduce:transition-none ${
+          className={`h-3.5 w-3.5 text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
             showBody ? "rotate-90" : ""
           }`}
           viewBox="0 0 12 12"

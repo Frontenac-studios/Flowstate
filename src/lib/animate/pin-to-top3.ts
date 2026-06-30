@@ -1,16 +1,16 @@
+import {
+  MOTION_TOKEN,
+  motionTransition,
+  prefersReducedMotion,
+  readMotionDurationMs,
+} from "./motion-tokens";
+
 type PinFlightOptions = {
   sourceEl: HTMLElement;
   top3SectionEl: HTMLElement;
   title: string;
   onComplete: () => void;
 };
-
-const DURATION_MS = 350;
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 function resolveTargetRect(top3SectionEl: HTMLElement): DOMRect {
   const hintEl = top3SectionEl.querySelector("[data-top3-hint]");
@@ -45,6 +45,7 @@ export function animatePinToTop3({
     return;
   }
 
+  const durationMs = readMotionDurationMs(MOTION_TOKEN.medium);
   const sourceRect = sourceEl.getBoundingClientRect();
   const targetRect = resolveTargetRect(top3SectionEl);
 
@@ -56,7 +57,7 @@ export function animatePinToTop3({
   ghost.style.left = `${sourceRect.left}px`;
   ghost.style.width = `${sourceRect.width}px`;
   ghost.style.height = `${sourceRect.height}px`;
-  ghost.style.transition = `top ${DURATION_MS}ms ease-out, left ${DURATION_MS}ms ease-out, width ${DURATION_MS}ms ease-out, height ${DURATION_MS}ms ease-out, opacity ${DURATION_MS}ms ease-out`;
+  ghost.style.transition = motionTransition(["top", "left", "width", "height", "opacity"]);
 
   const star = document.createElement("span");
   star.className = "shrink-0 text-accent";
@@ -83,5 +84,5 @@ export function animatePinToTop3({
   };
 
   ghost.addEventListener("transitionend", cleanup, { once: true });
-  setTimeout(cleanup, DURATION_MS + 50);
+  setTimeout(cleanup, durationMs + 50);
 }

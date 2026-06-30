@@ -100,6 +100,17 @@ const config: Config = {
         "kash-task-y": "var(--kash-task-row-py)",
         "kash-task-y-compact": "var(--kash-task-row-py-compact)",
       },
+      transitionDuration: {
+        micro: "var(--motion-micro)",
+        short: "var(--motion-short)",
+        medium: "var(--motion-medium)",
+        long: "var(--motion-long)",
+      },
+      transitionTimingFunction: {
+        enter: "var(--ease-enter)",
+        move: "var(--ease-move)",
+        exit: "var(--ease-exit)",
+      },
     },
   },
   plugins: [],
