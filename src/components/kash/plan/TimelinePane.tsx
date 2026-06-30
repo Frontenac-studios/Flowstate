@@ -4,10 +4,15 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
+import {
+  computeTimelineRange,
+  defaultViewportTopMin,
+  TIMELINE_VIEWPORT_MINUTES,
+} from "@/lib/timeline/adaptive-window";
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
 import { useTRPC } from "@/trpc/client";
 
@@ -15,6 +20,8 @@ import ProtectedBlockChip from "@/components/kash/plan/week/ProtectedBlockChip";
 
 const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
+/** Height of the visible scroll window — the six-hour default viewport. */
+const VIEWPORT_HEIGHT = (TIMELINE_VIEWPORT_MINUTES / 60) * HOUR_HEIGHT;
 
 type Block = {
   id: string;
@@ -239,20 +246,74 @@ export function TimelinePane() {
   }, []);
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
-  const startHour = settings?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
-  const endHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
-  const rangeStart = startHour * 60;
-  const rangeEnd = endHour * 60;
+  const dayStartHour = settings?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
+  const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
+
+  const { data: blocks = [] } = useQuery(trpc.focusBlocks.listForDate.queryOptions({ date }));
+  const { data: protectedBlocks = [] } = useQuery(
+    trpc.protectedBlocks.listForDate.queryOptions({ date })
+  );
+
+  const nowMinutes = now ? now.getHours() * 60 + now.getMinutes() : null;
+
+  // The rendered day grows to cover working hours, every block, and now; the
+  // viewport defaults to six hours around now but the rest scrolls into view.
+  const range = computeTimelineRange({
+    dayStartMin: dayStartHour * 60,
+    dayEndMin: dayEndHour * 60,
+    blocks: blocks as Block[],
+    nowMin: nowMinutes,
+  });
+  const rangeStart = range.startMin;
+  const rangeEnd = range.endMin;
+  const startHour = Math.floor(rangeStart / 60);
+  const endHour = Math.ceil(rangeEnd / 60);
   const hours = Array.from({ length: Math.max(1, endHour - startHour) }, (_, i) => startHour + i);
   const slots = Array.from(
     { length: Math.max(0, (rangeEnd - rangeStart) / SLOT_MINUTES) },
     (_, i) => rangeStart + i * SLOT_MINUTES
   );
 
-  const { data: blocks = [] } = useQuery(trpc.focusBlocks.listForDate.queryOptions({ date }));
-  const { data: protectedBlocks = [] } = useQuery(
-    trpc.protectedBlocks.listForDate.queryOptions({ date })
-  );
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const userScrolledRef = useRef(false);
+  const programmaticRef = useRef(false);
+  const [nowOffscreen, setNowOffscreen] = useState(false);
+
+  const nowTopPx = nowMinutes != null ? ((nowMinutes - rangeStart) / 60) * HOUR_HEIGHT : null;
+
+  const scrollToNow = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || nowMinutes == null) return;
+    const targetMin = defaultViewportTopMin({ startMin: rangeStart, endMin: rangeEnd }, nowMinutes);
+    const top = ((targetMin - rangeStart) / 60) * HOUR_HEIGHT;
+    if (Math.abs(el.scrollTop - top) > 1) {
+      programmaticRef.current = true;
+      el.scrollTop = top;
+    }
+    setNowOffscreen(false);
+  }, [nowMinutes, rangeStart, rangeEnd]);
+
+  // Park the viewport on "now" when the day opens, and keep it there until the
+  // user scrolls for themselves.
+  useEffect(() => {
+    if (!userScrolledRef.current) scrollToNow();
+  }, [scrollToNow]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (programmaticRef.current) {
+      programmaticRef.current = false;
+    } else {
+      userScrolledRef.current = true;
+    }
+    if (nowTopPx == null) {
+      setNowOffscreen(false);
+      return;
+    }
+    const visible = nowTopPx >= el.scrollTop && nowTopPx <= el.scrollTop + el.clientHeight;
+    setNowOffscreen(!visible);
+  }, [nowTopPx]);
 
   const allDayProtected = protectedBlocks.filter((b) => b.startMin == null);
 
@@ -283,7 +344,6 @@ export function TimelinePane() {
     (b) => b.endMin > rangeStart && b.startMin < rangeEnd
   );
 
-  const nowMinutes = now ? now.getHours() * 60 + now.getMinutes() : null;
   const showNowLine = nowMinutes != null && nowMinutes >= rangeStart && nowMinutes <= rangeEnd;
 
   const openFocus = (taskId: string, blockId: string) => {
@@ -320,48 +380,73 @@ export function TimelinePane() {
         </ul>
       ) : null}
 
-      <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
-        {hours.map((hour, i) => (
-          <div
-            key={hour}
-            className="absolute inset-x-0 flex items-start"
-            style={{ top: i * HOUR_HEIGHT, height: HOUR_HEIGHT }}
-          >
-            <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] tabular-nums text-ink-muted">
-              {formatHour(hour)}
-            </span>
-            <div className="ml-2 flex-1 border-t border-dashed border-[var(--border)]" />
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="relative overflow-y-auto overflow-x-hidden"
+          style={{ height: VIEWPORT_HEIGHT }}
+        >
+          <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
+            {hours.map((hour, i) => (
+              <div
+                key={hour}
+                className="absolute inset-x-0 flex items-start"
+                style={{ top: i * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+              >
+                <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] tabular-nums text-ink-muted">
+                  {formatHour(hour)}
+                </span>
+                <div className="ml-2 flex-1 border-t border-dashed border-[var(--border)]" />
+              </div>
+            ))}
+
+            {slots.map((min) => (
+              <TimelineSlot key={min} min={min} top={((min - rangeStart) / 60) * HOUR_HEIGHT} />
+            ))}
+
+            {laidOut.map((block) => (
+              <TimelineBlock
+                key={block.id}
+                block={block}
+                rangeStart={rangeStart}
+                rangeEnd={rangeEnd}
+                onResize={(id, startMin, endMin) => resizeMutation.mutate({ id, startMin, endMin })}
+                onRemove={(id) => removeMutation.mutate({ id })}
+                onComplete={(id) => completeMutation.mutate({ id })}
+                onOpen={openFocus}
+              />
+            ))}
+
+            {showNowLine ? (
+              <div
+                className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
+                style={{ top: ((nowMinutes! - rangeStart) / 60) * HOUR_HEIGHT }}
+                aria-hidden
+              >
+                <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] font-medium text-accent">
+                  now
+                </span>
+                <div className="ml-2 flex-1 border-t border-accent" />
+                <span className="ml-1 shrink-0 -translate-y-2 text-[10px] font-medium tabular-nums text-accent">
+                  {formatClock(nowMinutes!)}
+                </span>
+              </div>
+            ) : null}
           </div>
-        ))}
+        </div>
 
-        {slots.map((min) => (
-          <TimelineSlot key={min} min={min} top={((min - rangeStart) / 60) * HOUR_HEIGHT} />
-        ))}
-
-        {laidOut.map((block) => (
-          <TimelineBlock
-            key={block.id}
-            block={block}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-            onResize={(id, startMin, endMin) => resizeMutation.mutate({ id, startMin, endMin })}
-            onRemove={(id) => removeMutation.mutate({ id })}
-            onComplete={(id) => completeMutation.mutate({ id })}
-            onOpen={openFocus}
-          />
-        ))}
-
-        {showNowLine ? (
-          <div
-            className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
-            style={{ top: ((nowMinutes! - rangeStart) / 60) * HOUR_HEIGHT }}
-            aria-hidden
+        {nowOffscreen ? (
+          <button
+            type="button"
+            onClick={scrollToNow}
+            className="absolute bottom-2 right-2 z-20 rounded-pill border bg-surface px-2 py-0.5 text-[11px] font-medium text-accent shadow-sm"
           >
-            <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] font-medium text-accent">
-              now
-            </span>
-            <div className="ml-2 flex-1 border-t border-accent" />
-          </div>
+            {nowTopPx != null && scrollRef.current && nowTopPx < scrollRef.current.scrollTop
+              ? "↑"
+              : "↓"}{" "}
+            jump to now
+          </button>
         ) : null}
       </div>
 
