@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -74,6 +74,10 @@ type Props = {
 const ACTION_WIDTH_PX = 72;
 const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
 
+// AN-T1: hold the completed row on screen long enough for the slide-out to read
+// before the plan refetch unmounts it. Matches the row's transition duration.
+const COMPLETION_SLIDE_MS = 320;
+
 export function TaskRow({
   task,
   selected = false,
@@ -92,7 +96,12 @@ export function TaskRow({
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editError, setEditError] = useState<string | null>(null);
+  // AN-T1: drives the completion choreography — category-color checkbox, struck
+  // title, slide-out — set optimistically on check so it plays before the
+  // server round-trip resolves.
+  const [completing, setCompleting] = useState(false);
   const rowContentRef = useRef<HTMLDivElement>(null);
+  const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pinEnabled = canPin && !task.isTop3 && onPin != null;
 
   // Clean by default; indicators reveal per active lens (VF-2). The surrounding
@@ -129,7 +138,23 @@ export function TaskRow({
   const invalidatePlan = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listRecentlyCompleted.queryKey() });
   };
+
+  // Let the slide-out finish before the refetch unmounts the row (AN-T1); the
+  // server completion has already landed, this only paces the visual handoff
+  // into the Completed section.
+  const invalidatePlanAfterSlide = () => {
+    if (invalidateTimerRef.current) clearTimeout(invalidateTimerRef.current);
+    invalidateTimerRef.current = setTimeout(invalidatePlan, COMPLETION_SLIDE_MS);
+  };
+
+  useEffect(
+    () => () => {
+      if (invalidateTimerRef.current) clearTimeout(invalidateTimerRef.current);
+    },
+    []
+  );
 
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useDraggable({
@@ -145,8 +170,9 @@ export function TaskRow({
     trpc.tasks.complete.mutationOptions({
       onSuccess: (data) => {
         onComplete(data.task.id, data.previousCompletedAt);
-        invalidatePlan();
+        invalidatePlanAfterSlide();
       },
+      onError: () => setCompleting(false),
     })
   );
 
@@ -154,8 +180,9 @@ export function TaskRow({
     trpc.recurrence.completeOccurrence.mutationOptions({
       onSuccess: () => {
         onComplete(task.id, null);
-        invalidatePlan();
+        invalidatePlanAfterSlide();
       },
+      onError: () => setCompleting(false),
     })
   );
 
@@ -219,6 +246,8 @@ export function TaskRow({
   };
 
   const handleComplete = () => {
+    // Start the choreography immediately; the mutations roll it back on error.
+    setCompleting(true);
     if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
       completeOccurrenceMutation.mutate({
         recurrenceId: task.recurrenceId,
@@ -249,9 +278,13 @@ export function TaskRow({
     <li
       ref={setNodeRef}
       className={`relative overflow-hidden rounded-[var(--radius-card)] ${
-        isDragging ? "opacity-60" : ""
-      } ${isDragging ? "" : "transition-transform"}`}
-      style={{ transform: CSS.Transform.toString(transform) }}
+        completing
+          ? "translate-x-6 opacity-0 transition-[transform,opacity] duration-300 ease-out motion-reduce:translate-x-0"
+          : isDragging
+            ? "opacity-60"
+            : "transition-transform"
+      }`}
+      style={{ transform: completing ? undefined : CSS.Transform.toString(transform) }}
     >
       <div ref={containerRef} className="relative">
         {pinEnabled ? (
@@ -331,8 +364,15 @@ export function TaskRow({
 
           <input
             type="checkbox"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 accent-accent"
+            className={`mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 ${
+              completing ? "" : "accent-accent"
+            }`}
+            // AN-T1: the completed checkbox fills with the task's category colour
+            // (white check), not the all-ink accent — so the row reads its life
+            // area as it leaves.
+            style={completing ? { accentColor: stripeColor } : undefined}
             aria-label={`Complete ${task.title}`}
+            checked={completing}
             disabled={isCompleting}
             onClick={(e) => e.stopPropagation()}
             onChange={handleComplete}
@@ -367,7 +407,11 @@ export function TaskRow({
                 ) : null}
               </>
             ) : (
-              <span className={`block break-words text-ink ${isOverdue ? "font-medium" : ""}`}>
+              <span
+                className={`block break-words ${
+                  completing ? "text-ink-faint line-through" : "text-ink"
+                } ${isOverdue ? "font-medium" : ""}`}
+              >
                 {task.title}
               </span>
             )}

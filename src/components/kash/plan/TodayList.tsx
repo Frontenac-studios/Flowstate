@@ -4,12 +4,14 @@ import { useDroppable } from "@dnd-kit/core";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
+import { CompletedSection, type CompletedTaskRow } from "./CompletedSection";
 import type { PlanTaskRow } from "./TaskRow";
 import { TaskRow } from "./TaskRow";
 
 type Props = {
   pulse: boolean;
   tasks: PlanTaskRow[];
+  completions: CompletedTaskRow[];
   isLoading: boolean;
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
@@ -22,6 +24,7 @@ type Props = {
 export function TodayList({
   pulse,
   tasks,
+  completions,
   isLoading,
   selectedTaskId,
   onSelectTask,
@@ -79,6 +82,8 @@ export function TodayList({
           ))}
         </ul>
       )}
+
+      <CompletedSection completions={completions} />
     </section>
   );
 }

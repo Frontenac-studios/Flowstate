@@ -24,6 +24,7 @@ import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { resolvePulseTarget, type TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
 import type { BucketMode } from "@/lib/settings/constants";
+import { selectCompletionsToday } from "@/lib/today/select-completions-today";
 import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
@@ -98,12 +99,16 @@ export function DayPlanCanvas() {
     void queryClient.invalidateQueries({
       queryKey: trpc.tasks.listTop3Slots.queryKey(top3QueryInput),
     });
+    void queryClient.invalidateQueries({
+      queryKey: trpc.tasks.listRecentlyCompleted.queryKey(),
+    });
   }, [
     queryClient,
     top3QueryInput,
     trpc.tasks.listIncomplete,
     trpc.tasks.listTriageCandidates,
     trpc.tasks.listTop3Slots,
+    trpc.tasks.listRecentlyCompleted,
   ]);
 
   const triggerPulse = useCallback(
@@ -155,6 +160,23 @@ export function DayPlanCanvas() {
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
   const { data: top3Slots = [] } = useQuery(trpc.tasks.listTop3Slots.queryOptions(top3QueryInput));
+  const { data: recentlyCompleted = [] } = useQuery(
+    trpc.tasks.listRecentlyCompleted.queryOptions()
+  );
+
+  // AN-T1b: the day's completed rows that settle into the persistent "Completed"
+  // tail. Keyed on the local day so the list empties at the midnight rollover.
+  const completedToday = useMemo(
+    () =>
+      selectCompletionsToday(recentlyCompleted, localDate, tzOffsetMinutes).map((t) => ({
+        id: t.id,
+        title: t.title,
+        completedAt: t.completedAt,
+        category: t.category,
+        categoryUnresolved: t.categoryUnresolved,
+      })),
+    [recentlyCompleted, localDate, tzOffsetMinutes]
+  );
 
   const triageIds = useMemo(() => new Set(triageTasks.map((t) => t.id)), [triageTasks]);
 
@@ -483,6 +505,7 @@ export function DayPlanCanvas() {
                 <TodayList
                   pulse={pulseTarget === "today"}
                   tasks={todayTasks.map(toRow)}
+                  completions={completedToday}
                   isLoading={isLoading}
                   selectedTaskId={selectedTaskId}
                   onSelectTask={setSelectedTaskId}
