@@ -9,6 +9,7 @@ import { useTRPC } from "@/trpc/client";
 
 import ConstraintForm, { type ConstraintDraft } from "./ConstraintForm";
 import ConstraintRow from "./ConstraintRow";
+import SectionSuggestions from "./SectionSuggestions";
 
 function parseScheduleForDraft(raw: unknown): ConstraintDraft["schedule"] {
   if (raw == null) return null;
@@ -102,6 +103,8 @@ export default function ConstraintsSection() {
           );
         })}
       </div>
+
+      <SectionSuggestions section="constraints" />
     </section>
   );
 }

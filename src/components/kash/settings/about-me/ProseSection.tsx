@@ -7,6 +7,8 @@ import Textarea from "@/components/kash/ui/Textarea";
 import { SECTION_BODY_MAX } from "@/lib/about-me/constants";
 import { useTRPC } from "@/trpc/client";
 
+import SectionSuggestions from "./SectionSuggestions";
+
 type ProseSectionId = "work" | "life";
 
 const SAVE_DEBOUNCE_MS = 800;
@@ -89,6 +91,7 @@ export default function ProseSection({
         aria-label={`${title} — about you`}
         className="min-h-24 w-full text-body leading-relaxed"
       />
+      <SectionSuggestions section={section} />
     </section>
   );
 }

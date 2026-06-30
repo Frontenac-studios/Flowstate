@@ -9,6 +9,8 @@ import { CURATED_VALUES, VALUE_LABEL_MAX, VALUES_MAX, VALUES_MIN } from "@/lib/a
 import { normalizeValueLabel } from "@/lib/about-me/values";
 import { useTRPC } from "@/trpc/client";
 
+import SectionSuggestions from "./SectionSuggestions";
+
 export default function ValuesSection() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -155,6 +157,8 @@ export default function ValuesSection() {
       </div>
 
       {isLoading ? <p className="mt-2 text-meta text-ink-faint">Loading…</p> : null}
+
+      <SectionSuggestions section="values" />
     </section>
   );
 }
