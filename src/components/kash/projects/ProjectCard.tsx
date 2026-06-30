@@ -20,7 +20,7 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="border-subtle block rounded-card border bg-surface p-4 transition hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       <div className="flex items-center gap-2">
         <span

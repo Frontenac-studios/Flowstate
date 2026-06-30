@@ -95,7 +95,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
               key={tag}
               type="button"
               onClick={() => remove(tag)}
-              className="rounded-pill flex items-center gap-1 bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink transition-colors hover:text-abyss-ink-muted"
+              className="flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink transition-colors hover:text-abyss-ink-muted"
               aria-label={`Remove tag ${tag}`}
             >
               <HashIcon size={10} className="text-abyss-ink-faint" />
@@ -157,7 +157,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
                 key={tag}
                 type="button"
                 onClick={() => add(tag)}
-                className="rounded-pill flex items-center gap-1 border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink"
+                className="flex items-center gap-1 rounded-pill border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink"
               >
                 <PlusIcon size={10} />
                 {tag}

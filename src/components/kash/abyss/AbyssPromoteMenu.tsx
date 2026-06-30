@@ -112,7 +112,7 @@ export default function AbyssPromoteMenu({ item, onClose }: Props) {
                 role="menuitem"
                 onClick={() => promote.mutate({ id: item.id, target: pendingTarget, category })}
                 disabled={promote.isPending}
-                className="rounded-pill flex items-center gap-1.5 border border-abyss-border px-2 py-1 text-caption text-abyss-ink transition-colors hover:bg-abyss-surface-2 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-pill border border-abyss-border px-2 py-1 text-caption text-abyss-ink transition-colors hover:bg-abyss-surface-2 disabled:opacity-50"
               >
                 <span
                   className="h-2 w-2 rounded-full"

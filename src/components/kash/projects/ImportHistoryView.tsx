@@ -105,7 +105,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
       {importsQuery.isLoading ? (
         <p className="text-body text-ink-muted">Loading…</p>
       ) : imports.length === 0 ? (
-        <div className="border-subtle rounded-card border bg-surface px-6 py-12 text-center">
+        <div className="rounded-card border border-subtle bg-surface px-6 py-12 text-center">
           <p className="font-medium text-ink">No bulk imports yet</p>
           <p className="mt-1 text-meta text-ink-muted">
             Paste multiple lines in a column and press ⌘↵ to create an import.
@@ -118,7 +118,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
             return (
               <li
                 key={row.id}
-                className="border-subtle flex items-center justify-between gap-3 rounded-row border bg-surface px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-row border border-subtle bg-surface px-4 py-3"
               >
                 <div className="min-w-0">
                   <p className="font-medium text-ink">
@@ -167,7 +167,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
           {undoTasksQuery.isLoading ? (
             <p className="mt-3 text-body text-ink-muted">Loading tasks…</p>
           ) : (
-            <ul className="border-subtle mt-3 max-h-48 space-y-1 overflow-y-auto rounded-row border px-3 py-2">
+            <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-row border border-subtle px-3 py-2">
               {(undoTasksQuery.data ?? []).map((task) => (
                 <li key={task.id} className="truncate text-body text-ink">
                   {task.title}

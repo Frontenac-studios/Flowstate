@@ -21,7 +21,7 @@ export function CareGardenHome() {
         <GardenScene />
 
         <div className="flex flex-col gap-3">
-          <section className="border-subtle rounded-card border bg-surface p-3">
+          <section className="rounded-card border border-subtle bg-surface p-3">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">Today&apos;s wins</h2>
             <ul className="flex flex-col gap-0.5">
               {WINS.map((win) => (
@@ -44,7 +44,7 @@ export function CareGardenHome() {
             </ul>
           </section>
 
-          <section className="border-subtle rounded-card border bg-surface p-3">
+          <section className="rounded-card border border-subtle bg-surface p-3">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">What lifts me</h2>
             <div className="flex flex-wrap gap-1.5">
               {LIFTS.map((lift) => (
@@ -58,7 +58,7 @@ export function CareGardenHome() {
             </div>
           </section>
 
-          <section className="border-subtle rounded-card border bg-surface-2 p-3">
+          <section className="rounded-card border border-subtle bg-surface-2 p-3">
             <h2 className="mb-1.5 text-caption font-medium text-ink-muted">A gentle prompt</h2>
             <p className="mb-2.5 text-body leading-snug text-ink">
               You&apos;ve been heads-down a while. Want to take five slow breaths?

@@ -35,7 +35,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-subtle flex flex-col gap-3 rounded-card border bg-surface p-4"
+      className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4"
     >
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bingo-goal-title" className="text-caption font-medium text-ink">
@@ -43,7 +43,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
         </label>
         <input
           id="bingo-goal-title"
-          className="border-subtle rounded-control border bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Run a half marathon"

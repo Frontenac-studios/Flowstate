@@ -65,7 +65,7 @@ export default function AbyssComposer() {
       type="button"
       onClick={() => setType(value)}
       aria-pressed={type === value}
-      className={`rounded-pill flex items-center gap-1.5 px-2.5 py-1 text-meta transition-colors ${
+      className={`flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-meta transition-colors ${
         type === value
           ? "bg-abyss-accent text-abyss-on-accent"
           : "text-abyss-ink-muted hover:text-abyss-ink"
@@ -101,7 +101,7 @@ export default function AbyssComposer() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-abyss-border pt-2">
-        <div className="rounded-pill flex items-center gap-1 bg-abyss-surface-2 p-0.5">
+        <div className="flex items-center gap-1 rounded-pill bg-abyss-surface-2 p-0.5">
           <TypeToggle value="idea" label="Idea" icon={<IdeaIcon size={13} />} />
           <TypeToggle value="task" label="Task" icon={<TaskIcon size={13} />} />
         </div>
@@ -127,7 +127,7 @@ export default function AbyssComposer() {
               type="button"
               onClick={() => setCategory(cat)}
               aria-pressed={category === cat}
-              className={`rounded-pill flex items-center gap-1.5 px-2 py-0.5 text-caption transition-colors ${
+              className={`flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-caption transition-colors ${
                 category === cat
                   ? "bg-abyss-surface-2 text-abyss-ink"
                   : "text-abyss-ink-faint hover:text-abyss-ink-muted"
@@ -152,7 +152,7 @@ export default function AbyssComposer() {
               type="button"
               onClick={() => setTags((current) => current.filter((t) => t !== tag))}
               aria-label={`Remove tag ${tag}`}
-              className="rounded-pill flex items-center gap-1 bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink"
+              className="flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink"
             >
               <HashIcon size={10} className="text-abyss-ink-faint" />
               {tag}
@@ -167,7 +167,7 @@ export default function AbyssComposer() {
                   key={tag}
                   type="button"
                   onClick={() => setTags((current) => [...current, tag])}
-                  className="rounded-pill flex items-center gap-1 border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink"
+                  className="flex items-center gap-1 rounded-pill border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink"
                 >
                   <PlusIcon size={10} />
                   {tag}

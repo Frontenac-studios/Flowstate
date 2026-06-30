@@ -29,7 +29,7 @@ export default function BingoCellTile({
   if (cell.kind === "free") {
     return (
       <div
-        className={`border-subtle flex aspect-square flex-col items-center justify-center rounded-card border bg-surface-2 text-ink-faint ${ring}`}
+        className={`flex aspect-square flex-col items-center justify-center rounded-card border border-subtle bg-surface-2 text-ink-faint ${ring}`}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
           <path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9l6.9-.7z" />
@@ -43,7 +43,7 @@ export default function BingoCellTile({
     if (locked) {
       return (
         <div
-          className={`border-subtle aspect-square rounded-card border border-dashed bg-surface ${ring}`}
+          className={`aspect-square rounded-card border border-dashed border-subtle bg-surface ${ring}`}
           aria-hidden
         />
       );
@@ -52,7 +52,7 @@ export default function BingoCellTile({
       <button
         type="button"
         onClick={() => onAdd(cell.cellIndex)}
-        className={`border-subtle group flex aspect-square flex-col items-center justify-center rounded-card border border-dashed bg-surface text-ink-faint transition hover:border-ink-muted hover:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${ring}`}
+        className={`group flex aspect-square flex-col items-center justify-center rounded-card border border-dashed border-subtle bg-surface text-ink-faint transition hover:border-ink-muted hover:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${ring}`}
         aria-label="Add a goal to this square"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" aria-hidden>

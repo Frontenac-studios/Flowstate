@@ -81,7 +81,7 @@ export default function MillerColumn({
                 {expanded ? (
                   <li
                     data-miller-detail
-                    className="border-subtle mb-1 rounded-row border bg-surface-2 p-3"
+                    className="mb-1 rounded-row border border-subtle bg-surface-2 p-3"
                   >
                     {renderDetail(item)}
                   </li>
@@ -103,7 +103,7 @@ export default function MillerColumn({
               {expanded ? (
                 <li
                   data-miller-detail
-                  className="border-subtle mb-1 rounded-row border bg-surface-2 p-3"
+                  className="mb-1 rounded-row border border-subtle bg-surface-2 p-3"
                 >
                   {renderDetail(item)}
                 </li>
