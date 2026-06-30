@@ -19,7 +19,3 @@ export const PROJECT_CATEGORY_META: Record<ProjectCategory, { label: string; col
 export function categoryLabel(category: ProjectCategory): string {
   return PROJECT_CATEGORY_META[category].label;
 }
-
-export function categoryColor(category: ProjectCategory): string {
-  return PROJECT_CATEGORY_META[category].color;
-}

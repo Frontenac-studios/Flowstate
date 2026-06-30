@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
-import { categoryColor, type ProjectCategory } from "@/lib/projects/categories";
+import { type ProjectCategory } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { MAX_CATEGORY_LABEL_LENGTH } from "@/lib/projects/category-settings";
 import { useTRPC } from "@/trpc/client";
 
@@ -66,7 +67,7 @@ export default function CategorySettingsSection() {
             <span
               aria-hidden
               className="h-4 w-4 shrink-0 rounded-full"
-              style={{ backgroundColor: categoryColor(cat.category) }}
+              style={{ backgroundColor: categorySolidVar(cat.category) }}
             />
             <Input
               className="flex-1"

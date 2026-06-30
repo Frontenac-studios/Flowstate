@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
-import { PROJECT_CATEGORY_META } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { useTRPC } from "@/trpc/client";
 
@@ -116,7 +116,7 @@ export function InboxPanel({ active }: { active: boolean }) {
       {tasks.map((task, index) => {
         const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
         const stripeColor = resolvedCategory
-          ? PROJECT_CATEGORY_META[resolvedCategory].color
+          ? categorySolidVar(resolvedCategory)
           : NEUTRAL_CATEGORY_STRIPE;
         return (
           <li
