@@ -234,6 +234,32 @@ export const careRouter = createTRPCRouter({
       return row;
     }),
 
+  // Undo today's check-off — remove the care_events this activity logged today
+  // (the toggle-off half of the row checkbox). No-op if nothing was logged today.
+  unlogEvent: protectedProcedure
+    .input(z.object({ activityId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedActivity(ctx.userId, input.activityId);
+      const dayStart = startOfLocalDay();
+
+      const deleted = await db
+        .delete(careEvents)
+        .where(
+          and(
+            eq(careEvents.userId, ctx.userId),
+            eq(careEvents.activityId, input.activityId),
+            gte(careEvents.occurredAt, dayStart)
+          )
+        )
+        .returning({ id: careEvents.id });
+
+      for (const row of deleted) {
+        await syncCareEventRow(row.id, "delete", { id: row.id });
+      }
+
+      return { deletedCount: deleted.length };
+    }),
+
   // Add to my day — spawn a Body & Mind task linked back via tasks.care_activity_id,
   // plus a recurrence row when the practice carries a cadence. Mirrors the task +
   // recurrence creation path in tasks.create (category forced to body_mind here).

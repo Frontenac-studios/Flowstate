@@ -315,4 +315,62 @@ describe("care persistence (sqlite)", () => {
     expect(todays).toHaveLength(1);
     expect(todays[0]!.activityId).toBe(activity.id);
   });
+
+  it("unlogEvent removes today's check-offs for the activity (toggle-off)", () => {
+    const now = new Date();
+    const activity = db
+      .insert(careActivities)
+      .values({
+        id: randomUUID(),
+        userId,
+        title: "Drink a glass of water",
+        theme: "nourish",
+        source: "custom",
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+      .get();
+
+    // logged twice today + once yesterday (should keep the older one)
+    const yesterday = new Date(now.getTime() - 36 * 60 * 60 * 1000);
+    db.insert(careEvents)
+      .values([
+        { id: randomUUID(), userId, activityId: activity.id, occurredAt: now, createdAt: now },
+        { id: randomUUID(), userId, activityId: activity.id, occurredAt: now, createdAt: now },
+        {
+          id: randomUUID(),
+          userId,
+          activityId: activity.id,
+          occurredAt: yesterday,
+          createdAt: yesterday,
+        },
+      ])
+      .run();
+
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const deleted = db
+      .delete(careEvents)
+      .where(
+        and(
+          eq(careEvents.userId, userId),
+          eq(careEvents.activityId, activity.id),
+          gte(careEvents.occurredAt, dayStart)
+        )
+      )
+      .returning({ id: careEvents.id })
+      .all();
+
+    expect(deleted).toHaveLength(2);
+
+    const remaining = db
+      .select()
+      .from(careEvents)
+      .where(eq(careEvents.activityId, activity.id))
+      .all();
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]!.occurredAt.getTime()).toBe(yesterday.getTime());
+  });
 });

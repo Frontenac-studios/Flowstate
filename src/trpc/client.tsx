@@ -4,6 +4,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
 import superjson from "superjson";
 
@@ -11,6 +12,10 @@ import { makeQueryClient } from "./query-client";
 import type { AppRouter } from "./routers/_app";
 
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
+
+/** Inferred input/output shapes for any procedure — e.g. RouterOutputs["care"]["listActivities"]. */
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 let browserQueryClient: QueryClient;
 

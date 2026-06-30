@@ -6,6 +6,7 @@ import { InPageSwitcher } from "../InPageSwitcher";
 
 import { CareComingSoon } from "./CareComingSoon";
 import { CareGardenHome } from "./CareGardenHome";
+import { CareTasks } from "./CareTasks";
 import { CARE_SUBTITLES, CARE_TABS, type CareTab } from "./care-tabs";
 
 /**
@@ -26,7 +27,13 @@ export function CareView() {
 
       <InPageSwitcher options={CARE_TABS} value={tab} onChange={setTab} ariaLabel="Care section" />
 
-      {tab === "garden" ? <CareGardenHome /> : <CareComingSoon tab={tab} />}
+      {tab === "garden" ? (
+        <CareGardenHome />
+      ) : tab === "tasks" ? (
+        <CareTasks />
+      ) : (
+        <CareComingSoon tab={tab} />
+      )}
     </section>
   );
 }
