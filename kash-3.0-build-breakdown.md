@@ -1,12 +1,12 @@
 # Kash 3.0 — Build Breakdown & Spec-Maturity Tracker
 
-> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jun 25 2026 (P4 recurrence + Week protected blocks).**
+> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jun 27 2026 (Care library slice planned & approved — `care-library-build-plan.md`).**
 
 ---
 
 ## 0. The core distinction
 
-The **product-direction layer** (the hard, irreversible forks) is now **almost entirely decided.** What remains is mostly **building** plus a few **decision pockets** (Care/garden, Mechanics, Animation). Per-feature, the split is:
+The **product-direction layer** (the hard, irreversible forks) is now **almost entirely decided.** What remains is mostly **building** plus a few **decision pockets** (Care **garden art**, Mechanics, Animation). _Care's library slice is now fully decided (D0–D6, Jun 27) — only the garden-art spike remains a Care decision pocket._ Per-feature, the split is:
 
 - **Product decisions** — forks only you can make. Down to a short list now.
 - **Spec detail** — schemas, component props, prompt text. Draftable / drafted.
@@ -23,7 +23,7 @@ The build has moved well past the foundation:
 - **Week protected blocks — data + basic UI built (Jun 25).** `protected_block_templates` + `protected_blocks` (`proposed` | `confirmed`), tRPC CRUD + `proposeFromTemplates` / `confirmProposedForWeek`, Week column chips + add flow, Today all-day chips above timeline (`drizzle/0015_yummy_moondragon.sql`). _Not yet:_ Settings template editor, timed blocks on Today timeline, over-commit load counting, per-column tally on hover/tap, AI week-draft respecting protected blocks.
 - **Task-views / lens engine — built** (VF-1…VF-4c): filter + group application, real phase-ramp color, urgency ramps, inbox minimal lenses, projects priority lens. This is the Today/Week/Projects **visualization** layer.
 - **Navigation shell — in build** (PR #55): overlay rail, chat, command palette, Tauri parity. _(Finalized Jun 25: one "Plan" rail item with a Week↔Month↔Quarter↔Year↔**Bingo** switcher — Bingo is a **Plan sub-view, not its own rail item**. Routes Today→`/today`, Plan→`/plan`. Chat = collapsed, ⌘/ gray "Ask Claude" chip → push panel. Mobile = hamburger drawer. New Lucide icon set; active nav = gray pill.)_
-- **Not yet built (feature UI):** abyss, care/wellbeing/garden, values/about-me. **Planning foundation ✅ (Jun 25)** — schema + `/plan` shell + GhostedAccept + tRPC CRUD; horizon page UIs still placeholder. `/abyss` and `/care` remain shells.
+- **Not yet built (feature UI):** abyss, care/wellbeing/garden, values/about-me. **Planning foundation ✅ (Jun 25)** — schema + `/plan` shell + GhostedAccept + tRPC CRUD; horizon page UIs still placeholder. `/abyss` and `/care` remain shells. **Care library slice ✅ planned & approved (Jun 27)** — `care-library-build-plan.md` (D0–D6): Tasks-tab Finch library, 2 tables + `tasks.care_activity_id`, static seed catalog, cadence pre-fills recurrence; 5 PRs (CL1–CL5) **not yet started**, branch off `main`.
 
 **Implication:** the **data spine is complete**; Week §7 still needs polish (load/tally/review/AI). **Planning foundation is in code** (schema + `/plan` shell); horizon page UIs and cross-feature integration remain. Other net-new surfaces (Abyss, Values, Care, AI persona refactor) are spec'd with placeholder or no UI.
 
@@ -85,7 +85,7 @@ These each have a build spec; hand them to a build session:
 - **§10 The Abyss** (`abyss-build-spec.md`).
 - **§13 Values & Context** — incl. the About-me doc (`values-context.md`).
 - **§11 AI persona** — register refactor + confirm-card tool catalog (`ai-persona-build-spec.md`).
-- **§12 Care / Self-Care** — full Phases 1–8 (`care-build-spec.md`); stats-first, garden last.
+- **§12 Care / Self-Care** — full Phases 1–8 (`care-build-spec.md`); stats-first, garden last. **Library slice has a detailed approved plan** (`care-library-build-plan.md`, D0–D6) — the recommended first Care PR set (CL1–CL5).
 
 ### Visual redesign (Jun 24–25) — DONE, ready to apply
 
@@ -106,12 +106,24 @@ All §4 open questions are now closed (recorded in `plan.md` §4 + applied to th
 - **Rail icons (Lucide):** sun · calendar-days · folder · compass · sparkles · sprout · sliders (replaces emoji glyphs).
 - **Settings:** top tab bar (active = inset-white pill).
 
-### Still needs decisions
+### Decision-wrap — RESOLVED (Jun 27)
 
-- **Minor accent states** — checkbox-checked, Top-3 star, link styling, focus ring (small; finish anytime).
-- **Per-feature spec polish** — Today / Week / Projects still 🟡 in the matrix (UX detail, not product forks).
-- **Animation pass** — page-by-page motion, deliberately last (after build + Design Tokens).
-- **Care garden art** — illustrative spike (detailed garden visuals).
+The last open product/UX forks are now closed:
+
+- **Category colors** — KEPT: the Apple palette as accents on the black-and-white base. No rework (locked).
+- **Minor accent states** — **all-ink / monochrome** (checkbox-checked, Top-3 star, link, focus ring).
+- **AI modes (§11)** — signaled by **icon + a subtle per-mode tint** (planner blue · focus graphite · care green).
+- **About-me auto-draft (§11)** — **start empty; AI continuously proposes** additions (ghosted, §9 pattern); no onboarding draft. _(Values/About-me detail owned by a separate chat.)_
+- **Tags (§14)** — **build in v1** alongside category + project.
+- **Abyss archive threshold (§10)** — **fixed default (~90d) + user override**.
+- **Sync-status panel (D2)** — **both**: a minimal shell-status-bar indicator + full detail in Settings.
+- **Garden art (§12)** — **deferred to its own art spike** (runs near the animation pass).
+
+### Still open — non-product only
+
+- **Animation pass** — page-by-page motion, deliberately last.
+- **Garden-art spike** — detailed garden illustration (deferred above).
+- **Per-feature spec polish** — Today / Week / Projects UX detail (🟡 in the matrix; not product forks).
 
 **Headline:** feature planning, the visual redesign, **and global navigation** are all **complete.** The **data spine (Phases 1–4) is built**; Week protected blocks have data + basic UI. Every remaining feature has a build spec, the B&W palette is locked, all nine pages are wireframed, and the nav layer is fully decided. Remaining work: Week polish (load/tally/review), B&W PR2b, a few accent states, per-feature UX detail, the garden-art spike, and the final Animation pass. The app is fully in a **building** phase.
 
@@ -119,7 +131,7 @@ All §4 open questions are now closed (recorded in `plan.md` §4 + applied to th
 
 ## 4. Recommended order from here
 
-**Build track** (no decisions needed): **B&W PR2b** (outline-primary audit) + finish Design Tokens rollout + Nav polish → **Week §7 polish** (tally-on-demand, over-commit load, EoW review chip, Settings protected-block templates, AI week-draft) → then the spec'd surfaces (Values/About-me → AI persona → Abyss → Planning Mode → Care), each off its build spec. Use `kash-3.0-mockups.html` as the visual reference.
+**Build track** (no decisions needed): **B&W PR2b** (outline-primary audit) + finish Design Tokens rollout + Nav polish → **Week §7 polish** (tally-on-demand, over-commit load, EoW review chip, Settings protected-block templates, AI week-draft) → then the spec'd surfaces (Values/About-me → AI persona → Abyss → Planning Mode → Care), each off its build spec. Use `kash-3.0-mockups.html` as the visual reference. _Care's **library slice (CL1–CL5)** is the most build-ready Care entry point — fully planned in `care-library-build-plan.md`, branch off `main`._
 
 **Decision track** (done bar one): only the **Animation pass** remains — and it's meant to run last, after the surfaces are built and Design Tokens are rolled out.
 
