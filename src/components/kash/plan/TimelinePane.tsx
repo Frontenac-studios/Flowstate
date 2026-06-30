@@ -7,6 +7,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
+import { toISODateString } from "@/lib/dates/local-day";
+import type { ProjectCategory } from "@/lib/projects/categories";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import {
   computeTimelineRange,
@@ -14,6 +17,7 @@ import {
   TIMELINE_VIEWPORT_MINUTES,
 } from "@/lib/timeline/adaptive-window";
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
+import { largestOpenGap, nextOpenSlotMin } from "@/lib/timeline/living-record";
 import { useTRPC } from "@/trpc/client";
 
 import ProtectedBlockChip from "@/components/kash/plan/week/ProtectedBlockChip";
@@ -31,7 +35,22 @@ type Block = {
   endMin: number;
   status: string;
   title: string;
+  category: ProjectCategory | null;
+  categoryUnresolved: boolean;
+  isTop3: boolean;
 };
+
+/** The left-stripe colour for a block/marker: its category, or the accent when unresolved. */
+function stripeColor(category: ProjectCategory | null, unresolved: boolean): string {
+  return category && !unresolved ? categorySolidVar(category) : "var(--accent)";
+}
+
+function formatDuration(min: number): string {
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
 
 function formatHour(hour24: number): string {
   const period = hour24 < 12 ? "a" : "p";
@@ -66,6 +85,7 @@ type BlockProps = {
   block: ReturnType<typeof layoutBlocks<Block>>[number];
   rangeStart: number;
   rangeEnd: number;
+  nowMin: number | null;
   onResize: (id: string, startMin: number, endMin: number) => void;
   onRemove: (id: string) => void;
   onComplete: (id: string) => void;
@@ -76,12 +96,16 @@ function TimelineBlock({
   block,
   rangeStart,
   rangeEnd,
+  nowMin,
   onResize,
   onRemove,
   onComplete,
   onOpen,
 }: BlockProps) {
   const done = block.status === "done";
+  const active = !done && nowMin != null && nowMin >= block.startMin && nowMin < block.endMin;
+  const durationMin = block.endMin - block.startMin;
+  const elapsedMin = active && nowMin != null ? Math.max(0, nowMin - block.startMin) : 0;
   const [preview, setPreview] = useState<{ startMin: number; endMin: number } | null>(null);
   const [resize, setResize] = useState<{
     edge: "top" | "bottom";
@@ -136,14 +160,15 @@ function TimelineBlock({
   return (
     <div
       ref={setNodeRef}
-      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[3px] border-accent bg-surface ${
-        done ? "opacity-50" : ""
-      } ${isDragging ? "z-20 opacity-80" : ""}`}
+      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[3px] bg-surface ${
+        done ? "opacity-60" : ""
+      } ${active ? "ring-1 ring-accent" : ""} ${isDragging ? "z-20 opacity-80" : ""}`}
       style={{
         top,
         height,
         left: `calc(2.75rem + ${leftPct}%)`,
         width: `calc(${widthPct}% - ${gapPct}rem)`,
+        borderLeftColor: stripeColor(block.category, block.categoryUnresolved),
         transform: CSS.Translate.toString(transform),
       }}
       onDoubleClick={() => (done ? undefined : onOpen(block.taskId, block.id))}
@@ -161,6 +186,11 @@ function TimelineBlock({
       ) : null}
 
       <div className="flex items-center gap-1 px-2 py-1">
+        {block.isTop3 ? (
+          <span className="shrink-0 text-[10px] leading-none text-accent" title="Top 3">
+            ★
+          </span>
+        ) : null}
         <span
           className={`min-w-0 flex-1 truncate text-xs font-medium text-ink ${
             done ? "line-through" : ""
@@ -168,7 +198,18 @@ function TimelineBlock({
         >
           {block.title}
         </span>
-        <span className="shrink-0 text-[10px] text-ink-muted">{formatClock(startMin)}</span>
+        <span
+          className={`shrink-0 text-[10px] tabular-nums ${
+            active ? "font-medium text-accent" : "text-ink-muted"
+          }`}
+          title={done ? "Focused time" : active ? "Running" : "Starts"}
+        >
+          {done
+            ? `✓ ${formatDuration(durationMin)}`
+            : active
+              ? formatDuration(elapsedMin)
+              : formatClock(startMin)}
+        </span>
         {!done ? (
           <button
             type="button"
@@ -252,6 +293,9 @@ export function TimelinePane() {
   const { data: blocks = [] } = useQuery(trpc.focusBlocks.listForDate.queryOptions({ date }));
   const { data: protectedBlocks = [] } = useQuery(
     trpc.protectedBlocks.listForDate.queryOptions({ date })
+  );
+  const { data: recentlyCompleted = [] } = useQuery(
+    trpc.tasks.listRecentlyCompleted.queryOptions()
   );
 
   const nowMinutes = now ? now.getHours() * 60 + now.getMinutes() : null;
@@ -344,6 +388,31 @@ export function TimelinePane() {
     (b) => b.endMin > rangeStart && b.startMin < rangeEnd
   );
 
+  // Untimed completions: tasks checked off today that never got a focus block —
+  // shown as thin ticks at their completion time, so an errand-heavy day still
+  // reads as a full record rather than an empty calendar (Today §6 Thread 2).
+  const blockedTaskIds = new Set(blocks.map((b) => b.taskId));
+  const untimedCompletions = recentlyCompleted
+    .filter((t) => t.completedAt != null && !blockedTaskIds.has(t.id))
+    .map((t) => {
+      const at = new Date(t.completedAt as Date);
+      return { ...t, localDate: toISODateString(at), min: at.getHours() * 60 + at.getMinutes() };
+    })
+    .filter((t) => t.localDate === date && t.min >= rangeStart && t.min <= rangeEnd);
+
+  // The open "Decide" slot and a single self-care suggestion fill the day's
+  // remaining room without overlapping each other (design-prompt-today).
+  const busy = blocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin }));
+  const NEXT_BLOCK_MIN = 45;
+  const decideSlotMin =
+    nowMinutes != null ? nextOpenSlotMin(busy, nowMinutes, rangeEnd, NEXT_BLOCK_MIN) : null;
+  const selfCareBusy =
+    decideSlotMin != null
+      ? [...busy, { startMin: decideSlotMin, endMin: decideSlotMin + NEXT_BLOCK_MIN }]
+      : busy;
+  const selfCareGap =
+    nowMinutes != null ? largestOpenGap(selfCareBusy, nowMinutes, rangeEnd, 60) : null;
+
   const showNowLine = nowMinutes != null && nowMinutes >= rangeStart && nowMinutes <= rangeEnd;
 
   const openFocus = (taskId: string, blockId: string) => {
@@ -411,12 +480,59 @@ export function TimelinePane() {
                 block={block}
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
+                nowMin={nowMinutes}
                 onResize={(id, startMin, endMin) => resizeMutation.mutate({ id, startMin, endMin })}
                 onRemove={(id) => removeMutation.mutate({ id })}
                 onComplete={(id) => completeMutation.mutate({ id })}
                 onOpen={openFocus}
               />
             ))}
+
+            {untimedCompletions.map((t) => (
+              <div
+                key={`done-${t.id}`}
+                className="pointer-events-none absolute left-11 right-1 flex items-center gap-1.5"
+                style={{ top: ((t.min - rangeStart) / 60) * HOUR_HEIGHT }}
+                title={`Completed ${formatClock(t.min)}`}
+              >
+                <span
+                  className="size-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: stripeColor(t.category, t.categoryUnresolved) }}
+                />
+                <span className="min-w-0 flex-1 truncate text-[10px] text-ink-muted line-through">
+                  {t.title}
+                </span>
+                <span className="shrink-0 text-[10px] text-ink-faint">✓</span>
+              </div>
+            ))}
+
+            {selfCareGap ? (
+              <div
+                className="pointer-events-none absolute left-11 right-1 flex items-center gap-1.5 rounded-md border border-dashed border-[var(--border)] px-2 py-1"
+                style={{
+                  top: ((selfCareGap.startMin - rangeStart) / 60) * HOUR_HEIGHT + 4,
+                }}
+              >
+                <span className="text-[11px]" style={{ color: categorySolidVar("body_mind") }}>
+                  ◵
+                </span>
+                <span className="truncate text-[11px] text-ink-muted">
+                  Good gap — a short walk?
+                </span>
+              </div>
+            ) : null}
+
+            {decideSlotMin != null ? (
+              <div
+                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center rounded-md border border-dashed border-[var(--border)] text-[11px] text-ink-faint"
+                style={{
+                  top: ((decideSlotMin - rangeStart) / 60) * HOUR_HEIGHT,
+                  height: (NEXT_BLOCK_MIN / 60) * HOUR_HEIGHT - 4,
+                }}
+              >
+                Decide (⌘D) drops the next block here
+              </div>
+            ) : null}
 
             {showNowLine ? (
               <div
