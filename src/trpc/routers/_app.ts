@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { baseProcedure, createTRPCRouter } from "../init";
 import { abyssRouter } from "./abyss";
+import { careRouter } from "./care";
 import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
 import { dayReviewsRouter } from "./day-reviews";
@@ -26,6 +27,7 @@ export const appRouter = createTRPCRouter({
     return { greeting: `hello ${opts.input.text}` };
   }),
   abyss: abyssRouter,
+  care: careRouter,
   categorySettings: categorySettingsRouter,
   chat: chatRouter,
   dayReviews: dayReviewsRouter,
