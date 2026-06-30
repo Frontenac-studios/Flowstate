@@ -16,20 +16,18 @@ export type ResolveEodUiInput = {
 };
 
 export function resolveEodUiState(input: ResolveEodUiInput): EodUiState {
+  // The review modal opens ONLY on an explicit user action (Today §6 Q3-D — a
+  // soft, dismissible nudge that never seizes the screen). It never auto-opens
+  // on crossing the wind-down hour.
   if (input.modalOpen) return "modal";
   if (input.pathname !== "/today") return "hidden";
   if (!input.reviewDue) return "hidden";
   if (input.skippedForToday || input.snoozed) return "hidden";
 
-  if (input.crossedThresholdOnPage && input.modalShownForDate !== input.localDate) {
-    return "modal";
-  }
-
-  if (input.savedReviewExists && input.reviewDue) {
-    return "banner";
-  }
-
-  if (input.initialPlanVisitAfterDue && input.modalShownForDate !== input.localDate) {
+  // Past wind-down, on /today, not dismissed → a gentle banner (whether the
+  // review is already saved, this is the first visit after wind-down, or the
+  // user crossed wind-down while here). Review stays one tap away either way.
+  if (input.savedReviewExists || input.initialPlanVisitAfterDue || input.crossedThresholdOnPage) {
     return "banner";
   }
 

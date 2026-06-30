@@ -4,6 +4,8 @@ import Link from "next/link";
 import { forwardRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
+import { Top3Deadline } from "./Top3Deadline";
+
 export type Top3SlotTask = {
   id: string;
   title: string;
@@ -131,12 +133,15 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
       className={`mt-4 ${highlighted ? "kash-section-pulse rounded-[var(--radius-card)]" : ""}`}
       aria-labelledby="top3-heading"
     >
-      <h2
-        id="top3-heading"
-        className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-muted"
-      >
-        Today&apos;s Priorities
-      </h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2
+          id="top3-heading"
+          className="text-sm font-medium uppercase tracking-wide text-ink-muted"
+        >
+          Today&apos;s Priorities
+        </h2>
+        <Top3Deadline />
+      </div>
       <div className="flex flex-col gap-2">
         {showHint ? <Top3HintDropZone /> : null}
         {pinnedTasks.map(({ slot, task }) => (

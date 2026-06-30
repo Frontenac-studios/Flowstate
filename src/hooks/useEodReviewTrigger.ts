@@ -5,17 +5,16 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
-import { eodThresholdHour } from "@/lib/eod/eod-constants";
 import {
   isSkippedForDate,
   isSnoozed,
   readEodStorage,
-  setModalShownForDate,
   setSkippedDate,
   setSnoozeUntil,
 } from "@/lib/eod/eod-storage";
 import { resolveEodUiState } from "@/lib/eod/resolve-eod-ui-state";
 import type { EodUiState } from "@/lib/eod/types";
+import { useWindDownHour } from "@/hooks/useWindDownHour";
 import { useTRPC } from "@/trpc/client";
 
 function clientTzOffsetMinutes(): number {
@@ -42,6 +41,7 @@ export function useEodReviewTrigger() {
   const mountedRef = useRef(false);
 
   const tzOffsetMinutes = clientTzOffsetMinutes();
+  const [windDownHour] = useWindDownHour();
 
   const { data: savedRow } = useQuery({
     ...trpc.dayReviews.getForDate.queryOptions({ localDate }),
@@ -52,7 +52,7 @@ export function useEodReviewTrigger() {
   void storageTick;
   const storage = readEodStorage();
 
-  const reviewDue = localHourNow() >= eodThresholdHour();
+  const reviewDue = localHourNow() >= windDownHour;
   const skippedForToday = isSkippedForDate(localDate, storage.skippedDate);
   const snoozed = isSnoozed(new Date(), storage.snoozeUntil);
 
@@ -88,17 +88,16 @@ export function useEodReviewTrigger() {
   useEffect(() => {
     const id = window.setInterval(() => {
       const hour = localHourNow();
-      const threshold = eodThresholdHour();
       const prev = prevHourRef.current;
 
-      if (prev < threshold && hour >= threshold && pathname === "/today") {
+      if (prev < windDownHour && hour >= windDownHour && pathname === "/today") {
         setCrossedOnPage(true);
       }
       prevHourRef.current = hour;
     }, 60_000);
 
     return () => window.clearInterval(id);
-  }, [pathname]);
+  }, [pathname, windDownHour]);
 
   const uiState: EodUiState = resolveEodUiState({
     pathname,
@@ -112,14 +111,6 @@ export function useEodReviewTrigger() {
     initialPlanVisitAfterDue: initialAfterDue,
     crossedThresholdOnPage: crossedOnPage,
   });
-
-  useEffect(() => {
-    if (uiState === "modal" && !modalOpen) {
-      setModalOpen(true);
-      setModalShownForDate(localDate);
-      refreshStorage();
-    }
-  }, [uiState, modalOpen, localDate, refreshStorage]);
 
   const openReview = useCallback(() => {
     setModalOpen(true);

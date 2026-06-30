@@ -28,13 +28,13 @@ describe("resolveEodUiState", () => {
     expect(resolveEodUiState({ ...base, snoozed: true })).toBe("hidden");
   });
 
-  it("modal when crossing threshold on page", () => {
+  it("banner (never auto-modal) when crossing wind-down on page", () => {
     expect(
       resolveEodUiState({
         ...base,
         crossedThresholdOnPage: true,
       })
-    ).toBe("modal");
+    ).toBe("banner");
   });
 
   it("banner on initial visit after due", () => {
