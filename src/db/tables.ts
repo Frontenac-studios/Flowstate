@@ -2,6 +2,8 @@ import * as sqliteSchema from "@kash/db-local/schema";
 import { abyssItems as pgAbyssItems } from "./schema/abyss-items";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
+import { careActivities as pgCareActivities } from "./schema/care-activities";
+import { careEvents as pgCareEvents } from "./schema/care-events";
 import { goalMilestones as pgGoalMilestones } from "./schema/goal-milestones";
 import { goals as pgGoals } from "./schema/goals";
 import { monthIntentions as pgMonthIntentions } from "./schema/month-intentions";
@@ -101,3 +103,9 @@ export const reservedDays = (
 export const planningSuggestions = (
   isSqliteMode() ? sqliteSchema.planningSuggestions : pgPlanningSuggestions
 ) as typeof pgPlanningSuggestions;
+export const careActivities = (
+  isSqliteMode() ? sqliteSchema.careActivities : pgCareActivities
+) as typeof pgCareActivities;
+export const careEvents = (
+  isSqliteMode() ? sqliteSchema.careEvents : pgCareEvents
+) as typeof pgCareEvents;
