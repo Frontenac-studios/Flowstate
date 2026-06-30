@@ -1,6 +1,6 @@
 # Kash 3.0 — Build Breakdown & Spec-Maturity Tracker
 
-> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jun 27 2026 (Care library slice planned & approved — `care-library-build-plan.md`).**
+> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jun 30 2026 (animation sweep spec'd — `animation-sweep.md`; Projects Miller creation flows — `projects-miller.md`).**
 
 ---
 
@@ -60,13 +60,14 @@ The subsections that recur in every feature build — a checklist:
 | §6 Today              | ✅            | 🟡                                                     | 🏗️        | open Qs closed Jun 25 (adaptive calendar window + auto-scroll-now; planned, Top-3-weighted balance bar; wind-down anchor → Top-3 deadline + soft EoD nudge; thin completion markers); build living record + balance bar; **all-day protected chips ✅**                                                                                                                                                                                   |
 | §7 Week               | ✅            | 🟡                                                     | 🏗️        | open Qs closed Jun 25. **Protected blocks ✅** (templates + instances, Week chips, Today all-day chips, propose/confirm). _Left:_ per-column tally on hover/tap, learned over-commit warning (+ protected blocks in load), Settings template editor, timed protected blocks on Today timeline, AI week-draft respecting protected blocks, EoW review chip                                                                                 |
 | §8 Planning Mode      | ✅            | ✅ `planning-mode.md`                                  | 🏗️        | **foundation built Jun 25** — schema + sync + RLS + `/plan` 5-tab shell + breadcrumb + GhostedAccept + tRPC CRUD. _Parallel next:_ Bingo · Year · Quarter · Month · Week plan-mode · balance pass                                                                                                                                                                                                                                         |
-| §9 Projects           | ✅            | 🟡                                                     | ⬛ core   | open Qs closed Jun 25 (templating = explicit save + AI-suggest; estimates silent until n≈3; multi-project calendar = category/project toggle, default category; **% progress = weighted task-weight ratio per §2** — closes the deferred completion-metric). Build: templating engine, completion metric, calendar toggle (needs distinct project-hue set in Design Tokens)                                                               |
+| §9 Projects           | ✅            | ✅ `projects-miller.md`                                | ⬛ core   | open Qs closed Jun 25 (templating = explicit save + AI-suggest; estimates silent until n≈3; multi-project calendar = category/project toggle, default category; **% progress = weighted task-weight ratio per §2**). **Miller UX walked Jun 27–30** (`projects-miller.md`): landing = card gallery (not a column) · true recursive columns (mixed phases▸+tasks), fixed depth project→phase→subphase→task · creation flows PR-1..6 (composer syntax, blank+template, paste import) · PROJ-A/B/C resolved (completed-task mirrors Today, view/lens switch, phase-detail cascade). Build: templating engine, completion metric, calendar toggle (distinct project-hue set)            |
 | §10 The Abyss         | ✅            | ✅ `abyss-build-spec.md`                               | ⬜        | **build**                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | §11 AI persona        | ✅            | ✅ `ai-persona-build-spec.md`                          | 🟡        | refactor to registers + confirm-card tools                                                                                                                                                                                                                                                                                                                                                                                                |
 | §13 Values & Context  | ✅            | ✅ `values-context.md`                                 | ⬜        | **build** (owns the About-me doc)                                                                                                                                                                                                                                                                                                                                                                                                         |
 | §12 Self-Care / Care  | ✅            | ✅ `care-build-spec.md` + `care-library-build-plan.md` | ⬜        | **build** (stats-first → garden last). **Library slice planned & approved Jun 25** (D0–D6 in `care-library-build-plan.md`): Tasks-tab Finch library · practices live in Care, pinnable to Today · thematic 6 themes (Move/Calm/Connect/Rest/Nourish/Reflect, ~23 seeds) · static seed catalog · cadence pre-fills recurrence · keep `kind`, soft-remove, `tasks.care_activity_id` col · 5 PRs CL1–CL5, branch off `main`. Not yet started |
 | §15 Mechanics         | ✅            | ✅ (§15 plan)                                          | ⬜        | desktop-app fallback · simple controls · ephemeral celebrations                                                                                                                                                                                                                                                                                                                                                                           |
-| Animation pass        | ⚪            | ⚪                                                     | ⬜        | final phase                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Animation pass        | 🟡            | ✅ `animation-sweep.md`                                | 🟡        | **spec'd Jun 30** — foundation (AN-0 motion tokens), per-page motion (Today/Plan/Care/cross-cutting/Week/Abyss/Projects/⌘K), bespoke §7 (Focus ring+breath, Focus zoom, Top-3 fly+star _(pin flight already in code: `pin-to-top3.ts`)_, Daily Win, progress roll-up). **3 open:** project-complete (redo, 3 new options) · create-shimmer+sync pulse · bingo finalize→lock. Then build-out (mostly CSS on the tokens). |
+| 3 Daily Wins          | ✅            | ✅ `daily-wins-build-spec.md`                          | ⬜        | **spec'd Jun 30** (DW-1…DW-6 + placement): hybrid source (AI ghosted proposals + manual), ranked taxonomy w/ 1-care-event cap, hard 3, qualitative wins, garden nourish (drip per win + bigger beat on full 3), midnight reset + morning grace window, **EoD-only** Today tracker. `daily_wins` table (derived + overrides stored). 5 PRs DWN-1..5, not started. |
 
 ---
 
@@ -86,6 +87,7 @@ These each have a build spec; hand them to a build session:
 - **§13 Values & Context** — incl. the About-me doc (`values-context.md`).
 - **§11 AI persona** — register refactor + confirm-card tool catalog (`ai-persona-build-spec.md`).
 - **§12 Care / Self-Care** — full Phases 1–8 (`care-build-spec.md`); stats-first, garden last. **Library slice has a detailed approved plan** (`care-library-build-plan.md`, D0–D6) — the recommended first Care PR set (CL1–CL5).
+- **3 Daily Wins** — `daily-wins-build-spec.md` (DWN-1..5); cross-cuts §6 Today + §12 Care.
 
 ### Visual redesign (Jun 24–25) — DONE, ready to apply
 
@@ -119,13 +121,14 @@ The last open product/UX forks are now closed:
 - **Sync-status panel (D2)** — **both**: a minimal shell-status-bar indicator + full detail in Settings.
 - **Garden art (§12)** — **deferred to its own art spike** (runs near the animation pass).
 
-### Still open — non-product only
+### Still open
 
-- **Animation pass** — page-by-page motion, deliberately last.
-- **Garden-art spike** — detailed garden illustration (deferred above).
+- **3 bespoke animations** (`animation-sweep.md` §7 "Still open") — **project-complete** (redo with 3 new
+  options; first round rejected) · **create-shimmer + sync pulse** · **bingo finalize→lock**.
+- **Garden-art spike** — detailed garden illustration (a design task, runs near the animation pass).
 - **Per-feature spec polish** — Today / Week / Projects UX detail (🟡 in the matrix; not product forks).
 
-**Headline:** feature planning, the visual redesign, **and global navigation** are all **complete.** The **data spine (Phases 1–4) is built**; Week protected blocks have data + basic UI. Every remaining feature has a build spec, the B&W palette is locked, all nine pages are wireframed, and the nav layer is fully decided. Remaining work: Week polish (load/tally/review), B&W PR2b, a few accent states, per-feature UX detail, the garden-art spike, and the final Animation pass. The app is fully in a **building** phase.
+**Headline:** feature planning, the visual redesign, **and global navigation** are all **complete.** The **data spine (Phases 1–4) is built**; Week protected blocks have data + basic UI. Every feature now has a build spec (3 Daily Wins closed Jun 30), the B&W palette is locked, all nine pages are wireframed, the nav layer is fully decided, and the **animation sweep is spec'd** (3 bespoke moments still open). Remaining planning: just the 3 bespoke animations. Remaining build: Week polish (load/tally/review), B&W PR2b, a few accent states, per-feature UX detail, the garden-art spike, and applying the animation pass. The app is essentially in a **building** phase.
 
 ---
 
@@ -133,7 +136,10 @@ The last open product/UX forks are now closed:
 
 **Build track** (no decisions needed): **B&W PR2b** (outline-primary audit) + finish Design Tokens rollout + Nav polish → **Week §7 polish** (tally-on-demand, over-commit load, EoW review chip, Settings protected-block templates, AI week-draft) → then the spec'd surfaces (Values/About-me → AI persona → Abyss → Planning Mode → Care), each off its build spec. Use `kash-3.0-mockups.html` as the visual reference. _Care's **library slice (CL1–CL5)** is the most build-ready Care entry point — fully planned in `care-library-build-plan.md`, branch off `main`._
 
-**Decision track** (done bar one): only the **Animation pass** remains — and it's meant to run last, after the surfaces are built and Design Tokens are rolled out.
+**Decision track** (nearly done): only the **3 open bespoke animations** remain (project-complete redo ·
+create-shimmer+sync · bingo finalize→lock). The rest of the animation pass is spec'd
+(`animation-sweep.md`), and 3 Daily Wins is now fully spec'd (`daily-wins-build-spec.md`). Animation is
+meant to be applied last, after the surfaces are built and Design Tokens are rolled out.
 
 ---
 
@@ -141,7 +147,7 @@ The last open product/UX forks are now closed:
 
 - `kash-3.0-plan.md` — the master spec (all features + decisions).
 - `kash-3.0-build-breakdown.md` — this tracker.
-- Build specs: `data-spine-build-spec.md` · `abyss-build-spec.md` · `ai-persona-build-spec.md` · `care-build-spec.md` · `planning-mode.md` · `values-context.md` · `design-tokens.md`.
+- Build specs: `data-spine-build-spec.md` · `abyss-build-spec.md` · `ai-persona-build-spec.md` · `care-build-spec.md` · `planning-mode.md` · `values-context.md` · `design-tokens.md` · `projects-miller.md` · `animation-sweep.md` · `daily-wins-build-spec.md`.
 - `kash-3.0-data-spine.md` — the data-spine decision log.
 - `kash-3.0-backend-optimization-spec.md` — the Jun 24 architecture/latency pass (sync batching + bounded pull, indexing, outbox/storage, AI-seam latency); a **parallel track**, fixed as each feature phase touches the code.
 - Claude Design kit: `design-brief.md` · `design-system-starter.md` · `design-prompt-today.md` (all updated to B&W Jun 24).
