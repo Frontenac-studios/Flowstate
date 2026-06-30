@@ -49,6 +49,9 @@ export const focusBlocksRouter = createTRPCRouter({
           endMin: focusBlocks.endMin,
           status: focusBlocks.status,
           title: tasks.title,
+          category: tasks.category,
+          categoryUnresolved: tasks.categoryUnresolved,
+          isTop3: tasks.isTop3,
         })
         .from(focusBlocks)
         .innerJoin(tasks, eq(tasks.id, focusBlocks.taskId))
