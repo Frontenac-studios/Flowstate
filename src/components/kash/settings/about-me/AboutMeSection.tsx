@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { useTRPC } from "@/trpc/client";
 
+import ConstraintsSection from "./ConstraintsSection";
 import ProseSection from "./ProseSection";
 import ValuesSection from "./ValuesSection";
 
@@ -17,18 +18,6 @@ const CHIPS: { id: SectionId; label: string }[] = [
   { id: "life", label: "Life" },
   { id: "constraints", label: "Constraints" },
 ];
-
-/** Placeholder for sections whose UI lands in a later slice. */
-function ComingSoonSection({ id, title }: { id: SectionId; title: string }) {
-  return (
-    <section id={`about-${id}`} className="scroll-mt-24">
-      <h3 className="mb-2 text-subtitle font-medium text-ink">{title}</h3>
-      <div className="rounded-card border border-subtle bg-surface p-4">
-        <p className="text-body text-ink-muted">Arrives in a later update.</p>
-      </div>
-    </section>
-  );
-}
 
 export default function AboutMeSection() {
   const trpc = useTRPC();
@@ -106,7 +95,7 @@ export default function AboutMeSection() {
           body={bodies?.life ?? ""}
           placeholder="The bigger picture — people, commitments, what matters outside work…"
         />
-        <ComingSoonSection id="constraints" title="Constraints" />
+        <ConstraintsSection />
       </div>
     </div>
   );

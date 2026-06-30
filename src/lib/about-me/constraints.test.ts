@@ -5,6 +5,8 @@ import {
   formatConstraintSchedule,
   formatMinutes,
   formatWeekdays,
+  minutesToTimeInput,
+  timeInputToMinutes,
 } from "./constraints";
 
 describe("formatWeekdays", () => {
@@ -45,6 +47,23 @@ describe("formatConstraintSchedule", () => {
   it("handles days-only and empty", () => {
     expect(formatConstraintSchedule({ days: [2, 4] })).toBe("Tue, Thu");
     expect(formatConstraintSchedule(null)).toBe("");
+  });
+});
+
+describe("time input round-trip", () => {
+  it("converts minutes to HH:MM and back", () => {
+    expect(minutesToTimeInput(480)).toBe("08:00");
+    expect(minutesToTimeInput(15 * 60 + 45)).toBe("15:45");
+    expect(minutesToTimeInput(null)).toBe("");
+    expect(timeInputToMinutes("08:00")).toBe(480);
+    expect(timeInputToMinutes("15:45")).toBe(945);
+  });
+
+  it("rejects malformed or out-of-range times", () => {
+    expect(timeInputToMinutes("")).toBeNull();
+    expect(timeInputToMinutes("9am")).toBeNull();
+    expect(timeInputToMinutes("24:00")).toBeNull();
+    expect(timeInputToMinutes("12:75")).toBeNull();
   });
 });
 

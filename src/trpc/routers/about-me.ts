@@ -4,20 +4,25 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { syncAboutMeRow } from "@/db/record-sync-mutation";
-import { aboutMeSections, userValues } from "@/db/tables";
+import { aboutMeSections, userConstraints, userValues } from "@/db/tables";
 import {
   type AboutMeSection,
   aboutMeSectionSchema,
+  constraintSeveritySchema,
+  constraintTypeSchema,
   proseBodySchema,
   valueSourceSchema,
   VALUES_MAX,
 } from "@/lib/about-me/constants";
+import { constraintScheduleSchema } from "@/lib/about-me/constraints";
 import { canAddValue, isDuplicateValue, valueLabelSchema } from "@/lib/about-me/values";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
 /** Sections whose content is free prose the user edits directly. */
 const proseSectionSchema = aboutMeSectionSchema.extract(["work", "life"]);
+
+const constraintLabelSchema = z.string().trim().min(1, "Add a short label.").max(200);
 
 const valuesRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -127,7 +132,106 @@ const sectionsRouter = createTRPCRouter({
     }),
 });
 
+const constraintsRouter = createTRPCRouter({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return db
+      .select()
+      .from(userConstraints)
+      .where(eq(userConstraints.userId, ctx.userId))
+      .orderBy(asc(userConstraints.sortOrder), asc(userConstraints.createdAt));
+  }),
+
+  add: protectedProcedure
+    .input(
+      z.object({
+        type: constraintTypeSchema,
+        label: constraintLabelSchema,
+        schedule: constraintScheduleSchema.nullish(),
+        severity: constraintSeveritySchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await db
+        .select({ sortOrder: userConstraints.sortOrder })
+        .from(userConstraints)
+        .where(eq(userConstraints.userId, ctx.userId));
+      const nextSortOrder = existing.reduce((max, c) => Math.max(max, c.sortOrder + 1), 0);
+
+      const [row] = await db
+        .insert(userConstraints)
+        .values({
+          userId: ctx.userId,
+          type: input.type,
+          label: input.label,
+          schedule: input.schedule ?? null,
+          severity: input.severity,
+          author: "user",
+          sortOrder: nextSortOrder,
+        })
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to add constraint.",
+        });
+      }
+
+      await syncAboutMeRow("user_constraints", row.id, "insert", row);
+      return row;
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        type: constraintTypeSchema.optional(),
+        label: constraintLabelSchema.optional(),
+        schedule: constraintScheduleSchema.nullish(),
+        severity: constraintSeveritySchema.optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...rest } = input;
+      const patch: Record<string, unknown> = { updatedAt: new Date() };
+      if (rest.type !== undefined) patch.type = rest.type;
+      if (rest.label !== undefined) patch.label = rest.label;
+      if (rest.schedule !== undefined) patch.schedule = rest.schedule;
+      if (rest.severity !== undefined) patch.severity = rest.severity;
+
+      const [row] = await db
+        .update(userConstraints)
+        .set(patch)
+        .where(and(eq(userConstraints.id, id), eq(userConstraints.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Constraint not found." });
+      }
+
+      await syncAboutMeRow("user_constraints", row.id, "update", row);
+      return row;
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .delete(userConstraints)
+        .where(and(eq(userConstraints.id, input.id), eq(userConstraints.userId, ctx.userId)))
+        .returning({ id: userConstraints.id });
+
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Constraint not found." });
+      }
+
+      await syncAboutMeRow("user_constraints", row.id, "delete", { id: row.id });
+      return row;
+    }),
+});
+
 export const aboutMeRouter = createTRPCRouter({
   values: valuesRouter,
   sections: sectionsRouter,
+  constraints: constraintsRouter,
 });

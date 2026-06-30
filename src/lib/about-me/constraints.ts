@@ -66,3 +66,38 @@ export function formatConstraintSchedule(schedule: ConstraintSchedule | null | u
       : "";
   return [days, time].filter(Boolean).join(" · ");
 }
+
+/** Minutes-from-midnight → "HH:MM" for an <input type="time">; null/undefined → "". */
+export function minutesToTimeInput(min: number | null | undefined): string {
+  if (min == null) return "";
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** "HH:MM" from an <input type="time"> → minutes-from-midnight; "" → null. */
+export function timeInputToMinutes(value: string): number | null {
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (h > 23 || m > 59) return null;
+  return h * 60 + m;
+}
+
+/** Display metadata for the three constraint groups (V3-1), in capture order. */
+export const CONSTRAINT_TYPE_META = [
+  { type: "hours", title: "Working hours" },
+  { type: "commitment", title: "Recurring commitments" },
+  { type: "preference", title: "Preferences" },
+] as const;
+
+export const WEEKDAY_TOGGLES = [
+  { iso: 1, short: "M" },
+  { iso: 2, short: "T" },
+  { iso: 3, short: "W" },
+  { iso: 4, short: "T" },
+  { iso: 5, short: "F" },
+  { iso: 6, short: "S" },
+  { iso: 7, short: "S" },
+] as const;
