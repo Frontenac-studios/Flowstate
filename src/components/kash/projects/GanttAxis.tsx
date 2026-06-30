@@ -29,7 +29,7 @@ export default function GanttAxis({ ticks, pxPerDay, boardWidth }: Props) {
         {ticks.map((tick) => (
           <div
             key={tick.dayOffset}
-            className="border-subtle absolute top-0 h-full border-l"
+            className="absolute top-0 h-full border-l border-subtle"
             style={{ left: tick.dayOffset * pxPerDay }}
           >
             <span className="whitespace-nowrap pl-1 text-[11px] leading-7 text-ink-muted">

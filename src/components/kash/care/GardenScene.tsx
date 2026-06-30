@@ -27,7 +27,7 @@ const gardenPalette = {
 export function GardenScene() {
   return (
     <div
-      className="border-subtle flex h-full flex-col overflow-hidden rounded-card border"
+      className="flex h-full flex-col overflow-hidden rounded-card border border-subtle"
       style={gardenPalette}
     >
       <svg
@@ -80,7 +80,7 @@ export function GardenScene() {
         </g>
         <circle cx="345" cy="214" r="7" fill="var(--g-petal-a)" />
       </svg>
-      <p className="border-subtle border-t bg-surface px-3 py-2 text-caption text-ink-muted">
+      <p className="border-t border-subtle bg-surface px-3 py-2 text-caption text-ink-muted">
         Your garden — it grows as you tend yourself, and gently rests when you do.
       </p>
     </div>

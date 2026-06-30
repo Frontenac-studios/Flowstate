@@ -35,7 +35,7 @@ export default function WeeklySummaryCard() {
 
   return (
     <section
-      className="border-subtle rounded-card border bg-surface p-5"
+      className="rounded-card border border-subtle bg-surface p-5"
       aria-label="Weekly focus summary"
     >
       <div className="flex items-baseline justify-between gap-2">

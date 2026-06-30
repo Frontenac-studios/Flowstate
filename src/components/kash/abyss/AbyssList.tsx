@@ -100,7 +100,7 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-pill inline-flex items-center gap-0.5 bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted"
+                className="inline-flex items-center gap-0.5 rounded-pill bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted"
               >
                 <HashIcon size={9} className="text-abyss-ink-faint" />
                 {tag}
@@ -112,7 +112,7 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
 
       <div className="flex shrink-0 items-center gap-2">
         {promoted ? (
-          <span className="rounded-pill inline-flex items-center gap-1 bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted">
+          <span className="inline-flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted">
             <PromoteIcon size={12} />
             {promotedLabel(item.promotedTarget)}
           </span>

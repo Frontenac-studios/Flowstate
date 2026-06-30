@@ -201,7 +201,7 @@ export function FocusCanvas() {
 
   if (!taskId || !task) {
     return (
-      <section className="border-subtle rounded-card border bg-surface p-6 text-center">
+      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
         <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
         <p className="mt-2 text-ink-muted">Task not found. Returning to your plan.</p>
         <div className="mt-5">
@@ -220,7 +220,7 @@ export function FocusCanvas() {
   const showCategory = !task.categoryUnresolved;
 
   return (
-    <section className="border-subtle relative overflow-hidden rounded-card border bg-surface">
+    <section className="relative overflow-hidden rounded-card border border-subtle bg-surface">
       <div className="flex min-h-[440px] flex-col sm:flex-row">
         <div className="flex flex-1 flex-col p-7 sm:p-8">
           <span className="text-caption text-ink-faint">Focus session</span>
@@ -248,7 +248,7 @@ export function FocusCanvas() {
             ) : null}
             {task.isTop3 ? (
               <span
-                className="border-subtle rounded-chip border px-2 py-0.5 text-caption text-ink"
+                className="rounded-chip border border-subtle px-2 py-0.5 text-caption text-ink"
                 aria-label="Top 3"
               >
                 ★ Top 3
@@ -284,7 +284,7 @@ export function FocusCanvas() {
             <button
               type="button"
               onClick={() => void handlePark()}
-              className="border-subtle rounded-control border-[1.5px] px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+              className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
               disabled={doneFlash !== null}
             >
               Park
@@ -292,7 +292,7 @@ export function FocusCanvas() {
           </div>
         </div>
 
-        <div className="border-subtle flex w-full flex-col items-center justify-center gap-5 border-t bg-surface-2 p-8 sm:w-[46%] sm:border-l sm:border-t-0">
+        <div className="flex w-full flex-col items-center justify-center gap-5 border-t border-subtle bg-surface-2 p-8 sm:w-[46%] sm:border-l sm:border-t-0">
           <span className="text-caption tracking-[0.12em] text-ink-faint">
             {isPaused ? "PAUSED" : "FOCUSING · DND ON"}
           </span>
