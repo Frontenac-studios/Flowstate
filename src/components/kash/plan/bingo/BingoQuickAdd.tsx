@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
@@ -9,19 +10,24 @@ import {
   categoryTextVar,
 } from "@/lib/projects/category-tokens";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { useTRPC } from "@/trpc/client";
 
 type Props = {
   /** 1-based square number for the prompt (cellIndex + 1). */
   squareLabel: number;
   busy: boolean;
   error: string | null;
-  onSubmit: (title: string, category: ProjectCategory) => void;
+  onSubmit: (title: string, category: ProjectCategory, valueId: string | null) => void;
   onCancel: () => void;
 };
 
 export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCancel }: Props) {
+  const trpc = useTRPC();
+  const { data: values = [] } = useQuery(trpc.aboutMe.values.list.queryOptions());
+
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
+  const [valueId, setValueId] = useState<string | null>(null);
 
   const trimmed = title.trim();
   const canSubmit = trimmed.length > 0 && category !== null && !busy;
@@ -29,13 +35,13 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSubmit || category === null) return;
-    onSubmit(trimmed, category);
+    onSubmit(trimmed, category, valueId);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-subtle flex flex-col gap-3 rounded-card border bg-surface p-4"
+      className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4"
     >
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bingo-goal-title" className="text-caption font-medium text-ink">
@@ -43,7 +49,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
         </label>
         <input
           id="bingo-goal-title"
-          className="border-subtle rounded-control border bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Run a half marathon"
@@ -86,6 +92,32 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
           })}
         </div>
       </fieldset>
+
+      {values.length > 0 ? (
+        <fieldset className="flex flex-col gap-1.5">
+          <legend className="mb-1 text-caption font-medium text-ink">Value (optional)</legend>
+          <div className="flex flex-wrap gap-2">
+            {values.map((v) => {
+              const selected = valueId === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setValueId(selected ? null : v.id)}
+                  aria-pressed={selected}
+                  className={`rounded-chip border px-3 py-1 text-caption font-medium transition ${
+                    selected
+                      ? "border-ink bg-ink text-accent-on"
+                      : "border-subtle text-ink-muted hover:text-ink"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-caption text-critical">
