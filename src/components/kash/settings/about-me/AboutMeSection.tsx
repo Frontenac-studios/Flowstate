@@ -1,9 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/cn";
+import { useTRPC } from "@/trpc/client";
 
+import ProseSection from "./ProseSection";
 import ValuesSection from "./ValuesSection";
 
 type SectionId = "values" | "work" | "life" | "constraints";
@@ -28,6 +31,9 @@ function ComingSoonSection({ id, title }: { id: SectionId; title: string }) {
 }
 
 export default function AboutMeSection() {
+  const trpc = useTRPC();
+  const { data: bodies } = useQuery(trpc.aboutMe.sections.get.queryOptions());
+
   const [active, setActive] = useState<SectionId>("values");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,8 +94,18 @@ export default function AboutMeSection() {
 
       <div className="space-y-8">
         <ValuesSection />
-        <ComingSoonSection id="work" title="Work" />
-        <ComingSoonSection id="life" title="Life" />
+        <ProseSection
+          section="work"
+          title="Work"
+          body={bodies?.work ?? ""}
+          placeholder="Where you work, how you like to work, what you're focusing on…"
+        />
+        <ProseSection
+          section="life"
+          title="Life"
+          body={bodies?.life ?? ""}
+          placeholder="The bigger picture — people, commitments, what matters outside work…"
+        />
         <ComingSoonSection id="constraints" title="Constraints" />
       </div>
     </div>

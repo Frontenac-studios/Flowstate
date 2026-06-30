@@ -28,6 +28,9 @@ export const VALUE_LABEL_MAX = 40;
 // Generous prose cap — guards storage without getting in the user's way.
 export const SECTION_BODY_MAX = 4000;
 
+// Free-prose body for a headed section (Work / Life). Empty is allowed (cleared section).
+export const proseBodySchema = z.string().max(SECTION_BODY_MAX);
+
 // Order of the headed sections in the one scrolling doc + anchor chips.
 export const ABOUT_ME_SECTION_ORDER = ["values", "work", "life", "constraints"] as const;
 
