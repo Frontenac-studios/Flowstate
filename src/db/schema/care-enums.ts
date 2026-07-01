@@ -20,5 +20,9 @@ export const CARE_SOURCES = ["suggested", "custom"] as const;
 export const careSource = pgEnum("care_source", CARE_SOURCES);
 
 /** What nourished the garden — practice check-off, bingo line, or daily win (DW-5). */
-export const CARE_EVENT_SOURCES = ["practice", "bingo", "daily_win"] as const;
+export const CARE_EVENT_SOURCES = ["practice", "bingo", "daily_win", "breathing"] as const;
 export const careEventSource = pgEnum("care_event_source", CARE_EVENT_SOURCES);
+
+/** Reflection ritual cadence (daily / weekly / monthly). */
+export const REFLECTION_SCOPES = ["daily", "weekly", "monthly"] as const;
+export const reflectionScope = pgEnum("reflection_scope", REFLECTION_SCOPES);

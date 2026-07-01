@@ -183,6 +183,13 @@
       "when": 1782935000000,
       "tag": "0025_daily_win_care_event_source",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1782936000000,
+      "tag": "0026_care_phase5",
+      "breakpoints": true
     }
   ]
 }

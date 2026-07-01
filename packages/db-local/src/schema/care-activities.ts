@@ -20,6 +20,7 @@ export const careActivities = sqliteTable(
     note: text("note"),
     source: text("source", { enum: CARE_SOURCES }).notNull(),
     catalogKey: text("catalog_key"),
+    liftsMe: integer("lifts_me", { mode: "boolean" }).notNull().default(false),
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
