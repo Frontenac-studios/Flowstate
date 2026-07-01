@@ -34,6 +34,9 @@ import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
 const BingoCard = dynamic(() => import("./bingo/BingoCard"), {
   loading: () => <PlanHorizonPlaceholder horizon="bingo" />,
 });
+const BingoYearRolloverNudges = dynamic(() => import("./bingo/BingoYearRolloverNudges"), {
+  ssr: false,
+});
 const MonthView = dynamic(() => import("./month/MonthView"), {
   loading: () => <PlanHorizonPlaceholder horizon="month" />,
 });
@@ -221,6 +224,18 @@ function PlanHorizonViewInner() {
     (horizon === "month" && breadcrumb.month == null) ||
     (horizon === "quarter" && breadcrumb.quarter == null);
 
+  const showYearRolloverNudges = horizon === "bingo" || horizon === "year";
+
+  const handleStartNextYearBingo = useCallback((year: number) => {
+    setBreadcrumb({ year });
+    setHorizon("bingo");
+  }, []);
+
+  const handleOpenBingo = useCallback((year: number) => {
+    setBreadcrumb({ year });
+    setHorizon("bingo");
+  }, []);
+
   return (
     <CheckInProvider breadcrumb={breadcrumb}>
       <div className="flex flex-col gap-4">
@@ -241,6 +256,12 @@ function PlanHorizonViewInner() {
             />
           </div>
         </div>
+        {showYearRolloverNudges ? (
+          <BingoYearRolloverNudges
+            onStartNextYear={handleStartNextYearBingo}
+            onOpenBingo={handleOpenBingo}
+          />
+        ) : null}
         <PlanHorizonContent
           horizon={horizon}
           breadcrumb={breadcrumb}
