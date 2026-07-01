@@ -22,7 +22,7 @@ export default function CategoryFilter({ value, onChange }: Props) {
         type="button"
         onClick={() => onChange("all")}
         aria-pressed={value === "all"}
-        className={`rounded-chip border px-3 py-1 text-sm transition ${
+        className={`rounded-chip border px-3 py-1 text-sm transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
           value === "all"
             ? "border-accent bg-accent text-accent-on"
             : "border-subtle text-ink-muted hover:text-ink"
@@ -39,7 +39,7 @@ export default function CategoryFilter({ value, onChange }: Props) {
             // Clicking the active chip clears back to "all".
             onClick={() => onChange(active ? "all" : category)}
             aria-pressed={active}
-            className={`flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition ${
+            className={`flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
               active ? "border-transparent" : "border-subtle text-ink-muted hover:text-ink"
             }`}
             style={
@@ -53,7 +53,10 @@ export default function CategoryFilter({ value, onChange }: Props) {
           >
             <span
               className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: categorySolidVar(category) }}
+              style={{
+                backgroundColor: categorySolidVar(category),
+                boxShadow: "0 0 0 1px var(--mark-ring)",
+              }}
               aria-hidden
             />
             {categorySeedLabel(category)}

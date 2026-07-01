@@ -88,7 +88,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
                 type="button"
                 onClick={() => setCategory(value)}
                 aria-pressed={selected}
-                className={`flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition ${
+                className={`flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
                   selected ? "border-transparent" : "border-subtle text-ink-muted hover:text-ink"
                 }`}
                 style={
@@ -102,7 +102,10 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
               >
                 <span
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: categorySolidVar(value) }}
+                  style={{
+                    backgroundColor: categorySolidVar(value),
+                    boxShadow: "0 0 0 1px var(--mark-ring)",
+                  }}
                   aria-hidden
                 />
                 {categorySeedLabel(value)}

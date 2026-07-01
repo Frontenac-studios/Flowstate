@@ -20,12 +20,12 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
     >
       <div className="flex items-center gap-2">
         <span
-          className="h-3.5 w-[3px] shrink-0 rounded-full"
-          style={{ backgroundColor: stripe }}
+          className="h-3.5 shrink-0 rounded-full"
+          style={{ width: "var(--stripe-width)", backgroundColor: stripe }}
           aria-hidden
         />
         <h3 className="min-w-0 flex-1 truncate font-medium text-ink">{project.name}</h3>

@@ -37,7 +37,7 @@ export default function ProjectParseError({ warnings }: Props) {
       {warnings.map((warning, index) => (
         <p
           key={`${warning.code}-${index}`}
-          className={`text-[10px] leading-snug ${
+          className={`text-caption leading-snug ${
             isBlockingWarning(warning) ? "text-critical" : "text-ink-muted"
           }`}
         >

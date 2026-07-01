@@ -84,7 +84,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
       <div className="flex flex-col gap-2">
         <Link
           href={`/projects/${projectId}`}
-          className="w-fit text-meta text-ink-muted transition hover:text-ink"
+          className="w-fit text-meta text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
         >
           ← {projectName}
         </Link>
@@ -132,7 +132,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
                 {!undone ? (
                   <button
                     type="button"
-                    className="shrink-0 rounded-control border-[1.5px] border-ink px-3 py-1 text-meta text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+                    className="focus-visible:text-on-accent shrink-0 rounded-control border-[1.5px] border-ink px-3 py-1 text-meta text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
                     disabled={undoMutation.isPending}
                     onClick={() => setUndoTarget({ importId: row.id, taskCount: row.taskCount })}
                   >

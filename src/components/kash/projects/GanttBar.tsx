@@ -109,15 +109,15 @@ export default function GanttBar({
       onPointerCancel={endDrag}
       className={`absolute top-1/2 flex -translate-y-1/2 items-center rounded-md ${
         locked ? "" : "cursor-grab active:cursor-grabbing"
-      } ${completed ? "line-through" : ""}`}
+      } ${completed ? "line-through" : ""} ${taskDerived ? "border border-dashed border-white/65" : ""} ${
+        drag ? "shadow-overlay" : ""
+      }`}
       style={{
         left,
         width,
         height,
         backgroundColor: color,
         opacity,
-        border: taskDerived ? "1.5px dashed rgba(255,255,255,0.65)" : undefined,
-        boxShadow: drag ? "0 2px 8px rgba(0,0,0,0.18)" : undefined,
       }}
     >
       {!locked ? (

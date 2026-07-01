@@ -3,6 +3,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
+import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
@@ -72,12 +73,15 @@ export default function MillerPhaseRow({
         type="button"
         onClick={onOpen}
         aria-expanded={selected}
-        className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink"
+        className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
       >
         <span className="flex min-w-0 flex-1 items-start gap-1.5">
           <span
             className="mt-1 h-2 w-2 shrink-0 rounded-full"
-            style={{ backgroundColor: categorySolidVar(category) }}
+            style={{
+              backgroundColor: categorySolidVar(category),
+              boxShadow: "0 0 0 1px var(--mark-ring)",
+            }}
             aria-hidden
           />
           <span className="min-w-0 flex-1 break-words font-medium">{node.phase.name}</span>
@@ -86,18 +90,13 @@ export default function MillerPhaseRow({
           {itemCount > 0 ? (
             <span className="text-xs tabular-nums text-ink-muted">{itemCount}</span>
           ) : null}
-          <svg
-            viewBox="0 0 24 24"
-            className={`h-3.5 w-3.5 transition-transform ${isOpen ? "text-ink" : "text-ink-faint"}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="m9 18 6-6-6-6" />
-          </svg>
+          <ChevronRight
+            {...kashIconProps({
+              tokenSize: "sm",
+              className: `shrink-0 transition-transform ${isOpen ? "rotate-90 text-ink" : "text-ink-faint"}`,
+              "aria-hidden": true,
+            })}
+          />
         </span>
       </button>
     </li>

@@ -122,7 +122,7 @@ export default function TaskDetail({
                 type="button"
                 onClick={() => onUpdate({ priority: p })}
                 aria-pressed={selected}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition ${
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
                   selected ? "text-on-accent bg-accent" : "text-ink-muted hover:text-ink"
                 }`}
               >
@@ -154,7 +154,9 @@ export default function TaskDetail({
               backgroundColor: task.categoryUnresolved
                 ? "transparent"
                 : categorySolidVar(task.category),
-              boxShadow: task.categoryUnresolved ? "inset 0 0 0 1.5px var(--ink-muted)" : undefined,
+              boxShadow: task.categoryUnresolved
+                ? "inset 0 0 0 1.5px var(--ink-muted)"
+                : "0 0 0 1px var(--mark-ring)",
             }}
           />
           <Select
@@ -182,7 +184,7 @@ export default function TaskDetail({
         type="button"
         onClick={onRequestDelete}
         disabled={pending}
-        className="self-start text-sm text-critical transition hover:underline disabled:opacity-50"
+        className="self-start text-sm text-critical transition hover:underline focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
       >
         Delete task
       </button>

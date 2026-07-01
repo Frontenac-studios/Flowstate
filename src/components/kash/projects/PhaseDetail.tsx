@@ -141,7 +141,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
                 type="button"
                 onClick={clearAllDates}
                 disabled={pending}
-                className="self-start text-xs text-ink-muted transition hover:text-ink disabled:opacity-50"
+                className="self-start text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
               >
                 Clear all dates (use task schedules)
               </button>
@@ -160,7 +160,7 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
         type="button"
         onClick={onRequestDelete}
         disabled={pending}
-        className="self-start text-sm text-critical transition hover:underline disabled:opacity-50"
+        className="self-start text-sm text-critical transition hover:underline focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
       >
         Delete phase
       </button>

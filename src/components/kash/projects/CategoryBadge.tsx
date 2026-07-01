@@ -15,7 +15,10 @@ export default function CategoryBadge({ category, className = "" }: Props) {
     >
       <span
         className="h-2 w-2 rounded-full"
-        style={{ backgroundColor: categorySolidVar(category) }}
+        style={{
+          backgroundColor: categorySolidVar(category),
+          boxShadow: "0 0 0 1px var(--mark-ring)",
+        }}
         aria-hidden
       />
       {meta.label}

@@ -25,12 +25,12 @@ export default function ProjectWorkspaceHeader({
   showBackToProjects = false,
 }: Props) {
   return (
-    <header className="relative z-30 flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-overlay">
+    <header className="relative z-sticky flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-overlay">
       <div className="flex flex-wrap items-center gap-3">
         {showBackToProjects ? (
           <Link
             href="/projects"
-            className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
+            className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
           >
             ← Projects
           </Link>
@@ -42,7 +42,7 @@ export default function ProjectWorkspaceHeader({
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href={`/projects/${project.id}/imports`}
-          className="text-sm text-ink-muted transition hover:text-ink"
+          className="text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
         >
           Import history →
         </Link>

@@ -26,7 +26,7 @@ export default function ProjectParsePreview({ parse }: Props) {
       {chips.map((chip) => (
         <span
           key={chip}
-          className="rounded-pill border border-border bg-surface px-1.5 py-0.5 text-[10px] text-ink-muted"
+          className="rounded-pill border border-border bg-surface px-1.5 py-0.5 text-caption text-ink-muted"
         >
           {chip}
         </span>

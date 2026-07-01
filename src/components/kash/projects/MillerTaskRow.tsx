@@ -73,7 +73,7 @@ export default function MillerTaskRow({
         type="button"
         onClick={onOpenDetail}
         aria-expanded={selected}
-        className={`line-clamp-4 min-w-0 flex-1 break-words text-left text-sm ${
+        className={`line-clamp-4 min-w-0 flex-1 break-words text-left text-sm focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
           completed ? "text-ink-muted line-through" : "text-ink"
         }`}
       >
