@@ -235,7 +235,7 @@
 }
 
 .kash-section-pulse {
-  animation: kash-section-pulse 1.5s ease-out;
+  animation: kash-section-pulse var(--motion-long) var(--ease-enter);
 }
 
 .glass-section-header {

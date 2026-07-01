@@ -189,7 +189,8 @@
     <div class="wrap">
       <h1>Care self-care library — plan at a glance</h1>
       <p class="sub">
-        Library slice only · all six decisions baked in · awaiting your approval to build.
+        Library slice only · D0–D6 decided · <b>approved &amp; recorded Jun 27</b> · build (CL1–CL5)
+        not yet started.
       </p>
 
       <div class="card">
@@ -211,16 +212,19 @@
       </div>
 
       <div class="card">
-        <h2>Data model — 2 tables + 1 join (D5)</h2>
+        <h2>Data model — 2 new tables + 1 column on tasks (D5, confirmed)</h2>
         <div class="schema">
           <div class="tbl">
             <div class="name">care_activities</div>
             <div class="col"><span>title</span><span class="ty">text</span></div>
             <div class="col"><span>theme</span><span class="ty">move…reflect</span></div>
+            <div class="col"><span>kind</span><span class="ty">enum · null (kept)</span></div>
             <div class="col"><span>cadence</span><span class="ty">enum · null</span></div>
             <div class="col"><span>note</span><span class="ty">text · null</span></div>
             <div class="col"><span>source</span><span class="ty">suggested|custom</span></div>
-            <div class="col"><span>archived_at</span><span class="ty">ts · null</span></div>
+            <div class="col">
+              <span>archived_at</span><span class="ty">ts · null (soft-remove)</span>
+            </div>
           </div>
           <div class="tbl">
             <div class="name">care_events</div>
@@ -230,8 +234,8 @@
           </div>
           <div class="tbl join">
             <div class="name">
-              care_activity_tasks &nbsp;(thin join — links a pinned practice to its task; no change
-              to the shipped tasks table)
+              tasks.care_activity_id &nbsp;(nullable FK added to the existing tasks table — links a
+              pinned practice to its spawned Body &amp; Mind task; mirrored in db-local)
             </div>
           </div>
         </div>
@@ -280,16 +284,21 @@
         </div>
       </div>
 
-      <div class="open">
-        <b>4 small things to confirm at approval:</b>
+      <div class="open" style="background: #e9f6e8; border-color: #cfe9cd">
+        <b style="color: #1f7a1b">4 approval decisions — resolved (Jun 27):</b>
         <ol>
           <li>
-            <b>Omit the <code>kind</code> column</b> for now? (theme covers grouping; add later for
-            breathing/walk deep-links)
+            <b>Keep</b> the nullable <code>kind</code> column (forward-compat for breathing/walk
+            deep-links)
           </li>
-          <li><b>Soft-remove</b> (archived_at) vs hard delete — propose soft</li>
-          <li>Pin link = <b>join table</b> (proposed) vs a column on <code>tasks</code></li>
-          <li><b>Branch base</b> — <code>main</code> or <code>feat/planning-foundation</code>?</li>
+          <li><b>Soft-remove</b> via <code>archived_at</code> (no hard delete)</li>
+          <li>
+            Pin link = <b>column on <code>tasks</code></b> (<code>tasks.care_activity_id</code>)
+          </li>
+          <li>
+            Build branch <b>off <code>main</code></b> (cut once the in-tree design-tokens work is
+            committed)
+          </li>
         </ol>
       </div>
     </div>

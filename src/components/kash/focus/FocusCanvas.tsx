@@ -220,7 +220,10 @@ export function FocusCanvas() {
   const showCategory = !task.categoryUnresolved;
 
   return (
-    <section className="relative overflow-hidden rounded-card border border-subtle bg-surface">
+    <section
+      key={taskId}
+      className="row-arrive relative overflow-hidden rounded-card border border-subtle bg-surface"
+    >
       <div className="flex min-h-[440px] flex-col sm:flex-row">
         <div className="flex flex-1 flex-col p-7 sm:p-8">
           <span className="text-caption text-ink-faint">Focus session</span>

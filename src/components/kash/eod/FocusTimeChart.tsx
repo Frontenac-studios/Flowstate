@@ -30,7 +30,7 @@ export function FocusTimeChart({ bars, overflowCount }: Props) {
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
               <div
-                className="h-full rounded-full bg-accent transition-[width] duration-300 motion-reduce:transition-none"
+                className="h-full rounded-full bg-accent transition-[width] duration-medium motion-reduce:transition-none"
                 style={{ width: `${Math.round((bar.seconds / maxSeconds) * 100)}%` }}
               />
             </div>

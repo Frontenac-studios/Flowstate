@@ -1,7 +1,9 @@
 # Kash 3.0 — Today (§6) build-finish plan
 
-> Phased plan to finish the Today page. Decisions are all closed (Jun 25–27); this is build-only,
-> bar **one sub-decision** (TD2 adaptive floor, flagged below). Phase set = **TD1–TD6**, sequenced
+> Phased plan to finish the Today page. Decisions are all closed (Jun 25–27); this is build-only.
+> **Status (Jun 30): TD1–TD5 are BUILT** — `#91` shipped TD1–TD4 (balance bar, adaptive timeline,
+> living record, wind-down) and `#94` shipped TD5 (completion choreography + Completed section). **Only
+> TD6 (motion pass) remains**, in progress on `feat/today-td6-motion`. Phase set = **TD1–TD6**, sequenced
 > low-risk → high-choreography, animation last (per `kash-3.0-animation-sweep.md` + §3 of the
 > build-breakdown). Companions: `kash-3.0-design-prompt-today.md`, `kash-3.0-animation-sweep.md`,
 > the Today decision records (`kash-3.0-today-q1/q1b/q2/q3`, `-t1/-t2/-t3.html`),
@@ -24,28 +26,31 @@
 
 ---
 
-## Current state (verified via code, Jun 30)
+## Current state (verified via code, Jun 30 — post #91 & #94)
 
-**Built:** list/calendar/review switcher, Top-3 slots + pin flight animation (`pin-to-top3.ts`),
-timeline grid (`TimelinePane`, 56px/hr) with drag-drop + protected blocks (all-day + timed),
-quick-input composer, EoD review modal/banner + Top-3 status + focus-time chart, focus mode,
-balance bar (`BalanceBar` + `category-balance.ts`), completion toggle + undo, lens engine.
+**Built (TD1–TD5):**
 
-**Gaps vs decisions:**
+- **TD1 balance bar** ✅ — Top-3-weighted, planned population, empty-category hatch + lopsided warning
+  (`category-balance.ts` now carries the weighting).
+- **TD2 adaptive timeline** ✅ — `src/lib/timeline/adaptive-window.ts` + now-line + auto-scroll-to-now.
+- **TD3 living record** ✅ — thin completion markers / now-line in `TimelinePane`.
+- **TD4 wind-down + soft nudge** ✅ — `useWindDownHour.ts` + `src/lib/eod/wind-down.ts`; the auto-open
+  modal path is replaced by the configurable wind-down + soft chip; derived Top-3 target.
+- **TD5 completion choreography + Completed section** ✅ (#94) — category-color fill → strike → slide-out
+  → settle into a persistent `CompletedSection` (cleared at local-midnight rollover).
+- Plus the prior base: list/calendar/review switcher, Top-3 slots + pin flight (`pin-to-top3.ts`),
+  drag-drop timeline + protected blocks (all-day + timed), composer, focus mode, undo, lens engine.
 
-- **Balance bar = pure count**, no Top-3 weighting, no empty-category hatch, no lopsided warning, no "mostly X" label (`category-balance.ts:33-46`).
-- **Timeline window is a fixed grid** — no adaptive fit, no now-line, no auto-scroll-to-now (`TimelinePane`).
-- **No thin completion markers** for untimed checkoffs on the Calendar.
-- **EoD review auto-opens a modal** at a **fixed** threshold hour — _violates_ Q3-D (`useEodReviewTrigger.ts:116`, `eod-constants.ts`).
-- **No wind-down anchor / Top-3 target time** anywhere; no derived deadline.
-- **Completion = in-place strikethrough**; no category-color fill, no slide-out, no persistent **Completed · n** section (AN-T1/T1b).
-- **No row arrival animation** (slide-in-from-side); pin/pulse exist but not AN-T2.
+**Remaining gap:**
+
+- **TD6 motion pass** — row arrival slide-in (AN-T2), global motion-token wiring, and `prefers-reduced-motion`
+  full respect are **not yet merged** (in progress on `feat/today-td6-motion`). This is the last Today phase.
 
 ---
 
 ## Phases
 
-### TD1 · Balance bar = real metric (Top-3 weighted, planned, warning)
+### TD1 · Balance bar = real metric (Top-3 weighted, planned, warning) — ✅ BUILT (#91)
 
 **Implements:** Q2, T3. **Lowest risk — component exists, change the data layer.**
 
@@ -62,7 +67,7 @@ the hatched Relationships segment + warning before noon. **Size: S.**
 
 ---
 
-### TD2 · Adaptive calendar window + auto-scroll to now
+### TD2 · Adaptive calendar window + auto-scroll to now — ✅ BUILT (#91)
 
 **Implements:** Q1 (+ Q1b sub-decision). **Confirm the floor before building (see below).**
 
@@ -80,7 +85,7 @@ scrolling up reveals the morning and down reveals the evening; the frame grows t
 
 ---
 
-### TD3 · Timeline as a living record
+### TD3 · Timeline as a living record — ✅ BUILT (#91)
 
 **Implements:** T2 + the `design-prompt-today` "living record" framing. Builds on TD2.
 
@@ -99,7 +104,7 @@ states are all legible and match the mockup. **Size: M–L.**
 
 ---
 
-### TD4 · Wind-down anchor + Top-3 deadline + soft EoD nudge
+### TD4 · Wind-down anchor + Top-3 deadline + soft EoD nudge — ✅ BUILT (#91)
 
 **Implements:** Q3, T1. **Includes a correction** — current EoD auto-opens, which must stop.
 
@@ -116,7 +121,7 @@ Top-3 target tracks wind-down −1h and is overridable. **Size: M.**
 
 ---
 
-### TD5 · Completion choreography + Completed section
+### TD5 · Completion choreography + Completed section — ✅ BUILT (#94)
 
 **Implements:** AN-T1, AN-T1b. Structural + motion; first of the two "animation-last" phases.
 
@@ -131,7 +136,7 @@ Completed sequence; the section survives reload until midnight; undo still works
 
 ---
 
-### TD6 · Motion pass (arrival/RDM + tokens + reduced-motion)
+### TD6 · Motion pass (arrival/RDM + tokens + reduced-motion) — 🏗️ IN PROGRESS (`feat/today-td6-motion`)
 
 **Implements:** AN-T2, AN-0a/b/c. **Last** — after surfaces are built and Design Tokens rolled out.
 
@@ -157,7 +162,8 @@ TD5 (completion/Completed section) ─ independent structurally; pairs with TD6
 TD6 (motion pass)      ─ LAST; depends on surfaces above + Design Tokens rollout
 ```
 
-Recommended order: **TD1 → TD2 → TD3 → TD4 → TD5 → TD6.** TD1 and TD4 can run in parallel with the
-TD2/TD3 track if two build sessions are available.
+Recommended order: **TD1 → TD2 → TD3 → TD4 → TD5 → TD6.** TD1–TD5 are merged (#91, #94); **only TD6
+(motion) remains**, on `feat/today-td6-motion` — and it's meant to land last, with the app-wide animation
+pass and the Design Tokens rollout.
 
-**All sub-decisions resolved — the plan is fully build-ready.**
+**Today is functionally complete; TD6 motion polish is the only open phase.**

@@ -17,6 +17,7 @@ import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
+import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
 import { useTRPC } from "@/trpc/client";
 
 import { useReveal } from "./LensProvider";
@@ -69,14 +70,13 @@ type Props = {
   reveal?: RevealFlags;
   /** Day-grouped surfaces (Today, This Week) suppress the due lens (VF5). */
   suppressDue?: boolean;
+  /** AN-T2: stagger index for Today list arrival; omit on other surfaces. */
+  arriveIndex?: number;
 };
 
 const ACTION_WIDTH_PX = 72;
 const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
-
-// AN-T1: hold the completed row on screen long enough for the slide-out to read
-// before the plan refetch unmounts it. Matches the row's transition duration.
-const COMPLETION_SLIDE_MS = 320;
+const MAX_ARRIVE_STAGGER = 12;
 
 export function TaskRow({
   task,
@@ -90,6 +90,7 @@ export function TaskRow({
   showProject = true,
   reveal,
   suppressDue = false,
+  arriveIndex,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -146,7 +147,10 @@ export function TaskRow({
   // into the Completed section.
   const invalidatePlanAfterSlide = () => {
     if (invalidateTimerRef.current) clearTimeout(invalidateTimerRef.current);
-    invalidateTimerRef.current = setTimeout(invalidatePlan, COMPLETION_SLIDE_MS);
+    invalidateTimerRef.current = setTimeout(
+      invalidatePlan,
+      readMotionDurationMs(MOTION_TOKEN.medium)
+    );
   };
 
   useEffect(
@@ -278,13 +282,22 @@ export function TaskRow({
     <li
       ref={setNodeRef}
       className={`relative overflow-hidden rounded-[var(--radius-card)] ${
+        arriveIndex != null ? "row-arrive" : ""
+      } ${
         completing
-          ? "translate-x-6 opacity-0 transition-[transform,opacity] duration-300 ease-out motion-reduce:translate-x-0"
+          ? "translate-x-6 opacity-0 transition-[transform,opacity] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
           : isDragging
             ? "opacity-60"
             : "transition-transform"
       }`}
-      style={{ transform: completing ? undefined : CSS.Transform.toString(transform) }}
+      style={{
+        transform: completing ? undefined : CSS.Transform.toString(transform),
+        ...(arriveIndex != null
+          ? {
+              animationDelay: `calc(var(--motion-micro) * ${Math.min(arriveIndex, MAX_ARRIVE_STAGGER)})`,
+            }
+          : undefined),
+      }}
     >
       <div ref={containerRef} className="relative">
         {pinEnabled ? (
@@ -332,7 +345,7 @@ export function TaskRow({
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] transition-transform duration-150 ease-out ${
+          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move ${
             task.isTop3 ? "border-l-2 border-accent" : ""
           } ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
           style={{ transform: `translateX(${offset}px)` }}

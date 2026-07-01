@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { animatePinToTop3 } from "@/lib/animate/pin-to-top3";
+import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
@@ -116,7 +117,10 @@ export function DayPlanCanvas() {
       touchActivity();
       setPulseTarget(target);
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-      pulseTimerRef.current = setTimeout(() => setPulseTarget(null), 1500);
+      pulseTimerRef.current = setTimeout(
+        () => setPulseTarget(null),
+        readMotionDurationMs(MOTION_TOKEN.long)
+      );
     },
     [touchActivity]
   );
@@ -154,7 +158,10 @@ export function DayPlanCanvas() {
     top3SectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     setTop3Highlighted(true);
     if (top3HighlightTimerRef.current) clearTimeout(top3HighlightTimerRef.current);
-    top3HighlightTimerRef.current = setTimeout(() => setTop3Highlighted(false), 1500);
+    top3HighlightTimerRef.current = setTimeout(
+      () => setTop3Highlighted(false),
+      readMotionDurationMs(MOTION_TOKEN.long)
+    );
   }, []);
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());

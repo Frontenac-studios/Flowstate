@@ -10,7 +10,7 @@ type Props = {
 export function EodReviewBanner({ variant, onOpen, onSnooze, onSkip }: Props) {
   return (
     <div
-      className="mb-4 flex flex-wrap items-center gap-3 rounded-card border border-subtle bg-surface px-4 py-3"
+      className="row-arrive mb-4 flex flex-wrap items-center gap-3 rounded-card border border-subtle bg-surface px-4 py-3"
       role="region"
       aria-label="End of day review"
     >

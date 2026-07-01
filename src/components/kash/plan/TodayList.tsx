@@ -1,6 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { useEffect, useRef, useState } from "react";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
@@ -21,6 +22,42 @@ type Props = {
   onPin?: (taskId: string, sourceEl: HTMLElement) => void;
 };
 
+/**
+ * AN-T2: tracks which Today rows should play the arrival slide-in — staggered
+ * on first load, single-row when a new task lands after capture or bucket move.
+ */
+function useTodayRowArrival(tasks: PlanTaskRow[], isLoading: boolean): Map<string, number> {
+  const knownIdsRef = useRef<Set<string> | null>(null);
+  const [arriveMap, setArriveMap] = useState<Map<string, number>>(() => new Map());
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const ids = tasks.map((t) => t.id);
+
+    if (knownIdsRef.current === null) {
+      knownIdsRef.current = new Set(ids);
+      const initial = new Map<string, number>();
+      ids.forEach((id, index) => initial.set(id, index));
+      setArriveMap(initial);
+      return;
+    }
+
+    const newIds = ids.filter((id) => !knownIdsRef.current!.has(id));
+    for (const id of ids) knownIdsRef.current!.add(id);
+
+    if (newIds.length === 0) return;
+
+    setArriveMap((prev) => {
+      const next = new Map(prev);
+      for (const id of newIds) next.set(id, 0);
+      return next;
+    });
+  }, [tasks, isLoading]);
+
+  return arriveMap;
+}
+
 export function TodayList({
   pulse,
   tasks,
@@ -34,6 +71,7 @@ export function TodayList({
   onPin,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: "bucket:today" });
+  const arriveMap = useTodayRowArrival(tasks, isLoading);
 
   return (
     <section
@@ -78,6 +116,7 @@ export function TodayList({
               onDelete={onDelete}
               onPin={onPin}
               canPin={onPin != null}
+              arriveIndex={arriveMap.get(task.id)}
             />
           ))}
         </ul>
