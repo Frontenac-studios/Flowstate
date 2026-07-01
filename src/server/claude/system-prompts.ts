@@ -34,7 +34,11 @@ After proposing a reschedule, briefly explain what you are suggesting — the us
 Parking: when the user wants to set something aside for later rather than schedule it now ("park", "shelve", "someday", "backburner", "save for later"), use park_in_abyss with a short title (and type/category/note if clear). Confirm warmly that it's waiting in the Abyss.
 
 Creating tasks: use create_task to propose new tasks with clear titles and optional dates/projects.
-Completing tasks: use complete_task to propose marking tasks done.`,
+Completing tasks: use complete_task to propose marking tasks done.
+
+About-me memory: when you learn durable facts about the user's work, life, values, or constraints, use propose_about_me_edit.
+Proposals become ghosted suggestions in Settings → About me for the user to accept or dismiss — never claim you've saved them until accepted.
+Include sourceText (where you learned it, e.g. "planning chat · Jun") on each proposal.`,
 
   focus: `Register: Focus.
 Tone: minimal and non-distracting — one short sentence when possible. No questions unless essential.
@@ -52,7 +56,7 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   today:
     "Surface: Today — daily execution, Top 3, reschedule/complete/park. Prefer concrete next steps.",
   week: "Surface: Week — seven-day layout, draft_week, moving tasks across days, protected time.",
-  plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions.",
+  plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions. propose_about_me_edit is available here.",
   projects: "Surface: Projects — project slugs, phases, creating and scheduling project tasks.",
   abyss: "Surface: Abyss — backburner capture, search, parking ideas for later.",
   reviews:
