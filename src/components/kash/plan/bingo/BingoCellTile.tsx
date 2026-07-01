@@ -7,6 +7,7 @@ import type { BingoCell, BingoGoal } from "@/lib/planning/bingo-grid";
 type Props = {
   cell: BingoCell;
   locked: boolean;
+  locking?: boolean;
   inWinningLine: boolean;
   busy: boolean;
   onToggleDone: (goal: BingoGoal) => void;
@@ -19,6 +20,7 @@ type Props = {
 export default function BingoCellTile({
   cell,
   locked,
+  locking = false,
   inWinningLine,
   busy,
   onToggleDone,
@@ -28,11 +30,12 @@ export default function BingoCellTile({
   onOpenGoal,
 }: Props) {
   const ring = inWinningLine ? "shadow-[0_0_0_2px_var(--ink)]" : "";
+  const lockable = locking ? "bingo-cell-lockable" : "";
 
   if (cell.kind === "free") {
     return (
       <div
-        className={`flex aspect-square flex-col items-center justify-center rounded-card border border-subtle bg-surface-2 text-ink-faint ${ring}`}
+        className={`flex aspect-square flex-col items-center justify-center rounded-card border border-subtle bg-surface-2 text-ink-faint ${ring} ${lockable}`}
       >
         <Star {...kashIconProps({ tokenSize: "lg", className: "fill-current" })} aria-hidden />
         <span className="mt-1 text-caption">Free</span>
@@ -44,7 +47,7 @@ export default function BingoCellTile({
     if (locked) {
       return (
         <div
-          className={`aspect-square rounded-card border border-dashed border-subtle bg-surface ${ring}`}
+          className={`aspect-square rounded-card border border-dashed border-subtle bg-surface ${ring} ${lockable}`}
           aria-hidden
         />
       );
@@ -53,7 +56,7 @@ export default function BingoCellTile({
       <button
         type="button"
         onClick={() => onAdd(cell.cellIndex)}
-        className={`group flex aspect-square flex-col items-center justify-center rounded-card border border-dashed border-subtle bg-surface text-ink-faint transition hover:border-ink-muted hover:text-ink-muted focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${ring}`}
+        className={`group flex aspect-square flex-col items-center justify-center rounded-card border border-dashed border-subtle bg-surface text-ink-faint transition hover:border-ink-muted hover:text-ink-muted focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${ring} ${lockable}`}
         aria-label="Add a goal to this square"
       >
         <Plus {...kashIconProps({ tokenSize: "md", className: "text-ink-muted" })} aria-hidden />
@@ -103,7 +106,7 @@ export default function BingoCellTile({
     <div
       className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-[1.5px] bg-surface p-2 ${
         backburnered ? "opacity-40" : ""
-      } ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
+      } ${ring} ${lockable} ${inWinningLine ? "bingo-line-bounce" : ""}`}
       style={{ borderColor: solid }}
     >
       <button

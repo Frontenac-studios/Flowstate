@@ -9,9 +9,11 @@ import Button from "@/components/kash/ui/Button";
 
 import { InPageSwitcher } from "../InPageSwitcher";
 import CategoryFilter, { type CategoryFilterValue } from "./CategoryFilter";
+import CompletedProjectsSection from "./CompletedProjectsSection";
 import MultiProjectCalendarView from "./MultiProjectCalendarView";
 import NewProjectForm from "./NewProjectForm";
 import ProjectCard from "./ProjectCard";
+import { useProjectFoldTransitions } from "./useProjectFoldTransitions";
 
 type IndexViewMode = "gallery" | "calendar";
 
@@ -30,6 +32,8 @@ export default function ProjectsIndex() {
     if (filter === "all") return projects;
     return projects.filter((p) => p.category === filter);
   }, [projects, filter]);
+
+  const { activeProjects, completedProjects, foldingId } = useProjectFoldTransitions(visible);
 
   return (
     <section className="flex flex-col gap-6">
@@ -93,11 +97,22 @@ export default function ProjectsIndex() {
       ) : visible.length === 0 ? (
         <p className="text-ink-muted">No projects in this category.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        <>
+          {activeProjects.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {activeProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  folding={foldingId === project.id}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-ink-muted">No active projects in this category.</p>
+          )}
+          <CompletedProjectsSection projects={completedProjects} />
+        </>
       )}
     </section>
   );

@@ -15,13 +15,19 @@ export type ProjectListItem = {
   totalWeight: number;
 };
 
-export default function ProjectCard({ project }: { project: ProjectListItem }) {
+export default function ProjectCard({
+  project,
+  folding = false,
+}: {
+  project: ProjectListItem;
+  folding?: boolean;
+}) {
   const stripe = categorySolidVar(project.category);
 
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+      className={`kash-focus-visible block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 outline-none${folding ? "project-fold-to-filed" : ""}`}
     >
       <div className="flex items-center gap-2">
         <span

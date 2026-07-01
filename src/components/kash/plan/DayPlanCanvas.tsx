@@ -252,6 +252,8 @@ export function DayPlanCanvas() {
         projectSlug: task.projectSlug,
         top3Order: task.top3Order,
         completedAt: task.completedAt,
+        category: task.category,
+        categoryUnresolved: task.categoryUnresolved,
       });
     }
     return map;
