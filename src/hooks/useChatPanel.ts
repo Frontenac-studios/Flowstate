@@ -19,8 +19,14 @@ export function useChatPanel(threadId: string) {
   const [isStreaming, setIsStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const { data: configuredData } = useQuery(trpc.chat.isConfigured.queryOptions());
-  const { data: messages = [], isLoading } = useQuery(trpc.chat.list.queryOptions({ threadId }));
+  const { data: configuredData } = useQuery({
+    ...trpc.chat.isConfigured.queryOptions(),
+    enabled: railOpen,
+  });
+  const { data: messages = [], isLoading } = useQuery({
+    ...trpc.chat.list.queryOptions({ threadId }),
+    enabled: railOpen,
+  });
 
   const appendUserMutation = useMutation(trpc.chat.appendUser.mutationOptions());
   const editUserMessageMutation = useMutation(trpc.chat.editUserMessage.mutationOptions());

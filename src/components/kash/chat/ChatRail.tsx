@@ -30,7 +30,7 @@ export function ChatRail() {
   } = useChatPanel(threadId);
   const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
     threadId,
-    showSuggestions,
+    railOpen && showSuggestions,
     sendMessage
   );
 
