@@ -53,8 +53,39 @@
   selecting just updates contents (a quick content cross-fade at most). See `kash-3.0-projects-miller.md`.
 - **Ghosted-accept (§9):** a suggestion appears dashed/faded; on **Apply** it settles to a solid, real item.
 
-## 5. Inherits the system (no bespoke motion)
+## 5. Remaining pages
 
-Week, Projects, Abyss, Settings use the base tokens + the patterns above (slide-from-side rows,
-cross-fade pages, scale-up overlays, ghosted-accept settle). The **garden-art spike** (detailed
-illustration) is a separate art task, not part of this motion sweep.
+- **Week:** task **drag = lift** (scale + shadow) on grab, settles into the day; the per-category
+  **load bar animates its fill** on change. Protected blocks place with a scale/fade.
+- **Abyss:** the **"park" drop = sink + blur** — a parked thought sinks down and softly blurs into the
+  dark list ("fading out of mind"). Dark page enters with a fade. (⌘⇧A capture = the modal family.)
+- **Projects:** completed task **mirrors Today** — category-fill check → sinks to a per-column
+  "Completed · n" group (PROJ-A). Miller columns are always present; selection cross-fades contents.
+- **Command palette (⌘K):** the **modal family** — fade + scale-in from just above center, backdrop dim.
+
+## 6. Inherits the system (no bespoke motion)
+
+Settings tabs (seg-pill slide), EoD review (gentle fades) use the base tokens + the patterns above
+(slide-from-side rows, cross-fade pages, scale-up overlays, ghosted-accept settle). The
+**garden-art spike** (detailed illustration) is a separate art task, not part of this sweep.
+
+## 7. Bespoke moments (decided Jun 30)
+
+- **AN-B1 · Focus mode timer:** a **depleting ring** (winds down as time elapses) with a slow
+  **breath pulse** — calm, not a frantic countdown. (Was FOCUS-1.)
+- **AN-B2 · Focus mode entrance:** **zoom/center** — the focused task scales up and centers, the rest
+  of the UI recedes. (Was FOCUS-2.)
+- **AN-B3 · Top-3 pin:** pinning a task **flies it to its slot** in the Top-3 tray + a small **star pop**
+  on landing. (Was PIN-1.)
+- **AN-B4 · Daily Win:** logging a win **fills the Today slot quietly inline** (no reward animation in
+  Today); the **garden-nourish reward grows only on the Care page** (per §12). (Was WINS-1.)
+- **AN-B5 · Progress roll-up:** completing a linked task **smooth-fills** the goal/milestone bar (% counts
+  up); no pulse. (Was ROLL-1.)
+
+### Still open (carry to next session)
+
+- **Project complete (100%):** _redo with 3 NEW options._ The first round (A gentle flourish / B quiet ink
+  check / C flourish + garden nourish) was **all rejected**. Bring 3 fresh directions. (PROJ-DONE.)
+- **Create-shimmer + sync pulse (offline-first D1):** optimistic new rows show a brief state until synced;
+  a shell sync indicator pulses while syncing. _Not yet decided._
+- **Bingo finalize → lock:** the visual "set" when an annual-goals card is finalized/locked. _Not yet decided._
