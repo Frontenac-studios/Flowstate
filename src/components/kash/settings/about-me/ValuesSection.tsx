@@ -10,6 +10,7 @@ import { normalizeValueLabel } from "@/lib/about-me/values";
 import { useTRPC } from "@/trpc/client";
 
 import SectionSuggestions from "./SectionSuggestions";
+import ValuesYearlyReviewBanner from "./ValuesYearlyReviewBanner";
 
 export default function ValuesSection() {
   const trpc = useTRPC();
@@ -68,6 +69,8 @@ export default function ValuesSection() {
       <p className="mb-3 text-meta text-ink-muted">
         A small set of core values Kash leans on when it plans and suggests with you.
       </p>
+
+      <ValuesYearlyReviewBanner valueCount={count} />
 
       <div className="rounded-card border border-subtle bg-surface p-4">
         {count === 0 ? (

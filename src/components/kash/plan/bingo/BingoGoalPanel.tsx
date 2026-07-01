@@ -21,6 +21,7 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
   const queryClient = useQueryClient();
 
   const detailQuery = useQuery(trpc.planning.getGoalDetail.queryOptions({ id: goalId }));
+  const valuesQuery = useQuery(trpc.aboutMe.values.list.queryOptions());
   const suggestionsQuery = useQuery(
     trpc.planning.listSuggestions.queryOptions({
       surface: "milestone_breakdown",
@@ -43,6 +44,9 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
 
   const createMilestoneMutation = useMutation(
     trpc.planning.createMilestone.mutationOptions({ onSuccess: () => invalidate() })
+  );
+  const updateGoalMutation = useMutation(
+    trpc.planning.updateGoal.mutationOptions({ onSuccess: () => invalidate() })
   );
   const removeMilestoneMutation = useMutation(
     trpc.planning.removeMilestone.mutationOptions({ onSuccess: () => invalidate() })
@@ -83,6 +87,8 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
   const detail = detailQuery.data;
   const goal = detail?.goal;
   const category = goal?.category as ProjectCategory | undefined;
+  const values = valuesQuery.data ?? [];
+  const goalValueId = goal?.valueId ?? null;
 
   const capacity = useMemo(
     () => computeGoalCapacity(detail?.taskEstimates ?? []),
@@ -154,7 +160,45 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
         <span>{detail.progressPercent}% via milestones</span>
         <span>·</span>
         <span>{goal.state === "backburnered" ? "Paused" : goal.state}</span>
+        {detail.valueLabel ? (
+          <>
+            <span>·</span>
+            <span>{detail.valueLabel}</span>
+          </>
+        ) : null}
       </div>
+
+      {values.length > 0 && !locked ? (
+        <fieldset className="flex flex-col gap-1.5">
+          <legend className="mb-1 text-caption font-medium text-ink">Value (optional)</legend>
+          <div className="flex flex-wrap gap-2">
+            {values.map((v) => {
+              const selected = goalValueId === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  disabled={updateGoalMutation.isPending}
+                  onClick={() =>
+                    updateGoalMutation.mutate({
+                      id: goal.id,
+                      valueId: selected ? null : v.id,
+                    })
+                  }
+                  aria-pressed={selected}
+                  className={`rounded-chip border px-3 py-1 text-caption font-medium transition disabled:opacity-40 ${
+                    selected
+                      ? "border-ink bg-ink text-accent-on"
+                      : "border-subtle text-ink-muted hover:text-ink"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
       {capacity.showNudge ? (
         <p className="rounded-control border border-subtle bg-surface-2 px-3 py-2 text-caption text-ink-muted">
