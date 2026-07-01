@@ -24,14 +24,29 @@
   /* ---- ink — crisp near-black ---- */
   --ink: #16181d;
   --ink-muted: #6b7280;
-  --ink-faint: #9aa0ad;
+  --ink-faint: #767e8e; /* DT-9  was #9aa0ad */
 
   /* ---- accent = black (DT-2 revised Jun 24, was graphite) ---- */
   --accent: #16181d;
   --accent-hover: #000000;
   --on-accent: #ffffff;
   --accent-soft: rgba(22, 24, 29, 0.12);
-  --focus-ring: rgba(22, 24, 29, 0.35);
+  --focus-ring: var(--ink); /* DT-14 was rgba(22,24,29,0.35) */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --mark-ring: rgba(22, 24, 29, 0.35); /* DT-10 */
+  --stripe-width: 3px; /* DT-18 */
+  --tooltip-bg: var(--ink); /* DT-16 */
+  --tooltip-ink: var(--on-accent);
+  --z-base: 0; /* DT-19 */
+  --z-sticky: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+  --icon-sm: 14px; /* DT-13 */
+  --icon-md: 16px;
+  --icon-lg: 20px;
+  --icon-xl: 24px;
 
   /* ---- active states (A2 / DT-7): soft unified gray, strictly flat (border only) ---- */
   --active-surface: #eceef1; /* nav active pill · segmented track · Week gray background */
@@ -133,15 +148,6 @@
   --breath-pulse: 2400ms;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --motion-micro: 1ms;
-    --motion-short: 160ms;
-    --motion-medium: 160ms;
-    --motion-long: 160ms;
-  }
-}
-
 @keyframes row-arrive {
   from {
     opacity: 0;
@@ -167,6 +173,20 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-micro: 1ms;
+    --motion-short: 160ms;
+    --motion-medium: 160ms;
+    --motion-long: 160ms;
+  }
+
+  /* AN-0c: looping keyframes rest at their final state */
+  .motion-loop,
+  [data-motion-loop] {
+    animation: none !important;
+  }
+
+  /* AN-0c: transform-based entrances → opacity fade at --motion-short */
   .row-arrive {
     animation: row-arrive-reduce var(--motion-short) var(--ease-enter) both;
   }

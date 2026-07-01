@@ -74,12 +74,40 @@ const config: Config = {
         chip: "var(--radius-chip)",
         pill: "var(--radius-pill)",
       },
-      backdropBlur: {
-        kash: "var(--kash-glass-blur)",
-      },
       boxShadow: {
         overlay: "var(--shadow-overlay)",
-        "glass-inset": "none",
+      },
+      zIndex: {
+        base: "var(--z-base)",
+        sticky: "var(--z-sticky)",
+        overlay: "var(--z-overlay)",
+        modal: "var(--z-modal)",
+        toast: "var(--z-toast)",
+      },
+      width: {
+        "icon-sm": "var(--icon-sm)",
+        "icon-md": "var(--icon-md)",
+        "icon-lg": "var(--icon-lg)",
+        "icon-xl": "var(--icon-xl)",
+      },
+      height: {
+        "icon-sm": "var(--icon-sm)",
+        "icon-md": "var(--icon-md)",
+        "icon-lg": "var(--icon-lg)",
+        "icon-xl": "var(--icon-xl)",
+      },
+      minWidth: {
+        "icon-sm": "var(--icon-sm)",
+        "icon-md": "var(--icon-md)",
+        "icon-lg": "var(--icon-lg)",
+        "icon-xl": "var(--icon-xl)",
+      },
+      minHeight: {
+        "icon-sm": "var(--icon-sm)",
+        "icon-md": "var(--icon-md)",
+        "icon-lg": "var(--icon-lg)",
+        "icon-xl": "var(--icon-xl)",
+        "kash-row": "var(--kash-row-min-height)",
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
@@ -92,9 +120,6 @@ const config: Config = {
         subtitle: "var(--text-subtitle)",
         title: "var(--text-title)",
         h1: "var(--text-h1)",
-      },
-      minHeight: {
-        "kash-row": "var(--kash-row-min-height)",
       },
       padding: {
         "kash-task-y": "var(--kash-task-row-py)",

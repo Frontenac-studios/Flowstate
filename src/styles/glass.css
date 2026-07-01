@@ -118,8 +118,10 @@
   field-sizing: content;
 }
 
-.glass-input:focus {
-  box-shadow: 0 0 0 2px var(--focus-ring);
+.glass-input:focus,
+.glass-input:focus-visible {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
 }
 
 .glass-btn-primary {
@@ -143,6 +145,12 @@
 
 .glass-btn-primary:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.glass-btn-primary:focus-visible {
+  background: var(--ink);
+  color: var(--on-accent);
+  outline: none;
 }
 
 .glass-btn-primary:disabled {
@@ -169,6 +177,11 @@
   color: var(--ink);
 }
 
+.glass-btn-ghost:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .glass-icon-btn {
   border-radius: var(--radius-chip);
   border: 1px solid transparent;
@@ -184,6 +197,11 @@
   border-color: var(--border);
   background: var(--surface-2);
   color: var(--ink);
+}
+
+.glass-icon-btn:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .glass-menu-item {
