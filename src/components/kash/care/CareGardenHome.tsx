@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import { formatWinLabel } from "@/lib/daily-wins/format-win-label";
@@ -11,23 +11,20 @@ import { useTRPC } from "@/trpc/client";
 import { GardenScene } from "./GardenScene";
 import { useGardenNourishPulse } from "./useGardenNourishPulse";
 
-/**
- * The garden-centric Care home: the lush garden is the hero, with today's wins,
- * what-lifts-me, and a gentle prompt beside it. Garden nourishment reflects
- * self-care check-offs, planning bingo rewards, and daily wins (DW-5).
- */
-const LIFTS = ["Morning walk", "5 slow breaths", "Tea, no screen"];
-
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
 
-export function CareGardenHome() {
+type Props = { onOpenBreathing?: () => void };
+
+export function CareGardenHome({ onOpenBreathing }: Props) {
   const trpc = useTRPC();
   const tzOffsetMinutes = useMemo(() => clientTzOffsetMinutes(), []);
   const todayIso = useMemo(() => toLocalISODate(new Date(), tzOffsetMinutes), [tzOffsetMinutes]);
+  const [promptDismissed, setPromptDismissed] = useState(false);
 
   const gardenQuery = useQuery(trpc.care.getGardenState.queryOptions());
+  const liftsQuery = useQuery(trpc.care.getLiftsMe.queryOptions());
   const nourishmentsQuery = useQuery(trpc.care.recentWinNourishments.queryOptions({ limit: 8 }));
   const dayQuery = useQuery(
     trpc.dailyWins.getDay.queryOptions({ winDate: todayIso, tzOffsetMinutes })
@@ -36,16 +33,11 @@ export function CareGardenHome() {
   const { activeBeat, pulseKey } = useGardenNourishPulse(nourishmentsQuery.data);
   const garden = gardenQuery.data;
   const slots = dayQuery.data?.slots ?? [null, null, null];
+  const lifts = liftsQuery.data ?? [];
 
   const wins = slots.map((slot, index) => {
-    if (!slot) {
-      return { key: `empty-${index}`, label: "One more to notice…", done: false };
-    }
-    return {
-      key: slot.id,
-      label: formatWinLabel(slot),
-      done: true,
-    };
+    if (!slot) return { key: `empty-${index}`, label: "One more to notice…", done: false };
+    return { key: slot.id, label: formatWinLabel(slot), done: true };
   });
 
   return (
@@ -54,10 +46,10 @@ export function CareGardenHome() {
         <GardenScene
           nourishCount={garden?.nourishCount ?? 0}
           growthTier={garden?.growthTier ?? 0}
+          lifeState={garden?.lifeState ?? "active"}
           nourishBeat={activeBeat}
           nourishPulseKey={pulseKey}
         />
-
         <div className="flex flex-col gap-3">
           <section className="rounded-card border border-subtle bg-surface p-3">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">Today&apos;s wins</h2>
@@ -85,38 +77,51 @@ export function CareGardenHome() {
               </ul>
             )}
           </section>
-
           <section className="rounded-card border border-subtle bg-surface p-3">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">What lifts me</h2>
-            <div className="flex flex-wrap gap-1.5">
-              {LIFTS.map((lift) => (
-                <span
-                  key={lift}
-                  className="rounded-chip bg-[var(--cat-body-mind-fill)] px-2.5 py-1 text-meta text-[var(--cat-body-mind-text)]"
+            {liftsQuery.isLoading ? (
+              <p className="text-meta text-ink-faint">Loading…</p>
+            ) : lifts.length === 0 ? (
+              <p className="text-meta text-ink-faint">
+                Heart a practice in Tasks, or return to regulars over time.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {lifts.map((lift) => (
+                  <span
+                    key={lift.activityId}
+                    className="rounded-chip bg-[var(--cat-body-mind-fill)] px-2.5 py-1 text-meta text-[var(--cat-body-mind-text)]"
+                  >
+                    {lift.reason === "explicit" ? "♥ " : ""}
+                    {lift.title}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+          {!promptDismissed ? (
+            <section className="rounded-card border border-subtle bg-surface-2 p-3">
+              <h2 className="mb-1.5 text-caption font-medium text-ink-muted">A gentle prompt</h2>
+              <p className="mb-2.5 text-body leading-snug text-ink">
+                You&apos;ve been heads-down a while. Want to take five slow breaths?
+              </p>
+              <div className="flex gap-2">
+                <Button type="button" className="text-caption" onClick={onOpenBreathing}>
+                  Breathe
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-caption"
+                  onClick={() => setPromptDismissed(true)}
                 >
-                  {lift}
-                </span>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-card border border-subtle bg-surface-2 p-3">
-            <h2 className="mb-1.5 text-caption font-medium text-ink-muted">A gentle prompt</h2>
-            <p className="mb-2.5 text-body leading-snug text-ink">
-              You&apos;ve been heads-down a while. Want to take five slow breaths?
-            </p>
-            <div className="flex gap-2">
-              <Button type="button" className="text-caption">
-                Breathe
-              </Button>
-              <Button type="button" variant="ghost" className="text-caption">
-                Not now
-              </Button>
-            </div>
-          </section>
+                  Not now
+                </Button>
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
-
       <p className="px-0.5 text-caption text-ink-faint">
         See your wins history and gentle trends in the Stats tab.
       </p>

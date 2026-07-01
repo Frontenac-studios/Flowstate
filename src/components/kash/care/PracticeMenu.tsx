@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
-  activity: { id: string; title: string };
+  activity: { id: string; title: string; liftsMe?: boolean };
   onClose: () => void;
   /** Open the shared create/edit dialog for this practice. */
   onEdit: () => void;
@@ -46,12 +46,23 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
         void queryClient.invalidateQueries({ queryKey: trpc.care.listActivities.queryKey() });
         // Archiving an adopted practice frees its seed key back into the catalog.
         void queryClient.invalidateQueries({ queryKey: trpc.care.catalog.queryKey() });
+        void queryClient.invalidateQueries({ queryKey: trpc.care.getLiftsMe.queryKey() });
         onClose();
       },
     })
   );
 
-  const busy = addToMyDay.isPending || archive.isPending;
+  const toggleLiftsMe = useMutation(
+    trpc.care.toggleLiftsMe.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: trpc.care.listActivities.queryKey() });
+        void queryClient.invalidateQueries({ queryKey: trpc.care.getLiftsMe.queryKey() });
+        onClose();
+      },
+    })
+  );
+
+  const busy = addToMyDay.isPending || archive.isPending || toggleLiftsMe.isPending;
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
@@ -115,6 +126,42 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
           <button
             type="button"
             role="menuitem"
+            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
+            disabled={busy}
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+          >
+            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
+            disabled={busy}
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+          >
+            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
+            disabled={busy}
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+          >
+            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
+            disabled={busy}
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+          >
+            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
             onClick={onEdit}
             disabled={busy}
             className="flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
@@ -132,7 +179,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
           </button>
         </>
       )}
-      {addToMyDay.isError || archive.isError ? (
+      {addToMyDay.isError || archive.isError || toggleLiftsMe.isError ? (
         <p className="px-2 py-1 text-caption text-critical">Something went wrong — try again.</p>
       ) : null}
     </div>

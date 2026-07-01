@@ -6,14 +6,19 @@ import { db } from "@/db";
 import {
   syncCareActivityRow,
   syncCareEventRow,
+  syncCareReflectionRow,
   syncRecurrenceRow,
   syncTaskRow,
 } from "@/db/record-sync-mutation";
-import { careActivities, careEvents, taskRecurrence, tasks } from "@/db/tables";
-import { CARE_CADENCES, CARE_KINDS, CARE_THEMES } from "@/db/schema/care-enums";
+import { careActivities, careEvents, careReflections, taskRecurrence, tasks } from "@/db/tables";
+import { CARE_CADENCES, CARE_KINDS, CARE_THEMES, REFLECTION_SCOPES } from "@/db/schema/care-enums";
 import { availableCatalog, isCatalogKey } from "@/lib/care/catalog";
 import { cadenceToRRule } from "@/lib/care/cadence";
+import { buildCareStatsSummary } from "@/lib/care/care-stats";
+import { deriveLiftsMe } from "@/lib/care/lifts-me";
 import { extraPlantCount, gardenGrowthTier } from "@/lib/care/garden-growth";
+import { gardenLifeState } from "@/lib/care/garden-dormancy";
+import { formatReflectionPrompt, templateReflectionPrompt } from "@/lib/care/reflection-prompt";
 import { SEED_CATALOG } from "@/lib/care/seed-catalog";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import type { CareEventDailyWinMeta } from "@/db/schema/care-events";
@@ -23,6 +28,9 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 const themeSchema = z.enum(CARE_THEMES);
 const kindSchema = z.enum(CARE_KINDS);
 const cadenceSchema = z.enum(CARE_CADENCES);
+const reflectionScopeSchema = z.enum(REFLECTION_SCOPES);
+const localDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const moodSchema = z.number().int().min(1).max(5);
 
 /** Seed lookup for Adopt — copy a catalog entry's frozen fields onto the new row. */
 const SEED_BY_KEY = new Map(SEED_CATALOG.map((practice) => [practice.key, practice]));
@@ -266,12 +274,21 @@ export const careRouter = createTRPCRouter({
   // plus a recurrence row when the practice carries a cadence. Mirrors the task +
   // recurrence creation path in tasks.create (category forced to body_mind here).
   addToMyDay: protectedProcedure
-    .input(z.object({ activityId: z.string().uuid() }))
+    .input(
+      z.object({
+        activityId: z.string().uuid(),
+        /** Pin to a calendar day (defaults to today). */
+        scheduledDate: localDateSchema.optional(),
+        /** Override cadence-derived repeat; null = one-off. */
+        rrule: z.string().trim().min(1).max(500).nullable().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const activity = await getOwnedActivity(ctx.userId, input.activityId);
 
       const todayIso = toISODateString(startOfLocalDay());
-      const rrule = cadenceToRRule(activity.cadence);
+      const pinDate = input.scheduledDate ?? todayIso;
+      const rrule = input.rrule !== undefined ? input.rrule : cadenceToRRule(activity.cadence);
 
       const [task] = await db
         .insert(tasks)
@@ -282,7 +299,7 @@ export const careRouter = createTRPCRouter({
           category: "body_mind",
           categoryUnresolved: false,
           careActivityId: activity.id,
-          scheduledDate: rrule ? null : todayIso,
+          scheduledDate: rrule ? null : pinDate,
         })
         .returning();
 
@@ -300,7 +317,7 @@ export const careRouter = createTRPCRouter({
             userId: ctx.userId,
             taskId: task.id,
             rrule,
-            startDate: todayIso,
+            startDate: pinDate,
           })
           .returning();
 
@@ -324,18 +341,257 @@ export const careRouter = createTRPCRouter({
 
   /** Garden nourishment totals — practice check-offs, bingo lines, and daily wins. */
   getGardenState: protectedProcedure.query(async ({ ctx }) => {
-    const [row] = await db
+    const [countRow] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(careEvents)
       .where(eq(careEvents.userId, ctx.userId));
 
-    const nourishCount = row?.count ?? 0;
+    const [lastActiveRow] = await db
+      .select({ occurredAt: careEvents.occurredAt })
+      .from(careEvents)
+      .where(eq(careEvents.userId, ctx.userId))
+      .orderBy(desc(careEvents.occurredAt))
+      .limit(1);
+
+    const nourishCount = countRow?.count ?? 0;
+    const lastActiveAt = lastActiveRow?.occurredAt ?? null;
+    const lifeState = gardenLifeState({ lastActiveAt });
+
     return {
       nourishCount,
       growthTier: gardenGrowthTier(nourishCount),
       extraPlants: extraPlantCount(nourishCount),
+      lastActiveAt,
+      lifeState,
     };
   }),
+
+  /** Self-care frequency + mood trend for the Stats tab. */
+  getStatsSummary: protectedProcedure
+    .input(z.object({ days: z.number().int().min(7).max(30).default(14) }))
+    .query(async ({ ctx, input }) => {
+      const windowStart = new Date();
+      windowStart.setHours(0, 0, 0, 0);
+      windowStart.setDate(windowStart.getDate() - (input.days - 1));
+
+      const [events, reflections] = await Promise.all([
+        db
+          .select({ occurredAt: careEvents.occurredAt })
+          .from(careEvents)
+          .where(and(eq(careEvents.userId, ctx.userId), gte(careEvents.occurredAt, windowStart))),
+        db
+          .select({
+            reflectionDate: careReflections.reflectionDate,
+            mood: careReflections.mood,
+          })
+          .from(careReflections)
+          .where(
+            and(
+              eq(careReflections.userId, ctx.userId),
+              gte(careReflections.reflectionDate, toISODateString(windowStart))
+            )
+          ),
+      ]);
+
+      return buildCareStatsSummary({ events, reflections, windowDays: input.days });
+    }),
+
+  /** "What lifts me" — explicit hearts + regulars from care_events frequency. */
+  getLiftsMe: protectedProcedure.query(async ({ ctx }) => {
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - 30);
+
+    const [activities, events] = await Promise.all([
+      db
+        .select({
+          id: careActivities.id,
+          title: careActivities.title,
+          liftsMe: careActivities.liftsMe,
+        })
+        .from(careActivities)
+        .where(and(eq(careActivities.userId, ctx.userId), isNull(careActivities.archivedAt))),
+      db
+        .select({ activityId: careEvents.activityId, occurredAt: careEvents.occurredAt })
+        .from(careEvents)
+        .where(and(eq(careEvents.userId, ctx.userId), gte(careEvents.occurredAt, windowStart))),
+    ]);
+
+    return deriveLiftsMe({ activities, events });
+  }),
+
+  toggleLiftsMe: protectedProcedure
+    .input(z.object({ id: z.string().uuid(), liftsMe: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedActivity(ctx.userId, input.id);
+
+      const [row] = await db
+        .update(careActivities)
+        .set({ liftsMe: input.liftsMe, updatedAt: new Date() })
+        .where(and(eq(careActivities.id, input.id), eq(careActivities.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update practice.",
+        });
+      }
+
+      await syncCareActivityRow(row.id, "update", row);
+      return row;
+    }),
+
+  logBreathingSession: protectedProcedure
+    .input(
+      z.object({
+        preset: z.enum(["box4", "relax4-6"]),
+        cycles: z.number().int().min(1).max(20),
+        durationSeconds: z.number().int().min(1).max(3600),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const durationMinutes = Math.max(1, Math.round(input.durationSeconds / 60));
+
+      const [row] = await db
+        .insert(careEvents)
+        .values({
+          userId: ctx.userId,
+          activityId: null,
+          source: "breathing",
+          durationMinutes,
+          meta: { preset: input.preset, cycles: input.cycles },
+        })
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to log breathing session.",
+        });
+      }
+
+      await syncCareEventRow(row.id, "insert", row);
+      return row;
+    }),
+
+  getReflectionPrompt: protectedProcedure
+    .input(z.object({ reflectionDate: localDateSchema.optional() }))
+    .query(async ({ input }) => {
+      const reflectionDate = input.reflectionDate ?? toISODateString(startOfLocalDay());
+      const frame = templateReflectionPrompt(reflectionDate);
+      return {
+        reflectionDate,
+        scope: "daily" as const,
+        promptText: formatReflectionPrompt(frame),
+        frame,
+      };
+    }),
+
+  getReflectionForDate: protectedProcedure
+    .input(
+      z.object({
+        reflectionDate: localDateSchema,
+        scope: reflectionScopeSchema.default("daily"),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const [row] = await db
+        .select()
+        .from(careReflections)
+        .where(
+          and(
+            eq(careReflections.userId, ctx.userId),
+            eq(careReflections.reflectionDate, input.reflectionDate),
+            eq(careReflections.scope, input.scope)
+          )
+        )
+        .limit(1);
+
+      return row ?? null;
+    }),
+
+  saveReflection: protectedProcedure
+    .input(
+      z.object({
+        reflectionDate: localDateSchema,
+        scope: reflectionScopeSchema.default("daily"),
+        promptText: z.string().trim().min(1).max(4000),
+        bodyText: z.string().trim().max(8000).nullable().optional(),
+        mood: moodSchema.nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await db
+        .select({ id: careReflections.id })
+        .from(careReflections)
+        .where(
+          and(
+            eq(careReflections.userId, ctx.userId),
+            eq(careReflections.reflectionDate, input.reflectionDate),
+            eq(careReflections.scope, input.scope)
+          )
+        )
+        .limit(1);
+
+      const now = new Date();
+      const values = {
+        userId: ctx.userId,
+        reflectionDate: input.reflectionDate,
+        scope: input.scope,
+        promptText: input.promptText,
+        bodyText: input.bodyText ?? null,
+        mood: input.mood ?? null,
+        updatedAt: now,
+      };
+
+      if (existing) {
+        const [row] = await db
+          .update(careReflections)
+          .set(values)
+          .where(eq(careReflections.id, existing.id))
+          .returning();
+
+        if (!row) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update reflection.",
+          });
+        }
+
+        await syncCareReflectionRow(row.id, "update", row);
+        return row;
+      }
+
+      const [row] = await db.insert(careReflections).values(values).returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to save reflection.",
+        });
+      }
+
+      await syncCareReflectionRow(row.id, "insert", row);
+      return row;
+    }),
+
+  listReflectionArchive: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(30).default(14) }))
+    .query(async ({ ctx, input }) => {
+      return db
+        .select({
+          id: careReflections.id,
+          reflectionDate: careReflections.reflectionDate,
+          scope: careReflections.scope,
+          bodyText: careReflections.bodyText,
+          mood: careReflections.mood,
+          updatedAt: careReflections.updatedAt,
+        })
+        .from(careReflections)
+        .where(eq(careReflections.userId, ctx.userId))
+        .orderBy(desc(careReflections.reflectionDate), desc(careReflections.updatedAt))
+        .limit(input.limit);
+    }),
 
   /** Recent daily-win nourishments for Care-only garden animation (AN-C3). */
   recentWinNourishments: protectedProcedure

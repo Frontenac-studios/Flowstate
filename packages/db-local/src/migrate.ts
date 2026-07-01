@@ -500,7 +500,7 @@ CREATE TABLE IF NOT EXISTS care_reflections (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
   reflection_date TEXT NOT NULL,
-  scope TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'daily',
   prompt_text TEXT NOT NULL,
   body_text TEXT NOT NULL DEFAULT '',
   mood INTEGER,
@@ -559,6 +559,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "tasks", column: "care_activity_id", definition: "TEXT" },
   { table: "care_activities", column: "lifts_me", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "app_settings", column: "last_used_category", definition: "TEXT" },
+  { table: "care_activities", column: "lifts_me", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "app_settings", column: "abyss_archive_after_days", definition: "INTEGER" },
 ];
 

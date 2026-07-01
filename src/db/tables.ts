@@ -8,6 +8,7 @@ import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
 import { careActivities as pgCareActivities } from "./schema/care-activities";
 import { careEvents as pgCareEvents } from "./schema/care-events";
+import { careReflections as pgCareReflections } from "./schema/care-reflections";
 import { goalMilestones as pgGoalMilestones } from "./schema/goal-milestones";
 import { goals as pgGoals } from "./schema/goals";
 import { monthIntentions as pgMonthIntentions } from "./schema/month-intentions";
@@ -134,6 +135,9 @@ export const careActivities = (
 export const careEvents = (
   isSqliteMode() ? sqliteSchema.careEvents : pgCareEvents
 ) as typeof pgCareEvents;
+export const careReflections = (
+  isSqliteMode() ? sqliteSchema.careReflections : pgCareReflections
+) as typeof pgCareReflections;
 export const weekDayPriorities = (
   isSqliteMode() ? sqliteSchema.weekDayPriorities : pgWeekDayPriorities
 ) as typeof pgWeekDayPriorities;

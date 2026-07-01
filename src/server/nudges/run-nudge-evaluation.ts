@@ -129,14 +129,12 @@ export async function runNudgeEvaluation(params: {
   let fired = false;
   if (stallEvaluation.shouldFireStallNudge) {
     try {
-      await db
-        .insert(nudgeEvents)
-        .values({
-          userId,
-          kind: "top3_stall",
-          localDate,
-          taskIds: stallEvaluation.stalledTasks.map((t) => t.id),
-        });
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "top3_stall",
+        localDate,
+        taskIds: stallEvaluation.stalledTasks.map((t) => t.id),
+      });
       chips.push({
         kind: "top3_stall",
         message: templateStallChipMessage(
