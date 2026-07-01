@@ -30,6 +30,8 @@ export type PlanTaskRow = {
   projectSlug: string | null;
   projectName: string | null;
   isTop3: boolean;
+  /** Week day-priority slot (1–3) when pinned for a weekday (WD1). */
+  dayPriorityOrder?: number | null;
   // Optional so list builders that don't yet select category still type-check;
   // surfaced under the category lens as the life-area stripe (1.4b) or neutral
   // marker (1.4d).
@@ -103,7 +105,7 @@ export function TaskRow({
   const [completing, setCompleting] = useState(false);
   const rowContentRef = useRef<HTMLDivElement>(null);
   const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pinEnabled = canPin && !task.isTop3 && onPin != null;
+  const pinEnabled = canPin && !task.isTop3 && !task.dayPriorityOrder && onPin != null;
 
   // Clean by default; indicators reveal per active lens (VF-2). The surrounding
   // LensProvider renders clean on the server / first paint, then hydrates from

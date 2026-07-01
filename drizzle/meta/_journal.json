@@ -148,6 +148,13 @@
       "when": 1782921027098,
       "tag": "0020_high_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1782924091665,
+      "tag": "0021_familiar_mephisto",
+      "breakpoints": true
     }
   ]
 }

@@ -41,6 +41,7 @@ import {
   type WeekDraftAssignment,
 } from "@/lib/week/validate-week-draft-assignments";
 import { applyScheduleBatch } from "@/server/tasks/apply-schedule-batch";
+import { clearWeekDayPrioritiesForTask } from "./week-day-priorities";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -493,6 +494,10 @@ export const tasksRouter = createTRPCRouter({
           message: "Failed to schedule task.",
         });
       }
+
+      await clearWeekDayPrioritiesForTask(ctx.userId, input.id, {
+        exceptDate: input.scheduledDate ?? undefined,
+      });
 
       return row;
     }),

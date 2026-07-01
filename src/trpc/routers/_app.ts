@@ -22,6 +22,7 @@ import { tasksRouter } from "./tasks";
 import { timeEntriesRouter } from "./time-entries";
 import { syncRouter } from "./sync";
 import { weekDraftRouter } from "./week-draft";
+import { weekDayPrioritiesRouter } from "./week-day-priorities";
 
 export const appRouter = createTRPCRouter({
   hello: baseProcedure.input(z.object({ text: z.string() })).query((opts) => {
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   tasks: tasksRouter,
   timeEntries: timeEntriesRouter,
   weekDraft: weekDraftRouter,
+  weekDayPriorities: weekDayPrioritiesRouter,
 });
 
 export type AppRouter = typeof appRouter;

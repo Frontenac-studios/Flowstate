@@ -142,6 +142,24 @@ CREATE INDEX IF NOT EXISTS protected_blocks_user_id_scheduled_date_idx
 CREATE INDEX IF NOT EXISTS protected_blocks_user_id_updated_at_idx
   ON protected_blocks (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS week_day_priorities (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  scheduled_date TEXT NOT NULL,
+  priority_order INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS week_day_priorities_user_id_scheduled_date_idx
+  ON week_day_priorities (user_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS week_day_priorities_user_id_updated_at_idx
+  ON week_day_priorities (user_id, updated_at);
+CREATE UNIQUE INDEX IF NOT EXISTS week_day_priorities_user_date_slot_uidx
+  ON week_day_priorities (user_id, scheduled_date, priority_order);
+CREATE UNIQUE INDEX IF NOT EXISTS week_day_priorities_user_task_date_uidx
+  ON week_day_priorities (user_id, task_id, scheduled_date);
+
 CREATE TABLE IF NOT EXISTS focus_blocks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

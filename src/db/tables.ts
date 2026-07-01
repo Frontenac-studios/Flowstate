@@ -32,6 +32,7 @@ import { taskDependencies as pgTaskDependencies } from "./schema/task-dependenci
 import { taskOccurrenceOverrides as pgTaskOccurrenceOverrides } from "./schema/task-occurrence-overrides";
 import { taskRecurrence as pgTaskRecurrence } from "./schema/task-recurrence";
 import { tasks as pgTasks } from "./schema/tasks";
+import { weekDayPriorities as pgWeekDayPriorities } from "./schema/week-day-priorities";
 import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
 
 import { isSqliteMode } from "./mode";
@@ -125,3 +126,6 @@ export const careActivities = (
 export const careEvents = (
   isSqliteMode() ? sqliteSchema.careEvents : pgCareEvents
 ) as typeof pgCareEvents;
+export const weekDayPriorities = (
+  isSqliteMode() ? sqliteSchema.weekDayPriorities : pgWeekDayPriorities
+) as typeof pgWeekDayPriorities;

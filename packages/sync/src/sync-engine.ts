@@ -14,6 +14,7 @@ import {
   projects,
   protectedBlockTemplates,
   protectedBlocks,
+  weekDayPriorities,
   quarterThemes,
   reservedDays,
   syncWatermarks,
@@ -278,6 +279,22 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(protectedBlocks.id, id));
       else await db.insert(protectedBlocks).values(mapped as never);
+      return true;
+    }
+    case "week_day_priorities": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(weekDayPriorities)
+        .where(eq(weekDayPriorities.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(weekDayPriorities)
+          .set(mapped as never)
+          .where(eq(weekDayPriorities.id, id));
+      else await db.insert(weekDayPriorities).values(mapped as never);
       return true;
     }
     case "category_settings": {
