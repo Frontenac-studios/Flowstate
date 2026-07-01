@@ -11,6 +11,7 @@ npm run desktop:dev  # Tauri window + Next dev server (SQLite offline mode)
 ```
 
 `desktop:dev` automatically sets `DATABASE_MODE=sqlite`, `KASH_DESKTOP=1`, and `KASH_DATA_DIR` (default `~/Library/Application Support/com.frontenac.kash`) so local saves and sync match the release build. Supabase env vars in `.env.local` are still required for auth and sync when online.
+**Stale `.next` cache:** If the web or desktop dev server shows odd HMR or build errors after switching branches or config, delete the Next cache and restart: `npm run dev:clean` (from repo root; same as `npm run dev` but removes `.next` first).
 
 If you previously used the old `~/Library/Application Support/Kash` path, move `kash.db` into the new directory once.
 
