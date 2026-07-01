@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
+import Checkbox from "@/components/kash/ui/Checkbox";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
 import { proposalHeadline } from "@/lib/chat/proposed-actions";
 
@@ -54,8 +55,7 @@ export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss
           const checked = enabledIds.has(item.itemId);
           return (
             <li key={item.itemId} className="flex items-start gap-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 id={`proposal-${item.itemId}`}
                 checked={checked}
                 disabled={busy}

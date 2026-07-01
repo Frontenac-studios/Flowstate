@@ -4,6 +4,8 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import Checkbox from "@/components/kash/ui/Checkbox";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 
 import type { ProjectTask } from "./types";
@@ -61,12 +63,12 @@ export default function MillerTaskRow({
         isDragging ? "opacity-50" : ""
       } ${isOver ? "border-t-2 border-ink" : "border-t-2 border-transparent"}`}
     >
-      <input
-        type="checkbox"
+      <Checkbox
         checked={completed}
         onChange={onToggleComplete}
         onClick={(e) => e.stopPropagation()}
         aria-label={completed ? "Mark task incomplete" : "Mark task complete"}
+        accentColor={task.categoryUnresolved ? "var(--ink)" : categorySolidVar(task.category)}
         className="shrink-0"
       />
       <button

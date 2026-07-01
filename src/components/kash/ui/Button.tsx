@@ -14,8 +14,7 @@ import { cn } from "@/lib/cn";
  */
 export type ButtonVariant = "primary" | "ghost" | "destructive";
 
-const FOCUS_VISIBLE =
-  "outline-none focus-visible:outline focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-[var(--focus-ring-offset)]";
+const FOCUS_VISIBLE = "kash-focus-visible outline-none";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: cn(
