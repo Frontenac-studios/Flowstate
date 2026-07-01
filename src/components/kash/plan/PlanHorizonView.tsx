@@ -20,6 +20,7 @@ import { InPageSwitcher } from "../InPageSwitcher";
 import BingoCard from "./bingo/BingoCard";
 import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
+import MonthView from "./month/MonthView";
 import QuarterView from "./quarter/QuarterView";
 import YearView from "./year/YearView";
 
@@ -142,9 +143,10 @@ export function PlanHorizonView() {
   }, [horizon]);
 
   const showQuarterDrill = horizon === "quarter" && breadcrumb.quarter != null;
+  const showMonthDrill = horizon === "month" && breadcrumb.month != null;
   const showPlaceholder =
     horizon === "week" ||
-    horizon === "month" ||
+    (horizon === "month" && breadcrumb.month == null) ||
     (horizon === "quarter" && breadcrumb.quarter == null);
 
   return (
@@ -173,6 +175,8 @@ export function PlanHorizonView() {
           quarter={breadcrumb.quarter!}
           onZoomMonth={handleZoomMonth}
         />
+      ) : showMonthDrill ? (
+        <MonthView year={breadcrumb.year} month={breadcrumb.month!} />
       ) : showPlaceholder ? (
         <PlanHorizonPlaceholder horizon={horizon} />
       ) : null}

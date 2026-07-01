@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncPlanningRow } from "@/db/record-sync-mutation";
+import { syncPlanningRow, syncProtectedBlockRow } from "@/db/record-sync-mutation";
 import {
   bingoCards,
   goalMilestones,
@@ -12,6 +12,7 @@ import {
   phases,
   planningSuggestions,
   projects,
+  protectedBlocks,
   quarterThemes,
   reservedDays,
   taskTimeEntries,
@@ -24,7 +25,12 @@ import {
   type MilestoneProgress,
 } from "@/lib/planning/goal-progress";
 import { aggregateYearActivity } from "@/lib/planning/year-heat";
+import { mockReservedDayDate } from "@/lib/planning/month-calendar";
 import { monthsForQuarter } from "@/lib/planning/quarter-months";
+import {
+  defaultReservedDayLabel,
+  protectedBlockCategoryForReservedDay,
+} from "@/lib/planning/reserved-day-category";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 
@@ -624,6 +630,24 @@ export const planningRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const existing = await db
+        .select({ id: reservedDays.id })
+        .from(reservedDays)
+        .where(
+          and(
+            eq(reservedDays.userId, ctx.userId),
+            eq(reservedDays.year, input.year),
+            eq(reservedDays.month, input.month)
+          )
+        );
+
+      if (existing.length >= 2) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At most two reserved days per month.",
+        });
+      }
+
       const [row] = await db
         .insert(reservedDays)
         .values({
@@ -639,6 +663,80 @@ export const planningRouter = createTRPCRouter({
       if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await syncRow("reserved_days", row.id, "insert", row);
       return row;
+    }),
+
+  updateReservedDay: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        label: z.string().max(200).nullable().optional(),
+        resolvedDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const patch: Record<string, unknown> = { updatedAt: now };
+      if (input.label !== undefined) patch.label = input.label;
+      if (input.resolvedDate !== undefined) patch.resolvedDate = input.resolvedDate;
+
+      const [row] = await db
+        .update(reservedDays)
+        .set(patch)
+        .where(and(eq(reservedDays.id, input.id), eq(reservedDays.userId, ctx.userId)))
+        .returning();
+
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      await syncRow("reserved_days", row.id, "update", row);
+      return row;
+    }),
+
+  resolveReservedDay: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        resolvedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [slot] = await db
+        .select()
+        .from(reservedDays)
+        .where(and(eq(reservedDays.id, input.id), eq(reservedDays.userId, ctx.userId)))
+        .limit(1);
+
+      if (!slot) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const category = protectedBlockCategoryForReservedDay(slot.type);
+      const label = slot.label ?? defaultReservedDayLabel(slot.type);
+
+      const [block] = await db
+        .insert(protectedBlocks)
+        .values({
+          userId: ctx.userId,
+          category,
+          scheduledDate: input.resolvedDate,
+          label,
+          status: "proposed",
+        })
+        .returning();
+
+      if (!block) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await syncProtectedBlockRow(block.id, "insert", block);
+
+      const [row] = await db
+        .update(reservedDays)
+        .set({ resolvedDate: input.resolvedDate, updatedAt: now })
+        .where(eq(reservedDays.id, slot.id))
+        .returning();
+
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      await syncRow("reserved_days", row.id, "update", row);
+      return { reservedDay: row, protectedBlock: block };
     }),
 
   removeReservedDay: protectedProcedure
@@ -1043,6 +1141,63 @@ export const planningRouter = createTRPCRouter({
       return rows.filter(Boolean);
     }),
 
+  suggestReservedDayDates: protectedProcedure
+    .input(z.object({ year: yearSchema, month: monthSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const slots = await db
+        .select()
+        .from(reservedDays)
+        .where(
+          and(
+            eq(reservedDays.userId, ctx.userId),
+            eq(reservedDays.year, input.year),
+            eq(reservedDays.month, input.month)
+          )
+        );
+
+      const unresolved = slots.filter((slot) => !slot.resolvedDate);
+      if (unresolved.length === 0) return [];
+
+      const taken = new Set(
+        slots.flatMap((slot) => (slot.resolvedDate ? [slot.resolvedDate] : []))
+      );
+
+      const rows = await Promise.all(
+        unresolved.map(async (slot) => {
+          const suggestedDate = mockReservedDayDate(input.year, input.month, slot.type, taken);
+          if (!suggestedDate) return null;
+          taken.add(suggestedDate);
+
+          const label = slot.label ?? defaultReservedDayLabel(slot.type);
+          const category = protectedBlockCategoryForReservedDay(slot.type);
+
+          const [row] = await db
+            .insert(planningSuggestions)
+            .values({
+              userId: ctx.userId,
+              surface: "reserved_day",
+              payload: {
+                year: input.year,
+                month: input.month,
+                reservedDayId: slot.id,
+                suggestedDate,
+                label,
+                type: slot.type,
+                category,
+              },
+            })
+            .returning();
+          return row;
+        })
+      );
+
+      for (const row of rows) {
+        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
+      }
+
+      return rows.filter(Boolean);
+    }),
+
   applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
     const now = new Date();
     const staged = await db
@@ -1089,6 +1244,38 @@ export const planningRouter = createTRPCRouter({
             .where(and(eq(goals.id, payload.goalId), eq(goals.userId, ctx.userId)))
             .returning();
           if (updated) await syncRow("goals", updated.id, "update", updated);
+        }
+      }
+
+      if (row.surface === "reserved_day") {
+        const payload = row.payload as {
+          reservedDayId?: string;
+          suggestedDate?: string;
+          label?: string;
+          category?: (typeof PROJECT_CATEGORIES)[number];
+        };
+        if (payload.reservedDayId && payload.suggestedDate && payload.category) {
+          const [block] = await db
+            .insert(protectedBlocks)
+            .values({
+              userId: ctx.userId,
+              category: payload.category,
+              scheduledDate: payload.suggestedDate,
+              label: payload.label ?? null,
+              status: "proposed",
+            })
+            .returning();
+          if (block) await syncProtectedBlockRow(block.id, "insert", block);
+
+          const [updatedReserved] = await db
+            .update(reservedDays)
+            .set({ resolvedDate: payload.suggestedDate, updatedAt: now })
+            .where(
+              and(eq(reservedDays.id, payload.reservedDayId), eq(reservedDays.userId, ctx.userId))
+            )
+            .returning();
+          if (updatedReserved)
+            await syncRow("reserved_days", updatedReserved.id, "update", updatedReserved);
         }
       }
     }
