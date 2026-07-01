@@ -15,6 +15,9 @@ import type { RouterOutputs } from "@/trpc/client";
 
 type CareActivity = RouterOutputs["care"]["listActivities"][number];
 
+const THEME_CHIP_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
+
 type Props = {
   /** Editing an existing practice, or `null`/absent to create a new custom one. */
   activity?: CareActivity | null;
@@ -108,7 +111,7 @@ export default function CreatePracticeDialog({ activity, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -121,13 +124,13 @@ export default function CreatePracticeDialog({ activity, onClose }: Props) {
         aria-labelledby="practice-dialog-title"
         className="relative z-10 w-full max-w-md rounded-card border border-border bg-surface p-6 shadow-overlay"
       >
-        <h2 id="practice-dialog-title" className="text-lg font-semibold text-ink">
+        <h2 id="practice-dialog-title" className="text-title font-semibold text-ink">
           {isEdit ? "Edit practice" : "New practice"}
         </h2>
 
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="practice-title" className="text-sm font-medium text-ink">
+            <label htmlFor="practice-title" className="text-meta font-medium text-ink">
               Title
             </label>
             <Input
@@ -153,7 +156,7 @@ export default function CreatePracticeDialog({ activity, onClose }: Props) {
                     type="button"
                     onClick={() => setTheme(value)}
                     aria-pressed={selected}
-                    className={`rounded-chip border px-3 py-1 text-sm font-medium transition ${
+                    className={`rounded-chip border px-3 py-1 text-body font-medium transition ${THEME_CHIP_FOCUS} ${
                       selected
                         ? "border-ink bg-surface-2 text-ink"
                         : "border-subtle text-ink-muted hover:text-ink"
@@ -198,7 +201,7 @@ export default function CreatePracticeDialog({ activity, onClose }: Props) {
           </div>
 
           {error ? (
-            <p role="alert" className="text-sm text-critical">
+            <p role="alert" className="text-body text-critical">
               {error}
             </p>
           ) : null}

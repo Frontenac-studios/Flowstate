@@ -3,13 +3,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { Hash, Lightbulb, Plus, SquareCheck, X, withKashIcon } from "@/components/kash/ui/icon";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
-import { CloseIcon, HashIcon, IdeaIcon, PlusIcon, TaskIcon } from "./icons";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
 import { useAbyssTagSuggest } from "./useAbyssTagSuggest";
+
+const IdeaIcon = withKashIcon(Lightbulb);
+const TaskIcon = withKashIcon(SquareCheck);
+const PlusIcon = withKashIcon(Plus);
+const HashIcon = withKashIcon(Hash);
+const CloseIcon = withKashIcon(X);
+const ABYSS_INPUT_FOCUS = "focus:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]";
+const ABYSS_BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
 type AbyssType = "idea" | "task";
 
@@ -65,7 +74,7 @@ export default function AbyssComposer() {
       type="button"
       onClick={() => setType(value)}
       aria-pressed={type === value}
-      className={`flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-meta transition-colors ${
+      className={`flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-meta transition-colors ${ABYSS_BTN_FOCUS} ${
         type === value
           ? "bg-abyss-accent text-abyss-on-accent"
           : "text-abyss-ink-muted hover:text-abyss-ink"
@@ -87,13 +96,13 @@ export default function AbyssComposer() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Park an idea or task in the deep…"
           maxLength={200}
-          className="min-w-0 flex-1 bg-transparent text-body text-abyss-ink placeholder:text-abyss-ink-faint focus:outline-none"
+          className={`min-w-0 flex-1 bg-transparent text-body text-abyss-ink placeholder:text-abyss-ink-faint ${ABYSS_INPUT_FOCUS}`}
           aria-label="New abyss item"
         />
         <button
           type="submit"
           disabled={!canSubmit}
-          className="flex items-center gap-1 rounded-control bg-abyss-accent px-2.5 py-1.5 text-meta font-medium text-abyss-on-accent disabled:opacity-40"
+          className={`flex items-center gap-1 rounded-control bg-abyss-accent px-2.5 py-1.5 text-meta font-medium text-abyss-on-accent disabled:opacity-40 ${ABYSS_BTN_FOCUS}`}
         >
           <PlusIcon size={14} />
           Park
@@ -113,7 +122,7 @@ export default function AbyssComposer() {
             type="button"
             onClick={() => setCategory(null)}
             aria-pressed={category === null}
-            className={`rounded-pill px-2 py-0.5 text-caption transition-colors ${
+            className={`rounded-pill px-2 py-0.5 text-caption transition-colors ${ABYSS_BTN_FOCUS} ${
               category === null
                 ? "bg-abyss-surface-2 text-abyss-ink"
                 : "text-abyss-ink-faint hover:text-abyss-ink-muted"
@@ -127,7 +136,7 @@ export default function AbyssComposer() {
               type="button"
               onClick={() => setCategory(cat)}
               aria-pressed={category === cat}
-              className={`flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-caption transition-colors ${
+              className={`flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-caption transition-colors ${ABYSS_BTN_FOCUS} ${
                 category === cat
                   ? "bg-abyss-surface-2 text-abyss-ink"
                   : "text-abyss-ink-faint hover:text-abyss-ink-muted"
@@ -152,7 +161,7 @@ export default function AbyssComposer() {
               type="button"
               onClick={() => setTags((current) => current.filter((t) => t !== tag))}
               aria-label={`Remove tag ${tag}`}
-              className="flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink"
+              className={`flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink ${ABYSS_BTN_FOCUS}`}
             >
               <HashIcon size={10} className="text-abyss-ink-faint" />
               {tag}

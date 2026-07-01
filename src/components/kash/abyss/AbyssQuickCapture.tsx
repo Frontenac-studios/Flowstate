@@ -3,13 +3,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import { Lightbulb, Moon, SquareCheck, withKashIcon } from "@/components/kash/ui/icon";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
-import { IdeaIcon, MoonIcon, TaskIcon } from "./icons";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
+
+const IdeaIcon = withKashIcon(Lightbulb);
+const TaskIcon = withKashIcon(SquareCheck);
+const MoonIcon = withKashIcon(Moon);
+
+const INPUT_FOCUS = "focus:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]";
+const BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
 
 /** Fired by other chrome to open quick-capture (mirrors OPEN_PALETTE_EVENT). */
 export const OPEN_ABYSS_CAPTURE_EVENT = "kash:open-abyss-capture";
@@ -98,8 +107,8 @@ export default function AbyssQuickCapture() {
       type="button"
       onClick={() => setType(value)}
       aria-pressed={type === value}
-      className={`flex items-center gap-1.5 rounded-[var(--kash-radius-chip)] px-2.5 py-1 text-sm transition ${
-        type === value ? "bg-[var(--kash-accent-soft)] text-kash-ink" : "text-kash-ink-muted"
+      className={`flex items-center gap-1.5 rounded-chip px-2.5 py-1 text-caption transition ${BTN_FOCUS} ${
+        type === value ? "bg-accent-soft text-ink" : "text-ink-muted"
       }`}
     >
       {icon}
@@ -109,7 +118,7 @@ export default function AbyssQuickCapture() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[18vh]"
+      className="fixed inset-0 z-modal flex items-start justify-center px-4 pt-[18vh]"
       role="dialog"
       aria-modal="true"
       aria-label="Park in the Abyss"
@@ -118,10 +127,10 @@ export default function AbyssQuickCapture() {
       }}
     >
       <div className="absolute inset-0 bg-black/20" aria-hidden onMouseDown={close} />
-      <div className="glass-panel-strong relative z-10 w-full max-w-lg overflow-hidden p-3">
-        <div className="mb-2 flex items-center gap-2 px-1 text-kash-ink-muted">
-          <MoonIcon size={15} />
-          <span className="text-xs font-medium">Park in the Abyss</span>
+      <div className="relative z-base w-full max-w-lg overflow-hidden rounded-card border border-subtle bg-surface p-3 shadow-overlay">
+        <div className="mb-2 flex items-center gap-2 px-1 text-ink-muted">
+          <MoonIcon size={14} />
+          <span className="text-caption font-medium">Park in the Abyss</span>
         </div>
 
         <input
@@ -139,13 +148,13 @@ export default function AbyssQuickCapture() {
           }}
           placeholder="A backburner idea or deferred task…"
           maxLength={200}
-          className="glass-input w-full"
+          className={`w-full rounded-control border border-border bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-faint ${INPUT_FOCUS}`}
           aria-label="Item title"
         />
 
         {expanded ? (
           <div className="mt-3 flex flex-col gap-3">
-            <div className="flex w-fit items-center gap-1 rounded-[var(--kash-radius-chip)] bg-[var(--kash-accent-soft)] p-0.5">
+            <div className="flex w-fit items-center gap-1 rounded-chip bg-accent-soft p-0.5">
               <TypeToggle value="idea" label="Idea" icon={<IdeaIcon size={14} />} />
               <TypeToggle value="task" label="Task" icon={<TaskIcon size={14} />} />
             </div>
@@ -155,10 +164,8 @@ export default function AbyssQuickCapture() {
                 type="button"
                 onClick={() => setCategory(null)}
                 aria-pressed={category === null}
-                className={`rounded-[var(--kash-radius-chip)] px-2 py-0.5 text-xs transition ${
-                  category === null
-                    ? "bg-[var(--kash-accent-soft)] text-kash-ink"
-                    : "text-kash-ink-muted"
+                className={`rounded-chip px-2 py-0.5 text-caption transition ${BTN_FOCUS} ${
+                  category === null ? "bg-accent-soft text-ink" : "text-ink-muted"
                 }`}
               >
                 No category
@@ -169,10 +176,8 @@ export default function AbyssQuickCapture() {
                   type="button"
                   onClick={() => setCategory(cat)}
                   aria-pressed={category === cat}
-                  className={`flex items-center gap-1.5 rounded-[var(--kash-radius-chip)] px-2 py-0.5 text-xs transition ${
-                    category === cat
-                      ? "bg-[var(--kash-accent-soft)] text-kash-ink"
-                      : "text-kash-ink-muted"
+                  className={`flex items-center gap-1.5 rounded-chip px-2 py-0.5 text-caption transition ${BTN_FOCUS} ${
+                    category === cat ? "bg-accent-soft text-ink" : "text-ink-muted"
                   }`}
                 >
                   <span
@@ -191,7 +196,7 @@ export default function AbyssQuickCapture() {
               placeholder="Add a note (optional)"
               maxLength={2000}
               rows={2}
-              className="glass-input w-full resize-none"
+              className={`w-full resize-none rounded-control border border-border bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-faint ${INPUT_FOCUS}`}
               aria-label="Note"
             />
           </div>
@@ -201,18 +206,13 @@ export default function AbyssQuickCapture() {
           <button
             type="button"
             onClick={() => setExpanded((x) => !x)}
-            className="text-xs text-kash-ink-muted transition hover:text-kash-ink"
+            className={`text-caption text-ink-muted transition hover:text-ink ${BTN_FOCUS}`}
           >
             {expanded ? "Less" : "More"}
           </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!canSubmit}
-            className="glass-btn-primary disabled:opacity-40"
-          >
+          <Button type="button" onClick={submit} disabled={!canSubmit} className="text-caption">
             Park
-          </button>
+          </Button>
         </div>
       </div>
     </div>

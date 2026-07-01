@@ -4,6 +4,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import {
+  ArrowUpRight,
+  Hash,
+  Lightbulb,
+  Sparkles,
+  SquareCheck,
+  Trash2,
+  withKashIcon,
+} from "@/components/kash/ui/icon";
+import {
   ageInDays,
   filterItems,
   groupItems,
@@ -21,7 +30,15 @@ import { useTRPC } from "@/trpc/client";
 
 import AbyssPromoteMenu from "./AbyssPromoteMenu";
 import AbyssTagEditor from "./AbyssTagEditor";
-import { HashIcon, IdeaIcon, PromoteIcon, SparkleIcon, TaskIcon, TrashIcon } from "./icons";
+
+const IdeaIcon = withKashIcon(Lightbulb);
+const TaskIcon = withKashIcon(SquareCheck);
+const SparkleIcon = withKashIcon(Sparkles);
+const PromoteIcon = withKashIcon(ArrowUpRight);
+const HashIcon = withKashIcon(Hash);
+const TrashIcon = withKashIcon(Trash2);
+const ABYSS_BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
 /** Row shape the List renders — the slice of the abyss_items row it needs. */
 export type AbyssListItem = AbyssGroupableItem & {
@@ -80,11 +97,10 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
 
   return (
     <div
-      className={`group/row relative flex items-start gap-2.5 rounded-r-row py-2 pl-2.5 pr-2 transition-colors hover:bg-abyss-surface ${
+      className={`group/row relative flex items-start gap-2.5 rounded-r-row border-l-[length:var(--stripe-width)] py-2 pl-2.5 pr-2 transition-colors hover:bg-abyss-surface ${
         dimming ? "opacity-60" : ""
       }`}
       style={{
-        borderLeft: "3px solid",
         borderLeftColor: item.category ? categorySolidVar(item.category) : "var(--abyss-border)",
       }}
     >
@@ -132,11 +148,11 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
           aria-label={`Tag ${item.title}`}
           aria-haspopup="dialog"
           aria-expanded={openPopover === "tags"}
-          className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${
+          className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${ABYSS_BTN_FOCUS} ${
             openPopover === "tags" ? "text-abyss-ink opacity-100" : "opacity-0"
           }`}
         >
-          <HashIcon size={15} />
+          <HashIcon size={14} />
         </button>
 
         {promoted ? null : (
@@ -146,11 +162,11 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
             aria-label={`Promote ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={openPopover === "promote"}
-            className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${
+            className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${ABYSS_BTN_FOCUS} ${
               openPopover === "promote" ? "text-abyss-ink opacity-100" : "opacity-0"
             }`}
           >
-            <PromoteIcon size={15} />
+            <PromoteIcon size={14} />
           </button>
         )}
 
@@ -159,9 +175,9 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
           onClick={() => deleteMutation.mutate({ id: item.id })}
           disabled={deleteMutation.isPending}
           aria-label={`Delete ${item.title}`}
-          className="rounded-control p-1 text-abyss-ink-faint opacity-0 transition-opacity hover:text-abyss-ink focus:opacity-100 disabled:opacity-40 group-hover/row:opacity-100"
+          className={`rounded-control p-1 text-abyss-ink-faint opacity-0 transition-opacity hover:text-abyss-ink focus:opacity-100 disabled:opacity-40 group-hover/row:opacity-100 ${ABYSS_BTN_FOCUS}`}
         >
-          <TrashIcon size={15} />
+          <TrashIcon size={14} />
         </button>
       </div>
 

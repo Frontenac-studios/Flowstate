@@ -3,10 +3,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Hash, Plus, X, withKashIcon } from "@/components/kash/ui/icon";
 import { normalizeTag } from "@/lib/abyss/tags";
 import { useTRPC } from "@/trpc/client";
 
-import { CloseIcon, HashIcon, PlusIcon } from "./icons";
+const HashIcon = withKashIcon(Hash);
+const PlusIcon = withKashIcon(Plus);
+const CloseIcon = withKashIcon(X);
+const ABYSS_INPUT_FOCUS = "focus:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]";
+const ABYSS_BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
 type Props = {
   item: { id: string; tags: string[] | null; embedding: number[] | null };
@@ -86,7 +92,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
       ref={ref}
       role="dialog"
       aria-label="Edit tags"
-      className="absolute right-2 top-9 z-20 w-64 rounded-card border border-abyss-border-strong bg-abyss-surface p-2"
+      className="absolute right-2 top-9 z-overlay w-64 rounded-card border border-abyss-border-strong bg-abyss-surface p-2"
     >
       {current.length > 0 ? (
         <div className="mb-1.5 flex flex-wrap gap-1">
@@ -95,7 +101,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
               key={tag}
               type="button"
               onClick={() => remove(tag)}
-              className="flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink transition-colors hover:text-abyss-ink-muted"
+              className={`flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-2 py-0.5 text-caption text-abyss-ink transition-colors hover:text-abyss-ink-muted ${ABYSS_BTN_FOCUS}`}
               aria-label={`Remove tag ${tag}`}
             >
               <HashIcon size={10} className="text-abyss-ink-faint" />
@@ -118,7 +124,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
         }}
         placeholder="Tag…"
         maxLength={32}
-        className="w-full rounded-control bg-abyss-surface-2 px-2 py-1 text-meta text-abyss-ink placeholder:text-abyss-ink-faint focus:outline-none"
+        className={`w-full rounded-control bg-abyss-surface-2 px-2 py-1 text-meta text-abyss-ink placeholder:text-abyss-ink-faint ${ABYSS_INPUT_FOCUS}`}
         aria-label="Add a tag"
       />
 
@@ -129,7 +135,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
               key={tag}
               type="button"
               onClick={() => add(tag)}
-              className="flex items-center gap-1.5 rounded-control px-2 py-1 text-left text-meta text-abyss-ink transition-colors hover:bg-abyss-surface-2"
+              className={`flex items-center gap-1.5 rounded-control px-2 py-1 text-left text-meta text-abyss-ink transition-colors hover:bg-abyss-surface-2 ${ABYSS_BTN_FOCUS}`}
             >
               <HashIcon size={11} className="text-abyss-ink-faint" />
               {tag}
@@ -139,7 +145,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
             <button
               type="button"
               onClick={() => add(query)}
-              className="flex items-center gap-1.5 rounded-control px-2 py-1 text-left text-meta text-abyss-ink-muted transition-colors hover:bg-abyss-surface-2"
+              className={`flex items-center gap-1.5 rounded-control px-2 py-1 text-left text-meta text-abyss-ink-muted transition-colors hover:bg-abyss-surface-2 ${ABYSS_BTN_FOCUS}`}
             >
               <PlusIcon size={11} className="text-abyss-ink-faint" />
               Create “{normalizedQuery}”
@@ -157,7 +163,7 @@ export default function AbyssTagEditor({ item, allTags, onClose }: Props) {
                 key={tag}
                 type="button"
                 onClick={() => add(tag)}
-                className="flex items-center gap-1 rounded-pill border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink"
+                className={`flex items-center gap-1 rounded-pill border border-dashed border-abyss-border-strong px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:text-abyss-ink ${ABYSS_BTN_FOCUS}`}
               >
                 <PlusIcon size={10} />
                 {tag}

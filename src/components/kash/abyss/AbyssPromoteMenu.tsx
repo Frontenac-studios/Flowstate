@@ -3,12 +3,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  Calendar,
+  Folder,
+  Sun,
+  Target,
+  withKashIcon,
+  type LucideIcon,
+} from "@/components/kash/ui/icon";
 import type { AbyssPromotionTarget } from "@/lib/abyss/promotion";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
-import { CalendarIcon, FolderIcon, SunIcon, TargetIcon } from "./icons";
+const SunIcon = withKashIcon(Sun);
+const CalendarIcon = withKashIcon(Calendar);
+const FolderIcon = withKashIcon(Folder);
+const TargetIcon = withKashIcon(Target);
+const ABYSS_BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
 type Props = {
   item: { id: string; category: ProjectCategory | null };
@@ -19,7 +32,7 @@ type TargetOption = {
   key: AbyssPromotionTarget;
   label: string;
   hint: string;
-  Icon: (props: { size?: number; className?: string }) => React.ReactElement;
+  Icon: LucideIcon;
   needsCategory: boolean;
 };
 
@@ -97,7 +110,7 @@ export default function AbyssPromoteMenu({ item, onClose }: Props) {
       ref={ref}
       role="menu"
       aria-label="Promote into"
-      className="absolute right-2 top-9 z-20 w-60 rounded-card border border-abyss-border-strong bg-abyss-surface p-1.5"
+      className="absolute right-2 top-9 z-overlay w-60 rounded-card border border-abyss-border-strong bg-abyss-surface p-1.5"
     >
       {pendingTarget ? (
         <>
@@ -112,7 +125,7 @@ export default function AbyssPromoteMenu({ item, onClose }: Props) {
                 role="menuitem"
                 onClick={() => promote.mutate({ id: item.id, target: pendingTarget, category })}
                 disabled={promote.isPending}
-                className="flex items-center gap-1.5 rounded-pill border border-abyss-border px-2 py-1 text-caption text-abyss-ink transition-colors hover:bg-abyss-surface-2 disabled:opacity-50"
+                className={`flex items-center gap-1.5 rounded-pill border border-abyss-border px-2 py-1 text-caption text-abyss-ink transition-colors hover:bg-abyss-surface-2 disabled:opacity-50 ${ABYSS_BTN_FOCUS}`}
               >
                 <span
                   className="h-2 w-2 rounded-full"
@@ -134,9 +147,9 @@ export default function AbyssPromoteMenu({ item, onClose }: Props) {
               role="menuitem"
               onClick={() => choose(key, needsCategory)}
               disabled={promote.isPending}
-              className="flex w-full items-center gap-2.5 rounded-control px-2 py-1.5 text-left transition-colors hover:bg-abyss-surface-2 disabled:opacity-50"
+              className={`flex w-full items-center gap-2.5 rounded-control px-2 py-1.5 text-left transition-colors hover:bg-abyss-surface-2 disabled:opacity-50 ${ABYSS_BTN_FOCUS}`}
             >
-              <Icon size={17} className="text-abyss-ink-muted" />
+              <Icon size={16} className="text-abyss-ink-muted" />
               <span className="flex-1 text-body text-abyss-ink">{label}</span>
               <span className="text-caption text-abyss-ink-faint">{hint}</span>
             </button>
@@ -144,9 +157,7 @@ export default function AbyssPromoteMenu({ item, onClose }: Props) {
         </>
       )}
       {promote.isError ? (
-        <p className="px-2 py-1 text-caption" style={{ color: "var(--cat-relationships-solid)" }}>
-          Couldn&apos;t promote — try again.
-        </p>
+        <p className="px-2 py-1 text-caption text-critical">Couldn&apos;t promote — try again.</p>
       ) : null}
     </div>
   );

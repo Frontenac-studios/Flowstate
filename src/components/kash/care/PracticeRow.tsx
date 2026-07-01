@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import Checkbox from "@/components/kash/ui/Checkbox";
+import { MoreHorizontal, kashIconProps } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
 import { cadenceLabel } from "@/lib/care/labels";
 import { useTRPC } from "@/trpc/client";
@@ -99,11 +100,7 @@ export default function PracticeRow({ activity, doneToday, onEdit }: Props) {
         aria-expanded={menuOpen}
         onClick={() => setMenuOpen((v) => !v)}
       >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden>
-          <circle cx="5" cy="12" r="1.6" />
-          <circle cx="12" cy="12" r="1.6" />
-          <circle cx="19" cy="12" r="1.6" />
-        </svg>
+        <MoreHorizontal {...kashIconProps({ tokenSize: "md" })} aria-hidden />
       </IconButton>
 
       {menuOpen ? (
