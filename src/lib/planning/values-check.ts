@@ -53,7 +53,7 @@ export function detectValuesMisalignment(
   if (!hasQuietValues && !majorityUntagged) return null;
 
   return {
-    quietValues: hasQuietValues ? quietValues : [],
+    quietValues: hasQuietValues && !majorityUntagged ? quietValues : [],
     untaggedGoalCount,
     activeGoalCount: activeGoals.length,
   };
