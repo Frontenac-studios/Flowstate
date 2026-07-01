@@ -33,7 +33,7 @@ function assertMacOSBundleAssets() {
   const icon = path.join(tauriDir, "icons/icon.icns");
   if (!fs.existsSync(icon)) {
     throw new Error(
-      `Missing ${icon}. DMG packaging needs icons/icon.icns (see apps/desktop/src-tauri/icons/).`,
+      `Missing ${icon}. DMG packaging needs icons/icon.icns (see apps/desktop/src-tauri/icons/).`
     );
   }
 }
@@ -50,6 +50,6 @@ execSync("node apps/desktop/scripts/prepare-sidecar.mjs", {
 const sidecarServer = path.join(tauriDir, "sidecar/server.js");
 if (!fs.existsSync(sidecarServer)) {
   throw new Error(
-    `Sidecar bundle missing at ${sidecarServer}. prepare-sidecar.mjs should run before Tauri bundles resources.`,
+    `Sidecar bundle missing at ${sidecarServer}. prepare-sidecar.mjs should run before Tauri bundles resources.`
   );
 }
