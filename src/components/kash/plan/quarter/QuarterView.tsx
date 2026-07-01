@@ -49,9 +49,14 @@ export default function QuarterView({ year, quarter, onZoomMonth }: Props) {
   const themeQuery = useQuery(
     trpc.planning.getQuarterTheme.queryOptions({ year, quarter: quarter as 1 | 2 | 3 | 4 })
   );
-  const activityQuery = useQuery(
-    trpc.planning.getYearActivity.queryOptions({ year, tzOffsetMinutes })
-  );
+  const activityQuery = useQuery({
+    ...trpc.planning.getQuarterActivity.queryOptions({
+      year,
+      quarter: quarter as 1 | 2 | 3 | 4,
+      tzOffsetMinutes,
+    }),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const updateGoalMutation = useMutation(
     trpc.planning.updateGoal.mutationOptions({
@@ -82,8 +87,7 @@ export default function QuarterView({ year, quarter, onZoomMonth }: Props) {
     return map;
   }, [quarterGoals, year, quarter, months]);
 
-  const quarterData = activityQuery.data?.quarters.find((q) => q.quarter === quarter);
-  const weights = quarterData?.categoryWeights;
+  const weights = activityQuery.data?.categoryWeights;
   const neglected = weights ? detectQuarterNeglected(weights) : [];
 
   const focusCategories = useMemo(() => {

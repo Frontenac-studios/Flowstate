@@ -1,0 +1,2 @@
+CREATE INDEX "task_time_entries_user_id_started_at_idx" ON "task_time_entries" USING btree ("user_id","started_at");--> statement-breakpoint
+CREATE INDEX "tasks_user_id_completed_at_idx" ON "tasks" USING btree ("user_id","completed_at") WHERE "tasks"."completed_at" IS NOT NULL;

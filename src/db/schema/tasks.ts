@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { boolean, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { careActivities } from "./care-activities";
@@ -43,5 +44,8 @@ export const tasks = pgTable(
   (table) => [
     index("tasks_user_id_scheduled_date_idx").on(table.userId, table.scheduledDate),
     index("tasks_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+    index("tasks_user_id_completed_at_idx")
+      .on(table.userId, table.completedAt)
+      .where(sql`${table.completedAt} IS NOT NULL`),
   ]
 );

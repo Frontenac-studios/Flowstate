@@ -44,9 +44,10 @@ export default function YearView({ year, onZoomQuarter }: Props) {
 
   const goalsQuery = useQuery(trpc.planning.listGoals.queryOptions({ cardYear: year }));
   const themesQuery = useQuery(trpc.planning.listQuarterThemes.queryOptions({ year }));
-  const activityQuery = useQuery(
-    trpc.planning.getYearActivity.queryOptions({ year, tzOffsetMinutes })
-  );
+  const activityQuery = useQuery({
+    ...trpc.planning.getYearActivity.queryOptions({ year, tzOffsetMinutes }),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const updateGoalMutation = useMutation(
     trpc.planning.updateGoal.mutationOptions({

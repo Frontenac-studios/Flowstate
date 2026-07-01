@@ -206,6 +206,61 @@ function yearUtcBounds(year: number, tzOffsetMinutes: number): { start: Date; en
   };
 }
 
+/** UTC instants for [start, end) of a calendar quarter in browser-local wall-clock. */
+function quarterUtcBounds(
+  year: number,
+  quarter: number,
+  tzOffsetMinutes: number
+): { start: Date; end: Date } {
+  const startMonth = (quarter - 1) * 3;
+  const startLocalMidnight = Date.UTC(year, startMonth, 1);
+  const endLocalMidnight = Date.UTC(year, startMonth + 3, 1);
+  return {
+    start: new Date(startLocalMidnight - tzOffsetMinutes * 60_000),
+    end: new Date(endLocalMidnight - tzOffsetMinutes * 60_000),
+  };
+}
+
+async function fetchActivitySourceRows(userId: string, start: Date, end: Date) {
+  const [timeRows, completedRows] = await Promise.all([
+    db
+      .select({
+        startedAt: taskTimeEntries.startedAt,
+        endedAt: taskTimeEntries.endedAt,
+        category: tasks.category,
+      })
+      .from(taskTimeEntries)
+      .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+      .where(
+        and(
+          eq(taskTimeEntries.userId, userId),
+          gte(taskTimeEntries.startedAt, start),
+          lt(taskTimeEntries.startedAt, end)
+        )
+      ),
+    db
+      .select({
+        completedAt: tasks.completedAt,
+        category: tasks.category,
+      })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          isNotNull(tasks.completedAt),
+          gte(tasks.completedAt, start),
+          lt(tasks.completedAt, end)
+        )
+      ),
+  ]);
+
+  const completedTasks = completedRows.flatMap((row) =>
+    row.completedAt ? [{ completedAt: row.completedAt, category: row.category }] : []
+  );
+
+  return { completedTasks, timeEntries: timeRows };
+}
+
 async function syncRow(
   table:
     | "bingo_cards"
@@ -632,48 +687,32 @@ export const planningRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { start, end } = yearUtcBounds(input.year, input.tzOffsetMinutes);
-
-      const [timeRows, completedRows] = await Promise.all([
-        db
-          .select({
-            startedAt: taskTimeEntries.startedAt,
-            endedAt: taskTimeEntries.endedAt,
-            category: tasks.category,
-          })
-          .from(taskTimeEntries)
-          .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
-          .where(
-            and(
-              eq(taskTimeEntries.userId, ctx.userId),
-              gte(taskTimeEntries.startedAt, start),
-              lt(taskTimeEntries.startedAt, end)
-            )
-          ),
-        db
-          .select({
-            completedAt: tasks.completedAt,
-            category: tasks.category,
-          })
-          .from(tasks)
-          .where(
-            and(
-              eq(tasks.userId, ctx.userId),
-              isNotNull(tasks.completedAt),
-              gte(tasks.completedAt, start),
-              lt(tasks.completedAt, end)
-            )
-          ),
-      ]);
-
-      const completedTasks = completedRows.flatMap((row) =>
-        row.completedAt ? [{ completedAt: row.completedAt, category: row.category }] : []
-      );
+      const { completedTasks, timeEntries } = await fetchActivitySourceRows(ctx.userId, start, end);
 
       return aggregateYearActivity({
         year: input.year,
         completedTasks,
-        timeEntries: timeRows,
+        timeEntries,
       });
+    }),
+
+  getQuarterActivity: protectedProcedure
+    .input(
+      z.object({
+        year: yearSchema,
+        quarter: quarterSchema,
+        tzOffsetMinutes: z.number().int().min(-720).max(840),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { start, end } = quarterUtcBounds(input.year, input.quarter, input.tzOffsetMinutes);
+      const { completedTasks, timeEntries } = await fetchActivitySourceRows(ctx.userId, start, end);
+
+      return aggregateYearActivity({
+        year: input.year,
+        completedTasks,
+        timeEntries,
+      }).quarters[input.quarter - 1]!;
     }),
 
   listMonthIntentions: protectedProcedure
