@@ -26,15 +26,15 @@ Two homes (AN-B4):
 
 ## 1. Decision log (locked Jun 30)
 
-| #     | Decision                | Choice                                                                                                  |
-| ----- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| DW-1  | Win source model        | **Hybrid** — AI proposes ghosted wins (§9 accept/dismiss); user keeps, swaps, or adds own.              |
-| DW-2  | Detection taxonomy      | **Ranked**: Top-3 done › high-priority/effort done › care event › goal/milestone progress › Abyss→action. **Cap: max 1 care event** in the auto-3; tie-break = most recent; never propose >3. |
-| DW-3  | Count                   | **Hard cap of 3** hero slots. Extra good things can log as ordinary entries, not in the showcase.       |
-| DW-4  | Qualitative wins        | **Yes** — a manual win can be free text with no task behind it ("set a boundary," "slept 8h").          |
-| DW-5  | Garden nourish trigger  | **Either, gently** — each win = a small drip; a **full set of 3** = a slightly bigger growth beat. No penalty for fewer. |
-| DW-6  | Daily rollover          | Reset at **local midnight**, with a **morning grace window (until ~noon next day)** to backfill yesterday. |
-| 3a    | Today placement         | **EoD-only** — appears at the wind-down beat as a reflection moment, then tucks away.                   |
+| #    | Decision               | Choice                                                                                                                                                                                        |
+| ---- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DW-1 | Win source model       | **Hybrid** — AI proposes ghosted wins (§9 accept/dismiss); user keeps, swaps, or adds own.                                                                                                    |
+| DW-2 | Detection taxonomy     | **Ranked**: Top-3 done › high-priority/effort done › care event › goal/milestone progress › Abyss→action. **Cap: max 1 care event** in the auto-3; tie-break = most recent; never propose >3. |
+| DW-3 | Count                  | **Hard cap of 3** hero slots. Extra good things can log as ordinary entries, not in the showcase.                                                                                             |
+| DW-4 | Qualitative wins       | **Yes** — a manual win can be free text with no task behind it ("set a boundary," "slept 8h").                                                                                                |
+| DW-5 | Garden nourish trigger | **Either, gently** — each win = a small drip; a **full set of 3** = a slightly bigger growth beat. No penalty for fewer.                                                                      |
+| DW-6 | Daily rollover         | Reset at **local midnight**, with a **morning grace window (until ~noon next day)** to backfill yesterday.                                                                                    |
+| 3a   | Today placement        | **EoD-only** — appears at the wind-down beat as a reflection moment, then tucks away.                                                                                                         |
 
 ---
 
