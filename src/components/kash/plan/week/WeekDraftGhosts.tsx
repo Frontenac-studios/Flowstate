@@ -61,6 +61,7 @@ export default function WeekDraftGhosts({ anchorDate, hasInboxTasks }: Props) {
     const payload = s.payload as {
       taskTitle?: string;
       scheduledDate?: string;
+      rationale?: string;
     };
     const dateLabel = payload.scheduledDate
       ? formatHeaderDate(parseISODateString(payload.scheduledDate))
@@ -68,7 +69,7 @@ export default function WeekDraftGhosts({ anchorDate, hasInboxTasks }: Props) {
     return {
       id: s.id,
       label: `${payload.taskTitle ?? "Task"} → ${dateLabel}`,
-      detail: "Suggested week placement",
+      detail: payload.rationale ?? "Suggested week placement",
     };
   });
 

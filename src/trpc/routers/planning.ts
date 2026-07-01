@@ -42,7 +42,8 @@ import {
 import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES, categoryLabel } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
-import { templateWeekDraft } from "@/lib/week/template-week-draft";
+import { fetchWeekDraftContext } from "@/server/claude/fetch-week-draft-context";
+import { generateWeekDraft } from "@/server/claude/generate-week-draft";
 import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -1383,27 +1384,35 @@ export const planningRouter = createTRPCRouter({
   suggestWeekDraft: protectedProcedure
     .input(z.object({ anchorDate: isoDateSchema }))
     .mutation(async ({ ctx, input }) => {
-      const inboxRows = await db
-        .select({
-          id: tasks.id,
-          title: tasks.title,
-          priority: tasks.priority,
-        })
-        .from(tasks)
+      const pendingRows = await db
+        .select()
+        .from(planningSuggestions)
         .where(
-          and(eq(tasks.userId, ctx.userId), isNull(tasks.scheduledDate), isNull(tasks.completedAt))
+          and(
+            eq(planningSuggestions.userId, ctx.userId),
+            eq(planningSuggestions.surface, "week_draft"),
+            eq(planningSuggestions.status, "pending")
+          )
         );
 
-      if (inboxRows.length === 0) {
+      const forWeek = pendingRows.filter((row) => {
+        const payload = row.payload as { weekStart?: string };
+        return payload.weekStart === input.anchorDate;
+      });
+      if (forWeek.length > 0) return forWeek;
+
+      const draftContext = await fetchWeekDraftContext(ctx.userId, input.anchorDate);
+      if (draftContext.inbox.length === 0) {
         return [];
       }
 
-      const weekRef = parseISODateString(input.anchorDate);
-      const proposal = templateWeekDraft(inboxRows, weekRef);
+      const proposal = await generateWeekDraft(draftContext);
+
+      const inboxById = new Map(draftContext.inbox.map((task) => [task.id, task]));
 
       const rows = await Promise.all(
         proposal.assignments.map(async (assignment) => {
-          const task = inboxRows.find((row) => row.id === assignment.taskId);
+          const task = inboxById.get(assignment.taskId);
           const [row] = await db
             .insert(planningSuggestions)
             .values({
@@ -1414,6 +1423,8 @@ export const planningRouter = createTRPCRouter({
                 taskId: assignment.taskId,
                 taskTitle: task?.title,
                 scheduledDate: assignment.scheduledDate,
+                rationale: assignment.rationale,
+                summary: proposal.summary,
               },
             })
             .returning();

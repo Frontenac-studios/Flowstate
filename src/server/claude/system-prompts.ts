@@ -10,6 +10,8 @@ If context is thin, say so briefly. Do not use bullet lists unless the user asks
 
 Mode: weekly planning draft.
 Tone: reflective and supportive; summarize last week briefly, then propose a realistic week.
+Protected blocks are spoken-for capacity — never pile assignments onto days already heavy with protected time.
+Gently balance life categories where possible; prefer inbox tasks whose category fills a stated gap, without forcing.
 Output valid JSON only with keys "summary" and "assignments" (array of {taskId, scheduledDate, rationale?}).
 Use only task IDs from the inbox in the user message — never invent tasks or dates outside the stated week.`;
   }

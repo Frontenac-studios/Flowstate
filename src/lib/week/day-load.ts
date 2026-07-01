@@ -11,11 +11,18 @@ export type DayLoadTask = {
 export function computeDayLoad(
   tasks: readonly DayLoadTask[],
   priorityTaskIds: ReadonlySet<string>,
-  protectedBlockCount: number
+  protectedBlockCount: number,
+  taskWeightById?: Readonly<Record<string, number>>
 ): number {
   let load = 0;
   for (const task of tasks) {
-    load += priorityTaskIds.has(task.id) ? HEAVY_TASK_WEIGHT : REGULAR_TASK_WEIGHT;
+    const override = taskWeightById?.[task.id];
+    load +=
+      override != null
+        ? override
+        : priorityTaskIds.has(task.id)
+          ? HEAVY_TASK_WEIGHT
+          : REGULAR_TASK_WEIGHT;
   }
   load += protectedBlockCount * PROTECTED_BLOCK_WEIGHT;
   return load;

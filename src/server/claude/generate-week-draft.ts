@@ -1,8 +1,11 @@
 import "server-only";
 
-import { datesInIsoWeek, toISODateString } from "@/lib/dates/local-day";
+import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import { categoryLabel } from "@/lib/projects/categories";
+import { adjustWeekDraftForCapacity } from "@/lib/week/adjust-week-draft-capacity";
 import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
 import { templateWeekDraft, type WeekDraftProposal } from "@/lib/week/template-week-draft";
+import { weekDraftValidationContextFromSource } from "@/lib/week/week-draft-validation-context";
 
 import { requireAnthropicClient } from "./client";
 import type { WeekDraftContext } from "./fetch-week-draft-context";
@@ -10,10 +13,46 @@ import { buildSystemPrompt } from "./system-prompts";
 
 export type { WeekDraftProposal };
 
+function weekRefFromContext(ctx: WeekDraftContext): Date {
+  return parseISODateString(ctx.weekStartIso);
+}
+
 function templateFromContext(ctx: WeekDraftContext): WeekDraftProposal {
-  return templateWeekDraft(
-    ctx.inbox.map((t) => ({ id: t.id, title: t.title, priority: t.priority }))
+  const proposal = templateWeekDraft(
+    ctx.inbox.map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      category: t.category,
+      categoryUnresolved: t.categoryUnresolved,
+      loadWeight: t.loadWeight,
+    })),
+    weekRefFromContext(ctx),
+    {
+      protectedCountByDate: ctx.protectedCountByDate,
+      categoryLoad: ctx.categoryLoad,
+      balanceGapCategories: ctx.balanceGaps.map((gap) => gap.category),
+      overCommitThreshold: ctx.overCommitThreshold,
+      existingTasksByDate: Object.fromEntries(
+        ctx.weekDates.map((iso) => [
+          iso,
+          ctx.scheduledInWeek.filter((t) => t.scheduledDate === iso).map((t) => ({ id: t.id })),
+        ])
+      ),
+      taskWeightById: Object.fromEntries(
+        [...ctx.inbox, ...ctx.scheduledInWeek].map((task) => [task.id, task.loadWeight])
+      ),
+    }
   );
+
+  return {
+    ...proposal,
+    assignments: adjustWeekDraftForCapacity(
+      proposal.assignments,
+      weekDraftValidationContextFromSource(ctx),
+      ctx.weekDates
+    ),
+  };
 }
 
 function parseWeekDraftResponse(text: string): WeekDraftProposal | null {
@@ -58,17 +97,53 @@ function sanitizeProposal(
     byTask.set(row.taskId, row);
   }
 
+  const assignments = adjustWeekDraftForCapacity(
+    Array.from(byTask.values()),
+    weekDraftValidationContextFromSource(ctx),
+    ctx.weekDates
+  );
+
   return {
     summary: proposal.summary,
-    assignments: Array.from(byTask.values()),
+    assignments,
   };
 }
 
-export async function generateWeekDraft(
-  ctx: WeekDraftContext,
-  now: Date = new Date()
-): Promise<WeekDraftProposal> {
-  const weekDates = new Set(datesInIsoWeek(now).map(toISODateString));
+function formatProtectedBlocks(ctx: WeekDraftContext): string {
+  if (ctx.protectedBlocks.length === 0) return "(none)";
+  return ctx.protectedBlocks
+    .map((block) => {
+      const time =
+        block.startMin != null && block.endMin != null
+          ? ` ${block.startMin}-${block.endMin}min`
+          : " all-day";
+      const label = block.label ? ` "${block.label}"` : "";
+      return `  ${block.scheduledDate} | ${categoryLabel(block.category)}${label}${time} (${block.status})`;
+    })
+    .join("\n");
+}
+
+function formatCategoryLoad(ctx: WeekDraftContext): string {
+  const rows = Object.values(ctx.categoryLoad.byCategory).filter((row) => row.weight > 0);
+  if (rows.length === 0) return "(nothing scheduled yet)";
+  return rows
+    .map(
+      (row) =>
+        `  ${categoryLabel(row.category)}: weight ${row.weight} (${row.taskCount} tasks, ${row.protectedBlockCount} protected)`
+    )
+    .join("\n");
+}
+
+function formatBalanceGaps(ctx: WeekDraftContext): string {
+  if (ctx.balanceGaps.length === 0) return "(balanced enough — no urgent gaps)";
+  return ctx.balanceGaps.map((gap) => `  - ${gap.label}`).join("\n");
+}
+
+export async function generateWeekDraft(ctx: WeekDraftContext): Promise<WeekDraftProposal> {
+  const weekRef = weekRefFromContext(ctx);
+  const weekDates = new Set(
+    ctx.weekDates.length > 0 ? ctx.weekDates : datesInIsoWeek(weekRef).map(toISODateString)
+  );
   const fallback = templateFromContext(ctx);
 
   if (!isAnthropicConfigured()) {
@@ -86,14 +161,18 @@ export async function generateWeekDraft(
       : ctx.inbox
           .map(
             (t) =>
-              `  id=${t.id} | ${t.title} | p${t.priority}${t.projectSlug ? ` #${t.projectSlug}` : ""}`
+              `  id=${t.id} | ${t.title} | p${t.priority} | ${categoryLabel(t.category)}${t.categoryUnresolved ? " (unresolved)" : ""}${t.projectSlug ? ` #${t.projectSlug}` : ""}`
           )
           .join("\n");
 
   const scheduledLines =
     ctx.scheduledInWeek.length === 0
       ? "(none)"
-      : ctx.scheduledInWeek.map((t) => `  id=${t.id} | ${t.scheduledDate} | ${t.title}`).join("\n");
+      : ctx.scheduledInWeek
+          .map(
+            (t) => `  id=${t.id} | ${t.scheduledDate} | ${t.title} | ${categoryLabel(t.category)}`
+          )
+          .join("\n");
 
   const completions =
     ctx.lastWeekCompletions.length === 0
@@ -112,8 +191,21 @@ export async function generateWeekDraft(
     "assignments: only task IDs from inbox below; scheduledDate must be Mon–Sun this week.",
     "Do not invent tasks. Do not create new tasks.",
     "",
+    "Protected blocks are spoken-for time — do not pile work onto days that are already heavy with protected blocks.",
+    `Day load threshold (Top-3-weighted units): ${ctx.overCommitThreshold}. Protected blocks count fully toward load.`,
+    "Gently balance life categories where you can — prefer assigning inbox tasks whose category fills a gap, without forcing.",
+    "",
     `Week: ${ctx.weekStartIso} through ${ctx.weekEndIso}`,
     `Triage backlog count: ${ctx.triageCount}`,
+    "",
+    "Protected blocks this week:",
+    formatProtectedBlocks(ctx),
+    "",
+    "Current category load (scheduled + protected):",
+    formatCategoryLoad(ctx),
+    "",
+    "Category balance gaps to lean toward:",
+    formatBalanceGaps(ctx),
     "",
     "Inbox (unscheduled):",
     inboxLines,

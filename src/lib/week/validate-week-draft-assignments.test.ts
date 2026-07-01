@@ -44,4 +44,23 @@ describe("validateWeekDraftAssignments", () => {
     );
     expect(result).toEqual({ ok: false, error: "DATE_OUT_OF_WEEK" });
   });
+
+  it("rejects assignments that over-fill a day with protected blocks", () => {
+    const result = validateWeekDraftAssignments(
+      [
+        { taskId: "a", scheduledDate: "2026-05-27" },
+        { taskId: "b", scheduledDate: "2026-05-27" },
+      ],
+      owned,
+      wed,
+      {
+        protectedCountByDate: { "2026-05-27": 8 },
+        existingTasksByDate: {},
+        priorityTaskIdsByDate: {},
+        taskWeightById: { a: 1, b: 1 },
+        overCommitThreshold: 9,
+      }
+    );
+    expect(result).toEqual({ ok: false, error: "DAY_OVER_CAPACITY" });
+  });
 });
