@@ -107,6 +107,10 @@ export async function syncCareEventRow(rowId: string, op: SyncOp, payload: unkno
   await recordSyncMutation({ table: "care_events", rowId, op, payload });
 }
 
+export async function syncDailyWinRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
+  await recordSyncMutation({ table: "daily_wins", rowId, op, payload });
+}
+
 type PlanningSyncTable =
   | "bingo_cards"
   | "goals"

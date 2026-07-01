@@ -19,6 +19,7 @@ export const SYNC_TABLES = [
   "task_recurrence",
   "task_occurrence_overrides",
   "chat_messages",
+  "daily_wins",
   "day_reviews",
   "app_settings",
   "category_settings",

@@ -6,6 +6,7 @@ import { abyssRouter } from "./abyss";
 import { careRouter } from "./care";
 import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
+import { dailyWinsRouter } from "./daily-wins";
 import { dayReviewsRouter } from "./day-reviews";
 import { dependenciesRouter } from "./dependencies";
 import { focusBlocksRouter } from "./focus-blocks";
@@ -35,6 +36,7 @@ export const appRouter = createTRPCRouter({
   care: careRouter,
   categorySettings: categorySettingsRouter,
   chat: chatRouter,
+  dailyWins: dailyWinsRouter,
   dayReviews: dayReviewsRouter,
   dependencies: dependenciesRouter,
   focusBlocks: focusBlocksRouter,

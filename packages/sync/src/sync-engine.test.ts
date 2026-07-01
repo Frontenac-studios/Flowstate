@@ -177,4 +177,53 @@ describe("pushPendingMutations (via runSync)", () => {
     const { listPendingMutations } = await import("./mutation-log");
     expect(await listPendingMutations(db)).toHaveLength(0);
   });
+
+  it("queues and pushes offline daily_wins accept mutations", async () => {
+    await recordSyncMutation(db, {
+      table: "daily_wins",
+      rowId: "w1",
+      op: "insert",
+      payload: {
+        id: "w1",
+        userId: "u1",
+        winDate: "2026-07-01",
+        slot: 0,
+        source: "task",
+        refId: "00000000-0000-4000-8000-000000000001",
+        label: "Shipped fix",
+        state: "accepted",
+        author: "ai",
+      },
+    });
+    await recordSyncMutation(db, {
+      table: "daily_wins",
+      rowId: "w2",
+      op: "insert",
+      payload: {
+        id: "w2",
+        userId: "u1",
+        winDate: "2026-07-01",
+        slot: null,
+        source: "task",
+        refId: "00000000-0000-4000-8000-000000000002",
+        state: "dismissed",
+        author: "ai",
+      },
+    });
+
+    const fake = createFakeSupabase(() => ({ data: [], error: null }));
+    const res = await runSync({ db, supabase: fake as never, userId: "u1" });
+
+    expect(res.errors).toEqual([]);
+
+    const upserts = fake.calls.filter((c) => c.op === "upsert" && c.table === "daily_wins");
+    expect(upserts).toHaveLength(1);
+    const rows = upserts[0].rows as Array<{ id: string; state: string }>;
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.id === "w1")?.state).toBe("accepted");
+    expect(rows.find((r) => r.id === "w2")?.state).toBe("dismissed");
+
+    const { listPendingMutations } = await import("./mutation-log");
+    expect(await listPendingMutations(db)).toHaveLength(0);
+  });
 });

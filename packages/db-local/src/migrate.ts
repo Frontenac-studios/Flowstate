@@ -495,6 +495,25 @@ CREATE TABLE IF NOT EXISTS care_events (
 CREATE INDEX IF NOT EXISTS care_events_user_id_occurred_at_idx ON care_events (user_id, occurred_at);
 CREATE INDEX IF NOT EXISTS care_events_activity_id_idx ON care_events (activity_id);
 
+
+CREATE TABLE IF NOT EXISTS daily_wins (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  win_date TEXT NOT NULL,
+  slot INTEGER,
+  source TEXT NOT NULL,
+  ref_id TEXT,
+  label TEXT,
+  state TEXT NOT NULL,
+  author TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS daily_wins_user_id_win_date_idx ON daily_wins (user_id, win_date);
+CREATE INDEX IF NOT EXISTS daily_wins_user_id_updated_at_idx ON daily_wins (user_id, updated_at);
+CREATE UNIQUE INDEX IF NOT EXISTS daily_wins_user_date_slot_accepted_uidx ON daily_wins (user_id, win_date, slot);
+CREATE UNIQUE INDEX IF NOT EXISTS daily_wins_user_date_ref_dismissed_uidx ON daily_wins (user_id, win_date, ref_id);
+
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,

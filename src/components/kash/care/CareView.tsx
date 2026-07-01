@@ -6,6 +6,7 @@ import { InPageSwitcher } from "../InPageSwitcher";
 
 import { CareComingSoon } from "./CareComingSoon";
 import { CareGardenHome } from "./CareGardenHome";
+import { CareStats } from "./CareStats";
 import { CareTasks } from "./CareTasks";
 import { CARE_SUBTITLES, CARE_TABS, type CareTab } from "./care-tabs";
 
@@ -31,6 +32,8 @@ export function CareView() {
         <CareGardenHome />
       ) : tab === "tasks" ? (
         <CareTasks />
+      ) : tab === "stats" ? (
+        <CareStats />
       ) : (
         <CareComingSoon tab={tab} />
       )}

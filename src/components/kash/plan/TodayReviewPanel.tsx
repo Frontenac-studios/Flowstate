@@ -2,8 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { DailyWinsTracker } from "@/components/kash/eod/DailyWinsTracker";
 import { FocusTimeChart } from "@/components/kash/eod/FocusTimeChart";
 import { Top3ReviewSummary } from "@/components/kash/eod/Top3ReviewSummary";
+import { useWindDownDue } from "@/hooks/useWindDownDue";
 import { useTRPC } from "@/trpc/client";
 
 /**
@@ -20,6 +22,7 @@ export function TodayReviewPanel({
   tzOffsetMinutes: number;
 }) {
   const trpc = useTRPC();
+  const windDownDue = useWindDownDue();
   const { data, isLoading } = useQuery(
     trpc.dayReviews.getPayload.queryOptions({ localDate, tzOffsetMinutes })
   );
@@ -48,6 +51,9 @@ export function TodayReviewPanel({
       </div>
       <Top3ReviewSummary top3Status={data.top3Status} />
       <FocusTimeChart bars={data.focusBars} overflowCount={data.focusOverflowCount} />
+      {windDownDue ? (
+        <DailyWinsTracker winDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
+      ) : null}
     </section>
   );
 }
