@@ -9,6 +9,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import Checkbox from "@/components/kash/ui/Checkbox";
 import Input from "@/components/kash/ui/Input";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
@@ -404,14 +405,20 @@ export function TaskRow({
           onDoubleClick={() => onActivate?.(task.id)}
         >
           <span
-            className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
+            className={`mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full${
+              task.categoryUnresolved ? "stripe-resolving" : ""
+            }`}
             style={{ backgroundColor: stripeColor }}
             aria-label={stripeLabel}
             title={stripeLabel}
           />
 
           {task.isTop3 ? (
-            <span className="shrink-0 text-accent" aria-label="Top 3">
+            <span
+              className="shrink-0"
+              style={{ color: resolvedCategory ? stripeColor : "var(--accent)" }}
+              aria-label="Top 3"
+            >
               ★
             </span>
           ) : null}
@@ -445,15 +452,9 @@ export function TaskRow({
             </div>
           ) : null}
 
-          <input
-            type="checkbox"
-            className={`mt-0.5 h-4 w-4 shrink-0 rounded border border-white/60 ${
-              completing ? "" : "accent-accent"
-            }`}
-            // AN-T1: the completed checkbox fills with the task's category colour
-            // (white check), not the all-ink accent — so the row reads its life
-            // area as it leaves.
-            style={completing ? { accentColor: stripeColor } : undefined}
+          <Checkbox
+            className="mt-0.5"
+            accentColor={completing || resolvedCategory ? stripeColor : "var(--ink)"}
             aria-label={`Complete ${task.title}`}
             checked={completing}
             disabled={isCompleting}
@@ -503,7 +504,7 @@ export function TaskRow({
           {showProjectIndicator && task.projectId ? (
             <Link
               href={`/projects/${task.projectId}`}
-              className="mt-0.5 flex max-w-[11rem] shrink-0 items-center gap-1.5 text-xs text-ink-muted hover:text-accent"
+              className="mt-0.5 flex max-w-[11rem] shrink-0 items-center gap-1.5 text-xs text-ink-muted underline underline-offset-2 hover:text-accent"
               onClick={(e) => e.stopPropagation()}
             >
               <span
