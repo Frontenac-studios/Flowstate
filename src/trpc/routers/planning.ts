@@ -1621,9 +1621,19 @@ export const planningRouter = createTRPCRouter({
           targetQuarter: goals.targetQuarter,
           targetMonth: goals.targetMonth,
           state: goals.state,
+          valueId: goals.valueId,
         })
         .from(goals)
         .where(eq(goals.userId, ctx.userId));
+
+      const valueRows = await db
+        .select({
+          id: userValues.id,
+          label: userValues.label,
+        })
+        .from(userValues)
+        .where(eq(userValues.userId, ctx.userId))
+        .orderBy(asc(userValues.sortOrder), asc(userValues.createdAt));
 
       const taskRows = await db
         .select({
@@ -1639,7 +1649,13 @@ export const planningRouter = createTRPCRouter({
         .from(goalMilestones)
         .where(eq(goalMilestones.userId, ctx.userId));
 
-      const proposals = templateCheckInSuggestions(scope, goalRows, taskRows, milestoneRows);
+      const proposals = templateCheckInSuggestions(
+        scope,
+        goalRows,
+        taskRows,
+        milestoneRows,
+        valueRows
+      );
 
       const rows = await Promise.all(
         proposals.map(async (payload) => {

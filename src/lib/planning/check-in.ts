@@ -25,7 +25,12 @@ export function checkInScopeKey(scope: CheckInScope): string {
   return `year:${scope.year}`;
 }
 
-export const checkInActionSchema = z.enum(["goal_horizon", "milestone", "task_schedule"]);
+export const checkInActionSchema = z.enum([
+  "goal_horizon",
+  "milestone",
+  "task_schedule",
+  "values_check",
+]);
 export type CheckInAction = z.infer<typeof checkInActionSchema>;
 
 export const checkInTargetHorizonSchema = z.enum(["quarter", "month"]);
@@ -50,6 +55,8 @@ export const checkInPayloadSchema = z.object({
   targetQuarter: z.number().int().min(1).max(4).optional(),
   scheduledDate: z.string().optional(),
   sortOrder: z.number().int().optional(),
+  quietValueIds: z.array(z.string().uuid()).optional(),
+  quietValueLabels: z.array(z.string()).optional(),
 });
 
 export type CheckInPayload = z.infer<typeof checkInPayloadSchema>;

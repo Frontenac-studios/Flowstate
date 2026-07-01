@@ -1,5 +1,6 @@
 import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { monthsForQuarter } from "@/lib/planning/quarter-months";
+import { detectValuesMisalignment, valuesCheckLabel } from "@/lib/planning/values-check";
 
 import {
   checkInScopeKey,
@@ -16,6 +17,12 @@ type GoalRow = {
   targetQuarter: number | null;
   targetMonth: number | null;
   state: string;
+  valueId: string | null;
+};
+
+type ValueRow = {
+  id: string;
+  label: string;
 };
 
 type TaskRow = {
@@ -33,12 +40,29 @@ export function templateCheckInSuggestions(
   scope: CheckInScope,
   goals: readonly GoalRow[],
   tasks: readonly TaskRow[],
-  milestones: readonly MilestoneRow[]
+  milestones: readonly MilestoneRow[],
+  values: readonly ValueRow[] = []
 ): CheckInPayload[] {
   const scopeKey = checkInScopeKey(scope);
   const activeGoals = goals.filter((g) => g.state === "active" && g.targetYear === scope.year);
   const milestoneGoalIds = new Set(milestones.map((m) => m.goalId));
   const suggestions: CheckInPayload[] = [];
+
+  const misalignment = detectValuesMisalignment(values, goals, scope.year);
+  if (misalignment) {
+    suggestions.push({
+      scopeKey,
+      depth: scope.depth,
+      year: scope.year,
+      month: scope.month ?? null,
+      quarter: scope.quarter ?? null,
+      weekStart: scope.weekStart ?? null,
+      action: "values_check",
+      label: valuesCheckLabel(misalignment),
+      quietValueIds: misalignment.quietValues.map((value) => value.id),
+      quietValueLabels: misalignment.quietValues.map((value) => value.label),
+    });
+  }
 
   const unassignedHorizon = activeGoals.filter(
     (g) => g.targetHorizon == null || (g.targetHorizon === "year" && scope.depth !== "year")
