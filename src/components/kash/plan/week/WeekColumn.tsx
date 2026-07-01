@@ -13,6 +13,8 @@ import ColumnTallyPopover from "./ColumnTallyPopover";
 import DayPrioritiesSlots, { type DayPrioritySlotTask } from "./DayPrioritiesSlots";
 import ProtectedBlockChip, { type ProtectedBlockRow } from "./ProtectedBlockChip";
 
+import type { OverCommitThresholdMode } from "@/lib/week/over-commit-threshold";
+
 type Props = {
   isoDate: string;
   label: string;
@@ -21,6 +23,8 @@ type Props = {
   tasks: PlanTaskRow[];
   pinnedBySlot: Map<number, DayPrioritySlotTask>;
   protectedBlocks: ProtectedBlockRow[];
+  overCommitted?: boolean;
+  overCommitMode?: OverCommitThresholdMode;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onRemoveProtected: (id: string) => void;
@@ -41,6 +45,8 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     tasks,
     pinnedBySlot,
     protectedBlocks,
+    overCommitted = false,
+    overCommitMode = "cold-start",
     onComplete,
     onDelete,
     onRemoveProtected,
@@ -71,6 +77,8 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
         headerDate={headerDate}
         isToday={isToday}
         tasks={tasks}
+        overCommitted={overCommitted}
+        overCommitMode={overCommitMode}
         droppableRef={setNodeRef}
         isDropOver={isOver}
       >

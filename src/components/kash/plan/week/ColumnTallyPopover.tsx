@@ -5,11 +5,17 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 import { BalanceBar } from "@/components/kash/plan/BalanceBar";
 import type { PlanTaskRow } from "@/components/kash/plan/TaskRow";
 
+import type { OverCommitThresholdMode } from "@/lib/week/over-commit-threshold";
+
+import OverCommitFlag from "./OverCommitFlag";
+
 type Props = {
   label: string;
   headerDate: string;
   isToday: boolean;
   tasks: PlanTaskRow[];
+  overCommitted?: boolean;
+  overCommitMode?: OverCommitThresholdMode;
   /** Droppable ref + drag-over styling for the day column header. */
   droppableRef: (node: HTMLElement | null) => void;
   isDropOver: boolean;
@@ -42,6 +48,8 @@ export default function ColumnTallyPopover({
   tasks,
   droppableRef,
   isDropOver,
+  overCommitted = false,
+  overCommitMode = "cold-start",
   children,
 }: Props) {
   const tallyId = useId();
@@ -133,6 +141,7 @@ export default function ColumnTallyPopover({
             {headerDate}
             {isToday ? <span className="text-ink-faint"> · today</span> : null}
           </p>
+          {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
         </button>
       </div>
 

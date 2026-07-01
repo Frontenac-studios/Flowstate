@@ -1,4 +1,5 @@
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { taskLoadWeight, type LoadWeightedTask } from "@/lib/week/task-load-weight";
 
 /**
  * One slice of the Today balance bar: a category (or `null` for tasks without a
@@ -31,22 +32,13 @@ export type CategoryBalance = {
 };
 
 /** The minimal task shape the balance read needs — a subset of `PlanTaskRow`. */
-type BalanceTask = {
+type BalanceTask = LoadWeightedTask & {
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
-  isTop3?: boolean;
 };
-
-/** A Top-3 task counts as three small tasks (Today §6 Q2). */
-const TOP3_WEIGHT = 3;
-const DEFAULT_WEIGHT = 1;
 
 /** A single category this share (or more) of the weighted day reads as "mostly X". */
 const DOMINANT_SHARE = 0.4;
-
-function taskWeight(task: BalanceTask): number {
-  return task.isTop3 ? TOP3_WEIGHT : DEFAULT_WEIGHT;
-}
 
 /**
  * Weigh a day's planned tasks by life-area for the Today summary balance bar.
@@ -70,7 +62,7 @@ export function computeCategoryBalance(tasks: ReadonlyArray<BalanceTask>): Categ
 
   for (const task of tasks) {
     const resolved = task.category && !task.categoryUnresolved ? task.category : null;
-    weights.set(resolved, (weights.get(resolved) ?? 0) + taskWeight(task));
+    weights.set(resolved, (weights.get(resolved) ?? 0) + taskLoadWeight(task));
     counts.set(resolved, (counts.get(resolved) ?? 0) + 1);
   }
 

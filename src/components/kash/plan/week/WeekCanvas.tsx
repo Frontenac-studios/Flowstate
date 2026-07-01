@@ -15,6 +15,8 @@ import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import { computeWeekDayLoads } from "@/lib/week/day-load";
+import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
@@ -109,6 +111,7 @@ export function WeekCanvas({
   const { data: dayPriorities = [] } = useQuery(
     trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
   );
+  const { data: overCommitThreshold } = useQuery(trpc.weekOverCommit.getThreshold.queryOptions());
 
   const prioritiesByDate = useMemo(() => {
     const map: Record<string, Map<number, DayPrioritySlotTask>> = {};
@@ -146,6 +149,47 @@ export function WeekCanvas({
   }, [protectedBlocks]);
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
+
+  const priorityTaskIdsByDate = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    for (const [iso, pinnedBySlot] of Object.entries(prioritiesByDate)) {
+      map[iso] = new Set(Array.from(pinnedBySlot.values()).map((task) => task.id));
+    }
+    return map;
+  }, [prioritiesByDate]);
+
+  const protectedCountByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [iso, blocks] of Object.entries(protectedByDate)) {
+      map[iso] = blocks.length;
+    }
+    return map;
+  }, [protectedByDate]);
+
+  const dayLoads = useMemo(
+    () =>
+      computeWeekDayLoads({
+        dates: weekDates.map(toISODateString),
+        tasksByDate: Object.fromEntries(
+          weekDates.map((date) => [
+            toISODateString(date),
+            partitioned.byDate[toISODateString(date)] ?? [],
+          ])
+        ),
+        priorityTaskIdsByDate,
+        protectedCountByDate,
+      }),
+    [weekDates, partitioned.byDate, priorityTaskIdsByDate, protectedCountByDate]
+  );
+
+  const overCommittedByDate = useMemo(() => {
+    if (!overCommitThreshold) return {};
+    const map: Record<string, boolean> = {};
+    for (const [iso, load] of Object.entries(dayLoads)) {
+      map[iso] = isDayOverCommitted(load, overCommitThreshold.threshold);
+    }
+    return map;
+  }, [dayLoads, overCommitThreshold]);
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -442,6 +486,8 @@ export function WeekCanvas({
                     tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
                     pinnedBySlot={pinnedBySlot}
                     protectedBlocks={protectedByDate[iso] ?? []}
+                    overCommitted={overCommittedByDate[iso] ?? false}
+                    overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
                     onComplete={pushComplete}
                     onDelete={pushDelete}
                     onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
