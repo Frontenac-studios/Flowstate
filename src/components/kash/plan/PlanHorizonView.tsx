@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  horizonForBreadcrumb,
+  trimBreadcrumbForHorizon,
+  zoomToQuarter,
+} from "@/lib/planning/horizon-nav";
 import {
   HORIZON_OPTIONS,
   PLANNING_BREADCRUMB_STORAGE_KEY,
@@ -14,6 +19,8 @@ import { InPageSwitcher } from "../InPageSwitcher";
 import BingoCard from "./bingo/BingoCard";
 import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
+import QuarterDrillShell from "./year/QuarterDrillShell";
+import YearView from "./year/YearView";
 
 function currentYear(): number {
   return new Date().getFullYear();
@@ -69,7 +76,7 @@ function writeStoredBreadcrumb(breadcrumb: PlanningBreadcrumb) {
 
 /**
  * Long-horizon planning shell: Week · Month · Quarter · Year · Bingo switcher,
- * breadcrumb zoom scaffold, and placeholder panels until parallel PRs land.
+ * breadcrumb zoom scaffold, and horizon views.
  */
 export function PlanHorizonView() {
   const [horizon, setHorizon] = useState<PlanningHorizon>("year");
@@ -96,6 +103,26 @@ export function PlanHorizonView() {
     writeStoredBreadcrumb(breadcrumb);
   }, [breadcrumb, hydrated]);
 
+  const handleBreadcrumbNavigate = useCallback((next: PlanningBreadcrumb) => {
+    setBreadcrumb(next);
+    setHorizon(horizonForBreadcrumb(next));
+  }, []);
+
+  const handleHorizonChange = useCallback((next: PlanningHorizon) => {
+    setHorizon(next);
+    if (next !== "bingo") {
+      setBreadcrumb((prev) => trimBreadcrumbForHorizon(prev, next));
+    }
+  }, []);
+
+  const handleZoomQuarter = useCallback(
+    (quarter: number) => {
+      setBreadcrumb(zoomToQuarter(breadcrumb.year, quarter));
+      setHorizon("quarter");
+    },
+    [breadcrumb.year]
+  );
+
   const title = useMemo(() => {
     if (horizon === "bingo") return "Bingo";
     if (horizon === "year") return "Year";
@@ -104,27 +131,37 @@ export function PlanHorizonView() {
     return "Week";
   }, [horizon]);
 
+  const showQuarterDrill = horizon === "quarter" && breadcrumb.quarter != null;
+  const showPlaceholder =
+    horizon === "week" ||
+    horizon === "month" ||
+    (horizon === "quarter" && breadcrumb.quarter == null);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2">
           <h1 className="text-lg font-semibold text-ink">{title}</h1>
           {horizon !== "bingo" ? (
-            <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={setBreadcrumb} />
+            <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
           ) : null}
         </div>
         <InPageSwitcher
           options={HORIZON_OPTIONS}
           value={horizon}
-          onChange={setHorizon}
+          onChange={handleHorizonChange}
           ariaLabel="Planning horizon"
         />
       </div>
       {horizon === "bingo" ? (
         <BingoCard year={breadcrumb.year} />
-      ) : (
+      ) : horizon === "year" ? (
+        <YearView year={breadcrumb.year} onZoomQuarter={handleZoomQuarter} />
+      ) : showQuarterDrill ? (
+        <QuarterDrillShell year={breadcrumb.year} quarter={breadcrumb.quarter!} />
+      ) : showPlaceholder ? (
         <PlanHorizonPlaceholder horizon={horizon} />
-      )}
+      ) : null}
     </div>
   );
 }
