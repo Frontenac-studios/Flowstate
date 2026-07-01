@@ -1,11 +1,9 @@
 import { AppHeader } from "./AppHeader";
-import { CommandPalette } from "./CommandPalette";
+import { AppShellChatRail, AppShellFixedOverlays } from "./AppShellOverlays";
 import { LeftNavRail } from "./LeftNavRail";
-import AbyssQuickCapture from "./abyss/AbyssQuickCapture";
 import { ChatProvider } from "./chat/ChatProvider";
-import { ChatRail } from "./chat/ChatRail";
-import { ProactiveNudgesRunner } from "./nudges/ProactiveNudgesRunner";
 import ToastProvider from "./ui/ToastProvider";
+import { ProactiveNudgesRunner } from "./nudges/ProactiveNudgesRunner";
 
 /**
  * The single app shell every destination renders inside: left nav rail ·
@@ -13,11 +11,17 @@ import ToastProvider from "./ui/ToastProvider";
  * Section-specific providers (e.g. plan mode) and triage panels are mounted by
  * the individual routes, not here.
  */
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  proactiveNudges = false,
+}: {
+  children: React.ReactNode;
+  proactiveNudges?: boolean;
+}) {
   return (
     <ChatProvider>
       <ToastProvider>
-        <ProactiveNudgesRunner />
+        {proactiveNudges ? <ProactiveNudgesRunner /> : null}
         <div className="relative min-h-screen">
           <div className="kash-shell-inner relative z-sticky mx-auto flex min-h-screen w-full max-w-[110rem] gap-6 px-4 py-6 sm:px-6 lg:px-10">
             <LeftNavRail />
@@ -25,10 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <AppHeader />
               <div className="flex min-h-0 flex-1 flex-col">{children}</div>
             </div>
-            <ChatRail />
+            <AppShellChatRail />
           </div>
-          <CommandPalette />
-          <AbyssQuickCapture />
+          <AppShellFixedOverlays />
         </div>
       </ToastProvider>
     </ChatProvider>

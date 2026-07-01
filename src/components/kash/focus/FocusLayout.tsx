@@ -3,8 +3,8 @@ import Link from "next/link";
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
 export function FocusLayout({ children }: { children: React.ReactNode }) {
-  // Focus is deliberately distraction-free: no chat rail, no chat toggle, and
-  // no proactive nudges — entering Focus is the app's "Do Not Disturb".
+  // Focus is deliberately distraction-free: no chat rail or chat toggle.
+  // Proactive nudges still run (deferred) but only surface a silent badge.
   return (
     <div className="relative min-h-screen">
       <div className="relative z-sticky mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-6 sm:px-6">

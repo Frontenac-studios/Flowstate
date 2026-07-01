@@ -19,7 +19,7 @@ export default async function PlanPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell proactiveNudges>
       <PlanSurface>
         <ContextualInbox />
         <LensProvider scope="today">

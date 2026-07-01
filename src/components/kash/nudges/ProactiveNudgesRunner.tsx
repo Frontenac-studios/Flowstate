@@ -2,7 +2,7 @@
 
 import { useProactiveNudges } from "@/hooks/useProactiveNudges";
 
-/** Mount inside ChatProvider on plan and focus layouts. */
+/** Mount inside ChatProvider on /today, /plan, and /today/focus. */
 export function ProactiveNudgesRunner() {
   useProactiveNudges();
   return null;
