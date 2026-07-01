@@ -60,6 +60,11 @@ export function mapRemoteRow(
     base.payload = typeof base.payload === "string" ? base.payload : JSON.stringify(base.payload);
   }
 
+  if (table === "project_templates" && base.structure != null) {
+    base.structure =
+      typeof base.structure === "string" ? base.structure : JSON.stringify(base.structure);
+  }
+
   const dateFields = [
     "created_at",
     "updated_at",
@@ -299,6 +304,18 @@ export function mapPayloadToRemote(
 
   if (table === "about_me_suggestions" && typeof out.payload === "object" && out.payload) {
     out.payload = JSON.stringify(out.payload);
+  }
+
+  if (table === "project_templates" && typeof out.structure === "string") {
+    try {
+      out.structure = JSON.parse(out.structure as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
+  if (table === "project_templates" && typeof out.structure === "object" && out.structure) {
+    out.structure = JSON.stringify(out.structure);
   }
 
   return out;

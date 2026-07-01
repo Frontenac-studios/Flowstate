@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+
+import { MoreHorizontal, kashIconProps } from "@/components/kash/ui/icon";
+import IconButton from "@/components/kash/ui/IconButton";
 
 import { InPageSwitcher } from "../InPageSwitcher";
 import CategoryBadge from "./CategoryBadge";
+import ProjectMenu from "./ProjectMenu";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
 type Props = {
@@ -24,6 +29,8 @@ export default function ProjectWorkspaceHeader({
   onViewModeChange,
   showBackToProjects = false,
 }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="relative z-sticky flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-overlay">
       <div className="flex flex-wrap items-center gap-3">
@@ -52,6 +59,18 @@ export default function ProjectWorkspaceHeader({
           onChange={onViewModeChange}
           ariaLabel="View mode"
         />
+        <div className="relative">
+          <IconButton
+            type="button"
+            aria-label={`Actions for ${project.name}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <MoreHorizontal {...kashIconProps({ tokenSize: "md" })} aria-hidden />
+          </IconButton>
+          {menuOpen ? <ProjectMenu project={project} onClose={() => setMenuOpen(false)} /> : null}
+        </div>
       </div>
     </header>
   );
