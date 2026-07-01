@@ -48,14 +48,14 @@ export default function RepeatPicker({ rrule, startDate, disabled = false, onCha
     }
   }, [rrule, startDate]);
 
-  const emit = (nextEnabled: boolean, nextState: RepeatPickerState) => {
+  const emit = (nextEnabled: boolean, nextState: RepeatPickerState, nextStartDate = startDate) => {
     if (!nextEnabled) {
-      onChange({ rrule: null, startDate });
+      onChange({ rrule: null, startDate: nextStartDate });
       return;
     }
     onChange({
-      rrule: serializePickerStateToRrule(nextState, startDate),
-      startDate,
+      rrule: serializePickerStateToRrule(nextState, nextStartDate),
+      startDate: nextStartDate,
     });
   };
 
@@ -102,6 +102,23 @@ export default function RepeatPicker({ rrule, startDate, disabled = false, onCha
       {enabled ? (
         <div className="bg-surface-2/40 flex flex-col gap-3 rounded-card border border-subtle p-3">
           <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="repeat-starts" className="text-sm font-medium text-ink">
+                Starts
+              </label>
+              <Input
+                id="repeat-starts"
+                type="date"
+                className="text-sm"
+                value={startDate}
+                disabled={disabled}
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  emit(enabled, state, e.target.value);
+                }}
+              />
+            </div>
+
             <div className="flex flex-col gap-1.5">
               <label htmlFor="repeat-frequency" className="text-sm font-medium text-ink">
                 Frequency

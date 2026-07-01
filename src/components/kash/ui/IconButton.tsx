@@ -20,7 +20,7 @@ const IconButton = forwardRef<HTMLButtonElement, Props>(function IconButton(
       ref={ref}
       className={cn(
         "inline-flex items-center justify-center rounded-chip border border-transparent px-2 py-1 text-ink-muted transition hover:border-border hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50",
-        "outline-none focus-visible:outline focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-offset-[var(--focus-ring-offset)] focus-visible:outline-[var(--focus-ring)]",
+        "kash-focus-visible outline-none",
         className
       )}
       {...rest}

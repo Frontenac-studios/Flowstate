@@ -1,4 +1,5 @@
 import { expandOccurrences } from "@/lib/recurrence/expand";
+import { formatRruleLabel } from "@/lib/recurrence/format-label";
 import { makeOccurrenceId } from "@/lib/recurrence/occurrence-id";
 import type { OccurrenceOverrideInput } from "@/lib/recurrence/types";
 import { endOfIsoWeekSunday, startOfIsoWeekMonday, toISODateString } from "@/lib/dates/local-day";
@@ -130,7 +131,7 @@ export function mergeRecurringIntoPlanList({
         recurrenceId: template.recurrenceId,
         occurrenceDate: occurrence.occurrenceDate,
         templateTaskId: template.taskId,
-        recurringLabel: undefined,
+        recurringLabel: formatRruleLabel(template.rrule),
       });
     }
   }

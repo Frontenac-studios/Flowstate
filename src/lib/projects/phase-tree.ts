@@ -196,3 +196,14 @@ export function partitionByCompletion<T extends { completedAt: Date | null }>(
   }
   return { active, completed };
 }
+
+/** All tasks in a phase subtree (this node + descendants), in tree-walk order. */
+export function collectSubtreeTasks<P extends PhaseShape, T extends TaskShape>(
+  node: PhaseTreeNode<P, T>
+): T[] {
+  const collected: T[] = [...node.tasks];
+  for (const child of node.children) {
+    collected.push(...collectSubtreeTasks(child));
+  }
+  return collected;
+}
