@@ -460,7 +460,7 @@ export default function MillerColumnsView({
               tabIndex={0}
               onKeyDown={handleKeyDown}
               aria-label="Project columns"
-              className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto rounded-card border border-subtle bg-surface p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto rounded-card border border-subtle bg-surface p-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
             >
               {columns.map((col) => (
                 <MillerColumn

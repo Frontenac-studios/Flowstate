@@ -163,7 +163,7 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
             <div className="relative">
               {showToday ? (
                 <div
-                  className="pointer-events-none absolute top-0 z-10 w-px bg-accent"
+                  className="pointer-events-none absolute top-0 z-base w-px bg-accent"
                   style={{
                     left: GANTT_LABEL_WIDTH + todayOffset * pxPerDay,
                     height: boardRows.length * GANTT_ROW_HEIGHT,
@@ -203,7 +203,7 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
                   type="button"
                   onClick={() => seedDates(r.node.phase.id)}
                   disabled={m.updatePhase.isPending}
-                  className="rounded-full border border-transparent px-3 py-1 text-sm font-medium transition disabled:opacity-50"
+                  className="rounded-full border border-transparent px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
                   style={{
                     backgroundColor: categoryFillVar(category),
                     color: categoryTextVar(category),

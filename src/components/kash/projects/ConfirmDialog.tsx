@@ -70,7 +70,7 @@ export default function ConfirmDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onCancel();
@@ -81,7 +81,7 @@ export default function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        className={`${panelClass} relative z-10 w-full ${widthClass} p-6`}
+        className={`${panelClass} relative z-base w-full ${widthClass} p-6`}
       >
         <h2 id="confirm-title" className="text-lg font-semibold text-ink">
           {title}

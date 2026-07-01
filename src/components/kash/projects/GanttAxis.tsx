@@ -15,11 +15,11 @@ type Props = {
 export default function GanttAxis({ ticks, pxPerDay, boardWidth }: Props) {
   return (
     <div
-      className="sticky top-0 z-20 flex"
+      className="sticky top-0 z-sticky flex"
       style={{ width: GANTT_LABEL_WIDTH + boardWidth, height: AXIS_HEIGHT }}
     >
       <div
-        className="sticky left-0 z-30 border-b border-border bg-surface"
+        className="sticky left-0 z-overlay border-b border-border bg-surface"
         style={{ width: GANTT_LABEL_WIDTH, height: AXIS_HEIGHT }}
       />
       <div
@@ -32,7 +32,7 @@ export default function GanttAxis({ ticks, pxPerDay, boardWidth }: Props) {
             className="absolute top-0 h-full border-l border-subtle"
             style={{ left: tick.dayOffset * pxPerDay }}
           >
-            <span className="whitespace-nowrap pl-1 text-[11px] leading-7 text-ink-muted">
+            <span className="whitespace-nowrap pl-1 text-caption leading-7 text-ink-muted">
               {tick.label}
             </span>
           </div>
