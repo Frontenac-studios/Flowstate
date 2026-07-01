@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { z } from "zod";
 
 export const proposalStatusSchema = z.enum(["pending", "applied", "dismissed"]);
@@ -61,7 +59,7 @@ export const proposedActionSchema = z.discriminatedUnion("kind", [
 export type ProposedAction = z.infer<typeof proposedActionSchema>;
 
 export function newProposalItemId(): string {
-  return randomUUID();
+  return crypto.randomUUID();
 }
 
 export function filterPayloadByEnabledItems(action: ProposedAction): ProposedAction | null {

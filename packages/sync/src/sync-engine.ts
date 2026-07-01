@@ -12,6 +12,7 @@ import {
   phases,
   planningSuggestions,
   projects,
+  projectTemplates,
   protectedBlockTemplates,
   protectedBlocks,
   weekDayPriorities,
@@ -247,6 +248,22 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(taskOccurrenceOverrides.id, id));
       else await db.insert(taskOccurrenceOverrides).values(mapped as never);
+      return true;
+    }
+    case "project_templates": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(projectTemplates)
+        .where(eq(projectTemplates.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(projectTemplates)
+          .set(mapped as never)
+          .where(eq(projectTemplates.id, id));
+      else await db.insert(projectTemplates).values(mapped as never);
       return true;
     }
     case "protected_block_templates": {

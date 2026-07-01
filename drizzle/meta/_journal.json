@@ -162,6 +162,13 @@
       "when": 1782930652125,
       "tag": "0022_luxuriant_purifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782932014424,
+      "tag": "0023_tan_warbound",
+      "breakpoints": true
     }
   ]
 }
