@@ -14,6 +14,7 @@ import { templateEodReview } from "@/lib/eod/template-eod-review";
 import { renderInlineBold } from "@/lib/markdown/inline-bold";
 import { useTRPC } from "@/trpc/client";
 
+import { DailyWinsTracker } from "./DailyWinsTracker";
 import { FocusTimeChart } from "./FocusTimeChart";
 import { Top3ReviewSummary } from "./Top3ReviewSummary";
 
@@ -229,6 +230,8 @@ export function EodReviewModal({
             </section>
 
             <FocusTimeChart bars={payload.focusBars} overflowCount={payload.focusOverflowCount} />
+
+            <DailyWinsTracker winDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
 
             <section className="space-y-[var(--space-2)]" aria-label="Reflection">
               <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">
