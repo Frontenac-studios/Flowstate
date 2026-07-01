@@ -11,6 +11,8 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 
+import "./week-motion.css";
+
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";

@@ -115,6 +115,7 @@ export default function ProtectedWeekBar({ anchorDate }: Props) {
               <ProtectedBlockChip
                 key={block.id}
                 block={block}
+                animatePlace
                 onRemove={(id) => removeMutation.mutate({ id })}
               />
             ))}

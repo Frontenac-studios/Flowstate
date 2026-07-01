@@ -59,6 +59,7 @@ export function BalanceBar({ tasks }: { tasks: ReadonlyArray<BalanceTask> }) {
           {segments.map((segment) => (
             <span
               key={segment.category ?? "none"}
+              className="transition-[flex-grow] duration-medium ease-move motion-reduce:transition-none"
               style={{
                 flexGrow: segment.weight,
                 backgroundColor: segmentColor(segment),

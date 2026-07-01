@@ -89,6 +89,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
                 key={block.id}
                 block={block}
                 compact
+                animatePlace
                 onRemove={onRemoveProtected}
               />
             ))}
@@ -102,6 +103,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
               task={task}
               showProject={false}
               suppressDue
+              weekDragLift
               canPin={canPinMore}
               onPin={onPinTask}
               onComplete={onComplete}
