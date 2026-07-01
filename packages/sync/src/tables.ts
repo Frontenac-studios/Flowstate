@@ -28,6 +28,7 @@ export const SYNC_TABLES = [
   "task_bulk_import_items",
   "care_activities",
   "care_events",
+  "care_reflections",
   "user_values",
   "about_me_sections",
   "user_constraints",

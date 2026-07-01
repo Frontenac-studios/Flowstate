@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { DECIDE_EVENT } from "@/components/kash/chrome-events";
 import { useChat } from "@/components/kash/chat/ChatProvider";
@@ -9,6 +10,7 @@ import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import { useTRPC } from "@/trpc/client";
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
@@ -52,15 +54,18 @@ function chipKey(chip: EssentialNudgeChipPayload): string {
 
 export function useEssentialNudges() {
   const router = useRouter();
+  const trpc = useTRPC();
   const { planningSurface } = useChat();
   const { constraints } = useUserConstraints();
   const evaluatingRef = useRef(false);
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
   const [chips, setChips] = useState<EssentialNudgeChipPayload[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   const evaluate = useCallback(async () => {
     if (evaluatingRef.current) return;
+    if (settings && !settings.notificationsEnabled) return;
     if (shouldSuppressInAppNudges(new Date(), constraints)) return;
     evaluatingRef.current = true;
 
@@ -73,6 +78,7 @@ export function useEssentialNudges() {
           localDate,
           tzOffsetMinutes: clientTzOffsetMinutes(),
           includeSelfCare: planningSurface === "today",
+          includeMonthlyReview: planningSurface === "plan" || planningSurface === "reviews",
         }),
       });
 
@@ -98,7 +104,7 @@ export function useEssentialNudges() {
     } finally {
       evaluatingRef.current = false;
     }
-  }, [constraints, planningSurface]);
+  }, [constraints, planningSurface, settings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,6 +148,9 @@ export function useEssentialNudges() {
       }
       if (kind === "self_care_walk") {
         router.push("/care");
+      }
+      if (kind === "monthly_review") {
+        router.push("/abyss");
       }
       dismissChip(kind);
     },

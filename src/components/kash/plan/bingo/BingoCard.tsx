@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { readMotionDurationMs, MOTION_TOKEN } from "@/lib/animate/motion-tokens";
+
 import GhostedAccept from "@/components/kash/plan/GhostedAccept";
 import { Star, kashIconProps } from "@/components/kash/ui/icon";
 import { useToast } from "@/components/kash/ui/ToastProvider";
@@ -74,6 +76,21 @@ export default function BingoCard({ year }: Props) {
   const card = cardQuery.data ?? null;
   const bingoCardId = card?.id;
   const locked = card?.status === "final";
+  const [locking, setLocking] = useState(false);
+  const prevLockedRef = useRef(locked);
+
+  useEffect(() => {
+    if (!prevLockedRef.current && locked) {
+      setLocking(true);
+      const timer = window.setTimeout(
+        () => setLocking(false),
+        readMotionDurationMs(MOTION_TOKEN.short)
+      );
+      prevLockedRef.current = locked;
+      return () => window.clearTimeout(timer);
+    }
+    prevLockedRef.current = locked;
+  }, [locked]);
 
   const goalsQuery = useQuery({
     ...trpc.planning.listGoals.queryOptions({ bingoCardId }),
@@ -437,6 +454,7 @@ export default function BingoCard({ year }: Props) {
             <BingoGrid
               grid={grid}
               locked={locked}
+              locking={locking}
               pendingGoalId={pendingGoalId}
               onToggleDone={handleToggleDone}
               onBackburner={handleBackburner}

@@ -45,6 +45,7 @@ describe("system-prompts", () => {
   it("adds planning surface modifier for global chat on Today", () => {
     expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "today")).toContain("Surface: Today");
     expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "abyss")).toContain("Surface: Abyss");
+    expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "reviews")).toContain("Surface: Reviews");
   });
 
   it("omits surface modifier for focus threads", () => {
@@ -60,6 +61,6 @@ describe("planningSurfaceFromPathname", () => {
     expect(planningSurfaceFromPathname("/plan")).toBe("plan");
     expect(planningSurfaceFromPathname("/projects/foo")).toBe("projects");
     expect(planningSurfaceFromPathname("/abyss")).toBe("abyss");
-    expect(planningSurfaceFromPathname("/care")).toBeNull();
+    expect(planningSurfaceFromPathname("/care")).toBe("reviews");
   });
 });

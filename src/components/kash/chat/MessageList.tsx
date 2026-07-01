@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { prefersReducedMotion } from "@/lib/animate/motion-tokens";
+
 import Textarea from "@/components/kash/ui/Textarea";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
 import { parseFocusTaskId } from "@/lib/chat/threads";
@@ -31,6 +33,9 @@ type Props = {
   onEditUserMessage?: (messageId: string, text: string) => void;
   onApplyProposal?: (messageId: string, enabledItemIds: string[]) => void;
   onDismissProposal?: (messageId: string) => void;
+  hasMoreOlder?: boolean;
+  loadingOlder?: boolean;
+  onLoadOlder?: () => void;
   proposalBusy?: boolean;
 };
 
@@ -115,13 +120,30 @@ export function MessageList({
   onEditUserMessage,
   onApplyProposal,
   onDismissProposal,
+  hasMoreOlder = false,
+  loadingOlder = false,
+  onLoadOlder,
   proposalBusy = false,
 }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(messages.length);
+  const prevScrollHeightRef = useRef(0);
+  const reducedMotionRef = useRef(true);
   const isFocusThread = parseFocusTaskId(threadId) !== null;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    reducedMotionRef.current = prefersReducedMotion();
+  }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const prepended = messages.length > prevCountRef.current && prevScrollHeightRef.current > 0;
+    if (prepended) el.scrollTop += el.scrollHeight - prevScrollHeightRef.current;
+    else
+      bottomRef.current?.scrollIntoView({ behavior: reducedMotionRef.current ? "auto" : "smooth" });
+    prevCountRef.current = messages.length;
+    prevScrollHeightRef.current = el.scrollHeight;
   }, [messages, streamingText]);
 
   if (messages.length === 0 && !streamingText) {
@@ -133,7 +155,17 @@ export function MessageList({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 py-2">
+    <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 py-2">
+      {hasMoreOlder && onLoadOlder ? (
+        <button
+          type="button"
+          disabled={loadingOlder}
+          onClick={onLoadOlder}
+          className="mx-auto rounded-pill border border-border bg-surface px-3 py-1 text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:opacity-50"
+        >
+          {loadingOlder ? "Loading…" : "Load older messages"}
+        </button>
+      ) : null}
       {messages.map((m) => {
         const isNudge = m.role === "assistant" && m.content.meta?.source === "nudge";
         const proposal = m.content.meta?.proposal;

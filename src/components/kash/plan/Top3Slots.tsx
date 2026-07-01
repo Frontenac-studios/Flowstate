@@ -4,6 +4,9 @@ import Link from "next/link";
 import { forwardRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
+import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { type ProjectCategory } from "@/lib/projects/categories";
+
 import { Top3Deadline } from "./Top3Deadline";
 
 export type Top3SlotTask = {
@@ -13,6 +16,8 @@ export type Top3SlotTask = {
   projectSlug: string | null;
   top3Order: number;
   completedAt: Date | null;
+  category?: ProjectCategory | null;
+  categoryUnresolved?: boolean;
 };
 
 const SLOT_LABELS = ["①", "②", "③"] as const;
@@ -27,6 +32,8 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `top3:${slot}` });
   const label = SLOT_LABELS[slot - 1];
   const isCompleted = task.completedAt != null;
+  const starColor =
+    task.category && !task.categoryUnresolved ? categorySolidVar(task.category) : "var(--accent)";
 
   return (
     <div
@@ -45,7 +52,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
         <span className="mt-0.5 shrink-0 text-xs text-accent" aria-hidden>
           {label}
         </span>
-        <span className="mt-0.5 shrink-0 text-accent" aria-hidden>
+        <span className="mt-0.5 shrink-0" style={{ color: starColor }} aria-hidden>
           ★
         </span>
         <span
@@ -58,7 +65,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
         {task.projectSlug && task.projectId ? (
           <Link
             href={`/projects/${task.projectId}`}
-            className="mt-0.5 shrink-0 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-accent"
+            className="mt-0.5 shrink-0 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted underline underline-offset-2 hover:text-accent"
             onClick={(e) => e.stopPropagation()}
           >
             #{task.projectSlug}

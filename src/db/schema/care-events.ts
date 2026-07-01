@@ -8,13 +8,22 @@ export type CareEventBingoMeta = {
   lineType: "row" | "column" | "diagonal";
 };
 
+export type CareEventBreathingMeta = {
+  preset: "box4" | "relax4-6";
+  cycles: number;
+};
+
 export type CareEventDailyWinMeta = {
   dailyWinId: string;
   winDate: string;
   beat: "drip" | "full_set";
 };
 
-export type CareEventMeta = CareEventBingoMeta | CareEventDailyWinMeta | null;
+export type CareEventMeta =
+  | CareEventBingoMeta
+  | CareEventDailyWinMeta
+  | CareEventBreathingMeta
+  | null;
 
 // A logged self-care act ("I did this" / check-off) or a planning bingo nourish.
 // Feeds frequency stats, garden nourishment, and wins. activityId is nullable +

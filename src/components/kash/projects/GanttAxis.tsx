@@ -10,17 +10,23 @@ type Props = {
   ticks: GanttTick[];
   pxPerDay: number;
   boardWidth: number;
+  labelWidth?: number;
 };
 
-export default function GanttAxis({ ticks, pxPerDay, boardWidth }: Props) {
+export default function GanttAxis({
+  ticks,
+  pxPerDay,
+  boardWidth,
+  labelWidth = GANTT_LABEL_WIDTH,
+}: Props) {
   return (
     <div
       className="sticky top-0 z-sticky flex"
-      style={{ width: GANTT_LABEL_WIDTH + boardWidth, height: AXIS_HEIGHT }}
+      style={{ width: labelWidth + boardWidth, height: AXIS_HEIGHT }}
     >
       <div
         className="sticky left-0 z-overlay border-b border-border bg-surface"
-        style={{ width: GANTT_LABEL_WIDTH, height: AXIS_HEIGHT }}
+        style={{ width: labelWidth, height: AXIS_HEIGHT }}
       />
       <div
         className="relative border-b border-border bg-surface"

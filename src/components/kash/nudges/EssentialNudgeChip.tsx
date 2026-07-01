@@ -1,6 +1,6 @@
 "use client";
 
-import { Footprints, ListOrdered, X } from "lucide-react";
+import { Footprints, ListOrdered, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
@@ -34,6 +34,11 @@ const KIND_META: Record<
     icon: Footprints,
     regionLabel: "Self-care nudge",
     defaultAction: "Care",
+  },
+  monthly_review: {
+    icon: Sparkles,
+    regionLabel: "Monthly review nudge",
+    defaultAction: "Stargaze",
   },
 };
 

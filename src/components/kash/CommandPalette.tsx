@@ -124,7 +124,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-modal flex items-start justify-center px-4 pt-[18vh]"
+      className="modal-overlay fixed inset-0 z-modal flex items-start justify-center px-4 pt-[18vh]"
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
@@ -132,8 +132,12 @@ export function CommandPalette() {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div className="absolute inset-0 bg-black/20" aria-hidden onMouseDown={close} />
-      <div className="relative z-sticky w-full max-w-lg overflow-hidden rounded-card border border-border bg-surface p-2 shadow-overlay">
+      <div
+        className="modal-backdrop absolute inset-0 bg-black/20"
+        aria-hidden
+        onMouseDown={close}
+      />
+      <div className="modal-panel relative z-sticky w-full max-w-lg overflow-hidden rounded-card border border-border bg-surface p-2 shadow-overlay">
         <Input
           ref={inputRef}
           value={query}

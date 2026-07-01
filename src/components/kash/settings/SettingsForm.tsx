@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Select from "@/components/kash/ui/Select";
@@ -13,6 +13,8 @@ import { useTRPC } from "@/trpc/client";
 import AboutMeSection from "./about-me/AboutMeSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
+import { NotificationSettingsSection } from "./NotificationSettingsSection";
+import { SyncStatusPanel } from "./SyncStatusPanel";
 
 const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
 
@@ -46,17 +48,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "ai", label: "AI / Kash" },
   { id: "data", label: "Data & sync" },
 ];
-
-/** Placeholder panel for sections whose underlying feature is not built yet. */
-function ComingSoon({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
-      <h2 className="text-sm font-semibold text-ink">{title}</h2>
-      <p className="mt-2 text-sm text-ink-muted">{children}</p>
-      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-ink-faint">Coming soon</p>
-    </section>
-  );
-}
 
 export function SettingsForm() {
   const trpc = useTRPC();
@@ -155,11 +146,7 @@ export function SettingsForm() {
 
         {tab === "about" ? <AboutMeSection /> : null}
 
-        {tab === "notifications" ? (
-          <ComingSoon title="Notifications">
-            Global notification controls and Do Not Disturb preferences.
-          </ComingSoon>
-        ) : null}
+        {tab === "notifications" ? <NotificationSettingsSection /> : null}
 
         {tab === "preferences" ? (
           <>
@@ -286,11 +273,7 @@ export function SettingsForm() {
           </section>
         ) : null}
 
-        {tab === "data" ? (
-          <ComingSoon title="Data & sync">
-            Offline sync status, export, and account data controls.
-          </ComingSoon>
-        ) : null}
+        {tab === "data" ? <SyncStatusPanel /> : null}
       </div>
 
       <Link

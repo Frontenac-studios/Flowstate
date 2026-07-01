@@ -1,0 +1,2 @@
+ALTER TABLE "app_settings" ADD COLUMN "notifications_enabled" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "app_settings" ADD COLUMN "focus_dnd_enabled" boolean DEFAULT true NOT NULL;

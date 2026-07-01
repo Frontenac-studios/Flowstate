@@ -1,27 +1,19 @@
 import type { CSSProperties } from "react";
 
+import type { GardenLifeState } from "@/lib/care/garden-dormancy";
 import type { GardenNourishBeat } from "@/lib/care/garden-nourish";
-import { extraPlantCount } from "@/lib/care/garden-growth";
+import { extraPlantCount, gardenGrowthStageLabel } from "@/lib/care/garden-growth";
 
 import "./care-garden-motion.css";
 
 type Props = {
   nourishCount?: number;
   growthTier?: number;
+  lifeState?: GardenLifeState;
   nourishBeat?: GardenNourishBeat | null;
   nourishPulseKey?: number;
 };
 
-/**
- * The Care garden — the one lush, illustrative exception to the B&W redesign.
- *
- * Palette is token-anchored: the greens derive from the Body & Mind category
- * token (`--cat-body-mind-*`) via `color-mix`, sun/flower cores from the
- * reserved yellow, and only the two petal hues are bespoke illustrative tints.
- * All are scoped to this element as `--g-*` vars so no raw hex leaks to use
- * sites and the shared `tokens.css` is left untouched. A lightweight stand-in
- * until the detailed-illustrative art spike ships.
- */
 const gardenPalette = {
   "--g-sky": "color-mix(in srgb, var(--cat-body-mind-fill) 70%, var(--surface))",
   "--g-sun": "var(--reserved-yellow-fill)",
@@ -39,10 +31,14 @@ const gardenPalette = {
 export function GardenScene({
   nourishCount = 0,
   growthTier = 0,
+  lifeState = "active",
   nourishBeat = null,
   nourishPulseKey = 0,
 }: Props) {
   const bonusPlants = extraPlantCount(nourishCount);
+  const isDormant = lifeState === "dormant";
+  const isReviving = lifeState === "reviving";
+  const stageLabel = gardenGrowthStageLabel(growthTier, lifeState);
   const bonusOffsets = [
     { cx: 155, cy: 208, r: 7 },
     { cx: 172, cy: 212, r: 6 },
@@ -54,7 +50,24 @@ export function GardenScene({
   return (
     <div
       className="flex h-full flex-col overflow-hidden rounded-card border border-subtle"
-      style={gardenPalette}
+      style={{
+        ...gardenPalette,
+        ...(isDormant
+          ? ({
+              "--g-sky": "color-mix(in srgb, var(--surface-2) 85%, var(--cat-body-mind-fill))",
+              "--g-hill-1": "color-mix(in srgb, var(--surface-2) 70%, var(--surface))",
+              "--g-hill-2": "color-mix(in srgb, var(--surface-2) 78%, var(--surface))",
+              "--g-hill-3": "color-mix(in srgb, var(--surface-2) 86%, var(--surface))",
+              "--g-leaf": "color-mix(in srgb, var(--cat-body-mind-solid) 45%, var(--surface-2))",
+              "--g-leaf-soft":
+                "color-mix(in srgb, var(--cat-body-mind-solid) 30%, var(--surface-2))",
+            } as CSSProperties)
+          : isReviving
+            ? ({
+                "--g-sun": "color-mix(in srgb, var(--reserved-yellow-fill) 75%, var(--surface))",
+              } as CSSProperties)
+            : {}),
+      }}
     >
       <svg
         viewBox="0 0 380 250"
@@ -77,7 +90,13 @@ export function GardenScene({
           d="M0 224 Q140 210 260 222 Q330 230 380 222 L380 250 L0 250 Z"
           fill="var(--g-hill-3)"
         />
-        <g stroke="var(--g-stem)" strokeWidth={3} strokeLinecap="round" fill="none">
+        <g
+          stroke="var(--g-stem)"
+          strokeWidth={3}
+          strokeLinecap="round"
+          fill="none"
+          opacity={isDormant ? 0.55 : 1}
+        >
           <path d="M70 224 L70 188" />
           <path d="M70 200 q-12 -6 -16 -16" />
           <path d="M70 196 q12 -7 17 -17" />
@@ -88,18 +107,18 @@ export function GardenScene({
           <path d="M250 200 q-14 -6 -19 -18" />
           <path d="M250 194 q14 -7 19 -18" />
         </g>
-        <circle cx="70" cy="180" r="9" fill="var(--g-petal-a)" />
+        <circle cx="70" cy="180" r="9" fill="var(--g-petal-a)" opacity={isDormant ? 0.5 : 1} />
         <circle cx="70" cy="180" r="3.5" fill="var(--g-flower-core)" />
-        <circle cx="120" cy="174" r="9" fill="var(--g-petal-b)" />
+        <circle cx="120" cy="174" r="9" fill="var(--g-petal-b)" opacity={isDormant ? 0.5 : 1} />
         <circle cx="120" cy="174" r="3.5" fill="var(--g-flower-core)" />
         <circle cx="250" cy="170" r="11" fill="var(--g-sun)" />
         <circle cx="250" cy="170" r="4" fill="var(--g-flower-core)" />
-        <g fill="var(--g-leaf-soft)">
+        <g fill="var(--g-leaf-soft)" opacity={isDormant ? 0.45 : 1}>
           <ellipse cx="186" cy="214" rx="9" ry="20" />
           <ellipse cx="198" cy="216" rx="8" ry="16" />
           <ellipse cx="175" cy="217" rx="7" ry="14" />
         </g>
-        <g fill="var(--g-leaf)">
+        <g fill="var(--g-leaf)" opacity={isDormant ? 0.45 : 1}>
           <ellipse cx="310" cy="220" rx="8" ry="16" />
           <ellipse cx="322" cy="222" rx="7" ry="13" />
           <ellipse cx="300" cy="223" rx="6" ry="11" />
@@ -118,7 +137,7 @@ export function GardenScene({
         </g>
         {bonusPlants > 0
           ? bonusOffsets.slice(0, bonusPlants).map((plant, index) => (
-              <g key={`bonus-${index}`}>
+              <g key={`bonus-${index}`} opacity={isDormant ? 0.45 : 1}>
                 <circle cx={plant.cx} cy={plant.cy} r={plant.r} fill="var(--g-leaf-soft)" />
                 <circle
                   cx={plant.cx}
@@ -129,15 +148,24 @@ export function GardenScene({
               </g>
             ))
           : null}
+        {isReviving ? (
+          <text x="16" y="28" className="fill-[var(--cat-body-mind-text)] text-[11px]">
+            ✨ Waking up
+          </text>
+        ) : null}
+        {isDormant ? (
+          <text x="16" y="28" className="fill-[var(--ink-faint)] text-[11px]">
+            🌙 Resting gently
+          </text>
+        ) : null}
       </svg>
       <p className="border-t border-subtle bg-surface px-3 py-2 text-caption text-ink-muted">
         Your garden — it grows as you tend yourself, and gently rests when you do.
-        {nourishCount > 0 ? (
-          <span className="mt-0.5 block text-ink">
-            {nourishCount} nourish{nourishCount === 1 ? "" : "ments"}
-            {growthTier > 0 ? ` · growth tier ${growthTier}` : ""}
-          </span>
-        ) : null}
+        <span className="mt-0.5 block text-ink">
+          {nourishCount > 0
+            ? `${nourishCount} nourish${nourishCount === 1 ? "" : "ments"} · ${stageLabel}`
+            : stageLabel}
+        </span>
       </p>
     </div>
   );

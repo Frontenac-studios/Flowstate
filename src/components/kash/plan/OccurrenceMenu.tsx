@@ -138,6 +138,9 @@ export default function OccurrenceMenu({
     >
       {step === "menu" ? (
         <>
+          <p className="px-2 pb-1 text-caption text-ink-faint">
+            This occurrence only — series unchanged
+          </p>
           <button
             type="button"
             role="menuitem"

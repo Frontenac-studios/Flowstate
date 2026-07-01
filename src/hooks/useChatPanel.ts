@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
@@ -9,6 +9,22 @@ import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useTRPC } from "@/trpc/client";
 
 export type SendMessageSource = "composer" | "chip";
+
+type ChatMessage = {
+  id: string;
+  role: string;
+  content: {
+    type: string;
+    text: string;
+    meta?: {
+      source?: string;
+      kind?: string;
+      proposal?: ProposedAction;
+    };
+  };
+  taskId: string | null;
+  createdAt: Date;
+};
 
 export function useChatPanel(threadId: string) {
   const trpc = useTRPC();
@@ -18,16 +34,34 @@ export function useChatPanel(threadId: string) {
   const [streamingText, setStreamingText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [olderMessages, setOlderMessages] = useState<ChatMessage[]>([]);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: configuredData } = useQuery({
     ...trpc.chat.isConfigured.queryOptions(),
     enabled: railOpen,
   });
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: listData, isLoading } = useQuery({
     ...trpc.chat.list.queryOptions({ threadId }),
     enabled: railOpen,
   });
+
+  useEffect(() => {
+    setOlderMessages([]);
+    setHasMoreOlder(false);
+    setLoadingOlder(false);
+  }, [threadId]);
+
+  useEffect(() => {
+    if (listData) setHasMoreOlder(listData.hasMore);
+  }, [listData]);
+
+  const messages = useMemo(
+    () => [...olderMessages, ...(listData?.messages ?? [])],
+    [olderMessages, listData?.messages]
+  );
 
   const appendUserMutation = useMutation(trpc.chat.appendUser.mutationOptions());
   const editUserMessageMutation = useMutation(trpc.chat.editUserMessage.mutationOptions());
@@ -43,6 +77,21 @@ export function useChatPanel(threadId: string) {
       },
     });
   }, [queryClient]);
+
+  const loadOlderMessages = useCallback(async () => {
+    const oldest = messages[0];
+    if (!oldest || loadingOlder || !hasMoreOlder) return;
+    setLoadingOlder(true);
+    try {
+      const result = await queryClient.fetchQuery(
+        trpc.chat.list.queryOptions({ threadId, beforeMessageId: oldest.id })
+      );
+      setOlderMessages((prev) => [...result.messages, ...prev]);
+      setHasMoreOlder(result.hasMore);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [hasMoreOlder, loadingOlder, messages, queryClient, threadId, trpc.chat.list]);
 
   const refreshMessages = useCallback(async () => {
     await queryClient.invalidateQueries({
@@ -199,6 +248,7 @@ export function useChatPanel(threadId: string) {
           messageId,
           text: trimmed,
         });
+        setOlderMessages([]);
         await refreshMessages();
         await runStream(messageId, trimmed);
       } catch (err) {
@@ -234,6 +284,9 @@ export function useChatPanel(threadId: string) {
   return {
     messages,
     isLoading,
+    hasMoreOlder,
+    loadingOlder,
+    loadOlderMessages,
     configured: configuredData?.configured ?? false,
     streamingText,
     streamError,

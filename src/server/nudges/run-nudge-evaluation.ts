@@ -1,10 +1,13 @@
 import "server-only";
-
-import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
-
+import { and, asc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import {
+  evaluateMonthlyReview,
+  localMonthKey,
+  templateMonthlyReviewMessage,
+} from "@/lib/nudges/evaluate-monthly-review";
 import {
   evaluateSelfCareWalk,
   templateSelfCareWalkMessage,
@@ -12,25 +15,31 @@ import {
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
 import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
-
 export type NudgeEvaluateResult = {
   fired: boolean;
   chips: EssentialNudgeChipPayload[];
   stalledCount: number;
   slippedCount: number;
 };
-
 export async function runNudgeEvaluation(params: {
   userId: string;
   localDate: string;
   tzOffsetMinutes: number;
-  /** When true, evaluate the self-care walk chip (Today only). */
   includeSelfCare?: boolean;
+  includeMonthlyReview?: boolean;
 }): Promise<NudgeEvaluateResult> {
-  const { userId, localDate, tzOffsetMinutes, includeSelfCare = false } = params;
+  const {
+    userId,
+    localDate,
+    tzOffsetMinutes,
+    includeSelfCare = false,
+    includeMonthlyReview = false,
+  } = params;
   const now = new Date();
-
-  const [top3Rows, existingNudges, timeEntryRows] = await Promise.all([
+  const monthKey = localMonthKey(now, tzOffsetMinutes);
+  const monthStart = `${monthKey}-01`;
+  const monthEnd = `${monthKey}-31`;
+  const [top3Rows, existingNudges, timeEntryRows, monthlyNudges] = await Promise.all([
     db
       .select({
         id: tasks.id,
@@ -61,14 +70,24 @@ export async function runNudgeEvaluation(params: {
         )
       ),
     db
-      .select({
-        taskId: taskTimeEntries.taskId,
-        startedAt: taskTimeEntries.startedAt,
-      })
+      .select({ taskId: taskTimeEntries.taskId, startedAt: taskTimeEntries.startedAt })
       .from(taskTimeEntries)
       .where(eq(taskTimeEntries.userId, userId)),
+    includeMonthlyReview
+      ? db
+          .select({ kind: nudgeEvents.kind })
+          .from(nudgeEvents)
+          .where(
+            and(
+              eq(nudgeEvents.userId, userId),
+              eq(nudgeEvents.kind, "monthly_review"),
+              gte(nudgeEvents.localDate, monthStart),
+              lte(nudgeEvents.localDate, monthEnd)
+            )
+          )
+          .limit(1)
+      : Promise.resolve([]),
   ]);
-
   const top3Tasks = top3Rows
     .filter((r): r is typeof r & { top3Order: number } => r.top3Order !== null)
     .map((r) => ({
@@ -79,13 +98,10 @@ export async function runNudgeEvaluation(params: {
       scheduledDate: r.scheduledDate,
       completedAt: r.completedAt,
     }));
-
   const timeEntriesToday = timeEntryRows
     .filter((e) => startedOnLocalDay(e.startedAt, localDate, tzOffsetMinutes))
     .map((e) => ({ taskId: e.taskId, startedAt: e.startedAt }));
-
   const nudgedKinds = new Set(existingNudges.map((n) => n.kind));
-
   const stallEvaluation = evaluateTop3Stall({
     now,
     tzOffsetMinutes,
@@ -94,7 +110,6 @@ export async function runNudgeEvaluation(params: {
     timeEntriesToday,
     alreadyNudgedToday: nudgedKinds.has("top3_stall"),
   });
-
   const selfCareEvaluation = includeSelfCare
     ? evaluateSelfCareWalk({
         now,
@@ -103,10 +118,15 @@ export async function runNudgeEvaluation(params: {
         alreadyNudgedToday: nudgedKinds.has("self_care_walk"),
       })
     : { shouldFire: false, localHour: 0 };
-
+  const monthlyEvaluation = includeMonthlyReview
+    ? evaluateMonthlyReview({
+        now,
+        tzOffsetMinutes,
+        alreadyNudgedThisMonth: monthlyNudges.length > 0,
+      })
+    : { shouldFire: false, localHour: 0 };
   const chips: EssentialNudgeChipPayload[] = [];
   let fired = false;
-
   if (stallEvaluation.shouldFireStallNudge) {
     try {
       await db.insert(nudgeEvents).values({
@@ -123,29 +143,26 @@ export async function runNudgeEvaluation(params: {
         ),
       });
       fired = true;
-    } catch {
-      // Unique index — another tab won the race.
-    }
+    } catch {}
   }
-
   if (selfCareEvaluation.shouldFire) {
     try {
-      await db.insert(nudgeEvents).values({
-        userId,
-        kind: "self_care_walk",
-        localDate,
-        taskIds: [],
-      });
-      chips.push({
-        kind: "self_care_walk",
-        message: templateSelfCareWalkMessage(),
-      });
+      await db
+        .insert(nudgeEvents)
+        .values({ userId, kind: "self_care_walk", localDate, taskIds: [] });
+      chips.push({ kind: "self_care_walk", message: templateSelfCareWalkMessage() });
       fired = true;
-    } catch {
-      // Unique index — another tab won the race.
-    }
+    } catch {}
   }
-
+  if (monthlyEvaluation.shouldFire) {
+    try {
+      await db
+        .insert(nudgeEvents)
+        .values({ userId, kind: "monthly_review", localDate, taskIds: [] });
+      chips.push({ kind: "monthly_review", message: templateMonthlyReviewMessage() });
+      fired = true;
+    } catch {}
+  }
   return {
     fired,
     chips,
