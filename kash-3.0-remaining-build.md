@@ -133,10 +133,11 @@ wiring + essential nudges. _(Open tail: About-me update mechanism — §13.)_
 `abyss-build-spec.md`. Dark/immersive capture surface; ⌘⇧A modal capture; park = sink+blur (AN, §5);
 fixed archive threshold (~90d) + override.
 
-### B.8 — Values & About-me · ⬜ · M
+### B.8 — Values & About-me · ✅ · M
 
 `values-context.md` (owns the About-me doc: hybrid structured + free-form, read into AI context each turn,
-edits via `propose_about_me_edit` → confirm). Start empty; AI continuously proposes ghosted additions.
+edits via `propose_about_me_edit` → ghosted accept/dismiss in Settings). Start empty; AI continuously
+proposes additions via chat tool, check-in, and EoD reflection producers.
 
 ### B.9 — Mechanics · ⬜ · S
 

@@ -28,6 +28,7 @@ import {
 } from "@/lib/planning/balance-pass";
 import { checkInDepthSchema, checkInScopeKey } from "@/lib/planning/check-in";
 import { templateCheckInSuggestions } from "@/lib/planning/check-in-templates";
+import { runCheckInAboutMeProducer } from "@/server/about-me/register-hooks";
 import {
   goalProgressPercent,
   milestoneIsComplete,
@@ -1674,6 +1675,10 @@ export const planningRouter = createTRPCRouter({
       for (const row of rows) {
         if (row) await syncRow("planning_suggestions", row.id, "insert", row);
       }
+
+      try {
+        await runCheckInAboutMeProducer(ctx.userId, input.depth, scopeKey, input.year, goalRows);
+      } catch {}
 
       return rows.filter(Boolean);
     }),
