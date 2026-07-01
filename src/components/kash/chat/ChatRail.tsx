@@ -27,6 +27,9 @@ export function ChatRail() {
     sendMessage,
     editAndResend,
     stopGeneration,
+    applyProposal,
+    dismissProposal,
+    proposalBusy,
   } = useChatPanel(threadId);
   const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
     threadId,
@@ -96,10 +99,16 @@ export function ChatRail() {
           <p className="text-sm text-ink-muted">Loading…</p>
         ) : (
           <MessageList
+            threadId={threadId}
             messages={messages}
             streamingText={streamingText}
             canEdit={!isStreaming && !isSuggestionRunning}
             onEditUserMessage={(id, text) => void editAndResend(id, text)}
+            onApplyProposal={(messageId, enabledItemIds) =>
+              void applyProposal(messageId, enabledItemIds)
+            }
+            onDismissProposal={(messageId) => void dismissProposal(messageId)}
+            proposalBusy={proposalBusy}
           />
         )}
 

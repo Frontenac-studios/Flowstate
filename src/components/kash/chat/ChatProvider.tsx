@@ -13,10 +13,12 @@ import {
 
 import { readChatRailOpen, writeChatRailOpen } from "@/lib/chat/chat-rail-storage";
 import { GLOBAL_THREAD_ID, focusThreadId } from "@/lib/chat/threads";
+import { planningSurfaceFromPathname, type PlanningChatSurface } from "@/lib/chat/planning-surface";
 
 type ChatContextValue = {
   railOpen: boolean;
   activeThreadId: string;
+  planningSurface: PlanningChatSurface | null;
   unreadThreads: Set<string>;
   isFocusRoute: boolean;
   focusTaskId: string | null;
@@ -38,6 +40,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function ChatProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isFocusRoute = pathname.startsWith("/today/focus");
+  const planningSurface = planningSurfaceFromPathname(pathname);
 
   // Collapsed by default; hydrated from sessionStorage after mount to avoid a
   // server/client mismatch, then persisted per session.
@@ -120,6 +123,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     () => ({
       railOpen,
       activeThreadId,
+      planningSurface,
       unreadThreads,
       isFocusRoute,
       focusTaskId,
@@ -133,6 +137,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [
       railOpen,
       activeThreadId,
+      planningSurface,
       unreadThreads,
       isFocusRoute,
       focusTaskId,

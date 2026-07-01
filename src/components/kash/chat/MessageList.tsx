@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import Textarea from "@/components/kash/ui/Textarea";
+import type { ProposedAction } from "@/lib/chat/proposed-actions";
+import { parseFocusTaskId } from "@/lib/chat/threads";
 import { renderChatMessage } from "@/lib/markdown/render-chat-message";
+
+import { ConfirmActionCard } from "./ConfirmActionCard";
 
 type Message = {
   id: string;
@@ -11,15 +15,23 @@ type Message = {
   content: {
     type: string;
     text: string;
-    meta?: { source?: string; kind?: string };
+    meta?: {
+      source?: string;
+      kind?: string;
+      proposal?: ProposedAction;
+    };
   };
 };
 
 type Props = {
+  threadId: string;
   messages: Message[];
   streamingText?: string | null;
   canEdit?: boolean;
   onEditUserMessage?: (messageId: string, text: string) => void;
+  onApplyProposal?: (messageId: string, enabledItemIds: string[]) => void;
+  onDismissProposal?: (messageId: string) => void;
+  proposalBusy?: boolean;
 };
 
 function UserMessageRow({
@@ -96,12 +108,17 @@ function UserMessageRow({
 }
 
 export function MessageList({
+  threadId,
   messages,
   streamingText,
   canEdit = false,
   onEditUserMessage,
+  onApplyProposal,
+  onDismissProposal,
+  proposalBusy = false,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isFocusThread = parseFocusTaskId(threadId) !== null;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -119,6 +136,7 @@ export function MessageList({
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 py-2">
       {messages.map((m) => {
         const isNudge = m.role === "assistant" && m.content.meta?.source === "nudge";
+        const proposal = m.content.meta?.proposal;
 
         if (m.role === "user") {
           return (
@@ -136,6 +154,17 @@ export function MessageList({
             <div className="rounded-[var(--radius-row)] border border-border bg-surface px-3 py-2 text-sm text-ink">
               <p className="whitespace-pre-wrap">{renderChatMessage(m.content.text)}</p>
             </div>
+            {!isFocusThread &&
+            proposal?.status === "pending" &&
+            onApplyProposal &&
+            onDismissProposal ? (
+              <ConfirmActionCard
+                proposal={proposal}
+                busy={proposalBusy}
+                onConfirm={(enabledItemIds) => onApplyProposal(m.id, enabledItemIds)}
+                onDismiss={() => onDismissProposal(m.id)}
+              />
+            ) : null}
           </div>
         );
       })}
