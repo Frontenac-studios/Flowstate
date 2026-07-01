@@ -15,6 +15,16 @@ export function getLocalHour(now: Date, tzOffsetMinutes: number): number {
   return new Date(localMs).getUTCHours();
 }
 
+export function getLocalDayOfMonth(now: Date, tzOffsetMinutes: number): number {
+  const localMs = now.getTime() + tzOffsetMinutes * 60_000;
+  return new Date(localMs).getUTCDate();
+}
+
+export function getLocalDayOfWeek(now: Date, tzOffsetMinutes: number): number {
+  const localMs = now.getTime() + tzOffsetMinutes * 60_000;
+  return new Date(localMs).getUTCDay();
+}
+
 export function startedOnLocalDay(
   startedAt: Date,
   localDateIso: string,
