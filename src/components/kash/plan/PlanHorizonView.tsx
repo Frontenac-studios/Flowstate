@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import BalancePassProvider, {
@@ -27,13 +28,24 @@ import {
 } from "@/lib/planning/horizon-storage";
 
 import { InPageSwitcher } from "../InPageSwitcher";
-import BingoCard from "./bingo/BingoCard";
 import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
-import MonthView from "./month/MonthView";
-import QuarterView from "./quarter/QuarterView";
-import WeekPlanView from "./week/WeekPlanView";
-import YearView from "./year/YearView";
+
+const BingoCard = dynamic(() => import("./bingo/BingoCard"), {
+  loading: () => <PlanHorizonPlaceholder horizon="bingo" />,
+});
+const MonthView = dynamic(() => import("./month/MonthView"), {
+  loading: () => <PlanHorizonPlaceholder horizon="month" />,
+});
+const QuarterView = dynamic(() => import("./quarter/QuarterView"), {
+  loading: () => <PlanHorizonPlaceholder horizon="quarter" />,
+});
+const WeekPlanView = dynamic(() => import("./week/WeekPlanView"), {
+  loading: () => <PlanHorizonPlaceholder horizon="week" />,
+});
+const YearView = dynamic(() => import("./year/YearView"), {
+  loading: () => <PlanHorizonPlaceholder horizon="year" />,
+});
 
 function currentYear(): number {
   return new Date().getFullYear();
