@@ -49,7 +49,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
         </label>
         <input
           id="bingo-goal-title"
-          className="rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Run a half marathon"

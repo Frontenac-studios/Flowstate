@@ -15,7 +15,7 @@ export default function QuarterWeekDots({ weeks }: Props) {
       {weeks.map((week) => (
         <span
           key={week.weekStart}
-          className="size-[9px] shrink-0 rounded-[2px]"
+          className="size-2 shrink-0 rounded-[var(--radius-row)] shadow-[0_0_0_1px_var(--mark-ring)]"
           style={{
             backgroundColor: week.dominantCategory
               ? categorySolidVar(week.dominantCategory)

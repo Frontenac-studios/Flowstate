@@ -95,7 +95,7 @@ export default function MonthCalendarView({ year, month, protectedBlocks, reserv
                 {markers.slice(0, 2).map((marker, index) => (
                   <li
                     key={`${cell.iso}-${index}`}
-                    className={`truncate rounded px-1 text-[10px] ${
+                    className={`truncate rounded px-1 text-caption ${
                       marker.dashed
                         ? "border-ink/25 text-ink/70 border border-dashed"
                         : "bg-surface text-ink-muted"

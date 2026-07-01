@@ -92,7 +92,7 @@ export default function BingoOnboarding({
           One goal per line — we&apos;ll tag categories in rotation until AI persona ships (§11).
         </p>
         <textarea
-          className="min-h-[120px] rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="min-h-[120px] rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
           value={brainDumpText}
           onChange={(e) => setBrainDumpText(e.target.value)}
           placeholder="Run a half marathon&#10;Learn to cook three new cuisines&#10;..."
@@ -134,7 +134,7 @@ export default function BingoOnboarding({
         </h2>
       </div>
       <input
-        className="rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="rounded-control border border-subtle bg-surface px-3 py-2 text-body text-ink outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
         value={guidedTitle}
         onChange={(e) => setGuidedTitle(e.target.value)}
         placeholder={`One ${categorySeedLabel(category).toLowerCase()} goal…`}

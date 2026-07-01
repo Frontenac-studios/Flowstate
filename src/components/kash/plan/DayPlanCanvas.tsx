@@ -529,7 +529,7 @@ export function DayPlanCanvas() {
           </div>
         )}
 
-        <div className="sticky bottom-0 z-10 border-t border-border bg-surface pb-1 pt-3">
+        <div className="sticky bottom-0 z-sticky border-t border-border bg-surface pb-1 pt-3">
           <QuickInput
             ref={quickInputRef}
             draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}

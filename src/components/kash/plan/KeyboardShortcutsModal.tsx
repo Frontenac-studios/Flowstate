@@ -66,7 +66,7 @@ export function KeyboardShortcutsModal({ open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -79,7 +79,7 @@ export function KeyboardShortcutsModal({ open, onClose }: Props) {
         aria-modal="true"
         aria-labelledby="shortcuts-title"
         tabIndex={-1}
-        className="relative z-10 max-h-[85vh] w-full max-w-md overflow-y-auto rounded-card border border-border bg-surface p-6 shadow-overlay"
+        className="relative z-modal max-h-[85vh] w-full max-w-md overflow-y-auto rounded-card border border-border bg-surface p-6 shadow-overlay"
       >
         <h2 id="shortcuts-title" className="text-lg font-semibold text-ink">
           Keyboard shortcuts

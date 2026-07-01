@@ -2,10 +2,11 @@
 
 import { useId, useState } from "react";
 
+import { Check, ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 
-const NEUTRAL_CHECK = "rgba(120,120,120,0.45)";
+const NEUTRAL_CHECK = "var(--ink-faint)";
 
 export type CompletedTaskRow = {
   id: string;
@@ -42,25 +43,20 @@ export function CompletedSection({ completions }: Props) {
     <section className="mt-6" aria-labelledby={`${regionId}-heading`}>
       <button
         type="button"
-        className="flex w-full items-center gap-2 rounded-card px-1 py-1 text-left"
+        className="flex w-full items-center gap-2 rounded-card px-1 py-1 text-left focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
         aria-expanded={showBody}
         aria-controls={regionId}
         onClick={() => setCollapsed((v) => !v)}
       >
-        <svg
-          className={`h-3.5 w-3.5 text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
-            showBody ? "rotate-90" : ""
-          }`}
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <ChevronRight
+          {...kashIconProps({
+            tokenSize: "sm",
+            className: `text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
+              showBody ? "rotate-90" : ""
+            }`,
+          })}
           aria-hidden
-        >
-          <path d="M4.5 3l3 3-3 3" />
-        </svg>
+        />
         <span
           id={`${regionId}-heading`}
           className="text-sm font-medium uppercase tracking-wide text-ink-muted"
@@ -81,23 +77,15 @@ export function CompletedSection({ completions }: Props) {
               className="flex min-h-[var(--row-min-height)] items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)]"
             >
               <span
-                className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded text-white"
+                className="mt-0.5 flex h-icon-md w-icon-md shrink-0 items-center justify-center rounded text-white"
                 style={{ backgroundColor: checkColor }}
                 aria-label={label}
                 title={label}
               >
-                <svg
-                  className="h-3 w-3"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <Check
+                  {...kashIconProps({ tokenSize: "sm", className: "text-white" })}
                   aria-hidden
-                >
-                  <path d="M2.5 6.5l2.5 2.5 4.5-5" />
-                </svg>
+                />
               </span>
               <span className="min-w-0 flex-1 break-words text-ink-faint line-through">
                 {task.title}

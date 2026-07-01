@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import GhostedAccept from "@/components/kash/plan/GhostedAccept";
+import { Star, kashIconProps } from "@/components/kash/ui/icon";
 import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
 import {
   buildGrid,
@@ -332,9 +333,10 @@ export default function BingoCard({ year }: Props) {
             </span>
             {locked && lineCount > 0 ? (
               <span className="inline-flex items-center gap-1 font-medium text-ink">
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
-                  <path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9l6.9-.7z" />
-                </svg>
+                <Star
+                  {...kashIconProps({ tokenSize: "sm", className: "fill-current" })}
+                  aria-hidden
+                />
                 {lineCount} {lineCount === 1 ? "line" : "lines"}!
               </span>
             ) : null}

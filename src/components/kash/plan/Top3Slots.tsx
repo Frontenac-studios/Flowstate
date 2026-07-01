@@ -38,7 +38,7 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
       }`}
     >
       <div
-        className={`flex min-h-[var(--row-min-height)] items-start gap-2 rounded-pill border border-l-[3px] border-accent bg-surface py-[var(--row-py)] pl-3 pr-9 ${
+        className={`flex min-h-[var(--row-min-height)] items-start gap-2 rounded-pill border border-accent border-l-[var(--stripe-width)] bg-surface py-[var(--row-py)] pl-3 pr-9 ${
           isCompleted ? "opacity-90" : ""
         }`}
       >

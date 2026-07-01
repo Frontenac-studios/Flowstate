@@ -91,7 +91,7 @@ export default function MonthIntentionsEditor({ year, month, intentions }: Props
                     const saved = intentions.find((i) => i.category === category)?.text ?? "";
                     if (value !== saved) persist(category, value);
                   }}
-                  className="mt-0.5 w-full rounded-control border border-subtle bg-surface-2 px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="mt-0.5 w-full rounded-control border border-subtle bg-surface-2 px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
                   aria-label={`${categorySeedLabel(category)} intention`}
                 />
               </div>

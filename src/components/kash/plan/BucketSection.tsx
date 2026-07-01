@@ -3,6 +3,8 @@
 import { useEffect, useId, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
+import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
+
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import { applyLens } from "@/lib/tasks/lens-apply";
@@ -61,27 +63,22 @@ export function BucketSection({
       <button
         ref={setNodeRef}
         type="button"
-        className={`flex min-h-[var(--row-min-height)] w-full items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2 ${
+        className={`flex min-h-[var(--row-min-height)] w-full items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
           isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""
         }`}
         aria-expanded={showBody}
         aria-controls={regionId}
         onClick={() => setCollapsed((v) => !v)}
       >
-        <svg
-          className={`h-3.5 w-3.5 text-ink-muted transition-transform duration-150 motion-reduce:transition-none ${
-            showBody ? "rotate-90" : ""
-          }`}
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <ChevronRight
+          {...kashIconProps({
+            tokenSize: "sm",
+            className: `text-ink-muted transition-transform duration-150 motion-reduce:transition-none ${
+              showBody ? "rotate-90" : ""
+            }`,
+          })}
           aria-hidden
-        >
-          <path d="M4.5 3l3 3-3 3" />
-        </svg>
+        />
         <span className="text-sm font-medium uppercase tracking-wide text-ink-muted">{label}</span>
         <span className="ml-auto text-sm text-ink-muted">
           {hasTasks ? `(${visibleCount})` : ""}

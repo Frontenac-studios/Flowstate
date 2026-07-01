@@ -18,7 +18,7 @@ type LensMeta = { label: string; emblem: ReactNode };
 const LENS_META: Record<LensProperty, LensMeta> = {
   category: {
     label: "Category",
-    emblem: <span className="h-3 w-[3px] rounded-full bg-current" />,
+    emblem: <span className="h-3 w-[var(--stripe-width)] rounded-full bg-current" />,
   },
   priority: {
     label: "Priority",
@@ -73,8 +73,10 @@ export function LensControlBar() {
               aria-pressed={active}
               title={`${meta.label} lens — press ${key}`}
               aria-label={`${meta.label} lens (${key})`}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition ${
-                active ? "bg-accent text-white" : "text-ink-muted hover:text-ink"
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition focus:outline-none ${
+                active
+                  ? "bg-accent text-white focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--on-accent)]"
+                  : "text-ink-muted hover:text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
               }`}
             >
               <span aria-hidden className="flex w-3 items-center justify-center">
@@ -127,15 +129,15 @@ export function LensControlBar() {
                     type="button"
                     onClick={() => lens.toggleFilter(prop, opt.value)}
                     aria-pressed={selected.includes(opt.value)}
-                    className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition ${
+                    className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition focus:outline-none ${
                       selected.includes(opt.value)
-                        ? "border-accent bg-accent text-white"
-                        : "border-white/30 text-ink-muted hover:text-ink"
+                        ? "border-accent bg-accent text-white focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--on-accent)]"
+                        : "border-white/30 text-ink-muted hover:text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
                     }`}
                   >
                     <span
                       aria-hidden
-                      className="h-2 w-2 shrink-0 rounded-full"
+                      className="size-2 shrink-0 rounded-full shadow-[0_0_0_1px_var(--mark-ring)]"
                       style={{ backgroundColor: opt.color }}
                     />
                     {opt.label}
@@ -164,8 +166,10 @@ function GroupChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full px-2.5 py-1 transition ${
-        active ? "bg-accent text-white" : "text-ink-muted hover:text-ink"
+      className={`rounded-full px-2.5 py-1 transition focus:outline-none ${
+        active
+          ? "bg-accent text-white focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--on-accent)]"
+          : "text-ink-muted hover:text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
       }`}
     >
       {label}

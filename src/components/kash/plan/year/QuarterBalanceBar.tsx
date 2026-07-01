@@ -31,7 +31,11 @@ export default function QuarterBalanceBar({ weights }: Props) {
         return (
           <span
             key={category}
-            style={{ flexGrow: weight, backgroundColor: categorySolidVar(category) }}
+            style={{
+              flexGrow: weight,
+              backgroundColor: categorySolidVar(category),
+              boxShadow: "0 0 0 1px var(--mark-ring)",
+            }}
           />
         );
       })}

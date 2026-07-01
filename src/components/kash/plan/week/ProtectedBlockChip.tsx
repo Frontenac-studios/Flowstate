@@ -47,7 +47,7 @@ export default function ProtectedBlockChip({ block, compact = false, onRemove }:
       }`}
     >
       <span
-        className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full"
+        className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
         style={{ backgroundColor: categorySolidVar(block.category) }}
         aria-hidden
       />

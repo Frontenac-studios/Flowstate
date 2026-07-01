@@ -25,7 +25,11 @@ export default function QuarterCategoryStrips({ weights }: Props) {
             return (
               <span
                 key={category}
-                style={{ flexGrow: weight, backgroundColor: categorySolidVar(category) }}
+                style={{
+                  flexGrow: weight,
+                  backgroundColor: categorySolidVar(category),
+                  boxShadow: "0 0 0 1px var(--mark-ring)",
+                }}
                 title={`${categorySeedLabel(category)} · ${weight}`}
               />
             );
@@ -44,7 +48,7 @@ export default function QuarterCategoryStrips({ weights }: Props) {
         {PROJECT_CATEGORIES.map((category) => (
           <li key={category} className="flex items-center gap-1.5 text-caption text-ink-muted">
             <span
-              className="size-2 shrink-0 rounded-sm"
+              className="size-2 shrink-0 rounded-sm shadow-[0_0_0_1px_var(--mark-ring)]"
               style={{
                 backgroundColor: weights[category] > 0 ? categorySolidVar(category) : "transparent",
                 backgroundImage: weights[category] > 0 ? undefined : EMPTY_HATCH,

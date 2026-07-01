@@ -59,7 +59,11 @@ export function BalanceBar({ tasks }: { tasks: ReadonlyArray<BalanceTask> }) {
           {segments.map((segment) => (
             <span
               key={segment.category ?? "none"}
-              style={{ flexGrow: segment.weight, backgroundColor: segmentColor(segment) }}
+              style={{
+                flexGrow: segment.weight,
+                backgroundColor: segmentColor(segment),
+                boxShadow: "0 0 0 1px var(--mark-ring)",
+              }}
               title={`${segmentLabel(segment)} · ${segment.taskCount}`}
             />
           ))}
@@ -83,7 +87,7 @@ export function BalanceBar({ tasks }: { tasks: ReadonlyArray<BalanceTask> }) {
           {segments.map((segment) => (
             <li key={segment.category ?? "none"} className="flex items-center gap-1.5 text-meta">
               <span
-                className="size-2 shrink-0 rounded-sm"
+                className="size-2 shrink-0 rounded-sm shadow-[0_0_0_1px_var(--mark-ring)]"
                 style={{ backgroundColor: segmentColor(segment) }}
               />
               <span className="text-ink-muted">
