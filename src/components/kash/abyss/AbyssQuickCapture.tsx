@@ -10,6 +10,7 @@ import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/p
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
+import { OPEN_ABYSS_CAPTURE_EVENT } from "../chrome-events";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
 
 const IdeaIcon = withKashIcon(Lightbulb);
@@ -19,9 +20,6 @@ const MoonIcon = withKashIcon(Moon);
 const INPUT_FOCUS = "focus:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]";
 const BTN_FOCUS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
-
-/** Fired by other chrome to open quick-capture (mirrors OPEN_PALETTE_EVENT). */
-export const OPEN_ABYSS_CAPTURE_EVENT = "kash:open-abyss-capture";
 
 type AbyssType = "idea" | "task";
 

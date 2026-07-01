@@ -29,7 +29,7 @@ import { selectCompletionsToday } from "@/lib/today/select-completions-today";
 import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
-import { DECIDE_EVENT } from "../CommandPalette";
+import { DECIDE_EVENT } from "../chrome-events";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";

@@ -37,12 +37,16 @@ export function useSessionUndo() {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listRecentlyCompleted.queryKey() });
+    void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
+    void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
   }, [
     queryClient,
     trpc.tasks.listIncomplete,
     trpc.tasks.listTriageCandidates,
     trpc.tasks.listTop3Slots,
     trpc.tasks.listRecentlyCompleted,
+    trpc.planning.getYearActivity,
+    trpc.planning.getQuarterActivity,
   ]);
 
   const uncompleteMutation = useMutation(

@@ -1,6 +1,11 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import bundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +38,7 @@ const nextConfig = {
     // Avoid the main barrel (includes React.createContext). Remove when tRPC ships #7228.
     config.resolve.alias["@trpc/tanstack-react-query/create-options-proxy"] = path.join(
       __dirname,
-      "node_modules/@trpc/tanstack-react-query/src/internals/createOptionsProxy.ts"
+      "src/trpc/create-options-proxy.ts"
     );
 
     // 1H embeddings: the live composer hook (a client component) pulls
@@ -75,7 +80,7 @@ const nextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,

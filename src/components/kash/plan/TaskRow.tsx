@@ -140,6 +140,8 @@ export function TaskRow({
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listRecentlyCompleted.queryKey() });
+    void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
+    void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
   };
 
   // Let the slide-out finish before the refetch unmounts the row (AN-T1); the

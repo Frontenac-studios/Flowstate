@@ -153,6 +153,8 @@ export function FocusCanvas() {
 
     await queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     await queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+    await queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
+    await queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
 
     window.setTimeout(() => void rollNext(task.id), 1000);
   }, [
@@ -167,6 +169,8 @@ export function FocusCanvas() {
     task,
     trpc.tasks.listIncomplete,
     trpc.tasks.listTop3Slots,
+    trpc.planning.getQuarterActivity,
+    trpc.planning.getYearActivity,
   ]);
 
   const handlePark = useCallback(async () => {

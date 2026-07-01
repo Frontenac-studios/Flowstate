@@ -47,7 +47,11 @@ export default function TaskTimeEntries({ taskId }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: listKey });
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: listKey });
+    void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
+    void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
+  };
 
   const createMutation = useMutation(
     trpc.timeEntries.create.mutationOptions({ onSuccess: invalidate })

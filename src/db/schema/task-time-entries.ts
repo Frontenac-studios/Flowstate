@@ -16,5 +16,8 @@ export const taskTimeEntries = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
-  (table) => [index("task_time_entries_user_id_updated_at_idx").on(table.userId, table.updatedAt)]
+  (table) => [
+    index("task_time_entries_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+    index("task_time_entries_user_id_started_at_idx").on(table.userId, table.startedAt),
+  ]
 );

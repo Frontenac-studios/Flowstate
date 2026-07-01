@@ -12,6 +12,24 @@ function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
 
+/** Defer the first mount evaluate until after initial paint / hydration. */
+const INITIAL_DEFER_MS = 4_000;
+
+function scheduleIdle(callback: () => void): number {
+  if (typeof window.requestIdleCallback === "function") {
+    return window.requestIdleCallback(callback);
+  }
+  return window.setTimeout(callback, 0);
+}
+
+function cancelIdle(id: number): void {
+  if (typeof window.cancelIdleCallback === "function") {
+    window.cancelIdleCallback(id);
+  } else {
+    window.clearTimeout(id);
+  }
+}
+
 function msUntilNextNudgeCheck(): number {
   const now = new Date();
   const next = new Date(now);
@@ -77,7 +95,15 @@ export function useProactiveNudges() {
   }, [activeThreadId, isFocusRoute, markRead, notifyUnread, queryClient, railOpen, trpc.chat.list]);
 
   useEffect(() => {
-    void evaluate();
+    let cancelled = false;
+    let idleId: number | undefined;
+
+    const deferTimeoutId = window.setTimeout(() => {
+      if (cancelled) return;
+      idleId = scheduleIdle(() => {
+        if (!cancelled) void evaluate();
+      });
+    }, INITIAL_DEFER_MS);
 
     const onVisible = () => {
       if (document.visibilityState === "visible") {
@@ -86,13 +112,16 @@ export function useProactiveNudges() {
     };
     document.addEventListener("visibilitychange", onVisible);
 
-    const timeoutId = window.setTimeout(() => {
+    const nextCheckTimeoutId = window.setTimeout(() => {
       void evaluate();
     }, msUntilNextNudgeCheck());
 
     return () => {
+      cancelled = true;
+      window.clearTimeout(deferTimeoutId);
+      window.clearTimeout(nextCheckTimeoutId);
+      if (idleId !== undefined) cancelIdle(idleId);
       document.removeEventListener("visibilitychange", onVisible);
-      window.clearTimeout(timeoutId);
     };
   }, [evaluate]);
 }

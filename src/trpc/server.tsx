@@ -7,7 +7,15 @@ import { createCallerFactory, createTRPCContext } from "./init";
 import { makeQueryClient } from "./query-client";
 import { appRouter } from "./routers/_app";
 
+/** Per-request QueryClient; dehydrate uses superjson via `makeQueryClient`. */
 export const getQueryClient = cache(makeQueryClient);
+
+export {
+  createServerTRPC,
+  prefetchPlanPageQueries,
+  resolvePlanPageYear,
+  serverTzOffsetMinutes,
+} from "./prefetch";
 
 const createCaller = createCallerFactory(appRouter);
 

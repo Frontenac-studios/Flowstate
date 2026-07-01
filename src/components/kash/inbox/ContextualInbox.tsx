@@ -22,8 +22,15 @@ export function ContextualInbox() {
   const [open, setOpen] = useInboxOpen();
 
   const trpc = useTRPC();
-  const { data: triage = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
-  const inboxCount = triage.length;
+  const { data: countData } = useQuery({
+    ...trpc.tasks.countTriageCandidates.queryOptions(),
+    enabled: !open,
+  });
+  const { data: triage, isLoading: isLoadingTriage } = useQuery({
+    ...trpc.tasks.listTriageCandidates.queryOptions(),
+    enabled: open,
+  });
+  const inboxCount = open ? (triage?.length ?? countData?.count ?? 0) : (countData?.count ?? 0);
 
   return (
     <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
@@ -69,7 +76,7 @@ export function ContextualInbox() {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-              <InboxPanel active={open} />
+              <InboxPanel active={open} tasks={triage ?? []} isLoading={isLoadingTriage} />
             </div>
           </div>
         )}
