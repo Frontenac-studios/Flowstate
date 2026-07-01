@@ -152,6 +152,8 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   resolvedDate: "resolved_date",
   threadId: "thread_id",
   reviewDate: "date",
+  winDate: "win_date",
+  refId: "ref_id",
   reflectionText: "reflection_text",
   reflectiveQuestion: "reflective_question",
   top3Status: "top_3_status",

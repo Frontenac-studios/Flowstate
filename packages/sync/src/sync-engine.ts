@@ -4,6 +4,7 @@ import {
   bingoCards,
   categorySettings,
   chatMessages,
+  dailyWins,
   dayReviews,
   goalMilestones,
   goals,
@@ -351,6 +352,18 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(chatMessages.id, id));
       else await db.insert(chatMessages).values(mapped as never);
+      return true;
+    }
+    case "daily_wins": {
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(dailyWins).where(eq(dailyWins.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(dailyWins)
+          .set(mapped as never)
+          .where(eq(dailyWins.id, id));
+      else await db.insert(dailyWins).values(mapped as never);
       return true;
     }
     case "day_reviews": {
