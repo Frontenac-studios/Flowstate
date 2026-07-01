@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncPlanningRow, syncProtectedBlockRow } from "@/db/record-sync-mutation";
+import { syncPlanningRow, syncProtectedBlockRow, syncTaskRow } from "@/db/record-sync-mutation";
 import {
   bingoCards,
   goalMilestones,
@@ -20,6 +20,12 @@ import {
 } from "@/db/tables";
 import { assertEditableBingoCell } from "@/lib/planning/bingo-cells";
 import {
+  balancePassScopeKey,
+  balanceSuggestionLabel,
+  computeBalanceFlags,
+  weightsFromActivity,
+} from "@/lib/planning/balance-pass";
+import {
   goalProgressPercent,
   milestoneIsComplete,
   type MilestoneProgress,
@@ -31,12 +37,144 @@ import {
   defaultReservedDayLabel,
   protectedBlockCategoryForReservedDay,
 } from "@/lib/planning/reserved-day-category";
-import { parseISODateString } from "@/lib/dates/local-day";
-import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import { PROJECT_CATEGORIES, categoryLabel } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import { templateWeekDraft } from "@/lib/week/template-week-draft";
+import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
+
+const balanceHorizonSchema = z.enum(["week", "month"]);
+
+/** Local calendar month [start, end) as UTC instants for activity queries. */
+function monthUtcBounds(
+  year: number,
+  month: number,
+  tzOffsetMinutes: number
+): { start: Date; end: Date } {
+  const startLocalMidnight = Date.UTC(year, month - 1, 1);
+  const endLocalMidnight = Date.UTC(year, month, 1);
+  return {
+    start: new Date(startLocalMidnight - tzOffsetMinutes * 60_000),
+    end: new Date(endLocalMidnight - tzOffsetMinutes * 60_000),
+  };
+}
+
+/** ISO week [start, end) as UTC instants from Monday anchor. */
+function weekUtcBounds(weekStart: string, tzOffsetMinutes: number): { start: Date; end: Date } {
+  const monday = parseISODateString(weekStart);
+  const startLocalMidnight = Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate());
+  const endLocalMidnight = startLocalMidnight + 7 * 86_400_000;
+  return {
+    start: new Date(startLocalMidnight - tzOffsetMinutes * 60_000),
+    end: new Date(endLocalMidnight - tzOffsetMinutes * 60_000),
+  };
+}
+
+async function categoryActivityForScope(
+  userId: string,
+  input: {
+    horizon: "week" | "month";
+    year: number;
+    month?: number;
+    weekStart?: string;
+    tzOffsetMinutes: number;
+  }
+) {
+  const bounds =
+    input.horizon === "week" && input.weekStart
+      ? weekUtcBounds(input.weekStart, input.tzOffsetMinutes)
+      : monthUtcBounds(input.year, input.month ?? 1, input.tzOffsetMinutes);
+
+  const weekDates =
+    input.horizon === "week" && input.weekStart
+      ? Array.from({ length: 7 }, (_, index) =>
+          toISODateString(addDays(parseISODateString(input.weekStart!), index))
+        )
+      : null;
+
+  const scheduledCondition =
+    weekDates != null
+      ? and(inArray(tasks.scheduledDate, weekDates), isNull(tasks.completedAt))
+      : and(
+          gte(tasks.scheduledDate, `${input.year}-${String(input.month).padStart(2, "0")}-01`),
+          lt(
+            tasks.scheduledDate,
+            input.month === 12
+              ? `${input.year + 1}-01-01`
+              : `${input.year}-${String((input.month ?? 0) + 1).padStart(2, "0")}-01`
+          ),
+          isNull(tasks.completedAt)
+        );
+
+  const [scheduledRows, completedRows] = await Promise.all([
+    db
+      .select({ category: tasks.category })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), scheduledCondition)),
+    db
+      .select({ category: tasks.category })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          isNotNull(tasks.completedAt),
+          gte(tasks.completedAt, bounds.start),
+          lt(tasks.completedAt, bounds.end)
+        )
+      ),
+  ]);
+
+  return weightsFromActivity([...scheduledRows, ...completedRows]);
+}
+
+async function statedCategoriesForScope(
+  userId: string,
+  input: { year: number; month?: number; quarter?: number }
+): Promise<Set<(typeof PROJECT_CATEGORIES)[number]>> {
+  const stated = new Set<(typeof PROJECT_CATEGORIES)[number]>();
+
+  if (input.month != null) {
+    const intentions = await db
+      .select({ category: monthIntentions.category, text: monthIntentions.text })
+      .from(monthIntentions)
+      .where(
+        and(
+          eq(monthIntentions.userId, userId),
+          eq(monthIntentions.year, input.year),
+          eq(monthIntentions.month, input.month)
+        )
+      );
+    for (const row of intentions) {
+      if (row.text.trim()) stated.add(row.category);
+    }
+  }
+
+  if (input.quarter != null) {
+    const [theme] = await db
+      .select({ focusCategories: quarterThemes.focusCategories })
+      .from(quarterThemes)
+      .where(
+        and(
+          eq(quarterThemes.userId, userId),
+          eq(quarterThemes.year, input.year),
+          eq(quarterThemes.quarter, input.quarter)
+        )
+      )
+      .limit(1);
+    const focus = theme?.focusCategories;
+    if (Array.isArray(focus)) {
+      for (const category of focus) {
+        if (PROJECT_CATEGORIES.includes(category as (typeof PROJECT_CATEGORIES)[number])) {
+          stated.add(category as (typeof PROJECT_CATEGORIES)[number]);
+        }
+      }
+    }
+  }
+
+  return stated;
+}
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const yearSchema = z.number().int().min(2000).max(2100);
@@ -1249,6 +1387,110 @@ export const planningRouter = createTRPCRouter({
       return rows.filter(Boolean);
     }),
 
+  suggestBalancePass: protectedProcedure
+    .input(
+      z.object({
+        horizon: balanceHorizonSchema,
+        year: yearSchema,
+        month: monthSchema.optional(),
+        quarter: quarterSchema.optional(),
+        weekStart: isoDateSchema.optional(),
+        tzOffsetMinutes: z.number().int().min(-720).max(840),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.horizon === "week" && !input.weekStart) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "weekStart is required for week balance pass.",
+        });
+      }
+      if (input.horizon === "month" && input.month == null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "month is required for month balance pass.",
+        });
+      }
+
+      const scopeKey = balancePassScopeKey(input);
+      const pendingRows = await db
+        .select()
+        .from(planningSuggestions)
+        .where(
+          and(
+            eq(planningSuggestions.userId, ctx.userId),
+            eq(planningSuggestions.surface, "balance_pass"),
+            eq(planningSuggestions.status, "pending")
+          )
+        );
+
+      const forScope = pendingRows.filter((row) => {
+        const payload = row.payload as { scopeKey?: string };
+        return payload.scopeKey === scopeKey;
+      });
+      if (forScope.length > 0) return forScope;
+
+      const categoryWeights = await categoryActivityForScope(ctx.userId, input);
+      const stated = await statedCategoriesForScope(ctx.userId, {
+        year: input.year,
+        month: input.month,
+        quarter: input.quarter,
+      });
+
+      const flags = computeBalanceFlags(categoryWeights, stated);
+      if (flags.length === 0) return [];
+
+      const abyssCandidates = await fetchAbyssBalanceCandidates(
+        ctx.userId,
+        flags.map((f) => f.category)
+      );
+      const abyssByCategory = new Map(
+        abyssCandidates.map((candidate) => [candidate.category, candidate])
+      );
+
+      const rows = await Promise.all(
+        flags.map(async (flag) => {
+          const abyss = abyssByCategory.get(flag.category);
+          const label = balanceSuggestionLabel(
+            flag.category,
+            categoryLabel(flag.category),
+            flag.tier
+          );
+          const taskTitle = abyss?.title ?? `Small win for ${categoryLabel(flag.category)}`;
+
+          const [row] = await db
+            .insert(planningSuggestions)
+            .values({
+              userId: ctx.userId,
+              surface: "balance_pass",
+              payload: {
+                scopeKey,
+                horizon: input.horizon,
+                year: input.year,
+                month: input.month ?? null,
+                quarter: input.quarter ?? null,
+                weekStart: input.weekStart ?? null,
+                category: flag.category,
+                tier: flag.tier,
+                rank: flag.rank,
+                label,
+                taskTitle,
+                taskId: abyss?.taskId ?? null,
+                source: abyss ? "abyss" : "generated",
+              },
+            })
+            .returning();
+          return row;
+        })
+      );
+
+      for (const row of rows) {
+        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
+      }
+
+      return rows.filter(Boolean);
+    }),
+
   applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
     const now = new Date();
     const staged = await db
@@ -1341,6 +1583,35 @@ export const planningRouter = createTRPCRouter({
               updatedAt: now,
             })
             .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
+        }
+      }
+
+      if (row.surface === "balance_pass") {
+        const payload = row.payload as {
+          taskId?: string | null;
+          taskTitle?: string;
+          category?: (typeof PROJECT_CATEGORIES)[number];
+          weekStart?: string | null;
+        };
+        if (payload.taskId) {
+          const patch: Record<string, unknown> = { updatedAt: now, bucketOverride: null };
+          if (payload.weekStart) patch.scheduledDate = payload.weekStart;
+          await db
+            .update(tasks)
+            .set(patch)
+            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
+        } else if (payload.taskTitle && payload.category) {
+          const [created] = await db
+            .insert(tasks)
+            .values({
+              userId: ctx.userId,
+              title: payload.taskTitle,
+              category: payload.category,
+              scheduledDate: payload.weekStart ?? null,
+              bucketOverride: payload.weekStart ? null : "later",
+            })
+            .returning();
+          if (created) await syncTaskRow(created.id, "insert", created);
         }
       }
     }

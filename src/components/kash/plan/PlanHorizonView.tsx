@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import BalancePassProvider, {
+  useBalancePassTrigger,
+} from "@/components/kash/plan/balance/BalancePassProvider";
 
 import {
   horizonForBreadcrumb,
@@ -8,7 +12,11 @@ import {
   zoomToMonth,
   zoomToQuarter,
 } from "@/lib/planning/horizon-nav";
-import { deriveIsoWeekForBreadcrumb, isWeekBreadcrumbScoped } from "@/lib/planning/week-breadcrumb";
+import {
+  deriveIsoWeekForBreadcrumb,
+  isWeekBreadcrumbScoped,
+  resolveWeekAnchorDate,
+} from "@/lib/planning/week-breadcrumb";
 import {
   HORIZON_OPTIONS,
   PLANNING_BREADCRUMB_STORAGE_KEY,
@@ -83,11 +91,23 @@ function writeStoredBreadcrumb(breadcrumb: PlanningBreadcrumb) {
  * breadcrumb zoom scaffold, and horizon views.
  */
 export function PlanHorizonView() {
+  return (
+    <BalancePassProvider>
+      <PlanHorizonViewInner />
+    </BalancePassProvider>
+  );
+}
+
+function PlanHorizonViewInner() {
   const [horizon, setHorizon] = useState<PlanningHorizon>("year");
   const [breadcrumb, setBreadcrumb] = useState<PlanningBreadcrumb>(() => ({
     year: currentYear(),
   }));
   const [hydrated, setHydrated] = useState(false);
+  const triggerBalancePass = useBalancePassTrigger();
+  const prevHorizonRef = useRef<PlanningHorizon>("year");
+  const breadcrumbRef = useRef(breadcrumb);
+  breadcrumbRef.current = breadcrumb;
 
   useEffect(() => {
     const storedHorizon = readStoredHorizon();
@@ -106,6 +126,36 @@ export function PlanHorizonView() {
     if (!hydrated) return;
     writeStoredBreadcrumb(breadcrumb);
   }, [breadcrumb, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const prev = prevHorizonRef.current;
+    const bc = breadcrumbRef.current;
+    const tzOffsetMinutes = new Date().getTimezoneOffset();
+
+    if (prev === "week" && horizon !== "week" && isWeekBreadcrumbScoped(bc)) {
+      triggerBalancePass?.({
+        horizon: "week",
+        year: bc.year,
+        month: bc.month,
+        quarter: bc.quarter,
+        weekStart: resolveWeekAnchorDate(bc),
+        tzOffsetMinutes,
+      });
+    }
+
+    if (prev === "month" && horizon !== "month" && bc.month != null) {
+      triggerBalancePass?.({
+        horizon: "month",
+        year: bc.year,
+        month: bc.month,
+        quarter: bc.quarter,
+        tzOffsetMinutes,
+      });
+    }
+
+    prevHorizonRef.current = horizon;
+  }, [horizon, hydrated, triggerBalancePass]);
 
   const handleBreadcrumbNavigate = useCallback((next: PlanningBreadcrumb) => {
     setBreadcrumb(next);

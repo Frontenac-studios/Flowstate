@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { useBalancePassTrigger } from "@/components/kash/plan/balance/BalancePassProvider";
 
 import { LensControlBar } from "@/components/kash/plan/LensControlBar";
 import { LensProvider } from "@/components/kash/plan/LensProvider";
@@ -27,9 +29,25 @@ type Props = {
 export default function WeekPlanView({ breadcrumb }: Props) {
   const trpc = useTRPC();
   const [planRailOpen, setPlanRailOpen] = useState(true);
+  const triggerBalancePass = useBalancePassTrigger();
+  const prevPlanRailRef = useRef(planRailOpen);
 
   const anchorDate = useMemo(() => resolveWeekAnchorDate(breadcrumb), [breadcrumb]);
   const weekRef = useMemo(() => parseISODateString(anchorDate), [anchorDate]);
+
+  useEffect(() => {
+    if (prevPlanRailRef.current && !planRailOpen) {
+      triggerBalancePass?.({
+        horizon: "week",
+        year: breadcrumb.year,
+        month: breadcrumb.month,
+        quarter: breadcrumb.quarter,
+        weekStart: anchorDate,
+        tzOffsetMinutes: new Date().getTimezoneOffset(),
+      });
+    }
+    prevPlanRailRef.current = planRailOpen;
+  }, [planRailOpen, triggerBalancePass, breadcrumb, anchorDate]);
 
   const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const hasInboxTasks = useMemo(
