@@ -472,6 +472,8 @@ CREATE TABLE IF NOT EXISTS care_events (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
   activity_id TEXT REFERENCES care_activities(id) ON DELETE SET NULL,
+  source TEXT NOT NULL DEFAULT 'practice',
+  meta TEXT,
   occurred_at INTEGER NOT NULL,
   duration_minutes INTEGER,
   created_at INTEGER NOT NULL

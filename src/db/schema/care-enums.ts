@@ -18,3 +18,7 @@ export const careCadence = pgEnum("care_cadence", CARE_CADENCES);
 /** Whether a practice came from the seed catalog or was user-created. */
 export const CARE_SOURCES = ["suggested", "custom"] as const;
 export const careSource = pgEnum("care_source", CARE_SOURCES);
+
+/** What nourished the garden — a library check-off or a planning bingo line. */
+export const CARE_EVENT_SOURCES = ["practice", "bingo"] as const;
+export const careEventSource = pgEnum("care_event_source", CARE_EVENT_SOURCES);

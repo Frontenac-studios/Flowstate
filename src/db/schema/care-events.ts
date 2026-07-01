@@ -1,11 +1,17 @@
-import { index, integer, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { careActivities } from "./care-activities";
+import { careEventSource } from "./care-enums";
 
-// A logged self-care act ("I did this" / check-off). Feeds frequency stats,
-// garden nourishment, and wins. activityId is nullable + set-null so an event
-// outlives its practice being archived/removed; durationMinutes is forward-compat
-// (walk length, etc.) and unused in this slice.
+export type CareEventBingoMeta = {
+  cardYear: number;
+  lineType: "row" | "column" | "diagonal";
+};
+
+// A logged self-care act ("I did this" / check-off) or a planning bingo nourish.
+// Feeds frequency stats, garden nourishment, and wins. activityId is nullable +
+// set-null so an event outlives its practice being archived/removed;
+// durationMinutes is forward-compat (walk length, etc.) and unused in this slice.
 export const careEvents = pgTable(
   "care_events",
   {
@@ -14,6 +20,8 @@ export const careEvents = pgTable(
     activityId: uuid("activity_id").references(() => careActivities.id, {
       onDelete: "set null",
     }),
+    source: careEventSource("source").notNull().default("practice"),
+    meta: jsonb("meta").$type<CareEventBingoMeta | null>(),
     occurredAt: timestamp("occurred_at", { withTimezone: true, mode: "date" })
       .notNull()
       .defaultNow(),

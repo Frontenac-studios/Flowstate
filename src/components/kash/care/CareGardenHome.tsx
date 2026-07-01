@@ -1,12 +1,16 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+
 import Button from "@/components/kash/ui/Button";
+import { useTRPC } from "@/trpc/client";
 
 import { GardenScene } from "./GardenScene";
 
 /**
  * The garden-centric Care home: the lush garden is the hero, with today's wins,
- * what-lifts-me, and a gentle prompt beside it. Content is static placeholder
- * this slice (chrome-first) — the data wiring (care_events / wins / activities)
- * lands with the library + stats slices.
+ * what-lifts-me, and a gentle prompt beside it. Garden nourishment reflects
+ * self-care check-offs and planning bingo rewards.
  */
 const WINS = [
   { label: "Took a 10-minute walk", done: true },
@@ -17,10 +21,17 @@ const WINS = [
 const LIFTS = ["Morning walk", "5 slow breaths", "Tea, no screen"];
 
 export function CareGardenHome() {
+  const trpc = useTRPC();
+  const gardenQuery = useQuery(trpc.care.getGardenState.queryOptions());
+  const garden = gardenQuery.data;
+
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.25fr_1fr]">
-        <GardenScene />
+        <GardenScene
+          nourishCount={garden?.nourishCount ?? 0}
+          growthTier={garden?.growthTier ?? 0}
+        />
 
         <div className="flex flex-col gap-3">
           <section className="rounded-card border border-subtle bg-surface p-3">

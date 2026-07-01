@@ -155,6 +155,13 @@
       "when": 1782924091665,
       "tag": "0021_familiar_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1782930652125,
+      "tag": "0022_luxuriant_purifiers",
+      "breakpoints": true
     }
   ]
 }

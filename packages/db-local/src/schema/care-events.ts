@@ -9,6 +9,8 @@ export const careEvents = sqliteTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     activityId: text("activity_id").references(() => careActivities.id, { onDelete: "set null" }),
+    source: text("source").notNull().default("practice"),
+    meta: text("meta"),
     occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull(),
     durationMinutes: integer("duration_minutes"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),

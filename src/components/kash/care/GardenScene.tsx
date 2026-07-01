@@ -1,5 +1,12 @@
 import type { CSSProperties } from "react";
 
+import { extraPlantCount } from "@/lib/care/garden-growth";
+
+type Props = {
+  nourishCount?: number;
+  growthTier?: number;
+};
+
 /**
  * The Care garden — the one lush, illustrative exception to the B&W redesign.
  *
@@ -24,7 +31,16 @@ const gardenPalette = {
   "--g-petal-b": "#cdb6e6",
 } as CSSProperties;
 
-export function GardenScene() {
+export function GardenScene({ nourishCount = 0, growthTier = 0 }: Props) {
+  const bonusPlants = extraPlantCount(nourishCount);
+  const bonusOffsets = [
+    { cx: 155, cy: 208, r: 7 },
+    { cx: 172, cy: 212, r: 6 },
+    { cx: 285, cy: 214, r: 7 },
+    { cx: 335, cy: 218, r: 6 },
+    { cx: 210, cy: 220, r: 6 },
+  ];
+
   return (
     <div
       className="flex h-full flex-col overflow-hidden rounded-card border border-subtle"
@@ -79,9 +95,28 @@ export function GardenScene() {
           <ellipse cx="300" cy="223" rx="6" ry="11" />
         </g>
         <circle cx="345" cy="214" r="7" fill="var(--g-petal-a)" />
+        {bonusPlants > 0
+          ? bonusOffsets.slice(0, bonusPlants).map((plant, index) => (
+              <g key={`bonus-${index}`}>
+                <circle cx={plant.cx} cy={plant.cy} r={plant.r} fill="var(--g-leaf-soft)" />
+                <circle
+                  cx={plant.cx}
+                  cy={plant.cy - plant.r - 2}
+                  r={plant.r - 2}
+                  fill="var(--g-petal-b)"
+                />
+              </g>
+            ))
+          : null}
       </svg>
       <p className="border-t border-subtle bg-surface px-3 py-2 text-caption text-ink-muted">
         Your garden — it grows as you tend yourself, and gently rests when you do.
+        {nourishCount > 0 ? (
+          <span className="mt-0.5 block text-ink">
+            {nourishCount} nourish{nourishCount === 1 ? "" : "ments"}
+            {growthTier > 0 ? ` · growth tier ${growthTier}` : ""}
+          </span>
+        ) : null}
       </p>
     </div>
   );
