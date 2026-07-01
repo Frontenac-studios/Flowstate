@@ -90,6 +90,7 @@ export default function BingoCard({ year }: Props) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { toast } = useToast();
   const [spellingStaged, setSpellingStaged] = useState<Set<string>>(new Set());
+  const [blackoutAnimating, setBlackoutAnimating] = useState(false);
   const awardedRef = useRef<Set<string>>(readAwardedLineSignatures(year));
 
   const invalidateCard = () =>
@@ -174,6 +175,8 @@ export default function BingoCard({ year }: Props) {
   const { done, total } = cardProgress(goals);
   const balance = categoryBalance(goals);
   const lineCount = completedLines(grid).length;
+  const blackoutComplete = isBlackoutComplete(grid);
+  const blackoutFinaleShown = readBingoRewardState(year).blackoutShown;
 
   const spellingFixes = useMemo(
     () => (confirmingFinalize && !locked ? suggestSpellingFixes(goals) : []),
@@ -195,9 +198,11 @@ export default function BingoCard({ year }: Props) {
     const rewardState = readBingoRewardState(year);
 
     if (isBlackoutComplete(grid) && !rewardState.blackoutShown) {
+      setBlackoutAnimating(true);
       toast({ message: rewardToastMessage("blackout"), variant: "success" });
       writeBingoRewardState(year, { ...rewardState, blackoutShown: true });
       await recordBingoReward({ cardYear: year, lineType: "row" });
+      window.setTimeout(() => setBlackoutAnimating(false), 540);
       return;
     }
 
@@ -423,19 +428,26 @@ export default function BingoCard({ year }: Props) {
         ) : null}
 
         {viewMode === "card" ? (
-          <BingoGrid
-            grid={grid}
-            locked={locked}
-            pendingGoalId={pendingGoalId}
-            onToggleDone={handleToggleDone}
-            onBackburner={handleBackburner}
-            onRemove={handleRemove}
-            onAdd={(cellIndex) => {
-              setAddError(null);
-              setAddingCell(cellIndex);
-            }}
-            onOpenGoal={(goal) => setSelectedGoalId(goal.id)}
-          />
+          <div className={blackoutAnimating ? "bingo-blackout-bounce" : undefined}>
+            {blackoutComplete && locked && blackoutFinaleShown ? (
+              <p className="plan-zoom-enter mb-2 text-center text-sm font-medium text-ink">
+                Blackout — every square complete. What a year.
+              </p>
+            ) : null}
+            <BingoGrid
+              grid={grid}
+              locked={locked}
+              pendingGoalId={pendingGoalId}
+              onToggleDone={handleToggleDone}
+              onBackburner={handleBackburner}
+              onRemove={handleRemove}
+              onAdd={(cellIndex) => {
+                setAddError(null);
+                setAddingCell(cellIndex);
+              }}
+              onOpenGoal={(goal) => setSelectedGoalId(goal.id)}
+            />
+          </div>
         ) : (
           <BingoListView
             goals={goals}
