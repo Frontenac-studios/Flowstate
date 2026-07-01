@@ -14,6 +14,9 @@ type Props = {
   onAddedToDay: () => void;
 };
 
+const MENU_BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
+
 /**
  * The per-row ⋯ menu: Add to my day · Edit · Remove. Owns the add-to-day and
  * archive mutations (Edit defers to the shared dialog via `onEdit`). Remove uses
@@ -70,7 +73,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
       ref={ref}
       role="menu"
       aria-label={`Actions for ${activity.title}`}
-      className="absolute right-0 top-8 z-20 w-52 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
+      className="absolute right-0 top-8 z-overlay w-52 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
     >
       {confirmingRemove ? (
         <>
@@ -83,7 +86,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
               role="menuitem"
               onClick={() => archive.mutate({ id: activity.id })}
               disabled={busy}
-              className="flex-1 rounded-control px-2 py-1.5 text-body text-critical transition-colors hover:bg-surface-2 disabled:opacity-50"
+              className={`flex-1 rounded-control px-2 py-1.5 text-body text-critical transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
             >
               {archive.isPending ? "Removing…" : "Remove"}
             </button>
@@ -92,7 +95,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
               role="menuitem"
               onClick={() => setConfirmingRemove(false)}
               disabled={busy}
-              className="flex-1 rounded-control px-2 py-1.5 text-body text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50"
+              className={`flex-1 rounded-control px-2 py-1.5 text-body text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
             >
               Cancel
             </button>
@@ -105,7 +108,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
             role="menuitem"
             onClick={() => addToMyDay.mutate({ activityId: activity.id })}
             disabled={busy}
-            className="flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
           >
             {addToMyDay.isPending ? "Adding…" : "Add to my day"}
           </button>
@@ -123,7 +126,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
             role="menuitem"
             onClick={() => setConfirmingRemove(true)}
             disabled={busy}
-            className="flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50"
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
           >
             Remove
           </button>

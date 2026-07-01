@@ -3,10 +3,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { Sparkles, X, withKashIcon } from "@/components/kash/ui/icon";
 import { normalizeTag } from "@/lib/abyss/tags";
 import { useTRPC } from "@/trpc/client";
 
-import { CloseIcon, SparkleIcon } from "./icons";
+const SparkleIcon = withKashIcon(Sparkles);
+const CloseIcon = withKashIcon(X);
+const ABYSS_INPUT_FOCUS = "focus:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]";
+const ABYSS_BTN_FOCUS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
 type Member = { id: string; title: string; tags: string[] | null };
 type Props = { members: Member[]; onDismiss: () => void };
@@ -47,7 +52,7 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
   return (
     <section className="rounded-card border border-abyss-border-strong bg-abyss-surface p-3">
       <div className="flex items-center gap-2">
-        <SparkleIcon size={15} className="text-cat-adulting" />
+        <SparkleIcon size={14} className="text-cat-adulting" />
         <span className="text-meta font-medium text-abyss-ink">
           You keep parking similar things
         </span>
@@ -56,17 +61,17 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="rounded-control p-0.5 text-abyss-ink-faint transition-colors hover:text-abyss-ink"
+          className={`rounded-control p-0.5 text-abyss-ink-faint transition-colors hover:text-abyss-ink ${ABYSS_BTN_FOCUS}`}
         >
-          <CloseIcon size={15} />
+          <CloseIcon size={14} />
         </button>
       </div>
 
-      <p className="mt-1.5 pl-[23px] text-caption text-abyss-ink-muted">
+      <p className="mt-1.5 pl-[calc(var(--icon-sm)+var(--space-3))] text-caption text-abyss-ink-muted">
         {members.map((member) => member.title).join(" · ")}
       </p>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 pl-[23px]">
+      <div className="mt-2 flex flex-wrap items-center gap-2 pl-[calc(var(--icon-sm)+var(--space-3))]">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -78,14 +83,14 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
           }}
           placeholder="Name this pattern…"
           maxLength={32}
-          className="w-44 rounded-control bg-abyss-surface-2 px-2 py-1 text-meta text-abyss-ink placeholder:text-abyss-ink-faint focus:outline-none"
+          className={`w-44 rounded-control bg-abyss-surface-2 px-2 py-1 text-meta text-abyss-ink placeholder:text-abyss-ink-faint ${ABYSS_INPUT_FOCUS}`}
           aria-label="Pattern name"
         />
         <button
           type="button"
           onClick={() => void apply()}
           disabled={busy || !tag}
-          className="rounded-control bg-abyss-accent px-2.5 py-1 text-meta font-medium text-abyss-on-accent disabled:opacity-40"
+          className={`rounded-control bg-abyss-accent px-2.5 py-1 text-meta font-medium text-abyss-on-accent disabled:opacity-40 ${ABYSS_BTN_FOCUS}`}
         >
           Tag {members.length}
         </button>
@@ -93,7 +98,7 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
           type="button"
           onClick={() => suggestName.mutate({ titles: members.map((m) => m.title) })}
           disabled={busy}
-          className="flex items-center gap-1 text-meta text-abyss-ink-muted transition-colors hover:text-abyss-ink disabled:opacity-40"
+          className={`flex items-center gap-1 text-meta text-abyss-ink-muted transition-colors hover:text-abyss-ink disabled:opacity-40 ${ABYSS_BTN_FOCUS}`}
         >
           <SparkleIcon size={12} />
           {suggestName.isPending ? "thinking…" : "suggest a name"}

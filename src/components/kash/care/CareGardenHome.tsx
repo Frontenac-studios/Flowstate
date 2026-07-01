@@ -1,3 +1,5 @@
+import Button from "@/components/kash/ui/Button";
+
 import { GardenScene } from "./GardenScene";
 
 /**
@@ -25,11 +27,11 @@ export function CareGardenHome() {
             <h2 className="mb-2 text-caption font-medium text-ink-muted">Today&apos;s wins</h2>
             <ul className="flex flex-col gap-0.5">
               {WINS.map((win) => (
-                <li key={win.label} className="flex items-center gap-2 py-0.5">
+                <li key={win.label} className="flex items-center gap-2 rounded-row px-1 py-0.5">
                   <span
                     className={
                       win.done
-                        ? "flex h-4 w-4 items-center justify-center rounded-[4px] bg-cat-body-mind text-[10px] text-white"
+                        ? "text-on-accent flex h-4 w-4 items-center justify-center rounded-[4px] bg-cat-body-mind text-caption"
                         : "h-4 w-4 rounded-[4px] border-[1.5px] border-[var(--priority-low)]"
                     }
                     aria-hidden
@@ -64,12 +66,12 @@ export function CareGardenHome() {
               You&apos;ve been heads-down a while. Want to take five slow breaths?
             </p>
             <div className="flex gap-2">
-              <button type="button" className="glass-btn-primary">
+              <Button type="button" className="text-caption">
                 Breathe
-              </button>
-              <button type="button" className="glass-btn-ghost">
+              </Button>
+              <Button type="button" variant="ghost" className="text-caption">
                 Not now
-              </button>
+              </Button>
             </div>
           </section>
         </div>
