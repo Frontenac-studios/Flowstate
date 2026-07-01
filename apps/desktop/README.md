@@ -54,3 +54,32 @@ Tag pushes and manual `workflow_dispatch` on [`.github/workflows/release.yml`](.
 ## Notarization
 
 Add GitHub secrets documented in `.github/workflows/desktop-macos.yml` (`APPLE_CERTIFICATE`, `APPLE_ID`, etc.).
+
+### DMG packaging failed (`bundle_dmg.sh`)
+
+`npm run desktop:build` can finish the Next.js standalone sidecar and `Kash.app` but still fail at **DMG** creation. Tauri ships its own `bundle_dmg.sh` under `target/release/bundle/dmg/` — you do **not** need Homebrew `create-dmg`.
+
+Typical Tauri error (stderr from the script is often empty):
+
+```text
+Running bundle_dmg.sh
+failed to bundle project error running bundle_dmg.sh
+```
+
+**Use the app without a DMG:** `apps/desktop/src-tauri/target/release/bundle/macos/Kash.app`
+
+**Retry steps (local macOS):**
+
+1. Eject any mounted **Kash** installer volume in Finder (`/Volumes/Kash`).
+2. Remove stale bundler output (the hook in `scripts/before-build.mjs` does this automatically on the next build; to do it manually):
+   - `apps/desktop/src-tauri/target/release/bundle/dmg`
+   - `apps/desktop/src-tauri/target/release/bundle/share/create-dmg`
+3. Re-run from repo root: `npm run desktop:build`
+
+**Finder / AppleScript flakes:** On machines without `CI=true`, Tauri runs Finder layout AppleScript inside `bundle_dmg.sh`, which can fail intermittently (`Can't get disk (-1728)`). GitHub Actions sets `CI=true` and skips that step. For a local DMG-only retry after `build:desktop` and `prepare-sidecar.mjs`:
+
+```sh
+CI=true npm run tauri build -w @kash/desktop
+```
+
+Confirm `icons/icon.icns` exists under `apps/desktop/src-tauri/` before building; DMG volume icons are generated from the `bundle.icon` list in `tauri.conf.json`.
