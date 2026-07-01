@@ -69,8 +69,12 @@ Each write tool returns a **proposed change**, not an immediate mutation (see ar
 
 **Order rationale:** voice (7A–B) and the confirm-card spine (6A, 7C) come before breadth (6B) — get _one_ write working end-to-end through a confirm card before adding twenty tools.
 
+## Confirm-card UX (resolved Jul 1)
+
+- **Affordance → inline in the chat thread.** A proposed write renders as a confirm card **inline in the chat rail**, directly below Kash's message (Confirm / Edit / Dismiss). Non-blocking, conversational; the card **is** the transparency (no separate activity log, no modal for routine writes). _(If a future destructive-action guard is wanted, a modal is the natural escalation — but the default and the delete path are both inline for now.)_
+- **Multi-task proposals → one grouped card.** A proposal that touches several tasks renders as a **single card** listing each affected task with a **per-row toggle**; the user confirms the (sub)set at once (e.g. "Reschedule 3 tasks → Thu", untick one, "Confirm 2"). Not one card per change.
+- **Focus register → silent auto-apply.** Focus exposes only its **minimal, reversible** tools (narrate · complete · park) and applies them **silently — no confirm card**. Anything beyond that set is simply **not exposed** in Focus, so there's nothing to confirm mid-session. Keeps Focus near-silent by construction. (Broader writes happen in the Planning/Reflection registers, where the inline confirm card applies.)
+
 ## Open
 
 - **About-me update mechanism** (§13) — circle back.
-- Exact confirm-card affordances (inline vs modal); batch-confirm for multi-task proposals.
-- Whether Focus register ever shows a confirm card (it should stay near-silent) or defers writes to after the session.

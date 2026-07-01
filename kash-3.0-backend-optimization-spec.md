@@ -116,15 +116,15 @@ Confirm/add composite indexes on **both** Postgres and the SQLite mirror:
 
 Decided Jun 24 2026. These are the only OPT items that change anything a user sees; the rest (OPT-1..5) are invisible.
 
-- **D1 — Create + category latency → _brief shimmer then settle._** On create, the row appears instantly with the client guess; the accent bar shows a subtle "resolving" shimmer while the server category resolves, then settles to the final color. Honest about the async step, no blocked create. _(Touches §2 composer accent-bar language — `kash-3.0-data-spine.md` 1.4b/1.AIa. The shimmer is a new accent-bar state; specify its motion in the Design Tokens / animation pass, calm and non-attention-grabbing.)_
+- **D1 — Create + category latency → _brief shimmer then settle._** On create, the row appears instantly with the client guess; the accent bar shows a subtle "resolving" shimmer while the server category resolves, then settles to the final color. Honest about the async step, no blocked create. _(Touches §2 composer accent-bar language — `kash-3.0-data-spine.md` 1.4b/1.AIa.)_ **Motion resolved Jul 1 (AN-B7):** the 3px stripe **gently pulses opacity** (breathing-adjacent, `--motion-medium` looped) then cross-fades to the final category color — no sweep, no indeterminate segment. **Sync indicator resolved Jul 1 (AN-B8):** a **slow pulsing dot in the left-nav (sidebar) footer** while the outbox flushes (this is the lightweight always-visible companion to D2's fuller status panel). See `kash-3.0-animation-sweep.md` AN-B7/AN-B8.
 - **D2 — Desktop sync visibility → _status dot + detail panel._** A synced/syncing/offline dot, expandable to last-synced time, pending count, manual sync, recent conflicts. Most transparent option; lands as OPT-7. _(New surface — a small settings/status affordance. Fits the desktop shell; must stay low-chrome per the calm principle, collapsed by default.)_
 - **D3 — Chat history loading → _windowed + load older._** The chat rail fetches the most recent N messages and infinite-scrolls upward for older. Bounds payload/latency; adds a scroll-to-load interaction. _(Touches §11 AI Companion chat rail — the rail gains an upward load-more affordance.)_
 - **D4 — Sequencing → _parallel track._** OPT items are fixed as the relevant feature phase touches that code, not as a blocking pre-phase. _(Touches §16 build sequencing — recorded there as a standing parallel track.)_
 
 **Open (defer to build):**
 
-- D1 shimmer exact motion/duration — Design Tokens + animation pass.
-- D2 panel placement (settings vs shell status bar) — Navigation/shell spec (§4).
+- ~~D1 shimmer exact motion/duration~~ — **resolved Jul 1** (AN-B7 breathe-then-settle; AN-B8 sidebar-footer pulsing dot).
+- D2 panel placement (settings vs shell status bar) — Navigation/shell spec (§4). _(Note: the always-visible sync **dot** now lives in the sidebar footer per AN-B8; the expandable **detail panel** placement is still D2's open question.)_
 - OPT-1 coalescing semantics when an offline delete follows an offline update of the same row — confirm at re-audit.
 
 ---
