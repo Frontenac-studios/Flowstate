@@ -1,0 +1,59 @@
+"use client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { Sparkles, X, withKashIcon } from "@/components/kash/ui/icon";
+import type { ConstellationItem } from "@/lib/abyss/constellations";
+import { buildMonthlyReview } from "@/lib/abyss/monthly-review";
+import { writeLastReviewMonth } from "@/lib/abyss/review-storage";
+import { useTRPC } from "@/trpc/client";
+const SparkleIcon = withKashIcon(Sparkles);
+const CloseIcon = withKashIcon(X);
+export default function AbyssMonthlyReview({
+  items,
+  now,
+  onDismiss,
+}: {
+  items: ConstellationItem[];
+  now: Date;
+  onDismiss: () => void;
+}) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const review = useMemo(() => buildMonthlyReview(items, now), [items, now]);
+  const recordResurface = useMutation(
+    trpc.abyss.recordResurface.mutationOptions({
+      onSuccess: () => void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() }),
+    })
+  );
+  return (
+    <div className="flex flex-col gap-3 rounded-card border border-abyss-border bg-abyss-surface p-4">
+      <div className="flex justify-between">
+        <div className="flex items-center gap-2">
+          <SparkleIcon size={18} />
+          <h2 className="text-subtitle">Stargazing review</h2>
+        </div>
+        <button type="button" onClick={onDismiss}>
+          <CloseIcon size={16} />
+        </button>
+      </div>
+      {review.constellations.map((c) => (
+        <section key={c.id} className="rounded-row border border-abyss-border px-3 py-2">
+          <h3 className="text-meta">{c.label}</h3>
+        </section>
+      ))}
+      <button
+        type="button"
+        onClick={() => {
+          for (const c of review.constellations)
+            for (const id of c.memberIds) recordResurface.mutate({ id });
+          for (const i of review.keepsCalling) recordResurface.mutate({ id: i.id });
+          writeLastReviewMonth(review.monthKey);
+          onDismiss();
+        }}
+        className="self-start rounded-control bg-abyss-accent px-3 py-1.5 text-meta text-abyss-on-accent"
+      >
+        Done stargazing
+      </button>
+    </div>
+  );
+}
