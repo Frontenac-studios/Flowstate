@@ -55,7 +55,7 @@ function UserMessageRow({
               setDraft(message.content.text);
               setEditing(false);
             }}
-            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-ink"
+            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
           >
             Cancel
           </button>
@@ -66,7 +66,7 @@ function UserMessageRow({
               onEdit(message.id, draft.trim());
               setEditing(false);
             }}
-            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-accent"
+            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-accent focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
           >
             Save & resend
           </button>
@@ -81,7 +81,7 @@ function UserMessageRow({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="absolute -left-7 top-1 rounded p-0.5 text-xs text-ink-muted opacity-0 transition hover:text-ink group-hover:opacity-100"
+          className="absolute -left-7 top-1 rounded p-0.5 text-xs text-ink-muted opacity-0 transition hover:text-ink focus:opacity-100 focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] group-hover:opacity-100"
           aria-label="Edit message"
           title="Edit & resend"
         >
@@ -129,7 +129,7 @@ export function MessageList({
         return (
           <div key={m.id} className="mr-auto max-w-[95%]">
             {isNudge ? (
-              <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-ink-muted">
+              <span className="mb-1 block text-caption font-medium uppercase tracking-wide text-ink-muted">
                 Nudge
               </span>
             ) : null}

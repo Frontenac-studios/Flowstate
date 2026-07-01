@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Pause, Play, kashIconProps } from "@/components/kash/ui/icon";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import {
   categoryFillVar,
@@ -207,7 +208,7 @@ export function FocusCanvas() {
         <div className="mt-5">
           <button
             type="button"
-            className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
+            className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
             onClick={() => router.push("/today")}
           >
             Back to plan
@@ -230,7 +231,7 @@ export function FocusCanvas() {
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span
-              className="h-4 w-[3px] shrink-0 rounded-full"
+              className="h-4 w-[var(--stripe-width)] shrink-0 rounded-full"
               style={{
                 backgroundColor: showCategory
                   ? categorySolidVar(task.category)
@@ -307,17 +308,12 @@ export function FocusCanvas() {
             onClick={() => void (isPaused ? handleResume() : handlePause())}
             disabled={doneFlash !== null}
             aria-label={isPaused ? "Resume" : "Pause"}
-            className="flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-ink text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+            className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-ink text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
           >
             {isPaused ? (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <path d="M5 3.5v9l7-4.5z" />
-              </svg>
+              <Play {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
             ) : (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <rect x="4.5" y="3.5" width="2.5" height="9" rx="0.5" />
-                <rect x="9" y="3.5" width="2.5" height="9" rx="0.5" />
-              </svg>
+              <Pause {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
             )}
           </button>
           <span className="text-caption text-ink-faint">Esc to exit</span>

@@ -13,7 +13,7 @@ import { useReveal } from "../plan/LensProvider";
 
 type InboxAction = "today" | "tomorrow" | "later" | "drop";
 
-const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
+const NEUTRAL_CATEGORY_STRIPE = "color-mix(in srgb, var(--ink-muted) 35%, transparent)";
 
 const ACTIONS: ReadonlyArray<readonly [InboxAction, string, string]> = [
   ["today", "Today", "1"],
@@ -130,7 +130,7 @@ export function InboxPanel({ active }: { active: boolean }) {
           >
             {reveal.category ? (
               <span
-                className="w-[3px] shrink-0 self-stretch rounded-full"
+                className="w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
                 style={{ backgroundColor: stripeColor }}
                 aria-hidden
               />
@@ -157,7 +157,7 @@ export function InboxPanel({ active }: { active: boolean }) {
                   key={action}
                   type="button"
                   onClick={() => apply(index, action)}
-                  className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted transition hover:bg-[var(--accent-soft)] hover:text-accent"
+                  className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted transition hover:bg-[var(--accent-soft)] hover:text-accent focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
                 >
                   {label}
                   <span className="ml-1 opacity-60">{key}</span>

@@ -57,7 +57,7 @@ export function InPageSwitcher<T extends string>({
 
   return (
     <div
-      className="inline-flex gap-[2px] rounded-pill bg-active-surface p-[2px] text-sm"
+      className="inline-flex gap-[var(--space-0)] rounded-pill bg-active-surface p-[var(--space-0)] text-sm"
       role="group"
       aria-label={ariaLabel}
     >
@@ -74,7 +74,7 @@ export function InPageSwitcher<T extends string>({
             onKeyDown={(e) => onKeyDown(e, index)}
             aria-pressed={pressed}
             className={cn(
-              "rounded-pill border px-3 py-1 transition-colors",
+              "rounded-pill border px-3 py-1 transition-colors focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]",
               pressed
                 ? "border-active-raised-border bg-active-raised text-ink"
                 : "border-transparent bg-transparent text-ink-muted hover:text-ink"

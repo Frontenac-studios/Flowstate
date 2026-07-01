@@ -19,7 +19,7 @@ export function ChatSuggestedActions({ suggestions, disabled, onSelect }: Props)
           type="button"
           disabled={disabled}
           onClick={() => onSelect(suggestion.id)}
-          className="rounded-pill border border-border bg-surface px-2.5 py-1 text-xs text-ink-muted transition hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-pill border border-border bg-surface px-2.5 py-1 text-xs text-ink-muted transition hover:text-accent focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {suggestion.label}
         </button>

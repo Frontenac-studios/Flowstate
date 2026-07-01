@@ -9,13 +9,12 @@ function SyncDot({
 }) {
   switch (displayState) {
     case "offline":
-      return <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />;
-    case "synced":
-      return <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />;
-    case "syncError":
-      return <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden />;
     case "pending":
-      return <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />;
+      return <span className="h-1.5 w-1.5 rounded-full bg-ink-muted" aria-hidden />;
+    case "synced":
+      return <span className="h-1.5 w-1.5 rounded-full bg-ink" aria-hidden />;
+    case "syncError":
+      return <span className="h-1.5 w-1.5 rounded-full bg-critical" aria-hidden />;
     default:
       return <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" aria-hidden />;
   }
@@ -23,11 +22,9 @@ function SyncDot({
 
 export function DesktopSyncBanner() {
   const { displayState, message } = useSyncStatus();
-
   if (displayState === "hidden") return null;
-
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-20 flex justify-center">
+    <div className="pointer-events-none fixed inset-x-0 top-2 z-sticky flex justify-center">
       <div
         className="pointer-events-auto inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-3 py-1 text-xs text-ink-muted"
         role="status"

@@ -118,10 +118,10 @@ export function SettingsForm() {
               aria-selected={active}
               aria-controls={`settings-panel-${t.id}`}
               onClick={() => setTab(t.id)}
-              className={`rounded-[6px] px-3 py-1.5 text-sm transition ${
+              className={`rounded-control px-3 py-1.5 text-sm transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
                 active
-                  ? "bg-[var(--surface)] font-medium text-ink shadow-sm"
-                  : "text-ink-muted hover:text-ink"
+                  ? "border border-active-raised-border bg-surface font-medium text-ink"
+                  : "border border-transparent text-ink-muted hover:text-ink"
               }`}
             >
               {t.label}
@@ -292,7 +292,7 @@ export function SettingsForm() {
 
       <Link
         href="/today"
-        className="inline-block rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink"
+        className="focus-visible:text-on-accent inline-block rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:bg-ink"
       >
         Back to Today
       </Link>
