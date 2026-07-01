@@ -79,7 +79,7 @@
   display: inline-flex;
   gap: 2px;
   border-radius: var(--radius-pill);
-  background: var(--accent-soft);
+  background: var(--active-surface);
   padding: 2px;
 }
 
@@ -148,9 +148,10 @@
 }
 
 .glass-btn-primary:focus-visible {
-  background: var(--ink);
-  color: var(--on-accent);
   outline: none;
+  box-shadow:
+    0 0 0 var(--focus-ring-width) var(--surface),
+    0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) var(--focus-ring);
 }
 
 .glass-btn-primary:disabled {
