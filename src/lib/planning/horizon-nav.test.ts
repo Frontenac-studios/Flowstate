@@ -5,6 +5,7 @@ import {
   trimBreadcrumbForHorizon,
   zoomToMonth,
   zoomToQuarter,
+  zoomToWeek,
   zoomToYear,
 } from "./horizon-nav";
 
@@ -20,6 +21,7 @@ describe("horizon-nav", () => {
     expect(zoomToYear(2026)).toEqual({ year: 2026 });
     expect(zoomToQuarter(2026, 3)).toEqual({ year: 2026, quarter: 3 });
     expect(zoomToMonth(2026, 2, 5)).toEqual({ year: 2026, quarter: 2, month: 5 });
+    expect(zoomToWeek(2026, 3, 8, 34)).toEqual({ year: 2026, quarter: 3, month: 8, isoWeek: 34 });
   });
 
   it("trims breadcrumb to selected horizon depth", () => {

@@ -14,7 +14,7 @@ import {
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
-import { datesInIsoWeek, toISODateString } from "@/lib/dates/local-day";
+import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
@@ -35,7 +35,17 @@ const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const VISIBLE_DAY_COUNT = 4;
 const DEFAULT_COMPOSER_HEIGHT_PX = 128;
 
-export function WeekCanvas() {
+type WeekCanvasProps = {
+  /** Monday ISO date anchoring the week columns; defaults to the user's local today. */
+  anchorDate?: string;
+  /** When false, hides the inbox rail and later backlog (execution-only view). */
+  showPlanningRail?: boolean;
+};
+
+export function WeekCanvas({
+  anchorDate: anchorDateProp,
+  showPlanningRail = true,
+}: WeekCanvasProps = {}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { touchActivity } = usePlanMode();
@@ -49,13 +59,16 @@ export function WeekCanvas() {
   const todayColumnRef = useRef<HTMLDivElement>(null);
   const hasPinnedTodayRef = useRef(false);
 
-  const { localDate: todayIso, now } = useLocalCalendarClock();
-  const weekDates = useMemo(() => datesInIsoWeek(now), [now]);
+  const { localDate: todayIso } = useLocalCalendarClock();
+  const anchorDate = anchorDateProp ?? todayIso;
+  const weekRef = useMemo(() => parseISODateString(anchorDate), [anchorDate]);
+  const weekDates = useMemo(() => datesInIsoWeek(weekRef), [weekRef]);
   const dayCount = weekDates.length;
   const columnWidthPercent = 100 / dayCount;
+  const todayInWeek = weekDates.some((date) => toISODateString(date) === todayIso);
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
-  const weekQueryInput = useMemo(() => ({ anchorDate: todayIso }), [todayIso]);
+  const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
   const { data: protectedBlocks = [] } = useQuery(
     trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
   );
@@ -70,7 +83,7 @@ export function WeekCanvas() {
     return map;
   }, [protectedBlocks]);
 
-  const partitioned = useMemo(() => partitionWeekTasks(tasks, now), [tasks, now]);
+  const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -194,10 +207,10 @@ export function WeekCanvas() {
 
   useEffect(() => {
     hasPinnedTodayRef.current = false;
-  }, [todayIso]);
+  }, [todayIso, anchorDate]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !todayInWeek) return;
 
     const pinTodayToLeft = () => {
       if (hasPinnedTodayRef.current) return;
@@ -232,7 +245,7 @@ export function WeekCanvas() {
       cancelAnimationFrame(innerFrame);
       observer?.disconnect();
     };
-  }, [isLoading, todayIso, dayCount]);
+  }, [isLoading, todayIso, dayCount, todayInWeek, anchorDate]);
 
   const inboxHeightPx = composerHeight * 1.5;
 
@@ -250,31 +263,34 @@ export function WeekCanvas() {
         <p className="mt-4 px-2 text-sm text-ink-muted">Loading…</p>
       ) : (
         <>
-          <WeekInbox
-            tasks={partitioned.inbox.map(toRow)}
-            heightPx={inboxHeightPx}
-            onComplete={pushComplete}
-            onDelete={pushDelete}
-            onDraftClick={() => {
-              setDraftOpen(true);
-              setAppliedMessage(null);
-            }}
-            appliedMessage={appliedMessage}
-            draftPanel={
-              draftOpen ? (
-                <WeekDraftPanel
-                  taskTitleById={taskTitleById}
-                  onClose={() => setDraftOpen(false)}
-                  onApplied={(count) => {
-                    setAppliedMessage(`Moved ${count} task${count === 1 ? "" : "s"}`);
-                    setDraftOpen(false);
-                  }}
-                />
-              ) : null
-            }
-          />
+          {showPlanningRail ? (
+            <WeekInbox
+              tasks={partitioned.inbox.map(toRow)}
+              heightPx={inboxHeightPx}
+              onComplete={pushComplete}
+              onDelete={pushDelete}
+              onDraftClick={() => {
+                setDraftOpen(true);
+                setAppliedMessage(null);
+              }}
+              appliedMessage={appliedMessage}
+              draftPanel={
+                draftOpen ? (
+                  <WeekDraftPanel
+                    anchorDate={anchorDate}
+                    taskTitleById={taskTitleById}
+                    onClose={() => setDraftOpen(false)}
+                    onApplied={(count) => {
+                      setAppliedMessage(`Moved ${count} task${count === 1 ? "" : "s"}`);
+                      setDraftOpen(false);
+                    }}
+                  />
+                ) : null
+              }
+            />
+          ) : null}
 
-          <ProtectedWeekBar anchorDate={todayIso} />
+          <ProtectedWeekBar anchorDate={anchorDate} />
 
           <div
             ref={dayScrollRef}
@@ -307,11 +323,13 @@ export function WeekCanvas() {
             </div>
           </div>
 
-          <WeekLaterBacklog
-            tasks={partitioned.later.map(toRow)}
-            onComplete={pushComplete}
-            onDelete={pushDelete}
-          />
+          {showPlanningRail ? (
+            <WeekLaterBacklog
+              tasks={partitioned.later.map(toRow)}
+              onComplete={pushComplete}
+              onDelete={pushDelete}
+            />
+          ) : null}
         </>
       )}
     </DndContext>
