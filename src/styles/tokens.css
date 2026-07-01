@@ -24,14 +24,14 @@
   /* ---- ink — crisp near-black ---- */
   --ink: #16181d;
   --ink-muted: #6b7280;
-  --ink-faint: #767e8e; /* DT-9  was #9aa0ad */
+  --ink-faint: #9aa0ad; /* DT-9 */
 
   /* ---- accent = black (DT-2 revised Jun 24, was graphite) ---- */
   --accent: #16181d;
   --accent-hover: #000000;
   --on-accent: #ffffff;
   --accent-soft: rgba(22, 24, 29, 0.12);
-  --focus-ring: var(--ink); /* DT-14 was rgba(22,24,29,0.35) */
+  --focus-ring: var(--ink-muted); /* DT-14 — AA-safe soft gray knockout ring */
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
   --mark-ring: rgba(22, 24, 29, 0.35); /* DT-10 */
@@ -80,9 +80,10 @@
   --reserved-yellow-text: #8a5a14;
 
   /* ---- semantics (DT-3b): icon-led + graphite; color for critical only ---- */
+  --crimson: #b3122a;
   --status-ink: var(--ink);
   --status-icon: var(--ink-muted);
-  --status-critical: #b3122a;
+  --status-critical: var(--crimson);
 
   /* ---- priority + due urgency (VF-4) ---- */
   /* Priority pips: graphite ramp, crimson only at High; always count-coded (1/2/3). */
@@ -243,6 +244,157 @@
   animation: ghost-settle var(--motion-short) var(--ease-enter) both;
 }
 
+.kash-focus-visible:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 var(--focus-ring-width) var(--surface),
+    0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) var(--focus-ring);
+}
+
+@keyframes stripe-resolving {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.stripe-resolving {
+  animation: stripe-resolving var(--motion-medium) var(--ease-breath) infinite;
+}
+
+@keyframes project-fold-to-filed {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+}
+
+@keyframes project-fold-to-filed-reduce {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.project-fold-to-filed {
+  animation: project-fold-to-filed var(--motion-medium) var(--ease-exit) forwards;
+  transform-origin: top;
+}
+
+@keyframes bingo-lock-grid {
+  0% {
+    border-color: var(--border);
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.98);
+  }
+  100% {
+    border-color: var(--ink);
+    transform: scale(1);
+  }
+}
+
+.bingo-lock-grid > * {
+  animation: bingo-lock-grid var(--motion-short) var(--ease-enter) forwards;
+}
+
+@keyframes page-cross-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-cross-fade {
+  animation: page-cross-fade-in var(--motion-short) var(--ease-enter) both;
+}
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes modal-panel-in-reduce {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.modal-overlay,
+.modal-backdrop {
+  animation: modal-backdrop-in var(--motion-short) var(--ease-enter) both;
+}
+.modal-panel {
+  animation: modal-panel-in var(--motion-medium) var(--ease-move) both;
+  transform-origin: top center;
+}
+@keyframes sync-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+.sync-dot-pulse {
+  animation: sync-dot-pulse var(--breath-pulse) var(--ease-breath) infinite;
+}
+@keyframes ephemeral-celebration {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+@keyframes ephemeral-celebration-reduce {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.ephemeral-celebration {
+  animation: ephemeral-celebration var(--motion-celebrate) var(--ease-enter) forwards;
+}
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-micro: 1ms;
@@ -275,6 +427,31 @@
     animation: none !important;
     border-style: solid;
     opacity: 1;
+  }
+  .page-cross-fade {
+    animation: page-cross-fade-in var(--motion-short) var(--ease-enter) both;
+  }
+  .modal-panel {
+    animation: modal-panel-in-reduce var(--motion-short) var(--ease-enter) both;
+  }
+  .sync-dot-pulse {
+    animation: none !important;
+  }
+  .stripe-resolving {
+    animation: none !important;
+    opacity: 1;
+  }
+  .project-fold-to-filed {
+    animation: project-fold-to-filed-reduce var(--motion-short) var(--ease-exit) forwards;
+    transform: none;
+  }
+  .bingo-lock-grid > * {
+    animation: none !important;
+    border-color: var(--ink);
+    transform: none;
+  }
+  .ephemeral-celebration {
+    animation: ephemeral-celebration-reduce var(--motion-short) var(--ease-enter) forwards;
   }
 }
 

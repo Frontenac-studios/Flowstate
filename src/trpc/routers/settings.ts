@@ -4,10 +4,13 @@ import { TRPCError } from "@trpc/server";
 import { db } from "@/db";
 import { appSettings } from "@/db/tables";
 import {
+  abyssArchiveAfterDaysSchema,
   bucketModeSchema,
+  DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
   DEFAULT_BUCKET_MODE,
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
+  notificationPrefsSchema,
   workingHoursSchema,
 } from "@/lib/settings/constants";
 
@@ -49,6 +52,9 @@ export const settingsRouter = createTRPCRouter({
       dayEndHour: row.dayEndHour ?? DEFAULT_DAY_END_HOUR,
       // 1.4 habit layer: lets the composer preview the category a loose task will land on.
       lastUsedCategory: row.lastUsedCategory ?? null,
+      notificationsEnabled: row.notificationsEnabled ?? true,
+      focusDndEnabled: row.focusDndEnabled ?? true,
+      abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
     };
   }),
 
@@ -94,5 +100,46 @@ export const settingsRouter = createTRPCRouter({
       }
 
       return { dayStartHour: input.dayStartHour, dayEndHour: input.dayEndHour };
+    }),
+  updateNotificationPrefs: protectedProcedure
+    .input(notificationPrefsSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({
+          notificationsEnabled: input.notificationsEnabled,
+          focusDndEnabled: input.focusDndEnabled,
+          updatedAt: new Date(),
+        })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update notification preferences.",
+        });
+      return {
+        notificationsEnabled: input.notificationsEnabled,
+        focusDndEnabled: input.focusDndEnabled,
+      };
+    }),
+
+  updateAbyssArchiveAfterDays: protectedProcedure
+    .input(abyssArchiveAfterDaysSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({ abyssArchiveAfterDays: input, updatedAt: new Date() })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update abyss archive threshold.",
+        });
+      }
+      return { abyssArchiveAfterDays: input };
     }),
 });

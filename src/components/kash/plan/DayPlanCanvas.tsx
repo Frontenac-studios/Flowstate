@@ -32,6 +32,7 @@ import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
 import { DECIDE_EVENT } from "../chrome-events";
+import { triggerEphemeralCelebration } from "../mechanics/EphemeralCelebration";
 import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
@@ -80,6 +81,7 @@ export function DayPlanCanvas() {
   const [replacePickerTaskId, setReplacePickerTaskId] = useState<string | null>(null);
   const [top3Highlighted, setTop3Highlighted] = useState(false);
   const [view, setView] = useState<TodayView>("list");
+  const top3CelebratedRef = useRef(false);
   const top3HighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
@@ -256,6 +258,18 @@ export function DayPlanCanvas() {
     }
     return map;
   }, [top3Slots]);
+
+  useEffect(() => {
+    if (top3CelebratedRef.current) return;
+    const allComplete = ([1, 2, 3] as const).every((slot) => {
+      const task = pinnedBySlot.get(slot);
+      return task != null && task.completedAt != null;
+    });
+    if (allComplete) {
+      top3CelebratedRef.current = true;
+      triggerEphemeralCelebration("top3-complete");
+    }
+  }, [pinnedBySlot]);
 
   const moveMutation = useMutation(
     trpc.tasks.moveToBucket.mutationOptions({

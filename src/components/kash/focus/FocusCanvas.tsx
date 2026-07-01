@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Pause, Play, kashIconProps } from "@/components/kash/ui/icon";
+import { triggerEphemeralCelebration } from "@/components/kash/mechanics/EphemeralCelebration";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
+import { setOsDoNotDisturb } from "@/lib/about-me/os-dnd";
 import {
   categoryFillVar,
   categorySeedLabel,
@@ -45,6 +47,7 @@ export function FocusCanvas() {
 
   const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
   const triageIds = useMemo(() => new Set(triageTasks.map((t) => t.id)), [triageTasks]);
   const task = useMemo(() => {
@@ -136,10 +139,17 @@ export function FocusCanvas() {
     [queryClient, router, tasks, triageIds, trpc.tasks.listIncomplete]
   );
 
+  useEffect(() => {
+    if (!taskId || settings?.focusDndEnabled === false) return;
+    setOsDoNotDisturb(true);
+    return () => setOsDoNotDisturb(false);
+  }, [taskId, settings?.focusDndEnabled]);
+
   const handleDone = useCallback(async () => {
     if (!task || doneFlash) return;
 
     setDoneFlash(`✓ done in ${Math.max(1, Math.round(seconds / 60))}m`);
+    if (seconds >= 60 || blockId) triggerEphemeralCelebration("focus-done");
 
     // Finish timing first so the DB records the "session", then complete the task.
     await endSession("done");

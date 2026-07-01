@@ -19,6 +19,8 @@ export type SyncStatus = {
   message: string;
   pendingCount: number;
   lastSyncTime: string | null;
+  isSyncing: boolean;
+  runSync: () => Promise<void>;
 };
 
 const SYNC_RETRY_INTERVAL_MS = 5 * 60 * 1000;
@@ -167,6 +169,8 @@ export function useSyncStatus(): SyncStatus {
       message: "",
       pendingCount: 0,
       lastSyncTime: null,
+      isSyncing: false,
+      runSync: async () => {},
     };
   }
 
@@ -190,5 +194,7 @@ export function useSyncStatus(): SyncStatus {
     message: formatSyncMessage(displayState, pendingCount, lastSyncTime),
     pendingCount,
     lastSyncTime,
+    isSyncing,
+    runSync,
   };
 }
