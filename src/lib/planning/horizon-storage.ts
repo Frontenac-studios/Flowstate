@@ -21,7 +21,7 @@ export const HORIZON_OPTIONS = [
 ];
 
 export const HORIZON_PLACEHOLDER_COPY: Record<PlanningHorizon, string> = {
-  week: "Week planning view — plan-mode rail and AI draft land in the next PR.",
+  week: "Select a month in the breadcrumb to zoom into a week.",
   month: "Nothing planned yet for this month.",
   quarter: "Nothing planned yet for this quarter.",
   year: "Nothing planned yet for this year.",

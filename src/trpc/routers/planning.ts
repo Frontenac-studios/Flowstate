@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, isNotNull, lt } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -31,8 +31,10 @@ import {
   defaultReservedDayLabel,
   protectedBlockCategoryForReservedDay,
 } from "@/lib/planning/reserved-day-category";
+import { parseISODateString } from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
+import { templateWeekDraft } from "@/lib/week/template-week-draft";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -40,6 +42,7 @@ const categorySchema = z.enum(PROJECT_CATEGORIES);
 const yearSchema = z.number().int().min(2000).max(2100);
 const monthSchema = z.number().int().min(1).max(12);
 const quarterSchema = z.number().int().min(1).max(4);
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD).");
 
 const suggestionSurfaceSchema = z.enum([
   "quarter_spread",
@@ -1198,6 +1201,54 @@ export const planningRouter = createTRPCRouter({
       return rows.filter(Boolean);
     }),
 
+  suggestWeekDraft: protectedProcedure
+    .input(z.object({ anchorDate: isoDateSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const inboxRows = await db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          priority: tasks.priority,
+        })
+        .from(tasks)
+        .where(
+          and(eq(tasks.userId, ctx.userId), isNull(tasks.scheduledDate), isNull(tasks.completedAt))
+        );
+
+      if (inboxRows.length === 0) {
+        return [];
+      }
+
+      const weekRef = parseISODateString(input.anchorDate);
+      const proposal = templateWeekDraft(inboxRows, weekRef);
+
+      const rows = await Promise.all(
+        proposal.assignments.map(async (assignment) => {
+          const task = inboxRows.find((row) => row.id === assignment.taskId);
+          const [row] = await db
+            .insert(planningSuggestions)
+            .values({
+              userId: ctx.userId,
+              surface: "week_draft",
+              payload: {
+                weekStart: input.anchorDate,
+                taskId: assignment.taskId,
+                taskTitle: task?.title,
+                scheduledDate: assignment.scheduledDate,
+              },
+            })
+            .returning();
+          return row;
+        })
+      );
+
+      for (const row of rows) {
+        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
+      }
+
+      return rows.filter(Boolean);
+    }),
+
   applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
     const now = new Date();
     const staged = await db
@@ -1276,6 +1327,20 @@ export const planningRouter = createTRPCRouter({
             .returning();
           if (updatedReserved)
             await syncRow("reserved_days", updatedReserved.id, "update", updatedReserved);
+        }
+      }
+
+      if (row.surface === "week_draft") {
+        const payload = row.payload as { taskId?: string; scheduledDate?: string };
+        if (payload.taskId && payload.scheduledDate) {
+          await db
+            .update(tasks)
+            .set({
+              scheduledDate: payload.scheduledDate,
+              bucketOverride: null,
+              updatedAt: now,
+            })
+            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
         }
       }
     }

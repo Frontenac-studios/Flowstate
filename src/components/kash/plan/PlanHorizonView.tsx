@@ -8,6 +8,7 @@ import {
   zoomToMonth,
   zoomToQuarter,
 } from "@/lib/planning/horizon-nav";
+import { deriveIsoWeekForBreadcrumb, isWeekBreadcrumbScoped } from "@/lib/planning/week-breadcrumb";
 import {
   HORIZON_OPTIONS,
   PLANNING_BREADCRUMB_STORAGE_KEY,
@@ -22,6 +23,7 @@ import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
 import MonthView from "./month/MonthView";
 import QuarterView from "./quarter/QuarterView";
+import WeekPlanView from "./week/WeekPlanView";
 import YearView from "./year/YearView";
 
 function currentYear(): number {
@@ -113,7 +115,13 @@ export function PlanHorizonView() {
   const handleHorizonChange = useCallback((next: PlanningHorizon) => {
     setHorizon(next);
     if (next !== "bingo") {
-      setBreadcrumb((prev) => trimBreadcrumbForHorizon(prev, next));
+      setBreadcrumb((prev) => {
+        const trimmed = trimBreadcrumbForHorizon(prev, next);
+        if (next === "week" && trimmed.isoWeek == null && isWeekBreadcrumbScoped(trimmed)) {
+          return { ...trimmed, isoWeek: deriveIsoWeekForBreadcrumb(trimmed) };
+        }
+        return trimmed;
+      });
     }
   }, []);
 
@@ -144,8 +152,9 @@ export function PlanHorizonView() {
 
   const showQuarterDrill = horizon === "quarter" && breadcrumb.quarter != null;
   const showMonthDrill = horizon === "month" && breadcrumb.month != null;
+  const showWeekPlan = horizon === "week" && isWeekBreadcrumbScoped(breadcrumb);
   const showPlaceholder =
-    horizon === "week" ||
+    (horizon === "week" && !showWeekPlan) ||
     (horizon === "month" && breadcrumb.month == null) ||
     (horizon === "quarter" && breadcrumb.quarter == null);
 
@@ -177,6 +186,8 @@ export function PlanHorizonView() {
         />
       ) : showMonthDrill ? (
         <MonthView year={breadcrumb.year} month={breadcrumb.month!} />
+      ) : showWeekPlan ? (
+        <WeekPlanView breadcrumb={breadcrumb} />
       ) : showPlaceholder ? (
         <PlanHorizonPlaceholder horizon={horizon} />
       ) : null}

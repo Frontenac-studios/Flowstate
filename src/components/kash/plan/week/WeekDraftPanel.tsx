@@ -10,11 +10,12 @@ import { useTRPC } from "@/trpc/client";
 
 type Props = {
   taskTitleById: Record<string, string>;
+  anchorDate?: string;
   onClose: () => void;
   onApplied: (count: number) => void;
 };
 
-export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
+export function WeekDraftPanel({ taskTitleById, anchorDate, onClose, onApplied }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [proposal, setProposal] = useState<WeekDraftProposal | null>(null);
@@ -31,9 +32,14 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
     })
   );
 
+  const weekRef = useMemo(
+    () => (anchorDate ? parseISODateString(anchorDate) : undefined),
+    [anchorDate]
+  );
+
   const grouped = useMemo(() => {
     if (!proposal) return [];
-    const weekDates = datesInIsoWeek().map(toISODateString);
+    const weekDates = datesInIsoWeek(weekRef).map(toISODateString);
     const byDate = new Map<string, WeekDraftProposal["assignments"]>();
     for (const iso of weekDates) {
       byDate.set(iso, []);
@@ -45,14 +51,14 @@ export function WeekDraftPanel({ taskTitleById, onClose, onApplied }: Props) {
     return weekDates
       .map((iso) => ({ iso, items: byDate.get(iso) ?? [] }))
       .filter((g) => g.items.length > 0);
-  }, [proposal]);
+  }, [proposal, weekRef]);
 
   const startedRef = useRef(false);
 
   const runGenerate = () => {
     setError(null);
     generateMutation.mutate(
-      {},
+      { weekStartIso: anchorDate },
       {
         onSuccess: setProposal,
         onError: () => setError("Could not generate a draft. Try again."),
