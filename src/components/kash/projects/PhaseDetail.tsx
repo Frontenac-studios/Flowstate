@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 
 import Input from "@/components/kash/ui/Input";
 import Textarea from "@/components/kash/ui/Textarea";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
+import type { ProjectCategory } from "@/lib/projects/categories";
 import {
+  collectSubtreeTasks,
   derivePhaseRangeFromTasks,
   hasManualPhaseDate,
   resolveEffectivePhaseRange,
   type ProjectTree,
 } from "@/lib/projects/phase-tree";
+import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
 
 import type { ProjectPhase, ProjectTask } from "./types";
 
@@ -24,6 +28,8 @@ type PhasePatch = {
 
 type Props = {
   node: Node;
+  category: ProjectCategory;
+  dayPriorityTaskIds: ReadonlySet<string>;
   onUpdate: (patch: PhasePatch) => void;
   onRequestDelete: () => void;
   pending: boolean;
@@ -33,11 +39,28 @@ function dateSideLabel(side: "Start" | "End", manual: boolean): string {
   return manual ? side : `${side} (from tasks)`;
 }
 
-export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }: Props) {
+export default function PhaseDetail({
+  node,
+  category,
+  dayPriorityTaskIds,
+  onUpdate,
+  onRequestDelete,
+  pending,
+}: Props) {
   const { phase } = node;
   const isLeaf = node.children.length === 0;
   const effective = resolveEffectivePhaseRange(node);
   const taskSnap = isLeaf ? derivePhaseRangeFromTasks(node.tasks) : null;
+  const subtreeTasks = collectSubtreeTasks(node);
+  const progress = weightedProgressForTasks(
+    subtreeTasks.map((task) => ({
+      id: task.id,
+      completedAt: task.completedAt,
+      isTop3: task.isTop3,
+    })),
+    dayPriorityTaskIds
+  );
+  const stripe = categorySolidVar(category);
 
   const [name, setName] = useState(phase.name);
   const [description, setDescription] = useState(phase.description ?? "");
@@ -69,6 +92,21 @@ export default function PhaseDetail({ node, onUpdate, onRequestDelete, pending }
 
   return (
     <div className="flex flex-col gap-4">
+      {subtreeTasks.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
+            <span>Progress</span>
+            <span>{progress.percent}%</span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-border">
+            <span
+              className="block h-full rounded-full"
+              style={{ width: `${progress.percent}%`, backgroundColor: stripe }}
+            />
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-1.5">
         <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Phase</span>
         <Input

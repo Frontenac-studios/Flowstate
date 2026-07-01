@@ -27,6 +27,8 @@ type Props = {
   onTypeFilterChange: (types: AbyssItemType[]) => void;
   ageFilter: AbyssAgeFilter;
   onAgeFilterChange: (age: AbyssAgeFilter) => void;
+  showArchive: boolean;
+  onArchiveToggle: () => void;
 };
 
 const GROUP_LABELS: Record<AbyssGroupMode, string> = {
@@ -123,6 +125,15 @@ export default function AbyssFloatingBar(props: Props) {
           </div>
         </>
       ) : null}
+
+      <button
+        type="button"
+        onClick={props.onArchiveToggle}
+        aria-pressed={props.showArchive}
+        className={`rounded-pill px-2.5 py-1 text-caption ${ABYSS_BTN_FOCUS} ${props.showArchive ? "bg-abyss-surface-2 text-abyss-ink" : "text-abyss-ink-faint hover:text-abyss-ink-muted"}`}
+      >
+        Archive
+      </button>
 
       <button
         type="button"

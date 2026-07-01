@@ -335,6 +335,8 @@ export const tasksRouter = createTRPCRouter({
           createdAt: tasks.createdAt,
           projectSlug: projects.slug,
           projectName: projects.name,
+          category: tasks.category,
+          categoryUnresolved: tasks.categoryUnresolved,
         })
         .from(tasks)
         .leftJoin(projects, eq(tasks.projectId, projects.id))

@@ -59,6 +59,8 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions. propose_about_me_edit is available here.",
   projects: "Surface: Projects — project slugs, phases, creating and scheduling project tasks.",
   abyss: "Surface: Abyss — backburner capture, search, parking ideas for later.",
+  reviews:
+    "Surface: Reviews — EoD/EoW/monthly reflection, wins, Abyss themes, About-me. Warm and celebratory.",
 };
 
 const SURFACE_REGISTER: Record<PromptSurface, KashRegister> = {
