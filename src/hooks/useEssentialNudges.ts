@@ -1,20 +1,19 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { DECIDE_EVENT } from "@/components/kash/chrome-events";
 import { useChat } from "@/components/kash/chat/ChatProvider";
 import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
-import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
-import { useTRPC } from "@/trpc/client";
+import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
 
-/** Defer the first mount evaluate until after initial paint / hydration. */
 const INITIAL_DEFER_MS = 4_000;
 
 function scheduleIdle(callback: () => void): number {
@@ -47,12 +46,18 @@ function msUntilNextNudgeCheck(): number {
   return next.getTime() - now.getTime();
 }
 
-export function useProactiveNudges() {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const { railOpen, activeThreadId, isFocusRoute, notifyUnread, markRead } = useChat();
+function chipKey(chip: EssentialNudgeChipPayload): string {
+  return chip.kind;
+}
+
+export function useEssentialNudges() {
+  const router = useRouter();
+  const { planningSurface } = useChat();
   const { constraints } = useUserConstraints();
   const evaluatingRef = useRef(false);
+
+  const [chips, setChips] = useState<EssentialNudgeChipPayload[]>([]);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   const evaluate = useCallback(async () => {
     if (evaluatingRef.current) return;
@@ -67,45 +72,33 @@ export function useProactiveNudges() {
         body: JSON.stringify({
           localDate,
           tzOffsetMinutes: clientTzOffsetMinutes(),
+          includeSelfCare: planningSurface === "today",
         }),
       });
 
       if (!res.ok) return;
 
       const data = (await res.json()) as {
-        fired?: boolean;
-        messageId?: string;
+        chips?: EssentialNudgeChipPayload[];
       };
 
-      if (!data.fired) return;
+      if (!data.chips?.length) return;
 
-      await queryClient.invalidateQueries({
-        queryKey: trpc.chat.list.queryKey({ threadId: GLOBAL_THREAD_ID }),
+      setChips((prev) => {
+        const seen = new Set(prev.map(chipKey));
+        const next = [...prev];
+        for (const chip of data.chips ?? []) {
+          if (!seen.has(chipKey(chip))) {
+            next.push(chip);
+            seen.add(chipKey(chip));
+          }
+        }
+        return next;
       });
-
-      const onGlobalThread = activeThreadId === GLOBAL_THREAD_ID;
-      if (railOpen && onGlobalThread) {
-        markRead(GLOBAL_THREAD_ID);
-      } else {
-        notifyUnread(GLOBAL_THREAD_ID);
-      }
-
-      if (isFocusRoute && !railOpen) {
-        // Silent badge only — never auto-open rail on focus.
-      }
     } finally {
       evaluatingRef.current = false;
     }
-  }, [
-    activeThreadId,
-    constraints,
-    isFocusRoute,
-    markRead,
-    notifyUnread,
-    queryClient,
-    railOpen,
-    trpc.chat.list,
-  ]);
+  }, [constraints, planningSurface]);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,4 +130,34 @@ export function useProactiveNudges() {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [evaluate]);
+
+  const dismissChip = useCallback((kind: EssentialNudgeChipPayload["kind"]) => {
+    setDismissed((prev) => new Set(prev).add(kind));
+  }, []);
+
+  const handleAction = useCallback(
+    (kind: EssentialNudgeChipPayload["kind"]) => {
+      if (kind === "top3_stall") {
+        window.dispatchEvent(new Event(DECIDE_EVENT));
+      }
+      if (kind === "self_care_walk") {
+        router.push("/care");
+      }
+      dismissChip(kind);
+    },
+    [dismissChip, router]
+  );
+
+  const visibleChips = chips.filter((chip) => !dismissed.has(chipKey(chip)));
+
+  return {
+    chips: visibleChips,
+    dismissChip,
+    handleAction,
+  };
+}
+
+/** @deprecated Use useEssentialNudges — kept for any legacy imports. */
+export function useProactiveNudges() {
+  useEssentialNudges();
 }

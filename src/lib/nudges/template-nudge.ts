@@ -33,3 +33,11 @@ export function templateStallNudge(stalled: StalledTop3Task[], slipped: SlippedT
 
   return text;
 }
+
+/** Plain-text variant for in-app nudge chips (no backticks). */
+export function templateStallChipMessage(
+  stalled: StalledTop3Task[],
+  slipped: SlippedTop3Task[]
+): string {
+  return templateStallNudge(stalled, slipped).replace(/`/g, "");
+}
