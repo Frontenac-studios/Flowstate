@@ -552,7 +552,9 @@ export const tasksRouter = createTRPCRouter({
               ? "Duplicate task in draft."
               : validation.error === "DAY_OVER_CAPACITY"
                 ? "One or more days would be over capacity with protected blocks."
-                : "One or more dates are outside the current week.";
+                : validation.error === "HARD_CONSTRAINT_VIOLATION"
+                  ? "One or more assignments overlap a hard personal constraint."
+                  : "One or more dates are outside the current week.";
         throw new TRPCError({ code: "BAD_REQUEST", message });
       }
 

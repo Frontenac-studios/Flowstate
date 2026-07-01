@@ -9,6 +9,7 @@ import {
   protectedBlocks,
   quarterThemes,
   tasks,
+  userConstraints,
   weekDayPriorities,
 } from "@/db/tables";
 import {
@@ -18,6 +19,7 @@ import {
   toISODateString,
 } from "@/lib/dates/local-day";
 import { computeBalanceFlags } from "@/lib/planning/balance-pass";
+import { toEvaluableConstraint, type EvaluableConstraint } from "@/lib/about-me/constraint-eval";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { lastWeekDateRange } from "@/lib/week/template-week-draft";
 import { DEFAULT_OVER_COMMIT_THRESHOLD } from "@/lib/week/over-commit-threshold";
@@ -65,6 +67,7 @@ export type WeekDraftContext = {
   protectedCountByDate: Record<string, number>;
   priorityTaskIdsByDate: Record<string, Set<string>>;
   overCommitThreshold: number;
+  userConstraints: EvaluableConstraint[];
 };
 
 async function statedCategoriesForWeek(
@@ -129,82 +132,100 @@ export async function fetchWeekDraftContext(
   const todayIso = toISODateString(startOfLocalDay(now));
   const lastWeek = lastWeekDateRange(weekRef);
 
-  const [incompleteRows, completedLastWeek, top3Rows, triageRows, protectedRows, priorityRows] =
-    await Promise.all([
-      db
-        .select({
-          id: tasks.id,
-          title: tasks.title,
-          priority: tasks.priority,
-          scheduledDate: tasks.scheduledDate,
-          bucketOverride: tasks.bucketOverride,
-          projectSlug: projects.slug,
-          category: tasks.category,
-          categoryUnresolved: tasks.categoryUnresolved,
-          isTop3: tasks.isTop3,
-        })
-        .from(tasks)
-        .leftJoin(projects, eq(tasks.projectId, projects.id))
-        .where(and(eq(tasks.userId, userId), isNull(tasks.completedAt)))
-        .orderBy(desc(tasks.priority)),
-      db
-        .select({ title: tasks.title, completedAt: tasks.completedAt })
-        .from(tasks)
-        .where(and(eq(tasks.userId, userId), isNotNull(tasks.completedAt)))
-        .orderBy(desc(tasks.completedAt))
-        .limit(30),
-      db
-        .select({
-          title: tasks.title,
-          top3Order: tasks.top3Order,
-          completedAt: tasks.completedAt,
-        })
-        .from(tasks)
-        .where(and(eq(tasks.userId, userId), eq(tasks.isTop3, true), isNotNull(tasks.top3Order)))
-        .orderBy(tasks.top3Order),
-      db
-        .select({ id: tasks.id })
-        .from(tasks)
-        .where(
-          and(
-            eq(tasks.userId, userId),
-            isNull(tasks.completedAt),
-            isNotNull(tasks.scheduledDate),
-            lte(tasks.scheduledDate, todayIso)
-          )
-        ),
-      db
-        .select({
-          scheduledDate: protectedBlocks.scheduledDate,
-          category: protectedBlocks.category,
-          label: protectedBlocks.label,
-          startMin: protectedBlocks.startMin,
-          endMin: protectedBlocks.endMin,
-          status: protectedBlocks.status,
-        })
-        .from(protectedBlocks)
-        .where(
-          and(
-            eq(protectedBlocks.userId, userId),
-            gte(protectedBlocks.scheduledDate, weekStart),
-            lte(protectedBlocks.scheduledDate, weekEnd),
-            inArray(protectedBlocks.status, ["confirmed", "proposed"])
-          )
-        ),
-      db
-        .select({
-          taskId: weekDayPriorities.taskId,
-          scheduledDate: weekDayPriorities.scheduledDate,
-        })
-        .from(weekDayPriorities)
-        .where(
-          and(
-            eq(weekDayPriorities.userId, userId),
-            gte(weekDayPriorities.scheduledDate, weekStart),
-            lte(weekDayPriorities.scheduledDate, weekEnd)
-          )
-        ),
-    ]);
+  const [
+    incompleteRows,
+    completedLastWeek,
+    top3Rows,
+    triageRows,
+    protectedRows,
+    priorityRows,
+    constraintRows,
+  ] = await Promise.all([
+    db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        priority: tasks.priority,
+        scheduledDate: tasks.scheduledDate,
+        bucketOverride: tasks.bucketOverride,
+        projectSlug: projects.slug,
+        category: tasks.category,
+        categoryUnresolved: tasks.categoryUnresolved,
+        isTop3: tasks.isTop3,
+      })
+      .from(tasks)
+      .leftJoin(projects, eq(tasks.projectId, projects.id))
+      .where(and(eq(tasks.userId, userId), isNull(tasks.completedAt)))
+      .orderBy(desc(tasks.priority)),
+    db
+      .select({ title: tasks.title, completedAt: tasks.completedAt })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), isNotNull(tasks.completedAt)))
+      .orderBy(desc(tasks.completedAt))
+      .limit(30),
+    db
+      .select({
+        title: tasks.title,
+        top3Order: tasks.top3Order,
+        completedAt: tasks.completedAt,
+      })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), eq(tasks.isTop3, true), isNotNull(tasks.top3Order)))
+      .orderBy(tasks.top3Order),
+    db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          isNull(tasks.completedAt),
+          isNotNull(tasks.scheduledDate),
+          lte(tasks.scheduledDate, todayIso)
+        )
+      ),
+    db
+      .select({
+        scheduledDate: protectedBlocks.scheduledDate,
+        category: protectedBlocks.category,
+        label: protectedBlocks.label,
+        startMin: protectedBlocks.startMin,
+        endMin: protectedBlocks.endMin,
+        status: protectedBlocks.status,
+      })
+      .from(protectedBlocks)
+      .where(
+        and(
+          eq(protectedBlocks.userId, userId),
+          gte(protectedBlocks.scheduledDate, weekStart),
+          lte(protectedBlocks.scheduledDate, weekEnd),
+          inArray(protectedBlocks.status, ["confirmed", "proposed"])
+        )
+      ),
+    db
+      .select({
+        taskId: weekDayPriorities.taskId,
+        scheduledDate: weekDayPriorities.scheduledDate,
+      })
+      .from(weekDayPriorities)
+      .where(
+        and(
+          eq(weekDayPriorities.userId, userId),
+          gte(weekDayPriorities.scheduledDate, weekStart),
+          lte(weekDayPriorities.scheduledDate, weekEnd)
+        )
+      ),
+    db
+      .select({
+        id: userConstraints.id,
+        type: userConstraints.type,
+        label: userConstraints.label,
+        schedule: userConstraints.schedule,
+        severity: userConstraints.severity,
+      })
+      .from(userConstraints)
+      .where(eq(userConstraints.userId, userId))
+      .orderBy(userConstraints.sortOrder),
+  ]);
 
   const weekSet = new Set(weekDates);
   const inbox: WeekDraftContextTask[] = [];
@@ -317,5 +338,6 @@ export async function fetchWeekDraftContext(
     protectedCountByDate,
     priorityTaskIdsByDate,
     overCommitThreshold: DEFAULT_OVER_COMMIT_THRESHOLD,
+    userConstraints: constraintRows.map(toEvaluableConstraint),
   };
 }

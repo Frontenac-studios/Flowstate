@@ -63,4 +63,28 @@ describe("validateWeekDraftAssignments", () => {
     );
     expect(result).toEqual({ ok: false, error: "DAY_OVER_CAPACITY" });
   });
+
+  it("rejects assignments on days with hard recurring commitments", () => {
+    const result = validateWeekDraftAssignments(
+      [{ taskId: "a", scheduledDate: "2026-05-26" }],
+      owned,
+      wed,
+      {
+        protectedCountByDate: {},
+        existingTasksByDate: {},
+        priorityTaskIdsByDate: {},
+        taskWeightById: { a: 1 },
+        userConstraints: [
+          {
+            id: "c1",
+            type: "commitment",
+            label: "School run",
+            severity: "hard",
+            schedule: { days: [2], startMin: 8 * 60, endMin: 8 * 60 + 30 },
+          },
+        ],
+      }
+    );
+    expect(result).toEqual({ ok: false, error: "HARD_CONSTRAINT_VIOLATION" });
+  });
 });

@@ -17,6 +17,8 @@ import { animatePinToTop3 } from "@/lib/animate/pin-to-top3";
 import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
+import { useUserConstraints } from "@/hooks/useUserConstraints";
+import { evaluateProposedSlot } from "@/lib/about-me/constraint-eval";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { toISODateString } from "@/lib/dates/local-day";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
@@ -30,6 +32,7 @@ import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
 import { DECIDE_EVENT } from "../chrome-events";
+import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
@@ -42,6 +45,8 @@ import { Top3ReplacePicker } from "./Top3ReplacePicker";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
+
+const DEFAULT_FOCUS_BLOCK_MIN = 45;
 
 /** Today's main-area views (VF redesign): the list, the full-width schedule, or the day review. */
 type TodayView = "list" | "calendar" | "review";
@@ -79,6 +84,8 @@ export function DayPlanCanvas() {
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
   const { pushComplete, pushDelete } = useSessionUndo();
+  const { toast } = useToast();
+  const { constraints } = useUserConstraints();
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const bucketMode: BucketMode = settings?.bucketMode ?? "relative";
@@ -353,6 +360,24 @@ export function DayPlanCanvas() {
     trpc.focusBlocks.move.mutationOptions({ onSuccess: invalidateBlocks })
   );
 
+  const validateFocusSlot = useCallback(
+    (dateIso: string, startMin: number, durationMin: number): boolean => {
+      const endMin = startMin + durationMin;
+      const evaluation = evaluateProposedSlot(constraints, { dateIso, startMin, endMin });
+      if (!evaluation.ok) {
+        const label = evaluation.hardViolations[0]?.label ?? "a personal constraint";
+        toast({ message: `That time overlaps ${label}.`, variant: "neutral" });
+        return false;
+      }
+      if (evaluation.softViolations.length > 0) {
+        const label = evaluation.softViolations[0]?.label ?? "a preference";
+        toast({ message: `Placed anyway — overlaps ${label}.`, variant: "neutral" });
+      }
+      return true;
+    },
+    [constraints, toast]
+  );
+
   const handleActivateTask = useCallback(
     (taskId: string) => {
       router.push(`/today/focus?${new URLSearchParams({ taskId }).toString()}`);
@@ -410,7 +435,10 @@ export function DayPlanCanvas() {
       if (!overId.startsWith("timeline:")) return;
       const startMin = Number(overId.slice("timeline:".length));
       if (Number.isNaN(startMin)) return;
-      moveBlockMutation.mutate({ id: activeId.slice("block:".length), startMin });
+      const blockId = activeId.slice("block:".length);
+      if (validateFocusSlot(todayIso, startMin, DEFAULT_FOCUS_BLOCK_MIN)) {
+        moveBlockMutation.mutate({ id: blockId, startMin });
+      }
       return;
     }
 
@@ -435,7 +463,9 @@ export function DayPlanCanvas() {
     if (overId.startsWith("timeline:")) {
       const startMin = Number(overId.slice("timeline:".length));
       if (Number.isNaN(startMin)) return;
-      createBlockMutation.mutate({ taskId, date: todayIso, startMin });
+      if (validateFocusSlot(todayIso, startMin, DEFAULT_FOCUS_BLOCK_MIN)) {
+        createBlockMutation.mutate({ taskId, date: todayIso, startMin });
+      }
       return;
     }
 

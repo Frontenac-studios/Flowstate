@@ -42,6 +42,7 @@ function templateFromContext(ctx: WeekDraftContext): WeekDraftProposal {
       taskWeightById: Object.fromEntries(
         [...ctx.inbox, ...ctx.scheduledInWeek].map((task) => [task.id, task.loadWeight])
       ),
+      userConstraints: ctx.userConstraints,
     }
   );
 
