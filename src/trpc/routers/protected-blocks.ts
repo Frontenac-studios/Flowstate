@@ -71,6 +71,40 @@ export const protectedBlocksRouter = createTRPCRouter({
         .orderBy(asc(protectedBlocks.startMin));
     }),
 
+  listForMonth: protectedProcedure
+    .input(
+      z.object({
+        year: z.number().int().min(2000).max(2100),
+        month: z.number().int().min(1).max(12),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const start = `${input.year}-${String(input.month).padStart(2, "0")}-01`;
+      const lastDay = new Date(input.year, input.month, 0).getDate();
+      const end = `${input.year}-${String(input.month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+      return db
+        .select({
+          id: protectedBlocks.id,
+          category: protectedBlocks.category,
+          scheduledDate: protectedBlocks.scheduledDate,
+          label: protectedBlocks.label,
+          startMin: protectedBlocks.startMin,
+          endMin: protectedBlocks.endMin,
+          status: protectedBlocks.status,
+        })
+        .from(protectedBlocks)
+        .where(
+          and(
+            eq(protectedBlocks.userId, ctx.userId),
+            gte(protectedBlocks.scheduledDate, start),
+            lte(protectedBlocks.scheduledDate, end),
+            inArray(protectedBlocks.status, ["confirmed", "proposed"])
+          )
+        )
+        .orderBy(asc(protectedBlocks.scheduledDate), asc(protectedBlocks.startMin));
+    }),
+
   create: protectedProcedure
     .input(
       z

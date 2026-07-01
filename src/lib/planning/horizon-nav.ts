@@ -16,6 +16,10 @@ export function zoomToQuarter(year: number, quarter: number): PlanningBreadcrumb
   return { year, quarter };
 }
 
+export function zoomToMonth(year: number, quarter: number, month: number): PlanningBreadcrumb {
+  return { year, quarter, month };
+}
+
 /** Keep scoped period fields up to the selected horizon depth (NAV-3). */
 export function trimBreadcrumbForHorizon(
   breadcrumb: PlanningBreadcrumb,

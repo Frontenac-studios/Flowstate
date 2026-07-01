@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   horizonForBreadcrumb,
   trimBreadcrumbForHorizon,
+  zoomToMonth,
   zoomToQuarter,
 } from "@/lib/planning/horizon-nav";
 import {
@@ -19,7 +20,8 @@ import { InPageSwitcher } from "../InPageSwitcher";
 import BingoCard from "./bingo/BingoCard";
 import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
-import QuarterDrillShell from "./year/QuarterDrillShell";
+import MonthView from "./month/MonthView";
+import QuarterView from "./quarter/QuarterView";
 import YearView from "./year/YearView";
 
 function currentYear(): number {
@@ -123,6 +125,15 @@ export function PlanHorizonView() {
     [breadcrumb.year]
   );
 
+  const handleZoomMonth = useCallback(
+    (month: number) => {
+      const quarter = breadcrumb.quarter ?? Math.ceil(month / 3);
+      setBreadcrumb(zoomToMonth(breadcrumb.year, quarter, month));
+      setHorizon("month");
+    },
+    [breadcrumb.year, breadcrumb.quarter]
+  );
+
   const title = useMemo(() => {
     if (horizon === "bingo") return "Bingo";
     if (horizon === "year") return "Year";
@@ -132,9 +143,10 @@ export function PlanHorizonView() {
   }, [horizon]);
 
   const showQuarterDrill = horizon === "quarter" && breadcrumb.quarter != null;
+  const showMonthDrill = horizon === "month" && breadcrumb.month != null;
   const showPlaceholder =
     horizon === "week" ||
-    horizon === "month" ||
+    (horizon === "month" && breadcrumb.month == null) ||
     (horizon === "quarter" && breadcrumb.quarter == null);
 
   return (
@@ -158,7 +170,13 @@ export function PlanHorizonView() {
       ) : horizon === "year" ? (
         <YearView year={breadcrumb.year} onZoomQuarter={handleZoomQuarter} />
       ) : showQuarterDrill ? (
-        <QuarterDrillShell year={breadcrumb.year} quarter={breadcrumb.quarter!} />
+        <QuarterView
+          year={breadcrumb.year}
+          quarter={breadcrumb.quarter!}
+          onZoomMonth={handleZoomMonth}
+        />
+      ) : showMonthDrill ? (
+        <MonthView year={breadcrumb.year} month={breadcrumb.month!} />
       ) : showPlaceholder ? (
         <PlanHorizonPlaceholder horizon={horizon} />
       ) : null}
