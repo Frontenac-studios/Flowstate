@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { type ProjectCategory } from "@/lib/projects/categories";
-import { projectProgress } from "@/lib/projects/project-progress";
 
 export type ProjectListItem = {
   id: string;
@@ -11,16 +10,24 @@ export type ProjectListItem = {
   category: ProjectCategory;
   taskCount: number;
   completedCount: number;
+  percent: number;
+  completedWeight: number;
+  totalWeight: number;
 };
 
-export default function ProjectCard({ project }: { project: ProjectListItem }) {
+export default function ProjectCard({
+  project,
+  folding = false,
+}: {
+  project: ProjectListItem;
+  folding?: boolean;
+}) {
   const stripe = categorySolidVar(project.category);
-  const { percent, completed, total } = projectProgress(project.completedCount, project.taskCount);
 
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+      className={`kash-focus-visible block rounded-card border border-subtle bg-surface p-4 transition hover:bg-surface-2 outline-none${folding ? "project-fold-to-filed" : ""}`}
     >
       <div className="flex items-center gap-2">
         <span
@@ -34,11 +41,13 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-border">
         <span
           className="block h-full rounded-full"
-          style={{ width: `${percent}%`, backgroundColor: stripe }}
+          style={{ width: `${project.percent}%`, backgroundColor: stripe }}
         />
       </div>
       <p className="mt-1.5 text-caption text-ink-faint">
-        {total === 0 ? "No tasks yet" : `${percent}% · ${completed} of ${total} tasks`}
+        {project.totalWeight === 0
+          ? "No tasks yet"
+          : `${project.percent}% · ${project.completedCount} of ${project.taskCount} tasks`}
       </p>
     </Link>
   );

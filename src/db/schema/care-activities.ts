@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { careCadence, careKind, careSource, careTheme } from "./care-enums";
 
@@ -19,6 +19,7 @@ export const careActivities = pgTable(
     note: text("note"),
     source: careSource("source").notNull(),
     catalogKey: text("catalog_key"),
+    liftsMe: boolean("lifts_me").notNull().default(false),
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),

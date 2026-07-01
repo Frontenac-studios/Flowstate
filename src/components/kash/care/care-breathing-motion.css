@@ -1,0 +1,14 @@
+.care-breathing-orb {
+  transition: transform var(--motion-medium) var(--ease-standard);
+}
+
+.care-breathing-orb-active {
+  transition: transform 1s var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .care-breathing-orb,
+  .care-breathing-orb-active {
+    transition: none;
+  }
+}

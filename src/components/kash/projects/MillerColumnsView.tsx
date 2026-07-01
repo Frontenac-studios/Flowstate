@@ -8,6 +8,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
@@ -27,6 +28,7 @@ import { millerColumnShellClass } from "./miller-columns";
 import { useMillerStripLayout } from "./useMillerStripLayout";
 import { executeComposerSubmit } from "@/lib/projects/execute-composer-submit";
 import type { ParsedProjectLine } from "@/lib/parser/parse-project-task-input";
+import { useTRPC } from "@/trpc/client";
 
 import NewItemRow from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
@@ -71,6 +73,11 @@ export default function MillerColumnsView({
   selectedPath,
   onSelectPath,
 }: Props) {
+  const trpc = useTRPC();
+  const { data: pinnedTaskIds = [] } = useQuery(
+    trpc.weekDayPriorities.listPinnedTaskIds.queryOptions()
+  );
+  const dayPriorityTaskIds = useMemo(() => new Set(pinnedTaskIds), [pinnedTaskIds]);
   const m = useProjectMutations(projectId);
 
   // One inline-detail target across the whole workspace (phase or task). Opening a
@@ -384,6 +391,8 @@ export default function MillerColumnsView({
         return (
           <PhaseDetail
             node={item.node}
+            category={category}
+            dayPriorityTaskIds={dayPriorityTaskIds}
             pending={m.deletePhase.isPending}
             onUpdate={(patch) => m.updatePhase.mutate({ id: item.node.phase.id, ...patch })}
             onRequestDelete={() => setConfirm({ kind: "phase-delete", id: item.node.phase.id })}
@@ -402,7 +411,7 @@ export default function MillerColumnsView({
         />
       );
     },
-    [detail, m, toggleTask]
+    [detail, m, toggleTask, category, dayPriorityTaskIds]
   );
 
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {

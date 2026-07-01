@@ -78,6 +78,7 @@ export function useEssentialNudges() {
           localDate,
           tzOffsetMinutes: clientTzOffsetMinutes(),
           includeSelfCare: planningSurface === "today",
+          includeMonthlyReview: planningSurface === "plan" || planningSurface === "reviews",
         }),
       });
 
@@ -147,6 +148,9 @@ export function useEssentialNudges() {
       }
       if (kind === "self_care_walk") {
         router.push("/care");
+      }
+      if (kind === "monthly_review") {
+        router.push("/abyss");
       }
       dismissChip(kind);
     },

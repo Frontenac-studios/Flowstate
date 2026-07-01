@@ -1,0 +1,45 @@
+@keyframes abyss-park-sink {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(6px);
+  }
+}
+@keyframes abyss-park-sink-reduce {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.abyss-park-sink {
+  animation: abyss-park-sink var(--motion-medium, 320ms) var(--ease-exit, ease-in) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .abyss-park-sink {
+    animation: abyss-park-sink-reduce var(--motion-short, 180ms) var(--ease-exit, ease-in) both;
+  }
+}
+@keyframes abyss-star-twinkle {
+  0%,
+  100% {
+    opacity: var(--star-opacity, 0.7);
+  }
+  50% {
+    opacity: calc(var(--star-opacity, 0.7) + 0.25);
+  }
+}
+.abyss-star-twinkle {
+  animation: abyss-star-twinkle 3.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .abyss-star-twinkle {
+    animation: none;
+  }
+}

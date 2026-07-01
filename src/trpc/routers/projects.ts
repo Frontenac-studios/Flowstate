@@ -1,11 +1,13 @@
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { syncProjectRow, syncProjectTemplateRow } from "@/db/record-sync-mutation";
-import { phases, projectTemplates, projects, tasks } from "@/db/tables";
+import { phases, projectTemplates, projects, tasks, weekDayPriorities } from "@/db/tables";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+import { buildMultiProjectCalendarRows } from "@/lib/projects/multi-project-calendar";
+import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import {
   buildTemplateStructureFromProject,
@@ -57,22 +59,110 @@ async function getOwnedTemplate(userId: string, templateId: string) {
 
 export const projectsRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
-    // Left join keeps projects with zero tasks; COUNT(column) ignores NULLs, so
-    // counting `completedAt` yields the completed-task tally per project.
-    return db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        slug: projects.slug,
-        category: projects.category,
-        taskCount: count(tasks.id),
-        completedCount: count(tasks.completedAt),
-      })
-      .from(projects)
-      .leftJoin(tasks, eq(tasks.projectId, projects.id))
-      .where(eq(projects.userId, ctx.userId))
-      .groupBy(projects.id)
-      .orderBy(projects.name);
+    const [projectRows, taskRows, pinnedRows] = await Promise.all([
+      db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          slug: projects.slug,
+          category: projects.category,
+        })
+        .from(projects)
+        .where(eq(projects.userId, ctx.userId))
+        .orderBy(projects.name),
+      db
+        .select({
+          id: tasks.id,
+          projectId: tasks.projectId,
+          completedAt: tasks.completedAt,
+          isTop3: tasks.isTop3,
+        })
+        .from(tasks)
+        .where(and(eq(tasks.userId, ctx.userId), isNotNull(tasks.projectId))),
+      db
+        .select({ taskId: weekDayPriorities.taskId })
+        .from(weekDayPriorities)
+        .where(eq(weekDayPriorities.userId, ctx.userId)),
+    ]);
+
+    const pinnedTaskIds = new Set(pinnedRows.map((row) => row.taskId));
+    const tasksByProject = new Map<string, typeof taskRows>();
+    for (const task of taskRows) {
+      if (task.projectId === null) continue;
+      const list = tasksByProject.get(task.projectId) ?? [];
+      list.push(task);
+      tasksByProject.set(task.projectId, list);
+    }
+
+    return projectRows.map((project) => {
+      const projectTasks = tasksByProject.get(project.id) ?? [];
+      const progress = weightedProgressForTasks(
+        projectTasks.map((task) => ({
+          id: task.id,
+          completedAt: task.completedAt,
+          isTop3: task.isTop3,
+        })),
+        pinnedTaskIds
+      );
+      const completedCount = projectTasks.filter((task) => task.completedAt !== null).length;
+      return {
+        ...project,
+        taskCount: projectTasks.length,
+        completedCount,
+        percent: progress.percent,
+        completedWeight: progress.completedWeight,
+        totalWeight: progress.totalWeight,
+      };
+    });
+  }),
+
+  multiProjectCalendar: protectedProcedure.query(async ({ ctx }) => {
+    const [projectRows, phaseRows, taskRows] = await Promise.all([
+      db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          category: projects.category,
+        })
+        .from(projects)
+        .where(eq(projects.userId, ctx.userId))
+        .orderBy(projects.name),
+      db
+        .select({
+          id: phases.id,
+          projectId: phases.projectId,
+          parentPhaseId: phases.parentPhaseId,
+          name: phases.name,
+          sortOrder: phases.sortOrder,
+          startDate: phases.startDate,
+          endDate: phases.endDate,
+          completedAt: phases.completedAt,
+        })
+        .from(phases)
+        .where(eq(phases.userId, ctx.userId)),
+      db
+        .select({
+          projectId: tasks.projectId,
+          phaseId: tasks.phaseId,
+          sortOrder: tasks.sortOrder,
+          scheduledDate: tasks.scheduledDate,
+          completedAt: tasks.completedAt,
+        })
+        .from(tasks)
+        .where(and(eq(tasks.userId, ctx.userId), isNotNull(tasks.projectId))),
+    ]);
+
+    const calendarTasks = taskRows.flatMap((task) =>
+      task.projectId === null ? [] : [{ ...task, projectId: task.projectId }]
+    );
+
+    const { span, rows } = buildMultiProjectCalendarRows(projectRows, phaseRows, calendarTasks);
+
+    return {
+      projects: projectRows,
+      rows,
+      span,
+    };
   }),
 
   listTemplates: protectedProcedure.query(async ({ ctx }) => {

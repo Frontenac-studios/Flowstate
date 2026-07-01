@@ -395,6 +395,7 @@
 .ephemeral-celebration {
   animation: ephemeral-celebration var(--motion-celebrate) var(--ease-enter) forwards;
 }
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-micro: 1ms;
@@ -437,6 +438,7 @@
   .sync-dot-pulse {
     animation: none !important;
   }
+
   .stripe-resolving {
     animation: none !important;
     opacity: 1;

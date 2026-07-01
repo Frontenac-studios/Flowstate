@@ -54,6 +54,14 @@ export async function clearWeekDayPrioritiesForTask(
 }
 
 export const weekDayPrioritiesRouter = createTRPCRouter({
+  listPinnedTaskIds: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({ taskId: weekDayPriorities.taskId })
+      .from(weekDayPriorities)
+      .where(eq(weekDayPriorities.userId, ctx.userId));
+    return rows.map((row) => row.taskId);
+  }),
+
   listForWeek: protectedProcedure
     .input(z.object({ anchorDate: isoDateSchema }))
     .query(async ({ ctx, input }) => {

@@ -75,8 +75,8 @@ export function LensControlBar() {
               aria-label={`${meta.label} lens (${key})`}
               className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition focus:outline-none ${
                 active
-                  ? "bg-accent text-white focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--on-accent)]"
-                  : "text-ink-muted hover:text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+                  ? "kash-focus-visible bg-active-surface text-ink outline-none"
+                  : "kash-focus-visible text-ink-muted outline-none hover:text-ink"
               }`}
             >
               <span aria-hidden className="flex w-3 items-center justify-center">
@@ -131,8 +131,8 @@ export function LensControlBar() {
                     aria-pressed={selected.includes(opt.value)}
                     className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition focus:outline-none ${
                       selected.includes(opt.value)
-                        ? "border-accent bg-accent text-white focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--on-accent)]"
-                        : "border-white/30 text-ink-muted hover:text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+                        ? "kash-focus-visible border-accent bg-active-surface text-ink outline-none"
+                        : "kash-focus-visible border-white/30 text-ink-muted outline-none hover:text-ink"
                     }`}
                   >
                     <span
@@ -168,7 +168,7 @@ function GroupChip({
       aria-pressed={active}
       className={`rounded-full px-2.5 py-1 transition focus:outline-none ${
         active
-          ? "bg-accent text-white focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--on-accent)]"
+          ? "kash-focus-visible bg-active-surface text-ink outline-none"
           : "text-ink-muted hover:text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
       }`}
     >

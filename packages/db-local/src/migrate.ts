@@ -497,11 +497,20 @@ CREATE INDEX IF NOT EXISTS care_events_user_id_occurred_at_idx ON care_events (u
 CREATE INDEX IF NOT EXISTS care_events_activity_id_idx ON care_events (activity_id);
 
 CREATE TABLE IF NOT EXISTS care_reflections (
-  id TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL, reflection_date TEXT NOT NULL, scope TEXT NOT NULL DEFAULT 'daily',
-  prompt_text TEXT NOT NULL, body_text TEXT, mood INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  reflection_date TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'daily',
+  prompt_text TEXT NOT NULL,
+  body_text TEXT NOT NULL DEFAULT '',
+  mood INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS care_reflections_user_date_scope_idx ON care_reflections (user_id, reflection_date, scope);
-CREATE INDEX IF NOT EXISTS care_reflections_user_id_updated_at_idx ON care_reflections (user_id, updated_at);
+CREATE UNIQUE INDEX IF NOT EXISTS care_reflections_user_date_scope_uidx
+  ON care_reflections (user_id, reflection_date, scope);
+CREATE INDEX IF NOT EXISTS care_reflections_user_id_updated_at_idx
+  ON care_reflections (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS daily_wins (
   id TEXT PRIMARY KEY NOT NULL,
