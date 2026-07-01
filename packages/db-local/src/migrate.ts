@@ -13,6 +13,20 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE UNIQUE INDEX IF NOT EXISTS projects_user_id_slug_idx ON projects (user_id, slug);
 CREATE INDEX IF NOT EXISTS projects_user_id_updated_at_idx ON projects (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS project_templates (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  structure TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS project_templates_user_id_updated_at_idx
+  ON project_templates (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS project_templates_user_id_name_idx
+  ON project_templates (user_id, name);
+
 CREATE TABLE IF NOT EXISTS phases (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
