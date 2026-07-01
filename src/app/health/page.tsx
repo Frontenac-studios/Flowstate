@@ -31,7 +31,7 @@ export default async function HealthPage() {
 
   return (
     <div className="relative min-h-screen">
-      <div className="relative z-10 mx-auto min-h-screen max-w-3xl px-6 py-12">
+      <div className="relative z-sticky mx-auto min-h-screen max-w-3xl px-6 py-12">
         <header className="mb-10 rounded-card border border-subtle bg-surface px-6 py-5">
           <p className="mb-2 text-sm text-ink-muted">
             <Link href="/today" className="glass-link">

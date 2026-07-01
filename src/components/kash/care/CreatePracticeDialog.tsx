@@ -122,7 +122,7 @@ export default function CreatePracticeDialog({ activity, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="practice-dialog-title"
-        className="relative z-10 w-full max-w-md rounded-card border border-border bg-surface p-6 shadow-overlay"
+        className="relative z-base w-full max-w-md rounded-card border border-border bg-surface p-6 shadow-overlay"
       >
         <h2 id="practice-dialog-title" className="text-title font-semibold text-ink">
           {isEdit ? "Edit practice" : "New practice"}
