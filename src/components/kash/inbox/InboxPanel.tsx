@@ -1,17 +1,19 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
+import type { RouterOutputs } from "@/trpc/client";
 import { useTRPC } from "@/trpc/client";
 
 import { useReveal } from "../plan/LensProvider";
 
 type InboxAction = "today" | "tomorrow" | "later" | "drop";
+type TriageTask = RouterOutputs["tasks"]["listTriageCandidates"][number];
 
 const NEUTRAL_CATEGORY_STRIPE = "color-mix(in srgb, var(--ink-muted) 35%, transparent)";
 
@@ -23,26 +25,34 @@ const ACTIONS: ReadonlyArray<readonly [InboxAction, string, string]> = [
 ];
 
 /**
- * Triage inbox: overdue + unscheduled tasks. Self-contained (its own query +
- * mutations) so it can live in the global bottom dock rather than the day canvas.
- * When `active` (the dock's Inbox tab is showing), arrow keys move the selection
- * and 1–4 apply an action to the selected task.
+ * Triage inbox: overdue + unscheduled tasks. List data is owned by
+ * {@link ContextualInbox} (fetched only while the strip is open); this panel
+ * handles mutations and keyboard triage. When `active`, arrow keys move the
+ * selection and 1–4 apply an action to the selected task.
  */
-export function InboxPanel({ active }: { active: boolean }) {
+export function InboxPanel({
+  active,
+  tasks,
+  isLoading,
+}: {
+  active: boolean;
+  tasks: TriageTask[];
+  isLoading: boolean;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { pushDelete } = useSessionUndo();
   const reveal = useReveal();
   const [selected, setSelected] = useState(0);
 
-  const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
-
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.countTriageCandidates.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
   }, [
     queryClient,
+    trpc.tasks.countTriageCandidates,
     trpc.tasks.listIncomplete,
     trpc.tasks.listTriageCandidates,
     trpc.tasks.listTop3Slots,

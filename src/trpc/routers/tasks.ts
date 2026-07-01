@@ -1,4 +1,17 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, lte, ne, or } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  ne,
+  or,
+} from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -37,6 +50,16 @@ const localCalendarInputSchema = z.object({
 });
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
+
+function triageCandidatesWhere(userId: string, todayIso: string) {
+  return and(
+    eq(tasks.userId, userId),
+    isNull(tasks.completedAt),
+    isNotNull(tasks.scheduledDate),
+    lt(tasks.scheduledDate, todayIso),
+    or(isNull(tasks.bucketOverride), ne(tasks.bucketOverride, "later"))
+  );
+}
 
 const taskSnapshotSchema = z.object({
   id: z.string().uuid(),
@@ -243,6 +266,17 @@ export const tasksRouter = createTRPCRouter({
     return rows;
   }),
 
+  countTriageCandidates: protectedProcedure.query(async ({ ctx }) => {
+    const todayIso = toISODateString(startOfLocalDay());
+
+    const [row] = await db
+      .select({ count: count() })
+      .from(tasks)
+      .where(triageCandidatesWhere(ctx.userId, todayIso));
+
+    return { count: Number(row?.count ?? 0) };
+  }),
+
   listTriageCandidates: protectedProcedure.query(async ({ ctx }) => {
     const todayIso = toISODateString(startOfLocalDay());
 
@@ -268,15 +302,7 @@ export const tasksRouter = createTRPCRouter({
       .from(tasks)
       .leftJoin(projects, eq(tasks.projectId, projects.id))
       .leftJoin(phases, eq(tasks.phaseId, phases.id))
-      .where(
-        and(
-          eq(tasks.userId, ctx.userId),
-          isNull(tasks.completedAt),
-          isNotNull(tasks.scheduledDate),
-          lt(tasks.scheduledDate, todayIso),
-          or(isNull(tasks.bucketOverride), ne(tasks.bucketOverride, "later"))
-        )
-      )
+      .where(triageCandidatesWhere(ctx.userId, todayIso))
       .orderBy(desc(tasks.priority), asc(tasks.createdAt));
 
     return rows;
