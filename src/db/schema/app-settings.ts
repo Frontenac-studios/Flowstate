@@ -10,6 +10,7 @@ export const appSettings = pgTable("app_settings", {
   // Phase 1 (1.4 habit layer): the category the resolver last landed on, used as
   // the default for loose tasks. Nullable until the user's first resolved create.
   lastUsedCategory: projectCategory("last_used_category"),
+  abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

@@ -9,7 +9,8 @@ import {
   syncProjectRow,
   syncTaskRow,
 } from "@/db/record-sync-mutation";
-import { abyssItems, goals, projects, tasks } from "@/db/tables";
+import { abyssItems, appSettings, goals, projects, tasks } from "@/db/tables";
+import { resolveArchiveThresholdDays, selectItemsToArchive } from "@/lib/abyss/archive";
 import {
   encodePromotedTarget,
   isTaskLaneTarget,
@@ -99,9 +100,38 @@ async function reconcileCameBack(
   return true;
 }
 
+async function getArchiveThresholdDays(userId: string): Promise<number> {
+  const [row] = await db
+    .select({ abyssArchiveAfterDays: appSettings.abyssArchiveAfterDays })
+    .from(appSettings)
+    .where(eq(appSettings.userId, userId))
+    .limit(1);
+  return resolveArchiveThresholdDays(row?.abyssArchiveAfterDays);
+}
+async function archiveStaleItems(userId: string, thresholdDays: number): Promise<void> {
+  const rows = await db
+    .select({
+      id: abyssItems.id,
+      status: abyssItems.status,
+      lastTouchedAt: abyssItems.lastTouchedAt,
+    })
+    .from(abyssItems)
+    .where(and(eq(abyssItems.userId, userId), eq(abyssItems.status, "active")));
+  for (const id of selectItemsToArchive(rows, new Date(), thresholdDays)) {
+    const now = new Date();
+    const [updated] = await db
+      .update(abyssItems)
+      .set({ status: "archived", updatedAt: now })
+      .where(and(eq(abyssItems.id, id), eq(abyssItems.userId, userId)))
+      .returning();
+    if (updated) await syncAbyssItemRow(updated.id, "update", updated);
+  }
+}
+
 export const abyssRouter = createTRPCRouter({
   /** Everything still in the deep (archived items are retrievable separately, slice 8). */
   list: protectedProcedure.query(async ({ ctx }) => {
+    await archiveStaleItems(ctx.userId, await getArchiveThresholdDays(ctx.userId));
     const query = () =>
       db
         .select()
@@ -114,6 +144,94 @@ export const abyssRouter = createTRPCRouter({
     return changed ? query() : rows;
   }),
 
+  listArchived: protectedProcedure.query(async ({ ctx }) =>
+    db
+      .select()
+      .from(abyssItems)
+      .where(and(eq(abyssItems.userId, ctx.userId), eq(abyssItems.status, "archived")))
+      .orderBy(desc(abyssItems.lastTouchedAt))
+  ),
+  restore: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [updated] = await db
+        .update(abyssItems)
+        .set({ status: "active", lastTouchedAt: now, updatedAt: now })
+        .where(
+          and(
+            eq(abyssItems.id, input.id),
+            eq(abyssItems.userId, ctx.userId),
+            eq(abyssItems.status, "archived")
+          )
+        )
+        .returning();
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Archived item not found." });
+      await syncAbyssItemRow(updated.id, "update", updated);
+      return updated;
+    }),
+  touch: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [updated] = await db
+        .update(abyssItems)
+        .set({ lastTouchedAt: now, updatedAt: now })
+        .where(and(eq(abyssItems.id, input.id), eq(abyssItems.userId, ctx.userId)))
+        .returning();
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Item not found." });
+      await syncAbyssItemRow(updated.id, "update", updated);
+      return updated;
+    }),
+  recordResurface: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [updated] = await db
+        .update(abyssItems)
+        .set({
+          resurfaceCount: sql`${abyssItems.resurfaceCount} + 1`,
+          lastResurfacedAt: now,
+          lastTouchedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(abyssItems.id, input.id), eq(abyssItems.userId, ctx.userId)))
+        .returning();
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Item not found." });
+      await syncAbyssItemRow(updated.id, "update", updated);
+      return updated;
+    }),
+  dropFromTask: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [task] = await db
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .limit(1);
+      if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      const now = new Date();
+      const [row] = await db
+        .insert(abyssItems)
+        .values({
+          userId: ctx.userId,
+          title: task.title,
+          type: "task",
+          category: task.categoryUnresolved ? null : task.category,
+          source: "drop",
+          lastTouchedAt: now,
+        })
+        .returning();
+      if (!row)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to park the task in the abyss.",
+        });
+      await syncAbyssItemRow(row.id, "insert", row);
+      await db.delete(tasks).where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)));
+      await syncTaskRow(input.id, "delete", { id: input.id, userId: ctx.userId });
+      return row;
+    }),
   /** Capture an item. `source` distinguishes quick/chat capture from a triage Drop. */
   create: protectedProcedure
     .input(

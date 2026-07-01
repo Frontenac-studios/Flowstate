@@ -8,6 +8,7 @@ import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/p
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
+import "./abyss-motion.css";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
 import { useAbyssTagSuggest } from "./useAbyssTagSuggest";
 
@@ -34,6 +35,7 @@ export default function AbyssComposer() {
   const [type, setType] = useState<AbyssType>("idea");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [isSinking, setIsSinking] = useState(false);
 
   const embedAndStore = useAbyssEmbedding();
   const suggested = useAbyssTagSuggest(title, tags);
@@ -44,10 +46,14 @@ export default function AbyssComposer() {
         void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
         // Embed the freshly-parked title client-side; a near-duplicate resurfaces what
         // you already had (§7A).
-        void embedAndStore(row.id, variables.title, true);
-        setTitle("");
-        setCategory(null);
-        setTags([]);
+        setIsSinking(true);
+        window.setTimeout(() => {
+          void embedAndStore(row.id, variables.title, true);
+          setTitle("");
+          setCategory(null);
+          setTags([]);
+          setIsSinking(false);
+        }, 280);
       },
     })
   );
@@ -88,7 +94,7 @@ export default function AbyssComposer() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2.5 rounded-card border border-abyss-border bg-abyss-surface p-2.5"
+      className={`flex flex-col gap-2.5 rounded-card border border-abyss-border bg-abyss-surface p-2.5${isSinking ? "abyss-park-sink" : ""}`}
     >
       <div className="flex items-center gap-2">
         <input

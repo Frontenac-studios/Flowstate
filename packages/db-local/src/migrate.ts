@@ -476,6 +476,7 @@ CREATE TABLE IF NOT EXISTS care_activities (
   note TEXT,
   source TEXT NOT NULL,
   catalog_key TEXT,
+  lifts_me INTEGER NOT NULL DEFAULT 0,
   archived_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
@@ -495,6 +496,21 @@ CREATE TABLE IF NOT EXISTS care_events (
 CREATE INDEX IF NOT EXISTS care_events_user_id_occurred_at_idx ON care_events (user_id, occurred_at);
 CREATE INDEX IF NOT EXISTS care_events_activity_id_idx ON care_events (activity_id);
 
+CREATE TABLE IF NOT EXISTS care_reflections (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  reflection_date TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  prompt_text TEXT NOT NULL,
+  body_text TEXT NOT NULL DEFAULT '',
+  mood INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS care_reflections_user_date_scope_uidx
+  ON care_reflections (user_id, reflection_date, scope);
+CREATE INDEX IF NOT EXISTS care_reflections_user_id_updated_at_idx
+  ON care_reflections (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS daily_wins (
   id TEXT PRIMARY KEY NOT NULL,
@@ -541,7 +557,9 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "tasks", column: "milestone_id", definition: "TEXT" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },
   { table: "tasks", column: "care_activity_id", definition: "TEXT" },
+  { table: "care_activities", column: "lifts_me", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "app_settings", column: "last_used_category", definition: "TEXT" },
+  { table: "app_settings", column: "abyss_archive_after_days", definition: "INTEGER" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {
