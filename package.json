@@ -36,7 +36,8 @@
     "supabase": "supabase",
     "auth:check-signup-disabled": "bash scripts/check-auth-signup-disabled.sh",
     "desktop:dev": "npm run build:desktop -w Flowstate && npm run tauri dev -w @kash/desktop",
-    "desktop:build": "npm run build:desktop -w Flowstate && node apps/desktop/scripts/prepare-sidecar.mjs && npm run tauri build -w @kash/desktop"
+    "desktop:build": "npm run build:desktop -w Flowstate && node apps/desktop/scripts/prepare-sidecar.mjs && npm run tauri build -w @kash/desktop",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
+    "@next/bundle-analyzer": "^16.2.9",
     "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
