@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { toISODateString } from "@/lib/dates/local-day";
 import type { ProjectCategory } from "@/lib/projects/categories";
+import { categoryLabel } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import {
@@ -20,7 +21,9 @@ import { layoutBlocks } from "@/lib/timeline/layout-blocks";
 import { largestOpenGap, nextOpenSlotMin } from "@/lib/timeline/living-record";
 import { useTRPC } from "@/trpc/client";
 
-import ProtectedBlockChip from "@/components/kash/plan/week/ProtectedBlockChip";
+import ProtectedBlockChip, {
+  type ProtectedBlockRow,
+} from "@/components/kash/plan/week/ProtectedBlockChip";
 
 const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
@@ -91,6 +94,77 @@ type BlockProps = {
   onComplete: (id: string) => void;
   onOpen: (taskId: string, blockId: string) => void;
 };
+
+type TimedProtectedBlock = {
+  id: string;
+  category: ProjectCategory;
+  label: string | null;
+  startMin: number;
+  endMin: number;
+  status: "proposed" | "confirmed";
+};
+
+function toTimedProtected(
+  b: ProtectedBlockRow & { scheduledDate?: string }
+): TimedProtectedBlock | null {
+  if (b.startMin == null || b.endMin == null) return null;
+  return {
+    id: b.id,
+    category: b.category,
+    label: b.label,
+    startMin: b.startMin,
+    endMin: b.endMin,
+    status: b.status,
+  };
+}
+
+function ProtectedTimelineBlock({
+  block,
+  layout,
+  rangeStart,
+}: {
+  block: TimedProtectedBlock;
+  layout: { col: number; cols: number };
+  rangeStart: number;
+}) {
+  const title = block.label?.trim() || categoryLabel(block.category);
+  const top = ((block.startMin - rangeStart) / 60) * HOUR_HEIGHT;
+  const height = Math.max(18, ((block.endMin - block.startMin) / 60) * HOUR_HEIGHT);
+  const gapPct = 1.5;
+  const widthPct = 100 / layout.cols;
+  const leftPct = layout.col * widthPct;
+  const proposed = block.status === "proposed";
+
+  return (
+    <div
+      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-pill border border-l-[var(--stripe-width)] ${
+        proposed
+          ? "border-dashed border-[var(--border)] bg-[var(--surface-2)] opacity-90"
+          : "border-[var(--border-subtle)] bg-[var(--surface-2)]"
+      }`}
+      style={{
+        top,
+        height,
+        left: `calc(2.75rem + ${leftPct}%)`,
+        width: `calc(${widthPct}% - ${gapPct}rem)`,
+        borderLeftColor: stripeColor(block.category, false),
+      }}
+      title={`Protected: ${title}`}
+    >
+      <div className="flex items-center gap-1 px-2 py-1">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink-muted">
+          <span aria-hidden className="mr-1">
+            ⬚
+          </span>
+          {title}
+        </span>
+        <span className="shrink-0 text-caption tabular-nums text-ink-faint">
+          {formatClock(block.startMin)}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function TimelineBlock({
   block,
@@ -302,10 +376,17 @@ export function TimelinePane() {
 
   // The rendered day grows to cover working hours, every block, and now; the
   // viewport defaults to six hours around now but the rest scrolls into view.
+  const timedProtected = protectedBlocks
+    .map(toTimedProtected)
+    .filter((b): b is TimedProtectedBlock => b != null);
+
   const range = computeTimelineRange({
     dayStartMin: dayStartHour * 60,
     dayEndMin: dayEndHour * 60,
-    blocks: blocks as Block[],
+    blocks: [
+      ...(blocks as Block[]),
+      ...timedProtected.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
+    ],
     nowMin: nowMinutes,
   });
   const rangeStart = range.startMin;
@@ -384,7 +465,14 @@ export function TimelinePane() {
     trpc.protectedBlocks.remove.mutationOptions({ onSuccess: invalidate })
   );
 
-  const laidOut = layoutBlocks(blocks as Block[]).filter(
+  type TimedGridItem = ({ kind: "focus" } & Block) | ({ kind: "protected" } & TimedProtectedBlock);
+
+  const gridItems: TimedGridItem[] = [
+    ...(blocks as Block[]).map((b) => ({ kind: "focus" as const, ...b })),
+    ...timedProtected.map((b) => ({ kind: "protected" as const, ...b })),
+  ];
+
+  const laidOutGrid = layoutBlocks(gridItems).filter(
     (b) => b.endMin > rangeStart && b.startMin < rangeEnd
   );
 
@@ -402,7 +490,10 @@ export function TimelinePane() {
 
   // The open "Decide" slot and a single self-care suggestion fill the day's
   // remaining room without overlapping each other (design-prompt-today).
-  const busy = blocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin }));
+  const busy = [
+    ...blocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
+    ...timedProtected.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
+  ];
   const NEXT_BLOCK_MIN = 45;
   const decideSlotMin =
     nowMinutes != null ? nextOpenSlotMin(busy, nowMinutes, rangeEnd, NEXT_BLOCK_MIN) : null;
@@ -474,19 +565,30 @@ export function TimelinePane() {
               <TimelineSlot key={min} min={min} top={((min - rangeStart) / 60) * HOUR_HEIGHT} />
             ))}
 
-            {laidOut.map((block) => (
-              <TimelineBlock
-                key={block.id}
-                block={block}
-                rangeStart={rangeStart}
-                rangeEnd={rangeEnd}
-                nowMin={nowMinutes}
-                onResize={(id, startMin, endMin) => resizeMutation.mutate({ id, startMin, endMin })}
-                onRemove={(id) => removeMutation.mutate({ id })}
-                onComplete={(id) => completeMutation.mutate({ id })}
-                onOpen={openFocus}
-              />
-            ))}
+            {laidOutGrid.map((item) =>
+              item.kind === "protected" ? (
+                <ProtectedTimelineBlock
+                  key={`protected-${item.id}`}
+                  block={item}
+                  layout={{ col: item.col, cols: item.cols }}
+                  rangeStart={rangeStart}
+                />
+              ) : (
+                <TimelineBlock
+                  key={item.id}
+                  block={item}
+                  rangeStart={rangeStart}
+                  rangeEnd={rangeEnd}
+                  nowMin={nowMinutes}
+                  onResize={(id, startMin, endMin) =>
+                    resizeMutation.mutate({ id, startMin, endMin })
+                  }
+                  onRemove={(id) => removeMutation.mutate({ id })}
+                  onComplete={(id) => completeMutation.mutate({ id })}
+                  onOpen={openFocus}
+                />
+              )
+            )}
 
             {untimedCompletions.map((t) => (
               <div

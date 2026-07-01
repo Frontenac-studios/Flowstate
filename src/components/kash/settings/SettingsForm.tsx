@@ -12,6 +12,7 @@ import { useTRPC } from "@/trpc/client";
 
 import AboutMeSection from "./about-me/AboutMeSection";
 import CategorySettingsSection from "./CategorySettingsSection";
+import DefaultWeekSection from "./DefaultWeekSection";
 
 const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
 
@@ -202,6 +203,8 @@ export function SettingsForm() {
                 </p>
               ) : null}
             </section>
+
+            <DefaultWeekSection />
 
             <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
               <h2 className="text-sm font-semibold text-ink">Working hours</h2>
