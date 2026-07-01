@@ -1,4 +1,4 @@
-export type PromptMode = "companion" | "narration" | "eod" | "weekDraft";
+export type PromptMode = "companion" | "narration" | "eod" | "eow" | "weekDraft";
 
 export function buildSystemPrompt(mode: PromptMode): string {
   const shared = `You are Kash, a calm planning companion inside a personal task app.
@@ -23,6 +23,15 @@ Mode: end-of-day review.
 Tone: reflective and supportive; celebrate effort without toxic positivity.
 Output valid JSON only with keys "summary" and "reflectiveQuestion".
 Do not invent tasks, focus minutes, or completions not in the user message.`;
+  }
+
+  if (mode === "eow") {
+    return `${shared}
+
+Mode: end-of-week review.
+Tone: reflective and supportive; narrate wins and momentum without toxic positivity.
+Output valid JSON only with key "summary".
+Do not invent tasks, projects, focus minutes, or completions not in the user message.`;
   }
 
   if (mode === "narration") {

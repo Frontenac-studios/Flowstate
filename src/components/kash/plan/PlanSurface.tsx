@@ -1,6 +1,7 @@
 "use client";
 
 import { EodReviewRunner } from "../eod/EodReviewRunner";
+import { EowReviewRunner } from "../eow/EowReviewRunner";
 import { MondayEntryRunner } from "./MondayEntryRunner";
 import { PlanProvider } from "./PlanProvider";
 import { Top3RolloverRunner } from "./Top3RolloverRunner";
@@ -16,6 +17,7 @@ export function PlanSurface({ children }: { children: React.ReactNode }) {
     <PlanProvider>
       <Top3RolloverRunner />
       <EodReviewRunner />
+      <EowReviewRunner />
       <MondayEntryRunner />
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </PlanProvider>
