@@ -20,6 +20,9 @@ export function ChatRail() {
   const {
     messages,
     isLoading,
+    hasMoreOlder,
+    loadingOlder,
+    loadOlderMessages,
     configured,
     streamingText,
     streamError,
@@ -102,6 +105,9 @@ export function ChatRail() {
             threadId={threadId}
             messages={messages}
             streamingText={streamingText}
+            hasMoreOlder={hasMoreOlder}
+            loadingOlder={loadingOlder}
+            onLoadOlder={() => void loadOlderMessages()}
             canEdit={!isStreaming && !isSuggestionRunning}
             onEditUserMessage={(id, text) => void editAndResend(id, text)}
             onApplyProposal={(messageId, enabledItemIds) =>

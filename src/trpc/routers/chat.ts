@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -29,8 +29,36 @@ const localCalendarInputSchema = z.object({
 
 export const chatRouter = createTRPCRouter({
   list: protectedProcedure
-    .input(z.object({ threadId: threadIdSchema }))
+    .input(
+      z.object({
+        threadId: threadIdSchema,
+        beforeMessageId: z.string().uuid().optional(),
+        limit: z.number().int().min(1).max(100).default(50),
+      })
+    )
     .query(async ({ ctx, input }) => {
+      const limit = input.limit;
+      let beforeCreatedAt: Date | undefined;
+      if (input.beforeMessageId) {
+        const [cursor] = await db
+          .select({ createdAt: chatMessages.createdAt })
+          .from(chatMessages)
+          .where(
+            and(
+              eq(chatMessages.userId, ctx.userId),
+              eq(chatMessages.threadId, input.threadId),
+              eq(chatMessages.id, input.beforeMessageId)
+            )
+          )
+          .limit(1);
+        if (!cursor) return { messages: [], hasMore: false };
+        beforeCreatedAt = cursor.createdAt;
+      }
+      const conditions = [
+        eq(chatMessages.userId, ctx.userId),
+        eq(chatMessages.threadId, input.threadId),
+      ];
+      if (beforeCreatedAt) conditions.push(lt(chatMessages.createdAt, beforeCreatedAt));
       const rows = await db
         .select({
           id: chatMessages.id,
@@ -40,17 +68,21 @@ export const chatRouter = createTRPCRouter({
           createdAt: chatMessages.createdAt,
         })
         .from(chatMessages)
-        .where(and(eq(chatMessages.userId, ctx.userId), eq(chatMessages.threadId, input.threadId)))
-        .orderBy(asc(chatMessages.createdAt))
-        .limit(100);
-
-      return rows.map((row) => ({
-        id: row.id,
-        role: row.role,
-        content: messageContentSchema.parse(row.content),
-        taskId: row.taskId,
-        createdAt: row.createdAt,
-      }));
+        .where(and(...conditions))
+        .orderBy(desc(chatMessages.createdAt))
+        .limit(limit + 1);
+      const hasMore = rows.length > limit;
+      const page = rows.slice(0, limit).reverse();
+      return {
+        messages: page.map((row) => ({
+          id: row.id,
+          role: row.role,
+          content: messageContentSchema.parse(row.content),
+          taskId: row.taskId,
+          createdAt: row.createdAt,
+        })),
+        hasMore,
+      };
     }),
 
   appendUser: protectedProcedure

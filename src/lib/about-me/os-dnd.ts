@@ -1,10 +1,12 @@
-/**
- * OS-level Do Not Disturb seam (§15 deferred).
- *
- * TODO(§15): Wire to Tauri OS DND when the desktop shell can toggle system quiet mode.
- * Stream B implements in-app quiet only via {@link shouldSuppressInAppNudges}.
- */
+type TauriInvoke = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
+type TauriWindow = Window & { __TAURI__?: { invoke?: TauriInvoke } };
+function tauriInvoke(): TauriInvoke | null {
+  if (typeof window === "undefined") return null;
+  const invoke = (window as TauriWindow).__TAURI__?.invoke;
+  return typeof invoke === "function" ? invoke : null;
+}
 export function setOsDoNotDisturb(enabled: boolean): void {
-  void enabled;
-  // no-op on web — reserved for Tauri integration
+  const invoke = tauriInvoke();
+  if (!invoke) return;
+  void invoke("set_do_not_disturb", { enabled }).catch(() => {});
 }

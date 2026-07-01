@@ -308,6 +308,51 @@
   animation: bingo-lock-grid var(--motion-short) var(--ease-enter) forwards;
 }
 
+@keyframes page-cross-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-cross-fade {
+  animation: page-cross-fade-in var(--motion-short) var(--ease-enter) both;
+}
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes modal-panel-in-reduce {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.modal-overlay,
+.modal-backdrop {
+  animation: modal-backdrop-in var(--motion-short) var(--ease-enter) both;
+}
+.modal-panel {
+  animation: modal-panel-in var(--motion-medium) var(--ease-move) both;
+  transform-origin: top center;
+}
 @keyframes sync-dot-pulse {
   0%,
   100% {
@@ -319,9 +364,36 @@
     transform: scale(1.15);
   }
 }
-
 .sync-dot-pulse {
   animation: sync-dot-pulse var(--breath-pulse) var(--ease-breath) infinite;
+}
+@keyframes ephemeral-celebration {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+@keyframes ephemeral-celebration-reduce {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.ephemeral-celebration {
+  animation: ephemeral-celebration var(--motion-celebrate) var(--ease-enter) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -357,7 +429,12 @@
     border-style: solid;
     opacity: 1;
   }
-
+  .page-cross-fade {
+    animation: page-cross-fade-in var(--motion-short) var(--ease-enter) both;
+  }
+  .modal-panel {
+    animation: modal-panel-in-reduce var(--motion-short) var(--ease-enter) both;
+  }
   .sync-dot-pulse {
     animation: none !important;
   }
@@ -366,16 +443,17 @@
     animation: none !important;
     opacity: 1;
   }
-
   .project-fold-to-filed {
     animation: project-fold-to-filed-reduce var(--motion-short) var(--ease-exit) forwards;
     transform: none;
   }
-
   .bingo-lock-grid > * {
     animation: none !important;
     border-color: var(--ink);
     transform: none;
+  }
+  .ephemeral-celebration {
+    animation: ephemeral-celebration-reduce var(--motion-short) var(--ease-enter) forwards;
   }
 }
 

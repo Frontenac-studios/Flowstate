@@ -9,6 +9,7 @@ import {
   DEFAULT_BUCKET_MODE,
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
+  notificationPrefsSchema,
   workingHoursSchema,
 } from "@/lib/settings/constants";
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -39,6 +40,8 @@ export const settingsRouter = createTRPCRouter({
       dayStartHour: row.dayStartHour ?? DEFAULT_DAY_START_HOUR,
       dayEndHour: row.dayEndHour ?? DEFAULT_DAY_END_HOUR,
       lastUsedCategory: row.lastUsedCategory ?? null,
+      notificationsEnabled: row.notificationsEnabled ?? true,
+      focusDndEnabled: row.focusDndEnabled ?? true,
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
     };
   }),
@@ -75,6 +78,29 @@ export const settingsRouter = createTRPCRouter({
           message: "Failed to update working hours.",
         });
       return { dayStartHour: input.dayStartHour, dayEndHour: input.dayEndHour };
+    }),
+  updateNotificationPrefs: protectedProcedure
+    .input(notificationPrefsSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({
+          notificationsEnabled: input.notificationsEnabled,
+          focusDndEnabled: input.focusDndEnabled,
+          updatedAt: new Date(),
+        })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update notification preferences.",
+        });
+      return {
+        notificationsEnabled: input.notificationsEnabled,
+        focusDndEnabled: input.focusDndEnabled,
+      };
     }),
   updateAbyssArchiveAfterDays: protectedProcedure
     .input(abyssArchiveAfterDaysSchema)

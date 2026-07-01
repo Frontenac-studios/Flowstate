@@ -5,7 +5,6 @@ import localFont from "next/font/local";
 
 import { AppBackdrop } from "@/components/kash/AppBackdrop";
 import { DesktopRuntimeFlag } from "@/components/kash/DesktopRuntimeFlag";
-import { DesktopSyncBanner } from "@/components/kash/DesktopSyncBanner";
 import { TRPCReactProvider } from "@/trpc/client";
 
 import "./globals.css";
@@ -49,10 +48,7 @@ export default function RootLayout({
       >
         <AppBackdrop />
         <DesktopRuntimeFlag />
-        <TRPCReactProvider>
-          {children}
-          <DesktopSyncBanner />
-        </TRPCReactProvider>
+        <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>
   );
