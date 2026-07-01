@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import GhostedAccept from "@/components/kash/plan/GhostedAccept";
 import { Star, kashIconProps } from "@/components/kash/ui/icon";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
 import {
   buildGrid,
@@ -29,7 +30,6 @@ import { useTRPC } from "@/trpc/client";
 import BingoBalanceLegend from "./BingoBalanceLegend";
 import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
-import BingoLineToast from "./BingoLineToast";
 import BingoListView, { type BingoListGroupBy } from "./BingoListView";
 import BingoOnboarding from "./BingoOnboarding";
 import BingoQuickAdd from "./BingoQuickAdd";
@@ -88,7 +88,7 @@ export default function BingoCard({ year }: Props) {
   const [addError, setAddError] = useState<string | null>(null);
   const [confirmingFinalize, setConfirmingFinalize] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { toast } = useToast();
   const [spellingStaged, setSpellingStaged] = useState<Set<string>>(new Set());
   const awardedRef = useRef<Set<string>>(readAwardedLineSignatures(year));
 
@@ -195,7 +195,7 @@ export default function BingoCard({ year }: Props) {
     const rewardState = readBingoRewardState(year);
 
     if (isBlackoutComplete(grid) && !rewardState.blackoutShown) {
-      setToastMessage(rewardToastMessage("blackout"));
+      toast({ message: rewardToastMessage("blackout"), variant: "success" });
       writeBingoRewardState(year, { ...rewardState, blackoutShown: true });
       await recordBingoReward({ cardYear: year, lineType: "row" });
       return;
@@ -207,11 +207,11 @@ export default function BingoCard({ year }: Props) {
 
       rewardState.linesAwarded += 1;
       const tier = rewardTierForLineCount(rewardState.linesAwarded);
-      setToastMessage(rewardToastMessage(tier));
+      toast({ message: rewardToastMessage(tier), variant: "success" });
       writeBingoRewardState(year, { ...rewardState });
       await recordBingoReward({ cardYear: year, lineType: entry.type });
     }
-  }, [grid, locked, year]);
+  }, [grid, locked, toast, year]);
 
   useEffect(() => {
     awardedRef.current = readAwardedLineSignatures(year);
@@ -220,12 +220,6 @@ export default function BingoCard({ year }: Props) {
   useEffect(() => {
     void handleRewards();
   }, [handleRewards]);
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = window.setTimeout(() => setToastMessage(null), 5000);
-    return () => window.clearTimeout(timer);
-  }, [toastMessage]);
 
   const occupiedCells = useMemo(
     () => new Set(goals.map((g) => g.cellIndex).filter((i): i is number => i != null)),
@@ -476,10 +470,6 @@ export default function BingoCard({ year }: Props) {
             onClose={() => setSelectedGoalId(null)}
           />
         </div>
-      ) : null}
-
-      {toastMessage ? (
-        <BingoLineToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
       ) : null}
     </div>
   );
