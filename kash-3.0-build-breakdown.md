@@ -1,12 +1,12 @@
 # Kash 3.0 — Build Breakdown & Spec-Maturity Tracker
 
-> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jun 30 2026 (animation sweep spec'd — `animation-sweep.md`; Projects Miller creation flows — `projects-miller.md`).**
+> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jul 1 2026 — all remaining product/design forks closed** (bespoke animations, accent states, AI confirm-card UX, garden-art direction). Consolidated build backlog: `kash-3.0-remaining-build.md`.
 
 ---
 
 ## 0. The core distinction
 
-The **product-direction layer** (the hard, irreversible forks) is now **almost entirely decided.** What remains is mostly **building** plus a few **decision pockets** (Care **garden art**, Mechanics, Animation). _Care's library slice is now fully decided (D0–D6, Jun 27) — only the garden-art spike remains a Care decision pocket._ Per-feature, the split is:
+The **product-direction layer** (the hard, irreversible forks) is now **fully decided (Jul 1).** What remains is **building** — no open decision pockets. _Care's library slice is decided (D0–D6, Jun 27); the garden-art **direction** is set (Jul 1: soft-flat / accumulating-from-seed / gentle-dormancy — see `kash-3.0-remaining-build.md` §A.4), leaving only the illustration production._ Per-feature, the split is:
 
 - **Product decisions** — forks only you can make. Down to a short list now.
 - **Spec detail** — schemas, component props, prompt text. Draftable / drafted.
@@ -66,7 +66,7 @@ The subsections that recur in every feature build — a checklist:
 | §13 Values & Context  | ✅            | ✅ `values-context.md`                                 | ⬜        | **build** (owns the About-me doc)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | §12 Self-Care / Care  | ✅            | ✅ `care-build-spec.md` + `care-library-build-plan.md` | ⬜        | **build** (stats-first → garden last). **Library slice planned & approved Jun 25** (D0–D6 in `care-library-build-plan.md`): Tasks-tab Finch library · practices live in Care, pinnable to Today · thematic 6 themes (Move/Calm/Connect/Rest/Nourish/Reflect, ~23 seeds) · static seed catalog · cadence pre-fills recurrence · keep `kind`, soft-remove, `tasks.care_activity_id` col · 5 PRs CL1–CL5, branch off `main`. Not yet started                                                                                                                                                                                                                                |
 | §15 Mechanics         | ✅            | ✅ (§15 plan)                                          | ⬜        | desktop-app fallback · simple controls · ephemeral celebrations                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Animation pass        | 🟡            | ✅ `animation-sweep.md`                                | 🟡        | **spec'd Jun 30** — foundation (AN-0 motion tokens), per-page motion (Today/Plan/Care/cross-cutting/Week/Abyss/Projects/⌘K), bespoke §7 (Focus ring+breath, Focus zoom, Top-3 fly+star _(pin flight already in code: `pin-to-top3.ts`)_, Daily Win, progress roll-up). **3 open:** project-complete (redo, 3 new options) · create-shimmer+sync pulse · bingo finalize→lock. Then build-out (mostly CSS on the tokens).                                                                                                                                                                                                                                                  |
+| Animation pass        | ✅            | ✅ `animation-sweep.md`                                | 🟡        | **fully spec'd; all forks closed Jul 1** — foundation (AN-0 motion tokens), per-page motion (Today/Plan/Care/cross-cutting/Week/Abyss/Projects/⌘K), bespoke §7 (Focus ring+breath, Focus zoom, Top-3 fly+star _(pin flight already in code: `pin-to-top3.ts`)_, Daily Win, progress roll-up) + **AN-B6 project-complete (fold to filed) · AN-B7 create-shimmer (stripe breathes) · AN-B8 sync dot (sidebar footer) · AN-P2c bingo finalize→lock (grid seats to ink)**. Remaining = build-out only (mostly CSS on the tokens).                                                                                                                                            |
 | 3 Daily Wins          | ✅            | ✅ `daily-wins-build-spec.md`                          | ⬜        | **spec'd Jun 30** (DW-1…DW-6 + placement): hybrid source (AI ghosted proposals + manual), ranked taxonomy w/ 1-care-event cap, hard 3, qualitative wins, garden nourish (drip per win + bigger beat on full 3), midnight reset + morning grace window, **EoD-only** Today tracker. `daily_wins` table (derived + overrides stored). 5 PRs DWN-1..5, not started.                                                                                                                                                                                                                                                                                                         |
 
 ---
@@ -119,16 +119,35 @@ The last open product/UX forks are now closed:
 - **Tags (§14)** — **build in v1** alongside category + project.
 - **Abyss archive threshold (§10)** — **fixed default (~90d) + user override**.
 - **Sync-status panel (D2)** — **both**: a minimal shell-status-bar indicator + full detail in Settings.
-- **Garden art (§12)** — **deferred to its own art spike** (runs near the animation pass).
+- **Garden art (§12)** — art spike; **direction set Jul 1** (see below). Illustration/animation production remains.
 
 ### Still open
 
-- **3 bespoke animations** (`animation-sweep.md` §7 "Still open") — **project-complete** (redo with 3 new
-  options; first round rejected) · **create-shimmer + sync pulse** · **bingo finalize→lock**.
-- **Garden-art spike** — detailed garden illustration (a design task, runs near the animation pass).
 - **Per-feature spec polish** — Today / Week / Projects UX detail (🟡 in the matrix; not product forks).
 
-**Headline:** feature planning, the visual redesign, **and global navigation** are all **complete.** The **data spine (Phases 1–4) is built**; Week protected blocks have data + basic UI. Every feature now has a build spec (3 Daily Wins closed Jun 30), the B&W palette is locked, all nine pages are wireframed, the nav layer is fully decided, and the **animation sweep is spec'd** (3 bespoke moments still open). Remaining planning: just the 3 bespoke animations. Remaining build: Week polish (load/tally/review), B&W PR2b, a few accent states, per-feature UX detail, the garden-art spike, and applying the animation pass. The app is essentially in a **building** phase.
+### Closed Jul 1 (all remaining product/design forks)
+
+- **Bespoke animations** (`animation-sweep.md` §7, now AN-B6/B7/B8 + AN-P2c) — **project-complete = fold to
+  filed** · **create-shimmer = stripe breathes → settle** · **sync indicator = sidebar-footer pulsing dot** ·
+  **bingo finalize→lock = grid seats to ink**.
+- **Accent states** (`plan.md` §5) — checkbox = category-fill / ink-fallback · Top-3 star = category-colored ·
+  links always underlined · focus ring = AA-safe soft gray.
+- **AI confirm-card UX** (`ai-persona-build-spec.md`) — inline in thread · one grouped card (per-row toggles) ·
+  Focus applies silently (no card).
+- **Garden-art spike direction** (§12) — **style = soft flat color** (Finch-adjacent) · **growth =
+  accumulating, each plant sprouts from a seed and grows up** (matches AN-C3 + the per-win drip nourish) ·
+  **neglect = gentle dormancy** (softens to muted, revives when tended, never dies). Remaining = the
+  illustration production itself (draw the seed→grown stages per species; a design/art task, not eng).
+
+**Headline (updated Jul 1):** feature planning, the visual redesign, **and global navigation** are all
+**complete** — and as of Jul 1 **every remaining product/design fork is closed** (bespoke animations, accent
+states, AI confirm-card UX, garden-art direction). The **data spine (Phases 1–4) is built**; Week protected
+blocks have data + basic UI. Every feature has a build spec, the B&W palette + accent states are locked, all
+nine pages are wireframed, the nav layer is fully decided, and the **animation sweep is fully spec'd** (no open
+moments). **Planning is done.** What's left is **pure build** — see `kash-3.0-remaining-build.md` for the
+consolidated backlog: Week polish (load/tally/review), B&W PR2b teardown, the accent-state application,
+per-feature UX detail, the Care library (CL1–5) + garden art, Daily Wins (DWN-1–5), the AI persona layer
+(7A–8A), Abyss, Values/About-me, and applying the animation pass. The app is squarely in a **building** phase.
 
 ---
 

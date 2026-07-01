@@ -242,7 +242,12 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - **Theming:** **light-first** for v1; tokens structured so dark drops in later. Deliberate exceptions: the **Abyss is dark/immersive**, the **Care garden is lush/illustrative**.
 - **Active/selected states:** nav-rail = soft gray pill · segmented controls & Settings tabs = inset white pill · Week "today" = gray week + white today column.
 - **Reference feel:** **Pinterest** (clean B&W structure) + **Finch** (warmth).
-- _Still open (minor, finish anytime):_ checkbox-checked, Top-3 star, link styling, focus-ring treatments; the final motion/animation pass.
+- **Accent states (resolved Jul 1):**
+  - **Checkbox-checked:** fills with the **task's category color + white check** (matches the Today completion pattern, AN-T1). Checkboxes with **no task/category** (settings, filters, confirm-card rows) fall back to **ink fill**.
+  - **Top-3 star:** **category-colored** — the pinned star takes its task's category hue (the mark the AN-B3 "star pop" lands on).
+  - **Link styling:** ink accent, **always underlined** (`text-underline-offset: 2px`) — distinguishable without hover.
+  - **Focus ring:** **soft gray** ring, but AA-safe — use the `--ink-muted` family (`#6b7280`, ~4.8:1 on white), **not** the very-light `#c9ccd2` (fails focus-visibility contrast). 2px offset.
+- _Still open (finish anytime):_ the final motion/animation pass (spec'd in `kash-3.0-animation-sweep.md`; all bespoke moments now resolved Jul 1).
 
 ---
 
@@ -880,7 +885,7 @@ Decisions to resolve as sections get expanded (collected from above):
 
 - **Categories:** ✅ RESOLVED (§2) — fixed 5, rename/recolor only, strict MECE, inherit-with-override, task-count balance. _Remaining:_ final labels, balance weighting, backfill method.
 - **Navigation:** ✅ FULLY RESOLVED (§4, Jun 25) — three-column shell, grouped left rail (new Lucide icons), contextual inbox, in-page switchers. Routes Today `/today` + Plan `/plan`; Bingo = Plan sub-view; chat collapsed → "Ask Claude" chip + `⌘/` + push panel; mobile = hamburger drawer; Settings = top tab bar. _Nothing outstanding._
-- **Design:** ✅ RESOLVED (§5, Jun 24–25) — flat **black-and-white** (glass rejected), light-first (Abyss dark + garden lush exceptions), Pinterest+Finch feel. _Remaining:_ minor accent states (checkbox/star/link/focus-ring) + animation pass.
+- **Design:** ✅ RESOLVED (§5, Jun 24–25; accent states + animation forks closed Jul 1) — flat **black-and-white** (glass rejected), light-first (Abyss dark + garden lush exceptions), Pinterest+Finch feel. Accent states decided (checkbox = category-fill/ink-fallback, Top-3 star = category-colored, links always underlined, focus ring = AA-safe soft gray). _Remaining:_ apply the animation pass in code.
 - **Today:** ✅ RESOLVED (§6) — living-record timeline (+auto-draft later), soft Top-3 nudges, auto-DND, gentle self-care prompts.
 - **Week:** ✅ RESOLVED (§7) — placeholder+constraint protected blocks, colored task borders, soft over-commit warning.
 - **Planning:** ✅ RESOLVED (§8) — category-tagged bingo card, monthly+quarterly cadence, soft balance-pass closing step. _Remaining:_ year-viz form.

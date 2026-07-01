@@ -34,6 +34,7 @@
   scales up to fill, detail resolves; reverses on zoom-out. Reinforces Year→Quarter→Month→Week depth.
 - **AN-P2 · Line-bingo:** a **gentle bounce** — the completed line gives a small happy pop and settles.
 - **AN-P2b · Blackout finale:** the **whole card bounces** + a finale line fades in. **No sprouts.**
+- **AN-P2c · Finalize → lock (resolved Jul 1):** when an annual-goals card is committed/locked, the grid **"seats to ink"** — every cell's hairline border darkens from `--border` to `--ink` in one unified settle (a tiny synchronized scale-down-and-back, `--motion-short`). Reads as the cells locking into a rigid, committed grid. No badge or lock glyph.
 
 ## 3. Care
 
@@ -81,11 +82,25 @@ Settings tabs (seg-pill slide), EoD review (gentle fades) use the base tokens + 
   Today); the **garden-nourish reward grows only on the Care page** (per §12). (Was WINS-1.)
 - **AN-B5 · Progress roll-up:** completing a linked task **smooth-fills** the goal/milestone bar (% counts
   up); no pulse. (Was ROLL-1.)
+- **AN-B6 · Project complete (100%) — "fold to filed" (resolved Jul 1):** on the Projects **gallery**, the
+  finished project card **folds/collapses in place** (`scaleY` from the top, `--motion-medium`, ease-in) into
+  a slim **"Completed · [name]"** bar, then sinks into the gallery's collapsible **"Completed · n"** group
+  (mirrors the Today/Projects completion filing, PROJ-A). **No celebration flourish** — the reward is the tidy
+  filing-away. (Resolves PROJ-DONE. The first round — flourish / ink-check / flourish+garden — and a second
+  round — seal / ripple / color-drain / recede / edge-seal — were all set aside for being too eventful; the
+  calm fold won.)
+- **AN-B7 · Create-shimmer (offline-first D1) — "stripe breathes" (resolved Jul 1):** an optimistic new row
+  appears instantly with the client-guessed category on its 3px stripe; while the server resolves the sharper
+  category, the **stripe gently pulses opacity** (breathing-adjacent, per AN-0a — `--motion-medium` in/out,
+  looped), then **settles to the final category color** (`--motion-short` cross-fade). A small "resolving"
+  meta-label may accompany it, clearing on settle. No sweep, no indeterminate segment. _(Backend companion:
+  `kash-3.0-backend-optimization-spec.md` D1.)_
+- **AN-B8 · Sync indicator (offline-first D1) — "sidebar-footer pulsing dot" (resolved Jul 1):** while the
+  outbox is flushing, a **slow pulsing dot** breathes in the **left-nav (sidebar) footer** (`--motion-medium`
+  opacity+scale pulse, looped) with a small "sync" label. Ambient and out of the content's way — you glance at
+  it only when you look for it. Idle = static/hidden; reduced-motion = a static dot (no pulse).
 
-### Still open (carry to next session)
+### Bespoke moments — all resolved (Jul 1)
 
-- **Project complete (100%):** _redo with 3 NEW options._ The first round (A gentle flourish / B quiet ink
-  check / C flourish + garden nourish) was **all rejected**. Bring 3 fresh directions. (PROJ-DONE.)
-- **Create-shimmer + sync pulse (offline-first D1):** optimistic new rows show a brief state until synced;
-  a shell sync indicator pulses while syncing. _Not yet decided._
-- **Bingo finalize → lock:** the visual "set" when an annual-goals card is finalized/locked. _Not yet decided._
+Every open animation fork is now decided (AN-B1…B8 above, plus AN-P2c). Nothing carries to a next session.
+Remaining work on motion is **implementation only** — applying this sweep in code.
