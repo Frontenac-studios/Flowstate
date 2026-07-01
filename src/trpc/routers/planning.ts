@@ -17,6 +17,7 @@ import {
   reservedDays,
   taskTimeEntries,
   tasks,
+  userValues,
 } from "@/db/tables";
 import { assertEditableBingoCell } from "@/lib/planning/bingo-cells";
 import {
@@ -1064,6 +1065,16 @@ export const planningRouter = createTRPCRouter({
         projectName = project?.name ?? null;
       }
 
+      let valueLabel: string | null = null;
+      if (goal.valueId) {
+        const [value] = await db
+          .select({ label: userValues.label })
+          .from(userValues)
+          .where(and(eq(userValues.id, goal.valueId), eq(userValues.userId, ctx.userId)))
+          .limit(1);
+        valueLabel = value?.label ?? null;
+      }
+
       return {
         goal,
         milestones,
@@ -1071,6 +1082,7 @@ export const planningRouter = createTRPCRouter({
         taskEstimates,
         projectSlug,
         projectName,
+        valueLabel,
       };
     }),
 
