@@ -4,7 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
+import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
+import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useTRPC } from "@/trpc/client";
 
@@ -49,10 +51,12 @@ export function useProactiveNudges() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { railOpen, activeThreadId, isFocusRoute, notifyUnread, markRead } = useChat();
+  const { constraints } = useUserConstraints();
   const evaluatingRef = useRef(false);
 
   const evaluate = useCallback(async () => {
     if (evaluatingRef.current) return;
+    if (shouldSuppressInAppNudges(new Date(), constraints)) return;
     evaluatingRef.current = true;
 
     try {
@@ -92,7 +96,16 @@ export function useProactiveNudges() {
     } finally {
       evaluatingRef.current = false;
     }
-  }, [activeThreadId, isFocusRoute, markRead, notifyUnread, queryClient, railOpen, trpc.chat.list]);
+  }, [
+    activeThreadId,
+    constraints,
+    isFocusRoute,
+    markRead,
+    notifyUnread,
+    queryClient,
+    railOpen,
+    trpc.chat.list,
+  ]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,3 +1,5 @@
+import type { EvaluableConstraint } from "@/lib/about-me/constraint-eval";
+
 import type { WeekDraftValidationContext } from "./validate-week-draft-assignments";
 
 export type WeekDraftValidationSource = {
@@ -7,6 +9,7 @@ export type WeekDraftValidationSource = {
   protectedCountByDate: Record<string, number>;
   priorityTaskIdsByDate?: Readonly<Record<string, ReadonlySet<string>>>;
   overCommitThreshold: number;
+  userConstraints?: readonly EvaluableConstraint[];
 };
 
 export function weekDraftValidationContextFromSource(
@@ -30,5 +33,6 @@ export function weekDraftValidationContextFromSource(
     priorityTaskIdsByDate: ctx.priorityTaskIdsByDate ?? {},
     taskWeightById,
     overCommitThreshold: ctx.overCommitThreshold,
+    userConstraints: ctx.userConstraints,
   };
 }

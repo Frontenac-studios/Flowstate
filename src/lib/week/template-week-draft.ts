@@ -1,4 +1,8 @@
 import { addDays, datesInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import {
+  softConstraintViolationCount,
+  type EvaluableConstraint,
+} from "@/lib/about-me/constraint-eval";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { DEFAULT_OVER_COMMIT_THRESHOLD } from "@/lib/week/over-commit-threshold";
 import { computeDayLoad } from "@/lib/week/day-load";
@@ -26,6 +30,7 @@ export type TemplateWeekDraftOptions = {
   existingTasksByDate?: Readonly<Record<string, readonly { id: string }[]>>;
   priorityTaskIdsByDate?: Readonly<Record<string, ReadonlySet<string>>>;
   taskWeightById?: Readonly<Record<string, number>>;
+  userConstraints?: readonly EvaluableConstraint[];
 };
 
 function dayLoad(
@@ -51,10 +56,15 @@ function pickTargetDay(
   options: TemplateWeekDraftOptions
 ): string {
   const threshold = options.overCommitThreshold ?? DEFAULT_OVER_COMMIT_THRESHOLD;
+  const constraints = options.userConstraints ?? [];
 
-  const sorted = [...weekDates].sort(
-    (a, b) => dayLoad(a, assignments, options) - dayLoad(b, assignments, options)
-  );
+  const sorted = [...weekDates].sort((a, b) => {
+    const loadDiff = dayLoad(a, assignments, options) - dayLoad(b, assignments, options);
+    if (loadDiff !== 0) return loadDiff;
+    return (
+      softConstraintViolationCount(constraints, a) - softConstraintViolationCount(constraints, b)
+    );
+  });
 
   const underCap = sorted.find((iso) => dayLoad(iso, assignments, options) < threshold);
   return underCap ?? sorted[0]!;
