@@ -265,6 +265,49 @@ Two weights only (400 / 500). Sentence case everywhere. Replaces Geist.
 }
 ```
 
+### 5.5 Motion (AN-0b + animation handoff)
+
+Formalizes the motion language as build tokens. Durations + easings are the AN-0b set from
+`kash-3.0-animation-sweep.md`; the four marked **NEW** are added for the bespoke moments specced in
+`kash-3.0-animation-handoff.md` (overshoot settles, looping breaths, the rare celebration beat). Motion
+tokens only — no color impact. Build rule (as for color): **no component inlines a raw ms/easing value;
+reference these tokens.** Reduced motion is a global override (AN-0c), not a per-component concern.
+
+```css
+:root {
+  /* durations (AN-0b) */
+  --motion-micro: 90ms; /* hovers, taps, pip toggles */
+  --motion-short: 160ms; /* toggles, chips, cross-fades, micro-pops */
+  --motion-medium: 240ms; /* rows/cards enter, panels, zoom level, fly-to-slot */
+  --motion-long: 420ms; /* page/zoom celebrations, focus entrance, garden growth */
+
+  /* easings (AN-0b) */
+  --ease-enter: ease-out; /* elements appearing */
+  --ease-move: cubic-bezier(0.22, 0.61, 0.36, 1); /* elements repositioning */
+  --ease-exit: ease-in; /* elements leaving */
+
+  /* NEW — gentle "settle past then back": star pop (AN-B3), garden overshoot (AN-C3),
+     line-bingo pop (AN-P2), bingo-lock cell settle (AN-B8). Soft, not springy. */
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* NEW — sinusoidal in-out for looping breath: Care orb (AN-C1), focus breath (AN-B1),
+     sync/pending dots (AN-B7). Symmetric, no harsh ends. */
+  --ease-breath: cubic-bezier(0.37, 0, 0.63, 1);
+
+  /* NEW — the rare, once-in-a-while celebration beat, bigger than --motion-long:
+     project complete (AN-B6), blackout finale (AN-P2b), bingo lock (AN-B8). */
+  --motion-celebrate: 540ms;
+
+  /* NEW — ambient breath-loop period (one full inhale+exhale) for chrome breaths
+     (sync dot, focus ring pulse). NOT Care's technique pace (data-driven, AN-C2). */
+  --breath-pulse: 2400ms;
+}
+```
+
+> **Reduced motion (AN-0c):** ship one global `@media (prefers-reduced-motion: reduce)` block that swaps
+> transform-based keyframes for an opacity fade at `--motion-short` and `animation: none`s every loop
+> (breaths, dots, depleting-ring pulse) to its resting state. No in-app toggle.
+
 ---
 
 ## 6. Migration notes (current code → these tokens)
@@ -353,3 +396,5 @@ emphasis = `danger` (overdue) / `soon` (today+tomorrow) / `muted`, adds `"tomorr
 - Status uses icon + graphite; `--status-critical` appears only on irreversible-danger paths.
 - Compact density + Figtree applied app-wide; type uses only the scale + two weights.
 - Light theme complete; adding `[data-theme="dark"]` requires no component changes.
+- No component inlines a raw ms/easing; motion uses the §5.5 tokens; `prefers-reduced-motion` is honored
+  globally (AN-0c). See `kash-3.0-animation-handoff.md` for per-animation specs.
