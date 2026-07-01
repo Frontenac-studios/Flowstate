@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -13,6 +13,7 @@ import { careActivities, careEvents, taskRecurrence, tasks } from "@/db/tables";
 import { CARE_CADENCES, CARE_KINDS, CARE_THEMES } from "@/db/schema/care-enums";
 import { availableCatalog, isCatalogKey } from "@/lib/care/catalog";
 import { cadenceToRRule } from "@/lib/care/cadence";
+import { extraPlantCount, gardenGrowthTier } from "@/lib/care/garden-growth";
 import { SEED_CATALOG } from "@/lib/care/seed-catalog";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 
@@ -319,4 +320,49 @@ export const careRouter = createTRPCRouter({
       .where(and(eq(careEvents.userId, ctx.userId), gte(careEvents.occurredAt, dayStart)))
       .orderBy(desc(careEvents.occurredAt));
   }),
+
+  /** Garden nourishment totals — practice check-offs and planning bingo lines. */
+  getGardenState: protectedProcedure.query(async ({ ctx }) => {
+    const [row] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(careEvents)
+      .where(eq(careEvents.userId, ctx.userId));
+
+    const nourishCount = row?.count ?? 0;
+    return {
+      nourishCount,
+      growthTier: gardenGrowthTier(nourishCount),
+      extraPlants: extraPlantCount(nourishCount),
+    };
+  }),
+
+  /** Record a planning bingo line reward as garden nourishment (RW-2). */
+  recordBingoNourish: protectedProcedure
+    .input(
+      z.object({
+        cardYear: z.number().int().min(2000).max(2100),
+        lineType: z.enum(["row", "column", "diagonal"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .insert(careEvents)
+        .values({
+          userId: ctx.userId,
+          activityId: null,
+          source: "bingo",
+          meta: { cardYear: input.cardYear, lineType: input.lineType },
+        })
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to record bingo nourishment.",
+        });
+      }
+
+      await syncCareEventRow(row.id, "insert", row);
+      return row;
+    }),
 });

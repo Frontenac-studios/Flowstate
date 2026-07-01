@@ -1,21 +1,32 @@
-/** Cross-feature stubs until Abyss / Care / Values / AI persona ship (§12.3). */
+"use client";
 
-export type AbyssBalanceCandidate = {
-  id: string;
-  title: string;
-  category: string;
-};
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import superjson from "superjson";
 
-/** Balance pass resurface tray — empty until §10 Abyss. */
-export async function fetchAbyssBalanceCandidates(): Promise<AbyssBalanceCandidate[]> {
-  return [];
-}
+import type { AppRouter } from "@/trpc/routers/_app";
 
-/** Bingo line reward — no-op until §12 Care garden. */
-export async function recordBingoReward(params: {
+type BingoRewardParams = {
   cardYear: number;
   lineType: "row" | "column" | "diagonal";
-}): Promise<void> {
-  void params;
-  /* Care integration PR */
+};
+
+let bingoRewardClient: ReturnType<typeof createTRPCClient<AppRouter>> | undefined;
+
+function getBingoRewardClient() {
+  if (!bingoRewardClient) {
+    bingoRewardClient = createTRPCClient<AppRouter>({
+      links: [
+        httpBatchLink({
+          transformer: superjson,
+          url: "/api/trpc",
+        }),
+      ],
+    });
+  }
+  return bingoRewardClient;
+}
+
+/** Bingo line reward — persists garden nourishment via Care (RW-2). */
+export async function recordBingoReward(params: BingoRewardParams): Promise<void> {
+  await getBingoRewardClient().care.recordBingoNourish.mutate(params);
 }
