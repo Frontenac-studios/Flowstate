@@ -12,6 +12,7 @@ type Props = {
   onBackburner: (goal: BingoGoal) => void;
   onRemove: (goal: BingoGoal) => void;
   onAdd: (cellIndex: number) => void;
+  onOpenGoal?: (goal: BingoGoal) => void;
 };
 
 export default function BingoCellTile({
@@ -23,6 +24,7 @@ export default function BingoCellTile({
   onBackburner,
   onRemove,
   onAdd,
+  onOpenGoal,
 }: Props) {
   const ring = inWinningLine ? "shadow-[0_0_0_2px_var(--ink)]" : "";
 
@@ -69,14 +71,23 @@ export default function BingoCellTile({
   if (goal.state === "done") {
     return (
       <div
-        className={`relative flex aspect-square flex-col justify-end overflow-hidden rounded-card p-2 ${ring}`}
+        className={`relative flex aspect-square flex-col justify-end overflow-hidden rounded-card p-2 ${ring} ${inWinningLine ? "motion-safe:animate-pulse" : ""}`}
         style={{ backgroundColor: solid }}
       >
         <button
           type="button"
-          onClick={() => onToggleDone(goal)}
+          onClick={() => onOpenGoal?.(goal)}
+          className="absolute inset-0 z-0 rounded-card focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          aria-label={`Open goal: ${goal.title}`}
+        />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleDone(goal);
+          }}
           disabled={busy}
-          className="absolute right-1.5 top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-white/25 text-white transition hover:bg-white/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50"
+          className="absolute right-1.5 top-1.5 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-white/25 text-white transition hover:bg-white/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50"
           aria-label={`Mark "${goal.title}" not done`}
         >
           <svg
@@ -89,8 +100,10 @@ export default function BingoCellTile({
             <path strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" d="m5 12 5 5 9-11" />
           </svg>
         </button>
-        <span className="text-caption font-medium text-white/80">{categoryName}</span>
-        <span className="line-clamp-3 text-meta font-medium text-white line-through">
+        <span className="relative z-[1] text-caption font-medium text-white/80">
+          {categoryName}
+        </span>
+        <span className="relative z-[1] line-clamp-3 text-meta font-medium text-white line-through">
           {goal.title}
         </span>
       </div>
@@ -103,15 +116,24 @@ export default function BingoCellTile({
     <div
       className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-[1.5px] bg-surface p-2 ${
         backburnered ? "opacity-40" : ""
-      } ${ring}`}
+      } ${ring} ${inWinningLine ? "motion-safe:animate-pulse" : ""}`}
       style={{ borderColor: solid }}
     >
+      <button
+        type="button"
+        onClick={() => onOpenGoal?.(goal)}
+        className="absolute inset-0 z-0 rounded-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        aria-label={`Open goal: ${goal.title}`}
+      />
       {!backburnered ? (
         <button
           type="button"
-          onClick={() => onToggleDone(goal)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleDone(goal);
+          }}
           disabled={busy}
-          className="absolute right-1.5 top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px] text-transparent transition hover:text-current focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+          className="absolute right-1.5 top-1.5 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px] text-transparent transition hover:text-current focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
           style={{ borderColor: solid, color: solid }}
           aria-label={`Mark "${goal.title}" done`}
         >
@@ -127,15 +149,20 @@ export default function BingoCellTile({
         </button>
       ) : null}
 
-      <span className="text-caption font-medium" style={{ color: solid }}>
+      <span className="relative z-[1] text-caption font-medium" style={{ color: solid }}>
         {backburnered ? `${categoryName} · paused` : categoryName}
       </span>
-      <span className="line-clamp-3 text-meta font-medium text-ink">{goal.title}</span>
+      <span className="relative z-[1] line-clamp-3 text-meta font-medium text-ink">
+        {goal.title}
+      </span>
 
-      <div className="absolute inset-x-1.5 bottom-1.5 flex justify-end gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+      <div className="relative z-10 flex justify-end gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
         <button
           type="button"
-          onClick={() => onBackburner(goal)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBackburner(goal);
+          }}
           disabled={busy}
           className="bg-surface/90 rounded-control px-1.5 py-0.5 text-caption text-ink-muted transition hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
         >
@@ -144,7 +171,10 @@ export default function BingoCellTile({
         {!locked ? (
           <button
             type="button"
-            onClick={() => onRemove(goal)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(goal);
+            }}
             disabled={busy}
             className="bg-surface/90 rounded-control px-1.5 py-0.5 text-caption text-ink-muted transition hover:text-critical focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
             aria-label={`Remove "${goal.title}"`}

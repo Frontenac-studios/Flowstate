@@ -579,6 +579,14 @@ export const tasksRouter = createTRPCRouter({
         phaseId: z.string().uuid().nullable().optional(),
         priority: z.number().int().min(0).max(3).default(0),
         category: categorySchema.optional(),
+        milestoneId: z.string().uuid().nullable().optional(),
+        timeEstimateMinutes: z
+          .number()
+          .int()
+          .min(1)
+          .max(24 * 60)
+          .nullable()
+          .optional(),
         /** RRULE body (without `RRULE:` prefix) — Phase 4 composer / picker. */
         rrule: z.string().min(1).max(2000).optional(),
         recurrenceStartDate: z
@@ -617,6 +625,8 @@ export const tasksRouter = createTRPCRouter({
           bucketOverride: input.bucketOverride ?? null,
           projectId: input.projectId ?? null,
           phaseId: input.phaseId ?? null,
+          milestoneId: input.milestoneId ?? null,
+          timeEstimateMinutes: input.timeEstimateMinutes ?? null,
           priority: input.priority,
           category: resolved.category,
           categoryUnresolved: resolved.unresolved,
@@ -690,6 +700,14 @@ export const tasksRouter = createTRPCRouter({
         projectId: z.string().uuid().nullable().optional(),
         phaseId: z.string().uuid().nullable().optional(),
         category: categorySchema.optional(),
+        milestoneId: z.string().uuid().nullable().optional(),
+        timeEstimateMinutes: z
+          .number()
+          .int()
+          .min(1)
+          .max(24 * 60)
+          .nullable()
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -702,6 +720,10 @@ export const tasksRouter = createTRPCRouter({
       if (input.priority !== undefined) patch.priority = input.priority;
       if (input.projectId !== undefined) patch.projectId = input.projectId;
       if (input.phaseId !== undefined) patch.phaseId = input.phaseId;
+      if (input.milestoneId !== undefined) patch.milestoneId = input.milestoneId;
+      if (input.timeEstimateMinutes !== undefined) {
+        patch.timeEstimateMinutes = input.timeEstimateMinutes;
+      }
       // Explicit category edit is a layer-1 assignment: set it and clear the
       // unresolved flag so the row leaves the invisible-plumbing state (1.4d).
       if (input.category !== undefined) {

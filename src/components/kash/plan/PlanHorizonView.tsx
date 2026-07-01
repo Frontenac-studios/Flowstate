@@ -108,7 +108,7 @@ export function PlanHorizonView() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2">
-          <h1 className="text-lg font-semibold text-kash-ink">{title}</h1>
+          <h1 className="text-lg font-semibold text-ink">{title}</h1>
           {horizon !== "bingo" ? (
             <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={setBreadcrumb} />
           ) : null}

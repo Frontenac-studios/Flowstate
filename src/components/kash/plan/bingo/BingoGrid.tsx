@@ -12,6 +12,7 @@ type Props = {
   onBackburner: (goal: BingoGoal) => void;
   onRemove: (goal: BingoGoal) => void;
   onAdd: (cellIndex: number) => void;
+  onOpenGoal?: (goal: BingoGoal) => void;
 };
 
 export default function BingoGrid({
@@ -22,6 +23,7 @@ export default function BingoGrid({
   onBackburner,
   onRemove,
   onAdd,
+  onOpenGoal,
 }: Props) {
   const winningCells = completedLineCells(grid);
 
@@ -38,6 +40,7 @@ export default function BingoGrid({
           onBackburner={onBackburner}
           onRemove={onRemove}
           onAdd={onAdd}
+          onOpenGoal={onOpenGoal}
         />
       ))}
     </div>
