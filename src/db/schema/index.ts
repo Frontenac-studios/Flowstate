@@ -21,6 +21,7 @@ export * from "./nudge-events";
 export * from "./phases";
 export * from "./planning-enums";
 export * from "./planning-suggestions";
+export * from "./project-templates";
 export * from "./projects";
 export * from "./protected-block-templates";
 export * from "./protected-blocks";

@@ -7,6 +7,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
+import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import Input from "@/components/kash/ui/Input";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
@@ -107,6 +108,7 @@ export function TaskRow({
   // title, slide-out — set optimistically on check so it plays before the
   // server round-trip resolves.
   const [completing, setCompleting] = useState(false);
+  const [occurrenceMenuOpen, setOccurrenceMenuOpen] = useState(false);
   const rowContentRef = useRef<HTMLDivElement>(null);
   const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pinEnabled = canPin && !task.isTop3 && !task.dayPriorityOrder && onPin != null;
@@ -228,6 +230,18 @@ export function TaskRow({
     })
   );
 
+  const editOccurrenceMutation = useMutation(
+    trpc.recurrence.editOccurrence.mutationOptions({
+      onSuccess: () => {
+        setEditing(false);
+        setEditError(null);
+        hide();
+        invalidatePlan();
+      },
+      onError: () => setEditError("Couldn't save your change — please try again."),
+    })
+  );
+
   const deleteMutation = useMutation(
     trpc.tasks.delete.mutationOptions({
       onSuccess: (data) => {
@@ -263,6 +277,14 @@ export function TaskRow({
       return;
     }
     setEditError(null);
+    if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+      editOccurrenceMutation.mutate({
+        recurrenceId: task.recurrenceId,
+        occurrenceDate: task.occurrenceDate,
+        patch: { title: trimmed },
+      });
+      return;
+    }
     updateMutation.mutate({ id: task.id, title: trimmed });
   };
 
@@ -288,7 +310,6 @@ export function TaskRow({
   };
 
   const startEdit = () => {
-    if (task.isRecurringOccurrence) return;
     hide();
     setEditTitle(task.title);
     setEditError(null);
@@ -368,7 +389,7 @@ export function TaskRow({
               handleDelete();
             }}
           >
-            Delete
+            {task.isRecurringOccurrence ? "Skip" : "Delete"}
           </button>
         </div>
 
@@ -396,13 +417,32 @@ export function TaskRow({
           ) : null}
 
           {task.isRecurringOccurrence ? (
-            <span
-              className="mt-0.5 shrink-0 text-xs text-ink-muted"
-              title="Recurring"
-              aria-label="Recurring task"
-            >
-              ↻
-            </span>
+            <div className="relative mt-0.5 shrink-0">
+              <button
+                type="button"
+                className="text-xs text-ink-muted hover:text-ink"
+                title={task.recurringLabel ?? "Recurring"}
+                aria-label="Recurring task actions"
+                aria-haspopup="menu"
+                aria-expanded={occurrenceMenuOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOccurrenceMenuOpen((open) => !open);
+                }}
+              >
+                ↻
+              </button>
+              {occurrenceMenuOpen && task.recurrenceId && task.occurrenceDate ? (
+                <OccurrenceMenu
+                  recurrenceId={task.recurrenceId}
+                  occurrenceDate={task.occurrenceDate}
+                  title={task.title}
+                  priority={task.priority}
+                  onClose={() => setOccurrenceMenuOpen(false)}
+                  onSaved={() => setOccurrenceMenuOpen(false)}
+                />
+              ) : null}
+            </div>
           ) : null}
 
           <input

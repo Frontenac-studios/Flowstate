@@ -67,6 +67,14 @@ export async function syncProjectRow(rowId: string, op: SyncOp, payload: unknown
   await recordSyncMutation({ table: "projects", rowId, op, payload });
 }
 
+export async function syncProjectTemplateRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "project_templates", rowId, op, payload });
+}
+
 export async function syncPhaseRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "phases", rowId, op, payload });
 }

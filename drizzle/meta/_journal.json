@@ -166,15 +166,22 @@
     {
       "idx": 23,
       "version": "7",
-      "when": 1782934000000,
-      "tag": "0023_quick_korath",
+      "when": 1782932014424,
+      "tag": "0023_tan_warbound",
       "breakpoints": true
     },
     {
       "idx": 24,
       "version": "7",
+      "when": 1782934000000,
+      "tag": "0024_quick_korath",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
       "when": 1782935000000,
-      "tag": "0024_daily_win_care_event_source",
+      "tag": "0025_daily_win_care_event_source",
       "breakpoints": true
     }
   ]
