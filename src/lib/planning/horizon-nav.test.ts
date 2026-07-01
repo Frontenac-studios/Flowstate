@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   horizonForBreadcrumb,
   trimBreadcrumbForHorizon,
+  zoomToMonth,
   zoomToQuarter,
   zoomToYear,
 } from "./horizon-nav";
@@ -18,6 +19,7 @@ describe("horizon-nav", () => {
   it("builds zoom breadcrumbs", () => {
     expect(zoomToYear(2026)).toEqual({ year: 2026 });
     expect(zoomToQuarter(2026, 3)).toEqual({ year: 2026, quarter: 3 });
+    expect(zoomToMonth(2026, 2, 5)).toEqual({ year: 2026, quarter: 2, month: 5 });
   });
 
   it("trims breadcrumb to selected horizon depth", () => {

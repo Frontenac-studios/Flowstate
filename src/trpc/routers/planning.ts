@@ -24,6 +24,7 @@ import {
   type MilestoneProgress,
 } from "@/lib/planning/goal-progress";
 import { aggregateYearActivity } from "@/lib/planning/year-heat";
+import { monthsForQuarter } from "@/lib/planning/quarter-months";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 
@@ -984,6 +985,64 @@ export const planningRouter = createTRPCRouter({
       return rows.filter(Boolean);
     }),
 
+  suggestQuarterSpread: protectedProcedure
+    .input(z.object({ year: yearSchema, quarter: quarterSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const goalRows = await db
+        .select({
+          id: goals.id,
+          title: goals.title,
+          targetHorizon: goals.targetHorizon,
+          targetYear: goals.targetYear,
+          targetQuarter: goals.targetQuarter,
+          targetMonth: goals.targetMonth,
+          state: goals.state,
+        })
+        .from(goals)
+        .where(eq(goals.userId, ctx.userId));
+
+      const unassigned = goalRows.filter(
+        (goal) =>
+          goal.state === "active" &&
+          goal.targetYear === input.year &&
+          goal.targetQuarter === input.quarter &&
+          goal.targetMonth == null &&
+          (goal.targetHorizon === "quarter" || goal.targetHorizon === null)
+      );
+
+      if (unassigned.length === 0) {
+        return [];
+      }
+
+      const months = monthsForQuarter(input.quarter);
+      const rows = await Promise.all(
+        unassigned.map(async (goal, index) => {
+          const targetMonth = months[index % months.length]!;
+          const [row] = await db
+            .insert(planningSuggestions)
+            .values({
+              userId: ctx.userId,
+              surface: "quarter_spread",
+              payload: {
+                year: input.year,
+                quarter: input.quarter,
+                goalId: goal.id,
+                goalTitle: goal.title,
+                targetMonth,
+              },
+            })
+            .returning();
+          return row;
+        })
+      );
+
+      for (const row of rows) {
+        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
+      }
+
+      return rows.filter(Boolean);
+    }),
+
   applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
     const now = new Date();
     const staged = await db
@@ -1007,6 +1066,29 @@ export const planningRouter = createTRPCRouter({
             })
             .returning();
           if (created) await syncRow("goal_milestones", created.id, "insert", created);
+        }
+      }
+
+      if (row.surface === "quarter_spread") {
+        const payload = row.payload as {
+          goalId?: string;
+          targetMonth?: number;
+          year?: number;
+          quarter?: number;
+        };
+        if (payload.goalId && payload.targetMonth && payload.year && payload.quarter) {
+          const [updated] = await db
+            .update(goals)
+            .set({
+              targetHorizon: "month",
+              targetYear: payload.year,
+              targetQuarter: payload.quarter,
+              targetMonth: payload.targetMonth,
+              updatedAt: now,
+            })
+            .where(and(eq(goals.id, payload.goalId), eq(goals.userId, ctx.userId)))
+            .returning();
+          if (updated) await syncRow("goals", updated.id, "update", updated);
         }
       }
     }
