@@ -10,6 +10,7 @@ import { categorySolidVar } from "@/lib/projects/category-tokens";
 import type { PlanTaskRow } from "../TaskRow";
 import { TaskRow } from "../TaskRow";
 import AddProtectedBlockButton from "./AddProtectedBlockButton";
+import DayPrioritiesSlots, { type DayPrioritySlotTask } from "./DayPrioritiesSlots";
 import ProtectedBlockChip, { type ProtectedBlockRow } from "./ProtectedBlockChip";
 
 type Props = {
@@ -18,10 +19,14 @@ type Props = {
   isToday: boolean;
   columnWidthPercent: number;
   tasks: PlanTaskRow[];
+  pinnedBySlot: Map<number, DayPrioritySlotTask>;
   protectedBlocks: ProtectedBlockRow[];
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onRemoveProtected: (id: string) => void;
+  onPinTask: (taskId: string, sourceEl: HTMLElement) => void;
+  onUnpinPriority: (taskId: string) => void;
+  canPinMore: boolean;
 };
 
 const NEUTRAL_DOT = "var(--ink-faint)";
@@ -37,15 +42,22 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     isToday,
     columnWidthPercent,
     tasks,
+    pinnedBySlot,
     protectedBlocks,
     onComplete,
     onDelete,
     onRemoveProtected,
+    onPinTask,
+    onUnpinPriority,
+    canPinMore,
   },
   ref
 ) {
   const { setNodeRef, isOver } = useDroppable({ id: `week-day:${isoDate}` });
   const headerDate = formatHeaderDate(parseISODateString(isoDate));
+
+  const priorityTaskIds = new Set(Array.from(pinnedBySlot.values()).map((task) => task.id));
+  const regularTasks = tasks.filter((task) => !priorityTaskIds.has(task.id));
 
   // Per-category load cue: one dot per task (colour = its life-area), capped.
   const dots = tasks.slice(0, MAX_DOTS);
@@ -104,12 +116,15 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
           ))}
         </ul>
       ) : null}
+      <DayPrioritiesSlots pinnedBySlot={pinnedBySlot} onUnpin={onUnpinPriority} />
       <ul className="mt-1 flex-1 space-y-1.5 px-1 pb-2" aria-label={`Tasks for ${isoDate}`}>
-        {tasks.map((task) => (
+        {regularTasks.map((task) => (
           <TaskRow
             key={task.id}
             task={task}
             showProject={false}
+            canPin={canPinMore}
+            onPin={onPinTask}
             onComplete={onComplete}
             onDelete={onDelete}
           />

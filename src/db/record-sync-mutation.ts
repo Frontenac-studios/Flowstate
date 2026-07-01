@@ -51,6 +51,14 @@ export async function syncProtectedBlockTemplateRow(
   await recordSyncMutation({ table: "protected_block_templates", rowId, op, payload });
 }
 
+export async function syncWeekDayPriorityRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "week_day_priorities", rowId, op, payload });
+}
+
 export async function syncAbyssItemRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "abyss_items", rowId, op, payload });
 }
