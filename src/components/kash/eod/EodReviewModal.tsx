@@ -189,10 +189,13 @@ export function EodReviewModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center p-[var(--space-4)]"
+      role="presentation"
+    >
       <button
         type="button"
-        className="bg-ink/20 absolute inset-0"
+        className="absolute inset-0 z-base bg-black/20"
         aria-label="Close review"
         onClick={onClose}
       />
@@ -203,23 +206,23 @@ export function EodReviewModal({
         aria-labelledby="eod-review-title"
         aria-describedby={payload && !payloadLoading ? summarySectionId : undefined}
         tabIndex={-1}
-        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-subtle bg-surface p-6"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-subtle bg-surface p-[var(--space-6)]"
       >
-        <h2 id="eod-review-title" className="text-lg font-semibold text-ink">
+        <h2 id="eod-review-title" className="text-title font-semibold text-ink">
           End of day review
         </h2>
 
         {payloadLoading || !payload ? (
-          <p className="mt-4 text-sm text-ink-muted">Loading your day…</p>
+          <p className="mt-[var(--space-4)] text-body text-ink-muted">Loading your day…</p>
         ) : (
-          <div id={summarySectionId} className="mt-4 space-y-5">
-            <p className="text-sm text-ink">
+          <div id={summarySectionId} className="mt-[var(--space-4)] space-y-[var(--space-5)]">
+            <p className="text-body text-ink">
               <span className="font-semibold">{payload.completionsToday}</span> task
               {payload.completionsToday === 1 ? "" : "s"} completed today
             </p>
 
             <section aria-label="Top 3 status">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
+              <p className="mb-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
                 Top 3
               </p>
               <Top3ReviewSummary top3Status={payload.top3Status} />
@@ -227,25 +230,29 @@ export function EodReviewModal({
 
             <FocusTimeChart bars={payload.focusBars} overflowCount={payload.focusOverflowCount} />
 
-            <section className="space-y-2" aria-label="Reflection">
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Summary</p>
+            <section className="space-y-[var(--space-2)]" aria-label="Reflection">
+              <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">
+                Summary
+              </p>
               {aiLoading ? (
-                <p className="text-sm text-ink-muted">Claude is reflecting on your day…</p>
+                <p className="text-body text-ink-muted">Claude is reflecting on your day…</p>
               ) : (
-                <p className="whitespace-pre-wrap text-sm text-ink">
+                <p className="whitespace-pre-wrap text-body text-ink">
                   {summary ? renderInlineBold(summary) : "—"}
                 </p>
               )}
 
               {reflectiveQuestion ? (
                 <>
-                  <p className="mt-3 text-sm font-medium text-ink">{reflectiveQuestion}</p>
-                  <label className="block text-xs text-ink-muted" htmlFor="eod-reflection">
+                  <p className="mt-[var(--space-3)] text-body font-medium text-ink">
+                    {reflectiveQuestion}
+                  </p>
+                  <label className="block text-caption text-ink-muted" htmlFor="eod-reflection">
                     Your answer (optional)
                   </label>
                   <Textarea
                     id="eod-reflection"
-                    className="mt-1 w-full resize-y text-sm"
+                    className="mt-[var(--space-1)] w-full resize-y text-body"
                     rows={3}
                     value={reflection}
                     onChange={(e) => setReflection(e.target.value)}
@@ -258,15 +265,15 @@ export function EodReviewModal({
         )}
 
         {saveError ? (
-          <p className="mt-4 text-sm text-critical" role="alert">
+          <p className="mt-[var(--space-4)] text-body text-critical" role="alert">
             {saveError}
           </p>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-2)]">
           <Button
             type="button"
-            className="px-4 py-2 text-sm"
+            className="text-body"
             disabled={payloadLoading || upsertMutation.isPending}
             onClick={() => void handleDone()}
           >
@@ -275,16 +282,16 @@ export function EodReviewModal({
           <Button
             type="button"
             variant="ghost"
-            className="text-sm"
+            className="text-body"
             disabled={aiLoading}
             onClick={handleRegenerate}
           >
             Regenerate
           </Button>
-          <Button type="button" variant="ghost" className="text-sm" onClick={onSnooze}>
+          <Button type="button" variant="ghost" className="text-body" onClick={onSnooze}>
             Not now
           </Button>
-          <Button type="button" variant="ghost" className="text-sm" onClick={onSkip}>
+          <Button type="button" variant="ghost" className="text-body" onClick={onSkip}>
             Skip today
           </Button>
         </div>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 /**
  * Flat check-off control (B&W). A native checkbox tinted to `--accent` via
- * `accent-color`, with a 2px focus ring at `--focus-ring`. Keeping the native
+ * `accent-color`, with a focus ring at `--focus-ring`. Keeping the native
  * appearance (rather than `appearance-none` + a custom tick) gives a robust,
  * accessible OS check mark while still honoring the accent token.
  */
@@ -19,8 +19,8 @@ const Checkbox = forwardRef<HTMLInputElement, Props>(function Checkbox(
       ref={ref}
       type="checkbox"
       className={cn(
-        "h-[18px] w-[18px] shrink-0 cursor-pointer rounded-[4px] outline-none [accent-color:var(--accent)]",
-        "transition-shadow focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]",
+        "h-icon-md w-icon-md shrink-0 cursor-pointer rounded-control outline-none [accent-color:var(--accent)]",
+        "transition-shadow focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}

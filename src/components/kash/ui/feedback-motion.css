@@ -1,0 +1,84 @@
+/* AN-X2 — Toast slide up + fade */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes toast-enter-reduce {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toast-exit-reduce {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toast-enter var(--motion-medium) var(--ease-enter) both;
+}
+
+.toast-exit {
+  animation: toast-exit var(--motion-short) var(--ease-exit) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter {
+    animation: toast-enter-reduce var(--motion-short) var(--ease-enter) both;
+  }
+
+  .toast-exit {
+    animation: toast-exit-reduce var(--motion-short) var(--ease-exit) both;
+  }
+}
+
+@keyframes nudge-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nudge-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.nudge-fade-in {
+  animation: nudge-fade-in var(--motion-medium) var(--ease-enter) both;
+}
+
+.nudge-fade-out {
+  animation: nudge-fade-out var(--motion-short) var(--ease-exit) both;
+}
