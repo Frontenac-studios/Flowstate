@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { isAnthropicConfigured } from "@/lib/env";
 import { threadIdSchema } from "@/lib/chat/threads";
+import { planningSurfaceSchema } from "@/lib/chat/planning-surface";
 import { appendAssistantMessage } from "@/server/claude/persist-message";
 import { streamCompanionReply } from "@/server/claude/generate";
 import { getRouteUserId } from "@/server/claude/route-auth";
@@ -14,22 +15,18 @@ const bodySchema = z.object({
   threadId: threadIdSchema,
   userMessageId: z.string().uuid(),
   text: z.string().min(1).max(8000),
+  planningSurface: planningSurfaceSchema.nullish(),
 });
 
 export async function POST(req: Request) {
   const userId = await getRouteUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!isAnthropicConfigured()) {
     return NextResponse.json({ error: "Claude is not configured." }, { status: 503 });
   }
 
   const parsed = bodySchema.safeParse(await req.json());
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
   const { threadId, text } = parsed.data;
 
@@ -41,12 +38,15 @@ export async function POST(req: Request) {
   });
 
   try {
-    const { stream, getFullText, getMutatedTasks } = await streamCompanionReply({
-      userId,
-      threadId,
-      userText: text,
-      signal: req.signal,
-    });
+    const { stream, getFullText, getMutatedTasks, getPendingProposal } = await streamCompanionReply(
+      {
+        userId,
+        threadId,
+        userText: text,
+        planningSurface: parsed.data.planningSurface ?? null,
+        signal: req.signal,
+      }
+    );
 
     const encoder = new TextEncoder();
     let assistantText = "";
@@ -56,7 +56,8 @@ export async function POST(req: Request) {
       const trimmed = partial.trim();
       if (!trimmed || saved) return;
       saved = true;
-      await appendAssistantMessage(userId, threadId, trimmed);
+      const proposal = getPendingProposal();
+      await appendAssistantMessage(userId, threadId, trimmed, undefined, proposal ?? undefined);
     };
 
     const readable = new ReadableStream({
@@ -78,6 +79,14 @@ export async function POST(req: Request) {
                 encoder.encode(`data: ${JSON.stringify({ type: "delta", text: event.text })}\n\n`)
               );
             }
+
+            if (event.type === "proposal") {
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({ type: "proposal", proposal: event.proposal })}\n\n`
+                )
+              );
+            }
           }
 
           if (req.signal.aborted) {
@@ -90,22 +99,24 @@ export async function POST(req: Request) {
           }
 
           const full = assistantText || getFullText();
-          if (full.trim()) {
-            await saveAssistant(full);
-          }
+          if (full.trim()) await saveAssistant(full);
 
-          const mutatedTasks = getMutatedTasks();
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "done", mutatedTasks })}\n\n`)
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: "done",
+                mutatedTasks: getMutatedTasks(),
+                proposal: getPendingProposal(),
+              })}\n\n`
+            )
           );
           controller.close();
         } catch (err) {
-          Sentry.captureException(err, {
-            extra: { threadId, userMessageLength: text.length },
-          });
-          const message = "Couldn't reach Claude — try again.";
+          Sentry.captureException(err, { extra: { threadId, userMessageLength: text.length } });
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "error", message })}\n\n`)
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "error", message: "Couldn't reach Claude — try again." })}\n\n`
+            )
           );
           controller.close();
         }
