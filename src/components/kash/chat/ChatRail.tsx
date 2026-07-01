@@ -63,9 +63,13 @@ export function ChatRail() {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" aria-hidden onClick={closeRail} />
+      <div
+        className="fixed inset-0 z-overlay bg-black/30 lg:hidden"
+        aria-hidden
+        onClick={closeRail}
+      />
       <aside
-        className="fixed inset-y-3 right-3 z-50 flex w-[min(100%-1.5rem,22rem)] flex-col rounded-card border border-border bg-surface p-4 shadow-overlay lg:sticky lg:inset-auto lg:top-6 lg:z-auto lg:h-[calc(100vh-3rem)] lg:w-[min(100%,22rem)] lg:shrink-0"
+        className="fixed inset-y-3 right-3 z-modal flex w-[min(100%-1.5rem,22rem)] flex-col rounded-card border border-border bg-surface p-4 shadow-overlay lg:sticky lg:inset-auto lg:top-6 lg:z-auto lg:h-[calc(100vh-3rem)] lg:w-[min(100%,22rem)] lg:shrink-0"
         aria-label="Claude chat"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -76,7 +80,7 @@ export function ChatRail() {
         </div>
 
         {!configured ? (
-          <p className="mb-3 rounded-lg bg-accent-soft px-3 py-2 text-xs text-ink-muted">
+          <p className="mb-3 rounded-control bg-accent-soft px-3 py-2 text-xs text-ink-muted">
             Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code>{" "}
             to your environment.
           </p>

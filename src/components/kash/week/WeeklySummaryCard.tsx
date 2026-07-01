@@ -64,7 +64,7 @@ export default function WeeklySummaryCard() {
                   <span className="text-ink">{categorySeedLabel(row.category)}</span>
                   <span className="shrink-0 text-ink-muted">{formatDuration(row.seconds)}</span>
                 </div>
-                <div className="h-[7px] overflow-hidden rounded-full bg-surface-2">
+                <div className="h-[var(--space-2)] overflow-hidden rounded-full bg-surface-2">
                   <div
                     className="h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
                     style={{

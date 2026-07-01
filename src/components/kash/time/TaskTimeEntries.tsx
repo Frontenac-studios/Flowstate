@@ -145,7 +145,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
                 <button
                   type="button"
                   onClick={() => beginEdit(entry)}
-                  className="text-ink-muted transition hover:text-ink"
+                  className="text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
                   aria-label="Edit entry"
                 >
                   Edit
@@ -154,7 +154,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
                   type="button"
                   onClick={() => deleteMutation.mutate({ entryId: entry.id })}
                   disabled={deleteMutation.isPending}
-                  className="text-ink-muted transition hover:text-critical disabled:opacity-50"
+                  className="text-ink-muted transition hover:text-critical focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:opacity-50"
                   aria-label="Delete entry"
                 >
                   Delete
@@ -196,7 +196,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           type="button"
           onClick={submit}
           disabled={pending}
-          className="rounded-pill border border-border bg-surface px-3 py-1 text-xs font-medium text-ink transition hover:text-accent disabled:opacity-50"
+          className="focus-visible:text-on-accent rounded-pill border border-border bg-surface px-3 py-1 text-xs font-medium text-ink transition hover:text-accent focus:outline-none focus-visible:bg-ink disabled:opacity-50"
         >
           {editingId ? "Save" : "Add time"}
         </button>
@@ -204,7 +204,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           <button
             type="button"
             onClick={resetForm}
-            className="text-xs text-ink-muted transition hover:text-ink"
+            className="text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
           >
             Cancel
           </button>

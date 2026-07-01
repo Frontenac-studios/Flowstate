@@ -63,7 +63,7 @@ export default function AboutMeSection() {
 
       <nav
         aria-label="About me sections"
-        className="bg-surface/95 sticky top-0 z-10 -mx-1 mb-5 flex gap-1 px-1 py-2 backdrop-blur"
+        className="bg-surface/95 sticky top-0 z-sticky -mx-1 mb-5 flex gap-1 px-1 py-2 backdrop-blur"
       >
         {CHIPS.map((chip) => (
           <button
@@ -72,7 +72,7 @@ export default function AboutMeSection() {
             onClick={() => jumpTo(chip.id)}
             aria-current={active === chip.id}
             className={cn(
-              "rounded-pill px-3 py-1 text-meta transition",
+              "focus-visible:text-on-accent rounded-pill px-3 py-1 text-meta transition focus:outline-none focus-visible:bg-ink",
               active === chip.id ? "bg-active-surface text-ink" : "text-ink-muted hover:text-ink"
             )}
           >

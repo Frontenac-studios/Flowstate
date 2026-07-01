@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import { Inbox, kashIconProps } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { useTRPC } from "@/trpc/client";
@@ -32,10 +33,11 @@ export function ContextualInbox() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex items-center gap-1.5 rounded-[var(--radius-chip)] px-2 py-1 text-sm text-ink-muted transition hover:text-ink"
+              className="focus-visible:text-on-accent flex items-center gap-1.5 rounded-chip px-2 py-1 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:bg-ink"
               title="Inbox (⌃I)"
             >
-              📥 Inbox
+              <Inbox {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
+              Inbox
               {inboxCount > 0 ? (
                 <span className="rounded-full bg-[var(--accent-soft)] px-1.5 text-xs text-accent">
                   {inboxCount}
@@ -47,8 +49,9 @@ export function ContextualInbox() {
         ) : (
           <div className="flex max-h-[42vh] flex-col">
             <div className="flex items-center gap-1 border-b border-[var(--border)] px-3 py-2">
-              <span className="rounded-[var(--radius-chip)] bg-[var(--accent-soft)] px-2.5 py-1 text-sm text-accent">
-                {inboxCount > 0 ? `📥 Inbox ${inboxCount}` : "📥 Inbox"}
+              <span className="flex items-center gap-1.5 rounded-chip bg-[var(--accent-soft)] px-2.5 py-1 text-sm text-accent">
+                <Inbox {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
+                {inboxCount > 0 ? `Inbox ${inboxCount}` : "Inbox"}
               </span>
               <IconButton
                 type="button"

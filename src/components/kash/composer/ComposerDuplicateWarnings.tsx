@@ -59,7 +59,7 @@ export default function ComposerDuplicateWarnings({
       {Array.from(byLine.entries()).map(([lineIndex, lineWarnings]) => (
         <div
           key={lineIndex}
-          className="rounded-lg border border-amber-200/70 bg-amber-50/50 p-3 text-sm text-amber-900"
+          className="rounded-control border border-subtle bg-surface-2 p-3 text-sm text-ink-muted"
         >
           {lineWarnings.map((warning, i) => (
             <p key={`${warning.matchKind}-${i}`}>

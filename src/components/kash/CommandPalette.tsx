@@ -11,6 +11,9 @@ export const OPEN_PALETTE_EVENT = "kash:open-palette";
 /** Fired when the user runs the "Decide next task" command. DayPlanCanvas listens. */
 export const DECIDE_EVENT = "kash:decide";
 
+const ROW_FOCUS =
+  "focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]";
+
 type Command = {
   id: string;
   label: string;
@@ -122,7 +125,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[18vh]"
+      className="fixed inset-0 z-modal flex items-start justify-center px-4 pt-[18vh]"
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
@@ -131,7 +134,7 @@ export function CommandPalette() {
       }}
     >
       <div className="absolute inset-0 bg-black/20" aria-hidden onMouseDown={close} />
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-card border border-border bg-surface p-2 shadow-overlay">
+      <div className="relative z-sticky w-full max-w-lg overflow-hidden rounded-card border border-border bg-surface p-2 shadow-overlay">
         <Input
           ref={inputRef}
           value={query}
@@ -165,7 +168,7 @@ export function CommandPalette() {
                   type="button"
                   onMouseEnter={() => setSelected(i)}
                   onClick={() => run(cmd)}
-                  className={`flex w-full items-center justify-between rounded-[var(--radius-chip)] px-3 py-2 text-left text-sm transition ${
+                  className={`flex w-full items-center justify-between rounded-chip px-3 py-2 text-left text-sm transition ${ROW_FOCUS} ${
                     i === selected ? "bg-[var(--accent-soft)] text-ink" : "text-ink"
                   }`}
                 >
