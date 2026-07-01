@@ -9,8 +9,7 @@ import SuggestionGhost, { type Suggestion } from "./SuggestionGhost";
 
 /**
  * Renders the pending AI-proposed ghosts for one section, inline (§13 V2-2). The
- * producer (§11 AI persona) is not wired yet, so this is empty in normal use — the
- * accept/dismiss path is fully built and ready.
+ * §11 producer writes rows via propose_about_me_edit / register hooks.
  */
 export default function SectionSuggestions({ section }: { section: AboutMeSection }) {
   const trpc = useTRPC();
