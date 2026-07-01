@@ -8,6 +8,14 @@ export type CareEventBingoMeta = {
   lineType: "row" | "column" | "diagonal";
 };
 
+export type CareEventDailyWinMeta = {
+  dailyWinId: string;
+  winDate: string;
+  beat: "drip" | "full_set";
+};
+
+export type CareEventMeta = CareEventBingoMeta | CareEventDailyWinMeta | null;
+
 // A logged self-care act ("I did this" / check-off) or a planning bingo nourish.
 // Feeds frequency stats, garden nourishment, and wins. activityId is nullable +
 // set-null so an event outlives its practice being archived/removed;
@@ -21,7 +29,7 @@ export const careEvents = pgTable(
       onDelete: "set null",
     }),
     source: careEventSource("source").notNull().default("practice"),
-    meta: jsonb("meta").$type<CareEventBingoMeta | null>(),
+    meta: jsonb("meta").$type<CareEventMeta>(),
     occurredAt: timestamp("occurred_at", { withTimezone: true, mode: "date" })
       .notNull()
       .defaultNow(),

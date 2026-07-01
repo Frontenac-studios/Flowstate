@@ -16,6 +16,7 @@ import { cadenceToRRule } from "@/lib/care/cadence";
 import { extraPlantCount, gardenGrowthTier } from "@/lib/care/garden-growth";
 import { SEED_CATALOG } from "@/lib/care/seed-catalog";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import type { CareEventDailyWinMeta } from "@/db/schema/care-events";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -321,7 +322,7 @@ export const careRouter = createTRPCRouter({
       .orderBy(desc(careEvents.occurredAt));
   }),
 
-  /** Garden nourishment totals — practice check-offs and planning bingo lines. */
+  /** Garden nourishment totals — practice check-offs, bingo lines, and daily wins. */
   getGardenState: protectedProcedure.query(async ({ ctx }) => {
     const [row] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
@@ -335,6 +336,36 @@ export const careRouter = createTRPCRouter({
       extraPlants: extraPlantCount(nourishCount),
     };
   }),
+
+  /** Recent daily-win nourishments for Care-only garden animation (AN-C3). */
+  recentWinNourishments: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(20).default(8) }))
+    .query(async ({ ctx, input }) => {
+      const rows = await db
+        .select({
+          id: careEvents.id,
+          meta: careEvents.meta,
+          occurredAt: careEvents.occurredAt,
+        })
+        .from(careEvents)
+        .where(and(eq(careEvents.userId, ctx.userId), eq(careEvents.source, "daily_win")))
+        .orderBy(desc(careEvents.occurredAt))
+        .limit(input.limit);
+
+      return rows
+        .map((row) => {
+          const meta = row.meta as CareEventDailyWinMeta | null;
+          if (!meta?.dailyWinId) return null;
+          return {
+            id: row.id,
+            dailyWinId: meta.dailyWinId,
+            winDate: meta.winDate,
+            beat: meta.beat,
+            occurredAt: row.occurredAt,
+          };
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+    }),
 
   /** Record a planning bingo line reward as garden nourishment (RW-2). */
   recordBingoNourish: protectedProcedure

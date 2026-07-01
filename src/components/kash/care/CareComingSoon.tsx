@@ -6,7 +6,7 @@ import { CARE_COMING_SOON, type CareTab } from "./care-tabs";
  * B&W landing for Care tabs whose features ship in later slices. A calm
  * empty-state panel — icon, title, a one-line preview of what's coming.
  */
-export function CareComingSoon({ tab }: { tab: Exclude<CareTab, "garden"> }) {
+export function CareComingSoon({ tab }: { tab: Exclude<CareTab, "garden" | "stats" | "tasks"> }) {
   const { title, copy, Icon } = CARE_COMING_SOON[tab];
 
   return (

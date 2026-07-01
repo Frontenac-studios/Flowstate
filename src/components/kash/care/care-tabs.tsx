@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import { BarChart3, BookText, List, Mountain, Wind, withKashIcon } from "@/components/kash/ui/icon";
+import { BookText, List, Mountain, Wind, withKashIcon } from "@/components/kash/ui/icon";
 
 import type { SwitcherOption } from "../InPageSwitcher";
 
@@ -34,7 +34,6 @@ export const CARE_SUBTITLES: Record<CareTab, string> = {
 const TasksIcon = withKashIcon(List);
 const BreathingIcon = withKashIcon(Wind);
 const ReflectionIcon = withKashIcon(BookText);
-const StatsIcon = withKashIcon(BarChart3);
 const TravelIcon = withKashIcon(Mountain);
 
 /**
@@ -42,7 +41,7 @@ const TravelIcon = withKashIcon(Mountain);
  * built now, so it has no "coming soon" entry.
  */
 export const CARE_COMING_SOON: Record<
-  Exclude<CareTab, "garden">,
+  Exclude<CareTab, "garden" | "stats">,
   { title: string; copy: string; Icon: LucideIcon }
 > = {
   tasks: {
@@ -59,11 +58,6 @@ export const CARE_COMING_SOON: Record<
     title: "Reflection",
     copy: "A gentle nightly prompt, space to write, and your reflections archive.",
     Icon: ReflectionIcon,
-  },
-  stats: {
-    title: "Self-care stats",
-    copy: "A quiet look at your self-care, wins, and mood over time.",
-    Icon: StatsIcon,
   },
   travel: {
     title: "Restorative time",

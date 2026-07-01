@@ -1,10 +1,15 @@
 import type { CSSProperties } from "react";
 
+import type { GardenNourishBeat } from "@/lib/care/garden-nourish";
 import { extraPlantCount } from "@/lib/care/garden-growth";
+
+import "./care-garden-motion.css";
 
 type Props = {
   nourishCount?: number;
   growthTier?: number;
+  nourishBeat?: GardenNourishBeat | null;
+  nourishPulseKey?: number;
 };
 
 /**
@@ -31,7 +36,12 @@ const gardenPalette = {
   "--g-petal-b": "#cdb6e6",
 } as CSSProperties;
 
-export function GardenScene({ nourishCount = 0, growthTier = 0 }: Props) {
+export function GardenScene({
+  nourishCount = 0,
+  growthTier = 0,
+  nourishBeat = null,
+  nourishPulseKey = 0,
+}: Props) {
   const bonusPlants = extraPlantCount(nourishCount);
   const bonusOffsets = [
     { cx: 155, cy: 208, r: 7 },
@@ -94,7 +104,18 @@ export function GardenScene({ nourishCount = 0, growthTier = 0 }: Props) {
           <ellipse cx="322" cy="222" rx="7" ry="13" />
           <ellipse cx="300" cy="223" rx="6" ry="11" />
         </g>
-        <circle cx="345" cy="214" r="7" fill="var(--g-petal-a)" />
+        <g
+          key={nourishPulseKey}
+          className={
+            nourishBeat === "full_set"
+              ? "garden-nourish-full"
+              : nourishBeat === "drip"
+                ? "garden-nourish-drip"
+                : undefined
+          }
+        >
+          <circle cx="345" cy="214" r="7" fill="var(--g-petal-a)" />
+        </g>
         {bonusPlants > 0
           ? bonusOffsets.slice(0, bonusPlants).map((plant, index) => (
               <g key={`bonus-${index}`}>

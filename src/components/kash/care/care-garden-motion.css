@@ -1,0 +1,63 @@
+/* AN-C3 — Care garden nourish (DW-5). Scoped to Care; uses global motion tokens. */
+
+@keyframes garden-nourish-grow {
+  0% {
+    opacity: 0.55;
+    transform: scaleY(0.2);
+  }
+  65% {
+    opacity: 1;
+    transform: scaleY(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes garden-nourish-grow-full {
+  0% {
+    opacity: 0.5;
+    transform: scaleY(0.15);
+  }
+  55% {
+    opacity: 1;
+    transform: scaleY(1.16);
+  }
+  78% {
+    transform: scaleY(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes garden-nourish-fade {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.garden-nourish-drip {
+  animation: garden-nourish-grow var(--motion-medium) var(--ease-overshoot) both;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+.garden-nourish-full {
+  animation: garden-nourish-grow-full var(--motion-celebrate) var(--ease-overshoot) both;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-nourish-drip,
+  .garden-nourish-full {
+    animation: garden-nourish-fade var(--motion-short) var(--ease-enter) both;
+    transform: none;
+  }
+}
