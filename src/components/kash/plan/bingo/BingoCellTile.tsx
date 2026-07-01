@@ -68,7 +68,7 @@ export default function BingoCellTile({
   if (goal.state === "done") {
     return (
       <div
-        className={`relative flex aspect-square flex-col justify-end overflow-hidden rounded-card p-2 ${ring} ${inWinningLine ? "motion-safe:animate-pulse" : ""}`}
+        className={`relative flex aspect-square flex-col justify-end overflow-hidden rounded-card p-2 ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
         style={{ backgroundColor: solid }}
       >
         <button
@@ -103,7 +103,7 @@ export default function BingoCellTile({
     <div
       className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-[1.5px] bg-surface p-2 ${
         backburnered ? "opacity-40" : ""
-      } ${ring} ${inWinningLine ? "motion-safe:animate-pulse" : ""}`}
+      } ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
       style={{ borderColor: solid }}
     >
       <button

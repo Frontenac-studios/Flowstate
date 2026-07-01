@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BalancePassProvider, {
   useBalancePassTrigger,
 } from "@/components/kash/plan/balance/BalancePassProvider";
+import CheckInProvider, { CheckInEntry } from "@/components/kash/plan/check-in/CheckInProvider";
 
 import {
   horizonForBreadcrumb,
@@ -209,30 +210,80 @@ function PlanHorizonViewInner() {
     (horizon === "quarter" && breadcrumb.quarter == null);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-lg font-semibold text-ink">{title}</h1>
-          {horizon !== "bingo" ? (
-            <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
-          ) : null}
+    <CheckInProvider breadcrumb={breadcrumb}>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-lg font-semibold text-ink">{title}</h1>
+            {horizon !== "bingo" ? (
+              <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <CheckInEntry />
+            <InPageSwitcher
+              options={HORIZON_OPTIONS}
+              value={horizon}
+              onChange={handleHorizonChange}
+              ariaLabel="Planning horizon"
+            />
+          </div>
         </div>
-        <InPageSwitcher
-          options={HORIZON_OPTIONS}
-          value={horizon}
-          onChange={handleHorizonChange}
-          ariaLabel="Planning horizon"
+        <PlanHorizonContent
+          horizon={horizon}
+          breadcrumb={breadcrumb}
+          showQuarterDrill={showQuarterDrill}
+          showMonthDrill={showMonthDrill}
+          showWeekPlan={showWeekPlan}
+          showPlaceholder={showPlaceholder}
+          onZoomQuarter={handleZoomQuarter}
+          onZoomMonth={handleZoomMonth}
         />
       </div>
+    </CheckInProvider>
+  );
+}
+
+type HorizonContentProps = {
+  horizon: PlanningHorizon;
+  breadcrumb: PlanningBreadcrumb;
+  showQuarterDrill: boolean;
+  showMonthDrill: boolean;
+  showWeekPlan: boolean;
+  showPlaceholder: boolean;
+  onZoomQuarter: (quarter: number) => void;
+  onZoomMonth: (month: number) => void;
+};
+
+function PlanHorizonContent({
+  horizon,
+  breadcrumb,
+  showQuarterDrill,
+  showMonthDrill,
+  showWeekPlan,
+  showPlaceholder,
+  onZoomQuarter,
+  onZoomMonth,
+}: HorizonContentProps) {
+  const contentKey = [
+    horizon,
+    breadcrumb.year,
+    breadcrumb.quarter,
+    breadcrumb.month,
+    breadcrumb.isoWeek,
+  ].join("-");
+
+  return (
+    <div key={contentKey} className="plan-zoom-enter">
       {horizon === "bingo" ? (
         <BingoCard year={breadcrumb.year} />
       ) : horizon === "year" ? (
-        <YearView year={breadcrumb.year} onZoomQuarter={handleZoomQuarter} />
+        <YearView year={breadcrumb.year} onZoomQuarter={onZoomQuarter} />
       ) : showQuarterDrill ? (
         <QuarterView
           year={breadcrumb.year}
           quarter={breadcrumb.quarter!}
-          onZoomMonth={handleZoomMonth}
+          onZoomMonth={onZoomMonth}
         />
       ) : showMonthDrill ? (
         <MonthView year={breadcrumb.year} month={breadcrumb.month!} />

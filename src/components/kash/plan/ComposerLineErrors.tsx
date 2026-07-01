@@ -45,7 +45,7 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
                         {i > 0 ? ", " : ""}
                         <button
                           type="button"
-                          className="glass-link font-medium"
+                          className="font-medium text-ink underline-offset-2 hover:underline"
                           onClick={() => onApplySuggestion(line, s.slug)}
                         >
                           {s.slug}
@@ -57,7 +57,10 @@ export function ComposerLineErrors({ lines, onApplySuggestion }: Props) {
                 ) : null}
                 <p className="text-ink-muted">
                   Create it in{" "}
-                  <Link href="/projects" className="glass-link font-medium">
+                  <Link
+                    href="/projects"
+                    className="font-medium text-ink underline-offset-2 hover:underline"
+                  >
                     Projects
                   </Link>{" "}
                   first — projects need a category.

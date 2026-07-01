@@ -25,6 +25,8 @@ import {
   computeBalanceFlags,
   weightsFromActivity,
 } from "@/lib/planning/balance-pass";
+import { checkInDepthSchema, checkInScopeKey } from "@/lib/planning/check-in";
+import { templateCheckInSuggestions } from "@/lib/planning/check-in-templates";
 import {
   goalProgressPercent,
   milestoneIsComplete,
@@ -1491,6 +1493,113 @@ export const planningRouter = createTRPCRouter({
       return rows.filter(Boolean);
     }),
 
+  suggestCheckIn: protectedProcedure
+    .input(
+      z.object({
+        depth: checkInDepthSchema,
+        year: yearSchema,
+        month: monthSchema.optional(),
+        quarter: quarterSchema.optional(),
+        weekStart: isoDateSchema.optional(),
+        tzOffsetMinutes: z.number().int().min(-720).max(840),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.depth === "week" && !input.weekStart) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "weekStart is required for week check-in.",
+        });
+      }
+      if (input.depth === "month" && input.month == null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "month is required for month check-in.",
+        });
+      }
+      if (input.depth === "quarter" && input.quarter == null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "quarter is required for quarter check-in.",
+        });
+      }
+
+      const scope = {
+        depth: input.depth,
+        year: input.year,
+        month: input.month,
+        quarter: input.quarter,
+        weekStart: input.weekStart,
+      };
+      const scopeKey = checkInScopeKey(scope);
+
+      const pendingRows = await db
+        .select()
+        .from(planningSuggestions)
+        .where(
+          and(
+            eq(planningSuggestions.userId, ctx.userId),
+            eq(planningSuggestions.surface, "check_in"),
+            eq(planningSuggestions.status, "pending")
+          )
+        );
+
+      const forScope = pendingRows.filter((row) => {
+        const payload = row.payload as { scopeKey?: string };
+        return payload.scopeKey === scopeKey;
+      });
+      if (forScope.length > 0) return forScope;
+
+      const goalRows = await db
+        .select({
+          id: goals.id,
+          title: goals.title,
+          targetHorizon: goals.targetHorizon,
+          targetYear: goals.targetYear,
+          targetQuarter: goals.targetQuarter,
+          targetMonth: goals.targetMonth,
+          state: goals.state,
+        })
+        .from(goals)
+        .where(eq(goals.userId, ctx.userId));
+
+      const taskRows = await db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          scheduledDate: tasks.scheduledDate,
+        })
+        .from(tasks)
+        .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)));
+
+      const milestoneRows = await db
+        .select({ goalId: goalMilestones.goalId })
+        .from(goalMilestones)
+        .where(eq(goalMilestones.userId, ctx.userId));
+
+      const proposals = templateCheckInSuggestions(scope, goalRows, taskRows, milestoneRows);
+
+      const rows = await Promise.all(
+        proposals.map(async (payload) => {
+          const [row] = await db
+            .insert(planningSuggestions)
+            .values({
+              userId: ctx.userId,
+              surface: "check_in",
+              payload,
+            })
+            .returning();
+          return row;
+        })
+      );
+
+      for (const row of rows) {
+        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
+      }
+
+      return rows.filter(Boolean);
+    }),
+
   applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
     const now = new Date();
     const staged = await db
@@ -1612,6 +1721,61 @@ export const planningRouter = createTRPCRouter({
             })
             .returning();
           if (created) await syncTaskRow(created.id, "insert", created);
+        }
+      }
+
+      if (row.surface === "check_in") {
+        const payload = row.payload as {
+          action?: "goal_horizon" | "milestone" | "task_schedule";
+          goalId?: string;
+          milestoneTitle?: string;
+          sortOrder?: number;
+          taskId?: string;
+          scheduledDate?: string;
+          targetHorizon?: "quarter" | "month";
+          targetYear?: number;
+          targetQuarter?: number;
+          targetMonth?: number;
+          year?: number;
+        };
+
+        if (payload.action === "goal_horizon" && payload.goalId && payload.targetHorizon) {
+          const [updated] = await db
+            .update(goals)
+            .set({
+              targetHorizon: payload.targetHorizon,
+              targetYear: payload.year ?? payload.targetYear,
+              targetQuarter: payload.targetQuarter ?? null,
+              targetMonth: payload.targetMonth ?? null,
+              updatedAt: now,
+            })
+            .where(and(eq(goals.id, payload.goalId), eq(goals.userId, ctx.userId)))
+            .returning();
+          if (updated) await syncRow("goals", updated.id, "update", updated);
+        }
+
+        if (payload.action === "milestone" && payload.goalId && payload.milestoneTitle) {
+          const [created] = await db
+            .insert(goalMilestones)
+            .values({
+              userId: ctx.userId,
+              goalId: payload.goalId,
+              title: payload.milestoneTitle,
+              sortOrder: payload.sortOrder ?? 0,
+            })
+            .returning();
+          if (created) await syncRow("goal_milestones", created.id, "insert", created);
+        }
+
+        if (payload.action === "task_schedule" && payload.taskId && payload.scheduledDate) {
+          await db
+            .update(tasks)
+            .set({
+              scheduledDate: payload.scheduledDate,
+              bucketOverride: null,
+              updatedAt: now,
+            })
+            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
         }
       }
     }

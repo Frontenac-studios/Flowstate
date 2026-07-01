@@ -43,7 +43,9 @@ export default function GhostedAccept({
           return (
             <li
               key={item.id}
-              className="border-ink/25 bg-ink/[0.02] flex items-start justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-sm"
+              className={`border-ink/25 bg-ink/[0.02] flex items-start justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-sm transition duration-short ${
+                staged ? "ghost-settle border-solid bg-surface" : ""
+              }`}
             >
               <div className="min-w-0 flex-1">
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
