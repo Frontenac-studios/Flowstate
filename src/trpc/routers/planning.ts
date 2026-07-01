@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -9,12 +9,21 @@ import {
   goalMilestones,
   goals,
   monthIntentions,
+  phases,
   planningSuggestions,
+  projects,
   quarterThemes,
   reservedDays,
+  tasks,
 } from "@/db/tables";
 import { assertEditableBingoCell } from "@/lib/planning/bingo-cells";
+import {
+  goalProgressPercent,
+  milestoneIsComplete,
+  type MilestoneProgress,
+} from "@/lib/planning/goal-progress";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+import { slugifyProjectName } from "@/lib/projects/slugify";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -632,8 +641,301 @@ export const planningRouter = createTRPCRouter({
       return row;
     }),
 
+  getGoalDetail: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [goal] = await db
+        .select()
+        .from(goals)
+        .where(and(eq(goals.id, input.id), eq(goals.userId, ctx.userId)))
+        .limit(1);
+
+      if (!goal) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Goal not found." });
+      }
+
+      const milestoneRows = await db
+        .select()
+        .from(goalMilestones)
+        .where(and(eq(goalMilestones.userId, ctx.userId), eq(goalMilestones.goalId, goal.id)))
+        .orderBy(asc(goalMilestones.sortOrder));
+
+      const milestoneIds = milestoneRows.map((m) => m.id);
+      const linkedTasks =
+        milestoneIds.length === 0
+          ? []
+          : await db
+              .select({
+                milestoneId: tasks.milestoneId,
+                completedAt: tasks.completedAt,
+                timeEstimateMinutes: tasks.timeEstimateMinutes,
+              })
+              .from(tasks)
+              .where(and(eq(tasks.userId, ctx.userId), inArray(tasks.milestoneId, milestoneIds)));
+
+      const statsByMilestone = new Map<string, { total: number; completed: number }>();
+      for (const id of milestoneIds) statsByMilestone.set(id, { total: 0, completed: 0 });
+      for (const task of linkedTasks) {
+        if (!task.milestoneId) continue;
+        const stats = statsByMilestone.get(task.milestoneId);
+        if (!stats) continue;
+        stats.total += 1;
+        if (task.completedAt) stats.completed += 1;
+      }
+
+      const milestones: MilestoneProgress[] = milestoneRows.map((m) => {
+        const taskCounts = statsByMilestone.get(m.id) ?? { total: 0, completed: 0 };
+        return {
+          id: m.id,
+          title: m.title,
+          sortOrder: m.sortOrder,
+          taskCounts,
+          isComplete: milestoneIsComplete(taskCounts),
+        };
+      });
+
+      const taskEstimates = linkedTasks.map((t) => t.timeEstimateMinutes);
+      let projectSlug: string | null = null;
+      let projectName: string | null = null;
+      if (goal.projectId) {
+        const [project] = await db
+          .select({ slug: projects.slug, name: projects.name })
+          .from(projects)
+          .where(and(eq(projects.id, goal.projectId), eq(projects.userId, ctx.userId)))
+          .limit(1);
+        projectSlug = project?.slug ?? null;
+        projectName = project?.name ?? null;
+      }
+
+      return {
+        goal,
+        milestones,
+        progressPercent: goalProgressPercent(milestones),
+        taskEstimates,
+        projectSlug,
+        projectName,
+      };
+    }),
+
+  listMilestoneTasks: protectedProcedure
+    .input(z.object({ milestoneId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [milestone] = await db
+        .select({ id: goalMilestones.id })
+        .from(goalMilestones)
+        .where(and(eq(goalMilestones.id, input.milestoneId), eq(goalMilestones.userId, ctx.userId)))
+        .limit(1);
+
+      if (!milestone) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Milestone not found." });
+      }
+
+      return db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          completedAt: tasks.completedAt,
+          timeEstimateMinutes: tasks.timeEstimateMinutes,
+          scheduledDate: tasks.scheduledDate,
+        })
+        .from(tasks)
+        .where(and(eq(tasks.userId, ctx.userId), eq(tasks.milestoneId, input.milestoneId)))
+        .orderBy(asc(tasks.createdAt));
+    }),
+
+  linkTaskToMilestone: protectedProcedure
+    .input(
+      z.object({
+        taskId: z.string().uuid(),
+        milestoneId: z.string().uuid().nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.milestoneId) {
+        const [milestone] = await db
+          .select({ id: goalMilestones.id })
+          .from(goalMilestones)
+          .where(
+            and(eq(goalMilestones.id, input.milestoneId), eq(goalMilestones.userId, ctx.userId))
+          )
+          .limit(1);
+        if (!milestone) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Milestone not found." });
+        }
+      }
+
+      const [row] = await db
+        .update(tasks)
+        .set({ milestoneId: input.milestoneId, updatedAt: new Date() })
+        .where(and(eq(tasks.id, input.taskId), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      }
+
+      return row;
+    }),
+
+  promoteGoalToProject: protectedProcedure
+    .input(z.object({ goalId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [goal] = await db
+        .select()
+        .from(goals)
+        .where(and(eq(goals.id, input.goalId), eq(goals.userId, ctx.userId)))
+        .limit(1);
+
+      if (!goal) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Goal not found." });
+      }
+      if (goal.projectId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Goal already has a backing project.",
+        });
+      }
+
+      const milestoneRows = await db
+        .select()
+        .from(goalMilestones)
+        .where(and(eq(goalMilestones.goalId, goal.id), eq(goalMilestones.userId, ctx.userId)))
+        .orderBy(asc(goalMilestones.sortOrder));
+
+      const slugBase = slugifyProjectName(goal.title);
+      let slug = slugBase;
+      let suffix = 1;
+      while (true) {
+        const [existing] = await db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(and(eq(projects.userId, ctx.userId), eq(projects.slug, slug)))
+          .limit(1);
+        if (!existing) break;
+        suffix += 1;
+        slug = `${slugBase}-${suffix}`;
+      }
+
+      const now = new Date();
+      const [project] = await db
+        .insert(projects)
+        .values({
+          userId: ctx.userId,
+          name: goal.title,
+          slug,
+          category: goal.category,
+        })
+        .returning();
+
+      if (!project) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create project.",
+        });
+      }
+
+      const phaseIdByMilestone = new Map<string, string>();
+      for (const [index, milestone] of Array.from(milestoneRows.entries())) {
+        const [phase] = await db
+          .insert(phases)
+          .values({
+            userId: ctx.userId,
+            projectId: project.id,
+            name: milestone.title,
+            sortOrder: index,
+          })
+          .returning();
+        if (phase) phaseIdByMilestone.set(milestone.id, phase.id);
+      }
+
+      for (const [milestoneId, phaseId] of Array.from(phaseIdByMilestone.entries())) {
+        await db
+          .update(tasks)
+          .set({ projectId: project.id, phaseId, updatedAt: now })
+          .where(and(eq(tasks.userId, ctx.userId), eq(tasks.milestoneId, milestoneId)));
+      }
+
+      const [updatedGoal] = await db
+        .update(goals)
+        .set({ projectId: project.id, updatedAt: now })
+        .where(and(eq(goals.id, goal.id), eq(goals.userId, ctx.userId)))
+        .returning();
+
+      if (!updatedGoal) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to link goal." });
+      }
+
+      await syncRow("goals", updatedGoal.id, "update", updatedGoal);
+      return { project, goal: updatedGoal };
+    }),
+
+  suggestMilestoneBreakdown: protectedProcedure
+    .input(z.object({ goalId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [goal] = await db
+        .select({ title: goals.title })
+        .from(goals)
+        .where(and(eq(goals.id, input.goalId), eq(goals.userId, ctx.userId)))
+        .limit(1);
+
+      if (!goal) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Goal not found." });
+      }
+
+      const titles = [
+        `Research & plan: ${goal.title}`,
+        `Execute core work on ${goal.title}`,
+        `Finish & review: ${goal.title}`,
+      ];
+
+      const rows = await Promise.all(
+        titles.map(async (title, index) => {
+          const [row] = await db
+            .insert(planningSuggestions)
+            .values({
+              userId: ctx.userId,
+              surface: "milestone_breakdown",
+              payload: { goalId: input.goalId, title, sortOrder: index },
+            })
+            .returning();
+          return row;
+        })
+      );
+
+      for (const row of rows) {
+        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
+      }
+
+      return rows.filter(Boolean);
+    }),
+
   applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
     const now = new Date();
+    const staged = await db
+      .select()
+      .from(planningSuggestions)
+      .where(
+        and(eq(planningSuggestions.userId, ctx.userId), eq(planningSuggestions.status, "staged"))
+      );
+
+    for (const row of staged) {
+      if (row.surface === "milestone_breakdown") {
+        const payload = row.payload as { goalId?: string; title?: string; sortOrder?: number };
+        if (payload.goalId && payload.title) {
+          const [created] = await db
+            .insert(goalMilestones)
+            .values({
+              userId: ctx.userId,
+              goalId: payload.goalId,
+              title: payload.title,
+              sortOrder: payload.sortOrder ?? 0,
+            })
+            .returning();
+          if (created) await syncRow("goal_milestones", created.id, "insert", created);
+        }
+      }
+    }
+
     const rows = await db
       .update(planningSuggestions)
       .set({ status: "applied", updatedAt: now })

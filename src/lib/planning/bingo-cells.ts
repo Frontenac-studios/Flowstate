@@ -14,3 +14,12 @@ export function assertEditableBingoCell(index: number): void {
     throw new Error(`cell_index must be 0–24 (excluding ${BINGO_FREE_CELL_INDEX}).`);
   }
 }
+
+/** Next empty cell index on the card (skips FREE center). */
+export function nextEmptyCellIndex(occupied: ReadonlySet<number>): number | null {
+  for (let i = 0; i < BINGO_CELL_COUNT; i += 1) {
+    if (i === BINGO_FREE_CELL_INDEX) continue;
+    if (!occupied.has(i)) return i;
+  }
+  return null;
+}

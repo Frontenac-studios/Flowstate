@@ -1,8 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import GhostedAccept from "@/components/kash/plan/GhostedAccept";
+import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
 import {
   buildGrid,
   cardProgress,
@@ -10,12 +12,54 @@ import {
   completedLines,
   type BingoGoal,
 } from "@/lib/planning/bingo-grid";
+import {
+  isBlackoutComplete,
+  newlyCompletedLines,
+  readBingoRewardState,
+  rewardTierForLineCount,
+  rewardToastMessage,
+  writeBingoRewardState,
+} from "@/lib/planning/bingo-line-reward";
+import { suggestSpellingFixes } from "@/lib/planning/bingo-spelling-pass";
+import { recordBingoReward } from "@/lib/planning/stubs";
 import { type ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
 import BingoBalanceLegend from "./BingoBalanceLegend";
+import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
+import BingoLineToast from "./BingoLineToast";
+import BingoListView, { type BingoListGroupBy } from "./BingoListView";
+import BingoOnboarding from "./BingoOnboarding";
 import BingoQuickAdd from "./BingoQuickAdd";
+
+const AWARDED_LINES_KEY = "kash-bingo-awarded-lines";
+
+function readAwardedLineSignatures(year: number): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(`${AWARDED_LINES_KEY}-${year}`);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as string[];
+    return new Set(parsed);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeAwardedLineSignatures(year: number, signatures: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      `${AWARDED_LINES_KEY}-${year}`,
+      JSON.stringify(Array.from(signatures))
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+type ViewMode = "card" | "list";
 
 type Props = {
   year: number;
@@ -35,10 +79,17 @@ export default function BingoCard({ year }: Props) {
     enabled: !!bingoCardId,
   });
 
+  const [viewMode, setViewMode] = useState<ViewMode>("card");
+  const [listGroupBy, setListGroupBy] = useState<BingoListGroupBy>("category");
   const [addingCell, setAddingCell] = useState<number | null>(null);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [pendingGoalId, setPendingGoalId] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [confirmingFinalize, setConfirmingFinalize] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [spellingStaged, setSpellingStaged] = useState<Set<string>>(new Set());
+  const awardedRef = useRef<Set<string>>(readAwardedLineSignatures(year));
 
   const invalidateCard = () =>
     queryClient.invalidateQueries({
@@ -52,7 +103,12 @@ export default function BingoCard({ year }: Props) {
       : Promise.resolve();
 
   const startMutation = useMutation(
-    trpc.planning.getOrCreateBingoCard.mutationOptions({ onSuccess: () => void invalidateCard() })
+    trpc.planning.getOrCreateBingoCard.mutationOptions({
+      onSuccess: () => {
+        void invalidateCard();
+        setShowOnboarding(true);
+      },
+    })
   );
 
   const createGoalMutation = useMutation(
@@ -60,6 +116,7 @@ export default function BingoCard({ year }: Props) {
       onSuccess: () => {
         setAddingCell(null);
         setAddError(null);
+        setShowOnboarding(false);
         void invalidateGoals();
       },
       onError: (err) => {
@@ -94,46 +151,104 @@ export default function BingoCard({ year }: Props) {
     trpc.planning.finalizeBingoCard.mutationOptions({
       onSuccess: () => {
         setConfirmingFinalize(false);
+        setSpellingStaged(new Set());
         void invalidateCard();
       },
     })
   );
 
-  if (cardQuery.isLoading) {
-    return <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted" />;
-  }
+  const goals: BingoGoal[] = useMemo(
+    () =>
+      (goalsQuery.data ?? []).map((g) => ({
+        id: g.id,
+        title: g.title,
+        category: g.category as ProjectCategory,
+        cellIndex: g.cellIndex,
+        state: g.state,
+      })),
+    [goalsQuery.data]
+  );
 
-  if (!card) {
-    return (
-      <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8">
-        <p className="text-body text-ink">
-          Your {year} bingo card is a 5×5 grid of goals. Fill the squares, then check them off as
-          you go — line up five for a win.
-        </p>
-        <button
-          type="button"
-          onClick={() => startMutation.mutate({ cardYear: year })}
-          disabled={startMutation.isPending}
-          className="rounded-control border-[1.5px] border-ink px-4 py-2 text-body font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
-        >
-          {startMutation.isPending ? "Creating…" : `Start your ${year} card`}
-        </button>
-      </div>
-    );
-  }
-
-  const goals: BingoGoal[] = (goalsQuery.data ?? []).map((g) => ({
-    id: g.id,
-    title: g.title,
-    category: g.category as ProjectCategory,
-    cellIndex: g.cellIndex,
-    state: g.state,
-  }));
-
-  const grid = buildGrid(goals);
+  const grid = useMemo(() => buildGrid(goals), [goals]);
   const { done, total } = cardProgress(goals);
   const balance = categoryBalance(goals);
   const lineCount = completedLines(grid).length;
+
+  const spellingFixes = useMemo(
+    () => (confirmingFinalize && !locked ? suggestSpellingFixes(goals) : []),
+    [confirmingFinalize, locked, goals]
+  );
+
+  const spellingGhostItems = spellingFixes.map((fix) => ({
+    id: fix.goalId,
+    label: fix.suggestedTitle,
+    detail: `Was: ${fix.currentTitle}`,
+  }));
+
+  const handleRewards = useCallback(async () => {
+    if (!locked) return;
+
+    const freshLines = newlyCompletedLines(grid, awardedRef.current);
+    if (freshLines.length === 0 && !isBlackoutComplete(grid)) return;
+
+    const rewardState = readBingoRewardState(year);
+
+    if (isBlackoutComplete(grid) && !rewardState.blackoutShown) {
+      setToastMessage(rewardToastMessage("blackout"));
+      writeBingoRewardState(year, { ...rewardState, blackoutShown: true });
+      await recordBingoReward({ cardYear: year, lineType: "row" });
+      return;
+    }
+
+    for (const entry of freshLines) {
+      awardedRef.current.add(entry.signature);
+      writeAwardedLineSignatures(year, awardedRef.current);
+
+      rewardState.linesAwarded += 1;
+      const tier = rewardTierForLineCount(rewardState.linesAwarded);
+      setToastMessage(rewardToastMessage(tier));
+      writeBingoRewardState(year, { ...rewardState });
+      await recordBingoReward({ cardYear: year, lineType: entry.type });
+    }
+  }, [grid, locked, year]);
+
+  useEffect(() => {
+    awardedRef.current = readAwardedLineSignatures(year);
+  }, [year]);
+
+  useEffect(() => {
+    void handleRewards();
+  }, [handleRewards]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
+  const occupiedCells = useMemo(
+    () => new Set(goals.map((g) => g.cellIndex).filter((i): i is number => i != null)),
+    [goals]
+  );
+
+  const addGoalsFromLines = useCallback(
+    async (lines: { title: string; category: ProjectCategory }[]) => {
+      if (!bingoCardId) return;
+      const occupied = new Set(occupiedCells);
+      for (const line of lines) {
+        const cell = nextEmptyCellIndex(occupied);
+        if (cell == null) break;
+        await createGoalMutation.mutateAsync({
+          bingoCardId,
+          cellIndex: cell,
+          title: line.title,
+          category: line.category,
+        });
+        occupied.add(cell);
+      }
+    },
+    [bingoCardId, createGoalMutation, occupiedCells]
+  );
 
   const handleToggleDone = (goal: BingoGoal) => {
     setPendingGoalId(goal.id);
@@ -161,86 +276,209 @@ export default function BingoCard({ year }: Props) {
     });
   };
 
+  const applySpellingFixes = () => {
+    for (const fix of spellingFixes) {
+      if (!spellingStaged.has(fix.goalId)) continue;
+      updateGoalMutation.mutate({ id: fix.goalId, title: fix.suggestedTitle });
+    }
+    if (card) finalizeMutation.mutate({ id: card.id });
+  };
+
+  if (cardQuery.isLoading) {
+    return <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted" />;
+  }
+
+  if (!card) {
+    return (
+      <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8">
+        <p className="text-body text-ink">
+          Your {year} bingo card is a 5×5 grid of goals. Fill the squares, then check them off as
+          you go — line up five for a win.
+        </p>
+        <button
+          type="button"
+          onClick={() => startMutation.mutate({ cardYear: year })}
+          disabled={startMutation.isPending}
+          className="rounded-control border-[1.5px] border-ink px-4 py-2 text-body font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+        >
+          {startMutation.isPending ? "Creating…" : `Start your ${year} card`}
+        </button>
+      </div>
+    );
+  }
+
+  if (showOnboarding && goals.length === 0) {
+    return (
+      <BingoOnboarding
+        year={year}
+        busy={createGoalMutation.isPending}
+        onBrainDump={(lines) => void addGoalsFromLines(lines)}
+        onBlank={() => setShowOnboarding(false)}
+        onGuidedComplete={() => setShowOnboarding(false)}
+      />
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-ink-muted">
-          <span className="rounded-control border border-subtle px-2 py-0.5">
-            {locked ? "Final" : "Draft"} · {year}
-          </span>
-          <span>
-            {done} of {total} done
-          </span>
-          {lineCount > 0 ? (
-            <span className="inline-flex items-center gap-1 font-medium text-ink">
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
-                <path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9l6.9-.7z" />
-              </svg>
-              {lineCount} {lineCount === 1 ? "line" : "lines"}!
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-ink-muted">
+            <span className="rounded-control border border-subtle px-2 py-0.5">
+              {locked ? "Final" : "Draft"} · {year}
             </span>
-          ) : null}
+            <span>
+              {done} of {total} done
+            </span>
+            {locked && lineCount > 0 ? (
+              <span className="inline-flex items-center gap-1 font-medium text-ink">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                  <path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9l6.9-.7z" />
+                </svg>
+                {lineCount} {lineCount === 1 ? "line" : "lines"}!
+              </span>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-control border border-subtle p-0.5 text-caption">
+              <button
+                type="button"
+                aria-pressed={viewMode === "card"}
+                onClick={() => setViewMode("card")}
+                className={`rounded-control px-2.5 py-1 font-medium ${
+                  viewMode === "card" ? "bg-surface-2 text-ink" : "text-ink-muted"
+                }`}
+              >
+                Card
+              </button>
+              <button
+                type="button"
+                aria-pressed={viewMode === "list"}
+                onClick={() => setViewMode("list")}
+                className={`rounded-control px-2.5 py-1 font-medium ${
+                  viewMode === "list" ? "bg-surface-2 text-ink" : "text-ink-muted"
+                }`}
+              >
+                List
+              </button>
+            </div>
+
+            {!locked ? (
+              confirmingFinalize ? (
+                <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-3">
+                  {spellingGhostItems.length > 0 ? (
+                    <GhostedAccept
+                      items={spellingGhostItems}
+                      stagedIds={spellingStaged}
+                      applyLabel="Apply fixes & finalize"
+                      onStage={(id) => {
+                        setSpellingStaged((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(id)) next.delete(id);
+                          else next.add(id);
+                          return next;
+                        });
+                      }}
+                      onDismiss={() => {
+                        /* skip individual fixes */
+                      }}
+                      onApply={applySpellingFixes}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 text-caption text-ink-muted">
+                      <span>Lock {year}? Goals can&apos;t be edited after.</span>
+                      <button
+                        type="button"
+                        onClick={() => finalizeMutation.mutate({ id: card.id })}
+                        disabled={finalizeMutation.isPending}
+                        className="rounded-control border-[1.5px] border-ink px-3 py-1 font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+                      >
+                        {finalizeMutation.isPending ? "Finalizing…" : "Finalize"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingFinalize(false)}
+                        className="px-2 py-1 text-ink-muted transition hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingFinalize(true)}
+                  disabled={total === 0}
+                  className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+                >
+                  Finalize card
+                </button>
+              )
+            ) : null}
+          </div>
         </div>
 
         {!locked ? (
-          confirmingFinalize ? (
-            <div className="flex items-center gap-2 text-caption text-ink-muted">
-              <span>Lock {year}? Goals can’t be edited after.</span>
-              <button
-                type="button"
-                onClick={() => finalizeMutation.mutate({ id: card.id })}
-                disabled={finalizeMutation.isPending}
-                className="rounded-control border-[1.5px] border-ink px-3 py-1 font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
-              >
-                {finalizeMutation.isPending ? "Finalizing…" : "Finalize"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingFinalize(false)}
-                className="px-2 py-1 text-ink-muted transition hover:text-ink"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmingFinalize(true)}
-              disabled={total === 0}
-              className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
-            >
-              Finalize card
-            </button>
-          )
+          <p className="text-caption text-ink-faint">
+            Draft — no bingo rewards until you finalize. Target finalize by Jan 31.
+          </p>
         ) : null}
+
+        {viewMode === "card" ? (
+          <BingoGrid
+            grid={grid}
+            locked={locked}
+            pendingGoalId={pendingGoalId}
+            onToggleDone={handleToggleDone}
+            onBackburner={handleBackburner}
+            onRemove={handleRemove}
+            onAdd={(cellIndex) => {
+              setAddError(null);
+              setAddingCell(cellIndex);
+            }}
+            onOpenGoal={(goal) => setSelectedGoalId(goal.id)}
+          />
+        ) : (
+          <BingoListView
+            goals={goals}
+            groupBy={listGroupBy}
+            onGroupByChange={setListGroupBy}
+            onSelectGoal={(goal) => setSelectedGoalId(goal.id)}
+            locked={locked}
+          />
+        )}
+
+        {addingCell !== null ? (
+          <BingoQuickAdd
+            squareLabel={addingCell + 1}
+            busy={createGoalMutation.isPending}
+            error={addError}
+            onSubmit={handleAddSubmit}
+            onCancel={() => {
+              setAddingCell(null);
+              setAddError(null);
+            }}
+          />
+        ) : null}
+
+        <BingoBalanceLegend balance={balance} />
       </div>
 
-      <BingoGrid
-        grid={grid}
-        locked={locked}
-        pendingGoalId={pendingGoalId}
-        onToggleDone={handleToggleDone}
-        onBackburner={handleBackburner}
-        onRemove={handleRemove}
-        onAdd={(cellIndex) => {
-          setAddError(null);
-          setAddingCell(cellIndex);
-        }}
-      />
-
-      {addingCell !== null ? (
-        <BingoQuickAdd
-          squareLabel={addingCell + 1}
-          busy={createGoalMutation.isPending}
-          error={addError}
-          onSubmit={handleAddSubmit}
-          onCancel={() => {
-            setAddingCell(null);
-            setAddError(null);
-          }}
-        />
+      {selectedGoalId ? (
+        <div className="w-full shrink-0 lg:w-80">
+          <BingoGoalPanel
+            goalId={selectedGoalId}
+            locked={locked}
+            onClose={() => setSelectedGoalId(null)}
+          />
+        </div>
       ) : null}
 
-      <BingoBalanceLegend balance={balance} />
+      {toastMessage ? (
+        <BingoLineToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+      ) : null}
     </div>
   );
 }

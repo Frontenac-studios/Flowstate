@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { assertEditableBingoCell, isValidBingoCellIndex } from "@/lib/planning/bingo-cells";
+import {
+  assertEditableBingoCell,
+  isValidBingoCellIndex,
+  nextEmptyCellIndex,
+} from "@/lib/planning/bingo-cells";
 import { BINGO_FREE_CELL_INDEX } from "@/db/schema/planning-enums";
 
 describe("bingo cell validation", () => {
@@ -16,5 +20,10 @@ describe("bingo cell validation", () => {
   it("accepts other in-range indices", () => {
     expect(isValidBingoCellIndex(0)).toBe(true);
     expect(isValidBingoCellIndex(24)).toBe(true);
+  });
+
+  it("finds the next empty cell skipping FREE center", () => {
+    expect(nextEmptyCellIndex(new Set([0, BINGO_FREE_CELL_INDEX]))).toBe(1);
+    expect(nextEmptyCellIndex(new Set())).toBe(0);
   });
 });
