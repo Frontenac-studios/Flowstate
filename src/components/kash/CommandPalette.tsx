@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 import Input from "@/components/kash/ui/Input";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
-/** Fired by other chrome (e.g. the header search pill) to open the palette. */
-export const OPEN_PALETTE_EVENT = "kash:open-palette";
-/** Fired when the user runs the "Decide next task" command. DayPlanCanvas listens. */
-export const DECIDE_EVENT = "kash:decide";
+import { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
+
+export { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
 
 const ROW_FOCUS =
   "focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]";

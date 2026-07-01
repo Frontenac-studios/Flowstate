@@ -4,7 +4,7 @@ import { Menu, kashIconProps } from "@/components/kash/ui/icon";
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
 import IconButton from "./ui/IconButton";
-import { OPEN_PALETTE_EVENT } from "./CommandPalette";
+import { OPEN_PALETTE_EVENT } from "./chrome-events";
 import { NAV_DRAWER_TOGGLE_EVENT } from "./LeftNavRail";
 import { ChatToggleButton } from "./chat/ChatToggleButton";
 
