@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
-import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
@@ -41,7 +40,6 @@ export function InboxPanel({
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { pushDelete } = useSessionUndo();
   const reveal = useReveal();
   const [selected, setSelected] = useState(0);
 
@@ -61,19 +59,21 @@ export function InboxPanel({
   const moveMutation = useMutation(
     trpc.tasks.moveToBucket.mutationOptions({ onSuccess: invalidate })
   );
-  const deleteMutation = useMutation(trpc.tasks.delete.mutationOptions({ onSuccess: invalidate }));
+  const dropMutation = useMutation(
+    trpc.abyss.dropFromTask.mutationOptions({ onSuccess: invalidate })
+  );
 
   const apply = useCallback(
     (index: number, action: InboxAction) => {
       const task = tasks[index];
       if (!task) return;
       if (action === "drop") {
-        deleteMutation.mutate({ id: task.id }, { onSuccess: (data) => pushDelete(data.snapshot) });
+        dropMutation.mutate({ id: task.id });
         return;
       }
       moveMutation.mutate({ id: task.id, bucket: action });
     },
-    [tasks, deleteMutation, moveMutation, pushDelete]
+    [tasks, dropMutation, moveMutation]
   );
 
   // Keep the selection in range as the list shrinks after each action.

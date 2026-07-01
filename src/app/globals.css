@@ -21,6 +21,12 @@ body {
   font-size: var(--density-base);
 }
 
+a:not([class]) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

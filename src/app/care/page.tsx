@@ -16,7 +16,7 @@ export default async function CarePage() {
   }
 
   return (
-    <AppShell>
+    <AppShell proactiveNudges>
       <CareView />
     </AppShell>
   );

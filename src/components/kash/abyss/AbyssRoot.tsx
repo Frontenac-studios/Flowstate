@@ -1,77 +1,48 @@
 "use client";
-
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import { selectEmergingCluster } from "@/lib/abyss/clustering";
 import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/grouping";
+import { isMonthlyReviewDue } from "@/lib/abyss/monthly-review";
+import { readLastReviewMonth } from "@/lib/abyss/review-storage";
 import { readAbyssTheme, writeAbyssTheme, type AbyssTheme } from "@/lib/abyss/theme-storage";
 import { useTRPC } from "@/trpc/client";
-
+import AbyssArchivedList from "./AbyssArchivedList";
 import AbyssComposer from "./AbyssComposer";
 import AbyssEmergingCard from "./AbyssEmergingCard";
 import AbyssFloatingBar, { type AbyssView } from "./AbyssFloatingBar";
 import AbyssList, { type AbyssListItem } from "./AbyssList";
+import AbyssMonthlyReview from "./AbyssMonthlyReview";
+import AbyssSky from "./AbyssSky";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
-
-function SkyPlaceholder() {
-  return (
-    <div className="relative flex min-h-[20rem] flex-1 flex-col items-center justify-center gap-2 overflow-hidden rounded-card border border-abyss-border bg-abyss-bg text-center">
-      <div className="pointer-events-none absolute inset-0 opacity-60" aria-hidden>
-        {[
-          [12, 18],
-          [28, 60],
-          [44, 30],
-          [62, 72],
-          [78, 22],
-          [88, 54],
-          [20, 84],
-          [70, 12],
-        ].map(([left, top], i) => (
-          <span
-            key={i}
-            className="absolute h-px w-px rounded-full bg-abyss-ink-faint"
-            style={{ left: `${left}%`, top: `${top}%` }}
-          />
-        ))}
-      </div>
-      <p className="text-subtitle text-abyss-ink">Stargaze mode</p>
-      <p className="max-w-xs text-meta text-abyss-ink-muted">
-        The constellation sky — type-as-star-styles and clustered themes — arrives with the
-        embedding pass. For now, the List leads.
-      </p>
-    </div>
-  );
-}
-
 export default function AbyssRoot() {
   const trpc = useTRPC();
   const { data, isLoading } = useQuery(trpc.abyss.list.queryOptions());
-
-  // Backfill embeddings for items captured server-side (chat "park…", Drop) or before
-  // §7A. Quiet (no duplicate-check) and attempted once per id per session.
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const embedAndStore = useAbyssEmbedding();
   const embedAttempted = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!data) return;
     for (const item of data) {
-      const hasEmbedding = Array.isArray(item.embedding) && item.embedding.length > 0;
-      if (hasEmbedding || embedAttempted.current.has(item.id)) continue;
+      if (
+        (Array.isArray(item.embedding) && item.embedding.length > 0) ||
+        embedAttempted.current.has(item.id)
+      )
+        continue;
       embedAttempted.current.add(item.id);
       void embedAndStore(item.id, item.title, false);
     }
   }, [data, embedAndStore]);
-
   const [theme, setTheme] = useState<AbyssTheme>("dark");
   const [view, setView] = useState<AbyssView>("list");
+  const [showArchive, setShowArchive] = useState(false);
+  const [showMonthlyReview, setShowMonthlyReview] = useState(false);
   const [groupMode, setGroupMode] = useState<AbyssGroupMode>("category");
   const [typeFilter, setTypeFilter] = useState<AbyssItemType[]>([]);
   const [ageFilter, setAgeFilter] = useState<AbyssAgeFilter>("all");
   const [query, setQuery] = useState("");
   const [now] = useState(() => new Date());
   const [dismissedCluster, setDismissedCluster] = useState<string | null>(null);
-
-  // Strongest cohesive cluster of un-tagged items → the "name this pattern" card.
   const emerging = useMemo(() => {
     const rows = data ?? [];
     const untagged = rows
@@ -87,27 +58,35 @@ export default function AbyssRoot() {
     if (!cluster) return null;
     const signature = [...cluster.ids].sort().join(",");
     if (signature === dismissedCluster) return null;
-    const members = cluster.ids
-      .map((id) => rows.find((r) => r.id === id))
-      .filter((r): r is NonNullable<typeof r> => Boolean(r))
-      .map((r) => ({ id: r.id, title: r.title, tags: r.tags ?? null }));
-    return { signature, members };
+    return {
+      signature,
+      members: cluster.ids
+        .map((id) => rows.find((r) => r.id === id))
+        .filter(Boolean)
+        .map((r) => ({ id: r!.id, title: r!.title, tags: r!.tags ?? null })),
+    };
   }, [data, dismissedCluster]);
-
   useEffect(() => {
     setTheme(readAbyssTheme());
   }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      writeAbyssTheme(next);
-      return next;
-    });
-  };
-
-  const items = (data ?? []) as AbyssListItem[];
-
+  useEffect(() => {
+    if (isMonthlyReviewDue(readLastReviewMonth(), now)) setShowMonthlyReview(true);
+  }, [now]);
+  const items = useMemo(() => (data ?? []) as AbyssListItem[], [data]);
+  const reviewItems = useMemo(
+    () =>
+      items.map((i) => ({
+        id: i.id,
+        title: i.title,
+        type: i.type,
+        embedding: i.embedding,
+        resurfaceCount: i.resurfaceCount,
+        lastTouchedAt: i.lastTouchedAt,
+        tags: i.tags,
+        status: i.status,
+      })),
+    [items]
+  );
   return (
     <div
       className="abyss-root flex min-h-full flex-1 flex-col gap-3 rounded-card bg-abyss-bg p-3 text-abyss-ink"
@@ -117,7 +96,13 @@ export default function AbyssRoot() {
         view={view}
         onViewChange={setView}
         theme={theme}
-        onThemeToggle={toggleTheme}
+        onThemeToggle={() =>
+          setTheme((p) => {
+            const n = p === "dark" ? "light" : "dark";
+            writeAbyssTheme(n);
+            return n;
+          })
+        }
         query={query}
         onQueryChange={setQuery}
         groupMode={groupMode}
@@ -126,10 +111,31 @@ export default function AbyssRoot() {
         onTypeFilterChange={setTypeFilter}
         ageFilter={ageFilter}
         onAgeFilterChange={setAgeFilter}
+        showArchive={showArchive}
+        onArchiveToggle={() => setShowArchive((v) => !v)}
       />
-
+      {showMonthlyReview ? (
+        <AbyssMonthlyReview
+          items={reviewItems}
+          now={now}
+          onDismiss={() => setShowMonthlyReview(false)}
+        />
+      ) : null}
+      {showArchive ? (
+        <section>
+          <h2 className="text-meta text-abyss-ink-muted">Archive</h2>
+          <AbyssArchivedList />
+        </section>
+      ) : null}
       {view === "sky" ? (
-        <SkyPlaceholder />
+        <AbyssSky
+          items={items}
+          query={query}
+          typeFilter={typeFilter}
+          ageFilter={ageFilter}
+          now={now}
+          archiveAfterDays={settings?.abyssArchiveAfterDays}
+        />
       ) : (
         <>
           <AbyssComposer />
@@ -140,7 +146,7 @@ export default function AbyssRoot() {
             />
           ) : null}
           {isLoading ? (
-            <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading the abyss">
+            <div aria-busy="true">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-11 animate-pulse rounded-row bg-abyss-surface" />
               ))}

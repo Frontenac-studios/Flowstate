@@ -8,6 +8,7 @@ export const appSettings = sqliteTable("app_settings", {
   dayStartHour: integer("day_start_hour").notNull().default(7),
   dayEndHour: integer("day_end_hour").notNull().default(19),
   lastUsedCategory: text("last_used_category", { enum: PROJECT_CATEGORIES }),
+  abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });

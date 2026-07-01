@@ -17,6 +17,7 @@ import {
   Sun,
 } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
+import { SyncFooterIndicator } from "@/components/kash/nav/SyncFooterIndicator";
 import { readNavRailPinned, writeNavRailPinned } from "@/lib/nav/nav-rail-storage";
 
 type NavItem = {
@@ -136,6 +137,7 @@ function NavSections({
         </Fragment>
       ))}
       <div className="mt-auto">
+        <SyncFooterIndicator expanded={expanded} />
         <NavLink
           item={SETTINGS_ITEM}
           active={isActive(SETTINGS_ITEM)}
