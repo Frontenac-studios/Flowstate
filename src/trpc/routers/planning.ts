@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -14,6 +14,7 @@ import {
   projects,
   quarterThemes,
   reservedDays,
+  taskTimeEntries,
   tasks,
 } from "@/db/tables";
 import { assertEditableBingoCell } from "@/lib/planning/bingo-cells";
@@ -22,6 +23,7 @@ import {
   milestoneIsComplete,
   type MilestoneProgress,
 } from "@/lib/planning/goal-progress";
+import { aggregateYearActivity } from "@/lib/planning/year-heat";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 
@@ -43,6 +45,16 @@ const suggestionSurfaceSchema = z.enum([
 ]);
 
 const suggestionStatusSchema = z.enum(["pending", "staged", "applied", "dismissed"]);
+
+/** UTC instants for [start, end) of a calendar year in browser-local wall-clock. */
+function yearUtcBounds(year: number, tzOffsetMinutes: number): { start: Date; end: Date } {
+  const startLocalMidnight = Date.UTC(year, 0, 1);
+  const endLocalMidnight = Date.UTC(year + 1, 0, 1);
+  return {
+    start: new Date(startLocalMidnight - tzOffsetMinutes * 60_000),
+    end: new Date(endLocalMidnight - tzOffsetMinutes * 60_000),
+  };
+}
 
 async function syncRow(
   table:
@@ -449,6 +461,69 @@ export const planningRouter = createTRPCRouter({
       if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await syncRow("quarter_themes", row.id, "insert", row);
       return row;
+    }),
+
+  listQuarterThemes: protectedProcedure
+    .input(z.object({ year: yearSchema }))
+    .query(async ({ ctx, input }) => {
+      return db
+        .select()
+        .from(quarterThemes)
+        .where(and(eq(quarterThemes.userId, ctx.userId), eq(quarterThemes.year, input.year)))
+        .orderBy(asc(quarterThemes.quarter));
+    }),
+
+  getYearActivity: protectedProcedure
+    .input(
+      z.object({
+        year: yearSchema,
+        tzOffsetMinutes: z.number().int().min(-720).max(840),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { start, end } = yearUtcBounds(input.year, input.tzOffsetMinutes);
+
+      const [timeRows, completedRows] = await Promise.all([
+        db
+          .select({
+            startedAt: taskTimeEntries.startedAt,
+            endedAt: taskTimeEntries.endedAt,
+            category: tasks.category,
+          })
+          .from(taskTimeEntries)
+          .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+          .where(
+            and(
+              eq(taskTimeEntries.userId, ctx.userId),
+              gte(taskTimeEntries.startedAt, start),
+              lt(taskTimeEntries.startedAt, end)
+            )
+          ),
+        db
+          .select({
+            completedAt: tasks.completedAt,
+            category: tasks.category,
+          })
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.userId, ctx.userId),
+              isNotNull(tasks.completedAt),
+              gte(tasks.completedAt, start),
+              lt(tasks.completedAt, end)
+            )
+          ),
+      ]);
+
+      const completedTasks = completedRows.flatMap((row) =>
+        row.completedAt ? [{ completedAt: row.completedAt, category: row.category }] : []
+      );
+
+      return aggregateYearActivity({
+        year: input.year,
+        completedTasks,
+        timeEntries: timeRows,
+      });
     }),
 
   listMonthIntentions: protectedProcedure
