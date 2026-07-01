@@ -3,15 +3,19 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 
 import { getAnthropicConfig } from "@/lib/env";
+import type { ProposedAction } from "@/lib/chat/proposed-actions";
 
+import { assembleChatContext } from "./assemble-chat-context";
 import { requireAnthropicClient } from "./client";
-import { CHAT_TOOLS, executeChatTool } from "./chat-tools";
-import { fetchPlanContextSnapshot } from "./fetch-plan-context";
-import { buildSystemPrompt } from "./system-prompts";
+import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
+import { executeChatTool, toolsForSurface } from "./chat-tools";
+import { buildChatSystemPrompt, buildSystemPrompt, registerForThread } from "./system-prompts";
 
 const MAX_TOOL_ROUNDS = 5;
 
-export type CompanionStreamDelta = { type: "delta"; text: string };
+export type CompanionStreamDelta =
+  | { type: "delta"; text: string }
+  | { type: "proposal"; proposal: ProposedAction };
 
 export type NarrationInput = {
   taskId: string;
@@ -29,7 +33,7 @@ export async function generateNarration(
 ): Promise<string> {
   const anthropic = requireAnthropicClient();
   const config = getAnthropicConfig();
-  const { contextBlock } = await fetchPlanContextSnapshot(userId, threadId);
+  const { contextBlock } = await assembleChatContext(userId, threadId);
 
   const userPayload = [
     "Generate a one-line RDM narration for this pick.",
@@ -39,7 +43,7 @@ export async function generateNarration(
     task.projectSlug ? `Project: #${task.projectSlug}` : null,
     `Pick reason: ${task.pickReason}`,
     "",
-    "Planner context:",
+    "Context:",
     contextBlock,
   ]
     .filter(Boolean)
@@ -55,9 +59,7 @@ export async function generateNarration(
 
   const block = response.content.find((b) => b.type === "text");
   const text = block?.type === "text" ? block.text.trim() : "";
-  if (!text) {
-    return fallbackNarration(task);
-  }
+  if (!text) return fallbackNarration(task);
   return text;
 }
 
@@ -72,7 +74,7 @@ export function buildAnthropicMessages(
   contextBlock: string,
   latestUserText: string
 ): Anthropic.MessageParam[] {
-  const contextPrefix = `Current planner state:\n${contextBlock}\n\n---\n\n`;
+  const contextPrefix = `Current context:\n${contextBlock}\n\n---\n\n`;
   const prior = history.slice(-18).map((m) => ({
     role: m.role,
     content: m.text,
@@ -85,18 +87,26 @@ export async function streamCompanionReply(params: {
   userId: string;
   threadId: string;
   userText: string;
+  planningSurface?: PlanningChatSurface | null;
   signal?: AbortSignal;
 }): Promise<{
   stream: AsyncIterable<CompanionStreamDelta>;
   getFullText: () => string;
   getMutatedTasks: () => boolean;
+  getPendingProposal: () => ProposedAction | null;
 }> {
   const anthropic = requireAnthropicClient();
   const config = getAnthropicConfig();
-  const { contextBlock, history } = await fetchPlanContextSnapshot(params.userId, params.threadId);
+  const register = registerForThread(params.threadId);
+  const tools = toolsForSurface(register, params.planningSurface);
+  const { contextBlock, history } = await assembleChatContext(params.userId, params.threadId);
   let messages = buildAnthropicMessages(history, contextBlock, params.userText);
 
-  const state = { fullText: "", mutatedTasks: false };
+  const state = {
+    fullText: "",
+    mutatedTasks: false,
+    pendingProposal: null as ProposedAction | null,
+  };
 
   async function* run(): AsyncGenerator<CompanionStreamDelta> {
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
@@ -105,9 +115,9 @@ export async function streamCompanionReply(params: {
       const stream = anthropic.messages.stream({
         model: config.model,
         max_tokens: 2048,
-        system: buildSystemPrompt("companion"),
+        system: buildChatSystemPrompt(params.threadId, params.planningSurface),
         messages,
-        tools: CHAT_TOOLS,
+        tools,
       });
 
       for await (const event of stream) {
@@ -122,10 +132,7 @@ export async function streamCompanionReply(params: {
 
       const final = await stream.finalMessage();
       const toolUses = final.content.filter((block) => block.type === "tool_use");
-
-      if (toolUses.length === 0 || final.stop_reason !== "tool_use") {
-        break;
-      }
+      if (toolUses.length === 0 || final.stop_reason !== "tool_use") break;
 
       messages = [...messages, { role: "assistant", content: final.content }];
 
@@ -133,8 +140,15 @@ export async function streamCompanionReply(params: {
       for (const toolUse of toolUses) {
         if (params.signal?.aborted) break;
         if (toolUse.type !== "tool_use") continue;
-        const result = await executeChatTool(params.userId, toolUse.name, toolUse.input);
+        const result = await executeChatTool(params.userId, toolUse.name, toolUse.input, {
+          register,
+          threadId: params.threadId,
+        });
         if (result.mutatedTasks) state.mutatedTasks = true;
+        if (result.proposal) {
+          state.pendingProposal = result.proposal;
+          yield { type: "proposal", proposal: result.proposal };
+        }
         toolResults.push({
           type: "tool_result",
           tool_use_id: toolUse.id,
@@ -150,5 +164,6 @@ export async function streamCompanionReply(params: {
     stream: run(),
     getFullText: () => state.fullText,
     getMutatedTasks: () => state.mutatedTasks,
+    getPendingProposal: () => state.pendingProposal,
   };
 }

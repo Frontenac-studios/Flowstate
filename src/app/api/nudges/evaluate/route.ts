@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   tzOffsetMinutes: z.number().int().min(-840).max(840),
+  includeSelfCare: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { localDate, tzOffsetMinutes } = parsed.data;
+  const { localDate, tzOffsetMinutes, includeSelfCare } = parsed.data;
 
   Sentry.addBreadcrumb({
     category: "kash.nudge",
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
       userId,
       localDate,
       tzOffsetMinutes,
+      includeSelfCare: includeSelfCare ?? false,
     });
 
     Sentry.addBreadcrumb({

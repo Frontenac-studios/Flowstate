@@ -1,18 +1,21 @@
 import "server-only";
 
-import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
-import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
+import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import {
+  evaluateSelfCareWalk,
+  templateSelfCareWalkMessage,
+} from "@/lib/nudges/evaluate-self-care-walk";
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
-import { appendAssistantMessage } from "@/server/claude/persist-message";
-import { generateNudge } from "@/server/claude/generate-nudge";
+import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
 
 export type NudgeEvaluateResult = {
   fired: boolean;
-  messageId?: string;
+  chips: EssentialNudgeChipPayload[];
   stalledCount: number;
   slippedCount: number;
 };
@@ -21,11 +24,13 @@ export async function runNudgeEvaluation(params: {
   userId: string;
   localDate: string;
   tzOffsetMinutes: number;
+  /** When true, evaluate the self-care walk chip (Today only). */
+  includeSelfCare?: boolean;
 }): Promise<NudgeEvaluateResult> {
-  const { userId, localDate, tzOffsetMinutes } = params;
+  const { userId, localDate, tzOffsetMinutes, includeSelfCare = false } = params;
   const now = new Date();
 
-  const [top3Rows, existingNudge, timeEntryRows] = await Promise.all([
+  const [top3Rows, existingNudges, timeEntryRows] = await Promise.all([
     db
       .select({
         id: tasks.id,
@@ -46,16 +51,15 @@ export async function runNudgeEvaluation(params: {
       )
       .orderBy(asc(tasks.top3Order)),
     db
-      .select({ id: nudgeEvents.id })
+      .select({ kind: nudgeEvents.kind })
       .from(nudgeEvents)
       .where(
         and(
           eq(nudgeEvents.userId, userId),
-          eq(nudgeEvents.kind, "top3_stall"),
-          eq(nudgeEvents.localDate, localDate)
+          eq(nudgeEvents.localDate, localDate),
+          inArray(nudgeEvents.kind, ["top3_stall", "self_care_walk"])
         )
-      )
-      .limit(1),
+      ),
     db
       .select({
         taskId: taskTimeEntries.taskId,
@@ -80,48 +84,72 @@ export async function runNudgeEvaluation(params: {
     .filter((e) => startedOnLocalDay(e.startedAt, localDate, tzOffsetMinutes))
     .map((e) => ({ taskId: e.taskId, startedAt: e.startedAt }));
 
-  const evaluation = evaluateTop3Stall({
+  const nudgedKinds = new Set(existingNudges.map((n) => n.kind));
+
+  const stallEvaluation = evaluateTop3Stall({
     now,
     tzOffsetMinutes,
     localDate,
     top3Tasks,
     timeEntriesToday,
-    alreadyNudgedToday: existingNudge.length > 0,
+    alreadyNudgedToday: nudgedKinds.has("top3_stall"),
   });
 
-  if (!evaluation.shouldFireStallNudge) {
-    return {
-      fired: false,
-      stalledCount: evaluation.stalledTasks.length,
-      slippedCount: evaluation.slippedTasks.length,
-    };
+  const selfCareEvaluation = includeSelfCare
+    ? evaluateSelfCareWalk({
+        now,
+        tzOffsetMinutes,
+        hadFocusTimeToday: timeEntriesToday.length > 0,
+        alreadyNudgedToday: nudgedKinds.has("self_care_walk"),
+      })
+    : { shouldFire: false, localHour: 0 };
+
+  const chips: EssentialNudgeChipPayload[] = [];
+  let fired = false;
+
+  if (stallEvaluation.shouldFireStallNudge) {
+    try {
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "top3_stall",
+        localDate,
+        taskIds: stallEvaluation.stalledTasks.map((t) => t.id),
+      });
+      chips.push({
+        kind: "top3_stall",
+        message: templateStallChipMessage(
+          stallEvaluation.stalledTasks,
+          stallEvaluation.slippedTasks
+        ),
+      });
+      fired = true;
+    } catch {
+      // Unique index — another tab won the race.
+    }
   }
 
-  try {
-    await db.insert(nudgeEvents).values({
-      userId,
-      kind: "top3_stall",
-      localDate,
-      taskIds: evaluation.stalledTasks.map((t) => t.id),
-    });
-  } catch {
-    return {
-      fired: false,
-      stalledCount: evaluation.stalledTasks.length,
-      slippedCount: evaluation.slippedTasks.length,
-    };
+  if (selfCareEvaluation.shouldFire) {
+    try {
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "self_care_walk",
+        localDate,
+        taskIds: [],
+      });
+      chips.push({
+        kind: "self_care_walk",
+        message: templateSelfCareWalkMessage(),
+      });
+      fired = true;
+    } catch {
+      // Unique index — another tab won the race.
+    }
   }
-
-  const text = await generateNudge(userId, evaluation.stalledTasks, evaluation.slippedTasks);
-  const message = await appendAssistantMessage(userId, GLOBAL_THREAD_ID, text, {
-    source: "nudge",
-    kind: "top3_stall",
-  });
 
   return {
-    fired: true,
-    messageId: message.id,
-    stalledCount: evaluation.stalledTasks.length,
-    slippedCount: evaluation.slippedTasks.length,
+    fired,
+    chips,
+    stalledCount: stallEvaluation.stalledTasks.length,
+    slippedCount: stallEvaluation.slippedTasks.length,
   };
 }

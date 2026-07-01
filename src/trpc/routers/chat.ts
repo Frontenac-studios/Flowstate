@@ -5,10 +5,15 @@ import { z } from "zod";
 import { db } from "@/db";
 import { chatMessages } from "@/db/tables";
 import { messageContentSchema, textContent } from "@/lib/chat/message-content";
+import { filterPayloadByItemIds, proposedActionSchema } from "@/lib/chat/proposed-actions";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";
 import { buildWorkOnSuggestion } from "@/server/chat/build-work-on-suggestion";
-import { editUserMessageAndTruncateAfter } from "@/server/claude/persist-message";
+import { applyProposedActionPayload } from "@/server/claude/apply-proposed-action";
+import {
+  editUserMessageAndTruncateAfter,
+  updateMessageProposalStatus,
+} from "@/server/claude/persist-message";
 import {
   listPromotedSuggestions,
   recordCustomSuggestionUsage,
@@ -216,6 +221,69 @@ export const chatRouter = createTRPCRouter({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       await recordCustomSuggestionUsage({ userId: ctx.userId, id: input.id });
+      return { ok: true as const };
+    }),
+
+  applyProposedAction: protectedProcedure
+    .input(
+      z.object({
+        messageId: z.string().uuid(),
+        enabledItemIds: z.array(z.string().min(1)).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .select({ id: chatMessages.id, content: chatMessages.content })
+        .from(chatMessages)
+        .where(and(eq(chatMessages.id, input.messageId), eq(chatMessages.userId, ctx.userId)))
+        .limit(1);
+
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Message not found." });
+
+      const content = messageContentSchema.parse(row.content);
+      const proposal = content.meta?.proposal;
+      if (!proposal || proposal.status !== "pending") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No pending proposal on this message.",
+        });
+      }
+
+      const parsedProposal = proposedActionSchema.parse(proposal);
+      const filtered = input.enabledItemIds?.length
+        ? filterPayloadByItemIds(parsedProposal, input.enabledItemIds)
+        : parsedProposal;
+
+      if (!filtered) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No items selected to apply." });
+      }
+
+      const result = await applyProposedActionPayload(ctx.userId, filtered);
+      await updateMessageProposalStatus(input.messageId, ctx.userId, "applied");
+      return { applied: result.applied, titles: result.titles };
+    }),
+
+  dismissProposedAction: protectedProcedure
+    .input(z.object({ messageId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .select({ id: chatMessages.id, content: chatMessages.content })
+        .from(chatMessages)
+        .where(and(eq(chatMessages.id, input.messageId), eq(chatMessages.userId, ctx.userId)))
+        .limit(1);
+
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Message not found." });
+
+      const content = messageContentSchema.parse(row.content);
+      const proposal = content.meta?.proposal;
+      if (!proposal || proposal.status !== "pending") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No pending proposal on this message.",
+        });
+      }
+
+      await updateMessageProposalStatus(input.messageId, ctx.userId, "dismissed");
       return { ok: true as const };
     }),
 });

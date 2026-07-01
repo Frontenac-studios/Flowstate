@@ -5,8 +5,8 @@ import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
 import type { SlippedTop3Task, StalledTop3Task } from "@/lib/nudges/evaluate-top3-stall";
 import { templateStallNudge } from "@/lib/nudges/template-nudge";
 
+import { assembleChatContext } from "./assemble-chat-context";
 import { requireAnthropicClient } from "./client";
-import { fetchPlanContextSnapshot } from "./fetch-plan-context";
 import { buildSystemPrompt } from "./system-prompts";
 
 export async function generateNudge(
@@ -24,7 +24,7 @@ export async function generateNudge(
     return templateStallNudge(stalled, slipped);
   }
 
-  const { contextBlock } = await fetchPlanContextSnapshot(userId, GLOBAL_THREAD_ID);
+  const { contextBlock } = await assembleChatContext(userId, GLOBAL_THREAD_ID);
 
   const stalledLines =
     stalled.length === 0
@@ -48,7 +48,7 @@ export async function generateNudge(
     `Slipped 2+ days on Top 3:`,
     slippedLines,
     "",
-    "Planner context:",
+    "Context:",
     contextBlock,
   ].join("\n");
 
@@ -63,9 +63,7 @@ export async function generateNudge(
 
     const block = response.content.find((b) => b.type === "text");
     const text = block?.type === "text" ? block.text.trim() : "";
-    if (!text) {
-      return templateStallNudge(stalled, slipped);
-    }
+    if (!text) return templateStallNudge(stalled, slipped);
     return text;
   } catch {
     return templateStallNudge(stalled, slipped);

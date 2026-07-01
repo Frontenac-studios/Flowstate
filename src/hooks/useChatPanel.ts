@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
+import type { ProposedAction } from "@/lib/chat/proposed-actions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useTRPC } from "@/trpc/client";
 
@@ -12,7 +13,7 @@ export type SendMessageSource = "composer" | "chip";
 export function useChatPanel(threadId: string) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { railOpen, activeThreadId, notifyUnread, markRead } = useChat();
+  const { railOpen, activeThreadId, planningSurface, notifyUnread, markRead } = useChat();
 
   const [streamingText, setStreamingText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -31,6 +32,8 @@ export function useChatPanel(threadId: string) {
   const appendUserMutation = useMutation(trpc.chat.appendUser.mutationOptions());
   const editUserMessageMutation = useMutation(trpc.chat.editUserMessage.mutationOptions());
   const recordPhraseSendMutation = useMutation(trpc.chat.recordPhraseSend.mutationOptions());
+  const applyProposalMutation = useMutation(trpc.chat.applyProposedAction.mutationOptions());
+  const dismissProposalMutation = useMutation(trpc.chat.dismissProposedAction.mutationOptions());
 
   const invalidateTaskQueries = useCallback(() => {
     void queryClient.invalidateQueries({
@@ -58,7 +61,12 @@ export function useChatPanel(threadId: string) {
         const res = await fetch("/api/claude/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ threadId, userMessageId, text }),
+          body: JSON.stringify({
+            threadId,
+            userMessageId,
+            text,
+            planningSurface: threadId === GLOBAL_THREAD_ID ? planningSurface : null,
+          }),
           signal: controller.signal,
         });
 
@@ -88,6 +96,7 @@ export function useChatPanel(threadId: string) {
               text?: string;
               message?: string;
               mutatedTasks?: boolean;
+              proposal?: ProposedAction | null;
             };
             if (payload.type === "delta" && payload.text) {
               assistantText += payload.text;
@@ -122,6 +131,7 @@ export function useChatPanel(threadId: string) {
     },
     [
       activeThreadId,
+      planningSurface,
       invalidateTaskQueries,
       markRead,
       notifyUnread,
@@ -204,6 +214,23 @@ export function useChatPanel(threadId: string) {
     abortRef.current?.abort();
   }, []);
 
+  const applyProposal = useCallback(
+    async (messageId: string, enabledItemIds: string[]) => {
+      await applyProposalMutation.mutateAsync({ messageId, enabledItemIds });
+      invalidateTaskQueries();
+      await refreshMessages();
+    },
+    [applyProposalMutation, invalidateTaskQueries, refreshMessages]
+  );
+
+  const dismissProposal = useCallback(
+    async (messageId: string) => {
+      await dismissProposalMutation.mutateAsync({ messageId });
+      await refreshMessages();
+    },
+    [dismissProposalMutation, refreshMessages]
+  );
+
   return {
     messages,
     isLoading,
@@ -211,9 +238,12 @@ export function useChatPanel(threadId: string) {
     streamingText,
     streamError,
     isStreaming,
+    proposalBusy: applyProposalMutation.isPending || dismissProposalMutation.isPending,
     sendMessage,
     editAndResend,
     stopGeneration,
+    applyProposal,
+    dismissProposal,
     setStreamError,
   };
 }

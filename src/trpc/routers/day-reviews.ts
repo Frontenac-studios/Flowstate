@@ -9,6 +9,7 @@ import { countCompletionsToday } from "@/lib/eod/count-completions-today";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
 import { top3StatusSchema } from "@/lib/eod/types";
 import { generateEodReview } from "@/server/claude/generate-eod-review";
+import { runEodReflectionAboutMeProducer } from "@/server/about-me/register-hooks";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -172,7 +173,11 @@ export const dayReviewsRouter = createTRPCRouter({
           },
         })
         .returning();
-
+      if (reflectionText) {
+        try {
+          await runEodReflectionAboutMeProducer(ctx.userId, input.localDate, reflectionText);
+        } catch {}
+      }
       return row!;
     }),
 

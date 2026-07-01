@@ -1,105 +1,69 @@
 import "server-only";
 
-import type Anthropic from "@anthropic-ai/sdk";
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, isNull, lte, ne } from "drizzle-orm";
 
 import { db } from "@/db";
 import { syncAbyssItemRow } from "@/db/record-sync-mutation";
 import { abyssItems, projects, tasks } from "@/db/tables";
+import {
+  newProposalItemId,
+  type ProposedAction,
+  proposedActionSchema,
+} from "@/lib/chat/proposed-actions";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
-import { applyScheduleBatch } from "@/server/tasks/apply-schedule-batch";
+import { normalizeChatToolProposal } from "@/server/about-me/normalize-tool-proposal";
+import { proposeAboutMeEdit } from "@/server/about-me/propose-about-me-edit";
+import type { KashRegister } from "@/server/claude/system-prompts";
+import {
+  PLANNING_CHAT_TOOLS,
+  toolsForRegister,
+  toolsForSurface,
+} from "@/lib/chat/chat-tool-catalog";
+
+import { applyProposedActionPayload, resolveOwnedTaskTitles } from "./apply-proposed-action";
+import { assembleChatContext } from "./assemble-chat-context";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const CHAT_TOOLS: Anthropic.Tool[] = [
-  {
-    name: "query_tasks",
-    description:
-      "Find incomplete tasks, optionally filtered by project slug and/or scheduled date range (inclusive). Use before rescheduling when the user mentions a project or date window.",
-    input_schema: {
-      type: "object",
-      properties: {
-        projectSlug: {
-          type: "string",
-          description: "Project slug without #, e.g. frontenac-studios-launch",
-        },
-        scheduledFrom: {
-          type: "string",
-          description: "Inclusive lower bound YYYY-MM-DD on scheduledDate",
-        },
-        scheduledTo: {
-          type: "string",
-          description: "Inclusive upper bound YYYY-MM-DD on scheduledDate",
-        },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "reschedule_tasks",
-    description:
-      "Assign new scheduled dates to one or more tasks. Each task moves to the given ISO date; clears bucket overrides.",
-    input_schema: {
-      type: "object",
-      properties: {
-        assignments: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              taskId: { type: "string", description: "Task UUID from context or query_tasks" },
-              scheduledDate: { type: "string", description: "New date YYYY-MM-DD" },
-            },
-            required: ["taskId", "scheduledDate"],
-          },
-        },
-      },
-      required: ["assignments"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "park_in_abyss",
-    description:
-      "Park a backburner idea or deferred task in the Abyss (a tended home for things to revisit later, not now). Use when the user says to 'park', 'shelve', 'someday', 'backburner', or 'save for later'. Not for actionable tasks they want scheduled — use reschedule_tasks for those.",
-    input_schema: {
-      type: "object",
-      properties: {
-        title: { type: "string", description: "Short title of the idea or task to park" },
-        type: {
-          type: "string",
-          enum: ["idea", "task"],
-          description: "'idea' (default) for a thought; 'task' for a concrete deferred to-do",
-        },
-        category: {
-          type: "string",
-          enum: [...PROJECT_CATEGORIES],
-          description: "Optional life-area category if clear from context",
-        },
-        note: { type: "string", description: "Optional extra detail" },
-      },
-      required: ["title"],
-      additionalProperties: false,
-    },
-  },
-];
+export const CHAT_TOOLS = PLANNING_CHAT_TOOLS;
+export { toolsForRegister, toolsForSurface };
 
 type QueryTasksInput = {
   projectSlug?: string;
+  titleContains?: string;
   scheduledFrom?: string;
   scheduledTo?: string;
+  limit?: number;
 };
 
 type RescheduleTasksInput = {
   assignments: { taskId: string; scheduledDate: string }[];
+  summary?: string;
 };
+
+type CreateTaskInput = {
+  tasks: { title: string; scheduledDate?: string; projectSlug?: string; priority?: number }[];
+  summary?: string;
+};
+
+type CompleteTaskInput = { taskIds: string[]; summary?: string };
 
 type ParkInAbyssInput = {
   title?: string;
   type?: "idea" | "task";
   category?: string;
   note?: string;
+};
+
+type QueryProjectsInput = { slugContains?: string };
+type QueryAbyssInput = { query?: string; limit?: number };
+type ProposeAboutMeEditToolInput = { proposals?: unknown[] };
+
+export type ChatToolResult = {
+  content: string;
+  mutatedTasks: boolean;
+  proposal?: ProposedAction;
 };
 
 async function parkInAbyss(userId: string, input: ParkInAbyssInput) {
@@ -157,17 +121,14 @@ async function queryTasks(userId: string, input: QueryTasksInput) {
   }
 
   const conditions = [eq(tasks.userId, userId), isNull(tasks.completedAt)];
-
-  if (projectId) {
-    conditions.push(eq(tasks.projectId, projectId));
-  }
-  if (input.scheduledFrom) {
-    conditions.push(gte(tasks.scheduledDate, input.scheduledFrom));
-  }
-  if (input.scheduledTo) {
-    conditions.push(lte(tasks.scheduledDate, input.scheduledTo));
+  if (projectId) conditions.push(eq(tasks.projectId, projectId));
+  if (input.scheduledFrom) conditions.push(gte(tasks.scheduledDate, input.scheduledFrom));
+  if (input.scheduledTo) conditions.push(lte(tasks.scheduledDate, input.scheduledTo));
+  if (input.titleContains?.trim()) {
+    conditions.push(ilike(tasks.title, `%${input.titleContains.trim()}%`));
   }
 
+  const limit = Math.min(Math.max(input.limit ?? 40, 1), 100);
   const rows = await db
     .select({
       id: tasks.id,
@@ -178,7 +139,8 @@ async function queryTasks(userId: string, input: QueryTasksInput) {
     })
     .from(tasks)
     .leftJoin(projects, eq(tasks.projectId, projects.id))
-    .where(and(...conditions));
+    .where(and(...conditions))
+    .limit(limit);
 
   return {
     ok: true as const,
@@ -193,39 +155,274 @@ async function queryTasks(userId: string, input: QueryTasksInput) {
   };
 }
 
-export type ChatToolResult = {
-  content: string;
-  mutatedTasks: boolean;
-};
+async function queryProjects(userId: string, input: QueryProjectsInput) {
+  const rows = await db
+    .select({ id: projects.id, slug: projects.slug, name: projects.name })
+    .from(projects)
+    .where(eq(projects.userId, userId))
+    .orderBy(projects.name);
+
+  const needle = input.slugContains?.trim().toLowerCase();
+  const filtered = needle
+    ? rows.filter((p) => p.slug.includes(needle) || p.name.toLowerCase().includes(needle))
+    : rows;
+
+  const counts = await db
+    .select({ projectId: tasks.projectId })
+    .from(tasks)
+    .where(and(eq(tasks.userId, userId), isNull(tasks.completedAt)));
+
+  const countByProject = new Map<string, number>();
+  for (const row of counts) {
+    if (!row.projectId) continue;
+    countByProject.set(row.projectId, (countByProject.get(row.projectId) ?? 0) + 1);
+  }
+
+  return {
+    ok: true as const,
+    count: filtered.length,
+    projects: filtered.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      openTasks: countByProject.get(p.id) ?? 0,
+    })),
+  };
+}
+
+async function queryAbyss(userId: string, input: QueryAbyssInput) {
+  const limit = Math.min(Math.max(input.limit ?? 20, 1), 50);
+  const conditions = [eq(abyssItems.userId, userId), ne(abyssItems.status, "archived")];
+  if (input.query?.trim()) {
+    conditions.push(ilike(abyssItems.title, `%${input.query.trim()}%`));
+  }
+
+  const rows = await db
+    .select({
+      id: abyssItems.id,
+      title: abyssItems.title,
+      type: abyssItems.type,
+      category: abyssItems.category,
+      lastTouchedAt: abyssItems.lastTouchedAt,
+    })
+    .from(abyssItems)
+    .where(and(...conditions))
+    .orderBy(desc(abyssItems.lastTouchedAt))
+    .limit(limit);
+
+  return { ok: true as const, count: rows.length, items: rows };
+}
+
+async function buildRescheduleProposal(
+  userId: string,
+  input: RescheduleTasksInput
+): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
+  if (!input.assignments?.length) return { ok: false, error: "assignments array is required" };
+  for (const row of input.assignments) {
+    if (!ISO_DATE.test(row.scheduledDate)) {
+      return { ok: false, error: "scheduledDate must be YYYY-MM-DD" };
+    }
+  }
+
+  const titleById = await resolveOwnedTaskTitles(
+    userId,
+    input.assignments.map((a) => a.taskId)
+  );
+  const items = input.assignments
+    .filter((a) => titleById.has(a.taskId))
+    .map((a) => ({
+      itemId: newProposalItemId(),
+      enabled: true,
+      taskId: a.taskId,
+      title: titleById.get(a.taskId) ?? "Task",
+      scheduledDate: a.scheduledDate,
+    }));
+
+  if (items.length === 0) return { ok: false, error: "No owned tasks matched the assignment IDs." };
+
+  return {
+    ok: true,
+    proposal: proposedActionSchema.parse({
+      kind: "reschedule_tasks",
+      status: "pending",
+      summary: input.summary,
+      items,
+    }),
+  };
+}
+
+async function buildCreateTaskProposal(
+  input: CreateTaskInput
+): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
+  const rows = input.tasks?.filter((t) => t.title?.trim()) ?? [];
+  if (rows.length === 0) return { ok: false, error: "tasks array is required" };
+
+  return {
+    ok: true,
+    proposal: proposedActionSchema.parse({
+      kind: "create_task",
+      status: "pending",
+      summary: input.summary,
+      items: rows.map((t) => ({
+        itemId: newProposalItemId(),
+        enabled: true,
+        title: t.title.trim(),
+        scheduledDate: t.scheduledDate && ISO_DATE.test(t.scheduledDate) ? t.scheduledDate : null,
+        projectSlug: t.projectSlug ?? null,
+        priority: t.priority,
+      })),
+    }),
+  };
+}
+
+async function buildCompleteTaskProposal(
+  userId: string,
+  input: CompleteTaskInput
+): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
+  const ids = input.taskIds?.filter(Boolean) ?? [];
+  if (ids.length === 0) return { ok: false, error: "taskIds array is required" };
+
+  const titleById = await resolveOwnedTaskTitles(userId, ids);
+  const items = ids
+    .filter((id) => titleById.has(id))
+    .map((id) => ({
+      itemId: newProposalItemId(),
+      enabled: true,
+      taskId: id,
+      title: titleById.get(id) ?? "Task",
+    }));
+
+  if (items.length === 0) return { ok: false, error: "No owned incomplete tasks matched the IDs." };
+
+  return {
+    ok: true,
+    proposal: proposedActionSchema.parse({
+      kind: "complete_task",
+      status: "pending",
+      summary: input.summary,
+      items,
+    }),
+  };
+}
+
+function isSilentWriteTool(register: KashRegister, name: string): boolean {
+  return register === "focus" && (name === "complete_task" || name === "park_in_abyss");
+}
 
 export async function executeChatTool(
   userId: string,
   name: string,
-  input: unknown
+  input: unknown,
+  options?: { register?: KashRegister; threadId?: string }
 ): Promise<ChatToolResult> {
+  const register = options?.register ?? "planning";
+
   try {
     if (name === "query_tasks") {
       const result = await queryTasks(userId, (input ?? {}) as QueryTasksInput);
       return { content: JSON.stringify(result), mutatedTasks: false };
     }
 
-    if (name === "reschedule_tasks") {
-      const parsed = input as RescheduleTasksInput;
-      if (!parsed?.assignments?.length) {
-        return {
-          content: JSON.stringify({ ok: false, error: "assignments array is required" }),
-          mutatedTasks: false,
-        };
-      }
+    if (name === "query_state") {
+      const threadId = options?.threadId ?? "global";
+      const { contextBlock } = await assembleChatContext(userId, threadId);
+      return { content: JSON.stringify({ ok: true, state: contextBlock }), mutatedTasks: false };
+    }
 
-      const { applied, titles } = await applyScheduleBatch(userId, parsed.assignments);
+    if (name === "query_projects") {
+      const result = await queryProjects(userId, (input ?? {}) as QueryProjectsInput);
+      return { content: JSON.stringify(result), mutatedTasks: false };
+    }
+
+    if (name === "query_abyss") {
+      const result = await queryAbyss(userId, (input ?? {}) as QueryAbyssInput);
+      return { content: JSON.stringify(result), mutatedTasks: false };
+    }
+
+    if (name === "draft_week" || name === "draft_eod" || name === "draft_balance_pass") {
       return {
         content: JSON.stringify({
           ok: true,
-          applied,
-          tasks: titles,
+          draft: name,
+          note: "Draft only — describe the proposal in your reply.",
         }),
-        mutatedTasks: applied > 0,
+        mutatedTasks: false,
+      };
+    }
+
+    if (name === "reschedule_tasks") {
+      const built = await buildRescheduleProposal(userId, input as RescheduleTasksInput);
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      if (isSilentWriteTool(register, name)) {
+        const applied = await applyProposedActionPayload(userId, built.proposal);
+        return {
+          content: JSON.stringify({ ok: true, applied: applied.applied, tasks: applied.titles }),
+          mutatedTasks: applied.applied > 0,
+        };
+      }
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "create_task") {
+      const built = await buildCreateTaskProposal(input as CreateTaskInput);
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "complete_task") {
+      const built = await buildCompleteTaskProposal(userId, input as CompleteTaskInput);
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      if (isSilentWriteTool(register, name)) {
+        const applied = await applyProposedActionPayload(userId, built.proposal);
+        return {
+          content: JSON.stringify({ ok: true, applied: applied.applied, tasks: applied.titles }),
+          mutatedTasks: applied.applied > 0,
+        };
+      }
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "propose_about_me_edit") {
+      const parsed = input as ProposeAboutMeEditToolInput;
+      const rawProposals = Array.isArray(parsed?.proposals) ? parsed.proposals : [];
+      if (!rawProposals.length) {
+        return {
+          content: JSON.stringify({ ok: false, error: "proposals array is required" }),
+          mutatedTasks: false,
+        };
+      }
+      const proposals = rawProposals
+        .map((item) => {
+          const raw = (item ?? {}) as Record<string, unknown>;
+          if (raw.constraintType != null && raw.type == null) raw.type = raw.constraintType;
+          return normalizeChatToolProposal(raw as Parameters<typeof normalizeChatToolProposal>[0]);
+        })
+        .filter((x): x is NonNullable<typeof x> => x != null);
+      if (!proposals.length) {
+        return {
+          content: JSON.stringify({ ok: false, error: "No valid proposals." }),
+          mutatedTasks: false,
+        };
+      }
+      const result = await proposeAboutMeEdit(userId, proposals);
+      return {
+        content: JSON.stringify({ ok: true, created: result.created, skipped: result.skipped }),
+        mutatedTasks: false,
       };
     }
 
@@ -240,9 +437,6 @@ export async function executeChatTool(
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Tool execution failed.";
-    return {
-      content: JSON.stringify({ ok: false, error: message }),
-      mutatedTasks: false,
-    };
+    return { content: JSON.stringify({ ok: false, error: message }), mutatedTasks: false };
   }
 }
