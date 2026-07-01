@@ -26,3 +26,12 @@ export function localWeekUtcBounds(now: Date, tzOffsetMinutes: number): { start:
     end: new Date(startMs + 7 * 86_400_000),
   };
 }
+
+/** ISO YYYY-MM-DD for the local calendar day of `instant` in `tzOffsetMinutes`. */
+export function localIsoDateFromUtcInstant(instant: Date, tzOffsetMinutes: number): string {
+  const local = new Date(instant.getTime() + tzOffsetMinutes * 60_000);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(local.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}

@@ -26,7 +26,13 @@ import {
   tasks,
 } from "@/db/tables";
 import { computeDependencyState } from "@/lib/tasks/dependencies/blocked";
-import { isDateInIsoWeek, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import {
+  isDateInIsoWeek,
+  parseISODateString,
+  startOfIsoWeekMonday,
+  startOfLocalDay,
+  toISODateString,
+} from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 import {
@@ -40,7 +46,10 @@ import {
   validateWeekDraftAssignments,
   type WeekDraftAssignment,
 } from "@/lib/week/validate-week-draft-assignments";
+import { weekDraftValidationContextFromSource } from "@/lib/week/week-draft-validation-context";
+import { fetchWeekDraftContext } from "@/server/claude/fetch-week-draft-context";
 import { applyScheduleBatch } from "@/server/tasks/apply-schedule-batch";
+import { clearWeekDayPrioritiesForTask } from "./week-day-priorities";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -494,6 +503,10 @@ export const tasksRouter = createTRPCRouter({
         });
       }
 
+      await clearWeekDayPrioritiesForTask(ctx.userId, input.id, {
+        exceptDate: input.scheduledDate ?? undefined,
+      });
+
       return row;
     }),
 
@@ -520,9 +533,15 @@ export const tasksRouter = createTRPCRouter({
         .where(and(eq(tasks.userId, ctx.userId), inArray(tasks.id, uniqueIds)));
 
       const ownedSet = new Set(ownedRows.map((r) => r.id));
+      const firstDate = input.assignments[0]!.scheduledDate;
+      const weekStart = toISODateString(startOfIsoWeekMonday(parseISODateString(firstDate)));
+      const draftContext = await fetchWeekDraftContext(ctx.userId, weekStart);
+
       const validation = validateWeekDraftAssignments(
         input.assignments as WeekDraftAssignment[],
-        ownedSet
+        ownedSet,
+        parseISODateString(weekStart),
+        weekDraftValidationContextFromSource(draftContext)
       );
 
       if (!validation.ok) {
@@ -531,7 +550,9 @@ export const tasksRouter = createTRPCRouter({
             ? "One or more tasks were not found."
             : validation.error === "DUPLICATE_TASK"
               ? "Duplicate task in draft."
-              : "One or more dates are outside the current week.";
+              : validation.error === "DAY_OVER_CAPACITY"
+                ? "One or more days would be over capacity with protected blocks."
+                : "One or more dates are outside the current week.";
         throw new TRPCError({ code: "BAD_REQUEST", message });
       }
 

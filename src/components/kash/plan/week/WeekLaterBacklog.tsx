@@ -42,7 +42,13 @@ export function WeekLaterBacklog({ tasks, onComplete, onDelete }: Props) {
       {open ? (
         <ul className="space-y-1.5 px-3 pb-3" aria-label="Later tasks">
           {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
+            <TaskRow
+              key={task.id}
+              task={task}
+              weekDragLift
+              onComplete={onComplete}
+              onDelete={onDelete}
+            />
           ))}
         </ul>
       ) : null}

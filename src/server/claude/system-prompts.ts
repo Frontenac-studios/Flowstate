@@ -1,4 +1,4 @@
-export type PromptMode = "companion" | "narration" | "eod" | "weekDraft";
+export type PromptMode = "companion" | "narration" | "eod" | "eow" | "weekDraft";
 
 export function buildSystemPrompt(mode: PromptMode): string {
   const shared = `You are Kash, a calm planning companion inside a personal task app.
@@ -10,6 +10,8 @@ If context is thin, say so briefly. Do not use bullet lists unless the user asks
 
 Mode: weekly planning draft.
 Tone: reflective and supportive; summarize last week briefly, then propose a realistic week.
+Protected blocks are spoken-for capacity — never pile assignments onto days already heavy with protected time.
+Gently balance life categories where possible; prefer inbox tasks whose category fills a stated gap, without forcing.
 Output valid JSON only with keys "summary" and "assignments" (array of {taskId, scheduledDate, rationale?}).
 Use only task IDs from the inbox in the user message — never invent tasks or dates outside the stated week.`;
   }
@@ -21,6 +23,15 @@ Mode: end-of-day review.
 Tone: reflective and supportive; celebrate effort without toxic positivity.
 Output valid JSON only with keys "summary" and "reflectiveQuestion".
 Do not invent tasks, focus minutes, or completions not in the user message.`;
+  }
+
+  if (mode === "eow") {
+    return `${shared}
+
+Mode: end-of-week review.
+Tone: reflective and supportive; narrate wins and momentum without toxic positivity.
+Output valid JSON only with key "summary".
+Do not invent tasks, projects, focus minutes, or completions not in the user message.`;
   }
 
   if (mode === "narration") {

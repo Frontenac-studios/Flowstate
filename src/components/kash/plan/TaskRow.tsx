@@ -30,6 +30,8 @@ export type PlanTaskRow = {
   projectSlug: string | null;
   projectName: string | null;
   isTop3: boolean;
+  /** Week day-priority slot (1–3) when pinned for a weekday (WD1). */
+  dayPriorityOrder?: number | null;
   // Optional so list builders that don't yet select category still type-check;
   // surfaced under the category lens as the life-area stripe (1.4b) or neutral
   // marker (1.4d).
@@ -72,6 +74,8 @@ type Props = {
   suppressDue?: boolean;
   /** AN-T2: stagger index for Today list arrival; omit on other surfaces. */
   arriveIndex?: number;
+  /** AN §5 / WD7: scale + shadow lift while dragging on the Week surface. */
+  weekDragLift?: boolean;
 };
 
 const ACTION_WIDTH_PX = 72;
@@ -91,10 +95,12 @@ export function TaskRow({
   reveal,
   suppressDue = false,
   arriveIndex,
+  weekDragLift = false,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editError, setEditError] = useState<string | null>(null);
   // AN-T1: drives the completion choreography — category-color checkbox, struck
@@ -103,7 +109,7 @@ export function TaskRow({
   const [completing, setCompleting] = useState(false);
   const rowContentRef = useRef<HTMLDivElement>(null);
   const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pinEnabled = canPin && !task.isTop3 && onPin != null;
+  const pinEnabled = canPin && !task.isTop3 && !task.dayPriorityOrder && onPin != null;
 
   // Clean by default; indicators reveal per active lens (VF-2). The surrounding
   // LensProvider renders clean on the server / first paint, then hydrates from
@@ -161,6 +167,15 @@ export function TaskRow({
     },
     []
   );
+
+  useEffect(() => {
+    if (!weekDragLift) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReducedMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [weekDragLift]);
 
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useDraggable({
@@ -280,20 +295,33 @@ export function TaskRow({
     setEditing(true);
   };
 
+  const dndTransform = CSS.Transform.toString(transform);
+  const weekLiftActive = weekDragLift && isDragging && !completing;
+  const dragTransform =
+    weekLiftActive && dndTransform && !reducedMotion ? `${dndTransform} scale(1.02)` : dndTransform;
+
   return (
     <li
       ref={setNodeRef}
       className={`relative overflow-hidden rounded-[var(--radius-card)] ${
         arriveIndex != null ? "row-arrive" : ""
       } ${
+        weekDragLift
+          ? "transition-[transform,box-shadow,opacity] duration-short ease-move motion-reduce:transition-opacity motion-reduce:duration-short"
+          : ""
+      } ${
         completing
           ? "translate-x-6 opacity-0 transition-[transform,opacity] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
-          : isDragging
-            ? "opacity-60"
-            : "transition-transform"
+          : weekLiftActive
+            ? `z-sticky ${reducedMotion ? "opacity-75" : "shadow-overlay"}`
+            : isDragging
+              ? "opacity-60"
+              : weekDragLift
+                ? ""
+                : "transition-transform"
       }`}
       style={{
-        transform: completing ? undefined : CSS.Transform.toString(transform),
+        transform: completing ? undefined : dragTransform || undefined,
         ...(arriveIndex != null
           ? {
               animationDelay: `calc(var(--motion-micro) * ${Math.min(arriveIndex, MAX_ARRIVE_STAGGER)})`,

@@ -91,6 +91,7 @@ export function WeekInbox({
                   key={task.id}
                   task={task}
                   showProject={false}
+                  weekDragLift
                   onComplete={onComplete}
                   onDelete={onDelete}
                 />

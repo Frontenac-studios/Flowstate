@@ -17,6 +17,8 @@ type Props = {
   block: ProtectedBlockRow;
   compact?: boolean;
   onRemove?: (id: string) => void;
+  /** AN §5 / WD7: scale + fade when the block lands in a week column or ritual bar. */
+  animatePlace?: boolean;
 };
 
 function formatTimeRange(startMin: number, endMin: number): string {
@@ -30,7 +32,12 @@ function formatTimeRange(startMin: number, endMin: number): string {
   return `${fmt(startMin)}–${fmt(endMin)}`;
 }
 
-export default function ProtectedBlockChip({ block, compact = false, onRemove }: Props) {
+export default function ProtectedBlockChip({
+  block,
+  compact = false,
+  onRemove,
+  animatePlace = false,
+}: Props) {
   const title = block.label?.trim() || categoryLabel(block.category);
   const timed =
     block.startMin != null && block.endMin != null
@@ -44,7 +51,7 @@ export default function ProtectedBlockChip({ block, compact = false, onRemove }:
         proposed
           ? "border-dashed border-[var(--border)] bg-[var(--surface-2)]"
           : "border-[var(--border-subtle)] bg-[var(--surface)]"
-      }`}
+      } ${animatePlace ? "protected-place" : ""}`}
     >
       <span
         className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"

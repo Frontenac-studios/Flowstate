@@ -4,6 +4,7 @@ export const SYNC_TABLES = [
   "phases",
   "protected_block_templates",
   "protected_blocks",
+  "week_day_priorities",
   "bingo_cards",
   "goals",
   "goal_milestones",

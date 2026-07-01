@@ -11,16 +11,23 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 
+import "./week-motion.css";
+
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import { computeWeekDayLoads } from "@/lib/week/day-load";
+import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
 import { usePlanMode } from "../PlanProvider";
 import { QuickInput } from "../QuickInput";
+import { Top3ReplacePicker } from "../Top3ReplacePicker";
+import type { Top3SlotTask } from "../Top3Slots";
 import type { PlanTaskRow } from "../TaskRow";
+import type { DayPrioritySlotTask } from "./DayPrioritiesSlots";
 import { WeekColumn } from "./WeekColumn";
 import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
@@ -34,6 +41,32 @@ const WEEK_TRACK_BG = "color-mix(in srgb, var(--ink) 4%, var(--surface))";
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const VISIBLE_DAY_COUNT = 4;
 const DEFAULT_COMPOSER_HEIGHT_PX = 128;
+
+function firstFreeSlot(pinnedBySlot: Map<number, DayPrioritySlotTask>): 1 | 2 | 3 | null {
+  for (const slot of [1, 2, 3] as const) {
+    if (!pinnedBySlot.has(slot)) return slot;
+  }
+  return null;
+}
+
+function toReplacePickerMap(
+  pinnedBySlot: Map<number, DayPrioritySlotTask>
+): Map<number, Top3SlotTask> {
+  const map = new Map<number, Top3SlotTask>();
+  for (const slot of [1, 2, 3] as const) {
+    const task = pinnedBySlot.get(slot);
+    if (!task) continue;
+    map.set(slot, {
+      id: task.id,
+      title: task.title,
+      projectId: task.projectId,
+      projectSlug: task.projectSlug,
+      top3Order: task.priorityOrder,
+      completedAt: task.completedAt,
+    });
+  }
+  return map;
+}
 
 type WeekCanvasProps = {
   /** Monday ISO date anchoring the week columns; defaults to the user's local today. */
@@ -53,6 +86,11 @@ export function WeekCanvas({
   const [draftOpen, setDraftOpen] = useState(false);
   const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
   const [composerHeight, setComposerHeight] = useState(DEFAULT_COMPOSER_HEIGHT_PX);
+  const [replacePicker, setReplacePicker] = useState<{
+    taskId: string;
+    isoDate: string;
+    anchorEl: HTMLElement;
+  } | null>(null);
 
   const composerMeasureRef = useRef<HTMLDivElement>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
@@ -72,6 +110,35 @@ export function WeekCanvas({
   const { data: protectedBlocks = [] } = useQuery(
     trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
   );
+  const { data: dayPriorities = [] } = useQuery(
+    trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
+  );
+  const { data: overCommitThreshold } = useQuery(trpc.weekOverCommit.getThreshold.queryOptions());
+
+  const prioritiesByDate = useMemo(() => {
+    const map: Record<string, Map<number, DayPrioritySlotTask>> = {};
+    for (const row of dayPriorities) {
+      const dayMap = map[row.scheduledDate] ?? new Map<number, DayPrioritySlotTask>();
+      dayMap.set(row.priorityOrder, {
+        id: row.taskId,
+        title: row.title,
+        projectId: row.projectId,
+        projectSlug: row.projectSlug,
+        priorityOrder: row.priorityOrder,
+        completedAt: row.completedAt,
+      });
+      map[row.scheduledDate] = dayMap;
+    }
+    return map;
+  }, [dayPriorities]);
+
+  const dayPriorityOrderByTaskId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of dayPriorities) {
+      map.set(row.taskId, row.priorityOrder);
+    }
+    return map;
+  }, [dayPriorities]);
 
   const protectedByDate = useMemo(() => {
     const map: Record<string, ProtectedBlockRow[]> = {};
@@ -85,12 +152,62 @@ export function WeekCanvas({
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
 
+  const priorityTaskIdsByDate = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    for (const [iso, pinnedBySlot] of Object.entries(prioritiesByDate)) {
+      map[iso] = new Set(Array.from(pinnedBySlot.values()).map((task) => task.id));
+    }
+    return map;
+  }, [prioritiesByDate]);
+
+  const protectedCountByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [iso, blocks] of Object.entries(protectedByDate)) {
+      map[iso] = blocks.length;
+    }
+    return map;
+  }, [protectedByDate]);
+
+  const dayLoads = useMemo(
+    () =>
+      computeWeekDayLoads({
+        dates: weekDates.map(toISODateString),
+        tasksByDate: Object.fromEntries(
+          weekDates.map((date) => [
+            toISODateString(date),
+            partitioned.byDate[toISODateString(date)] ?? [],
+          ])
+        ),
+        priorityTaskIdsByDate,
+        protectedCountByDate,
+      }),
+    [weekDates, partitioned.byDate, priorityTaskIdsByDate, protectedCountByDate]
+  );
+
+  const overCommittedByDate = useMemo(() => {
+    if (!overCommitThreshold) return {};
+    const map: Record<string, boolean> = {};
+    for (const [iso, load] of Object.entries(dayLoads)) {
+      map[iso] = isDayOverCommitted(load, overCommitThreshold.threshold);
+    }
+    return map;
+  }, [dayLoads, overCommitThreshold]);
+
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({
       queryKey: trpc.protectedBlocks.listForWeek.queryKey(weekQueryInput),
     });
-  }, [queryClient, trpc.tasks.listIncomplete, trpc.protectedBlocks.listForWeek, weekQueryInput]);
+    void queryClient.invalidateQueries({
+      queryKey: trpc.weekDayPriorities.listForWeek.queryKey(weekQueryInput),
+    });
+  }, [
+    queryClient,
+    trpc.tasks.listIncomplete,
+    trpc.protectedBlocks.listForWeek,
+    trpc.weekDayPriorities.listForWeek,
+    weekQueryInput,
+  ]);
 
   const scheduleMutation = useMutation(
     trpc.tasks.scheduleToDate.mutationOptions({
@@ -128,6 +245,24 @@ export function WeekCanvas({
     })
   );
 
+  const pinPriorityMutation = useMutation(
+    trpc.weekDayPriorities.pin.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+      },
+    })
+  );
+
+  const unpinPriorityMutation = useMutation(
+    trpc.weekDayPriorities.unpin.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+      },
+    })
+  );
+
   const toRow = (task: (typeof tasks)[number]): PlanTaskRow => ({
     id: task.id,
     title: task.title,
@@ -136,6 +271,7 @@ export function WeekCanvas({
     projectSlug: task.projectSlug,
     projectName: task.projectName,
     isTop3: task.isTop3,
+    dayPriorityOrder: dayPriorityOrderByTaskId.get(task.id) ?? null,
     category: task.category,
     categoryUnresolved: task.categoryUnresolved,
     scheduledDate: task.scheduledDate,
@@ -155,6 +291,41 @@ export function WeekCanvas({
   );
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handlePinTask = useCallback(
+    (isoDate: string, taskId: string, sourceEl: HTMLElement) => {
+      const pinnedBySlot = prioritiesByDate[isoDate] ?? new Map();
+      const slot = firstFreeSlot(pinnedBySlot);
+
+      if (slot != null) {
+        pinPriorityMutation.mutate({ taskId, scheduledDate: isoDate, slot });
+        return;
+      }
+
+      setReplacePicker({ taskId, isoDate, anchorEl: sourceEl });
+    },
+    [prioritiesByDate, pinPriorityMutation]
+  );
+
+  const handleUnpinPriority = useCallback(
+    (isoDate: string, taskId: string) => {
+      unpinPriorityMutation.mutate({ taskId, scheduledDate: isoDate });
+    },
+    [unpinPriorityMutation]
+  );
+
+  const handleReplaceSlot = useCallback(
+    (slot: 1 | 2 | 3) => {
+      if (!replacePicker) return;
+      pinPriorityMutation.mutate({
+        taskId: replacePicker.taskId,
+        scheduledDate: replacePicker.isoDate,
+        slot,
+      });
+      setReplacePicker(null);
+    },
+    [replacePicker, pinPriorityMutation]
+  );
 
   const onDragEnd = (event: DragEndEvent) => {
     const overId = event.over?.id;
@@ -304,6 +475,8 @@ export function WeekCanvas({
               {weekDates.map((date, index) => {
                 const iso = toISODateString(date);
                 const isToday = iso === todayIso;
+                const pinnedBySlot =
+                  prioritiesByDate[iso] ?? new Map<number, DayPrioritySlotTask>();
                 return (
                   <WeekColumn
                     key={iso}
@@ -313,10 +486,16 @@ export function WeekCanvas({
                     isToday={isToday}
                     columnWidthPercent={columnWidthPercent}
                     tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
+                    pinnedBySlot={pinnedBySlot}
                     protectedBlocks={protectedByDate[iso] ?? []}
+                    overCommitted={overCommittedByDate[iso] ?? false}
+                    overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
                     onComplete={pushComplete}
                     onDelete={pushDelete}
                     onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
+                    onPinTask={(taskId, sourceEl) => handlePinTask(iso, taskId, sourceEl)}
+                    onUnpinPriority={(taskId) => handleUnpinPriority(iso, taskId)}
+                    canPinMore={pinnedBySlot.size < 3}
                   />
                 );
               })}
@@ -332,6 +511,17 @@ export function WeekCanvas({
           ) : null}
         </>
       )}
+
+      {replacePicker ? (
+        <Top3ReplacePicker
+          pinnedBySlot={toReplacePickerMap(
+            prioritiesByDate[replacePicker.isoDate] ?? new Map<number, DayPrioritySlotTask>()
+          )}
+          anchorEl={replacePicker.anchorEl}
+          onReplace={handleReplaceSlot}
+          onDismiss={() => setReplacePicker(null)}
+        />
+      ) : null}
     </DndContext>
   );
 }
