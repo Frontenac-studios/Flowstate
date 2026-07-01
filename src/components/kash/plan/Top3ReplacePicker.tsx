@@ -46,7 +46,7 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
       ref={panelRef}
       role="dialog"
       aria-label="Replace a priority"
-      className="fixed z-50 flex flex-col gap-2 rounded-card border border-subtle bg-surface p-3 shadow-lg"
+      className="fixed z-modal flex flex-col gap-2 rounded-card border border-subtle bg-surface p-3 shadow-overlay"
       style={{ top, left, width: Math.min(width, 400) }}
     >
       <p className="text-sm font-medium text-ink">Replace a priority</p>
@@ -58,7 +58,7 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
             <button
               key={slot}
               type="button"
-              className="flex min-h-9 items-center gap-2 rounded-pill border border-border bg-surface px-3 py-0.5 text-left text-sm text-ink hover:ring-2 hover:ring-[var(--accent-soft)]"
+              className="flex min-h-9 items-center gap-2 rounded-pill border border-border bg-surface px-3 py-0.5 text-left text-sm text-ink hover:ring-2 hover:ring-[var(--accent-soft)] focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
               onClick={() => onReplace(slot)}
             >
               <span className="shrink-0 text-xs text-accent" aria-hidden>
@@ -71,7 +71,7 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
       </div>
       <button
         type="button"
-        className="mt-1 text-center text-xs text-ink-muted hover:text-ink"
+        className="mt-1 text-center text-xs text-ink-muted hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
         onClick={onDismiss}
       >
         Nevermind

@@ -14,7 +14,7 @@ export default function BingoBalanceLegend({ balance }: Props) {
       {PROJECT_CATEGORIES.map((category) => (
         <span key={category} className="inline-flex items-center gap-1.5 text-caption text-ink">
           <span
-            className="h-2.5 w-2.5 rounded-[3px]"
+            className="size-2.5 rounded-[var(--radius-row)] shadow-[0_0_0_1px_var(--mark-ring)]"
             style={{ backgroundColor: categorySolidVar(category) }}
             aria-hidden
           />

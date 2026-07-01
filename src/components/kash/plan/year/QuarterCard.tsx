@@ -45,7 +45,7 @@ export default function QuarterCard({
       ref={setNodeRef}
       type="button"
       onClick={handleClick}
-      className={`rounded-card border p-4 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+      className={`rounded-card border p-4 text-left transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
         emptyQuarter ? "border-dashed border-subtle opacity-70" : "border-subtle bg-surface"
       } ${isFutureQuarter && !emptyQuarter ? "opacity-85" : ""} ${
         isOver || isDropTarget ? "ring-2 ring-ink-muted" : "hover:border-ink-muted"
@@ -53,7 +53,7 @@ export default function QuarterCard({
       aria-label={`Quarter ${quarter.quarter}${themePhrase ? `, ${themePhrase}` : ""}`}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[15px] font-semibold text-ink">Q{quarter.quarter}</span>
+        <span className="text-subtitle font-semibold text-ink">Q{quarter.quarter}</span>
         <span className={`truncate text-xs ${untitled ? "text-ink-faint" : "text-ink-muted"}`}>
           {untitled ? "untitled" : themePhrase}
         </span>
@@ -63,9 +63,9 @@ export default function QuarterCard({
       <QuarterWeekDots weeks={quarter.weeks} />
 
       {emptyQuarter ? (
-        <p className="mt-3 text-[11px] text-ink-faint">drag a goal here to set its horizon</p>
+        <p className="mt-3 text-caption text-ink-faint">drag a goal here to set its horizon</p>
       ) : isFutureQuarter && totalActivity === 0 ? (
-        <p className="mt-3 text-[11px] text-ink-faint">planned · lighter load</p>
+        <p className="mt-3 text-caption text-ink-faint">planned · lighter load</p>
       ) : null}
     </button>
   );

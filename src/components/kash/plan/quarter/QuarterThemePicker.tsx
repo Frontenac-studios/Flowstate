@@ -87,7 +87,7 @@ export default function QuarterThemePicker({ year, quarter, phrase, focusCategor
           onBlur={() => {
             if (draftPhrase !== (phrase ?? "")) persist(draftPhrase, selected);
           }}
-          className="rounded-control border border-subtle bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="rounded-control border border-subtle bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
         />
       </div>
 
@@ -116,7 +116,7 @@ export default function QuarterThemePicker({ year, quarter, phrase, focusCategor
                 }
               >
                 <span
-                  className="size-2 shrink-0 rounded-full"
+                  className="size-2 shrink-0 rounded-full shadow-[0_0_0_1px_var(--mark-ring)]"
                   style={{ backgroundColor: categorySolidVar(category) }}
                   aria-hidden
                 />

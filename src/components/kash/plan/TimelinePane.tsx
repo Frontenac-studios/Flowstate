@@ -160,9 +160,9 @@ function TimelineBlock({
   return (
     <div
       ref={setNodeRef}
-      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[3px] bg-surface ${
+      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[var(--stripe-width)] bg-surface ${
         done ? "opacity-60" : ""
-      } ${active ? "ring-1 ring-accent" : ""} ${isDragging ? "z-20 opacity-80" : ""}`}
+      } ${active ? "ring-1 ring-accent" : ""} ${isDragging ? "z-sticky opacity-80" : ""}`}
       style={{
         top,
         height,
@@ -187,7 +187,7 @@ function TimelineBlock({
 
       <div className="flex items-center gap-1 px-2 py-1">
         {block.isTop3 ? (
-          <span className="shrink-0 text-[10px] leading-none text-accent" title="Top 3">
+          <span className="shrink-0 text-caption leading-none text-accent" title="Top 3">
             ★
           </span>
         ) : null}
@@ -199,7 +199,7 @@ function TimelineBlock({
           {block.title}
         </span>
         <span
-          className={`shrink-0 text-[10px] tabular-nums ${
+          className={`shrink-0 text-caption tabular-nums ${
             active ? "font-medium text-accent" : "text-ink-muted"
           }`}
           title={done ? "Focused time" : active ? "Running" : "Starts"}
@@ -463,7 +463,7 @@ export function TimelinePane() {
                 className="absolute inset-x-0 flex items-start"
                 style={{ top: i * HOUR_HEIGHT, height: HOUR_HEIGHT }}
               >
-                <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] tabular-nums text-ink-muted">
+                <span className="w-9 shrink-0 -translate-y-2 text-right text-caption tabular-nums text-ink-muted">
                   {formatHour(hour)}
                 </span>
                 <div className="ml-2 flex-1 border-t border-dashed border-[var(--border)]" />
@@ -499,10 +499,10 @@ export function TimelinePane() {
                   className="size-1.5 shrink-0 rounded-full"
                   style={{ backgroundColor: stripeColor(t.category, t.categoryUnresolved) }}
                 />
-                <span className="min-w-0 flex-1 truncate text-[10px] text-ink-muted line-through">
+                <span className="min-w-0 flex-1 truncate text-caption text-ink-muted line-through">
                   {t.title}
                 </span>
-                <span className="shrink-0 text-[10px] text-ink-faint">✓</span>
+                <span className="shrink-0 text-caption text-ink-faint">✓</span>
               </div>
             ))}
 
@@ -513,10 +513,10 @@ export function TimelinePane() {
                   top: ((selfCareGap.startMin - rangeStart) / 60) * HOUR_HEIGHT + 4,
                 }}
               >
-                <span className="text-[11px]" style={{ color: categorySolidVar("body_mind") }}>
+                <span className="text-caption" style={{ color: categorySolidVar("body_mind") }}>
                   ◵
                 </span>
-                <span className="truncate text-[11px] text-ink-muted">
+                <span className="truncate text-caption text-ink-muted">
                   Good gap — a short walk?
                 </span>
               </div>
@@ -524,7 +524,7 @@ export function TimelinePane() {
 
             {decideSlotMin != null ? (
               <div
-                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center rounded-md border border-dashed border-[var(--border)] text-[11px] text-ink-faint"
+                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center rounded-md border border-dashed border-[var(--border)] text-caption text-ink-faint"
                 style={{
                   top: ((decideSlotMin - rangeStart) / 60) * HOUR_HEIGHT,
                   height: (NEXT_BLOCK_MIN / 60) * HOUR_HEIGHT - 4,
@@ -536,15 +536,15 @@ export function TimelinePane() {
 
             {showNowLine ? (
               <div
-                className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
+                className="pointer-events-none absolute inset-x-0 z-sticky flex items-center"
                 style={{ top: ((nowMinutes! - rangeStart) / 60) * HOUR_HEIGHT }}
                 aria-hidden
               >
-                <span className="w-9 shrink-0 -translate-y-2 text-right text-[11px] font-medium text-accent">
+                <span className="w-9 shrink-0 -translate-y-2 text-right text-caption font-medium text-accent">
                   now
                 </span>
                 <div className="ml-2 flex-1 border-t border-accent" />
-                <span className="ml-1 shrink-0 -translate-y-2 text-[10px] font-medium tabular-nums text-accent">
+                <span className="ml-1 shrink-0 -translate-y-2 text-caption font-medium tabular-nums text-accent">
                   {formatClock(nowMinutes!)}
                 </span>
               </div>
@@ -556,7 +556,7 @@ export function TimelinePane() {
           <button
             type="button"
             onClick={scrollToNow}
-            className="absolute bottom-2 right-2 z-20 rounded-pill border bg-surface px-2 py-0.5 text-[11px] font-medium text-accent shadow-sm"
+            className="absolute bottom-2 right-2 z-sticky rounded-pill border bg-surface px-2 py-0.5 text-caption font-medium text-accent shadow-sm"
           >
             {nowTopPx != null && scrollRef.current && nowTopPx < scrollRef.current.scrollTop
               ? "↑"

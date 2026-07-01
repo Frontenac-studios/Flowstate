@@ -49,7 +49,7 @@ export type PlanTaskRow = {
   recurringLabel?: string;
 };
 
-const NEUTRAL_CATEGORY_STRIPE = "rgba(120,120,120,0.3)";
+const NEUTRAL_CATEGORY_STRIPE = "var(--ink-faint)";
 
 type Props = {
   task: PlanTaskRow;
@@ -353,7 +353,7 @@ export function TaskRow({
           onDoubleClick={() => onActivate?.(task.id)}
         >
           <span
-            className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full"
+            className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
             style={{ backgroundColor: stripeColor }}
             aria-label={stripeLabel}
             title={stripeLabel}

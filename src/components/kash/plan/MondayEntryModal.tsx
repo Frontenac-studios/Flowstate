@@ -19,12 +19,12 @@ export function MondayEntryModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4"
+      className="fixed inset-0 z-modal flex items-center justify-center bg-black/20 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="monday-entry-title"
     >
-      <div className="max-w-md rounded-card border border-border bg-surface p-8 text-center shadow-lg shadow-overlay">
+      <div className="max-w-md rounded-card border border-border bg-surface p-8 text-center shadow-overlay">
         <h2 id="monday-entry-title" className="text-xl font-semibold text-ink">
           Good morning — plan the week or dive into today?
         </h2>
@@ -34,14 +34,14 @@ export function MondayEntryModal() {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             type="button"
-            className="rounded-pill border-[1.5px] border-ink bg-surface px-6 py-2.5 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
+            className="rounded-pill border-[1.5px] border-ink bg-surface px-6 py-2.5 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
             onClick={planTheWeek}
           >
             Plan the week
           </button>
           <button
             type="button"
-            className="rounded-pill border border-border bg-surface px-6 py-2.5 text-sm text-ink-muted transition hover:text-ink"
+            className="rounded-pill border border-border bg-surface px-6 py-2.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
             onClick={() => resolveMondayChoice("today")}
           >
             Jump into today

@@ -16,7 +16,7 @@ type Props = {
 export default function BalancePassChip({ scopeKey, count, expanded, onToggle, onDismiss }: Props) {
   return (
     <div
-      className="border-ink/15 bg-surface/95 fixed bottom-6 right-6 z-40 max-w-md rounded-xl border shadow-lg backdrop-blur-sm"
+      className="border-ink/15 fixed bottom-6 right-6 z-toast max-w-md rounded-xl border bg-surface shadow-overlay"
       role="complementary"
       aria-label="Balance pass suggestions"
     >
@@ -24,7 +24,7 @@ export default function BalancePassChip({ scopeKey, count, expanded, onToggle, o
         <button
           type="button"
           onClick={onToggle}
-          className="hover:bg-ink/5 flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-0.5 text-left"
+          className="hover:bg-ink/5 flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-0.5 text-left focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
           aria-expanded={expanded}
         >
           <span className="text-sm font-medium text-ink">Balance pass</span>
@@ -36,7 +36,7 @@ export default function BalancePassChip({ scopeKey, count, expanded, onToggle, o
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss balance pass"
-          className="hover:bg-ink/5 shrink-0 rounded px-2 py-1 text-ink-muted"
+          className="hover:bg-ink/5 shrink-0 rounded px-2 py-1 text-ink-muted focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
         >
           ✕
         </button>
