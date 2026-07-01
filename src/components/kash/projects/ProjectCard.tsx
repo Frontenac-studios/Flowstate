@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { type ProjectCategory } from "@/lib/projects/categories";
-import { projectProgress } from "@/lib/projects/project-progress";
 
 export type ProjectListItem = {
   id: string;
@@ -11,11 +10,13 @@ export type ProjectListItem = {
   category: ProjectCategory;
   taskCount: number;
   completedCount: number;
+  percent: number;
+  completedWeight: number;
+  totalWeight: number;
 };
 
 export default function ProjectCard({ project }: { project: ProjectListItem }) {
   const stripe = categorySolidVar(project.category);
-  const { percent, completed, total } = projectProgress(project.completedCount, project.taskCount);
 
   return (
     <Link
@@ -34,11 +35,13 @@ export default function ProjectCard({ project }: { project: ProjectListItem }) {
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-border">
         <span
           className="block h-full rounded-full"
-          style={{ width: `${percent}%`, backgroundColor: stripe }}
+          style={{ width: `${project.percent}%`, backgroundColor: stripe }}
         />
       </div>
       <p className="mt-1.5 text-caption text-ink-faint">
-        {total === 0 ? "No tasks yet" : `${percent}% · ${completed} of ${total} tasks`}
+        {project.totalWeight === 0
+          ? "No tasks yet"
+          : `${project.percent}% · ${project.completedCount} of ${project.taskCount} tasks`}
       </p>
     </Link>
   );

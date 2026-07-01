@@ -422,7 +422,11 @@ export function TaskRow({
                 type="button"
                 className="text-xs text-ink-muted hover:text-ink"
                 title={task.recurringLabel ?? "Recurring"}
-                aria-label="Recurring task actions"
+                aria-label={
+                  task.recurringLabel
+                    ? `${task.recurringLabel} — recurring occurrence actions`
+                    : "Recurring occurrence actions"
+                }
                 aria-haspopup="menu"
                 aria-expanded={occurrenceMenuOpen}
                 onClick={(e) => {
