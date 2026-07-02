@@ -27,7 +27,7 @@ describe("evaluateCategoryBaseline", () => {
   it("flags most-starved category when lopsided and below baseline", () => {
     const result = evaluateCategoryBaseline({
       historicalWeeks: workHeavyHistory,
-      currentWeek: week({ professional: 90, body_mind: 5, relationships: 5 }),
+      currentWeek: week({ professional: 90, body_mind: 3, relationships: 5 }),
     });
     expect(result.ready).toBe(true);
     expect(result.lopsided).toBe(true);

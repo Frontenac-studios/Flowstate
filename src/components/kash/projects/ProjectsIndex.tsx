@@ -1,11 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useTRPC } from "@/trpc/client";
 
 import Button from "@/components/kash/ui/Button";
+import { readMotionDurationMs, MOTION_TOKEN } from "@/lib/animate/motion-tokens";
 
 import { InPageSwitcher } from "../InPageSwitcher";
 import CategoryFilter, { type CategoryFilterValue } from "./CategoryFilter";
@@ -13,6 +14,7 @@ import CompletedProjectsSection from "./CompletedProjectsSection";
 import MultiProjectCalendarView from "./MultiProjectCalendarView";
 import NewProjectForm from "./NewProjectForm";
 import ProjectCard from "./ProjectCard";
+import { ProjectTemplateSuggestChip } from "./ProjectTemplateSuggestChip";
 import { useProjectFoldTransitions } from "./useProjectFoldTransitions";
 
 type IndexViewMode = "gallery" | "calendar";
@@ -24,6 +26,7 @@ export default function ProjectsIndex() {
   const [filter, setFilter] = useState<CategoryFilterValue>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [indexView, setIndexView] = useState<IndexViewMode>("gallery");
+  const [templateSuggestId, setTemplateSuggestId] = useState<string | null>(null);
 
   const hasProjects = (projects?.length ?? 0) > 0;
 
@@ -34,6 +37,20 @@ export default function ProjectsIndex() {
   }, [projects, filter]);
 
   const { activeProjects, completedProjects, foldingId } = useProjectFoldTransitions(visible);
+
+  const templateSuggestProject = useMemo(() => {
+    if (!templateSuggestId) return null;
+    return visible.find((p) => p.id === templateSuggestId) ?? null;
+  }, [templateSuggestId, visible]);
+
+  useEffect(() => {
+    if (!foldingId) return;
+    const timer = window.setTimeout(
+      () => setTemplateSuggestId(foldingId),
+      readMotionDurationMs(MOTION_TOKEN.medium)
+    );
+    return () => window.clearTimeout(timer);
+  }, [foldingId]);
 
   return (
     <section className="flex flex-col gap-6">
@@ -98,6 +115,13 @@ export default function ProjectsIndex() {
         <p className="text-ink-muted">No projects in this category.</p>
       ) : (
         <>
+          {templateSuggestProject ? (
+            <ProjectTemplateSuggestChip
+              projectId={templateSuggestProject.id}
+              projectName={templateSuggestProject.name}
+              onDismiss={() => setTemplateSuggestId(null)}
+            />
+          ) : null}
           {activeProjects.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {activeProjects.map((project) => (

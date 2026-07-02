@@ -1,21 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import type { EvidenceAnchor } from "@/db/schema/evidence-editions";
-import type { ProjectCategory } from "@/lib/projects/categories";
 
-import { templateEvidenceNarrative } from "./aggregate-edition-input";
-import { monthPeriodForDate, quarterPeriodForDate } from "./generate-edition";
-import { qualifiesGoalForEvidenceEdition } from "./maybe-trigger-milestone";
+import { monthPeriodForDate, quarterPeriodForDate } from "./evidence-periods";
+import { qualifiesGoalForEvidenceEdition } from "./qualifies-goal-for-evidence";
+import { templateEvidenceNarrative, type EditionInput } from "./template-evidence-narrative";
 
-function editionInput(overrides?: {
-  anchors?: EvidenceAnchor[];
-  categoryCounts?: Partial<Record<ProjectCategory, number>>;
-}) {
+function editionInput(overrides?: Partial<EditionInput>): EditionInput {
   return {
     periodStart: "2026-01-01",
     periodEnd: "2026-03-31",
-    anchors: overrides?.anchors ?? [],
-    categoryCounts: overrides?.categoryCounts ?? {},
+    anchors: [],
+    categoryCounts: {},
+    ...overrides,
   };
 }
 
@@ -67,8 +64,8 @@ describe("templateEvidenceNarrative", () => {
   });
 
   it("caps anchors at forty entries", () => {
-    const anchors = Array.from({ length: 50 }, (_, i) => ({
-      type: "win" as const,
+    const anchors: EvidenceAnchor[] = Array.from({ length: 50 }, (_, i) => ({
+      type: "win",
       id: `w-${i}`,
       label: `Win ${i}`,
     }));

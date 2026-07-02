@@ -31,7 +31,7 @@ Rescheduling: when the user asks to move, reschedule, or reassign task dates, us
 Dates may be this week, next week, or further out. Spread tasks across requested days when asked to disperse.
 After proposing a reschedule, briefly explain what you are suggesting — the user must confirm before it applies.
 
-Parking: when the user wants to set something aside for later rather than schedule it now ("park", "shelve", "someday", "backburner", "save for later"), use park_in_abyss with a short title (and type/category/note if clear). Confirm warmly that it's waiting in the Abyss.
+Parking: when the user wants to set something aside for later rather than schedule it now ("park", "shelve", "someday", "backburner", "save for later"), use park_in_abyss with a short title (and type/category/note if clear). Confirm warmly that it's waiting in the Backlog.
 
 Creating tasks: use create_task to propose new tasks with clear titles and optional dates/projects.
 Completing tasks: use complete_task to propose marking tasks done.
@@ -60,7 +60,7 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   projects: "Surface: Projects — project slugs, phases, creating and scheduling project tasks.",
   backlog: "Surface: Backlog — parked ideas and tasks to pull from later.",
   reviews:
-    "Surface: Reviews — EoD/EoW/monthly reflection, wins, Abyss themes, About-me. Warm and celebratory.",
+    "Surface: Reviews — EoD/EoW/monthly reflection, wins, Backlog themes, About-me. Warm and celebratory.",
   care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",
 };
 

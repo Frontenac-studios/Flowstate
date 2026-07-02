@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
 import { InPageSwitcher } from "@/components/kash/InPageSwitcher";
+import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
 import {
   categoryFillVar,
   categorySeedLabel,
@@ -39,6 +40,10 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
 
   const { data: templates, isLoading: templatesLoading } = useQuery({
     ...trpc.projects.listTemplates.queryOptions(),
+    enabled: mode === "template",
+  });
+  const { data: estimateSampleCount = 0 } = useQuery({
+    ...trpc.projects.estimateSampleCount.queryOptions(),
     enabled: mode === "template",
   });
 
@@ -132,6 +137,10 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
             </p>
           ) : (
             <div className="flex flex-col gap-1">
+              <p className="mb-1 flex items-center gap-2 text-caption text-ink-muted">
+                Duration estimates
+                <EstimateConfidenceHint sampleCount={estimateSampleCount} />
+              </p>
               {templates?.map((template) => {
                 const selected = templateId === template.id;
                 return (

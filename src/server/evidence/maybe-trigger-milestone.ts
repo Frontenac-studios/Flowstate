@@ -5,18 +5,11 @@ import { and, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { goalMilestones, goals } from "@/db/tables";
 import { generateEvidenceEdition } from "@/server/evidence/generate-edition";
+import { qualifiesGoalForEvidenceEdition } from "@/lib/evidence/qualifies-goal-for-evidence";
 import { toISODateString } from "@/lib/dates/local-day";
 import { startOfLocalDay } from "@/lib/dates/local-day";
 
-const LARGE_HORIZONS = new Set(["quarter", "year"]);
-
-/** E8: quarter-horizon+ OR 3+ milestones. */
-export function qualifiesGoalForEvidenceEdition(
-  targetHorizon: string | null,
-  milestoneCount: number
-): boolean {
-  return (targetHorizon != null && LARGE_HORIZONS.has(targetHorizon)) || milestoneCount >= 3;
-}
+export { qualifiesGoalForEvidenceEdition };
 
 export async function maybeTriggerEvidenceMilestoneEdition(
   userId: string,

@@ -6,9 +6,12 @@ import { db } from "@/db";
 import { syncEvidenceEditionRow } from "@/db/record-sync-mutation";
 import type { EvidenceEditionKind } from "@/db/schema/evidence-editions";
 import { evidenceEditions as evidenceEditionsTable } from "@/db/tables";
-import { parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import { monthPeriodForDate, quarterPeriodForDate } from "@/lib/evidence/evidence-periods";
+import { templateEvidenceNarrative } from "@/lib/evidence/template-evidence-narrative";
 
-import { aggregateEditionInput, templateEvidenceNarrative } from "./aggregate-edition-input";
+import { aggregateEditionInput } from "./aggregate-edition-input";
+
+export { monthPeriodForDate, quarterPeriodForDate };
 
 export async function generateEvidenceEdition(params: {
   userId: string;
@@ -36,22 +39,6 @@ export async function generateEvidenceEdition(params: {
   if (!row) throw new Error("Failed to create evidence edition.");
   await syncEvidenceEditionRow(row.id, "insert", row);
   return row;
-}
-
-export function quarterPeriodForDate(isoDate: string): { start: string; end: string } {
-  const d = parseISODateString(isoDate);
-  const month = d.getUTCMonth();
-  const quarterStartMonth = Math.floor(month / 3) * 3;
-  const start = new Date(Date.UTC(d.getUTCFullYear(), quarterStartMonth, 1));
-  const end = new Date(Date.UTC(d.getUTCFullYear(), quarterStartMonth + 3, 0));
-  return { start: toISODateString(start), end: toISODateString(end) };
-}
-
-export function monthPeriodForDate(isoDate: string): { start: string; end: string } {
-  const d = parseISODateString(isoDate);
-  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));
-  return { start: toISODateString(start), end: toISODateString(end) };
 }
 
 export async function getLatestEvidenceEdition(userId: string) {

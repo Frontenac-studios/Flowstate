@@ -38,7 +38,7 @@ const QUERY_PROJECTS_TOOL: Anthropic.Tool = {
 
 const QUERY_ABYSS_TOOL: Anthropic.Tool = {
   name: "query_abyss",
-  description: "Search Abyss items.",
+  description: "Search Backlog items.",
   input_schema: {
     type: "object",
     properties: { query: { type: "string" }, limit: { type: "number" } },
@@ -119,7 +119,7 @@ const PROPOSE_ABOUT_ME_EDIT_TOOL: Anthropic.Tool = {
 
 const PARK_IN_ABYSS_TOOL: Anthropic.Tool = {
   name: "park_in_abyss",
-  description: "Park in Abyss.",
+  description: "Park in Backlog.",
   input_schema: {
     type: "object",
     properties: {
