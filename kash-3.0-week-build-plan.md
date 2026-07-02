@@ -1,8 +1,6 @@
 # Kash 3.0 — Week (§7) build-finish plan
 
-> Phased plan to finish the Week view. Decisions are all closed (Jun 25); this is **build-only**. Phase
-> set = **WD1–WD7**, sequenced low-risk → high-choreography, animation last (per
-> `kash-3.0-animation-sweep.md` §5 + §3 of the build-breakdown). Mirrors `kash-3.0-today-build-plan.md`.
+> Phased plan to finish the Week view. Decisions are all closed (Jun 25); **WD1–WD7 shipped** (Jul 1 2026, Phases 0–6 on `main`).
 > Companions: `kash-3.0-plan.md` §7, the Week decision records (`kash-3.0-week-q1-column-tally`,
 > `-q2-overcommit-threshold`, `-q2b-learned-guard`, `-q3-protected-recurrence`, `-week-layout`,
 > `-week-inverted.html`), `kash-3.0-mockups.html` (visual ref), `kash-3.0-design-tokens.md` (§5 motion).
@@ -25,31 +23,17 @@
 
 ---
 
-## Current state (verified via code, Jun 30)
+## Current state (verified via code, Jul 1 2026 — complete)
 
 **Built:** `this-week` page; `WeekCanvas` / `WeekColumn` / `WeekInbox` / `WeekLaterBacklog`; AI week
-draft (`WeekDraftPanel`, `week-draft` router, `generate-week-draft`, `validate-week-draft-assignments`);
-protected blocks **data + UI** (`protected_block_templates` + `protected_blocks` schema, `protected-blocks`
-router with `proposeFromTemplates` / `confirmProposedForWeek`, `AddProtectedBlockButton`, `ProtectedWeekBar`,
-`ProtectedBlockChip`, Today all-day chips); week time aggregation (`aggregate-week.ts`); `WeeklySummaryCard`
-(focus time **by category + by project** — the EoW substrate); category coloring inherited from the lens
-engine (VF).
+draft (respects protected blocks + category balance); protected blocks (templates + instances, Week chips,
+Today all-day + **timed grid** blocks, `DefaultWeekSection` in Settings); **per-day priorities**
+(`week_day_priorities` router); **on-demand tally** (`ColumnTallyPopover`); **learned over-commit**
+(`OverCommitFlag`, `over-commit-threshold.ts`); **EoW review chip** (`EowReviewRunner`); week time
+aggregation + weighted project progress in `WeeklySummaryCard`; category borders via lens engine; week
+motion CSS (`week-motion.css`).
 
-**Gaps vs decisions:**
-
-- **No per-day priorities** — no day-scoped Top-N anywhere (no `dayPriority`/`day_priority` in code).
-- **No per-column tally** — borders exist via the lens, but there's **no on-hover/tap proportional
-  category tally** per day; no day-load calc.
-- **No over-commit warning** — no load/over-commit computation; no learned threshold; protected blocks
-  not yet counted toward a day's load.
-- **AI week-draft ignores protected blocks** — `fetch-week-draft-context` / `generate-week-draft` /
-  `validate-week-draft-assignments` have **no protected-block awareness**; no explicit category-balance pass.
-- **EoW review is content-only** — `WeeklySummaryCard` renders time by category/project but has **no
-  trigger/chip**, **no configurable week wind-down**, and **no % progress** per project/phase.
-- **Protected blocks: loop unfinished** — no **Settings "default week" template editor** surfaced; the
-  weekly **propose/confirm** isn't wired into a planning-ritual moment; **timed** protected blocks don't
-  render on the Today timeline grid (only all-day chips).
-- **No Week motion** — drag lift, load-bar fill, protected-place scale/fade not implemented (AN §5).
+**Gaps vs decisions:** none material — Week §7 is shipped.
 
 ---
 

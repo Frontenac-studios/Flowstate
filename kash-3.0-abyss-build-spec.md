@@ -73,4 +73,10 @@ Drizzle one-table-per-file; `db:generate` → review SQL → commit. RLS on ever
 
 ## Open (settle during build)
 
-Archive threshold (+ user-set?) · confirm `idea/task/reference` taxonomy · constellation icon 20px form · Abyss dark surface tokens · `links` rich-media scope (URLs now, images later?).
+**RESOLVED Jul 1 2026:**
+
+- **Auto-archive:** fixed **~90 days**; no user setting in v1.
+- **Taxonomy:** three soft types — **idea / task / reference** (confirmed).
+- **Reference capture:** **URLs only** for now (images/rich media later).
+
+**Remaining build polish:** constellation icon's exact 20px form · Abyss dark surface tokens (Design Tokens phase).

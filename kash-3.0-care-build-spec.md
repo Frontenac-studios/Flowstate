@@ -2,7 +2,7 @@
 
 > Engineering spec for Care. Purpose, garden model & art, breathing, reflection, "what lifts me", and stats (subsections 1–6) are resolved in `kash-3.0-plan.md` §12. This doc covers the **data model, behavior, integration, and build order.**
 >
-> **Anchoring decisions:** Care is both a destination + ambient layer · adaptive/Finch-modeled guidance · hybrid (aware, never a scoreboard) · uniform seasonal garden that gently goes dormant + revives · detailed-illustrative garden art · pulsing-orb breathing (box-4 default, on-demand + stress offer) · hybrid reflection prompts + open space + **mood kept separate from tasks** · "what lifts me" = regulars + explicit marks · Care stats = self-care frequency / wins / mood (not balance).
+> **Anchoring decisions:** Care is both a destination + ambient layer · adaptive/Finch-modeled guidance · hybrid (aware, never a scoreboard) · uniform seasonal garden that gently goes dormant + revives · **procedural garden art in v1, illustrated seed→grown when ready (Jul 1 2026)** · pulsing-orb breathing (box-4 default, on-demand + stress offer) · hybrid reflection prompts + open space + **mood kept separate from tasks** · "what lifts me" = regulars + explicit marks · Care stats = self-care frequency / wins / mood (not balance).
 
 ## Current state
 

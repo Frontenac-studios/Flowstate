@@ -35,7 +35,7 @@ Zod inputs on every tool/proc; `import "server-only"` for server logic; no secre
 - Planning: `set_top3`, `apply_week_draft`, `set_protected_block`, `set_day_priorities`, `apply_balance_suggestions`.
 - Projects: `create_project`, `edit_phase`, `move_task_to_phase`, `replan_project_dates`.
 - Abyss: `capture_to_abyss`, `promote_abyss_item`, `archive_abyss_item`, `delete_abyss_item`.
-- Memory: `propose_about_me_edit` _(mechanism deferred — §13)_.
+- Memory: `propose_about_me_edit` → confirm. **Update mechanism — RESOLVED Jul 1 2026 (hybrid):** Settings ghosted accept/reject rows for AI proposals; chat-initiated edits via confirm-card; user can always edit directly in Settings About tab.
 
 Each write tool returns a **proposed change**, not an immediate mutation (see architecture). Per-register exposure: Planning sees planning/project/task tools; Focus sees a minimal set (narrate, complete, park); Reflection sees review/win/abyss-review tools.
 
@@ -49,7 +49,7 @@ Each write tool returns a **proposed change**, not an immediate mutation (see ar
 
 **Confirm-card pattern (the key mechanism):** state-changing tools do **not** mutate directly. The model calls a write tool → the server returns a **structured proposed action** → the chat UI renders a **confirm card** ("Reschedule 3 tasks to Thu? · Confirm / Edit / Dismiss") → on confirm, the client calls the apply mutation. This makes "Kash can do anything" safe by construction, and the confirm card **is** the transparency (no separate activity log).
 
-**Memory:** About-me doc stored per user (hybrid: structured sections + free-form notes), read into context each turn; edits go through `propose_about_me_edit` → confirm. _(Update mechanism deferred — §13.)_
+**Memory:** About-me doc stored per user (hybrid: structured sections + free-form notes), read into context each turn. **Update mechanism — RESOLVED Jul 1 2026 (hybrid):** Settings ghosted accept/reject rows for AI proposals; chat-initiated edits via `propose_about_me_edit` → confirm-card; direct edit always available in Settings.
 
 ---
 
@@ -71,10 +71,10 @@ Each write tool returns a **proposed change**, not an immediate mutation (see ar
 
 ## Confirm-card UX (resolved Jul 1)
 
-- **Affordance → inline in the chat thread.** A proposed write renders as a confirm card **inline in the chat rail**, directly below Kash's message (Confirm / Edit / Dismiss). Non-blocking, conversational; the card **is** the transparency (no separate activity log, no modal for routine writes). _(If a future destructive-action guard is wanted, a modal is the natural escalation — but the default and the delete path are both inline for now.)_
+- **Affordance → inline in the chat thread.** A proposed write renders as a confirm card **inline in the chat rail**, directly below Kash's message (Confirm / Edit / Dismiss). Non-blocking, conversational; the card **is** the transparency (no separate activity log). **Destructive writes included — inline for all writes (RESOLVED Jul 1 2026).** _(If a future destructive-action guard is wanted, a modal is the natural escalation — but v1 default and the delete path are both inline.)_
 - **Multi-task proposals → one grouped card.** A proposal that touches several tasks renders as a **single card** listing each affected task with a **per-row toggle**; the user confirms the (sub)set at once (e.g. "Reschedule 3 tasks → Thu", untick one, "Confirm 2"). Not one card per change.
 - **Focus register → silent auto-apply.** Focus exposes only its **minimal, reversible** tools (narrate · complete · park) and applies them **silently — no confirm card**. Anything beyond that set is simply **not exposed** in Focus, so there's nothing to confirm mid-session. Keeps Focus near-silent by construction. (Broader writes happen in the Planning/Reflection registers, where the inline confirm card applies.)
 
 ## Open
 
-- **About-me update mechanism** (§13) — circle back.
+_All product forks closed Jul 1 2026._ Remaining: full write-tool catalog audit vs spec (build tail).

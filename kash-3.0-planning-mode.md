@@ -40,40 +40,40 @@ Every page owns one link. Two structural consequences emerged and apply app-wide
 
 ## 2. Decision log
 
-| #      | Decision                     | Choice                                                                                                                  |
-| ------ | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| PM-A   | Year-view form               | Quarter cards; **clicking a quarter zooms into the Quarter view** (holds the week scroll, NAV-2); heatmap **merged in** |
-| PM1-1  | Goal: obligation vs desire   | Soft **optional** flag                                                                                                  |
-| PM1-2  | Goal: value link             | **Optional** link to a core value (§13, 3–7 flat set)                                                                   |
-| PM1-3  | Goal: progress model         | **Hybrid** — milestones, each auto-completed by linked tasks                                                            |
-| PM1-4  | Goal: target horizon         | Starts **"this year"**; horizons assigned later at Check-ins                                                            |
-| PM1-5  | Goal: progress reach         | Everywhere, but **Year view hides it by default** (drill-in); goal + Check-in show it directly                          |
-| PM1-6  | Annual-goals page shape      | ~~List~~ → **superseded (§7):** 5×5 Bingo **card** primary, **list on toggle**                                          |
-| PM1-7  | Balance viz on goals page    | Balance **bar + gap nudge**                                                                                             |
-| PM1-8  | Reward                       | ~~Balance bingo~~ → **superseded (§7):** classic **line bingo** (row/col/diag, free center)                             |
-| PM1-9  | Decomposition trigger        | **Both** — manual on the goal + AI in the Check-in (incremental)                                                        |
-| PM1-10 | Goal ↔ Project               | ~~Always a Project~~ → **superseded (§7):** panel-only, **promote to Project when big**                                 |
-| PM1-11 | Day-to-day goal marker       | **None** — goal-linked tasks look like any task                                                                         |
-| PM1-12 | Capacity / expectation       | **Both** — soft page nudge + Check-in                                                                                   |
-| PM2-1  | Year encoding granularity    | **Two-level** — proportional bar on quarter cards, dominant-color dots on week cells                                    |
-| PM2-2  | Year: planned vs actual      | **Actual only** (driven by completed-task / time data — ties to Phase 2 aggregation)                                    |
-| PM2-3  | Year interactivity           | **Overview + light placement** (drag a goal onto a quarter to set its horizon)                                          |
-| PM2-4  | Neglected-category signal    | **Calm callout by default; per-category strips on drill-in**                                                            |
-| PM3-1  | Quarter theme                | **Phrase + focus categories** (structured — app can nudge on a neglected focus area)                                    |
-| PM3-2  | Quarter → month distribution | **Manual drag + AI-proposed** spread                                                                                    |
-| PM3-2b | AI suggestion behavior       | **Ghosted, opt-in** — dashed; nothing changes until you accept/drag                                                     |
-| PM4-1  | Monthly intentions           | **Per-category lines** (color-coded)                                                                                    |
-| PM4-2  | Month layout                 | **List default, calendar on toggle**                                                                                    |
-| PM4-3  | 1–2 reserved self-care days  | **Flexible, AI-suggested** into real dates → become **suggested** protected blocks (§7)                                 |
-| PM5-1  | Week view structure          | **Same view; planning rail + AI draft on a "Plan mode" toggle**                                                         |
-| PM5-2  | Week scheduling              | **Drag + AI draft (ghosted)**                                                                                           |
-| PM5-3  | Week → Today handoff         | **Today's column IS Today** — scheduling sets the date; no re-entry                                                     |
-| PM6-1  | Balance-pass source          | **Both** — resurface backlog/Abyss **+** generate new                                                                   |
-| PM6-2  | Balance-pass trigger         | **Auto at end of planning** (always dismissible)                                                                        |
-| PM6-3  | Balance model                | **Two-tier** — near-zero **floor** flags first, then below-intention **target** gaps                                    |
-| PM7-1  | Check-in trigger             | **On-demand + gentle cadence** (set/snooze)                                                                             |
-| PM7-3  | Check-in autonomy            | **Propose, apply on confirm** (ghosted/opt-in)                                                                          |
-| PM7-4  | Check-in default scope       | **Ask each time** — small-bite framing                                                                                  |
+| #      | Decision                     | Choice                                                                                                                                                      |
+| ------ | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PM-A   | Year-view form               | Quarter cards; **clicking a quarter zooms into the Quarter view** (holds the week scroll, NAV-2); heatmap **merged in** — **shipped / ratified Jul 1 2026** |
+| PM1-1  | Goal: obligation vs desire   | Soft **optional** flag                                                                                                                                      |
+| PM1-2  | Goal: value link             | **Optional** link to a core value (§13, 3–7 flat set)                                                                                                       |
+| PM1-3  | Goal: progress model         | **Hybrid** — milestones, each auto-completed by linked tasks                                                                                                |
+| PM1-4  | Goal: target horizon         | Starts **"this year"**; horizons assigned later at Check-ins                                                                                                |
+| PM1-5  | Goal: progress reach         | Everywhere, but **Year view hides it by default** (drill-in); goal + Check-in show it directly                                                              |
+| PM1-6  | Annual-goals page shape      | ~~List~~ → **superseded (§7):** 5×5 Bingo **card** primary, **list on toggle**                                                                              |
+| PM1-7  | Balance viz on goals page    | Balance **bar + gap nudge**                                                                                                                                 |
+| PM1-8  | Reward                       | ~~Balance bingo~~ → **superseded (§7):** classic **line bingo** (row/col/diag, free center)                                                                 |
+| PM1-9  | Decomposition trigger        | **Both** — manual on the goal + AI in the Check-in (incremental)                                                                                            |
+| PM1-10 | Goal ↔ Project               | ~~Always a Project~~ → **superseded (§7):** panel-only, **promote to Project when big**                                                                     |
+| PM1-11 | Day-to-day goal marker       | **None** — goal-linked tasks look like any task                                                                                                             |
+| PM1-12 | Capacity / expectation       | **Both** — soft page nudge + Check-in                                                                                                                       |
+| PM2-1  | Year encoding granularity    | **Two-level** — proportional bar on quarter cards, dominant-color dots on week cells                                                                        |
+| PM2-2  | Year: planned vs actual      | **Actual only** (driven by completed-task / time data — ties to Phase 2 aggregation)                                                                        |
+| PM2-3  | Year interactivity           | **Overview + light placement** (drag a goal onto a quarter to set its horizon)                                                                              |
+| PM2-4  | Neglected-category signal    | **Calm callout by default; per-category strips on drill-in**                                                                                                |
+| PM3-1  | Quarter theme                | **Phrase + focus categories** (structured — app can nudge on a neglected focus area)                                                                        |
+| PM3-2  | Quarter → month distribution | **Manual drag + AI-proposed** spread                                                                                                                        |
+| PM3-2b | AI suggestion behavior       | **Ghosted, opt-in** — dashed; nothing changes until you accept/drag                                                                                         |
+| PM4-1  | Monthly intentions           | **Per-category lines** (color-coded)                                                                                                                        |
+| PM4-2  | Month layout                 | **List default, calendar on toggle**                                                                                                                        |
+| PM4-3  | 1–2 reserved self-care days  | **Flexible, AI-suggested** into real dates → become **suggested** protected blocks (§7)                                                                     |
+| PM5-1  | Week view structure          | **Same view; planning rail + AI draft on a "Plan mode" toggle**                                                                                             |
+| PM5-2  | Week scheduling              | **Drag + AI draft (ghosted)**                                                                                                                               |
+| PM5-3  | Week → Today handoff         | **Today's column IS Today** — scheduling sets the date; no re-entry                                                                                         |
+| PM6-1  | Balance-pass source          | **Both** — resurface backlog/Abyss **+** generate new                                                                                                       |
+| PM6-2  | Balance-pass trigger         | **Auto at end of planning** (always dismissible)                                                                                                            |
+| PM6-3  | Balance model                | **Two-tier** — near-zero **floor** flags first, then below-intention **target** gaps                                                                        |
+| PM7-1  | Check-in trigger             | **On-demand + gentle cadence** (set/snooze)                                                                                                                 |
+| PM7-3  | Check-in autonomy            | **Propose, apply on confirm** (ghosted/opt-in)                                                                                                              |
+| PM7-4  | Check-in default scope       | **Ask each time** — small-bite framing                                                                                                                      |
 
 ---
 
