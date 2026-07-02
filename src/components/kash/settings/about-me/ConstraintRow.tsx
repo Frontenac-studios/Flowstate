@@ -69,8 +69,8 @@ export default function ConstraintRow({
   return (
     <div className="flex items-center gap-3 rounded-row border border-subtle bg-surface px-3 py-2">
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-body text-ink">{row.label}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-body text-ink">{row.label}</span>
           <SeverityPill severity={row.severity} />
         </div>
         {scheduleText ? <p className="text-meta text-ink-muted">{scheduleText}</p> : null}

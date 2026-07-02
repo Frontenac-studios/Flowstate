@@ -6,6 +6,7 @@ import { useState } from "react";
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
 import Select from "@/components/kash/ui/Select";
+import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
@@ -184,7 +185,11 @@ export default function DefaultWeekSection() {
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-sm text-ink-muted">No default blocks yet — add one below.</p>
+        <ColoredEmptyInvitation
+          title="Add your first block"
+          hint="Recurring protected time proposed each week during planning — add one below."
+          className="mt-4 border-0 bg-transparent px-0 py-4 shadow-none"
+        />
       )}
 
       <form

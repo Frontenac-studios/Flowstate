@@ -86,6 +86,22 @@ export default function ConstraintsSection() {
                     initial={{ type: group.type, label: "", schedule: null, severity: "soft" }}
                     onClose={closeForms}
                   />
+                ) : groupRows.length === 0 ? (
+                  <div className="rounded-row border border-dashed border-border px-3 py-4 text-center">
+                    <p className="text-meta text-ink-muted">
+                      Nothing here yet — {group.title.toLowerCase()} live here
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeForms();
+                        setAddingType(group.type);
+                      }}
+                      className="mt-3 rounded-row border border-dashed border-border px-3 py-1.5 text-meta text-ink-muted transition hover:border-ink hover:text-ink"
+                    >
+                      + Add {group.title.toLowerCase()}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"

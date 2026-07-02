@@ -5,6 +5,7 @@ import { type FormEvent, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
+import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import { CURATED_VALUES, VALUE_LABEL_MAX, VALUES_MAX, VALUES_MIN } from "@/lib/about-me/constants";
 import { normalizeValueLabel } from "@/lib/about-me/values";
 import { useTRPC } from "@/trpc/client";
@@ -74,9 +75,11 @@ export default function ValuesSection() {
 
       <div className="rounded-card border border-subtle bg-surface p-4">
         {count === 0 ? (
-          <p className="text-body text-ink-muted">
-            No values yet — add a few from the suggestions below, or write your own.
-          </p>
+          <ColoredEmptyInvitation
+            title="Add your first value"
+            hint="Pick from the suggestions below, or write your own."
+            className="border-0 bg-transparent px-0 py-4 shadow-none"
+          />
         ) : (
           <ul className="flex flex-wrap gap-2" aria-label="Your values">
             {values.map((v) => (

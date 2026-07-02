@@ -63,7 +63,7 @@ export default function AboutMeSection() {
 
       <nav
         aria-label="About me sections"
-        className="bg-surface/95 sticky top-0 z-sticky -mx-1 mb-5 flex gap-1 px-1 py-2 backdrop-blur"
+        className="sticky top-0 z-sticky -mx-1 mb-5 flex gap-1 border-b border-subtle bg-surface px-1 py-2"
       >
         {CHIPS.map((chip) => (
           <button
