@@ -1,0 +1,70 @@
+.ritual-sheet-backdrop {
+  background: var(--backdrop);
+  animation: modal-backdrop-in var(--motion-short) var(--ease-enter) both;
+}
+
+.ritual-sheet-panel {
+  animation: ritual-sheet-slide-in var(--motion-medium) var(--ease-move) both;
+}
+
+@keyframes ritual-sheet-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ritual-sheet-slide-in-reduce {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ritual-sheet-fade {
+  opacity: 0;
+  transition: opacity var(--motion-short) var(--ease-enter);
+}
+
+.ritual-sheet-fade-top {
+  background: linear-gradient(to bottom, var(--surface), transparent);
+}
+
+.ritual-sheet-fade-bottom {
+  background: linear-gradient(to top, var(--surface), transparent);
+}
+
+.ritual-sheet-fade-visible {
+  opacity: 1;
+}
+
+.eod-reflecting-pulse {
+  animation: eod-reflecting-pulse var(--breath-pulse) var(--ease-breath) infinite;
+}
+
+@keyframes eod-reflecting-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ritual-sheet-panel {
+    animation: ritual-sheet-slide-in-reduce var(--motion-short) var(--ease-enter) both;
+  }
+
+  .eod-reflecting-pulse {
+    animation: none !important;
+    opacity: 0.85;
+  }
+}

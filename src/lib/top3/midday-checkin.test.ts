@@ -29,13 +29,14 @@ describe("computeMiddayCheckin", () => {
     expect(formatMiddayCheckinLine(state)).toBe("still time for these · 4 hours left");
   });
 
-  it("suppresses on over-commit", () => {
+  it("shows resting line on over-commit after noon (T3/EOD-3)", () => {
     const state = computeMiddayCheckin({
       ...base,
       now: new Date("2026-07-01T13:00:00.000Z"),
       isOverCommitted: true,
     });
-    expect(state.visible).toBe(false);
+    expect(state).toEqual({ visible: true, variant: "resting" });
+    expect(formatMiddayCheckinLine(state)).toBe("Check-in resting — today is full");
   });
 
   it("shows a quiet win when all pinned items are complete", () => {
