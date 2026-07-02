@@ -1,9 +1,10 @@
 /**
- * Local-development auth bypass.
+ * Local auth bypass for web dev and Kash desktop.
  *
- * Lets `npm run dev` and `npm run desktop:dev` skip the login gate so the app
- * can be exercised without a Supabase session. Hard-gated to
- * `NODE_ENV === "development"`, so it can NEVER activate in a production build.
+ * Lets `npm run dev`, `npm run desktop:dev`, and the release Kash.app sidecar
+ * skip the login gate so the app can be exercised without a Supabase session.
+ * Web production/preview (Vercel) never bypasses. Desktop release bypass requires
+ * `KASH_DESKTOP=1` at runtime (set by the bundled sidecar launcher).
  *
  * When bypassed, tRPC and API routes use a stable dev user id so reads/writes
  * work against local SQLite (desktop) or Postgres (web dev). Sync to hosted
@@ -15,8 +16,12 @@ export const DEV_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 export const DEV_USER_EMAIL = "dev@localhost";
 
+function isLocalDesktopRuntime(): boolean {
+  return process.env.KASH_DESKTOP === "1" && !process.env.VERCEL;
+}
+
 export function isAuthBypassed(): boolean {
-  return process.env.NODE_ENV === "development";
+  return process.env.NODE_ENV === "development" || isLocalDesktopRuntime();
 }
 
 export type ResolvedAuth = {
