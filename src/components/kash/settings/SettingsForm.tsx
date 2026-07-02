@@ -13,7 +13,7 @@ import { useTRPC } from "@/trpc/client";
 import AboutMeSection from "./about-me/AboutMeSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
-import { NotificationSettingsSection } from "./NotificationSettingsSection";
+import { NotificationsAndAssistanceSection } from "./AssistanceSettingsSection";
 import { SyncStatusPanel } from "./SyncStatusPanel";
 
 const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
@@ -146,7 +146,7 @@ export function SettingsForm() {
 
         {tab === "about" ? <AboutMeSection /> : null}
 
-        {tab === "notifications" ? <NotificationSettingsSection /> : null}
+        {tab === "notifications" ? <NotificationsAndAssistanceSection /> : null}
 
         {tab === "preferences" ? (
           <>

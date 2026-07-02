@@ -62,6 +62,8 @@ function toReplacePickerMap(
       projectId: task.projectId,
       projectSlug: task.projectSlug,
       top3Order: task.priorityOrder,
+      top3PinnedAt: null,
+      scheduledDate: null,
       completedAt: task.completedAt,
     });
   }

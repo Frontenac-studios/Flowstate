@@ -19,6 +19,7 @@ export const protectedBlocks = sqliteTable(
       onDelete: "set null",
     }),
     status: text("status", { enum: protectedBlockStatusValues }).notNull().default("confirmed"),
+    source: text("source"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },

@@ -1,5 +1,10 @@
 # Kash 3.0 — The Abyss: Build Spec (Phases 6–8)
 
+> **⚠️ Superseded in part (Jul 1 2026):** the Abyss is being **renamed and reframed as "Backlog"** —
+> light surface, "Themes" lens instead of the dark **Sky**, recency list, one-tap pull. See
+> `kash-3.0-backlog-reframe-build-spec.md`. The **data model, embeddings, promote logic, sync, and
+> ~90-day archive below still stand**; the **dark-surface + Sky sections are retired** by the reframe.
+>
 > Engineering spec for the Abyss. Product / UX / UI / motion / identity (Phases 1–5) are resolved in `kash-3.0-plan.md` §10. This doc covers the **data model, AI behavior, integration, and build order**. Decisions: own `abyss_items` entity · embeddings-based clustering (reuse category inference) · Reflection & care voice for the monthly review.
 
 ## Conventions (CLAUDE.md)
@@ -30,7 +35,7 @@ Drizzle one-table-per-file; `db:generate` → review SQL → commit. RLS on ever
 
 **Lifecycle:**
 
-- **Archive:** a periodic check sets `status = archived` after the inactivity threshold (TBD; user-set?). Retrievable; never hard-deleted.
+- **Archive:** a periodic check sets `status = archived` after the inactivity threshold (**resolved: fixed ~90 days, no user setting v1**). Retrievable; never hard-deleted.
 - **Promote:** sets `status = promoted` + links (`promoted_task_id` / `promoted_target`); the item **stays**. If the spawned task is completed or abandoned, the item returns to `active` (a quiet "it came back").
 - **Delete:** explicit per-item hard delete (the only true removal).
 
@@ -51,7 +56,7 @@ Drizzle one-table-per-file; `db:generate` → review SQL → commit. RLS on ever
 **Integration:**
 
 - **Drop → Abyss (§6):** the triage "Drop" action creates an `abyss_items` row (`source = drop`, `type = task` default, carries the task's `category`). A separate explicit **Delete** stays true-delete.
-- **Capture entry points:** a **global shortcut** (⌘⇧A, TBD) → quick-capture overlay (quick mode default, expandable to full); and the **chat rail** ("park…") via a Claude tool that creates the item and auto-tags type/category.
+- **Capture entry points:** a **global shortcut** (**⌘⇧A — built**) → quick-capture overlay (quick mode default, expandable to full); and the **chat rail** ("park…") via a Claude tool that creates the item and auto-tags type/category. _(Capture copy updates to "Backlog" wording per the reframe.)_
 - **Promotion:** one-tap → target picker (Today / Week / Project / §8 annual goal); spawns/links the target; sets `status = promoted`.
 - **Sync / RLS:** `abyss_items` (+ embeddings) mirrored in `packages/db-local` + `packages/sync`; RLS `auth.uid()`.
 - **Monthly-review reminder:** via the §15 notification layer (OS on Tauri desktop, in-app on web).

@@ -41,7 +41,7 @@ staying quiet when the user is slammed.
 **Open (settle during build):**
 
 - Heatmap grain: per-goal attention (locked) — plus whether an **all-goals** attention heatmap doubles as a category-balance signal (nice-to-have; ties to §2).
-- Milestone target dates: optional or required for timeline placement (see §2).
+- _(Settled Phase 4: milestone target dates are **optional** — add one when useful; undated milestones order by sequence and space evenly. Timeline always works.)_
 - Steering copy + exact load threshold at which offers go silent (§3d).
 
 ---

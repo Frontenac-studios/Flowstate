@@ -36,11 +36,16 @@ without pinging, and speak up only when a task genuinely keeps slipping.
 | TD2 | Hold-time offer | **Timeline ghost block** — a dashed placeholder appears on the Today timeline; tap to confirm the hold, so the user sees exactly where the time lands.     |
 | TD3 | Persistent slip | **Gentle chip** — an amber chip that names the choice ("'File taxes' keeps sliding. Break it down, or let it go?"). Present, but not a full modal.         |
 
-**Open (settle during build):**
+**Settled (Phase 4, Jul 1 2026):**
 
-- Default hold length (T1/TD2) — fixed (e.g. 90 min) or inferred from the Top-3 tasks' estimates.
-- Midday timing (T2) — a fixed local hour, or adaptive to the day's shape. Suppression threshold reuses over-commit.
-- Slip threshold (T3) — confirm "2+ days, no focus time and not completed" against the existing `evaluate-top3-stall` "slipped" definition.
+- **Hold length = 45-min sprint + break + resume (T1/TD2).** The one-tap hold is a **45-minute** focus
+  block; at the end Kash **prompts a break with suggestions** (a Care breathing/walk offer), then lets
+  the user **continue another 45** if they want. Not a static block — a gentle sprint/rest rhythm that
+  ties Top-3 focus into Care.
+- **Midday timing = fixed early afternoon (~1–2pm)** (T2), matching the current stall-check timing.
+  Suppression still reuses the over-commit signal via the arbiter (M9).
+- **Milestone/slip threshold (T3)** — confirm "2+ days, no focus time and not completed" against the
+  existing `evaluate-top3-stall` "slipped" definition (engineering default).
 
 ---
 
@@ -48,9 +53,10 @@ without pinging, and speak up only when a task genuinely keeps slipping.
 
 Read-mostly; reuses Top-3 + protected-block + nudge infra.
 
-- **Time hold (T1/TD2)** — reuse **`protected_blocks`**: the one-tap hold creates a protected block on
-  the Today timeline flagged as a Top-3 focus hold (add a small `kind`/`source` marker, or a nullable
-  `top3` boolean). No new table.
+- **Time hold (T1/TD2)** — reuse **`protected_blocks`**: the one-tap hold creates a **45-minute**
+  protected block on the Today timeline flagged as a Top-3 focus hold (add a small `kind`/`source`
+  marker, or a nullable `top3` boolean). On completion, a **break prompt** offers a Care break
+  (breathing/walk) and a **resume** for another 45; a resumed sprint is a second block. No new table.
 - **Slip detection (T3)** — reuse **`evaluate-top3-stall`**, which already computes both a same-day
   stall and a multi-day "slipped" state. Needs a reliable "days in Top-3 without progress" signal;
   derive from `top3Order` + `top3PinnedAt` + focus history, adding a first-entered timestamp only if

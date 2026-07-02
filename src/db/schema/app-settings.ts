@@ -9,6 +9,7 @@ export const appSettings = pgTable("app_settings", {
   notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
   focusDndEnabled: boolean("focus_dnd_enabled").notNull().default(true),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
+  top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

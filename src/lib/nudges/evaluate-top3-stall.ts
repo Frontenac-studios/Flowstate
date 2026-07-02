@@ -37,13 +37,18 @@ export type EvaluateTop3StallInput = {
   tzOffsetMinutes: number;
   localDate: string;
   top3Tasks: Top3TaskInput[];
+  /** Focus sessions on the effective local day (stall detection). */
   timeEntriesToday: TimeEntryInput[];
+  /** All focus sessions for slip progress (defaults to timeEntriesToday). */
+  timeEntries?: TimeEntryInput[];
   alreadyNudgedToday: boolean;
 };
 
 export type EvaluateTop3StallResult = {
   stalledTasks: StalledTop3Task[];
   slippedTasks: SlippedTop3Task[];
+  /** Slipped 2+ days with no focus time since the pin reference date (T3/TD3). */
+  slippedWithoutProgress: SlippedTop3Task[];
   shouldFireStallNudge: boolean;
   localHour: number;
 };
@@ -57,6 +62,7 @@ function isIncompleteTop3(task: Top3TaskInput): boolean {
 export function evaluateTop3Stall(input: EvaluateTop3StallInput): EvaluateTop3StallResult {
   const { now, tzOffsetMinutes, localDate, top3Tasks, timeEntriesToday, alreadyNudgedToday } =
     input;
+  const allTimeEntries = input.timeEntries ?? timeEntriesToday;
 
   const localHour = getLocalHour(now, tzOffsetMinutes);
   const computedLocalDate = toLocalISODate(now, tzOffsetMinutes);
@@ -97,6 +103,15 @@ export function evaluateTop3Stall(input: EvaluateTop3StallInput): EvaluateTop3St
     })
     .filter((t) => t.daysSlipped >= SLIPPED_DAYS_THRESHOLD);
 
+  const slippedWithoutProgress = slippedTasks.filter(
+    (t) =>
+      !allTimeEntries.some(
+        (e) =>
+          e.taskId === t.id &&
+          calendarDaysBetween(t.pinReferenceDate, toLocalISODate(e.startedAt, tzOffsetMinutes)) >= 0
+      )
+  );
+
   const thresholdHour = nudgeThresholdHour();
   const shouldFireStallNudge =
     localHour >= thresholdHour && stalledTasks.length > 0 && !alreadyNudgedToday;
@@ -104,6 +119,7 @@ export function evaluateTop3Stall(input: EvaluateTop3StallInput): EvaluateTop3St
   return {
     stalledTasks,
     slippedTasks,
+    slippedWithoutProgress,
     shouldFireStallNudge,
     localHour,
   };

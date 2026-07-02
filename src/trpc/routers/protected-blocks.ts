@@ -7,6 +7,7 @@ import { syncProtectedBlockRow, syncProtectedBlockTemplateRow } from "@/db/recor
 import { protectedBlockTemplates, protectedBlocks } from "@/db/tables";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+import { TOP3_HOLD_LABEL, TOP3_HOLD_SOURCE } from "@/lib/top3/constants";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -59,6 +60,7 @@ export const protectedBlocksRouter = createTRPCRouter({
           startMin: protectedBlocks.startMin,
           endMin: protectedBlocks.endMin,
           status: protectedBlocks.status,
+          source: protectedBlocks.source,
         })
         .from(protectedBlocks)
         .where(
@@ -92,6 +94,7 @@ export const protectedBlocksRouter = createTRPCRouter({
           startMin: protectedBlocks.startMin,
           endMin: protectedBlocks.endMin,
           status: protectedBlocks.status,
+          source: protectedBlocks.source,
         })
         .from(protectedBlocks)
         .where(
@@ -128,6 +131,7 @@ export const protectedBlocksRouter = createTRPCRouter({
             .optional(),
           templateId: z.string().uuid().nullable().optional(),
           status: z.enum(["proposed", "confirmed"]).default("confirmed"),
+          source: z.string().max(50).nullable().optional(),
         })
         .superRefine((v, ctx) => {
           const hasStart = v.startMin != null;
@@ -155,6 +159,7 @@ export const protectedBlocksRouter = createTRPCRouter({
           endMin: input.endMin ?? null,
           templateId: input.templateId ?? null,
           status: input.status,
+          source: input.source ?? null,
         })
         .returning();
 
@@ -385,5 +390,68 @@ export const protectedBlocksRouter = createTRPCRouter({
       }
 
       return { confirmed: rows.length };
+    }),
+
+  confirmTop3Hold: protectedProcedure
+    .input(
+      z.object({
+        scheduledDate: isoDateSchema,
+        category: categorySchema,
+        startMin: z
+          .number()
+          .int()
+          .min(0)
+          .max(24 * 60 - 1),
+        endMin: z
+          .number()
+          .int()
+          .min(1)
+          .max(24 * 60),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.endMin <= input.startMin) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "endMin must be after startMin." });
+      }
+
+      const existing = await db
+        .select({ id: protectedBlocks.id })
+        .from(protectedBlocks)
+        .where(
+          and(
+            eq(protectedBlocks.userId, ctx.userId),
+            eq(protectedBlocks.scheduledDate, input.scheduledDate),
+            eq(protectedBlocks.source, TOP3_HOLD_SOURCE)
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        return existing[0]!;
+      }
+
+      const [row] = await db
+        .insert(protectedBlocks)
+        .values({
+          userId: ctx.userId,
+          category: input.category,
+          scheduledDate: input.scheduledDate,
+          label: TOP3_HOLD_LABEL,
+          startMin: input.startMin,
+          endMin: input.endMin,
+          status: "confirmed",
+          source: TOP3_HOLD_SOURCE,
+        })
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create Top-3 hold.",
+        });
+      }
+
+      await syncProtectedBlockRow(row.id, "insert", row);
+      return row;
     }),
 });

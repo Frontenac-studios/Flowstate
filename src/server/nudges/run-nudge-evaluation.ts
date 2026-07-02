@@ -101,6 +101,10 @@ export async function runNudgeEvaluation(params: {
   const timeEntriesToday = timeEntryRows
     .filter((e) => startedOnLocalDay(e.startedAt, localDate, tzOffsetMinutes))
     .map((e) => ({ taskId: e.taskId, startedAt: e.startedAt }));
+  const allTimeEntries = timeEntryRows.map((e) => ({
+    taskId: e.taskId,
+    startedAt: e.startedAt,
+  }));
   const nudgedKinds = new Set(existingNudges.map((n) => n.kind));
   const stallEvaluation = evaluateTop3Stall({
     now,
@@ -108,6 +112,7 @@ export async function runNudgeEvaluation(params: {
     localDate,
     top3Tasks,
     timeEntriesToday,
+    timeEntries: allTimeEntries,
     alreadyNudgedToday: nudgedKinds.has("top3_stall"),
   });
   const selfCareEvaluation = includeSelfCare

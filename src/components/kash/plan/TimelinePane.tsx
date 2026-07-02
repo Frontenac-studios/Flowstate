@@ -24,6 +24,7 @@ import { useTRPC } from "@/trpc/client";
 import ProtectedBlockChip, {
   type ProtectedBlockRow,
 } from "@/components/kash/plan/week/ProtectedBlockChip";
+import { TOP3_HOLD_LABEL } from "@/lib/top3/constants";
 
 const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
@@ -122,10 +123,18 @@ function ProtectedTimelineBlock({
   block,
   layout,
   rangeStart,
+  interactive = false,
+  onConfirm,
+  onDismiss,
+  confirming = false,
 }: {
   block: TimedProtectedBlock;
   layout: { col: number; cols: number };
   rangeStart: number;
+  interactive?: boolean;
+  onConfirm?: () => void;
+  onDismiss?: () => void;
+  confirming?: boolean;
 }) {
   const title = block.label?.trim() || categoryLabel(block.category);
   const top = ((block.startMin - rangeStart) / 60) * HOUR_HEIGHT;
@@ -137,11 +146,11 @@ function ProtectedTimelineBlock({
 
   return (
     <div
-      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-pill border border-l-[var(--stripe-width)] ${
+      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[var(--stripe-width)] ${
         proposed
           ? "border-dashed border-[var(--border)] bg-[var(--surface-2)] opacity-90"
           : "border-[var(--border-subtle)] bg-[var(--surface-2)]"
-      }`}
+      } ${interactive ? "z-sticky shadow-sm" : "pointer-events-none"}`}
       style={{
         top,
         height,
@@ -162,7 +171,62 @@ function ProtectedTimelineBlock({
           {formatClock(block.startMin)}
         </span>
       </div>
+      {interactive ? (
+        <div className="flex items-center gap-1 border-t border-dashed border-[var(--border)] px-2 py-1">
+          <button
+            type="button"
+            className="text-on-accent flex-1 rounded-pill bg-accent px-2 py-0.5 text-caption font-medium disabled:opacity-60"
+            onClick={onConfirm}
+            disabled={confirming}
+          >
+            {confirming ? "Holding…" : "Hold this time"}
+          </button>
+          <button
+            type="button"
+            className="rounded-pill px-2 py-0.5 text-caption text-ink-muted hover:text-ink"
+            onClick={onDismiss}
+            aria-label="Skip Top 3 time hold"
+          >
+            Skip
+          </button>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+type Top3HoldGhostProps = {
+  slot: { startMin: number; endMin: number };
+  rangeStart: number;
+  onConfirm: () => void;
+  onDismiss: () => void;
+  confirming?: boolean;
+};
+
+function Top3HoldGhost({
+  slot,
+  rangeStart,
+  onConfirm,
+  onDismiss,
+  confirming = false,
+}: Top3HoldGhostProps) {
+  return (
+    <ProtectedTimelineBlock
+      block={{
+        id: "top3-hold-ghost",
+        category: "professional",
+        label: TOP3_HOLD_LABEL,
+        startMin: slot.startMin,
+        endMin: slot.endMin,
+        status: "proposed",
+      }}
+      layout={{ col: 0, cols: 1 }}
+      rangeStart={rangeStart}
+      interactive
+      onConfirm={onConfirm}
+      onDismiss={onDismiss}
+      confirming={confirming}
+    />
   );
 }
 
@@ -347,7 +411,19 @@ function TimelineBlock({
  * blocks (handled in DayPlanCanvas); blocks here can be moved, resized, started
  * (▶ / double-click → focus), marked done (✓), and removed (×).
  */
-export function TimelinePane() {
+type Top3HoldOffer = {
+  slot: { startMin: number; endMin: number };
+  show: boolean;
+  onConfirm: () => void;
+  onDismiss: () => void;
+  confirming?: boolean;
+};
+
+type TimelinePaneProps = {
+  top3HoldOffer?: Top3HoldOffer | null;
+};
+
+export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -589,6 +665,16 @@ export function TimelinePane() {
                 />
               )
             )}
+
+            {top3HoldOffer?.show && top3HoldOffer.slot ? (
+              <Top3HoldGhost
+                slot={top3HoldOffer.slot}
+                rangeStart={rangeStart}
+                onConfirm={top3HoldOffer.onConfirm}
+                onDismiss={top3HoldOffer.onDismiss}
+                confirming={top3HoldOffer.confirming}
+              />
+            ) : null}
 
             {untimedCompletions.map((t) => (
               <div

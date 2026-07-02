@@ -16,6 +16,7 @@ import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { animatePinToTop3 } from "@/lib/animate/pin-to-top3";
 import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
+import { useTop3Assurance } from "@/hooks/useTop3Assurance";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { evaluateProposedSlot } from "@/lib/about-me/constraint-eval";
@@ -27,11 +28,16 @@ import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { resolvePulseTarget, type TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
 import type { BucketMode } from "@/lib/settings/constants";
+import {
+  DEFAULT_DAY_END_HOUR,
+  DEFAULT_DAY_START_HOUR,
+  DEFAULT_TOP3_MIDDAY_CHECKIN,
+} from "@/lib/settings/constants";
 import { selectCompletionsToday } from "@/lib/today/select-completions-today";
 import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
-import { DECIDE_EVENT } from "../chrome-events";
+import { CHAT_SEND_EVENT, DECIDE_EVENT } from "../chrome-events";
 import { triggerEphemeralCelebration } from "../mechanics/EphemeralCelebration";
 import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
@@ -44,6 +50,7 @@ import { TodayList } from "./TodayList";
 import { TodayReviewPanel } from "./TodayReviewPanel";
 import { Top3ReplacePicker } from "./Top3ReplacePicker";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
+import { useChat } from "../chat/ChatProvider";
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
 
@@ -91,6 +98,10 @@ export function DayPlanCanvas() {
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const bucketMode: BucketMode = settings?.bucketMode ?? "relative";
+  const dayStartHour = settings?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
+  const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
+  const top3MiddayCheckin = settings?.top3MiddayCheckin ?? DEFAULT_TOP3_MIDDAY_CHECKIN;
+  const { openRail } = useChat();
 
   /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
   const now = useMemo(() => new Date(), []);
@@ -254,6 +265,8 @@ export function DayPlanCanvas() {
         projectId: task.projectId,
         projectSlug: task.projectSlug,
         top3Order: task.top3Order,
+        top3PinnedAt: task.top3PinnedAt,
+        scheduledDate: task.scheduledDate,
         completedAt: task.completedAt,
         category: task.category,
         categoryUnresolved: task.categoryUnresolved,
@@ -273,6 +286,15 @@ export function DayPlanCanvas() {
       triggerEphemeralCelebration("top3-complete");
     }
   }, [pinnedBySlot]);
+
+  const top3Assurance = useTop3Assurance({
+    localDate,
+    tzOffsetMinutes,
+    pinnedBySlot,
+    dayStartHour,
+    dayEndHour,
+    top3MiddayCheckin,
+  });
 
   const moveMutation = useMutation(
     trpc.tasks.moveToBucket.mutationOptions({
@@ -308,6 +330,36 @@ export function DayPlanCanvas() {
         invalidatePlan();
       },
     })
+  );
+
+  const handleSlipBreakDown = useCallback(
+    (taskId: string) => {
+      const task = Array.from(pinnedBySlot.values()).find((t) => t.id === taskId);
+      const title = task?.title ?? "this task";
+      openRail();
+      window.dispatchEvent(
+        new CustomEvent(CHAT_SEND_EVENT, {
+          detail: `Help me break down "${title}" into smaller steps I can finish today.`,
+        })
+      );
+      top3Assurance.dismissSlip(taskId);
+    },
+    [openRail, pinnedBySlot, top3Assurance]
+  );
+
+  const handleSlipDrop = useCallback(
+    (taskId: string) => {
+      unpinMutation.mutate({ id: taskId });
+      top3Assurance.dismissSlip(taskId);
+    },
+    [top3Assurance, unpinMutation]
+  );
+
+  const handleSlipKeep = useCallback(
+    (taskId: string) => {
+      top3Assurance.dismissSlip(taskId);
+    },
+    [top3Assurance]
   );
 
   const executePin = useCallback(
@@ -526,6 +578,11 @@ export function DayPlanCanvas() {
             ref={top3SectionRef}
             pinnedBySlot={pinnedBySlot}
             highlighted={top3Highlighted}
+            middayLine={top3Assurance.middayLine}
+            slipTask={top3Assurance.slipTask}
+            onSlipBreakDown={handleSlipBreakDown}
+            onSlipDrop={handleSlipDrop}
+            onSlipKeep={handleSlipKeep}
             onUnpin={(taskId) => unpinMutation.mutate({ id: taskId })}
           />
           {replacePickerTaskId ? (
@@ -571,7 +628,19 @@ export function DayPlanCanvas() {
               </div>
             ) : null}
             <div className="min-w-0 flex-1 lg:basis-0">
-              <TimelinePane />
+              <TimelinePane
+                top3HoldOffer={
+                  top3Assurance.showHoldGhost && top3Assurance.holdGhost
+                    ? {
+                        slot: top3Assurance.holdGhost,
+                        show: true,
+                        onConfirm: top3Assurance.confirmHold,
+                        onDismiss: top3Assurance.declineHold,
+                        confirming: top3Assurance.confirmingHold,
+                      }
+                    : null
+                }
+              />
             </div>
           </div>
         )}

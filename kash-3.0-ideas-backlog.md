@@ -44,7 +44,14 @@ opposite vector: it's backward-looking _reassurance_, built from data Kash is al
 
 ---
 
-## Rename & reframe the Abyss as "Backlog" · 💡
+## Rename & reframe the Abyss as "Backlog" · 📋 COMMITTED (full reframe)
+
+> **Decided Jul 1 2026 (Phase 3):** **full reframe** — rename Abyss → **Backlog** _and_ redesign the
+> surface from the dark void to the **light B&W "ready-to-pull" list** (category-striped rows, promote
+> affordances). **Retires the Abyss dark-surface exception** (update plan §5/§10 +
+> `design-system-starter.md`). Ship in **one coordinated rename sweep** alongside Bingo → Goals
+> (see `kash-3.0-open-decisions.md` §C). **Now fully specced → `kash-3.0-backlog-reframe-build-spec.md`** (light surface, "Themes" lens replacing the dark Sky, recency list, one-tap pull).
+> Shaping notes below.
 
 **The pitch.** Rename — and reframe/redesign — the **Abyss** (`/abyss`) as **"Backlog."** The Abyss
 today is the single catch-all inbox for tasks, ideas, and someday/reference items (sky + list,
