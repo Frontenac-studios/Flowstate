@@ -47,6 +47,7 @@ import { slugifyProjectName } from "@/lib/projects/slugify";
 import { fetchWeekDraftContext } from "@/server/claude/fetch-week-draft-context";
 import { generateWeekDraft } from "@/server/claude/generate-week-draft";
 import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
+import { maybeTriggerEvidenceMilestoneEdition } from "@/server/evidence/maybe-trigger-milestone";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -496,6 +497,9 @@ export const planningRouter = createTRPCRouter({
       }
 
       await syncRow("goals", row.id, "update", row);
+      if (input.state === "done") {
+        void maybeTriggerEvidenceMilestoneEdition(ctx.userId, row.id).catch(() => {});
+      }
       return row;
     }),
 

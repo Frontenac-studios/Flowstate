@@ -6,6 +6,7 @@ import {
   chatMessages,
   dailyWins,
   dayReviews,
+  evidenceEditions,
   goalMilestones,
   goals,
   monthIntentions,
@@ -381,6 +382,22 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(dailyWins.id, id));
       else await db.insert(dailyWins).values(mapped as never);
+      return true;
+    }
+    case "evidence_editions": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(evidenceEditions)
+        .where(eq(evidenceEditions.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(evidenceEditions)
+          .set(mapped as never)
+          .where(eq(evidenceEditions.id, id));
+      else await db.insert(evidenceEditions).values(mapped as never);
       return true;
     }
     case "day_reviews": {

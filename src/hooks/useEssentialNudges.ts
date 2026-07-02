@@ -53,6 +53,7 @@ export function useEssentialNudges() {
           tzOffsetMinutes: clientTzOffsetMinutes(),
           includeSelfCare: planningSurface === "today",
           includeMonthlyReview: planningSurface === "plan" || planningSurface === "reviews",
+          includeEvidenceSurface: planningSurface === "care",
         }),
       });
       if (!res.ok) return;
@@ -107,6 +108,9 @@ export function useEssentialNudges() {
           break;
         case "open_care":
           router.push("/care");
+          break;
+        case "open_care_wins":
+          router.push("/care?tab=wins");
           break;
         case "open_backlog":
           router.push("/backlog");

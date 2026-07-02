@@ -12,6 +12,7 @@ const bodySchema = z.object({
   tzOffsetMinutes: z.number().int().min(-840).max(840),
   includeSelfCare: z.boolean().optional(),
   includeMonthlyReview: z.boolean().optional(),
+  includeEvidenceSurface: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -32,7 +33,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { localDate, tzOffsetMinutes, includeSelfCare, includeMonthlyReview } = parsed.data;
+  const {
+    localDate,
+    tzOffsetMinutes,
+    includeSelfCare,
+    includeMonthlyReview,
+    includeEvidenceSurface,
+  } = parsed.data;
 
   Sentry.addBreadcrumb({
     category: "kash.nudge",
@@ -48,6 +55,7 @@ export async function POST(req: Request) {
       tzOffsetMinutes,
       includeSelfCare: includeSelfCare ?? false,
       includeMonthlyReview: includeMonthlyReview ?? false,
+      includeEvidenceSurface: includeEvidenceSurface ?? false,
     });
 
     Sentry.addBreadcrumb({

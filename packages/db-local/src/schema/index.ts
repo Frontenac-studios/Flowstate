@@ -11,6 +11,7 @@ export * from "./category-settings";
 export * from "./chat-custom-suggestions";
 export * from "./chat-messages";
 export * from "./daily-wins";
+export * from "./evidence-editions";
 export * from "./day-reviews";
 export * from "./focus-blocks";
 export * from "./goal-milestones";

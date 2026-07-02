@@ -17,6 +17,7 @@ import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
 import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
 import { fetchBalanceNudgeContext } from "@/server/nudges/fetch-balance-nudge-context";
+import { getLatestEvidenceEdition } from "@/server/evidence/generate-edition";
 import { fetchIsOverCommittedForDate } from "@/server/week/fetch-over-commit-for-date";
 export type NudgeEvaluateResult = {
   fired: boolean;
@@ -30,6 +31,7 @@ export async function runNudgeEvaluation(params: {
   tzOffsetMinutes: number;
   includeSelfCare?: boolean;
   includeMonthlyReview?: boolean;
+  includeEvidenceSurface?: boolean;
 }): Promise<NudgeEvaluateResult> {
   const {
     userId,
@@ -37,6 +39,7 @@ export async function runNudgeEvaluation(params: {
     tzOffsetMinutes,
     includeSelfCare = false,
     includeMonthlyReview = false,
+    includeEvidenceSurface = false,
   } = params;
   const now = new Date();
   const monthKey = localMonthKey(now, tzOffsetMinutes);
@@ -247,6 +250,27 @@ export async function runNudgeEvaluation(params: {
       });
       fired = true;
     } catch {}
+  }
+  if (includeEvidenceSurface && !nudgedKinds.has("evidence_surface")) {
+    const latest = await getLatestEvidenceEdition(userId);
+    if (latest?.state === "unseen" && latest.kind === "milestone") {
+      try {
+        await db.insert(nudgeEvents).values({
+          userId,
+          kind: "evidence_surface",
+          localDate,
+          taskIds: [],
+        });
+        chips.push({
+          kind: "evidence_surface",
+          message: "You closed something big. Here's the trail that got you here.",
+          klass: "reassurance",
+          priority: 0,
+          action: { type: "open_care_wins" },
+        });
+        fired = true;
+      } catch {}
+    }
   }
   return {
     fired,

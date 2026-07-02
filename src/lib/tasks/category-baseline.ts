@@ -67,9 +67,12 @@ function categoriesBelowUsual(
       starved.push(category);
     }
   }
-  return starved.sort(
-    (a, b) => current[a] / Math.max(baseline[a], 1) - current[b] / Math.max(baseline[b], 1)
-  );
+  return starved.sort((a, b) => {
+    const ratioA = current[a] / Math.max(baseline[a], 1);
+    const ratioB = current[b] / Math.max(baseline[b], 1);
+    if (ratioA !== ratioB) return ratioA - ratioB;
+    return baseline[b] - current[b] - (baseline[a] - current[a]);
+  });
 }
 
 /**
