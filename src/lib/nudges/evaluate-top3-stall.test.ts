@@ -116,6 +116,29 @@ describe("evaluateTop3Stall", () => {
     });
     expect(result.slippedTasks).toHaveLength(1);
     expect(result.slippedTasks[0]?.daysSlipped).toBeGreaterThanOrEqual(2);
+    expect(result.slippedWithoutProgress).toHaveLength(1);
+  });
+
+  it("excludes slipped tasks that received focus since pin", () => {
+    const now = new Date("2026-05-26T23:00:00.000Z");
+    const result = evaluateTop3Stall({
+      now,
+      tzOffsetMinutes: TZ_LA,
+      localDate: "2026-05-26",
+      top3Tasks: [
+        task({
+          id: "a",
+          title: "Old pin",
+          top3Order: 2,
+          top3PinnedAt: new Date("2026-05-24T12:00:00.000Z"),
+        }),
+      ],
+      timeEntriesToday: [],
+      timeEntries: [{ taskId: "a", startedAt: new Date("2026-05-25T20:00:00.000Z") }],
+      alreadyNudgedToday: false,
+    });
+    expect(result.slippedTasks).toHaveLength(1);
+    expect(result.slippedWithoutProgress).toHaveLength(0);
   });
 
   it("respects NUDGE_DEBUG_HOUR", () => {

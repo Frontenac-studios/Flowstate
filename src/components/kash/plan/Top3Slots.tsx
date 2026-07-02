@@ -8,6 +8,8 @@ import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { type ProjectCategory } from "@/lib/projects/categories";
 
 import { Top3Deadline } from "./Top3Deadline";
+import { Top3SlipChip } from "./Top3SlipChip";
+import "@/components/kash/ui/feedback-motion.css";
 
 export type Top3SlotTask = {
   id: string;
@@ -15,6 +17,8 @@ export type Top3SlotTask = {
   projectId: string | null;
   projectSlug: string | null;
   top3Order: number;
+  top3PinnedAt: Date | null;
+  scheduledDate: string | null;
   completedAt: Date | null;
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
@@ -116,10 +120,30 @@ type Props = {
   pinnedBySlot: Map<number, Top3SlotTask>;
   onUnpin: (taskId: string) => void;
   highlighted?: boolean;
+  middayLine?: string | null;
+  slipTask?: {
+    id: string;
+    title: string;
+    top3Order: number;
+    daysSlipped: number;
+    pinReferenceDate: string;
+  } | null;
+  onSlipBreakDown?: (taskId: string) => void;
+  onSlipDrop?: (taskId: string) => void;
+  onSlipKeep?: (taskId: string) => void;
 };
 
 export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
-  { pinnedBySlot, onUnpin, highlighted = false },
+  {
+    pinnedBySlot,
+    onUnpin,
+    highlighted = false,
+    middayLine = null,
+    slipTask = null,
+    onSlipBreakDown,
+    onSlipDrop,
+    onSlipKeep,
+  },
   ref
 ) {
   const pinnedTasks = ([1, 2, 3] as const)
@@ -155,7 +179,19 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
           <Top3Slot key={task.id} slot={slot} task={task} onUnpin={onUnpin} />
         ))}
         {showNextDropZone ? <Top3NextDropZone /> : null}
+        {middayLine ? (
+          <p className="nudge-fade-in px-1 text-center text-xs text-ink-muted">{middayLine}</p>
+        ) : null}
       </div>
+      {slipTask && onSlipBreakDown && onSlipDrop && onSlipKeep ? (
+        <Top3SlipChip
+          className="mt-2"
+          task={slipTask}
+          onBreakDown={() => onSlipBreakDown(slipTask.id)}
+          onDrop={() => onSlipDrop(slipTask.id)}
+          onKeep={() => onSlipKeep(slipTask.id)}
+        />
+      ) : null}
     </section>
   );
 });

@@ -11,6 +11,7 @@ export type ProtectedBlockRow = {
   startMin: number | null;
   endMin: number | null;
   status: "proposed" | "confirmed";
+  source?: string | null;
 };
 
 type Props = {

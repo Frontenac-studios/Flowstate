@@ -22,3 +22,7 @@ export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 export const abyssArchiveAfterDaysSchema = z.number().int().min(1).max(365);
 export type AbyssArchiveAfterDays = z.infer<typeof abyssArchiveAfterDaysSchema>;
 export const DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS = 90;
+
+export const top3MiddayCheckinSchema = z.enum(["on", "off"]);
+export type Top3MiddayCheckin = z.infer<typeof top3MiddayCheckinSchema>;
+export const DEFAULT_TOP3_MIDDAY_CHECKIN: Top3MiddayCheckin = "on";

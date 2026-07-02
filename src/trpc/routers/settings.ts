@@ -9,7 +9,9 @@ import {
   DEFAULT_BUCKET_MODE,
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
+  DEFAULT_TOP3_MIDDAY_CHECKIN,
   notificationPrefsSchema,
+  top3MiddayCheckinSchema,
   workingHoursSchema,
 } from "@/lib/settings/constants";
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -35,6 +37,7 @@ export const settingsRouter = createTRPCRouter({
   get: protectedProcedure.query(async ({ ctx }) => {
     const row = await getOrCreateSettings(ctx.userId);
     const parsed = bucketModeSchema.safeParse(row.bucketMode);
+    const middayParsed = top3MiddayCheckinSchema.safeParse(row.top3MiddayCheckin);
     return {
       bucketMode: parsed.success ? parsed.data : DEFAULT_BUCKET_MODE,
       dayStartHour: row.dayStartHour ?? DEFAULT_DAY_START_HOUR,
@@ -43,6 +46,7 @@ export const settingsRouter = createTRPCRouter({
       notificationsEnabled: row.notificationsEnabled ?? true,
       focusDndEnabled: row.focusDndEnabled ?? true,
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
+      top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
     };
   }),
   updateBucketMode: protectedProcedure.input(bucketModeSchema).mutation(async ({ ctx, input }) => {
@@ -117,5 +121,21 @@ export const settingsRouter = createTRPCRouter({
           message: "Failed to update abyss archive threshold.",
         });
       return { abyssArchiveAfterDays: input };
+    }),
+  updateTop3MiddayCheckin: protectedProcedure
+    .input(top3MiddayCheckinSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({ top3MiddayCheckin: input, updatedAt: new Date() })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update Top-3 midday check-in setting.",
+        });
+      return { top3MiddayCheckin: input };
     }),
 });

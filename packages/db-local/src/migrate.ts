@@ -567,6 +567,12 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   { table: "app_settings", column: "focus_dnd_enabled", definition: "INTEGER NOT NULL DEFAULT 1" },
   { table: "app_settings", column: "abyss_archive_after_days", definition: "INTEGER" },
+  {
+    table: "app_settings",
+    column: "top3_midday_checkin",
+    definition: "TEXT NOT NULL DEFAULT 'on'",
+  },
+  { table: "protected_blocks", column: "source", definition: "TEXT" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {

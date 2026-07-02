@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { projects, taskTimeEntries, tasks } from "@/db/tables";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
+import { startedOnLocalDay } from "@/lib/nudges/local-time";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -135,6 +136,39 @@ export const timeEntriesRouter = createTRPCRouter({
 
       return rows;
     }),
+
+  listStartedForLocalDate: protectedProcedure
+    .input(
+      z.object({
+        localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        tzOffsetMinutes: z.number().int().min(-840).max(840),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const rows = await db
+        .select({
+          taskId: taskTimeEntries.taskId,
+          startedAt: taskTimeEntries.startedAt,
+        })
+        .from(taskTimeEntries)
+        .where(eq(taskTimeEntries.userId, ctx.userId));
+
+      return rows
+        .filter((row) => startedOnLocalDay(row.startedAt, input.localDate, input.tzOffsetMinutes))
+        .map((row) => ({ taskId: row.taskId, startedAt: row.startedAt }));
+    }),
+
+  listAllStarted: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        taskId: taskTimeEntries.taskId,
+        startedAt: taskTimeEntries.startedAt,
+      })
+      .from(taskTimeEntries)
+      .where(eq(taskTimeEntries.userId, ctx.userId));
+
+    return rows;
+  }),
 
   /** Add a time block by hand (reason "manual"); works on any task. */
   create: protectedProcedure

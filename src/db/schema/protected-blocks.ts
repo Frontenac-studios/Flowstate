@@ -20,6 +20,8 @@ export const protectedBlocks = pgTable(
       onDelete: "set null",
     }),
     status: protectedBlockStatus("status").notNull().default("confirmed"),
+    /** Distinguishes Top-3 focus holds from week/month protected blocks. */
+    source: text("source"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

@@ -6,6 +6,7 @@ import IconButton from "@/components/kash/ui/IconButton";
 import { useChatPanel } from "@/hooks/useChatPanel";
 import { useChatSuggestions } from "@/hooks/useChatSuggestions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
+import { CHAT_SEND_EVENT } from "@/components/kash/chrome-events";
 
 import { useChat } from "./ChatProvider";
 import { ChatComposer } from "./ChatComposer";
@@ -43,6 +44,16 @@ export function ChatRail() {
   useEffect(() => {
     if (railOpen) markRead(threadId);
   }, [railOpen, markRead, threadId]);
+
+  useEffect(() => {
+    const onChatSend = (event: Event) => {
+      const text = (event as CustomEvent<string>).detail;
+      if (!text?.trim()) return;
+      void sendMessage(text, "chip");
+    };
+    window.addEventListener(CHAT_SEND_EVENT, onChatSend);
+    return () => window.removeEventListener(CHAT_SEND_EVENT, onChatSend);
+  }, [sendMessage]);
 
   // On narrow viewports the rail is an overlay drawer; Escape closes it (but not
   // while typing in the composer). At lg it is an inline column and stays put.

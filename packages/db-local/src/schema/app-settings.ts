@@ -11,6 +11,7 @@ export const appSettings = sqliteTable("app_settings", {
     .default(true),
   focusDndEnabled: integer("focus_dnd_enabled", { mode: "boolean" }).notNull().default(true),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
+  top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
