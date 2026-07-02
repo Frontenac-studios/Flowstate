@@ -1,0 +1,5 @@
+/* D13 / D23 — horizontal scroll peek + fade on Miller column strip */
+.miller-column-scroll {
+  mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent 100%);
+}

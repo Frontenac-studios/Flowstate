@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { defaultMillerPath, expandMillerPath } from "@/lib/projects/miller-path";
@@ -19,11 +20,15 @@ import {
   readPriorityFilter,
   writePriorityFilter,
 } from "@/lib/projects/miller-priority-filter";
-import { partitionByCompletion, type ProjectTree } from "@/lib/projects/phase-tree";
+import {
+  collectSubtreeTasks,
+  partitionByCompletion,
+  type ProjectTree,
+} from "@/lib/projects/phase-tree";
+import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
 
 import MillerColumn, { type ColumnItem, type DetailSelection } from "./MillerColumn";
 import MillerPriorityFilter from "./MillerPriorityFilter";
-import MillerGhostColumn from "./MillerGhostColumn";
 import { millerColumnShellClass } from "./miller-columns";
 import { useMillerStripLayout } from "./useMillerStripLayout";
 import { executeComposerSubmit } from "@/lib/projects/execute-composer-submit";
@@ -34,8 +39,11 @@ import NewItemRow from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
+import ProjectSyntaxChip from "./ProjectSyntaxChip";
 import type { ProjectPhase, ProjectTask } from "./types";
 import { useProjectMutations } from "./useProjectMutations";
+
+import "./projects-motion.css";
 
 type Tree = ProjectTree<ProjectPhase, ProjectTask>;
 type Node = Tree["rootPhases"][number];
@@ -50,6 +58,7 @@ type Props = {
   tasks: ProjectTask[];
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
+  estimateSampleCount?: number;
 };
 
 function orderItems(phases: Node[], tasks: ProjectTask[]): ColumnItem[] {
@@ -72,23 +81,21 @@ export default function MillerColumnsView({
   tasks,
   selectedPath,
   onSelectPath,
+  estimateSampleCount = 0,
 }: Props) {
   const trpc = useTRPC();
   const { data: pinnedTaskIds = [] } = useQuery(
     trpc.weekDayPriorities.listPinnedTaskIds.queryOptions()
   );
+  const { data: timeRollups } = useQuery(trpc.projects.getTimeRollups.queryOptions({ projectId }));
   const dayPriorityTaskIds = useMemo(() => new Set(pinnedTaskIds), [pinnedTaskIds]);
   const m = useProjectMutations(projectId);
 
-  // One inline-detail target across the whole workspace (phase or task). Opening a
-  // detail in any column moves it here; Escape clears it. (VF-Projects: docked panel +
-  // highlight + double-click model retired Jun 26.)
   const [detail, setDetail] = useState<DetailSelection>(null);
   const [focus, setFocus] = useState({ col: 0, index: 0 });
   const [confirm, setConfirm] = useState<Confirm>(null);
+  const [composerFocused, setComposerFocused] = useState(false);
 
-  // Projects priority lens (VF-4c): filters visible tasks; phases stay. Clean by
-  // default, hydrated from localStorage after mount.
   const [priorityLevels, setPriorityLevels] = useState<Set<number>>(new Set());
   useEffect(() => setPriorityLevels(readPriorityFilter()), []);
   const togglePriority = useCallback((level: number) => {
@@ -103,18 +110,42 @@ export default function MillerColumnsView({
 
   const { nodeById, taskById } = useMemo(() => {
     const nodes = new Map<string, Node>();
-    const tasks = new Map<string, ProjectTask>();
+    const taskMap = new Map<string, ProjectTask>();
     const walk = (list: Node[]) => {
       for (const node of list) {
         nodes.set(node.phase.id, node);
-        for (const task of node.tasks) tasks.set(task.id, task);
+        for (const task of node.tasks) taskMap.set(task.id, task);
         walk(node.children);
       }
     };
     walk(tree.rootPhases);
-    for (const task of tree.looseTasks) tasks.set(task.id, task);
-    return { nodeById: nodes, taskById: tasks };
+    for (const task of tree.looseTasks) taskMap.set(task.id, task);
+    return { nodeById: nodes, taskById: taskMap };
   }, [tree]);
+
+  const phaseMetrics = useMemo(() => {
+    const metrics = new Map<string, { percent: number; timeSpentSeconds: number }>();
+    const walk = (list: Node[]) => {
+      for (const node of list) {
+        const subtreeTasks = collectSubtreeTasks(node);
+        const progress = weightedProgressForTasks(
+          subtreeTasks.map((task) => ({
+            id: task.id,
+            completedAt: task.completedAt,
+            isTop3: task.isTop3,
+          })),
+          dayPriorityTaskIds
+        );
+        metrics.set(node.phase.id, {
+          percent: progress.percent,
+          timeSpentSeconds: timeRollups?.byPhaseId[node.phase.id] ?? 0,
+        });
+        walk(node.children);
+      }
+    };
+    walk(tree.rootPhases);
+    return metrics;
+  }, [tree.rootPhases, dayPriorityTaskIds, timeRollups?.byPhaseId]);
 
   const tasksForParent = useCallback(
     (parentPhaseId: string | null): ProjectTask[] =>
@@ -152,9 +183,7 @@ export default function MillerColumnsView({
 
   const activeColumnLevel = selectedPath.length;
 
-  const { stripRef, ghostColumnCount, widthClassName, targetVisibleColumns } = useMillerStripLayout(
-    columns.length
-  );
+  const { stripRef, widthClassName, targetVisibleColumns } = useMillerStripLayout(columns.length);
 
   useEffect(() => {
     const basePath =
@@ -165,7 +194,6 @@ export default function MillerColumnsView({
     }
   }, [tree, selectedPath, targetVisibleColumns, onSelectPath]);
 
-  // Keep keyboard focus inside the rendered columns when the tree/path changes.
   useEffect(() => {
     setFocus((f) => {
       const col = Math.min(f.col, columns.length - 1);
@@ -175,7 +203,6 @@ export default function MillerColumnsView({
     });
   }, [columns]);
 
-  // Single-click a phase: drill into its child column AND expand its detail inline.
   const openPhase = useCallback(
     (level: number, node: Node) => {
       const userPath = selectedPath.slice(0, level).concat(node.phase.id);
@@ -187,7 +214,6 @@ export default function MillerColumnsView({
     [onSelectPath, selectedPath, tree, targetVisibleColumns]
   );
 
-  // Single-click a task (a leaf): collapse any deeper drill and expand its detail inline.
   const openTaskDetail = useCallback(
     (level: number, task: ProjectTask) => {
       onSelectPath(selectedPath.slice(0, level));
@@ -382,8 +408,6 @@ export default function MillerColumnsView({
   const composerParentPhaseId =
     selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
 
-  // Renders the inline detail editor under whichever row is the current detail target.
-  // Wires the same mutations the docked panel used; the column drops it in place.
   const renderDetail = useCallback(
     (item: ColumnItem) => {
       if (item.kind === "phase") {
@@ -393,6 +417,8 @@ export default function MillerColumnsView({
             node={item.node}
             category={category}
             dayPriorityTaskIds={dayPriorityTaskIds}
+            timeSpentSeconds={timeRollups?.byPhaseId[item.node.phase.id] ?? 0}
+            estimateSampleCount={estimateSampleCount}
             pending={m.deletePhase.isPending}
             onUpdate={(patch) => m.updatePhase.mutate({ id: item.node.phase.id, ...patch })}
             onRequestDelete={() => setConfirm({ kind: "phase-delete", id: item.node.phase.id })}
@@ -411,7 +437,15 @@ export default function MillerColumnsView({
         />
       );
     },
-    [detail, m, toggleTask, category, dayPriorityTaskIds]
+    [
+      detail,
+      m,
+      toggleTask,
+      category,
+      dayPriorityTaskIds,
+      timeRollups?.byPhaseId,
+      estimateSampleCount,
+    ]
   );
 
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
@@ -441,12 +475,9 @@ export default function MillerColumnsView({
             className="shrink-0 rounded-card border border-subtle bg-surface p-4"
             data-miller-composer
           >
-            {isBlank ? (
-              <p className="mb-3 text-sm text-ink-muted">
-                Add tasks below — Parent//+ Child for subdirectories, or ;;; + Phase to create
-                directories only.
-              </p>
-            ) : null}
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <ProjectSyntaxChip showOnFocus focused={composerFocused} />
+            </div>
             <NewItemRow
               projectId={projectId}
               phases={phases}
@@ -454,6 +485,7 @@ export default function MillerColumnsView({
               defaultPhaseId={composerParentPhaseId}
               pending={createPending}
               onSubmitComposer={handleSubmitComposer}
+              onFocusChange={setComposerFocused}
             />
           </div>
 
@@ -463,39 +495,41 @@ export default function MillerColumnsView({
             </div>
           ) : null}
 
-          <div className="flex min-h-0 flex-1 gap-3">
-            <div
-              ref={stripRef}
-              tabIndex={0}
-              onKeyDown={handleKeyDown}
-              aria-label="Project columns"
-              className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto rounded-card border border-subtle bg-surface p-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
-            >
-              {columns.map((col) => (
-                <MillerColumn
-                  key={col.level}
-                  level={col.level}
-                  parentPhaseId={col.parentPhaseId}
-                  category={category}
-                  items={col.items}
-                  openPhaseId={selectedPath[col.level] ?? null}
-                  detail={detail}
-                  focusIndex={focus.col === col.level ? focus.index : null}
-                  isActive={col.level === activeColumnLevel}
-                  shellClassName={millerColumnShellClass(widthClassName)}
-                  renderDetail={renderDetail}
-                  onOpenPhase={(node) => openPhase(col.level, node)}
-                  onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
-                  onToggleTask={toggleTask}
-                />
-              ))}
-              {Array.from({ length: ghostColumnCount }, (_, i) => (
-                <MillerGhostColumn
-                  key={`ghost-${i}`}
-                  shellClassName={millerColumnShellClass(widthClassName)}
-                />
-              ))}
-            </div>
+          <div
+            ref={stripRef}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            aria-label="Project columns"
+            className="miller-column-scroll flex min-h-0 flex-1 items-stretch gap-1.5 overflow-x-auto pb-1 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          >
+            {columns.map((col) => (
+              <MillerColumn
+                key={col.level}
+                level={col.level}
+                parentPhaseId={col.parentPhaseId}
+                category={category}
+                items={col.items}
+                openPhaseId={selectedPath[col.level] ?? null}
+                detail={detail}
+                focusIndex={focus.col === col.level ? focus.index : null}
+                isActive={col.level === activeColumnLevel}
+                shellClassName={millerColumnShellClass(widthClassName)}
+                phaseMetrics={phaseMetrics}
+                blankInvitation={
+                  isBlank && col.level === 0 ? (
+                    <ColoredEmptyInvitation
+                      title="Nothing here yet"
+                      hint="Add phases and tasks below — one per line."
+                      className="mx-1 my-2 border-none bg-transparent py-6 shadow-none"
+                    />
+                  ) : null
+                }
+                renderDetail={renderDetail}
+                onOpenPhase={(node) => openPhase(col.level, node)}
+                onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
+                onToggleTask={toggleTask}
+              />
+            ))}
           </div>
         </div>
       </DndContext>

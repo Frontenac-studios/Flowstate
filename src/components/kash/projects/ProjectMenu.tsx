@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
@@ -59,6 +60,14 @@ export default function ProjectMenu({ project, onClose }: Props) {
         aria-label={`Actions for ${project.name}`}
         className="absolute right-0 top-full z-overlay mt-1 w-52 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
       >
+        <Link
+          href={`/projects/${project.id}/imports`}
+          role="menuitem"
+          onClick={onClose}
+          className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 ${MENU_BTN_FOCUS}`}
+        >
+          Import history
+        </Link>
         <button
           type="button"
           role="menuitem"
