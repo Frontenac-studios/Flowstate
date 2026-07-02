@@ -20,6 +20,7 @@ describe("care-stats", () => {
 
     expect(summary.totalEvents).toBe(2);
     expect(summary.averageMood).toBe(3.5);
+    expect(summary.facetFrequencies).toHaveLength(3);
     expect(summary.frequencyPhrase).toMatch(/quiet lately/i);
     expect(summary.moodPhrase).toMatch(/mixed/i);
   });

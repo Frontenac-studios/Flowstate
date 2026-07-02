@@ -1,56 +1,47 @@
 import type { LucideIcon } from "lucide-react";
 
-import { BookText, List, Mountain, Wind, withKashIcon } from "@/components/kash/ui/icon";
+import { BookText, ScrollText, Wind, withKashIcon } from "@/components/kash/ui/icon";
 
 import type { SwitcherOption } from "../InPageSwitcher";
 
 /**
- * Care sub-sections (§12 "Care — RESOLVED"). The Garden is the garden-centric
- * home; the rest are top tabs. Icons use the shared Kash icon module (lucide +
- * token sizes) for the "coming soon" landings — the top tabs themselves are
- * text-only pills.
+ * Care sub-sections (D33 / V13). Five tabs: Garden · Evidence · Tasks ·
+ * Breathing · Reflection. Legacy ?tab=wins|stats|travel redirect in CareView.
  */
-export type CareTab = "garden" | "wins" | "tasks" | "breathing" | "reflection" | "stats" | "travel";
+export type CareTab = "garden" | "evidence" | "tasks" | "breathing" | "reflection";
+
+/** Legacy tab values kept for deep-link redirects only. */
+export type LegacyCareTab = "wins" | "stats" | "travel";
 
 export const CARE_TABS: ReadonlyArray<SwitcherOption<CareTab>> = [
   { value: "garden", label: "Garden" },
-  { value: "wins", label: "Wins" },
+  { value: "evidence", label: "Evidence" },
   { value: "tasks", label: "Tasks" },
   { value: "breathing", label: "Breathing" },
   { value: "reflection", label: "Reflection" },
-  { value: "stats", label: "Stats" },
-  { value: "travel", label: "Travel" },
 ];
 
 /** A gentle one-line subtitle under the "Care" heading, per active tab. */
 export const CARE_SUBTITLES: Record<CareTab, string> = {
   garden: "A calm place to tend yourself",
-  wins: "Short- and long-horizon wins",
+  evidence: "Wins, editions, and gentle trends",
   tasks: "Self-care practices — yours, and ones to try",
   breathing: "Settle your breath",
   reflection: "A moment to reflect",
-  stats: "Gently, how you've been",
-  travel: "Plan some restorative time",
 };
 
-const TasksIcon = withKashIcon(List);
 const BreathingIcon = withKashIcon(Wind);
 const ReflectionIcon = withKashIcon(BookText);
-const TravelIcon = withKashIcon(Mountain);
+const EvidenceIcon = withKashIcon(ScrollText);
 
 /**
  * Copy + icon for tabs whose features ship in later slices. The Garden home is
  * built now, so it has no "coming soon" entry.
  */
 export const CARE_COMING_SOON: Record<
-  Exclude<CareTab, "garden" | "stats" | "wins">,
+  Exclude<CareTab, "garden" | "evidence" | "tasks">,
   { title: string; copy: string; Icon: LucideIcon }
 > = {
-  tasks: {
-    title: "Self-care library",
-    copy: "Browse and adopt self-care practices by theme, then check them off.",
-    Icon: TasksIcon,
-  },
   breathing: {
     title: "Breathing",
     copy: "Guided breathing with a pulsing orb — box breathing and more.",
@@ -61,9 +52,22 @@ export const CARE_COMING_SOON: Record<
     copy: "A gentle nightly prompt, space to write, and your reflections archive.",
     Icon: ReflectionIcon,
   },
-  travel: {
-    title: "Restorative time",
-    copy: "Plan restorative time — a rest day, a weekend, or a longer break.",
-    Icon: TravelIcon,
-  },
 };
+
+export { EvidenceIcon };
+
+/** Map legacy ?tab= values to the V13 tab lineup (D33). */
+export function resolveCareTab(requested: string | null): CareTab {
+  if (requested === "wins" || requested === "stats") return "evidence";
+  if (requested === "travel") return "garden";
+  if (
+    requested === "garden" ||
+    requested === "evidence" ||
+    requested === "tasks" ||
+    requested === "breathing" ||
+    requested === "reflection"
+  ) {
+    return requested;
+  }
+  return "garden";
+}

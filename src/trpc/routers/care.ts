@@ -376,8 +376,13 @@ export const careRouter = createTRPCRouter({
 
       const [events, reflections] = await Promise.all([
         db
-          .select({ occurredAt: careEvents.occurredAt })
+          .select({
+            occurredAt: careEvents.occurredAt,
+            theme: careActivities.theme,
+            kind: careActivities.kind,
+          })
           .from(careEvents)
+          .leftJoin(careActivities, eq(careEvents.activityId, careActivities.id))
           .where(and(eq(careEvents.userId, ctx.userId), gte(careEvents.occurredAt, windowStart))),
         db
           .select({

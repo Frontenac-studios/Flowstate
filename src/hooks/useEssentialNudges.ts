@@ -110,7 +110,7 @@ export function useEssentialNudges() {
           router.push("/care");
           break;
         case "open_care_wins":
-          router.push("/care?tab=wins");
+          router.push("/care?tab=evidence");
           break;
         case "open_backlog":
           router.push("/backlog");

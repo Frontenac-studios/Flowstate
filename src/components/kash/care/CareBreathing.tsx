@@ -115,11 +115,14 @@ export function CareBreathing() {
 
       <div className="relative flex h-56 w-full items-center justify-center rounded-card border border-subtle bg-surface-2">
         <div
-          className={`care-breathing-orb flex h-32 w-32 items-center justify-center rounded-full bg-[var(--cat-body-mind-fill)] ${running ? "care-breathing-orb-active" : ""}`}
+          className={`care-breathing-orb relative flex h-32 w-32 items-center justify-center ${running ? "care-breathing-orb-active" : ""}`}
           style={{ transform: running ? `scale(${orbScale})` : undefined }}
           aria-hidden
         >
-          <span className="text-4xl">🫧</span>
+          <span className="absolute inset-0 rounded-full bg-[var(--cat-body-mind-fill)]" />
+          <span className="absolute inset-[18%] rounded-full bg-[color-mix(in_srgb,var(--cat-body-mind-solid)_35%,var(--surface))]" />
+          <span className="absolute inset-[32%] rounded-full bg-[color-mix(in_srgb,var(--cat-body-mind-solid)_55%,var(--surface))]" />
+          <span className="absolute inset-[44%] rounded-full bg-[var(--cat-body-mind-solid)] opacity-80" />
         </div>
         <div className="absolute inset-x-0 bottom-4 text-center">
           {running && currentStep ? (

@@ -1,5 +1,15 @@
+import type { WinFacet } from "@/lib/daily-wins/facets";
+import { carePracticeFacet } from "@/lib/daily-wins/facets";
+import type { CareKind, CareTheme } from "@/lib/care/types";
+
 export type DailyFrequency = { date: string; count: number };
 export type MoodPoint = { date: string; mood: number };
+
+export type FacetFrequencySummary = {
+  facet: WinFacet;
+  count: number;
+  phrase: string;
+};
 
 export type CareStatsSummary = {
   frequencyDays: DailyFrequency[];
@@ -9,6 +19,7 @@ export type CareStatsSummary = {
   averageMood: number | null;
   moodPhrase: string;
   frequencyPhrase: string;
+  facetFrequencies: FacetFrequencySummary[];
 };
 
 function average(values: number[]): number | null {
@@ -31,8 +42,16 @@ function gentleMoodPhrase(avg: number | null): string {
   return "Some heavy days noted — be gentle with yourself.";
 }
 
+function gentleFacetPhrase(facet: WinFacet, count: number): string {
+  const label = { physical: "Body", mental: "Mind", spiritual: "Soul" }[facet];
+  if (count === 0) return `${label} — quiet lately, and that's okay.`;
+  if (count >= 5) return `${label} — a steady thread of care.`;
+  if (count >= 2) return `${label} — a few gentle moments.`;
+  return `${label} — one small act noticed.`;
+}
+
 export function buildCareStatsSummary(input: {
-  events: ReadonlyArray<{ occurredAt: Date }>;
+  events: ReadonlyArray<{ occurredAt: Date; theme?: CareTheme | null; kind?: CareKind | null }>;
   reflections: ReadonlyArray<{ reflectionDate: string; mood: number | null }>;
   windowDays?: number;
   now?: Date;
@@ -65,6 +84,21 @@ export function buildCareStatsSummary(input: {
 
   const averageMood = average(moodPoints.map((point) => point.mood));
 
+  const facetCounts: Record<WinFacet, number> = { physical: 0, mental: 0, spiritual: 0 };
+  for (const event of input.events) {
+    if (event.occurredAt < windowStart) continue;
+    const facet = carePracticeFacet({ theme: event.theme, kind: event.kind });
+    facetCounts[facet] += 1;
+  }
+
+  const facetFrequencies: FacetFrequencySummary[] = (
+    ["physical", "mental", "spiritual"] as const
+  ).map((facet) => ({
+    facet,
+    count: facetCounts[facet],
+    phrase: gentleFacetPhrase(facet, facetCounts[facet]),
+  }));
+
   return {
     frequencyDays: Array.from(counts.entries()).map(([date, count]) => ({ date, count })),
     totalEvents,
@@ -73,5 +107,6 @@ export function buildCareStatsSummary(input: {
     averageMood,
     moodPhrase: gentleMoodPhrase(averageMood),
     frequencyPhrase: gentleFrequencyPhrase(totalEvents, windowDays),
+    facetFrequencies,
   };
 }
