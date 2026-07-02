@@ -26,6 +26,8 @@ export const tasks = sqliteTable(
     categoryUnresolved: integer("category_unresolved", { mode: "boolean" })
       .notNull()
       .default(false),
+    // jsonb string[] in Postgres; stored as a JSON string here (see row-mapper).
+    tags: text("tags"),
     isTop3: integer("is_top_3", { mode: "boolean" }).notNull().default(false),
     top3Order: integer("top_3_order"),
     top3PinnedAt: integer("top_3_pinned_at", { mode: "timestamp_ms" }),

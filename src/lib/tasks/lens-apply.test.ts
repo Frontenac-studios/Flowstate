@@ -5,6 +5,7 @@ import type { PlanTaskRow } from "@/components/kash/plan/TaskRow";
 import {
   applyLens,
   filterTasks,
+  filterTasksByTags,
   groupTasks,
   LENS_NONE,
   sortWithinGroup,
@@ -177,5 +178,18 @@ describe("applyLens", () => {
       // only professional tasks remain, grouped by priority 3 then 1
       expect(result.groups.map((g) => g.key)).toEqual(["3", "1"]);
     }
+  });
+
+  it("filters by selected tags with OR semantics", () => {
+    const tagged = [
+      task({ id: "a", tags: ["work"] }),
+      task({ id: "b", tags: ["home"] }),
+      task({ id: "c", tags: ["work", "urgent"] }),
+    ];
+    expect(
+      filterTasksByTags(tagged, ["work"])
+        .map((t) => t.id)
+        .sort()
+    ).toEqual(["a", "c"]);
   });
 });

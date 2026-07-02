@@ -49,11 +49,26 @@ describe("parseQuickInput", () => {
     expect(result.warnings).toEqual([{ code: "invalid_property", property: "not a date" }]);
   });
 
-  it("warns on unknown slug-shaped semicolon project segments", () => {
-    const result = parseQuickInput("broken; notadate", ctx);
+  it("warns on unknown slug-shaped semicolon project segments with fuzzy matches", () => {
+    const result = parseQuickInput("broken; rdn", {
+      ...ctx,
+      projects: [{ slug: "rdm", name: "RDM" }],
+    });
     expect(result.title).toBe("broken");
-    expect(result.projectSlug).toBe("notadate");
-    expect(result.warnings).toEqual([{ code: "project_not_found", slug: "notadate" }]);
+    expect(result.projectSlug).toBeNull();
+    expect(result.warnings).toEqual([{ code: "project_not_found", slug: "rdn" }]);
+  });
+
+  it("parses unknown slug-shaped segments as tags when no project is close", () => {
+    const result = parseQuickInput("write report; work", ctx);
+    expect(result.title).toBe("write report");
+    expect(result.tags).toEqual(["work"]);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("parses hash-prefixed tag segments", () => {
+    const result = parseQuickInput("write report; #urgent", ctx);
+    expect(result.tags).toEqual(["urgent"]);
   });
 
   it("parses tomorrow", () => {

@@ -19,6 +19,7 @@ export type TaskSnapshot = {
   // category is NOT NULL on tasks (1B), so a snapshot always carries one.
   category: ProjectCategory;
   categoryUnresolved: boolean;
+  tags?: string[];
 };
 
 type UndoFrame =

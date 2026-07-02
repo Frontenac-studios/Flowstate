@@ -1,5 +1,15 @@
 import { sql } from "drizzle-orm";
-import { boolean, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 import { careActivities } from "./care-activities";
 import { goalMilestones } from "./goal-milestones";
@@ -28,6 +38,8 @@ export const tasks = pgTable(
     // placeholder but not really categorized — render a neutral "no category yet"
     // marker, keep out of balance math, re-resolve later (offline reconnect / backfill).
     categoryUnresolved: boolean("category_unresolved").notNull().default(false),
+    /** Phase 5 (§14): freeform labels — many per task, distinct from category. */
+    tags: jsonb("tags").$type<string[]>().default([]),
     priority: integer("priority").notNull().default(0),
     scheduledDate: date("scheduled_date", { mode: "string" }),
     bucketOverride: text("bucket_override"),

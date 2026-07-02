@@ -274,6 +274,7 @@ export function WeekCanvas({
     dayPriorityOrder: dayPriorityOrderByTaskId.get(task.id) ?? null,
     category: task.category,
     categoryUnresolved: task.categoryUnresolved,
+    tags: task.tags ?? [],
     scheduledDate: task.scheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,

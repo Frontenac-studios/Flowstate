@@ -6,6 +6,7 @@ import { parsePriorityWord } from "@/lib/tasks/priority";
 import { matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
 import { parseRecurrencePhrase } from "@/lib/recurrence/parse-phrase";
+import { normalizeTaskTag, normalizeTaskTags } from "@/lib/tasks/tags";
 
 export type ParseWarning =
   | {
@@ -35,6 +36,8 @@ export type ParseResult = {
   priority: 0 | 1 | 2 | 3;
   /** Explicit category from a `;` segment (1.4b layer 1). null = let the resolver decide. */
   category: ProjectCategory | null;
+  /** Freeform tags from trailing `;` segments (Phase 5 / §14). */
+  tags: string[];
   /** RRULE body when a recurrence phrase is parsed (Phase 4). */
   rrule: string | null;
   /** Chip label for recurrence preview (Phase 4). */
@@ -131,6 +134,23 @@ function parsePriority(token: string): 0 | 1 | 2 | 3 | null {
   return token.length as 1 | 2 | 3;
 }
 
+function parseTagSegment(segment: string): string | null {
+  const trimmed = segment.trim();
+  const hadHash = trimmed.startsWith("#");
+  const stripped = trimmed.replace(/^#+/, "");
+  if (!hadHash && /\s/.test(stripped)) return null;
+  const normalized = normalizeTaskTag(stripped);
+  return normalized.length > 0 ? normalized : null;
+}
+
+function addTag(tags: string[], raw: string): void {
+  const tag = parseTagSegment(raw);
+  if (!tag) return;
+  const key = tag.toLowerCase();
+  if (tags.some((existing) => existing.toLowerCase() === key)) return;
+  tags.push(tag);
+}
+
 function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
   const today = ctx.today ?? new Date();
   const todayIso = toISODateString(startOfLocalDay(today));
@@ -147,6 +167,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
   let projectSlug: string | null = null;
   let priority: 0 | 1 | 2 | 3 = 0;
   let category: ProjectCategory | null = null;
+  const tags: string[] = [];
   let rrule: string | null = null;
   let recurrenceLabel: string | null = null;
   const warnings: ParseWarning[] = [];
@@ -190,24 +211,34 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
     const slugCandidate = extractProjectSlugToken(segment);
     if (slugCandidate) {
-      projectSlug = slugCandidate;
+      const match = findProjectBySlug(slugCandidate, ctx.projects);
+      if (match) {
+        projectSlug = match.slug;
+        continue;
+      }
+      const fuzzy = fuzzyProjectSuggestions(slugCandidate, ctx.projects, 3);
+      const closeFuzzy = fuzzy.filter((s) => s.score <= 5);
+      if (closeFuzzy.length > 0) {
+        warnings.push({ code: "project_not_found", slug: slugCandidate });
+        suggestions = closeFuzzy.map((s) => ({ slug: s.slug, name: s.name }));
+        continue;
+      }
+      const tag = parseTagSegment(segment);
+      if (tag) {
+        addTag(tags, segment);
+        continue;
+      }
+      warnings.push({ code: "project_not_found", slug: slugCandidate });
+      continue;
+    }
+
+    const tag = parseTagSegment(segment);
+    if (tag) {
+      addTag(tags, segment);
       continue;
     }
 
     warnings.push({ code: "invalid_property", property: segment });
-  }
-
-  if (projectSlug) {
-    const match = findProjectBySlug(projectSlug, ctx.projects);
-    if (match) {
-      projectSlug = match.slug;
-    } else {
-      warnings.push({ code: "project_not_found", slug: projectSlug });
-      suggestions = fuzzyProjectSuggestions(projectSlug, ctx.projects).map((s) => ({
-        slug: s.slug,
-        name: s.name,
-      }));
-    }
   }
 
   return {
@@ -217,6 +248,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     projectSlug,
     priority,
     category,
+    tags: normalizeTaskTags(tags),
     rrule,
     recurrenceLabel,
     warnings,
@@ -261,6 +293,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     projectSlug: null,
     priority: 0,
     category: null,
+    tags: [],
     rrule: null,
     recurrenceLabel: null,
     warnings: [],

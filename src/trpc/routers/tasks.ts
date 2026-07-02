@@ -11,6 +11,7 @@ import {
   lte,
   ne,
   or,
+  sql,
 } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -35,6 +36,7 @@ import {
 } from "@/lib/dates/local-day";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
+import { normalizeTaskTags } from "@/lib/tasks/tags";
 import {
   resolveTaskCategoryForUser,
   setLastUsedCategory,
@@ -60,6 +62,14 @@ const localCalendarInputSchema = z.object({
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 
+const taskTagsSchema = z.array(z.string().min(1).max(64)).max(20);
+
+function tagsContainAny(tags: readonly string[]): ReturnType<typeof sql> | undefined {
+  if (tags.length === 0) return undefined;
+  const clauses = tags.map((tag) => sql`${tasks.tags} @> ${JSON.stringify([tag])}::jsonb`);
+  return clauses.length === 1 ? clauses[0] : or(...clauses);
+}
+
 function triageCandidatesWhere(userId: string, todayIso: string) {
   return and(
     eq(tasks.userId, userId),
@@ -84,6 +94,7 @@ const taskSnapshotSchema = z.object({
   // category is NOT NULL on tasks (1B), so a deleted row always carries one.
   category: categorySchema,
   categoryUnresolved: z.boolean(),
+  tags: z.array(z.string()).optional(),
 });
 
 async function getOwnedTask(userId: string, taskId: string) {
@@ -101,146 +112,167 @@ async function getOwnedTask(userId: string, taskId: string) {
 }
 
 export const tasksRouter = createTRPCRouter({
-  listIncomplete: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await db
-      .select({
-        id: tasks.id,
-        title: tasks.title,
-        priority: tasks.priority,
-        scheduledDate: tasks.scheduledDate,
-        bucketOverride: tasks.bucketOverride,
-        projectId: tasks.projectId,
-        phaseId: tasks.phaseId,
-        isTop3: tasks.isTop3,
-        top3Order: tasks.top3Order,
-        completedAt: tasks.completedAt,
-        createdAt: tasks.createdAt,
-        category: tasks.category,
-        categoryUnresolved: tasks.categoryUnresolved,
-        projectSlug: projects.slug,
-        projectName: projects.name,
-        phaseName: phases.name,
-        phaseSortOrder: phases.sortOrder,
-      })
-      .from(tasks)
-      .leftJoin(projects, eq(tasks.projectId, projects.id))
-      .leftJoin(phases, eq(tasks.phaseId, phases.id))
-      .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)))
-      .orderBy(desc(tasks.priority), asc(tasks.createdAt));
+  listIncomplete: protectedProcedure
+    .input(
+      z
+        .object({
+          /** OR semantics — return tasks that carry any of these tags. */
+          tags: taskTagsSchema.optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tagFilter = input?.tags ? normalizeTaskTags(input.tags) : [];
+      const tagWhere = tagsContainAny(tagFilter);
 
-    const recurrenceRows = await db
-      .select({
-        recurrenceId: taskRecurrence.id,
-        taskId: taskRecurrence.taskId,
-        rrule: taskRecurrence.rrule,
-        startDate: taskRecurrence.startDate,
-        title: tasks.title,
-        priority: tasks.priority,
-        bucketOverride: tasks.bucketOverride,
-        projectId: tasks.projectId,
-        phaseId: tasks.phaseId,
-        isTop3: tasks.isTop3,
-        top3Order: tasks.top3Order,
-        completedAt: tasks.completedAt,
-        createdAt: tasks.createdAt,
-        category: tasks.category,
-        categoryUnresolved: tasks.categoryUnresolved,
-        projectSlug: projects.slug,
-        projectName: projects.name,
-        phaseName: phases.name,
-        phaseSortOrder: phases.sortOrder,
-      })
-      .from(taskRecurrence)
-      .innerJoin(tasks, eq(taskRecurrence.taskId, tasks.id))
-      .leftJoin(projects, eq(tasks.projectId, projects.id))
-      .leftJoin(phases, eq(tasks.phaseId, phases.id))
-      .where(and(eq(taskRecurrence.userId, ctx.userId), isNull(tasks.completedAt)));
+      const rows = await db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          priority: tasks.priority,
+          scheduledDate: tasks.scheduledDate,
+          bucketOverride: tasks.bucketOverride,
+          projectId: tasks.projectId,
+          phaseId: tasks.phaseId,
+          isTop3: tasks.isTop3,
+          top3Order: tasks.top3Order,
+          completedAt: tasks.completedAt,
+          createdAt: tasks.createdAt,
+          category: tasks.category,
+          categoryUnresolved: tasks.categoryUnresolved,
+          tags: tasks.tags,
+          projectSlug: projects.slug,
+          projectName: projects.name,
+          phaseName: phases.name,
+          phaseSortOrder: phases.sortOrder,
+        })
+        .from(tasks)
+        .leftJoin(projects, eq(tasks.projectId, projects.id))
+        .leftJoin(phases, eq(tasks.phaseId, phases.id))
+        .where(
+          and(
+            eq(tasks.userId, ctx.userId),
+            isNull(tasks.completedAt),
+            tagWhere ? tagWhere : undefined
+          )
+        )
+        .orderBy(desc(tasks.priority), asc(tasks.createdAt));
 
-    const recurrenceIds = recurrenceRows.map((r) => r.recurrenceId);
-    const overrideRows =
-      recurrenceIds.length === 0
-        ? []
-        : await db
-            .select({
-              recurrenceId: taskOccurrenceOverrides.recurrenceId,
-              occurrenceDate: taskOccurrenceOverrides.occurrenceDate,
-              status: taskOccurrenceOverrides.status,
-              movedToDate: taskOccurrenceOverrides.movedToDate,
-              patch: taskOccurrenceOverrides.patch,
-              completedAt: taskOccurrenceOverrides.completedAt,
-            })
-            .from(taskOccurrenceOverrides)
-            .where(
-              and(
-                eq(taskOccurrenceOverrides.userId, ctx.userId),
-                inArray(taskOccurrenceOverrides.recurrenceId, recurrenceIds)
-              )
-            );
+      const recurrenceRows = await db
+        .select({
+          recurrenceId: taskRecurrence.id,
+          taskId: taskRecurrence.taskId,
+          rrule: taskRecurrence.rrule,
+          startDate: taskRecurrence.startDate,
+          title: tasks.title,
+          priority: tasks.priority,
+          bucketOverride: tasks.bucketOverride,
+          projectId: tasks.projectId,
+          phaseId: tasks.phaseId,
+          isTop3: tasks.isTop3,
+          top3Order: tasks.top3Order,
+          completedAt: tasks.completedAt,
+          createdAt: tasks.createdAt,
+          category: tasks.category,
+          categoryUnresolved: tasks.categoryUnresolved,
+          tags: tasks.tags,
+          projectSlug: projects.slug,
+          projectName: projects.name,
+          phaseName: phases.name,
+          phaseSortOrder: phases.sortOrder,
+        })
+        .from(taskRecurrence)
+        .innerJoin(tasks, eq(taskRecurrence.taskId, tasks.id))
+        .leftJoin(projects, eq(tasks.projectId, projects.id))
+        .leftJoin(phases, eq(tasks.phaseId, phases.id))
+        .where(and(eq(taskRecurrence.userId, ctx.userId), isNull(tasks.completedAt)));
 
-    const overridesByRecurrence = new Map<string, OccurrenceOverrideInput[]>();
-    for (const override of overrideRows) {
-      const list = overridesByRecurrence.get(override.recurrenceId) ?? [];
-      list.push({
-        occurrenceDate: override.occurrenceDate,
-        status: override.status,
-        movedToDate: override.movedToDate,
-        patch: (override.patch as Record<string, unknown> | null) ?? null,
-        completedAt: override.completedAt,
+      const recurrenceIds = recurrenceRows.map((r) => r.recurrenceId);
+      const overrideRows =
+        recurrenceIds.length === 0
+          ? []
+          : await db
+              .select({
+                recurrenceId: taskOccurrenceOverrides.recurrenceId,
+                occurrenceDate: taskOccurrenceOverrides.occurrenceDate,
+                status: taskOccurrenceOverrides.status,
+                movedToDate: taskOccurrenceOverrides.movedToDate,
+                patch: taskOccurrenceOverrides.patch,
+                completedAt: taskOccurrenceOverrides.completedAt,
+              })
+              .from(taskOccurrenceOverrides)
+              .where(
+                and(
+                  eq(taskOccurrenceOverrides.userId, ctx.userId),
+                  inArray(taskOccurrenceOverrides.recurrenceId, recurrenceIds)
+                )
+              );
+
+      const overridesByRecurrence = new Map<string, OccurrenceOverrideInput[]>();
+      for (const override of overrideRows) {
+        const list = overridesByRecurrence.get(override.recurrenceId) ?? [];
+        list.push({
+          occurrenceDate: override.occurrenceDate,
+          status: override.status,
+          movedToDate: override.movedToDate,
+          patch: (override.patch as Record<string, unknown> | null) ?? null,
+          completedAt: override.completedAt,
+        });
+        overridesByRecurrence.set(override.recurrenceId, list);
+      }
+
+      const mergedRows = mergeRecurringIntoPlanList({
+        rows,
+        templates: recurrenceRows.map((r) => ({
+          recurrenceId: r.recurrenceId,
+          taskId: r.taskId,
+          rrule: r.rrule,
+          startDate: r.startDate,
+          title: r.title,
+          priority: r.priority,
+          bucketOverride: r.bucketOverride,
+          projectId: r.projectId,
+          phaseId: r.phaseId,
+          isTop3: r.isTop3,
+          top3Order: r.top3Order,
+          completedAt: r.completedAt,
+          createdAt: r.createdAt,
+          category: r.category,
+          categoryUnresolved: r.categoryUnresolved,
+          tags: r.tags,
+          projectSlug: r.projectSlug,
+          projectName: r.projectName,
+          phaseName: r.phaseName,
+          phaseSortOrder: r.phaseSortOrder,
+        })),
+        overridesByRecurrence,
       });
-      overridesByRecurrence.set(override.recurrenceId, list);
-    }
 
-    const mergedRows = mergeRecurringIntoPlanList({
-      rows,
-      templates: recurrenceRows.map((r) => ({
-        recurrenceId: r.recurrenceId,
-        taskId: r.taskId,
-        rrule: r.rrule,
-        startDate: r.startDate,
-        title: r.title,
-        priority: r.priority,
-        bucketOverride: r.bucketOverride,
-        projectId: r.projectId,
-        phaseId: r.phaseId,
-        isTop3: r.isTop3,
-        top3Order: r.top3Order,
-        completedAt: r.completedAt,
-        createdAt: r.createdAt,
-        category: r.category,
-        categoryUnresolved: r.categoryUnresolved,
-        projectSlug: r.projectSlug,
-        projectName: r.projectName,
-        phaseName: r.phaseName,
-        phaseSortOrder: r.phaseSortOrder,
-      })),
-      overridesByRecurrence,
-    });
+      // Phase 3: surface live dependency state (isBlocked drives RDM-skip, unblocksCount
+      // drives blocker weight). Dependency ids use template task ids for occurrences.
+      const edges = await db
+        .select({
+          blockerTaskId: taskDependencies.blockerTaskId,
+          blockedTaskId: taskDependencies.blockedTaskId,
+          expiresAt: taskDependencies.expiresAt,
+        })
+        .from(taskDependencies)
+        .where(eq(taskDependencies.userId, ctx.userId));
 
-    // Phase 3: surface live dependency state (isBlocked drives RDM-skip, unblocksCount
-    // drives blocker weight). Dependency ids use template task ids for occurrences.
-    const edges = await db
-      .select({
-        blockerTaskId: taskDependencies.blockerTaskId,
-        blockedTaskId: taskDependencies.blockedTaskId,
-        expiresAt: taskDependencies.expiresAt,
-      })
-      .from(taskDependencies)
-      .where(eq(taskDependencies.userId, ctx.userId));
+      const depTaskIds = mergedRows.map((r) => r.templateTaskId ?? r.id);
+      const depState = computeDependencyState(edges, depTaskIds);
 
-    const depTaskIds = mergedRows.map((r) => r.templateTaskId ?? r.id);
-    const depState = computeDependencyState(edges, depTaskIds);
-
-    return mergedRows.map((row) => {
-      const depId = row.templateTaskId ?? row.id;
-      const state = depState.get(depId);
-      return {
-        ...row,
-        isBlocked: state?.isBlocked ?? false,
-        blockedByIds: state?.blockedByIds ?? [],
-        unblocksCount: state?.unblocksCount ?? 0,
-      };
-    });
-  }),
+      return mergedRows.map((row) => {
+        const depId = row.templateTaskId ?? row.id;
+        const state = depState.get(depId);
+        return {
+          ...row,
+          isBlocked: state?.isBlocked ?? false,
+          blockedByIds: state?.blockedByIds ?? [],
+          unblocksCount: state?.unblocksCount ?? 0,
+        };
+      });
+    }),
 
   listToday: protectedProcedure.query(async ({ ctx }) => {
     const todayIso = toISODateString(startOfLocalDay());
@@ -644,6 +676,7 @@ export const tasksRouter = createTRPCRouter({
           .string()
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
+        tags: taskTagsSchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -681,6 +714,7 @@ export const tasksRouter = createTRPCRouter({
           priority: input.priority,
           category: resolved.category,
           categoryUnresolved: resolved.unresolved,
+          tags: input.tags ? normalizeTaskTags(input.tags) : [],
         })
         .returning();
 
@@ -731,6 +765,7 @@ export const tasksRouter = createTRPCRouter({
           top3Order: input.top3Order,
           category: input.category,
           categoryUnresolved: input.categoryUnresolved,
+          tags: input.tags ? normalizeTaskTags(input.tags) : [],
         })
         .returning();
 
@@ -759,6 +794,7 @@ export const tasksRouter = createTRPCRouter({
           .max(24 * 60)
           .nullable()
           .optional(),
+        tags: taskTagsSchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -780,6 +816,9 @@ export const tasksRouter = createTRPCRouter({
       if (input.category !== undefined) {
         patch.category = input.category;
         patch.categoryUnresolved = false;
+      }
+      if (input.tags !== undefined) {
+        patch.tags = normalizeTaskTags(input.tags);
       }
 
       const [row] = await db
@@ -881,9 +920,26 @@ export const tasksRouter = createTRPCRouter({
           top3Order: existing.top3Order,
           category: existing.category,
           categoryUnresolved: existing.categoryUnresolved,
+          tags: existing.tags ?? [],
         },
       };
     }),
+
+  listTagVocabulary: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({ tags: tasks.tags })
+      .from(tasks)
+      .where(eq(tasks.userId, ctx.userId));
+
+    const byLower = new Map<string, string>();
+    for (const row of rows) {
+      for (const tag of row.tags ?? []) {
+        const key = tag.toLowerCase();
+        if (!byLower.has(key)) byLower.set(key, tag);
+      }
+    }
+    return Array.from(byLower.values()).sort((a, b) => a.localeCompare(b));
+  }),
 
   listByProject: protectedProcedure
     .input(z.object({ projectId: z.string().uuid() }))
@@ -904,6 +960,7 @@ export const tasksRouter = createTRPCRouter({
           createdAt: tasks.createdAt,
           category: tasks.category,
           categoryUnresolved: tasks.categoryUnresolved,
+          tags: tasks.tags,
         })
         .from(tasks)
         .where(and(eq(tasks.userId, ctx.userId), eq(tasks.projectId, input.projectId)))

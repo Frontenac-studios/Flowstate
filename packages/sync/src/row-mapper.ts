@@ -51,6 +51,10 @@ export function mapRemoteRow(
     base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
   }
 
+  if (table === "tasks" && base.tags != null) {
+    base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
+  }
+
   if (table === "user_constraints" && base.schedule != null) {
     base.schedule =
       typeof base.schedule === "string" ? base.schedule : JSON.stringify(base.schedule);
@@ -216,6 +220,14 @@ export function mapPayloadToRemote(
     out.category_unresolved = out.category_unresolved === 1;
   }
 
+  if (table === "tasks" && typeof out.tags === "string") {
+    try {
+      out.tags = JSON.parse(out.tags as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
   if (table === "task_occurrence_overrides" && typeof out.patch === "object" && out.patch) {
     out.patch = JSON.stringify(out.patch);
   }
@@ -297,6 +309,10 @@ export function mapPayloadToRemote(
   }
 
   if (table === "abyss_items" && typeof out.tags === "object" && out.tags) {
+    out.tags = JSON.stringify(out.tags);
+  }
+
+  if (table === "tasks" && typeof out.tags === "object" && out.tags) {
     out.tags = JSON.stringify(out.tags);
   }
 

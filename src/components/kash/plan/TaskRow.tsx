@@ -39,6 +39,7 @@ export type PlanTaskRow = {
   // marker (1.4d).
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
+  tags?: string[] | null;
   // Surfaced under the due lens as a relative label (VF-1).
   scheduledDate?: string | null;
   // Phase identity for the project lens (VF-4): name shown as "Project · Phase",

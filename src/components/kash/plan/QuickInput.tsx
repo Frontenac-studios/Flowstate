@@ -68,6 +68,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
   const { data: incompleteTasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const { data: tagVocabulary = [] } = useQuery(trpc.tasks.listTagVocabulary.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
   const projectRefs = useMemo(
@@ -76,8 +77,8 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   );
 
   const assistCtx = useMemo(
-    () => ({ projects: projectRefs, lastProjectSlug }),
-    [projectRefs, lastProjectSlug]
+    () => ({ projects: projectRefs, lastProjectSlug, tagVocabulary }),
+    [projectRefs, lastProjectSlug, tagVocabulary]
   );
 
   const assist = useMemo(
@@ -192,6 +193,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       projectId: resolveProjectId(line),
       priority: line.parse.priority,
       category: line.parse.category ?? undefined,
+      tags: line.parse.tags.length > 0 ? line.parse.tags : undefined,
       rrule: line.parse.rrule ?? undefined,
       recurrenceStartDate:
         line.parse.rrule && line.parse.scheduledDate ? line.parse.scheduledDate : undefined,

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import TaskTimeEntries from "@/components/kash/time/TaskTimeEntries";
 import TaskRepeatSection from "@/components/kash/projects/TaskRepeatSection";
+import TaskTagsEditor from "@/components/kash/projects/TaskTagsEditor";
 import Select from "@/components/kash/ui/Select";
 import Textarea from "@/components/kash/ui/Textarea";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
@@ -18,7 +19,12 @@ import type { ProjectTask } from "./types";
 
 type Props = {
   task: ProjectTask;
-  onUpdate: (patch: { title?: string; priority?: number; category?: ProjectCategory }) => void;
+  onUpdate: (patch: {
+    title?: string;
+    priority?: number;
+    category?: ProjectCategory;
+    tags?: string[];
+  }) => void;
   onToggleComplete: () => void;
   onRequestDelete: () => void;
   pending: boolean;
@@ -175,6 +181,12 @@ export default function TaskDetail({
           <p className="text-xs text-ink-muted">Auto-filed — pick a category to confirm.</p>
         ) : null}
       </div>
+
+      <TaskTagsEditor
+        tags={task.tags ?? []}
+        disabled={pending}
+        onChange={(tags) => onUpdate({ tags })}
+      />
 
       <div className="border-t border-[var(--border-subtle)] pt-4">
         <TaskTimeEntries taskId={task.id} />

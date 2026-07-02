@@ -1,6 +1,6 @@
 # Kash 3.0 — Build Breakdown & Spec-Maturity Tracker
 
-> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jul 1 2026 (post Phases 0–6 + waves 1–4 on `main`).** All product/design forks closed Jul 1; **~85% of the 3.0 build is now in code.** Entry-point snapshot: `docs/build-status.md`. Consolidated backlog: `kash-3.0-remaining-build.md`.
+> Companion to `kash-3.0-plan.md`. The **working checklist**: what's built, what's spec'd-and-ready, and what still needs decisions. **Last synced: Jul 1 2026 (post Phases 0–6 + waves 1–4 on `main`; updated after the Jul 1 gap audit).** All _original_ product/design forks closed Jul 1; **~85% of the original 3.0 build is in code.** A Jul 1 gap audit (`kash-3.0-goals-vs-build.md`) then added a **reassurance & steering track** — four newly-specced, not-yet-built features (Evidence, Goals progress/steering, Balance nudge, Top-3 assurance). Entry-point snapshot: `docs/build-status.md`. Consolidated backlog: `kash-3.0-remaining-build.md`.
 
 ---
 
@@ -58,24 +58,28 @@ The subsections that recur in every feature build — a checklist:
 
 **Legend:** ✅ decided · 🟡 partial · 🔴 open · ⬜ not started · ⬛ built · 🏗️ in active build
 
-| Feature               | Product forks | Build spec                                             | In code | Remaining                                                                |
-| --------------------- | ------------- | ------------------------------------------------------ | ------- | ------------------------------------------------------------------------ |
-| §4 Navigation         | ✅            | ✅                                                     | ⬛      | —                                                                        |
-| §5 Design Tokens      | ✅            | ✅ `design-tokens.md`                                  | 🟡      | Retire legacy `glass.css` import when safe                               |
-| Visual redesign (B&W) | ✅            | ✅ `visual-redesign.md`                                | ⬛      | Applied in Phase 0 (#124)                                                |
-| §2 Life Categories    | ✅            | ✅                                                     | ⬛      | —                                                                        |
-| §14 Task & Data Model | ✅            | ✅ `data-spine-build-spec.md`                          | 🟡      | **Task tags** (decided v1, not in schema); Repeat picker polish optional |
-| §6 Today              | ✅            | ✅ `today-build-plan.md`                               | ⬛      | —                                                                        |
-| §7 Week               | ✅            | ✅ `week-build-plan.md`                                | ⬛      | —                                                                        |
-| §8 Planning Mode      | ✅            | ✅ `planning-mode.md`                                  | ⬛      | Ongoing horizon polish; core shipped                                     |
-| §9 Projects           | ✅            | ✅ `projects-miller.md`                                | 🟡      | AI template-suggest on completion; estimate-confidence UI                |
-| §10 The Abyss         | ✅            | ✅ `abyss-build-spec.md`                               | ⬛      | —                                                                        |
-| §11 AI persona        | ✅            | ✅ `ai-persona-build-spec.md`                          | 🟡      | Full write-tool audit                                                    |
-| §13 Values & Context  | ✅            | ✅ `values-context.md`                                 | ⬛      | —                                                                        |
-| §12 Self-Care / Care  | ✅            | ✅ `care-build-spec.md` + `care-library-build-plan.md` | 🟡      | Custom garden illustration art (procedural garden live)                  |
-| §15 Mechanics         | ✅            | ✅ (§15 plan)                                          | ⬛      | —                                                                        |
-| Animation pass        | ✅            | ✅ `animation-sweep.md`                                | 🟡      | Residual token audit; optional polish                                    |
-| 3 Daily Wins          | ✅            | ✅ `daily-wins-build-spec.md`                          | ⬛      | —                                                                        |
+| Feature                   | Product forks    | Build spec                                             | In code | Remaining                                                                |
+| ------------------------- | ---------------- | ------------------------------------------------------ | ------- | ------------------------------------------------------------------------ |
+| §4 Navigation             | ✅               | ✅                                                     | ⬛      | —                                                                        |
+| §5 Design Tokens          | ✅               | ✅ `design-tokens.md`                                  | 🟡      | Retire legacy `glass.css` import when safe                               |
+| Visual redesign (B&W)     | ✅               | ✅ `visual-redesign.md`                                | ⬛      | Applied in Phase 0 (#124)                                                |
+| §2 Life Categories        | ✅               | ✅                                                     | ⬛      | —                                                                        |
+| §14 Task & Data Model     | ✅               | ✅ `data-spine-build-spec.md`                          | 🟡      | **Task tags** (decided v1, not in schema); Repeat picker polish optional |
+| §6 Today                  | ✅               | ✅ `today-build-plan.md`                               | ⬛      | —                                                                        |
+| §7 Week                   | ✅               | ✅ `week-build-plan.md`                                | ⬛      | —                                                                        |
+| §8 Planning Mode          | ✅               | ✅ `planning-mode.md`                                  | ⬛      | Ongoing horizon polish; core shipped                                     |
+| §9 Projects               | ✅               | ✅ `projects-miller.md`                                | 🟡      | AI template-suggest on completion; estimate-confidence UI                |
+| §10 The Abyss             | ✅               | ✅ `abyss-build-spec.md`                               | ⬛      | —                                                                        |
+| §11 AI persona            | ✅               | ✅ `ai-persona-build-spec.md`                          | 🟡      | Full write-tool audit                                                    |
+| §13 Values & Context      | ✅               | ✅ `values-context.md`                                 | ⬛      | —                                                                        |
+| §12 Self-Care / Care      | ✅               | ✅ `care-build-spec.md` + `care-library-build-plan.md` | 🟡      | Custom garden illustration art (procedural garden live)                  |
+| §15 Mechanics             | ✅               | ✅ (§15 plan)                                          | ⬛      | —                                                                        |
+| Animation pass            | ✅               | ✅ `animation-sweep.md`                                | 🟡      | Residual token audit; optional polish                                    |
+| 3 Daily Wins              | ✅               | ✅ `daily-wins-build-spec.md`                          | ⬛      | —                                                                        |
+| Evidence (wins memory)    | ✅ _(gap audit)_ | ✅ `evidence-build-spec.md`                            | ⬜      | New track; reverses part of §15 (memory, no gamification)                |
+| Goals progress + steering | ✅ _(gap audit)_ | ✅ `goals-view-build-spec.md`                          | ⬜      | New track; Bingo→Goals horizon; timeline + heatmap + steering            |
+| Balance nudge             | ✅ _(gap audit)_ | ✅ `balance-nudge-build-spec.md`                       | ⬜      | New track; closes the §2 nudge promise                                   |
+| Top-3 assurance           | ✅ _(gap audit)_ | ✅ `top3-assurance-build-spec.md`                      | ⬜      | New track; hold + check-ins + slip flag                                  |
 
 ---
 
