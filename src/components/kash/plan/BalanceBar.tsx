@@ -10,6 +10,12 @@ type BalanceTask = {
   isTop3?: boolean;
 };
 
+type Props = {
+  tasks: ReadonlyArray<BalanceTask>;
+  /** Optional weekly tilt caption (BD2) — e.g. "tilted toward work this week". */
+  weeklyTiltCaption?: string | null;
+};
+
 const UNCATEGORISED_COLOR = "var(--ink-faint)";
 
 /** A faint diagonal hatch marking a life-area with nothing planned today. */
@@ -37,7 +43,7 @@ function joinLabels(labels: string[]): string {
  * alarming nudge — calm and encouraging, not a scoreboard. Renders nothing when
  * the day is empty.
  */
-export function BalanceBar({ tasks }: { tasks: ReadonlyArray<BalanceTask> }) {
+export function BalanceBar({ tasks, weeklyTiltCaption }: Props) {
   const { segments, emptyCategories, totalTasks, dominant, lopsided } =
     computeCategoryBalance(tasks);
   if (totalTasks === 0) return null;
@@ -100,6 +106,11 @@ export function BalanceBar({ tasks }: { tasks: ReadonlyArray<BalanceTask> }) {
         {lopsided ? (
           <p className="text-meta text-ink-muted" role="note">
             Light on {joinLabels(emptyLabels.map((l) => l.toLowerCase()))} today.
+          </p>
+        ) : null}
+        {weeklyTiltCaption ? (
+          <p className="text-meta text-ink-faint motion-safe:transition-opacity motion-safe:duration-medium">
+            {weeklyTiltCaption}
           </p>
         ) : null}
       </div>

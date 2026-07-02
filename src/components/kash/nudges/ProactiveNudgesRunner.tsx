@@ -18,6 +18,7 @@ export function ProactiveNudgesRunner() {
         <EssentialNudgeChip
           kind={chip.kind}
           message={chip.message}
+          categoryTint={chip.categoryTint}
           onAction={() => handleAction(chip)}
           onDismiss={() => dismiss(chip.kind)}
         />

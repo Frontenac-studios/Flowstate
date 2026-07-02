@@ -29,7 +29,9 @@ describe("abyss-balance-candidates", () => {
       ["body_mind"]
     );
 
-    expect(picked).toEqual([{ taskId: null, title: "Task wins", category: "body_mind" }]);
+    expect(picked).toEqual([
+      { abyssItemId: "2", taskId: null, title: "Task wins", category: "body_mind" },
+    ]);
   });
 
   it("ranks by resurface count then recency within the same type", () => {
@@ -71,8 +73,8 @@ describe("abyss-balance-candidates", () => {
     );
 
     expect(picked).toEqual([
-      { taskId: null, title: "Call mom", category: "relationships" },
-      { taskId: null, title: "Walk more", category: "body_mind" },
+      { abyssItemId: "2", taskId: null, title: "Call mom", category: "relationships" },
+      { abyssItemId: "1", taskId: null, title: "Walk more", category: "body_mind" },
     ]);
   });
 

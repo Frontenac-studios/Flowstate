@@ -122,6 +122,27 @@ export default function WeeklySummaryCard() {
         <p className="mt-4 text-sm text-ink-muted">Reflecting on your week…</p>
       ) : null}
 
+      {data.balanceDigest ? (
+        <div className="mt-4 rounded-row border border-subtle bg-surface-2 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Balance</p>
+          <p className="mt-2 text-sm text-ink-muted">{data.balanceDigest}</p>
+          {data.balanceDigestRows && data.balanceDigestRows.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {data.balanceDigestRows.map((row) => (
+                <li key={row.category} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="text-ink">{row.label}</span>
+                  {row.offerTitle ? (
+                    <span className="truncate text-ink-muted">{row.offerTitle}</span>
+                  ) : (
+                    <span className="text-ink-faint">Add something small</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+
       {totalSeconds === 0 ? (
         <p className="mt-3 text-sm text-ink-muted">No focus time logged this week yet.</p>
       ) : (

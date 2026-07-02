@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { DECIDE_EVENT } from "@/components/kash/chrome-events";
 import { useChat } from "@/components/kash/chat/ChatProvider";
@@ -10,6 +10,7 @@ import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import type { ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
 const INITIAL_DEFER_MS = 4_000;
@@ -22,10 +23,14 @@ function clientTzOffsetMinutes(): number {
 export function useEssentialNudges() {
   const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { planningSurface } = useChat();
   const { constraints } = useUserConstraints();
   const evaluatingRef = useRef(false);
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+
+  const promoteAbyss = useMutation(trpc.abyss.promote.mutationOptions());
+  const createTask = useMutation(trpc.tasks.create.mutationOptions());
 
   const [opener, setOpener] = useState<EssentialNudgeChipPayload | null>(null);
   const [chip, setChip] = useState<EssentialNudgeChipPayload | null>(null);
@@ -104,17 +109,48 @@ export function useEssentialNudges() {
           router.push("/care");
           break;
         case "open_backlog":
-          router.push("/abyss");
+          router.push("/backlog");
           break;
         case "open_top3":
           window.dispatchEvent(new Event(DECIDE_EVENT));
           break;
+        case "balance_add": {
+          const localDate = toISODateString(startOfLocalDay());
+          let parsed: {
+            category?: ProjectCategory;
+            abyssItemId?: string | null;
+            title?: string;
+          } = {};
+          try {
+            parsed = JSON.parse(payload.action.payload ?? "{}") as typeof parsed;
+          } catch {
+            /* ignore */
+          }
+          void (async () => {
+            if (parsed.abyssItemId) {
+              await promoteAbyss.mutateAsync({
+                id: parsed.abyssItemId,
+                target: "today",
+              });
+            } else if (parsed.title && parsed.category) {
+              await createTask.mutateAsync({
+                title: parsed.title,
+                category: parsed.category,
+                scheduledDate: localDate,
+              });
+            }
+            void queryClient.invalidateQueries({
+              queryKey: trpc.tasks.listIncomplete.queryKey(),
+            });
+          })();
+          break;
+        }
         default:
           break;
       }
       dismiss(payload.kind);
     },
-    [dismiss, router]
+    [createTask, dismiss, promoteAbyss, queryClient, router, trpc.tasks.listIncomplete]
   );
 
   const visibleChip = useMemo(

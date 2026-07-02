@@ -1,3 +1,5 @@
+import type { ProjectCategory } from "@/lib/projects/categories";
+
 export const essentialNudgeKinds = [
   "top3_stall",
   "self_care_walk",
@@ -17,4 +19,5 @@ export type EssentialNudgeChipPayload = {
   klass: EssentialNudgeClass;
   priority: number;
   action?: { type: string; payload?: string };
+  categoryTint?: ProjectCategory;
 };

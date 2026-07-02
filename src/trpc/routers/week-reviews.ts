@@ -5,7 +5,12 @@ import { db } from "@/db";
 import { phases, projects, taskTimeEntries, tasks, weekDayPriorities } from "@/db/tables";
 import { aggregateProjectPhaseProgress } from "@/lib/projects/aggregate-project-phase-progress";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
+import { buildBalanceDigestRows, templateBalanceDigest } from "@/lib/eow/balance-digest";
+import { categorySeedLabel } from "@/lib/projects/category-tokens";
 import { localIsoDateFromUtcInstant, localWeekUtcBounds } from "@/lib/time/local-week-bounds";
+import { fetchWeeklyCategoryAttention } from "@/server/nudges/fetch-balance-nudge-context";
+import { evaluateCategoryBaseline } from "@/lib/tasks/category-baseline";
+import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
 import { generateEowReview } from "@/server/claude/generate-eow-review";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -89,12 +94,34 @@ async function fetchEowPayload(userId: string, tzOffsetMinutes: number) {
 
   const projectProgress = aggregateProjectPhaseProgress(progressTasks, phaseRows, projectNames);
 
+  const weeklyAttention = await fetchWeeklyCategoryAttention(userId, 8);
+  const historicalWeeks = weeklyAttention.slice(0, -1);
+  const currentWeek = weeklyAttention[weeklyAttention.length - 1] ?? null;
+  const baseline =
+    currentWeek != null
+      ? evaluateCategoryBaseline({ historicalWeeks, currentWeek })
+      : { starvedCategories: [], dominant: null, lopsided: false, ready: false, mostStarved: null };
+  const digestCandidates =
+    baseline.starvedCategories.length > 0
+      ? await fetchAbyssBalanceCandidates(userId, baseline.starvedCategories)
+      : [];
+  const balanceDigestRows = buildBalanceDigestRows(baseline.starvedCategories, digestCandidates);
+  const balanceDigest =
+    baseline.ready && baseline.lopsided ? templateBalanceDigest(balanceDigestRows) : "";
+  const weeklyTiltCaption =
+    baseline.dominant != null
+      ? `tilted toward ${categorySeedLabel(baseline.dominant).toLowerCase()} this week`
+      : null;
+
   return {
     weekStart: start,
     weekEnd: end,
     weekStartIso,
     completionsThisWeek: completedRows.length,
     projectProgress,
+    balanceDigest,
+    balanceDigestRows,
+    weeklyTiltCaption,
     ...rollup,
   };
 }

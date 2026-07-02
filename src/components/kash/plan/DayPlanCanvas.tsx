@@ -113,6 +113,9 @@ export function DayPlanCanvas() {
     () => ({ localDate, tzOffsetMinutes }),
     [localDate, tzOffsetMinutes]
   );
+  const { data: weekPayload } = useQuery(
+    trpc.weekReviews.getPayload.queryOptions({ tzOffsetMinutes })
+  );
 
   const invalidatePlan = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -599,7 +602,10 @@ export function DayPlanCanvas() {
               <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
                 Balance
               </span>
-              <BalanceBar tasks={todayTasks} />
+              <BalanceBar
+                tasks={todayTasks}
+                weeklyTiltCaption={weekPayload?.weeklyTiltCaption ?? null}
+              />
             </div>
           ) : null}
         </section>

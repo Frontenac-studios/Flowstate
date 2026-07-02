@@ -3,6 +3,7 @@ import { and, asc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm"
 import { db } from "@/db";
 import { nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import { evaluateBalanceLopsided } from "@/lib/nudges/evaluate-balance-lopsided";
 import {
   evaluateMonthlyReview,
   localMonthKey,
@@ -15,6 +16,8 @@ import {
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
 import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
+import { fetchBalanceNudgeContext } from "@/server/nudges/fetch-balance-nudge-context";
+import { fetchIsOverCommittedForDate } from "@/server/week/fetch-over-commit-for-date";
 export type NudgeEvaluateResult = {
   fired: boolean;
   chips: EssentialNudgeChipPayload[];
@@ -66,7 +69,12 @@ export async function runNudgeEvaluation(params: {
         and(
           eq(nudgeEvents.userId, userId),
           eq(nudgeEvents.localDate, localDate),
-          inArray(nudgeEvents.kind, ["top3_stall", "self_care_walk", "top3_slip"])
+          inArray(nudgeEvents.kind, [
+            "top3_stall",
+            "self_care_walk",
+            "top3_slip",
+            "balance_lopsided",
+          ])
         )
       ),
     db
@@ -130,6 +138,21 @@ export async function runNudgeEvaluation(params: {
         alreadyNudgedThisMonth: monthlyNudges.length > 0,
       })
     : { shouldFire: false, localHour: 0 };
+
+  const [balanceContext, isOverCommitted] = await Promise.all([
+    fetchBalanceNudgeContext(userId),
+    fetchIsOverCommittedForDate(userId, localDate, tzOffsetMinutes),
+  ]);
+
+  const balanceEvaluation = evaluateBalanceLopsided({
+    historicalWeeks: balanceContext.historicalWeeks,
+    currentWeek: balanceContext.currentWeek,
+    candidate: balanceContext.candidate,
+    balanceNudgeEnabled: balanceContext.balanceNudgeEnabled,
+    alreadyNudgedToday: nudgedKinds.has("balance_lopsided"),
+    isOverCommitted,
+  });
+
   const chips: EssentialNudgeChipPayload[] = [];
   let fired = false;
   if (stallEvaluation.shouldFireStallNudge) {
@@ -202,6 +225,25 @@ export async function runNudgeEvaluation(params: {
         klass: "reassurance",
         priority: 1,
         action: { type: "open_backlog" },
+      });
+      fired = true;
+    } catch {}
+  }
+  if (balanceEvaluation.shouldFire && balanceEvaluation.category) {
+    try {
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "balance_lopsided",
+        localDate,
+        taskIds: [],
+      });
+      chips.push({
+        kind: "balance_lopsided",
+        message: balanceEvaluation.message,
+        klass: "problem",
+        priority: 1,
+        action: balanceEvaluation.action,
+        categoryTint: balanceEvaluation.category,
       });
       fired = true;
     } catch {}
