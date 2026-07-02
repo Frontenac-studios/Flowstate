@@ -111,7 +111,7 @@ Legend: ⬛ built · 🟡 partial · ⬜ not started
 | Evidence (wins memory)    | ⬜   | _New (gap audit)._ Read-mostly; one `evidence_editions` table + cadence setting. `kash-3.0-evidence-build-spec.md`                                                                            |
 | Goals progress + steering | ⬜   | _New (gap audit)._ Bingo→Goals horizon; per-goal timeline + heatmap; next-step steering. `kash-3.0-goals-view-build-spec.md`                                                                  |
 | Balance nudge             | ⬜   | _New (gap audit)._ Learned baseline + lopsidedness trigger; category-tinted chip + digest. `kash-3.0-balance-nudge-build-spec.md`                                                             |
-| Top-3 assurance           | ⬜   | _New (gap audit)._ One-tap hold + midday check-in + slip flag. `kash-3.0-top3-assurance-build-spec.md`                                                                                        |
+| Top-3 assurance           | ✅   | One-tap hold ghost + confirm, midday slot check-in (`top3MiddayCheckin`), slip chip. `kash-3.0-top3-assurance-build-spec.md`                                                                  |
 
 ---
 
@@ -155,5 +155,9 @@ See `kash-3.0-remaining-build.md` for the full backlog. Highest leverage:
 - **Product goals (rubric):** `../README.md`
 - **Gap audit (goals vs build):** `kash-3.0-goals-vs-build.md`
 - **Gap-audit specs:** `kash-3.0-evidence-build-spec.md`, `kash-3.0-goals-view-build-spec.md`, `kash-3.0-balance-nudge-build-spec.md`, `kash-3.0-top3-assurance-build-spec.md`
+- **Foundations spec (morning hand-off + nudge arbiter):** `kash-3.0-morning-and-arbitration-build-spec.md`
+- **Backlog reframe (Abyss → Backlog):** `kash-3.0-backlog-reframe-build-spec.md`
+- **Foundations impl plan:** `kash-3.0-foundations-impl-plan.md`
+- **Open decisions / holes (consistency read — A1–C resolved in 4 phases):** `kash-3.0-open-decisions.md`
 - **Ideas backlog (future / someday):** `kash-3.0-ideas-backlog.md`
 - **Frozen v1 brief (historical):** `planning-start.md`

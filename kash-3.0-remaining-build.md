@@ -35,7 +35,18 @@ since:** the Jul 1 gap audit reopened the wins-memory fork and added four decide
 The build faithfully shipped the _mechanical_ product (capture, schedule, track, balance-sense). The
 audit (`kash-3.0-goals-vs-build.md`) found the **reassurance / reflection / steering layer** — the
 emotional core the README names — under-built. Four features, each fully specced (functional +
-visual decisions locked):
+visual decisions locked). **Consistency-read follow-up** (`kash-3.0-open-decisions.md`) resolved the
+cross-cutting holes in 4 phases.
+
+### A0.0 — Foundations (build FIRST) · ⬜ · M
+
+`kash-3.0-morning-and-arbitration-build-spec.md` — the two prerequisites all four features plug into:
+a **daily morning hand-off** (skippable once/day overlay: carryover, recurring, set-Top-3, hold offer,
+the day's reassurance opener) and a **nudge arbiter** (adaptive budget; reassurance-first _sequencing_
+— problems surface after a beat, not suppressed; one load-aware suppression point). **Every feature's
+"one per day" cadence defers here.** Also: new **"Assistance" Settings group** (A3) homes all the
+toggles; **Abyss → Backlog full reframe** (`kash-3.0-backlog-reframe-build-spec.md`) + **Bingo → Goals**
+ship in one coordinated rename sweep (C).
 
 ### A0.1 — Evidence (wins memory) · ⬜ · M
 
@@ -60,7 +71,7 @@ Closes the §2 promise the build never delivered. Learned baseline → **overall
 chip (BD1) + bar tilt-caption (BD2). Reuses `computeCategoryBalance`, `abyss-balance-candidates`,
 `EssentialNudgeChip`. Spec: `kash-3.0-balance-nudge-build-spec.md`.
 
-### A0.4 — Top-3 assurance · ⬜ · S–M
+### A0.4 — Top-3 assurance · ✅ · S–M
 
 One-tap time **hold** (timeline ghost block → protected block); morning/midday/wind-down check-ins
 (load-aware, midday lives on the slots); flag **persistent slips** (2+ days) as a gentle chip. Reuses

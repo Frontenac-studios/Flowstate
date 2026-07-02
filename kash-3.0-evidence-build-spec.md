@@ -24,14 +24,14 @@ It is memory, not metrics. It must never become a scoreboard (see §5, reconcili
 
 ## 1. Decision log (locked Jul 1 2026)
 
-| #   | Decision             | Choice                                                                                                                                                                                                      |
-| --- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| E1  | Access model         | **Both** — a permanent shrine **and** Kash resurfaces it.                                                                                                                                                   |
-| E2  | Content              | **Braid, weighted to the user's own wins + words.** Real artifacts are the substance; AI is a thin connective thread.                                                                                       |
-| E3  | AI voice             | **The user's own voice, reflected** — drawn from their reflections + About-me tone. Not a hype friend, not a detached observer.                                                                             |
-| E4  | Home                 | **A tab inside Care**, alongside garden / reflections / stats.                                                                                                                                              |
-| E5  | Resurfacing triggers | **(a) Larger goal completion** (goals above a size/horizon threshold — see E8), and **(b) periodic review — adjustable in the UI, default quarterly.**                                                      |
-| E8  | "Larger" threshold   | A goal-completion edition fires only for goals **above a size/horizon threshold** (not every small goal). Exact threshold set at build — candidate: quarter-horizon or larger, or goals with ≥N milestones. |
+| #   | Decision             | Choice                                                                                                                                                                                                                                                            |
+| --- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E1  | Access model         | **Both** — a permanent shrine **and** Kash resurfaces it.                                                                                                                                                                                                         |
+| E2  | Content              | **Braid, weighted to the user's own wins + words.** Real artifacts are the substance; AI is a thin connective thread.                                                                                                                                             |
+| E3  | AI voice             | **The user's own voice, reflected** — drawn from their reflections + About-me tone. Not a hype friend, not a detached observer.                                                                                                                                   |
+| E4  | Home                 | **The "Wins" tab in Care, lower zone** _(refined Phase 2 / A4)_. One "Wins" tab, two zones: recent **7-day pulse** (Daily Wins hit-rate + garden nourish) on top, **Evidence** scroll below. Not a standalone tab — short- and long-horizon wins together.        |
+| E5  | Resurfacing triggers | **(a) Larger goal completion** (goals above a size/horizon threshold — see E8), and **(b) periodic review — adjustable in the UI, default quarterly.**                                                                                                            |
+| E8  | "Larger" threshold   | _(Settled Phase 4.)_ A goal-completion edition fires when **either** the goal is **quarter-horizon or bigger** **OR** it has **3+ milestones** — catches both "aimed big" and "was a lot of work," so nothing substantial is missed while small goals stay quiet. |
 
 ### Visual design (locked Jul 1 2026)
 
@@ -45,7 +45,7 @@ It is memory, not metrics. It must never become a scoreboard (see §5, reconcili
 **Open (settle during build):**
 
 - Voice guardrails — the precise "never do this" list (§3c). Draft below; confirm before shipping AI copy.
-- Exact "larger goal" threshold (E8) — quarter-horizon+, or ≥N milestones. Cadence default is **quarterly** (E5).
+- _(E8 settled Phase 4: quarter-horizon+ OR 3+ milestones. Cadence default **quarterly**, E5.)_
 
 ---
 

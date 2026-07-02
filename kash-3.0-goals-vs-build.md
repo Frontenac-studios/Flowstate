@@ -8,6 +8,14 @@
 
 ---
 
+> **⚠️ Status update (Jul 1 2026):** this audit captured the **pre-spec code state**. All three gaps
+> below (A progress/wins, B goal-steering, C balance) and Top-3 have **since been specced** — see
+> `kash-3.0-evidence-build-spec.md`, `kash-3.0-goals-view-build-spec.md`,
+> `kash-3.0-balance-nudge-build-spec.md`, `kash-3.0-top3-assurance-build-spec.md`, and the foundations
+> in `kash-3.0-morning-and-arbitration-build-spec.md`. The 🔴/🟡 scorecard verdicts still describe what's
+> **in code** (not yet built); the "no design behind it / isn't specced anywhere" prose below is now
+> **out of date** — kept as the audit's original finding, not the current state.
+
 ## The rubric (from the README)
 
 1. **Calm / kill decision paralysis** — RDM, fewer trivial choices.
@@ -35,7 +43,7 @@
 | 7   | Weekly time-by-category               | ✅      | `WeeklySummaryCard` rolls focus time up per category **and** project. The strongest "invisible→visible" surface in the app.               |
 | 3   | You plan, Kash steers                 | ✅      | Confirm-card + reversible AI honor the contract.                                                                                          |
 | 2   | Balance across sectors                | 🟡      | Balance is **computed and displayed** (BalanceBar, neglect callouts) but only **1 of 5** categories gets an active nudge.                 |
-| 8   | Top 3 land                            | 🟡      | Static list + a 2pm stall nudge; no protected time or active "you'll get these done" assurance.                                           |
+| 8   | Top 3 land                            | ✅      | One-tap timeline hold, load-aware midday check-in on slots, wind-down deadline, and persistent-slip chip (Jul 2026 assurance).            |
 | 4   | Steer toward goals in small steps     | 🔴      | Milestones must be **manually** linked to tasks; nothing surfaces the next small step into Today.                                         |
 | 5   | Progress visualization / see the path | 🔴      | Goal progress is a **text "% via milestones"** — no bar, timeline, or path. This is the #1 stated emotional need and the weakest surface. |
 | 6   | Remember & resurface wins             | 🔴      | Wins are stored but **never shown back**. No history, no wall, no reassurance lookback.                                                   |
