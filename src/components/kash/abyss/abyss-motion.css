@@ -26,6 +26,67 @@
     animation: abyss-park-sink-reduce var(--motion-short, 180ms) var(--ease-exit, ease-in) both;
   }
 }
+
+@keyframes abyss-promote-rise {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-28px) scale(1.02);
+    filter: blur(4px);
+  }
+}
+@keyframes abyss-promote-rise-reduce {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.abyss-promote-rise {
+  animation: abyss-promote-rise var(--motion-medium, 320ms) var(--ease-exit, ease-in) both;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .abyss-promote-rise {
+    animation: abyss-promote-rise-reduce var(--motion-short, 180ms) var(--ease-exit, ease-in) both;
+  }
+}
+
+@keyframes abyss-archive-drift {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(32px);
+    filter: blur(6px);
+  }
+}
+@keyframes abyss-archive-drift-reduce {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.abyss-archive-drift {
+  animation: abyss-archive-drift var(--motion-medium, 320ms) var(--ease-exit, ease-in) both;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .abyss-archive-drift {
+    animation: abyss-archive-drift-reduce var(--motion-short, 180ms) var(--ease-exit, ease-in) both;
+  }
+}
+
 @keyframes abyss-star-twinkle {
   0%,
   100% {

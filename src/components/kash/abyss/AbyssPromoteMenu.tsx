@@ -26,6 +26,9 @@ const ABYSS_BTN_FOCUS =
 type Props = {
   item: { id: string; category: ProjectCategory | null };
   onClose: () => void;
+  /** B1 — overflow shows Week / Project / Goal; Today is one-tap on the row. */
+  variant?: "full" | "overflow";
+  onPromoted?: () => void;
 };
 
 type TargetOption = {
@@ -67,16 +70,19 @@ const TARGETS: TargetOption[] = [
  * none, the menu reveals category chips before promoting. Owns the mutation; closes on
  * success, outside-click, or Escape.
  */
-export default function AbyssPromoteMenu({ item, onClose }: Props) {
+export default function AbyssPromoteMenu({ item, onClose, variant = "full", onPromoted }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const ref = useRef<HTMLDivElement>(null);
   const [pendingTarget, setPendingTarget] = useState<AbyssPromotionTarget | null>(null);
 
+  const targets = variant === "overflow" ? TARGETS.filter((t) => t.key !== "today") : TARGETS;
+
   const promote = useMutation(
     trpc.abyss.promote.mutationOptions({
       onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+        if (onPromoted) onPromoted();
+        else void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
         onClose();
       },
     })
@@ -140,7 +146,7 @@ export default function AbyssPromoteMenu({ item, onClose }: Props) {
       ) : (
         <>
           <p className="px-2 pb-1 pt-1 text-caption text-abyss-ink-faint">Lift it into…</p>
-          {TARGETS.map(({ key, label, hint, Icon, needsCategory }) => (
+          {targets.map(({ key, label, hint, Icon, needsCategory }) => (
             <button
               key={key}
               type="button"

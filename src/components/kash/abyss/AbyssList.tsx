@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import {
   ArrowUpRight,
+  Ellipsis,
   Hash,
   Lightbulb,
   Sparkles,
@@ -12,6 +13,7 @@ import {
   Trash2,
   withKashIcon,
 } from "@/components/kash/ui/icon";
+import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import {
   ageInDays,
   filterItems,
@@ -28,6 +30,7 @@ import { distinctTags } from "@/lib/abyss/tags";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
+import "./abyss-motion.css";
 import AbyssPromoteMenu from "./AbyssPromoteMenu";
 import AbyssTagEditor from "./AbyssTagEditor";
 
@@ -37,8 +40,11 @@ const SparkleIcon = withKashIcon(Sparkles);
 const PromoteIcon = withKashIcon(ArrowUpRight);
 const HashIcon = withKashIcon(Hash);
 const TrashIcon = withKashIcon(Trash2);
+const OverflowIcon = withKashIcon(Ellipsis);
 const ABYSS_BTN_FOCUS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
+
+const EXIT_MS = 320;
 
 /** Row shape the List renders — the slice of the abyss_items row it needs. */
 export type AbyssListItem = AbyssGroupableItem & {
@@ -69,6 +75,7 @@ type Props = {
   ageFilter: AbyssAgeFilter;
   query: string;
   now: Date;
+  onClearFilters?: () => void;
 };
 
 function TypeGlyph({ type }: { type: AbyssItemType }) {
@@ -83,10 +90,26 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [openPopover, setOpenPopover] = useState<"promote" | "tags" | null>(null);
+  const [exitClass, setExitClass] = useState<string | null>(null);
+
+  const invalidateList = () => {
+    void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+  };
+
   const deleteMutation = useMutation(
     trpc.abyss.delete.mutationOptions({
       onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+        setExitClass("abyss-archive-drift");
+        window.setTimeout(invalidateList, EXIT_MS);
+      },
+    })
+  );
+
+  const promoteToday = useMutation(
+    trpc.abyss.promote.mutationOptions({
+      onSuccess: () => {
+        setExitClass("abyss-promote-rise");
+        window.setTimeout(invalidateList, EXIT_MS);
       },
     })
   );
@@ -94,12 +117,13 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
   const dimming = isDimming(now, item);
   const promoted = item.status === "promoted";
   const tags = item.tags ?? [];
+  const busy = deleteMutation.isPending || promoteToday.isPending;
 
   return (
     <div
       className={`group/row relative flex items-start gap-2.5 rounded-r-row border-l-[length:var(--stripe-width)] py-2 pl-2.5 pr-2 transition-colors hover:bg-abyss-surface ${
         dimming ? "opacity-60" : ""
-      }`}
+      } ${exitClass ?? ""}`}
       style={{
         borderLeftColor: item.category ? categorySolidVar(item.category) : "var(--abyss-border)",
       }}
@@ -126,7 +150,7 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
         ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5">
         {promoted ? (
           <span className="inline-flex items-center gap-1 rounded-pill bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted">
             <PromoteIcon size={12} />
@@ -137,9 +161,20 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
             parked {item.resurfaceCount}×
           </span>
         ) : dimming ? (
-          <span className="text-caption text-abyss-ink-faint">
-            {ageInDays(now, item.lastTouchedAt)}d
+          <span className="rounded-pill bg-abyss-surface-2 px-1.5 py-0.5 text-caption text-abyss-ink-muted">
+            parked {ageInDays(now, item.lastTouchedAt)}d ago
           </span>
+        ) : null}
+
+        {!promoted ? (
+          <button
+            type="button"
+            onClick={() => promoteToday.mutate({ id: item.id, target: "today" })}
+            disabled={busy}
+            className={`rounded-control px-2 py-0.5 text-caption text-abyss-ink-muted transition-colors hover:bg-abyss-surface-2 hover:text-abyss-ink disabled:opacity-40 ${ABYSS_BTN_FOCUS}`}
+          >
+            Today
+          </button>
         ) : null}
 
         <button
@@ -159,21 +194,21 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
           <button
             type="button"
             onClick={() => setOpenPopover((p) => (p === "promote" ? null : "promote"))}
-            aria-label={`Promote ${item.title}`}
+            aria-label={`More actions for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={openPopover === "promote"}
             className={`rounded-control p-1 text-abyss-ink-faint transition-opacity hover:text-abyss-ink focus:opacity-100 group-hover/row:opacity-100 ${ABYSS_BTN_FOCUS} ${
               openPopover === "promote" ? "text-abyss-ink opacity-100" : "opacity-0"
             }`}
           >
-            <PromoteIcon size={14} />
+            <OverflowIcon size={14} />
           </button>
         )}
 
         <button
           type="button"
           onClick={() => deleteMutation.mutate({ id: item.id })}
-          disabled={deleteMutation.isPending}
+          disabled={busy}
           aria-label={`Delete ${item.title}`}
           className={`rounded-control p-1 text-abyss-ink-faint opacity-0 transition-opacity hover:text-abyss-ink focus:opacity-100 disabled:opacity-40 group-hover/row:opacity-100 ${ABYSS_BTN_FOCUS}`}
         >
@@ -184,6 +219,11 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
       {openPopover === "promote" ? (
         <AbyssPromoteMenu
           item={{ id: item.id, category: item.category }}
+          variant="overflow"
+          onPromoted={() => {
+            setExitClass("abyss-promote-rise");
+            window.setTimeout(invalidateList, EXIT_MS);
+          }}
           onClose={() => setOpenPopover(null)}
         />
       ) : null}
@@ -207,7 +247,15 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
   );
 }
 
-export default function AbyssList({ items, groupMode, typeFilter, ageFilter, query, now }: Props) {
+export default function AbyssList({
+  items,
+  groupMode,
+  typeFilter,
+  ageFilter,
+  query,
+  now,
+  onClearFilters,
+}: Props) {
   const filtered = useMemo(
     () => filterItems(items, { types: typeFilter, age: ageFilter, query }, now),
     [items, typeFilter, ageFilter, query, now]
@@ -219,26 +267,35 @@ export default function AbyssList({ items, groupMode, typeFilter, ageFilter, que
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-1.5 rounded-card border border-abyss-border bg-abyss-surface px-6 py-14 text-center">
-        <p className="text-subtitle text-abyss-ink">The deep is empty</p>
-        <p className="max-w-sm text-meta text-abyss-ink-muted">
-          Park a backburner idea or deferred task above — it&apos;ll wait here, brightening when it
-          keeps calling you and dimming as it drifts.
-        </p>
-      </div>
+      <ColoredEmptyInvitation
+        title="The deep is empty"
+        hint="Park a backburner idea or deferred task above — it'll wait here, brightening when it keeps calling you and dimming as it drifts."
+        className="border-abyss-border bg-abyss-surface"
+      />
     );
   }
 
   if (filtered.length === 0) {
     return (
-      <p className="px-2.5 py-8 text-center text-meta text-abyss-ink-muted">Nothing matches.</p>
+      <div className="flex flex-col items-center gap-3 px-2.5 py-8 text-center">
+        <p className="text-meta text-abyss-ink-muted">Nothing matches.</p>
+        {onClearFilters ? (
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className={`rounded-control border border-abyss-border px-3 py-1.5 text-caption text-abyss-ink-muted transition-colors hover:bg-abyss-surface hover:text-abyss-ink ${ABYSS_BTN_FOCUS}`}
+          >
+            Clear filters
+          </button>
+        ) : null}
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col rounded-card border border-abyss-border bg-abyss-surface p-1">
       {keepsCalling.length > 0 ? (
-        <section className="bg-abyss-surface/60 mb-1 rounded-card p-1">
+        <section className="bg-abyss-surface-2/60 mb-1 rounded-card p-1">
           <div className="flex items-center gap-2 px-2.5 pb-1 pt-2">
             <SparkleIcon size={14} className="text-cat-adulting" />
             <span className="text-meta font-medium text-abyss-ink">Keeps calling you</span>

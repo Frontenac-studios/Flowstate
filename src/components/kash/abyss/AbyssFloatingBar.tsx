@@ -1,24 +1,20 @@
 "use client";
 
-import { Moon, Search, Sun, withKashIcon } from "@/components/kash/ui/icon";
+import { Search, withKashIcon } from "@/components/kash/ui/icon";
 import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/grouping";
-import type { AbyssTheme } from "@/lib/abyss/theme-storage";
+import type { AbyssViewMode } from "@/lib/abyss/surface-variant";
 
 const SearchIcon = withKashIcon(Search);
-const SunIcon = withKashIcon(Sun);
-const MoonIcon = withKashIcon(Moon);
 
 const ABYSS_INPUT_FOCUS = "focus:outline-none focus-visible:shadow-[0_0_0_2px_var(--focus-ring)]";
 const ABYSS_BTN_FOCUS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
-export type AbyssView = "list" | "sky";
+export type AbyssView = AbyssViewMode;
 
 type Props = {
   view: AbyssView;
   onViewChange: (view: AbyssView) => void;
-  theme: AbyssTheme;
-  onThemeToggle: () => void;
   query: string;
   onQueryChange: (q: string) => void;
   groupMode: AbyssGroupMode;
@@ -29,6 +25,8 @@ type Props = {
   onAgeFilterChange: (age: AbyssAgeFilter) => void;
   showArchive: boolean;
   onArchiveToggle: () => void;
+  hasItems: boolean;
+  archivedCount: number;
 };
 
 const GROUP_LABELS: Record<AbyssGroupMode, string> = {
@@ -44,9 +42,14 @@ const AGE_LABELS: Record<AbyssAgeFilter, string> = {
   dimming: "Drifting",
 };
 
+const VIEW_LABELS: Record<AbyssView, string> = {
+  list: "List",
+  themes: "Themes",
+  sky: "Sky",
+};
+
 /**
- * The translucent control bar pinned over the Abyss canvas (placement decided
- * Jun 24): search · grouping · type/age filters · light toggle · List/Sky switch.
+ * D28 — pre-data: search + view tabs; filters when items exist; archive when non-empty.
  */
 export default function AbyssFloatingBar(props: Props) {
   const toggleType = (type: AbyssItemType) => {
@@ -57,6 +60,8 @@ export default function AbyssFloatingBar(props: Props) {
     );
   };
 
+  const showFilters = props.hasItems && props.view === "list";
+
   return (
     <div className="sticky top-0 z-sticky flex flex-wrap items-center gap-2 rounded-card border border-abyss-border bg-abyss-bar px-3 py-2 backdrop-blur-md">
       <div className="flex min-w-[10rem] flex-1 items-center gap-2 text-abyss-ink-muted">
@@ -66,11 +71,11 @@ export default function AbyssFloatingBar(props: Props) {
           onChange={(e) => props.onQueryChange(e.target.value)}
           placeholder="Search the deep…"
           className={`min-w-0 flex-1 bg-transparent text-meta text-abyss-ink placeholder:text-abyss-ink-faint ${ABYSS_INPUT_FOCUS}`}
-          aria-label="Search abyss items"
+          aria-label="Search backlog items"
         />
       </div>
 
-      {props.view === "list" ? (
+      {showFilters ? (
         <>
           <label className="flex items-center gap-1.5 text-caption text-abyss-ink-faint">
             Group
@@ -126,42 +131,39 @@ export default function AbyssFloatingBar(props: Props) {
         </>
       ) : null}
 
-      <button
-        type="button"
-        onClick={props.onArchiveToggle}
-        aria-pressed={props.showArchive}
-        className={`rounded-pill px-2.5 py-1 text-caption ${ABYSS_BTN_FOCUS} ${props.showArchive ? "bg-abyss-surface-2 text-abyss-ink" : "text-abyss-ink-faint hover:text-abyss-ink-muted"}`}
-      >
-        Archive
-      </button>
-
-      <button
-        type="button"
-        onClick={props.onThemeToggle}
-        className={`rounded-pill p-1.5 text-abyss-ink-muted transition-colors hover:text-abyss-ink ${ABYSS_BTN_FOCUS}`}
-        aria-label={props.theme === "dark" ? "Switch to light" : "Switch to dark"}
-      >
-        {props.theme === "dark" ? <MoonIcon size={16} /> : <SunIcon size={16} />}
-      </button>
+      {props.archivedCount > 0 ? (
+        <button
+          type="button"
+          onClick={props.onArchiveToggle}
+          aria-pressed={props.showArchive}
+          className={`rounded-pill px-2.5 py-1 text-caption ${ABYSS_BTN_FOCUS} ${
+            props.showArchive
+              ? "bg-abyss-surface-2 text-abyss-ink"
+              : "text-abyss-ink-faint hover:text-abyss-ink-muted"
+          }`}
+        >
+          Archived · {props.archivedCount}
+        </button>
+      ) : null}
 
       <div
         className="flex items-center gap-0.5 rounded-pill border border-abyss-border bg-abyss-surface p-0.5"
         role="group"
         aria-label="View"
       >
-        {(["list", "sky"] as const).map((v) => (
+        {(["list", "themes", "sky"] as const).map((v) => (
           <button
             key={v}
             type="button"
             onClick={() => props.onViewChange(v)}
             aria-pressed={props.view === v}
-            className={`rounded-pill px-3 py-1 text-caption capitalize transition-colors ${ABYSS_BTN_FOCUS} ${
+            className={`rounded-pill px-3 py-1 text-caption transition-colors ${ABYSS_BTN_FOCUS} ${
               props.view === v
                 ? "bg-abyss-accent text-abyss-on-accent"
                 : "text-abyss-ink-muted hover:text-abyss-ink"
             }`}
           >
-            {v}
+            {VIEW_LABELS[v]}
           </button>
         ))}
       </div>

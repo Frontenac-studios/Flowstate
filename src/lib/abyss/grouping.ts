@@ -65,6 +65,11 @@ export function compareByBrightness(a: AbyssGroupableItem, b: AbyssGroupableItem
   return b.lastTouchedAt.getTime() - a.lastTouchedAt.getTime();
 }
 
+/** BK4 — list rows default to newest-first within a group. */
+export function compareByRecency(a: AbyssGroupableItem, b: AbyssGroupableItem): number {
+  return b.lastTouchedAt.getTime() - a.lastTouchedAt.getTime();
+}
+
 export function filterItems<T extends AbyssGroupableItem>(
   items: T[],
   filter: AbyssFilter,
@@ -109,10 +114,11 @@ function pushSorted<T extends AbyssGroupableItem>(
   groups: AbyssGroup<T>[],
   key: string,
   label: string,
-  items: T[]
+  items: T[],
+  compare: (a: T, b: T) => number = compareByRecency
 ): void {
   if (items.length === 0) return;
-  groups.push({ key, label, items: [...items].sort(compareByBrightness) });
+  groups.push({ key, label, items: [...items].sort(compare) });
 }
 
 /**
