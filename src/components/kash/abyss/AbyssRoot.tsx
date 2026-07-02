@@ -1,6 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { selectEmergingCluster } from "@/lib/abyss/clustering";
 import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/grouping";
 import { isMonthlyReviewDue } from "@/lib/abyss/monthly-review";
@@ -15,7 +17,14 @@ import AbyssList, { type AbyssListItem } from "./AbyssList";
 import AbyssMonthlyReview from "./AbyssMonthlyReview";
 import AbyssSky from "./AbyssSky";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
+function readCategoryLens(param: string | null): ProjectCategory | null {
+  if (!param) return null;
+  return PROJECT_CATEGORIES.includes(param as ProjectCategory) ? (param as ProjectCategory) : null;
+}
+
 export default function AbyssRoot() {
+  const searchParams = useSearchParams();
+  const categoryLens = readCategoryLens(searchParams.get("category"));
   const trpc = useTRPC();
   const { data, isLoading } = useQuery(trpc.abyss.list.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
@@ -72,7 +81,11 @@ export default function AbyssRoot() {
   useEffect(() => {
     if (isMonthlyReviewDue(readLastReviewMonth(), now)) setShowMonthlyReview(true);
   }, [now]);
-  const items = useMemo(() => (data ?? []) as AbyssListItem[], [data]);
+  const items = useMemo(() => {
+    const rows = (data ?? []) as AbyssListItem[];
+    if (!categoryLens) return rows;
+    return rows.filter((item) => item.category === categoryLens);
+  }, [data, categoryLens]);
   const reviewItems = useMemo(
     () =>
       items.map((i) => ({

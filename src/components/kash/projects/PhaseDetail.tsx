@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
 import Input from "@/components/kash/ui/Input";
 import Textarea from "@/components/kash/ui/Textarea";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
@@ -14,6 +15,7 @@ import {
   type ProjectTree,
 } from "@/lib/projects/phase-tree";
 import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
+import { formatDuration } from "@/lib/time/duration";
 
 import type { ProjectPhase, ProjectTask } from "./types";
 
@@ -30,6 +32,8 @@ type Props = {
   node: Node;
   category: ProjectCategory;
   dayPriorityTaskIds: ReadonlySet<string>;
+  timeSpentSeconds?: number;
+  estimateSampleCount?: number;
   onUpdate: (patch: PhasePatch) => void;
   onRequestDelete: () => void;
   pending: boolean;
@@ -43,6 +47,8 @@ export default function PhaseDetail({
   node,
   category,
   dayPriorityTaskIds,
+  timeSpentSeconds = 0,
+  estimateSampleCount = 0,
   onUpdate,
   onRequestDelete,
   pending,
@@ -105,6 +111,14 @@ export default function PhaseDetail({
             />
           </div>
         </div>
+      ) : null}
+
+      {timeSpentSeconds > 0 ? (
+        <p className="text-xs text-ink-muted">
+          Time spent: {formatDuration(timeSpentSeconds)}
+          {" · "}
+          <EstimateConfidenceHint sampleCount={estimateSampleCount} />
+        </p>
       ) : null}
 
       <div className="flex flex-col gap-1.5">

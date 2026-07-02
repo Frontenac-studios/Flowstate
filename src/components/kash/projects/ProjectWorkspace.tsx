@@ -30,6 +30,12 @@ export default function ProjectWorkspace({
   const tasksQuery = useQuery(
     trpc.tasks.listByProject.queryOptions({ projectId: initialProject.id })
   );
+  const { data: timeRollups } = useQuery(
+    trpc.projects.getTimeRollups.queryOptions({ projectId: initialProject.id })
+  );
+  const { data: estimateSampleCount = 0 } = useQuery(
+    trpc.projects.estimateSampleCount.queryOptions()
+  );
 
   const [viewMode, setViewMode] = useState<ProjectViewMode>("columns");
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
@@ -48,6 +54,8 @@ export default function ProjectWorkspace({
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         showBackToProjects={showBackToProjects}
+        timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
+        estimateSampleCount={estimateSampleCount}
       />
 
       {isLoading ? (
@@ -61,6 +69,7 @@ export default function ProjectWorkspace({
           tasks={tasksQuery.data ?? []}
           selectedPath={selectedPath}
           onSelectPath={setSelectedPath}
+          estimateSampleCount={estimateSampleCount}
         />
       ) : (
         <CalendarBoardView tree={tree} projectId={initialProject.id} category={project.category} />

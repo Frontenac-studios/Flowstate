@@ -5,6 +5,7 @@ import {
   useCallback,
   useImperativeHandle,
   useRef,
+  type FocusEvent,
   type KeyboardEvent,
   type Ref,
 } from "react";
@@ -23,6 +24,8 @@ type Props = {
   onCursorChange?: (cursor: number) => void;
   ghostSuffix?: string | null;
   onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onFocus?: (e: FocusEvent<HTMLTextAreaElement>) => void;
+  onBlur?: (e: FocusEvent<HTMLTextAreaElement>) => void;
   disabled?: boolean;
   placeholder?: string;
   rows?: number;
@@ -36,6 +39,8 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
     onCursorChange,
     ghostSuffix,
     onKeyDown,
+    onFocus,
+    onBlur,
     disabled,
     placeholder,
     rows = 2,
@@ -87,7 +92,11 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
         onSelect={syncCursor}
         onKeyUp={syncCursor}
         onClick={syncCursor}
-        onFocus={syncCursor}
+        onFocus={(e) => {
+          syncCursor();
+          onFocus?.(e);
+        }}
+        onBlur={onBlur}
         onKeyDown={onKeyDown}
         autoComplete="off"
         spellCheck={false}

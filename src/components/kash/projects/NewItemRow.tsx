@@ -40,6 +40,7 @@ type Props = {
   defaultPhaseId: string | null;
   onSubmitComposer: (lines: ParsedProjectLine[]) => Promise<void>;
   pending: boolean;
+  onFocusChange?: (focused: boolean) => void;
 };
 
 export default function NewItemRow({
@@ -49,6 +50,7 @@ export default function NewItemRow({
   defaultPhaseId,
   onSubmitComposer,
   pending,
+  onFocusChange,
 }: Props) {
   const [value, setValue] = useComposerDraft(projectComposerDraftScope(projectId));
   const [cursor, setCursor] = useState(0);
@@ -212,8 +214,10 @@ export default function NewItemRow({
         onChange={setValue}
         onCursorChange={setCursor}
         ghostSuffix={cursorOnPlusParentDirLine ? null : (assist?.suggestionSuffix ?? null)}
-        placeholder="add tasks — parent dir: Phase or Parent//+ Child · ;;; + Phase for directories only"
+        placeholder="add phases and tasks — one per line"
         disabled={isBusy}
+        onFocus={() => onFocusChange?.(true)}
+        onBlur={() => onFocusChange?.(false)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();

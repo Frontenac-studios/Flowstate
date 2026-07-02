@@ -406,17 +406,17 @@ never touch the same surface — the **design-pass session** continues its V7 or
 **Backlog → Care → Abyss (D13 check)**; the **audit/spec session** takes **Settings → Overlays**.
 Log decisions here as usual; the next free D-number applies regardless of session.
 
-| Page / surface                                       | Status                                                                                                     | Decisions                        |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Global tokens (canvas, category chrome, cutoff rule) | ⬛ built Jul 2                                                                                             | D9 D10 D12 D13                   |
-| Today                                                | 🟡 decided Jul 2 — V6 partial in PR2                                                                       | D11 D14 (V3/V6 remainder PR16)   |
-| This Week                                            | ⬛ built Jul 2                                                                                             | D19 D20 D21 (V9) + W1 D5         |
-| Projects (index + detail)                            | ✅ decided Jul 2                                                                                           | D23 D24 D25 D26 (V10, not built) |
-| Backlog                                              | ✅ decided Jul 2                                                                                           | D27 D28 D29 (V11, not built)     |
-| Care                                                 | ✅ decided Jul 2                                                                                           | D33 D34 D35 (V13, not built)     |
-| Abyss                                                | ✅ audited Jul 2 — `/abyss` redirects to `/backlog`; one D13 fix (archived-title truncate) folded into V11 | —                                |
-| Settings                                             | ✅ decided Jul 2 · audit/spec session                                                                      | D30 D31 D32 (V12, not built)     |
-| Overlays (hand-off, review, focus, palette)          | ✅ decided Jul 2 · audit/spec session                                                                      | D36 D37 D38 (V14, not built)     |
+| Page / surface                                       | Status                                                                                                     | Decisions                       |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Global tokens (canvas, category chrome, cutoff rule) | ⬛ built Jul 2                                                                                             | D9 D10 D12 D13                  |
+| Today                                                | 🟡 decided Jul 2 — V6 partial in PR2                                                                       | D11 D14 (V3/V6 remainder PR16)  |
+| This Week                                            | ⬛ built Jul 2                                                                                             | D19 D20 D21 (V9) + W1 D5        |
+| Projects (index + detail)                            | ⬛ built Jul 2                                                                                             | D23 D24 D25 D26 D17 P4 P5 (V10) |
+| Backlog                                              | ✅ decided Jul 2                                                                                           | D27 D28 D29 (V11, not built)    |
+| Care                                                 | ✅ decided Jul 2                                                                                           | D33 D34 D35 (V13, not built)    |
+| Abyss                                                | ✅ audited Jul 2 — `/abyss` redirects to `/backlog`; one D13 fix (archived-title truncate) folded into V11 | —                               |
+| Settings                                             | ✅ decided Jul 2 · audit/spec session                                                                      | D30 D31 D32 (V12, not built)    |
+| Overlays (hand-off, review, focus, palette)          | ✅ decided Jul 2 · audit/spec session                                                                      | D36 D37 D38 (V14, not built)    |
 
 ---
 

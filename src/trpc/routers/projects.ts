@@ -1,11 +1,22 @@
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { syncProjectRow, syncProjectTemplateRow } from "@/db/record-sync-mutation";
-import { phases, projectTemplates, projects, tasks, weekDayPriorities } from "@/db/tables";
-import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+import {
+  phases,
+  projectTemplates,
+  projects,
+  tasks,
+  taskTimeEntries,
+  weekDayPriorities,
+} from "@/db/tables";
+import {
+  aggregateSecondsByTask,
+  rollupProjectPhaseTime,
+} from "@/lib/projects/aggregate-time-rollups";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { buildMultiProjectCalendarRows } from "@/lib/projects/multi-project-calendar";
 import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
 import { slugifyProjectName } from "@/lib/projects/slugify";
@@ -60,7 +71,7 @@ async function getOwnedTemplate(userId: string, templateId: string) {
 
 export const projectsRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
-    const [projectRows, taskRows, pinnedRows] = await Promise.all([
+    const [projectRows, taskRows, pinnedRows, timeEntryRows] = await Promise.all([
       db
         .select({
           id: projects.id,
@@ -84,6 +95,16 @@ export const projectsRouter = createTRPCRouter({
         .select({ taskId: weekDayPriorities.taskId })
         .from(weekDayPriorities)
         .where(eq(weekDayPriorities.userId, ctx.userId)),
+      db
+        .select({
+          taskId: taskTimeEntries.taskId,
+          startedAt: taskTimeEntries.startedAt,
+          endedAt: taskTimeEntries.endedAt,
+          projectId: tasks.projectId,
+        })
+        .from(taskTimeEntries)
+        .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+        .where(and(eq(taskTimeEntries.userId, ctx.userId), isNotNull(tasks.projectId))),
     ]);
 
     const pinnedTaskIds = new Set(pinnedRows.map((row) => row.taskId));
@@ -93,6 +114,25 @@ export const projectsRouter = createTRPCRouter({
       const list = tasksByProject.get(task.projectId) ?? [];
       list.push(task);
       tasksByProject.set(task.projectId, list);
+    }
+
+    const secondsByTask = aggregateSecondsByTask(
+      timeEntryRows.map((row) => ({
+        taskId: row.taskId,
+        startedAt: row.startedAt,
+        endedAt: row.endedAt,
+      }))
+    );
+    const taskProjectId = new Map(
+      taskRows
+        .filter((task): task is typeof task & { projectId: string } => task.projectId !== null)
+        .map((task) => [task.id, task.projectId])
+    );
+    const secondsByProject = new Map<string, number>();
+    for (const [taskId, seconds] of Array.from(secondsByTask.entries())) {
+      const projectId = taskProjectId.get(taskId);
+      if (!projectId || seconds <= 0) continue;
+      secondsByProject.set(projectId, (secondsByProject.get(projectId) ?? 0) + seconds);
     }
 
     return projectRows.map((project) => {
@@ -113,9 +153,60 @@ export const projectsRouter = createTRPCRouter({
         percent: progress.percent,
         completedWeight: progress.completedWeight,
         totalWeight: progress.totalWeight,
+        timeSpentSeconds: secondsByProject.get(project.id) ?? 0,
       };
     });
   }),
+
+  listLooseTaskCountsByCategory: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({ category: tasks.category })
+      .from(tasks)
+      .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.projectId)));
+
+    const counts = new Map<ProjectCategory, number>();
+    for (const row of rows) {
+      counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
+    }
+
+    return PROJECT_CATEGORIES.map((category) => ({
+      category,
+      count: counts.get(category) ?? 0,
+    })).filter((row) => row.count > 0);
+  }),
+
+  getTimeRollups: protectedProcedure
+    .input(z.object({ projectId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      await getOwnedProject(ctx.userId, input.projectId);
+
+      const [taskRows, phaseRows, timeRows] = await Promise.all([
+        db
+          .select({ id: tasks.id, phaseId: tasks.phaseId })
+          .from(tasks)
+          .where(and(eq(tasks.userId, ctx.userId), eq(tasks.projectId, input.projectId))),
+        db
+          .select({ id: phases.id, parentPhaseId: phases.parentPhaseId })
+          .from(phases)
+          .where(and(eq(phases.userId, ctx.userId), eq(phases.projectId, input.projectId))),
+        db
+          .select({
+            taskId: taskTimeEntries.taskId,
+            startedAt: taskTimeEntries.startedAt,
+            endedAt: taskTimeEntries.endedAt,
+          })
+          .from(taskTimeEntries)
+          .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+          .where(and(eq(taskTimeEntries.userId, ctx.userId), eq(tasks.projectId, input.projectId))),
+      ]);
+
+      const byTaskSeconds = aggregateSecondsByTask(timeRows);
+      return rollupProjectPhaseTime({
+        tasks: taskRows,
+        phases: phaseRows,
+        byTaskSeconds,
+      });
+    }),
 
   multiProjectCalendar: protectedProcedure.query(async ({ ctx }) => {
     const [projectRows, phaseRows, taskRows] = await Promise.all([

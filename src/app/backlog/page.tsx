@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { AppShell } from "@/components/kash/AppShell";
 import AbyssRoot from "@/components/kash/abyss/AbyssRoot";
@@ -17,7 +18,9 @@ export default async function BacklogPage() {
 
   return (
     <AppShell>
-      <AbyssRoot />
+      <Suspense fallback={<p className="text-ink-muted">Loading backlog…</p>}>
+        <AbyssRoot />
+      </Suspense>
     </AppShell>
   );
 }

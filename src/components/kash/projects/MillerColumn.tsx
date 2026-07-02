@@ -17,6 +17,11 @@ export type ColumnItem = { kind: "phase"; node: Node } | { kind: "task"; task: P
 
 export type DetailSelection = { type: "phase" | "task"; id: string } | null;
 
+export type PhaseMetrics = {
+  percent: number;
+  timeSpentSeconds: number;
+};
+
 type Props = {
   level: number;
   parentPhaseId: string | null;
@@ -27,7 +32,8 @@ type Props = {
   focusIndex: number | null;
   isActive: boolean;
   shellClassName?: string;
-  hint?: string;
+  phaseMetrics?: Map<string, PhaseMetrics>;
+  blankInvitation?: ReactNode;
   renderDetail: (item: ColumnItem) => ReactNode;
   onOpenPhase: (node: Node) => void;
   onOpenTaskDetail: (task: ProjectTask) => void;
@@ -44,7 +50,8 @@ export default function MillerColumn({
   focusIndex,
   isActive,
   shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
-  hint,
+  phaseMetrics,
+  blankInvitation,
   renderDetail,
   onOpenPhase,
   onOpenTaskDetail,
@@ -58,15 +65,17 @@ export default function MillerColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`miller-column-card p-2 transition ${shellClassName} ${
-        isActive ? "miller-column-card-active" : ""
-      } ${isOver ? "bg-[var(--surface-selected)]" : ""}`}
+      className={`flex flex-col rounded-card border bg-surface p-2 transition ${shellClassName} ${
+        isActive ? "border-ink" : "border-subtle"
+      } ${isOver ? "ring-1 ring-inset ring-ink" : ""}`}
     >
+      {blankInvitation}
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
         {items.map((item, index) => {
           const focused = focusIndex === index;
           if (item.kind === "phase") {
             const expanded = detail?.type === "phase" && detail.id === item.node.phase.id;
+            const metrics = phaseMetrics?.get(item.node.phase.id);
             return (
               <Fragment key={`p:${item.node.phase.id}`}>
                 <MillerPhaseRow
@@ -76,6 +85,8 @@ export default function MillerColumn({
                   isOpen={openPhaseId === item.node.phase.id}
                   selected={expanded}
                   focused={focused}
+                  progressPercent={metrics?.percent}
+                  timeSpentSeconds={metrics?.timeSpentSeconds}
                   onOpen={() => onOpenPhase(item.node)}
                 />
                 {expanded ? (
@@ -112,9 +123,6 @@ export default function MillerColumn({
           );
         })}
       </ul>
-      {hint && items.length === 0 ? (
-        <p className="mt-1 px-2 text-xs text-ink-muted">{hint}</p>
-      ) : null}
     </div>
   );
 }

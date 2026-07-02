@@ -17,7 +17,7 @@ import {
   type GanttGranularity,
 } from "@/lib/projects/gantt-scale";
 import { projectIndexById } from "@/lib/projects/multi-project-calendar";
-import { projectCycleSolidVar } from "@/lib/projects/project-cycle-color";
+import { projectCalendarSolidVar } from "@/lib/projects/project-cycle-color";
 import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher } from "../InPageSwitcher";
@@ -154,7 +154,7 @@ export default function MultiProjectCalendarView() {
                 color={
                   colorMode === "category"
                     ? categorySolidVar(row.category)
-                    : projectCycleSolidVar(projectIndexes.get(row.projectId) ?? 0)
+                    : projectCalendarSolidVar(projectIndexes.get(row.projectId) ?? 0, row.category)
                 }
                 showProjectName={row.projectId !== rows[index - 1]?.projectId}
               />
