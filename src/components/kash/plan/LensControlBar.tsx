@@ -1,9 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { lensFilterOptions } from "@/lib/tasks/lens-apply";
 import { type LensProperty } from "@/lib/tasks/lens";
+import { useTRPC } from "@/trpc/client";
 
 import { LENS_KEY_BINDINGS, useLens } from "./LensProvider";
 
@@ -46,13 +49,22 @@ const LENS_META: Record<LensProperty, LensMeta> = {
  * cap (VF3) means a 3rd reveal unpresses the oldest.
  */
 export function LensControlBar() {
+  const trpc = useTRPC();
   const lens = useLens();
+  const { data: tagVocabulary = [] } = useQuery({
+    ...trpc.tasks.listTagVocabulary.queryOptions(),
+    enabled: lens?.scope === "this-week",
+  });
+  const tagOptions = useMemo(() => {
+    const set = new Set(tagVocabulary);
+    for (const tag of lens?.tagFilter ?? []) set.add(tag);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [tagVocabulary, lens?.tagFilter]);
   if (!lens) return null;
 
   const { state } = lens;
-  // VF-3 group/filter controls only render where they apply (This Week). Today
-  // stays pure VF-2 reveal toggles until VF-4 rolls application out per page.
   const showApplyControls = lens.scope === "this-week" && state.active.length > 0;
+  const showTagFilter = lens.scope === "this-week" && tagOptions.length > 0;
 
   return (
     <div className="flex flex-col gap-2">
@@ -146,6 +158,27 @@ export function LensControlBar() {
               </div>
             );
           })}
+        </div>
+      ) : null}
+
+      {showTagFilter ? (
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by tag">
+          <span className="text-xs text-ink-muted">Tags:</span>
+          {tagOptions.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => lens.toggleTagFilter(tag)}
+              aria-pressed={lens.tagFilter.includes(tag)}
+              className={`rounded-full border px-2 py-0.5 text-xs transition focus:outline-none ${
+                lens.tagFilter.includes(tag)
+                  ? "kash-focus-visible border-accent bg-active-surface text-ink outline-none"
+                  : "kash-focus-visible border-white/30 text-ink-muted outline-none hover:text-ink"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>

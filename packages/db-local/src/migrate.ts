@@ -557,6 +557,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "tasks", column: "milestone_id", definition: "TEXT" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },
   { table: "tasks", column: "care_activity_id", definition: "TEXT" },
+  { table: "tasks", column: "tags", definition: "TEXT" },
   { table: "care_activities", column: "lifts_me", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "app_settings", column: "last_used_category", definition: "TEXT" },
   {

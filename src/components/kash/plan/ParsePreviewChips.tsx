@@ -15,6 +15,7 @@ export function getParseChips(parse: ParseResult): string[] {
   if (parse.priority > 0) chips.push(priorityMeta(parse.priority).label);
   if (parse.recurrenceLabel) chips.push(`↻ ${parse.recurrenceLabel}`);
   if (parse.projectSlug) chips.push(parse.projectSlug);
+  for (const tag of parse.tags) chips.push(`#${tag}`);
   return chips;
 }
 

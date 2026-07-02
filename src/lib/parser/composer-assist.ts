@@ -22,6 +22,8 @@ export type ComposerAssistState = {
 export type ComposerAssistContext = {
   projects: ProjectRef[];
   lastProjectSlug?: string | null;
+  /** Existing task tags for autocomplete (Phase 5). */
+  tagVocabulary?: readonly string[];
 };
 
 const PRIORITY_PATTERN = /^!{1,3}$/;
@@ -157,6 +159,15 @@ function getCategorySuggestion(partial: string): string | null {
   return null;
 }
 
+function getTagSuggestion(partial: string, vocabulary: readonly string[]): string | null {
+  const typed = partial.trim().replace(/^#+/, "").toLowerCase();
+  if (!typed) return vocabulary[0] ?? null;
+  const match = vocabulary.find(
+    (tag) => tag.toLowerCase().startsWith(typed) || tag.toLowerCase().includes(typed)
+  );
+  return match ?? null;
+}
+
 function getDefaultSuggestion(
   property: ComposerProperty,
   ctx: ComposerAssistContext,
@@ -174,6 +185,10 @@ function getDefaultSuggestion(
     case "category":
       return getCategorySuggestion(partial);
   }
+}
+
+function getExtraSegmentSuggestion(partial: string, ctx: ComposerAssistContext): string | null {
+  return getTagSuggestion(partial, ctx.tagVocabulary ?? []);
 }
 
 function computeSuggestionSuffix(partial: string, suggestion: string): string | null {
@@ -245,11 +260,15 @@ export function getComposerAssist(
 
     if (segmentProperty === null) {
       const properties = buildPropertyStatuses(segments, null, inSemicolonMode, ctx.projects);
+      const tagSuggestion = getExtraSegmentSuggestion(segmentTrimmed, ctx);
+      const tagSuffix = tagSuggestion
+        ? computeSuggestionSuffix(segmentTrimmed, tagSuggestion)
+        : null;
       return {
         properties,
         activeProperty: "category",
-        suggestion: null,
-        suggestionSuffix: null,
+        suggestion: tagSuggestion,
+        suggestionSuffix: tagSuffix,
         segmentIndex,
         inSemicolonMode,
       };

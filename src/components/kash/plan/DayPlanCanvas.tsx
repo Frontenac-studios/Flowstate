@@ -234,6 +234,7 @@ export function DayPlanCanvas() {
     isTop3: task.isTop3,
     category: task.category,
     categoryUnresolved: task.categoryUnresolved,
+    tags: task.tags ?? [],
     scheduledDate: task.scheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,

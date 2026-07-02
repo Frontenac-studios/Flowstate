@@ -19,6 +19,7 @@ export type PlanListTaskRow = {
   createdAt: Date;
   category: ProjectCategory;
   categoryUnresolved: boolean;
+  tags?: string[] | null;
   projectSlug: string | null;
   projectName: string | null;
   phaseName: string | null;
@@ -50,6 +51,7 @@ type RecurrenceTemplateRow = {
   createdAt: Date;
   category: ProjectCategory;
   categoryUnresolved: boolean;
+  tags?: string[] | null;
   projectSlug: string | null;
   projectName: string | null;
   phaseName: string | null;
@@ -123,6 +125,7 @@ export function mergeRecurringIntoPlanList({
         createdAt: template.createdAt,
         category: template.category,
         categoryUnresolved: template.categoryUnresolved,
+        tags: template.tags ?? [],
         projectSlug: template.projectSlug,
         projectName: template.projectName,
         phaseName: template.phaseName,

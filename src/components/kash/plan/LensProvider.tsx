@@ -13,6 +13,12 @@ import {
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { readLensState, writeLensState, type LensScope } from "@/lib/plan/lens-storage";
 import {
+  readTagFilter,
+  toggleTagFilterValue,
+  writeTagFilter,
+  type TagFilterScope,
+} from "@/lib/plan/tag-filter-storage";
+import {
   EMPTY_LENS,
   LENS_PROPERTIES,
   NO_REVEAL,
@@ -39,9 +45,11 @@ type LensContextValue = {
   properties: readonly LensProperty[];
   state: LensState;
   reveal: RevealFlags;
+  tagFilter: string[];
   toggle: (prop: LensProperty) => void;
   setGroup: (prop: LensProperty | null) => void;
   toggleFilter: (prop: LensProperty, value: string) => void;
+  toggleTagFilter: (tag: string) => void;
 };
 
 const LensContext = createContext<LensContextValue | null>(null);
@@ -71,9 +79,11 @@ export function LensProvider({
   bindKeys?: boolean;
 }) {
   const [state, setState] = useState<LensState>(EMPTY_LENS);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
 
   useEffect(() => {
     setState(readLensState(scope));
+    if (scope === "this-week") setTagFilter(readTagFilter(scope));
   }, [scope]);
 
   // All mutations flow through one updater so every change persists.
@@ -100,6 +110,17 @@ export function LensProvider({
     (prop: LensProperty, value: string) => update((prev) => toggleFilterValue(prev, prop, value)),
     [update]
   );
+  const toggleTagFilter = useCallback(
+    (tag: string) => {
+      if (scope !== "this-week") return;
+      setTagFilter((prev) => {
+        const next = toggleTagFilterValue(prev, tag);
+        writeTagFilter(scope as TagFilterScope, next);
+        return next;
+      });
+    },
+    [scope]
+  );
 
   useEffect(() => {
     if (!bindKeys) return;
@@ -122,11 +143,13 @@ export function LensProvider({
       properties,
       state,
       reveal: revealFlagsFromLens(state),
+      tagFilter,
       toggle,
       setGroup,
       toggleFilter,
+      toggleTagFilter,
     }),
-    [scope, properties, state, toggle, setGroup, toggleFilter]
+    [scope, properties, state, tagFilter, toggle, setGroup, toggleFilter, toggleTagFilter]
   );
 
   return <LensContext.Provider value={value}>{children}</LensContext.Provider>;

@@ -47,7 +47,8 @@ export function BucketSection({
   // — the day-groups stay as the outer level and lens groups nest inside. Today
   // (and any non-lens scope) renders the plain list unchanged.
   const lens = useLens();
-  const result = lens?.scope === "this-week" ? applyLens(tasks, lens.state) : null;
+  const result =
+    lens?.scope === "this-week" ? applyLens(tasks, lens.state, new Date(), lens.tagFilter) : null;
   const visibleCount =
     result == null
       ? tasks.length

@@ -3,6 +3,7 @@ import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/p
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { priorityMeta } from "@/lib/tasks/priority";
+import { taskMatchesTagFilter } from "@/lib/tasks/tags";
 
 import type { LensProperty, LensState } from "./lens";
 import type { PlanTaskRow } from "@/components/kash/plan/TaskRow";
@@ -99,6 +100,15 @@ export function filterTasks(
   return tasks.filter((task) =>
     active.every((prop) => state.filters[prop]!.includes(taskLensValue(task, prop, today)))
   );
+}
+
+/** OR semantics across selected tags; empty selection does not narrow. */
+export function filterTasksByTags(
+  tasks: PlanTaskRow[],
+  selectedTags: readonly string[]
+): PlanTaskRow[] {
+  if (selectedTags.length === 0) return tasks;
+  return tasks.filter((task) => taskMatchesTagFilter(task.tags, selectedTags));
 }
 
 /** Default in-group sort: priority high → none, then title A→Z. Stable, pure. */
@@ -228,9 +238,10 @@ export type LensResult =
 export function applyLens(
   tasks: PlanTaskRow[],
   state: LensState,
-  today: Date = new Date()
+  today: Date = new Date(),
+  tagFilter: readonly string[] = []
 ): LensResult {
-  const filtered = filterTasks(tasks, state, today);
+  const filtered = filterTasksByTags(filterTasks(tasks, state, today), tagFilter);
   if (state.group) {
     return { kind: "grouped", groups: groupTasks(filtered, state.group, today) };
   }
