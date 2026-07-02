@@ -530,6 +530,23 @@ CREATE INDEX IF NOT EXISTS daily_wins_user_id_updated_at_idx ON daily_wins (user
 CREATE UNIQUE INDEX IF NOT EXISTS daily_wins_user_date_slot_accepted_uidx ON daily_wins (user_id, win_date, slot);
 CREATE UNIQUE INDEX IF NOT EXISTS daily_wins_user_date_ref_dismissed_uidx ON daily_wins (user_id, win_date, ref_id);
 
+CREATE TABLE IF NOT EXISTS evidence_editions (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  ref_id TEXT,
+  narrative TEXT NOT NULL DEFAULT '{}',
+  state TEXT NOT NULL DEFAULT 'unseen',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS evidence_editions_user_id_updated_at_idx
+  ON evidence_editions (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS evidence_editions_user_kind_period_idx
+  ON evidence_editions (user_id, kind, period_start);
+
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,
@@ -571,6 +588,31 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
     table: "app_settings",
     column: "top3_midday_checkin",
     definition: "TEXT NOT NULL DEFAULT 'on'",
+  },
+  {
+    table: "app_settings",
+    column: "assistance_enabled",
+    definition: "INTEGER NOT NULL DEFAULT 1",
+  },
+  {
+    table: "app_settings",
+    column: "morning_handoff",
+    definition: "TEXT NOT NULL DEFAULT 'on'",
+  },
+  {
+    table: "app_settings",
+    column: "goal_steering",
+    definition: "TEXT NOT NULL DEFAULT 'on'",
+  },
+  {
+    table: "app_settings",
+    column: "balance_nudge",
+    definition: "TEXT NOT NULL DEFAULT 'on'",
+  },
+  {
+    table: "app_settings",
+    column: "evidence_cadence",
+    definition: "TEXT NOT NULL DEFAULT 'quarterly'",
   },
   { table: "protected_blocks", column: "source", definition: "TEXT" },
 ];

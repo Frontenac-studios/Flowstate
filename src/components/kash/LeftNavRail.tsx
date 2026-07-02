@@ -47,7 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Reflect & plan",
     items: [
       { href: "/plan", label: "Plan", icon: Compass, match: ["/plan"] },
-      { href: "/abyss", label: "Abyss", icon: Sparkles, match: ["/abyss"] },
+      { href: "/backlog", label: "Backlog", icon: Sparkles, match: ["/backlog", "/abyss"] },
       { href: "/care", label: "Care", icon: Sprout, match: ["/care"] },
     ],
   },

@@ -118,6 +118,31 @@ export function useEssentialNudges() {
         case "open_top3":
           window.dispatchEvent(new Event(DECIDE_EVENT));
           break;
+        case "goal_step_add": {
+          const localDate = toISODateString(startOfLocalDay());
+          let offer: {
+            milestoneId?: string;
+            stepTitle?: string;
+            category?: ProjectCategory;
+          } = {};
+          try {
+            offer = JSON.parse(payload.action.payload ?? "{}") as typeof offer;
+          } catch {
+            /* ignore */
+          }
+          if (offer.milestoneId && offer.stepTitle && offer.category) {
+            void createTask.mutateAsync({
+              title: offer.stepTitle,
+              category: offer.category,
+              milestoneId: offer.milestoneId,
+              scheduledDate: localDate,
+            });
+          }
+          void queryClient.invalidateQueries({
+            queryKey: trpc.tasks.listIncomplete.queryKey(),
+          });
+          break;
+        }
         case "balance_add": {
           const localDate = toISODateString(startOfLocalDay());
           let parsed: {

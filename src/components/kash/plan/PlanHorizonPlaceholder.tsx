@@ -8,8 +8,8 @@ export default function PlanHorizonPlaceholder({ horizon }: Props) {
   const copy =
     horizon === "week"
       ? "Week planning view — plan-mode rail and AI draft land in the next PR."
-      : horizon === "bingo"
-        ? "Your annual bingo card will live here."
+      : horizon === "goals"
+        ? "Your goals — bingo grid or list overview."
         : "Nothing planned yet.";
 
   return (

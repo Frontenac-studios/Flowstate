@@ -220,10 +220,24 @@
       "breakpoints": true
     },
     {
+      "idx": 31,
+      "version": "7",
+      "when": 1782974200000,
+      "tag": "0031_phase1_assistance_foundations",
+      "breakpoints": true
+    },
+    {
       "idx": 32,
       "version": "7",
       "when": 1782980000000,
       "tag": "0032_evidence_editions",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1782985000000,
+      "tag": "0033_goal_milestone_timeline",
       "breakpoints": true
     }
   ]

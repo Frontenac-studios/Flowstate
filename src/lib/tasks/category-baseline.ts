@@ -71,7 +71,10 @@ function categoriesBelowUsual(
     const ratioA = current[a] / Math.max(baseline[a], 1);
     const ratioB = current[b] / Math.max(baseline[b], 1);
     if (ratioA !== ratioB) return ratioA - ratioB;
-    return baseline[b] - current[b] - (baseline[a] - current[a]);
+    const deficitA = baseline[a] - current[a];
+    const deficitB = baseline[b] - current[b];
+    if (deficitA !== deficitB) return deficitB - deficitA;
+    return PROJECT_CATEGORIES.indexOf(a) - PROJECT_CATEGORIES.indexOf(b);
   });
 }
 

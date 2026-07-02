@@ -178,7 +178,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "propose_about_me_edit",
   ],
   projects: ["query_tasks", "query_projects", "create_task", "reschedule_tasks", "complete_task"],
-  abyss: ["query_abyss", "park_in_abyss", "query_tasks"],
+  backlog: ["query_abyss", "park_in_abyss", "query_tasks"],
   reviews: [
     "query_tasks",
     "query_state",

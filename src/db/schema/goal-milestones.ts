@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { goals } from "./goals";
 
@@ -13,6 +13,8 @@ export const goalMilestones = pgTable(
       .references(() => goals.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
+    targetDate: date("target_date", { mode: "string" }),
+    completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

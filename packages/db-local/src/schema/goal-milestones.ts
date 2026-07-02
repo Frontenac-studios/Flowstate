@@ -12,6 +12,8 @@ export const goalMilestones = sqliteTable(
       .references(() => goals.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
+    targetDate: text("target_date"),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },

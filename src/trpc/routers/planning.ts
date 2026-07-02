@@ -1052,6 +1052,8 @@ export const planningRouter = createTRPCRouter({
           id: m.id,
           title: m.title,
           sortOrder: m.sortOrder,
+          targetDate: m.targetDate ?? null,
+          completedAt: m.completedAt ?? null,
           taskCounts,
           isComplete: milestoneIsComplete(taskCounts),
         };

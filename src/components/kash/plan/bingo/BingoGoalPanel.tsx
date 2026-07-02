@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
 import GhostedAccept from "@/components/kash/plan/GhostedAccept";
+import { GoalJourneyTimeline } from "./GoalJourneyTimeline";
 import { computeGoalCapacity, formatCapacityMinutes } from "@/lib/planning/goal-capacity";
 import { categorySeedLabel, categorySolidVar } from "@/lib/projects/category-tokens";
 import type { ProjectCategory } from "@/lib/projects/categories";
@@ -157,7 +158,9 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
       </div>
 
       <div className="flex items-center gap-3 text-caption text-ink-muted">
-        <span>{detail.progressPercent}% via milestones</span>
+        <span>
+          {detail.milestones.filter((m) => m.isComplete).length} of {detail.milestones.length} stops
+        </span>
         <span>·</span>
         <span>{goal.state === "backburnered" ? "Paused" : goal.state}</span>
         {detail.valueLabel ? (
@@ -225,6 +228,11 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
           {promoteMutation.isPending ? "Creating project…" : "Promote to project"}
         </button>
       )}
+
+      <section className="flex flex-col gap-2">
+        <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">Journey</h3>
+        <GoalJourneyTimeline milestones={detail.milestones} />
+      </section>
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">

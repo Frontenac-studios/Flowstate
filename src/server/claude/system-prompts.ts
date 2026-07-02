@@ -58,7 +58,7 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   week: "Surface: Week — seven-day layout, draft_week, moving tasks across days, protected time.",
   plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions. propose_about_me_edit is available here.",
   projects: "Surface: Projects — project slugs, phases, creating and scheduling project tasks.",
-  abyss: "Surface: Abyss — backburner capture, search, parking ideas for later.",
+  backlog: "Surface: Backlog — parked ideas and tasks to pull from later.",
   reviews:
     "Surface: Reviews — EoD/EoW/monthly reflection, wins, Abyss themes, About-me. Warm and celebratory.",
   care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",

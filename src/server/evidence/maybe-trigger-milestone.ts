@@ -11,6 +11,13 @@ import { startOfLocalDay } from "@/lib/dates/local-day";
 const LARGE_HORIZONS = new Set(["quarter", "year"]);
 
 /** E8: quarter-horizon+ OR 3+ milestones. */
+export function qualifiesGoalForEvidenceEdition(
+  targetHorizon: string | null,
+  milestoneCount: number
+): boolean {
+  return (targetHorizon != null && LARGE_HORIZONS.has(targetHorizon)) || milestoneCount >= 3;
+}
+
 export async function maybeTriggerEvidenceMilestoneEdition(
   userId: string,
   goalId: string
@@ -28,9 +35,7 @@ export async function maybeTriggerEvidenceMilestoneEdition(
     .from(goalMilestones)
     .where(and(eq(goalMilestones.goalId, goalId), eq(goalMilestones.userId, userId)));
 
-  const isLarge =
-    (goal.targetHorizon != null && LARGE_HORIZONS.has(goal.targetHorizon)) ||
-    (milestoneCount?.count ?? 0) >= 3;
+  const isLarge = qualifiesGoalForEvidenceEdition(goal.targetHorizon, milestoneCount?.count ?? 0);
 
   if (!isLarge) return;
 

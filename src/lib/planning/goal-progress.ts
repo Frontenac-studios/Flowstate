@@ -9,6 +9,8 @@ export type MilestoneProgress = {
   id: string;
   title: string;
   sortOrder: number;
+  targetDate: string | null;
+  completedAt: Date | null;
   taskCounts: MilestoneTaskCounts;
   /** Derived: all linked tasks completed (or no tasks = incomplete). */
   isComplete: boolean;

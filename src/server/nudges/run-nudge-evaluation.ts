@@ -16,7 +16,9 @@ import {
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
 import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
+import { evaluateGoalSteering } from "@/lib/nudges/evaluate-goal-steering";
 import { fetchBalanceNudgeContext } from "@/server/nudges/fetch-balance-nudge-context";
+import { fetchGoalSteeringOffer } from "@/server/planning/fetch-goal-steering-offer";
 import { getLatestEvidenceEdition } from "@/server/evidence/generate-edition";
 import { fetchIsOverCommittedForDate } from "@/server/week/fetch-over-commit-for-date";
 export type NudgeEvaluateResult = {
@@ -77,6 +79,7 @@ export async function runNudgeEvaluation(params: {
             "self_care_walk",
             "top3_slip",
             "balance_lopsided",
+            "goal_step",
           ])
         )
       ),
@@ -142,9 +145,10 @@ export async function runNudgeEvaluation(params: {
       })
     : { shouldFire: false, localHour: 0 };
 
-  const [balanceContext, isOverCommitted] = await Promise.all([
+  const [balanceContext, isOverCommitted, goalSteeringOffer] = await Promise.all([
     fetchBalanceNudgeContext(userId),
     fetchIsOverCommittedForDate(userId, localDate, tzOffsetMinutes),
+    fetchGoalSteeringOffer(userId),
   ]);
 
   const balanceEvaluation = evaluateBalanceLopsided({
@@ -153,6 +157,13 @@ export async function runNudgeEvaluation(params: {
     candidate: balanceContext.candidate,
     balanceNudgeEnabled: balanceContext.balanceNudgeEnabled,
     alreadyNudgedToday: nudgedKinds.has("balance_lopsided"),
+    isOverCommitted,
+  });
+
+  const goalSteeringEvaluation = evaluateGoalSteering({
+    offer: goalSteeringOffer,
+    goalSteeringEnabled: true,
+    alreadyNudgedToday: nudgedKinds.has("goal_step"),
     isOverCommitted,
   });
 
@@ -247,6 +258,27 @@ export async function runNudgeEvaluation(params: {
         priority: 1,
         action: balanceEvaluation.action,
         categoryTint: balanceEvaluation.category,
+      });
+      fired = true;
+    } catch {}
+  }
+  if (goalSteeringEvaluation.shouldFire && goalSteeringEvaluation.offer) {
+    try {
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "goal_step",
+        localDate,
+        taskIds: [],
+      });
+      chips.push({
+        kind: "goal_step",
+        message: goalSteeringEvaluation.message,
+        klass: "problem",
+        priority: 2,
+        action: {
+          type: "goal_step_add",
+          payload: JSON.stringify(goalSteeringEvaluation.offer),
+        },
       });
       fired = true;
     } catch {}

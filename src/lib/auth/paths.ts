@@ -3,6 +3,7 @@ const PROTECTED_PREFIXES = [
   "/plan",
   "/this-week",
   "/projects",
+  "/backlog",
   "/abyss",
   "/care",
   "/settings",
