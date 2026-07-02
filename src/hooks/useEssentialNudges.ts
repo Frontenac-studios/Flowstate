@@ -1,172 +1,195 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { DECIDE_EVENT } from "@/components/kash/chrome-events";
 import { useChat } from "@/components/kash/chat/ChatProvider";
 import { useUserConstraints } from "@/hooks/useUserConstraints";
-import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
+import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import type { ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
+
+const INITIAL_DEFER_MS = 4_000;
+const RELEASE_BEAT_MS = 15_000;
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
 
-const INITIAL_DEFER_MS = 4_000;
-
-function scheduleIdle(callback: () => void): number {
-  if (typeof window.requestIdleCallback === "function") {
-    return window.requestIdleCallback(callback);
-  }
-  return window.setTimeout(callback, 0);
-}
-
-function cancelIdle(id: number): void {
-  if (typeof window.cancelIdleCallback === "function") {
-    window.cancelIdleCallback(id);
-  } else {
-    window.clearTimeout(id);
-  }
-}
-
-function msUntilNextNudgeCheck(): number {
-  const now = new Date();
-  const next = new Date(now);
-  const threshold =
-    typeof process !== "undefined" && process.env.NEXT_PUBLIC_NUDGE_DEBUG_HOUR
-      ? Number.parseInt(process.env.NEXT_PUBLIC_NUDGE_DEBUG_HOUR, 10)
-      : 14;
-  const hour = Number.isFinite(threshold) ? threshold : 14;
-  next.setHours(hour, 0, 0, 0);
-  if (next.getTime() <= now.getTime()) {
-    next.setDate(next.getDate() + 1);
-  }
-  return next.getTime() - now.getTime();
-}
-
-function chipKey(chip: EssentialNudgeChipPayload): string {
-  return chip.kind;
-}
-
 export function useEssentialNudges() {
   const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { planningSurface } = useChat();
   const { constraints } = useUserConstraints();
   const evaluatingRef = useRef(false);
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
-  const [chips, setChips] = useState<EssentialNudgeChipPayload[]>([]);
+  const promoteAbyss = useMutation(trpc.abyss.promote.mutationOptions());
+  const createTask = useMutation(trpc.tasks.create.mutationOptions());
+
+  const [opener, setOpener] = useState<EssentialNudgeChipPayload | null>(null);
+  const [chip, setChip] = useState<EssentialNudgeChipPayload | null>(null);
+  const [queue, setQueue] = useState<EssentialNudgeChipPayload[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+
+  const canShowProblem =
+    (settings?.assistanceEnabled ?? true) && !shouldSuppressInAppNudges(new Date(), constraints);
 
   const evaluate = useCallback(async () => {
     if (evaluatingRef.current) return;
     if (settings && !settings.notificationsEnabled) return;
-    if (shouldSuppressInAppNudges(new Date(), constraints)) return;
     evaluatingRef.current = true;
-
     try {
-      const localDate = toISODateString(startOfLocalDay());
       const res = await fetch("/api/nudges/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          localDate,
+          localDate: toISODateString(startOfLocalDay()),
           tzOffsetMinutes: clientTzOffsetMinutes(),
           includeSelfCare: planningSurface === "today",
           includeMonthlyReview: planningSurface === "plan" || planningSurface === "reviews",
+          includeEvidenceSurface: planningSurface === "care",
         }),
       });
-
       if (!res.ok) return;
+      const data = (await res.json()) as { chips?: EssentialNudgeChipPayload[] };
+      const incoming = data.chips ?? [];
+      if (incoming.length === 0) return;
 
-      const data = (await res.json()) as {
-        chips?: EssentialNudgeChipPayload[];
-      };
+      const reassurance = incoming.filter((c) => c.klass === "reassurance");
+      const problem = incoming
+        .filter((c) => c.klass === "problem")
+        .sort((a, b) => a.priority - b.priority);
 
-      if (!data.chips?.length) return;
-
-      setChips((prev) => {
-        const seen = new Set(prev.map(chipKey));
-        const next = [...prev];
-        for (const chip of data.chips ?? []) {
-          if (!seen.has(chipKey(chip))) {
-            next.push(chip);
-            seen.add(chipKey(chip));
-          }
-        }
-        return next;
-      });
+      if (reassurance.length > 0) {
+        setOpener((prev) => prev ?? reassurance[0] ?? null);
+      }
+      if (canShowProblem && problem.length > 0) {
+        setChip((prev) => prev ?? problem[0] ?? null);
+        setQueue((prev) => [...prev, ...problem.slice(1)]);
+      }
     } finally {
       evaluatingRef.current = false;
     }
-  }, [constraints, planningSurface, settings]);
+  }, [canShowProblem, planningSurface, settings]);
 
   useEffect(() => {
-    let cancelled = false;
-    let idleId: number | undefined;
-
-    const deferTimeoutId = window.setTimeout(() => {
-      if (cancelled) return;
-      idleId = scheduleIdle(() => {
-        if (!cancelled) void evaluate();
-      });
-    }, INITIAL_DEFER_MS);
-
-    const onVisible = () => {
-      if (document.visibilityState === "visible") {
-        void evaluate();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    const nextCheckTimeoutId = window.setTimeout(() => {
-      void evaluate();
-    }, msUntilNextNudgeCheck());
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(deferTimeoutId);
-      window.clearTimeout(nextCheckTimeoutId);
-      if (idleId !== undefined) cancelIdle(idleId);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
+    const id = window.setTimeout(() => void evaluate(), INITIAL_DEFER_MS);
+    return () => window.clearTimeout(id);
   }, [evaluate]);
 
-  const dismissChip = useCallback((kind: EssentialNudgeChipPayload["kind"]) => {
+  useEffect(() => {
+    if (!canShowProblem || chip != null || queue.length === 0) return;
+    const next = queue[0];
+    if (!next) return;
+    const id = window.setTimeout(() => {
+      setChip(next);
+      setQueue((prev) => prev.slice(1));
+    }, RELEASE_BEAT_MS);
+    return () => window.clearTimeout(id);
+  }, [canShowProblem, chip, queue]);
+
+  const dismiss = useCallback((kind: EssentialNudgeChipPayload["kind"]) => {
     setDismissed((prev) => new Set(prev).add(kind));
+    setChip((prev) => (prev?.kind === kind ? null : prev));
+    setOpener((prev) => (prev?.kind === kind ? null : prev));
   }, []);
 
   const handleAction = useCallback(
-    (kind: EssentialNudgeChipPayload["kind"]) => {
-      if (kind === "top3_stall") {
-        window.dispatchEvent(new Event(DECIDE_EVENT));
+    (payload: EssentialNudgeChipPayload) => {
+      switch (payload.action?.type) {
+        case "decide":
+          window.dispatchEvent(new Event(DECIDE_EVENT));
+          break;
+        case "open_care":
+          router.push("/care");
+          break;
+        case "open_care_wins":
+          router.push("/care?tab=wins");
+          break;
+        case "open_backlog":
+          router.push("/backlog");
+          break;
+        case "open_top3":
+          window.dispatchEvent(new Event(DECIDE_EVENT));
+          break;
+        case "goal_step_add": {
+          const localDate = toISODateString(startOfLocalDay());
+          let offer: {
+            milestoneId?: string;
+            stepTitle?: string;
+            category?: ProjectCategory;
+          } = {};
+          try {
+            offer = JSON.parse(payload.action.payload ?? "{}") as typeof offer;
+          } catch {
+            /* ignore */
+          }
+          if (offer.milestoneId && offer.stepTitle && offer.category) {
+            void createTask.mutateAsync({
+              title: offer.stepTitle,
+              category: offer.category,
+              milestoneId: offer.milestoneId,
+              scheduledDate: localDate,
+            });
+          }
+          void queryClient.invalidateQueries({
+            queryKey: trpc.tasks.listIncomplete.queryKey(),
+          });
+          break;
+        }
+        case "balance_add": {
+          const localDate = toISODateString(startOfLocalDay());
+          let parsed: {
+            category?: ProjectCategory;
+            abyssItemId?: string | null;
+            title?: string;
+          } = {};
+          try {
+            parsed = JSON.parse(payload.action.payload ?? "{}") as typeof parsed;
+          } catch {
+            /* ignore */
+          }
+          void (async () => {
+            if (parsed.abyssItemId) {
+              await promoteAbyss.mutateAsync({
+                id: parsed.abyssItemId,
+                target: "today",
+              });
+            } else if (parsed.title && parsed.category) {
+              await createTask.mutateAsync({
+                title: parsed.title,
+                category: parsed.category,
+                scheduledDate: localDate,
+              });
+            }
+            void queryClient.invalidateQueries({
+              queryKey: trpc.tasks.listIncomplete.queryKey(),
+            });
+          })();
+          break;
+        }
+        default:
+          break;
       }
-      if (kind === "self_care_walk") {
-        router.push("/care");
-      }
-      if (kind === "monthly_review") {
-        router.push("/abyss");
-      }
-      dismissChip(kind);
+      dismiss(payload.kind);
     },
-    [dismissChip, router]
+    [createTask, dismiss, promoteAbyss, queryClient, router, trpc.tasks.listIncomplete]
   );
 
-  const visibleChips = chips.filter((chip) => !dismissed.has(chipKey(chip)));
+  const visibleChip = useMemo(
+    () => (chip && !dismissed.has(chip.kind) ? chip : null),
+    [chip, dismissed]
+  );
 
-  return {
-    chips: visibleChips,
-    dismissChip,
-    handleAction,
-  };
+  return { opener, chip: visibleChip, dismiss, handleAction };
 }
 
-/** @deprecated Use useEssentialNudges — kept for any legacy imports. */
 export function useProactiveNudges() {
   useEssentialNudges();
 }

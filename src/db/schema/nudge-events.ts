@@ -9,7 +9,16 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const nudgeEventKinds = ["top3_stall", "self_care_walk", "monthly_review"] as const;
+export const nudgeEventKinds = [
+  "top3_stall",
+  "self_care_walk",
+  "monthly_review",
+  "top3_slip",
+  "balance_lopsided",
+  "goal_step",
+  "evidence_surface",
+  "morning_handoff",
+] as const;
 export type NudgeEventKind = (typeof nudgeEventKinds)[number];
 
 export const nudgeEvents = pgTable(

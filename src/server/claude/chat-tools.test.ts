@@ -14,8 +14,16 @@ describe("toolsForRegister", () => {
   });
 });
 describe("toolsForSurface", () => {
-  it("covers all six planning surfaces", () => {
-    for (const surface of ["today", "week", "plan", "projects", "abyss", "reviews"] as const)
+  it("covers all planning surfaces", () => {
+    for (const surface of [
+      "today",
+      "week",
+      "plan",
+      "projects",
+      "backlog",
+      "reviews",
+      "care",
+    ] as const)
       expect(toolsForSurface("planning", surface).map((t) => t.name)).toEqual(
         SURFACE_TOOL_NAMES[surface]
       );

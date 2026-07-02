@@ -11,6 +11,7 @@ export type AbyssBalanceItemInput = {
 };
 
 export type AbyssBalanceCandidate = {
+  abyssItemId: string;
   taskId: string | null;
   title: string;
   category: ProjectCategory;
@@ -55,6 +56,7 @@ export function pickAbyssBalanceCandidates(
     const sorted = [...bucket].sort(compareAbyssBalanceItems);
     for (const item of sorted.slice(0, limitPerCategory)) {
       picked.push({
+        abyssItemId: item.id,
         taskId: item.promotedTaskId,
         title: item.title,
         category,

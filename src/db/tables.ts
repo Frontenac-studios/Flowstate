@@ -20,6 +20,7 @@ import { chatCustomSuggestions as pgChatCustomSuggestions } from "./schema/chat-
 import { chatMessages as pgChatMessages } from "./schema/chat-messages";
 import { dailyWins as pgDailyWins } from "./schema/daily-wins";
 import { dayReviews as pgDayReviews } from "./schema/day-reviews";
+import { evidenceEditions as pgEvidenceEditions } from "./schema/evidence-editions";
 import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { nudgeEvents as pgNudgeEvents } from "./schema/nudge-events";
 import { phases as pgPhases } from "./schema/phases";
@@ -77,6 +78,9 @@ export const dailyWins = (
 export const dayReviews = (
   isSqliteMode() ? sqliteSchema.dayReviews : pgDayReviews
 ) as typeof pgDayReviews;
+export const evidenceEditions = (
+  isSqliteMode() ? sqliteSchema.evidenceEditions : pgEvidenceEditions
+) as typeof pgEvidenceEditions;
 export const appSettings = (
   isSqliteMode() ? sqliteSchema.appSettings : pgAppSettings
 ) as typeof pgAppSettings;

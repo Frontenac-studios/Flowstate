@@ -10,10 +10,11 @@ import type { SwitcherOption } from "../InPageSwitcher";
  * token sizes) for the "coming soon" landings — the top tabs themselves are
  * text-only pills.
  */
-export type CareTab = "garden" | "tasks" | "breathing" | "reflection" | "stats" | "travel";
+export type CareTab = "garden" | "wins" | "tasks" | "breathing" | "reflection" | "stats" | "travel";
 
 export const CARE_TABS: ReadonlyArray<SwitcherOption<CareTab>> = [
   { value: "garden", label: "Garden" },
+  { value: "wins", label: "Wins" },
   { value: "tasks", label: "Tasks" },
   { value: "breathing", label: "Breathing" },
   { value: "reflection", label: "Reflection" },
@@ -24,6 +25,7 @@ export const CARE_TABS: ReadonlyArray<SwitcherOption<CareTab>> = [
 /** A gentle one-line subtitle under the "Care" heading, per active tab. */
 export const CARE_SUBTITLES: Record<CareTab, string> = {
   garden: "A calm place to tend yourself",
+  wins: "Short- and long-horizon wins",
   tasks: "Self-care practices — yours, and ones to try",
   breathing: "Settle your breath",
   reflection: "A moment to reflect",
@@ -41,7 +43,7 @@ const TravelIcon = withKashIcon(Mountain);
  * built now, so it has no "coming soon" entry.
  */
 export const CARE_COMING_SOON: Record<
-  Exclude<CareTab, "garden" | "stats">,
+  Exclude<CareTab, "garden" | "stats" | "wins">,
   { title: string; copy: string; Icon: LucideIcon }
 > = {
   tasks: {

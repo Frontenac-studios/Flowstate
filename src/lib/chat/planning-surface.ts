@@ -4,8 +4,9 @@ export const planningChatSurfaces = [
   "week",
   "plan",
   "projects",
-  "abyss",
+  "backlog",
   "reviews",
+  "care",
 ] as const;
 export type PlanningChatSurface = (typeof planningChatSurfaces)[number];
 export const planningSurfaceSchema = z.enum(planningChatSurfaces);
@@ -14,7 +15,8 @@ export function planningSurfaceFromPathname(pathname: string): PlanningChatSurfa
   if (pathname === "/this-week" || pathname.startsWith("/this-week/")) return "week";
   if (pathname === "/plan" || pathname.startsWith("/plan/")) return "plan";
   if (pathname === "/projects" || pathname.startsWith("/projects/")) return "projects";
-  if (pathname === "/abyss" || pathname.startsWith("/abyss/")) return "abyss";
-  if (pathname === "/care" || pathname.startsWith("/care/")) return "reviews";
+  if (pathname === "/backlog" || pathname.startsWith("/backlog/")) return "backlog";
+  if (pathname === "/abyss" || pathname.startsWith("/abyss/")) return "backlog";
+  if (pathname === "/care" || pathname.startsWith("/care/")) return "care";
   return null;
 }

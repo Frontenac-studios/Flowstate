@@ -53,11 +53,11 @@ export function CommandPalette() {
         run: () => router.push("/plan"),
       },
       {
-        id: "go-abyss",
-        label: "Go to Abyss",
+        id: "go-backlog",
+        label: "Go to Backlog",
         hint: "Reflect & plan",
-        keywords: "backburner ideas later parked",
-        run: () => router.push("/abyss"),
+        keywords: "backburner ideas later parked backlog",
+        run: () => router.push("/backlog"),
       },
       {
         id: "go-care",

@@ -32,7 +32,7 @@ import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
 
 const BingoCard = dynamic(() => import("./bingo/BingoCard"), {
-  loading: () => <PlanHorizonPlaceholder horizon="bingo" />,
+  loading: () => <PlanHorizonPlaceholder horizon="goals" />,
 });
 const BingoYearRolloverNudges = dynamic(() => import("./bingo/BingoYearRolloverNudges"), {
   ssr: false,
@@ -63,9 +63,10 @@ function readStoredHorizon(): PlanningHorizon | null {
       raw === "month" ||
       raw === "quarter" ||
       raw === "year" ||
+      raw === "goals" ||
       raw === "bingo"
     ) {
-      return raw;
+      return raw === "bingo" ? "goals" : raw;
     }
   } catch {
     /* ignore */
@@ -180,7 +181,7 @@ function PlanHorizonViewInner() {
 
   const handleHorizonChange = useCallback((next: PlanningHorizon) => {
     setHorizon(next);
-    if (next !== "bingo") {
+    if (next !== "goals") {
       setBreadcrumb((prev) => {
         const trimmed = trimBreadcrumbForHorizon(prev, next);
         if (next === "week" && trimmed.isoWeek == null && isWeekBreadcrumbScoped(trimmed)) {
@@ -209,7 +210,7 @@ function PlanHorizonViewInner() {
   );
 
   const title = useMemo(() => {
-    if (horizon === "bingo") return "Bingo";
+    if (horizon === "goals") return "Goals";
     if (horizon === "year") return "Year";
     if (horizon === "quarter") return "Quarter";
     if (horizon === "month") return "Month";
@@ -224,16 +225,16 @@ function PlanHorizonViewInner() {
     (horizon === "month" && breadcrumb.month == null) ||
     (horizon === "quarter" && breadcrumb.quarter == null);
 
-  const showYearRolloverNudges = horizon === "bingo" || horizon === "year";
+  const showYearRolloverNudges = horizon === "goals" || horizon === "year";
 
   const handleStartNextYearBingo = useCallback((year: number) => {
     setBreadcrumb({ year });
-    setHorizon("bingo");
+    setHorizon("goals");
   }, []);
 
   const handleOpenBingo = useCallback((year: number) => {
     setBreadcrumb({ year });
-    setHorizon("bingo");
+    setHorizon("goals");
   }, []);
 
   return (
@@ -242,7 +243,7 @@ function PlanHorizonViewInner() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <h1 className="text-lg font-semibold text-ink">{title}</h1>
-            {horizon !== "bingo" ? (
+            {horizon !== "goals" ? (
               <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
             ) : null}
           </div>
@@ -308,7 +309,7 @@ function PlanHorizonContent({
 
   return (
     <div key={contentKey} className="plan-zoom-enter">
-      {horizon === "bingo" ? (
+      {horizon === "goals" ? (
         <BingoCard year={breadcrumb.year} />
       ) : horizon === "year" ? (
         <YearView year={breadcrumb.year} onZoomQuarter={onZoomQuarter} />

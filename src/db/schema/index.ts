@@ -13,6 +13,7 @@ export * from "./chat-custom-suggestions";
 export * from "./chat-messages";
 export * from "./daily-wins";
 export * from "./day-reviews";
+export * from "./evidence-editions";
 export * from "./focus-blocks";
 export * from "./goal-milestones";
 export * from "./goals";

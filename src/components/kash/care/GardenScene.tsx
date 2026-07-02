@@ -3,7 +3,9 @@ import type { CSSProperties } from "react";
 import type { GardenLifeState } from "@/lib/care/garden-dormancy";
 import type { GardenNourishBeat } from "@/lib/care/garden-nourish";
 import { extraPlantCount, gardenGrowthStageLabel } from "@/lib/care/garden-growth";
+import { gardenSpeciesForTier, isGardenGrownStage } from "@/lib/care/garden-species";
 
+import { GardenSpeciesSprite } from "./GardenSpeciesSprite";
 import "./care-garden-motion.css";
 
 type Props = {
@@ -39,6 +41,8 @@ export function GardenScene({
   const isDormant = lifeState === "dormant";
   const isReviving = lifeState === "reviving";
   const stageLabel = gardenGrowthStageLabel(growthTier, lifeState);
+  const species = gardenSpeciesForTier(growthTier);
+  const grown = isGardenGrownStage(growthTier);
   const bonusOffsets = [
     { cx: 155, cy: 208, r: 7 },
     { cx: 172, cy: 212, r: 6 },
@@ -113,16 +117,8 @@ export function GardenScene({
         <circle cx="120" cy="174" r="3.5" fill="var(--g-flower-core)" />
         <circle cx="250" cy="170" r="11" fill="var(--g-sun)" />
         <circle cx="250" cy="170" r="4" fill="var(--g-flower-core)" />
-        <g fill="var(--g-leaf-soft)" opacity={isDormant ? 0.45 : 1}>
-          <ellipse cx="186" cy="214" rx="9" ry="20" />
-          <ellipse cx="198" cy="216" rx="8" ry="16" />
-          <ellipse cx="175" cy="217" rx="7" ry="14" />
-        </g>
-        <g fill="var(--g-leaf)" opacity={isDormant ? 0.45 : 1}>
-          <ellipse cx="310" cy="220" rx="8" ry="16" />
-          <ellipse cx="322" cy="222" rx="7" ry="13" />
-          <ellipse cx="300" cy="223" rx="6" ry="11" />
-        </g>
+        <GardenSpeciesSprite species={species} grown={grown} x={186} y={224} />
+        <GardenSpeciesSprite species="fern" grown={grown} x={310} y={226} />
         <g
           key={nourishPulseKey}
           className={

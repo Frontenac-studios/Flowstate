@@ -34,7 +34,7 @@ export function trimBreadcrumbForHorizon(
   breadcrumb: PlanningBreadcrumb,
   horizon: PlanningHorizon
 ): PlanningBreadcrumb {
-  if (horizon === "bingo") return breadcrumb;
+  if (horizon === "goals") return breadcrumb;
   if (horizon === "year") return { year: breadcrumb.year };
   if (horizon === "quarter") {
     return {

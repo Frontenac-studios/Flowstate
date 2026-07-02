@@ -3,6 +3,7 @@ import { and, asc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm"
 import { db } from "@/db";
 import { nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import { evaluateBalanceLopsided } from "@/lib/nudges/evaluate-balance-lopsided";
 import {
   evaluateMonthlyReview,
   localMonthKey,
@@ -15,6 +16,11 @@ import {
 import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
 import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
+import { evaluateGoalSteering } from "@/lib/nudges/evaluate-goal-steering";
+import { fetchBalanceNudgeContext } from "@/server/nudges/fetch-balance-nudge-context";
+import { fetchGoalSteeringOffer } from "@/server/planning/fetch-goal-steering-offer";
+import { getLatestEvidenceEdition } from "@/server/evidence/generate-edition";
+import { fetchIsOverCommittedForDate } from "@/server/week/fetch-over-commit-for-date";
 export type NudgeEvaluateResult = {
   fired: boolean;
   chips: EssentialNudgeChipPayload[];
@@ -27,6 +33,7 @@ export async function runNudgeEvaluation(params: {
   tzOffsetMinutes: number;
   includeSelfCare?: boolean;
   includeMonthlyReview?: boolean;
+  includeEvidenceSurface?: boolean;
 }): Promise<NudgeEvaluateResult> {
   const {
     userId,
@@ -34,6 +41,7 @@ export async function runNudgeEvaluation(params: {
     tzOffsetMinutes,
     includeSelfCare = false,
     includeMonthlyReview = false,
+    includeEvidenceSurface = false,
   } = params;
   const now = new Date();
   const monthKey = localMonthKey(now, tzOffsetMinutes);
@@ -66,7 +74,13 @@ export async function runNudgeEvaluation(params: {
         and(
           eq(nudgeEvents.userId, userId),
           eq(nudgeEvents.localDate, localDate),
-          inArray(nudgeEvents.kind, ["top3_stall", "self_care_walk"])
+          inArray(nudgeEvents.kind, [
+            "top3_stall",
+            "self_care_walk",
+            "top3_slip",
+            "balance_lopsided",
+            "goal_step",
+          ])
         )
       ),
     db
@@ -130,6 +144,29 @@ export async function runNudgeEvaluation(params: {
         alreadyNudgedThisMonth: monthlyNudges.length > 0,
       })
     : { shouldFire: false, localHour: 0 };
+
+  const [balanceContext, isOverCommitted, goalSteeringOffer] = await Promise.all([
+    fetchBalanceNudgeContext(userId),
+    fetchIsOverCommittedForDate(userId, localDate, tzOffsetMinutes),
+    fetchGoalSteeringOffer(userId),
+  ]);
+
+  const balanceEvaluation = evaluateBalanceLopsided({
+    historicalWeeks: balanceContext.historicalWeeks,
+    currentWeek: balanceContext.currentWeek,
+    candidate: balanceContext.candidate,
+    balanceNudgeEnabled: balanceContext.balanceNudgeEnabled,
+    alreadyNudgedToday: nudgedKinds.has("balance_lopsided"),
+    isOverCommitted,
+  });
+
+  const goalSteeringEvaluation = evaluateGoalSteering({
+    offer: goalSteeringOffer,
+    goalSteeringEnabled: true,
+    alreadyNudgedToday: nudgedKinds.has("goal_step"),
+    isOverCommitted,
+  });
+
   const chips: EssentialNudgeChipPayload[] = [];
   let fired = false;
   if (stallEvaluation.shouldFireStallNudge) {
@@ -146,16 +183,48 @@ export async function runNudgeEvaluation(params: {
           stallEvaluation.stalledTasks,
           stallEvaluation.slippedTasks
         ),
+        klass: "problem",
+        priority: 3,
+        action: { type: "decide" },
       });
       fired = true;
     } catch {}
+  }
+  if (stallEvaluation.slippedWithoutProgress.length > 0 && !nudgedKinds.has("top3_slip")) {
+    const slip = stallEvaluation.slippedWithoutProgress.sort(
+      (a, b) => a.top3Order - b.top3Order
+    )[0];
+    if (slip) {
+      try {
+        await db.insert(nudgeEvents).values({
+          userId,
+          kind: "top3_slip",
+          localDate,
+          taskIds: [slip.id],
+        });
+        chips.push({
+          kind: "top3_slip",
+          message: `'${slip.title}' keeps sliding. Break it down, or let it go?`,
+          klass: "problem",
+          priority: 0,
+          action: { type: "open_top3" },
+        });
+        fired = true;
+      } catch {}
+    }
   }
   if (selfCareEvaluation.shouldFire) {
     try {
       await db
         .insert(nudgeEvents)
         .values({ userId, kind: "self_care_walk", localDate, taskIds: [] });
-      chips.push({ kind: "self_care_walk", message: templateSelfCareWalkMessage() });
+      chips.push({
+        kind: "self_care_walk",
+        message: templateSelfCareWalkMessage(),
+        klass: "problem",
+        priority: 3,
+        action: { type: "open_care" },
+      });
       fired = true;
     } catch {}
   }
@@ -164,9 +233,76 @@ export async function runNudgeEvaluation(params: {
       await db
         .insert(nudgeEvents)
         .values({ userId, kind: "monthly_review", localDate, taskIds: [] });
-      chips.push({ kind: "monthly_review", message: templateMonthlyReviewMessage() });
+      chips.push({
+        kind: "monthly_review",
+        message: templateMonthlyReviewMessage(),
+        klass: "reassurance",
+        priority: 1,
+        action: { type: "open_backlog" },
+      });
       fired = true;
     } catch {}
+  }
+  if (balanceEvaluation.shouldFire && balanceEvaluation.category) {
+    try {
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "balance_lopsided",
+        localDate,
+        taskIds: [],
+      });
+      chips.push({
+        kind: "balance_lopsided",
+        message: balanceEvaluation.message,
+        klass: "problem",
+        priority: 1,
+        action: balanceEvaluation.action,
+        categoryTint: balanceEvaluation.category,
+      });
+      fired = true;
+    } catch {}
+  }
+  if (goalSteeringEvaluation.shouldFire && goalSteeringEvaluation.offer) {
+    try {
+      await db.insert(nudgeEvents).values({
+        userId,
+        kind: "goal_step",
+        localDate,
+        taskIds: [],
+      });
+      chips.push({
+        kind: "goal_step",
+        message: goalSteeringEvaluation.message,
+        klass: "problem",
+        priority: 2,
+        action: {
+          type: "goal_step_add",
+          payload: JSON.stringify(goalSteeringEvaluation.offer),
+        },
+      });
+      fired = true;
+    } catch {}
+  }
+  if (includeEvidenceSurface && !nudgedKinds.has("evidence_surface")) {
+    const latest = await getLatestEvidenceEdition(userId);
+    if (latest?.state === "unseen" && latest.kind === "milestone") {
+      try {
+        await db.insert(nudgeEvents).values({
+          userId,
+          kind: "evidence_surface",
+          localDate,
+          taskIds: [],
+        });
+        chips.push({
+          kind: "evidence_surface",
+          message: "You closed something big. Here's the trail that got you here.",
+          klass: "reassurance",
+          priority: 0,
+          action: { type: "open_care_wins" },
+        });
+        fired = true;
+      } catch {}
+    }
   }
   return {
     fired,

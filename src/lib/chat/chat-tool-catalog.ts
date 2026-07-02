@@ -38,7 +38,7 @@ const QUERY_PROJECTS_TOOL: Anthropic.Tool = {
 
 const QUERY_ABYSS_TOOL: Anthropic.Tool = {
   name: "query_abyss",
-  description: "Search Abyss items.",
+  description: "Search Backlog items.",
   input_schema: {
     type: "object",
     properties: { query: { type: "string" }, limit: { type: "number" } },
@@ -119,7 +119,7 @@ const PROPOSE_ABOUT_ME_EDIT_TOOL: Anthropic.Tool = {
 
 const PARK_IN_ABYSS_TOOL: Anthropic.Tool = {
   name: "park_in_abyss",
-  description: "Park in Abyss.",
+  description: "Park in Backlog.",
   input_schema: {
     type: "object",
     properties: {
@@ -178,7 +178,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "propose_about_me_edit",
   ],
   projects: ["query_tasks", "query_projects", "create_task", "reschedule_tasks", "complete_task"],
-  abyss: ["query_abyss", "park_in_abyss", "query_tasks"],
+  backlog: ["query_abyss", "park_in_abyss", "query_tasks"],
   reviews: [
     "query_tasks",
     "query_state",
@@ -188,6 +188,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "complete_task",
     "propose_about_me_edit",
   ],
+  care: ["query_tasks", "query_state", "draft_eod", "complete_task", "propose_about_me_edit"],
 };
 
 export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [

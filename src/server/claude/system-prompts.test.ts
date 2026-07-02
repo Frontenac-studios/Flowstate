@@ -44,7 +44,7 @@ describe("system-prompts", () => {
 
   it("adds planning surface modifier for global chat on Today", () => {
     expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "today")).toContain("Surface: Today");
-    expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "abyss")).toContain("Surface: Abyss");
+    expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "backlog")).toContain("Surface: Backlog");
     expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "reviews")).toContain("Surface: Reviews");
   });
 
@@ -60,7 +60,7 @@ describe("planningSurfaceFromPathname", () => {
     expect(planningSurfaceFromPathname("/this-week")).toBe("week");
     expect(planningSurfaceFromPathname("/plan")).toBe("plan");
     expect(planningSurfaceFromPathname("/projects/foo")).toBe("projects");
-    expect(planningSurfaceFromPathname("/abyss")).toBe("abyss");
-    expect(planningSurfaceFromPathname("/care")).toBe("reviews");
+    expect(planningSurfaceFromPathname("/abyss")).toBe("backlog");
+    expect(planningSurfaceFromPathname("/care")).toBe("care");
   });
 });

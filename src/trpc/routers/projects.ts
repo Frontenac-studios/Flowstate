@@ -15,6 +15,7 @@ import {
   projectTemplateStructureSchema,
 } from "@/lib/projects/template-structure";
 import { applyProjectTemplate, syncAppliedTemplateRows } from "@/server/projects/apply-template";
+import { countEstimateSamplesForUser } from "@/lib/projects/count-estimate-samples";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -190,6 +191,10 @@ export const projectsRouter = createTRPCRouter({
         updatedAt: row.updatedAt,
       };
     });
+  }),
+
+  estimateSampleCount: protectedProcedure.query(async ({ ctx }) => {
+    return countEstimateSamplesForUser(ctx.userId);
   }),
 
   getById: protectedProcedure

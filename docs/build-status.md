@@ -1,18 +1,18 @@
 # Kash 3.0 — Build status (entry point)
 
-> **Last synced:** Jul 1 2026 (post Phases 0–6 + waves 1–4 on `main`; **updated after the Jul 1 gap
-> audit** — see `kash-3.0-goals-vs-build.md`).  
+> **Last synced:** Jul 2 2026 (Kash 3.0 complete — Phases 0–6, waves 1–4, gap-audit Phases 0–5
+> (Top-3, foundations, balance, evidence, goals, tail) on `feat/kash-3.0-complete`).  
 > This is the one-page snapshot. Detail lives in the docs linked below.
 
 ---
 
 ## Headline
 
-| Layer         | Status                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Decisions** | **Mostly closed.** All original product/design forks closed Jul 1 2026 (values shape, About-me UX, Daily Wins labels, self-care cadence, low-stakes defaults). The **Jul 1 gap audit reopened one** (wins memory vs §15 "nothing stored" — see Evidence below) and **added four new decided tracks** (Evidence, Goals progress/steering, Balance nudge, Top-3 assurance). |
-| **Specing**   | **Done for all tracks** — every feature area, including the four new gap-audit tracks, has an authoritative build spec (see [document set](#document-set)).                                                                                                                                                                                                               |
-| **Build**     | **~85% of the original 3.0 scope shipped** — daily loop, week, planning horizons, projects, Abyss, Care, Daily Wins, Values, AI confirm-card, mechanics. **Not yet built:** the four gap-audit tracks (reassurance / steering / balance / Top-3), task tags, garden art, backend-optimization parallel track, legacy cleanup.                                             |
+| Layer         | Status                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Decisions** | **Closed.** All original product/design forks closed Jul 1 2026 (values shape, About-me UX, Daily Wins labels, self-care cadence, low-stakes defaults). The **Jul 1 gap audit reopened one** (wins memory vs §15 "nothing stored" — see Evidence below) and **added four new decided tracks** (Evidence, Goals progress/steering, Balance nudge, Top-3 assurance); all five gap-audit tracks (incl. foundations) are **built** Jul 2 2026. |
+| **Specing**   | **Done for all tracks** — every feature area, including the four new gap-audit tracks, has an authoritative build spec (see [document set](#document-set)).                                                                                                                                                                                                                                                                                |
+| **Build**     | **Kash 3.0 complete.** Original scope + Jul 1 gap-audit reassurance track (foundations, Evidence, Goals progress/steering, Balance nudge, Top-3 assurance) and tail polish (task tags, projects tail, garden species art, AI tool audit) are in code. **Remaining:** optional illustrated garden assets, legacy `glass.css` cleanup, backend-optimization parallel track.                                                                  |
 
 ---
 
@@ -42,7 +42,7 @@
 
 **Build-only remainder (not a product fork):** task **tags** — ✅ built (`tasks.tags`, Phase 5 / `0029` migration).
 
-**Reopened / added (Jul 1 2026 — gap audit, `kash-3.0-goals-vs-build.md`):** the audit held the built app against the README product goals and found the reassurance / steering / balance layer under-built. Four decided tracks came out of it:
+**Reopened / added (Jul 1 2026 — gap audit, `kash-3.0-goals-vs-build.md`) — ✅ all built Jul 2 2026:** the audit held the built app against the README product goals and found the reassurance / steering / balance layer under-built. Four decided tracks (+ foundations prerequisite) came out of it; shipped as gap-audit Phases 0–5:
 
 | Item                                                | Choice                                                                                                                                                                                                                                                                     | Owner doc                               |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -88,30 +88,32 @@ Visual reference mockup: `kash-3.0-mockups.html`.
 
 ## Build status by feature
 
-Legend: ⬛ built · 🟡 partial · ⬜ not started
+Legend: ⬛ built · ✅ built (gap-audit track) · 🟡 partial · ⬜ not started
 
-| Feature                   | Code | Notes                                                                                                                                                                                         |
-| ------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| §2 Life categories        | ⬛   | Enum on tasks + projects, settings editor, inference, sync                                                                                                                                    |
-| §4 Navigation             | ⬛   | Grouped rail, `/today` + `/plan`, chat push panel, ⌘/, mobile drawer, Settings tabs                                                                                                           |
-| §5 Design tokens / B&W    | 🟡   | `tokens.css` canonical; accent states wired on tasks. Legacy `glass.css` import remains (aliases only)                                                                                        |
-| §6 Today                  | ⬛   | TD1–TD6: balance bar, adaptive timeline, living record, wind-down, completion choreography, arrival motion                                                                                    |
-| §7 Week                   | ⬛   | Grid, protected blocks (+ timed on Today timeline), priorities, tally-on-demand, over-commit, EoW chip, AI draft respects protected blocks, Settings default-week editor                      |
-| §8 Planning Mode          | ⬛   | Year / Quarter / Month / Week / Bingo views, balance pass, check-in, bingo rewards → garden nourish                                                                                           |
-| §9 Projects               | 🟡   | Miller, gallery, multi-project calendar toggle, templates (save + apply), weighted % progress, fold-to-filed. **Left:** AI “save as template?” on completion, duration-estimate confidence UI |
-| §10 Abyss                 | ⬛   | Capture, sky + list, archive, monthly review, promote, embeddings                                                                                                                             |
-| §11 AI persona            | 🟡   | Register prompts, confirm-card, proposed-action tools, About-me in context. **Left:** full write-tool breadth audit                                                                           |
-| §12 Care                  | 🟡   | All tabs shipped (garden, tasks library, breathing, reflection, stats, travel). **Left:** custom seed→grown illustration art (procedural garden in code)                                      |
-| §13 Values / About-me     | ⬛   | Settings About tab: flat 3–7 values, constraints, prose, ghosted suggestions, hybrid update UX                                                                                                |
-| §14 Data spine            | ⬛   | Category, time entries, dependencies, recurrence, protected blocks, **task tags** all built                                                                                                   |
-| 3 Daily Wins              | ⬛   | Table, EoD tracker, garden nourish, reflection proposals                                                                                                                                      |
-| §15 Mechanics             | ⬛   | Ephemeral celebrations, sync footer dot, notification settings, desktop sync panel                                                                                                            |
-| Animation pass            | 🟡   | Stripe-resolving, project fold, sync pulse, bingo lock, page cross-fade, week/care motion. Residual app-wide token audit optional                                                             |
-| Backend optimization      | 🟡   | Parallel track — batched sync/indexing lands with touched surfaces (`backend-optimization-spec.md`)                                                                                           |
-| Evidence (wins memory)    | ⬜   | _New (gap audit)._ Read-mostly; one `evidence_editions` table + cadence setting. `kash-3.0-evidence-build-spec.md`                                                                            |
-| Goals progress + steering | ⬜   | _New (gap audit)._ Bingo→Goals horizon; per-goal timeline + heatmap; next-step steering. `kash-3.0-goals-view-build-spec.md`                                                                  |
-| Balance nudge             | ⬜   | _New (gap audit)._ Learned baseline + lopsidedness trigger; category-tinted chip + digest. `kash-3.0-balance-nudge-build-spec.md`                                                             |
-| Top-3 assurance           | ✅   | One-tap hold ghost + confirm, midday slot check-in (`top3MiddayCheckin`), slip chip. `kash-3.0-top3-assurance-build-spec.md`                                                                  |
+| Feature                         | Code | Notes                                                                                                                                                                           |
+| ------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §2 Life categories              | ⬛   | Enum on tasks + projects, settings editor, inference, sync                                                                                                                      |
+| §4 Navigation                   | ⬛   | Grouped rail, `/today` + `/plan`, chat push panel, ⌘/, mobile drawer, Settings tabs                                                                                             |
+| §5 Design tokens / B&W          | 🟡   | `tokens.css` canonical; accent states wired on tasks. Legacy `glass.css` import remains (aliases only)                                                                          |
+| §6 Today                        | ⬛   | TD1–TD6: balance bar, adaptive timeline, living record, wind-down, completion choreography, arrival motion                                                                      |
+| §7 Week                         | ⬛   | Grid, protected blocks (+ timed on Today timeline), priorities, tally-on-demand, over-commit, EoW chip, AI draft respects protected blocks, Settings default-week editor        |
+| §8 Planning Mode                | ⬛   | Year / Quarter / Month / Week / Bingo views, balance pass, check-in, bingo rewards → garden nourish                                                                             |
+| §9 Projects                     | ⬛   | Miller, gallery, multi-project calendar toggle, templates (save + apply + completion suggest chip), weighted % progress, fold-to-filed, estimate-confidence “learning…” hint    |
+| §10 Abyss                       | ⬛   | Capture, sky + list, archive, monthly review, promote, embeddings                                                                                                               |
+| §11 AI persona                  | ⬛   | Register prompts, confirm-card, proposed-action tools, About-me in context, write-tool catalog audited                                                                          |
+| §12 Care                        | 🟡   | All tabs shipped (garden with per-species sprites, tasks library, breathing, reflection, stats, travel, Evidence shrine). **Left:** optional full illustrated seed→grown assets |
+| §13 Values / About-me           | ⬛   | Settings About tab: flat 3–7 values, constraints, prose, ghosted suggestions, hybrid update UX                                                                                  |
+| §14 Data spine                  | ⬛   | Category, time entries, dependencies, recurrence, protected blocks, **task tags** all built                                                                                     |
+| 3 Daily Wins                    | ⬛   | Table, EoD tracker, garden nourish, reflection proposals                                                                                                                        |
+| §15 Mechanics                   | ⬛   | Ephemeral celebrations, sync footer dot, notification settings, desktop sync panel                                                                                              |
+| Animation pass                  | 🟡   | Stripe-resolving, project fold, sync pulse, bingo lock, page cross-fade, week/care motion. Residual app-wide token audit optional                                               |
+| Backend optimization            | 🟡   | Parallel track — batched sync/indexing lands with touched surfaces (`backend-optimization-spec.md`)                                                                             |
+| Top-3 assurance                 | ✅   | Gap Phase 0. One-tap hold ghost + confirm, midday slot check-in (`top3MiddayCheckin`), slip chip. `kash-3.0-top3-assurance-build-spec.md`                                       |
+| Foundations (morning + arbiter) | ✅   | Gap Phase 1. Daily morning hand-off, nudge arbiter, Assistance settings group. `kash-3.0-morning-and-arbitration-build-spec.md`                                                 |
+| Balance nudge                   | ✅   | Gap Phase 2. Category-starvation nudge + weekly digest; learned baseline + lopsidedness trigger. `kash-3.0-balance-nudge-build-spec.md`                                         |
+| Evidence (wins memory)          | ✅   | Gap Phase 3. `evidence_editions` table + Care shrine; cadence setting; milestone triggers. `kash-3.0-evidence-build-spec.md`                                                    |
+| Goals progress + steering       | ✅   | Gap Phase 4. Bingo→Goals horizon; per-goal journey timeline + attention heatmap; next-step steering into Today. `kash-3.0-goals-view-build-spec.md`                             |
+| Tail polish                     | ✅   | Gap Phase 5. Task tags, projects tail, garden species art, AI tool audit, design cleanup. `kash-3.0-remaining-build.md` §A                                                      |
 
 ---
 
@@ -119,30 +121,32 @@ Legend: ⬛ built · 🟡 partial · ⬜ not started
 
 See `kash-3.0-remaining-build.md` for the full backlog. Highest leverage:
 
-1. **Gap-audit tracks (reassurance / steering)** — the emotional core the README names and the build
-   under-serves: **Evidence** (wins memory), **Goals progress + steering**, **Balance nudge**,
-   **Top-3 assurance**. Specced Jul 1; see the four new specs.
-2. **Task tags** (§14) — ✅ built (Phase 5)
-3. **Projects tail** — AI template suggestion on completion, estimate-confidence “learning…” UI
-4. **Garden illustration art** — per-species seed→grown assets (procedural garden already live)
-5. **Legacy cleanup** — retire unused `glass.css` surface classes when safe
-6. **Backend optimization** — continue fix-as-you-touch per `backend-optimization-spec.md`
+1. **Legacy cleanup** — retire unused `glass.css` surface classes when alias audit is clean
+2. **Garden illustration art** — optional full illustrated seed→grown assets (per-species SVG sprites shipped)
+3. **Backend optimization** — continue fix-as-you-touch per `backend-optimization-spec.md`
+4. **Animation residual** — optional app-wide motion token audit
 
 ---
 
 ## Recent merge wave (main)
 
-| PR       | Scope                                                             |
-| -------- | ----------------------------------------------------------------- |
-| #124     | Phase 0 — visual foundation (B&W tokens, accent wiring)           |
-| #125     | Phase 1 — projects spine (calendar, progress, recurrence polish)  |
-| #126     | Phase 2 — AI persona breadth + confirm-card                       |
-| #127     | Phase 3 — Abyss                                                   |
-| #128     | Phase 4 — Values / About-me                                       |
-| #129     | Phase 5 — Care expansion (library, garden, breathing, reflection) |
-| #130     | Phase 6 — mechanics + motion QA                                   |
-| #121–123 | Waves 2–4 — spine/projects, AI spine, Daily Wins                  |
-| #131     | Design tokens doc publish (DT-9…DT-20)                            |
+| PR       | Scope                                                              |
+| -------- | ------------------------------------------------------------------ |
+| #124     | Phase 0 — visual foundation (B&W tokens, accent wiring)            |
+| #125     | Phase 1 — projects spine (calendar, progress, recurrence polish)   |
+| #126     | Phase 2 — AI persona breadth + confirm-card                        |
+| #127     | Phase 3 — Abyss                                                    |
+| #128     | Phase 4 — Values / About-me                                        |
+| #129     | Phase 5 — Care expansion (library, garden, breathing, reflection)  |
+| #130     | Phase 6 — mechanics + motion QA                                    |
+| #121–123 | Waves 2–4 — spine/projects, AI spine, Daily Wins                   |
+| #131     | Design tokens doc publish (DT-9…DT-20)                             |
+| gap 0    | Top-3 assurance — hold ghost, midday check-in, slip chip           |
+| gap 1    | Foundations — nudge arbiter, morning hand-off, Assistance settings |
+| gap 2    | Balance nudge — category-starvation + weekly digest                |
+| gap 3    | Evidence — wins memory editions + Care shrine                      |
+| gap 4    | Goals — progress timeline, steering, Bingo→Goals rename            |
+| gap 5    | Tail — tags, projects tail, garden sprites, AI tool audit          |
 
 ---
 

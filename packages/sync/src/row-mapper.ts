@@ -69,6 +69,11 @@ export function mapRemoteRow(
       typeof base.structure === "string" ? base.structure : JSON.stringify(base.structure);
   }
 
+  if (table === "evidence_editions" && base.narrative != null) {
+    base.narrative =
+      typeof base.narrative === "string" ? base.narrative : JSON.stringify(base.narrative);
+  }
+
   const dateFields = [
     "created_at",
     "updated_at",
@@ -243,6 +248,14 @@ export function mapPayloadToRemote(
   if (table === "planning_suggestions" && typeof out.payload === "string") {
     try {
       out.payload = JSON.parse(out.payload as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
+  if (table === "evidence_editions" && typeof out.narrative === "string") {
+    try {
+      out.narrative = JSON.parse(out.narrative as string);
     } catch {
       /* keep string */
     }
