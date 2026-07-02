@@ -10,6 +10,11 @@ export const appSettings = sqliteTable("app_settings", {
     .notNull()
     .default(true),
   focusDndEnabled: integer("focus_dnd_enabled", { mode: "boolean" }).notNull().default(true),
+  assistanceEnabled: integer("assistance_enabled", { mode: "boolean" }).notNull().default(true),
+  morningHandoff: text("morning_handoff").notNull().default("on"),
+  goalSteering: text("goal_steering").notNull().default("on"),
+  balanceNudge: text("balance_nudge").notNull().default("on"),
+  evidenceCadence: text("evidence_cadence").notNull().default("quarterly"),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),

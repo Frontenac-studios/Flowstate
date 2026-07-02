@@ -12,6 +12,7 @@ import { dependenciesRouter } from "./dependencies";
 import { focusBlocksRouter } from "./focus-blocks";
 import { healthChecksRouter } from "./health-checks";
 import { meRouter } from "./me";
+import { nudgesRouter } from "./nudges";
 import { phasesRouter } from "./phases";
 import { planningRouter } from "./planning";
 import { projectsRouter } from "./projects";
@@ -42,6 +43,7 @@ export const appRouter = createTRPCRouter({
   focusBlocks: focusBlocksRouter,
   healthChecks: healthChecksRouter,
   me: meRouter,
+  nudges: nudgesRouter,
   phases: phasesRouter,
   planning: planningRouter,
   projects: projectsRouter,

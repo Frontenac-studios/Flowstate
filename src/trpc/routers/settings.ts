@@ -1,20 +1,38 @@
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { appSettings } from "@/db/tables";
 import {
   abyssArchiveAfterDaysSchema,
+  balanceNudgeSchema,
   bucketModeSchema,
   DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
+  DEFAULT_BALANCE_NUDGE,
   DEFAULT_BUCKET_MODE,
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
+  DEFAULT_EVIDENCE_CADENCE,
+  DEFAULT_GOAL_STEERING,
+  DEFAULT_MORNING_HANDOFF,
   DEFAULT_TOP3_MIDDAY_CHECKIN,
+  evidenceCadenceSchema,
+  goalSteeringSchema,
+  morningHandoffSchema,
   notificationPrefsSchema,
   top3MiddayCheckinSchema,
   workingHoursSchema,
 } from "@/lib/settings/constants";
 import { createTRPCRouter, protectedProcedure } from "../init";
+
+const assistanceSettingsSchema = z.object({
+  assistanceEnabled: z.boolean(),
+  morningHandoff: morningHandoffSchema,
+  goalSteering: goalSteeringSchema,
+  balanceNudge: balanceNudgeSchema,
+  top3MiddayCheckin: top3MiddayCheckinSchema,
+  evidenceCadence: evidenceCadenceSchema,
+});
 async function getOrCreateSettings(userId: string) {
   const [existing] = await db
     .select()
@@ -45,6 +63,19 @@ export const settingsRouter = createTRPCRouter({
       lastUsedCategory: row.lastUsedCategory ?? null,
       notificationsEnabled: row.notificationsEnabled ?? true,
       focusDndEnabled: row.focusDndEnabled ?? true,
+      assistanceEnabled: row.assistanceEnabled ?? true,
+      morningHandoff: morningHandoffSchema.safeParse(row.morningHandoff).success
+        ? row.morningHandoff
+        : DEFAULT_MORNING_HANDOFF,
+      goalSteering: goalSteeringSchema.safeParse(row.goalSteering).success
+        ? row.goalSteering
+        : DEFAULT_GOAL_STEERING,
+      balanceNudge: balanceNudgeSchema.safeParse(row.balanceNudge).success
+        ? row.balanceNudge
+        : DEFAULT_BALANCE_NUDGE,
+      evidenceCadence: evidenceCadenceSchema.safeParse(row.evidenceCadence).success
+        ? row.evidenceCadence
+        : DEFAULT_EVIDENCE_CADENCE,
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
     };
@@ -137,5 +168,30 @@ export const settingsRouter = createTRPCRouter({
           message: "Failed to update Top-3 midday check-in setting.",
         });
       return { top3MiddayCheckin: input };
+    }),
+  updateAssistanceSettings: protectedProcedure
+    .input(assistanceSettingsSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({
+          assistanceEnabled: input.assistanceEnabled,
+          morningHandoff: input.morningHandoff,
+          goalSteering: input.goalSteering,
+          balanceNudge: input.balanceNudge,
+          top3MiddayCheckin: input.top3MiddayCheckin,
+          evidenceCadence: input.evidenceCadence,
+          updatedAt: new Date(),
+        })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update assistance settings.",
+        });
+      }
+      return input;
     }),
 });

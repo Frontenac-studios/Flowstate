@@ -66,7 +66,7 @@ export async function runNudgeEvaluation(params: {
         and(
           eq(nudgeEvents.userId, userId),
           eq(nudgeEvents.localDate, localDate),
-          inArray(nudgeEvents.kind, ["top3_stall", "self_care_walk"])
+          inArray(nudgeEvents.kind, ["top3_stall", "self_care_walk", "top3_slip"])
         )
       ),
     db
@@ -146,16 +146,48 @@ export async function runNudgeEvaluation(params: {
           stallEvaluation.stalledTasks,
           stallEvaluation.slippedTasks
         ),
+        klass: "problem",
+        priority: 3,
+        action: { type: "decide" },
       });
       fired = true;
     } catch {}
+  }
+  if (stallEvaluation.slippedWithoutProgress.length > 0 && !nudgedKinds.has("top3_slip")) {
+    const slip = stallEvaluation.slippedWithoutProgress.sort(
+      (a, b) => a.top3Order - b.top3Order
+    )[0];
+    if (slip) {
+      try {
+        await db.insert(nudgeEvents).values({
+          userId,
+          kind: "top3_slip",
+          localDate,
+          taskIds: [slip.id],
+        });
+        chips.push({
+          kind: "top3_slip",
+          message: `'${slip.title}' keeps sliding. Break it down, or let it go?`,
+          klass: "problem",
+          priority: 0,
+          action: { type: "open_top3" },
+        });
+        fired = true;
+      } catch {}
+    }
   }
   if (selfCareEvaluation.shouldFire) {
     try {
       await db
         .insert(nudgeEvents)
         .values({ userId, kind: "self_care_walk", localDate, taskIds: [] });
-      chips.push({ kind: "self_care_walk", message: templateSelfCareWalkMessage() });
+      chips.push({
+        kind: "self_care_walk",
+        message: templateSelfCareWalkMessage(),
+        klass: "problem",
+        priority: 3,
+        action: { type: "open_care" },
+      });
       fired = true;
     } catch {}
   }
@@ -164,7 +196,13 @@ export async function runNudgeEvaluation(params: {
       await db
         .insert(nudgeEvents)
         .values({ userId, kind: "monthly_review", localDate, taskIds: [] });
-      chips.push({ kind: "monthly_review", message: templateMonthlyReviewMessage() });
+      chips.push({
+        kind: "monthly_review",
+        message: templateMonthlyReviewMessage(),
+        klass: "reassurance",
+        priority: 1,
+        action: { type: "open_backlog" },
+      });
       fired = true;
     } catch {}
   }

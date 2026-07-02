@@ -40,6 +40,26 @@ const KIND_META: Record<
     regionLabel: "Monthly review nudge",
     defaultAction: "Stargaze",
   },
+  balance_lopsided: {
+    icon: Sparkles,
+    regionLabel: "Balance nudge",
+    defaultAction: "Balance",
+  },
+  goal_step: {
+    icon: ListOrdered,
+    regionLabel: "Goal step nudge",
+    defaultAction: "Step",
+  },
+  top3_slip: {
+    icon: ListOrdered,
+    regionLabel: "Top 3 slip nudge",
+    defaultAction: "Top 3",
+  },
+  evidence_surface: {
+    icon: Sparkles,
+    regionLabel: "Evidence nudge",
+    defaultAction: "View",
+  },
 };
 
 /** Minimal dismissible essential nudge chip (§8A). Parent controls visibility. */
