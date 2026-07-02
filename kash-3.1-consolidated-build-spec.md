@@ -410,7 +410,7 @@ Log decisions here as usual; the next free D-number applies regardless of sessio
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | Global tokens (canvas, category chrome, cutoff rule) | ⬛ built Jul 2                                                                                             | D9 D10 D12 D13                   |
 | Today                                                | 🟡 decided Jul 2 — V6 partial in PR2                                                                       | D11 D14 (V3/V6 remainder PR16)   |
-| This Week                                            | ✅ decided Jul 2                                                                                           | D19 D20 D21 (V9, not built)      |
+| This Week                                            | ⬛ built Jul 2                                                                                             | D19 D20 D21 (V9) + W1 D5         |
 | Projects (index + detail)                            | ✅ decided Jul 2                                                                                           | D23 D24 D25 D26 (V10, not built) |
 | Backlog                                              | ✅ decided Jul 2                                                                                           | D27 D28 D29 (V11, not built)     |
 | Care                                                 | ✅ decided Jul 2                                                                                           | D33 D34 D35 (V13, not built)     |

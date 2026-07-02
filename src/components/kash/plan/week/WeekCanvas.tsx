@@ -14,6 +14,7 @@ import {
 import "./week-motion.css";
 
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
+import { weekHasPlanningData } from "@/lib/week/week-has-data";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
@@ -35,8 +36,8 @@ import { WeekLaterBacklog } from "./WeekLaterBacklog";
 import ProtectedWeekBar from "./ProtectedWeekBar";
 import type { ProtectedBlockRow } from "./ProtectedBlockChip";
 
-/** Inverted week track (Kash 3.0): soft-gray surface the day columns sit on. */
-const WEEK_TRACK_BG = "color-mix(in srgb, var(--ink) 4%, var(--surface))";
+/** D19 — canvas tint behind white day-column cards (no gray track). */
+const WEEK_CANVAS_BG = "var(--canvas)";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const VISIBLE_DAY_COUNT = 4;
@@ -75,11 +76,14 @@ type WeekCanvasProps = {
   anchorDate?: string;
   /** When false, hides the inbox rail and later backlog (execution-only view). */
   showPlanningRail?: boolean;
+  /** D21 — hide ritual bar when the week has no plan data yet. */
+  showWeekChrome?: boolean;
 };
 
 export function WeekCanvas({
   anchorDate: anchorDateProp,
   showPlanningRail = true,
+  showWeekChrome = true,
 }: WeekCanvasProps = {}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -153,6 +157,21 @@ export function WeekCanvas({
   }, [protectedBlocks]);
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
+
+  const weekDateIsos = useMemo(() => weekDates.map(toISODateString), [weekDates]);
+
+  const hasWeekPlanData = useMemo(
+    () =>
+      weekHasPlanningData({
+        weekDates: weekDateIsos,
+        tasks,
+        protectedBlockCount: protectedBlocks.length,
+        dayPriorityCount: dayPriorities.length,
+      }) || partitioned.inbox.length > 0,
+    [weekDateIsos, tasks, protectedBlocks.length, dayPriorities.length, partitioned.inbox.length]
+  );
+
+  const showChrome = showWeekChrome && hasWeekPlanData;
 
   const priorityTaskIdsByDate = useMemo(() => {
     const map: Record<string, Set<string>> = {};
@@ -467,12 +486,12 @@ export function WeekCanvas({
             />
           ) : null}
 
-          <ProtectedWeekBar anchorDate={anchorDate} />
+          {showChrome ? <ProtectedWeekBar anchorDate={anchorDate} /> : null}
 
           <div
             ref={dayScrollRef}
-            className="mt-4 overflow-x-auto rounded-card border border-subtle p-2"
-            style={{ backgroundColor: WEEK_TRACK_BG }}
+            className="week-day-scroll mt-4 overflow-x-auto rounded-card p-2"
+            style={{ backgroundColor: WEEK_CANVAS_BG }}
           >
             <div
               className="flex gap-2"
@@ -502,6 +521,7 @@ export function WeekCanvas({
                     onPinTask={(taskId, sourceEl) => handlePinTask(iso, taskId, sourceEl)}
                     onUnpinPriority={(taskId) => handleUnpinPriority(iso, taskId)}
                     canPinMore={pinnedBySlot.size < 3}
+                    showPinHint={isToday && pinnedBySlot.size === 0}
                   />
                 );
               })}
