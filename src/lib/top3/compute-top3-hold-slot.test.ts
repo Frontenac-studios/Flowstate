@@ -6,7 +6,7 @@ import { TOP3_HOLD_DURATION_MIN } from "./constants";
 describe("computeTop3HoldSlot", () => {
   it("returns the first open slot with default duration", () => {
     const slot = computeTop3HoldSlot([{ startMin: 600, endMin: 690 }], 540, 19 * 60);
-    expect(slot).toEqual({ startMin: 690, endMin: 690 + TOP3_HOLD_DURATION_MIN });
+    expect(slot).toEqual({ startMin: 540, endMin: 540 + TOP3_HOLD_DURATION_MIN });
   });
 
   it("returns null when the day cannot fit the hold", () => {
