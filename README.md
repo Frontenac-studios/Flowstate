@@ -119,6 +119,8 @@ See [`apps/desktop/README.md`](apps/desktop/README.md) and [`docs/desktop-qa.md`
 
 RLS audit checklist: [`docs/rls-audit.md`](./docs/rls-audit.md).
 
+Kash 3.0 build status: [`docs/build-status.md`](./docs/build-status.md).
+
 ## What's in here
 
 ```

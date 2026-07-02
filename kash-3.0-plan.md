@@ -2,7 +2,7 @@
 
 > **Status:** Working skeleton. This is a _living_ document, not a scoping brief.
 > **Companion doc:** `planning-start.md` is the frozen v1 brief — keep it for the _reasoning_ behind the daily loop (RDM, Focus, triage), but this file supersedes it as the source of truth for where Kash is going.
-> **Build tracker:** `kash-3.0-build-breakdown.md` maps spec maturity — recurring decision dimensions per feature, and which areas are concept-complete vs. need focused breakdown. Use it to check completeness before building.
+> **Build tracker:** `kash-3.0-build-breakdown.md` maps spec maturity — recurring decision dimensions per feature, and which areas are concept-complete vs. need focused breakdown. **One-page snapshot:** `docs/build-status.md`.
 
 ---
 
@@ -90,7 +90,7 @@ The five categories (names editable; concepts fixed). **A `project_category` Pos
 
 **Remaining open questions:**
 
-- Confirm final default labels, or rename now (esp. "Adulting", "Body & Mind").
+- ✅ **Default labels — RESOLVED (Jul 1 2026):** keep all five — Professional, Personal Projects, Relationships, Adulting, Body & Mind.
 - ✅ **Balance weighting — LOCKED (Jun 25): Top-3 weighting** (Top-3 = large, others = small). Locked via the §6 Today balance-bar decision; Today and Categories share one metric. Upgrades to time-based later without reworking views.
 - Backfill: triage existing loose tasks via a bulk AI pass, or manually?
 
@@ -98,25 +98,26 @@ The five categories (names editable; concepts fixed). **A `project_category` Pos
 
 ## 3. Current-state baseline (honest snapshot)
 
-So the plan is grounded, here is what is actually built today:
+So the plan is grounded, here is what is actually built today (**Jul 1 2026, post Phases 0–6 on `main`**):
 
-| Area                                | State                      | Notes                                                                                                                                                         |
-| ----------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Today / daily loop (`/plan`)        | **Built**                  | Composer + parser, Top 3, buckets, triage strip, RDM, Focus mode + timer, EoD review, nudges, Monday entry flow. Most mature area.                            |
-| This Week (`/this-week`)            | **Built**                  | Week canvas, 7-day columns, week inbox, AI week draft.                                                                                                        |
-| Projects (`/projects`)              | **Built**                  | Phases, Miller columns, Gantt/calendar board, task detail, time entries, bulk import, category badges.                                                        |
-| AI / Claude                         | **Built**                  | Chat rail + focus chat, RDM narration, nudge gen, week-draft gen, EoD review gen, server chat-tools.                                                          |
-| Settings                            | **Built (thin)**           | Bucket mode toggle, AI config, sign out.                                                                                                                      |
-| Global navigation                   | **Built but inconsistent** | Left rail (4 items) + header + bottom dock + command palette — three nav surfaces added at different times.                                                   |
-| Data model                          | **Built**                  | tasks, projects, phases, focus-blocks, task-time-entries, day-reviews, nudge-events, chat-messages, app-settings, chat-custom-suggestions, task-bulk-imports. |
-| Desktop                             | **Built**                  | Tauri macOS app, offline SQLite + Supabase sync.                                                                                                              |
-| **Life categories (global)**        | **None**                   | Only a faint badge inside Projects.                                                                                                                           |
-| **Planning Mode (month/qtr/year)**  | **None**                   | App only thinks in days + weeks.                                                                                                                              |
-| **The Abyss**                       | **None**                   | Inbox/triage is the nearest cousin.                                                                                                                           |
-| **Self-care / wellbeing**           | **None**                   | No walks, breathing, reflection, values, or gamification.                                                                                                     |
-| **Values + editable AI memory doc** | **None**                   | Chat memory exists; no user-facing values or editable context summary.                                                                                        |
+| Area                            | State            | Notes                                                                                                                                                                                                             |
+| ------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Today / daily loop (`/today`)   | **Built**        | Composer + parser, Top 3, buckets, triage, RDM, Focus + timer, EoD review, balance bar, adaptive timeline, wind-down, completion choreography, arrival motion.                                                    |
+| This Week (`/this-week`)        | **Built**        | Week canvas, protected blocks, per-day priorities, tally-on-demand, over-commit warning, AI week draft (respects protected blocks), EoW review chip.                                                              |
+| Projects (`/projects`)          | **Built**        | Phases, Miller columns, Gantt/calendar, multi-project calendar toggle, templates (save/apply), weighted % progress, time entries, bulk import. _Tail:_ AI template-suggest on completion, estimate-confidence UI. |
+| Planning Mode (`/plan`)         | **Built**        | Year / Quarter / Month / Week / Bingo horizons, balance pass, check-in, bingo rewards → garden.                                                                                                                   |
+| AI / Claude                     | **Built**        | Chat rail, focus chat, confirm-card + proposed actions, RDM narration, nudges, week-draft, EoD, expanded tool catalog. _Tail:_ write-tool catalog audit.                                                          |
+| Settings                        | **Built**        | Categories, About-me (values + constraints), default-week editor, notifications, sync panel, bucket mode, AI config.                                                                                              |
+| Global navigation               | **Built**        | Grouped left rail, `/today` + `/plan`, chat push panel (⌘/), command palette, mobile drawer, sync footer dot.                                                                                                     |
+| Life categories (global)        | **Built**        | On tasks + projects, inference, settings editor, balance visualization.                                                                                                                                           |
+| Data model spine                | **Built**        | Category, time entries, dependencies, recurrence, protected blocks. _Deferred:_ task **tags** (decided v1, schema pending).                                                                                       |
+| The Abyss (`/abyss`)            | **Built**        | Sky + list, capture, archive, monthly review, promote, embeddings.                                                                                                                                                |
+| Self-care / wellbeing (`/care`) | **Built**        | Garden (procedural), Finch library, breathing, reflection, stats, travel, Daily Wins nourish. _Tail:_ custom illustration art.                                                                                    |
+| Values + editable AI memory doc | **Built**        | Settings About tab; flat 3–7 values; ghosted AI suggestions; hybrid update UX (Settings + chat confirm-card).                                                                                                     |
+| Desktop                         | **Built**        | Tauri macOS app, offline SQLite + Supabase sync.                                                                                                                                                                  |
+| Design system (B&W)             | **Mostly built** | Tokens live; legacy `glass.css` import remains.                                                                                                                                                                   |
 
-**Takeaway:** the _daily execution engine_ is strong. The _whole-life, self-care, long-horizon, and balance_ layers — the heart of the 3.0 vision — barely exist yet.
+**Takeaway:** the **3.0 vision is largely shipped.** Remaining work is tail items (tags, projects polish, garden art, cleanup) — see `docs/build-status.md` and `kash-3.0-remaining-build.md`.
 
 ---
 
@@ -311,7 +312,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - **Balance bar:** Top-3-weighted now → time-based later; counts the whole planned day (planned population).
 - **EoD / Top-3 timing:** a single configurable **wind-down time** (default 6pm) drives both — EoD nudge fires at wind-down (soft, dismissible, never auto-opens), Top-3 deadline = wind-down − 1h.
 - **Untimed completions:** shown on the Calendar as thin category-colored completion markers (no fabricated duration).
-- _Deferred to §10/§11 (Care):_ self-care prompt cadence — walk/breathing frequency and walk-vs-breathing selection logic.
+- _Deferred to §10/§11 (Care):_ ~~self-care prompt cadence~~ → **RESOLVED (Jul 1 2026):** **2–3 gentle walk offers/day** around work blocks; **breathing offered on heavy/stress days** via adaptive stress signal (activity + mood — see §12). All gentle, dismissible (low-stakes autonomy, §11).
 
 ---
 
@@ -555,7 +556,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 - **AI: reuse the category-inference embeddings** for semantic theme clustering (constellations); resurface-count tracking; the **monthly review is owned by the Reflection & care guide** voice (brightest constellations first).
 - **Integration & build** drafted in the build-spec doc — Drop/triage wiring (§6), capture entry points, promotion targets, sync/RLS, the §15 monthly-review reminder, dark theming, and the build sub-phase order.
 
-**Minor open (settle during build):** archive threshold, _idea/task/reference_ taxonomy confirm, the constellation icon's exact 20px form, Abyss dark surface tokens (Design Tokens phase).
+**Minor open (settle during build):** ~~archive threshold, _idea/task/reference_ taxonomy confirm~~ → **RESOLVED (Jul 1 2026):** fixed **~90d auto-archive** (no user setting v1); three soft types **idea / task / reference**; reference capture **URLs only** for now. Remaining build polish: constellation icon's exact 20px form, Abyss dark surface tokens (Design Tokens phase).
 
 ---
 
@@ -621,11 +622,15 @@ The persona-definition session **tempered the three-modes framing**: they are **
 - **Autonomy: conservative.** The only fully-auto tier is **surfacing / suggesting** (no data change). **Anything that changes state is confirmed** — reschedules, week/project rearrangement, category edits, About-me edits. (Calibrates §11's tiered autonomy to its cautious end; the auto tier is narrow.)
 - **Transparency: confirms only.** Because Kash confirms almost everything, there's little silent auto-action — no separate activity log needed. The confirm step _is_ the transparency.
 
-### About-me doc (partially resolved Jun 16)
+### About-me doc (resolved Jul 1 2026)
 
 - **Structure: hybrid** — fixed sections (Values, Working hours & constraints, Preferences) + a **free-form notes area** for the rest.
-- **Update mechanism: DEFERRED** — being defined elsewhere (§13 / a separate effort); **circle back.** (Leaning, per conservative autonomy: Kash proposes, you approve — not locked.)
-- **Editing UX: a dedicated editable page** as the baseline (read/edit the whole doc); chat-add optional. _(No strong preference stated — default, revisit.)_
+- **Update mechanism: hybrid (RESOLVED Jul 1 2026):**
+  - **Settings** — AI proposals appear as **ghosted accept/reject rows** (same §9 pattern as planning suggestions); user can **always edit directly** in the About tab.
+  - **Chat** — chat-initiated About-me edits go through the **confirm-card** (`propose_about_me_edit` → Confirm / Edit / Dismiss).
+  - Both paths respect conservative autonomy; no silent writes.
+- **Retroactivity: future-only (RESOLVED Jul 1 2026)** — saving the doc shapes **future** AI turns only; no retroactive replan or silent recompute of current plans.
+- **Editing UX:** dedicated Settings About tab as the baseline; chat proposals optional.
 
 ### Tool / action catalog (resolved Jun 16; detailed in `kash-3.0-ai-persona-build-spec.md`)
 
@@ -634,9 +639,9 @@ The persona-definition session **tempered the three-modes framing**: they are **
 
 **Remaining open (persona layer):**
 
-- **About-me update mechanism** — circle back (defined elsewhere).
+- ~~About-me update mechanism~~ → **RESOLVED (Jul 1 2026)** — hybrid Settings ghosted rows + chat confirm-card; direct edit always available.
 - **Architecture + integration** detail → `kash-3.0-ai-persona-build-spec.md` (subsections 7–8).
-- (From §13) Values ranked 1–5 or flat? Do context edits reshape past suggestions or only future?
+- ~~Values ranked 1–5 or flat? retroactive edits?~~ → **RESOLVED (Jul 1 2026)** — flat 3–7 set; future-only edits (§13).
 
 ---
 
@@ -678,11 +683,11 @@ The persona-definition session **tempered the three-modes framing**: they are **
 
 **4. Care hub contents (`/care`):** walks, breathing exercises, reflection rituals (daily EoD celebration / weekly / monthly), the garden + stats, and travel-planning-around-work. Self-care prompts also surface inline in Today.
 
-**5. The 3 Daily Wins** _(added Jun 16)_ — a daily wellbeing structure inspired by "a physical, a mental, a spiritual win." Decisions you made:
+**5. The 3 Daily Wins** _(added Jun 16)_ — a daily wellbeing structure with three cross-cutting facets:
 
-- **Structure: a cross-cutting lens**, not a category. A _win-axis_ (physical / mental / spiritual) sits orthogonal to the 5 life categories — **any task in any category can also count as a win** (a fulfilling work task can be your mental win).
-- **Auto-detected** from activity (completed tasks via title inference — reusing the Phase 1 category-inference seam — plus existing signals: walk reminders → physical, breathing → spiritual, daily reflection → spiritual).
-- **Naming deferred** — the physical/mental/spiritual concept is locked; exact labels (and whether "spiritual" is reframed) settled in the design/copy pass.
+- **Structure: a cross-cutting lens**, not a category. A _win-axis_ with three facets sits orthogonal to the 5 life categories — **any task in any category can also count as a win** (a fulfilling work task can be your Mind win).
+- **Facet labels — RESOLVED (Jul 1 2026):** display **Body · Mind · Soul** everywhere (compact). Internal enum keys may remain `physical` / `mental` / `spiritual` in code/schema.
+- **Auto-detected** from activity (completed tasks via title inference — reusing the Phase 1 category-inference seam — plus existing signals: walk reminders → Body, breathing → Soul, daily reflection → Soul).
 - **Encouragement: both** a gentle daily prompt _and_ garden nourishment (hitting wins feeds §12's garden). Encouragement-only, never punitive.
 
 **Resolved (Jun 16, Rounds 1–2):**
@@ -691,13 +696,13 @@ The persona-definition session **tempered the three-modes framing**: they are **
 - **Editable:** fully — correct a wrong guess _and_ add a missed win.
 - **Surface:** **both** — a compact 3-slot tracker glance in Today + a fuller view (history/trends) in Care.
 - **Daily reset:** local midnight (matches the app's day rollover / morning triage).
-- **Daily review:** celebrate what you got, then **gently** note an open facet ("2 of 3 — spiritual was quiet today"). No guilt.
+- **Daily review:** celebrate what you got, then **gently** note an open facet ("2 of 3 — Soul was quiet today"). No guilt.
 - **In-day prompt:** a couple of gentle touchpoints if a facet's still open, via the §15 notification layer (like other Care prompts).
 - **Garden:** each win nourishes a little; all 3 in a day = a small bonus.
 
 **Still to draft (spec detail, not forks — I'll draft for your review):**
 
-- Detection taxonomy — which signals map to physical / mental / spiritual. Seed: walks / workouts / rest → physical; reading / writing / creating / learning → mental; breathing / reflection / gratitude → spiritual; other tasks via title inference (Phase 1 seam). Cross-cutting, so non-Body-&-Mind tasks contribute.
+- Detection taxonomy — which signals map to Body / Mind / Soul (enum: `physical` / `mental` / `spiritual`). Seed: walks / workouts / rest → Body; reading / writing / creating / learning → Mind; breathing / reflection / gratitude → Soul; other tasks via title inference (Phase 1 seam). Cross-cutting, so non-Body-&-Mind tasks contribute.
 - Exact touchpoint times for the in-day prompt.
 - Win attribution display (show what counted, tap to correct) — follows from "fully editable."
 
@@ -709,7 +714,7 @@ The persona-definition session **tempered the three-modes framing**: they are **
 - **Capabilities (the Care hub holds):**
   - **Self-care tasks** — the Finch-style library (adopt or create).
   - **The garden + stats** — grows from self-care + balance (stats-first, garden-later).
-  - **3 Daily Wins** — physical / mental / spiritual (cross-cutting, auto-detected — see above).
+  - **3 Daily Wins** — Body · Mind · Soul facets (cross-cutting, auto-detected — see above).
   - **Breathing** — guided, grounding visual.
   - **Reflection rituals** — daily / weekly / monthly (Reflection register, §11).
   - **Walks** — gentle reminders.
@@ -723,16 +728,16 @@ The persona-definition session **tempered the three-modes framing**: they are **
 - **Neglect → gently dormant, then revives** — softly dims when you've been away, brightens the moment you return. **Never dies, never punishes.**
 - **Nourishment:** each self-care act feeds it a little; all 3 Daily Wins in a day = a small bonus (§12).
 
-### Care — Phase 3: Garden art (resolved Jun 22)
+### Care — Phase 3: Garden art (resolved Jun 22; v1 delivery Jul 1 2026)
 
-- **Detailed · illustrative** (petals/leaves, real character) — a deliberate lush world, like the Abyss is a deliberate dark one. _Detailed generative-asset work = a design spike that ships after the stats substrate._
+- **Detailed · illustrative** (petals/leaves, real character) — a deliberate lush world, like the Abyss is a deliberate dark one. **v1 ships procedural garden art** (`GardenScene`) until per-species illustrated seed→grown assets exist — **RESOLVED Jul 1 2026.**
 
 ### Care — Phase 4: Breathing (resolved Jun 22)
 
 - **Visualization: a pulsing orb** — soft, abstract, calm; scales with the breath.
 - **Pattern: a few presets** (Box 4-4-4-4 · 4-7-8 relax · simple in-out), **defaulting to Box 4-4-4-4.**
 - **Offered: on-demand + a gentle offer during stressful stretches** — never forced. (Stress signals defined in the data/integration phase.)
-- A completed session counts as a self-care act (feeds the garden; a mental/spiritual win).
+- A completed session counts as a self-care act (feeds the garden; a Mind/Soul win).
 
 ### Care — Phase 5: Reflection rituals (resolved Jun 22)
 
@@ -768,22 +773,25 @@ _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits
 
 ## 13. Account, Values & Personal Context
 
-> **Status: PARTIALLY RESOLVED (Jun 2026).** The memory architecture — a single editable "About me" doc — was decided in §11 and is shared with the AI companion. Remaining here: values ranking and retroactivity (micro decisions).
+> **Status: RESOLVED (Jul 1 2026).** The memory architecture — a single editable "About me" doc — was decided in §11 and is shared with the AI companion. Values shape, retroactivity, and update mechanism are closed.
 
 **Purpose:** The editable "who I am" layer that powers values-based prioritization and transparent AI memory.
 
-**Current state:** `None` (chat memory exists internally; nothing user-facing or editable).
+**Current state:** `Built` — Settings About tab with flat values, constraints, prose, ghosted AI suggestions, hybrid update UX.
 
 **Vision:**
 
-- **Top 5 Values:** editable, stored in your account, referenced by the AI when prioritizing and by Planning Mode when setting goals.
+- **Core values (3–7 flat set):** editable, stored in your account, referenced by the AI when prioritizing and by Planning Mode when setting goals. **Not ranked** — a flat set, not 1–5 hierarchy.
 - **Editable AI context doc:** a single readable page summarizing everything the AI "knows" about you — fully editable, so memory is transparent and in your control.
 - **Saved personal info:** preferences, working hours, recurring constraints, the things the AI should always account for.
 
-**Open questions:**
+**Resolved (Jul 1 2026):**
 
-- Are values ranked (1–5) or a flat set?
-- Should editing the context doc retroactively reshape past AI suggestions, or only future ones?
+- ✅ **Values shape:** flat 3–7 set, **not ranked** 1–5.
+- ✅ **Retroactivity:** **future-only** — edits apply going forward; no retroactive replan.
+- ✅ **Update mechanism:** **hybrid** — Settings ghosted accept/reject rows + chat confirm-card; direct edit always available in Settings.
+- ✅ **Value tags v1:** **`value_id` on goals only** (bingo goals); no `tasks.value_id` column in v1.
+- ✅ **Values vs urgency:** values **nudge + explain** aligned suggestions; urgency can still win when deadlines demand it.
 
 ---
 
@@ -841,7 +849,7 @@ _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits
 
 - ✅ Blocked task: **hidden until unblocked**, and the blocking task gets a **boosted RDM weight** to surface sooner (decided Jun 16, see data-spine doc).
 - ✅ Recurrence: **RRULE via rrule.js**, end = **on date / after N / never** (decided Jun 16).
-- Tags: build in v1, or defer until after category lands? _(still open)_
+- ✅ **Tags:** build in v1 (decided Jun 27) — **`tasks.tags` schema not yet added** (build tail, not an open product fork).
 - **Cleanup — retire the `#project` token** _(added Jun 16)_: remove every `#project-name` hashtag-token instance from the parser (`parse-quick-input.ts`, `composer-assist.ts`, `fuzzy-project.ts`, `parse-project-task-input.ts`, `project-composer-assist.ts` + tests), the composer UI (`ComposerPropertyBar`, `ParsePreviewChips`, `QuickInput`, placeholders/help text), and docs. Project assignment moves to the **semicolon property mode + autocomplete**, consistent with category capture (Phase 1D). **Confirm the replacement before deleting** so project tagging isn't broken. Naturally rides along with the Phase-1 composer work (same files).
 
 ---
@@ -858,7 +866,7 @@ _Care is now planned end-to-end (Phases 1–8). `/care` CareView scaffold awaits
 - **Notification controls — simple:** a **global on/off** + the focus-block DND. No per-type toggles for v1 (calm, minimal settings).
 - **Time-tracking as the data spine** — settled by §14: optional on **any** task; feeds §9 scoping, EoD charts, the §2 time-based balance upgrade. Keep capture frictionless (Focus timer + manual).
 - **Gamification** — **Care's garden + stats** (§12) are the only _persistent_ layer, **plus light ephemeral celebration moments app-wide** (a vanishing flourish when all 3 Top tasks land, or after a good focus block) — **nothing scored or stored**, no points/badges/streaks. Encouragement without a tally.
-- **Offline + sync** — existing Tauri SQLite + Supabase sync. All new tables (category on tasks, recurrence, dependencies, abyss, planning/goals, values/About-me, self-care events) must respect the sync model. **Optimized model (Jun 24 pass — `kash-3.0-backend-optimization-spec.md`):** batched push + keyset-paginated pull (the unbounded full-table re-pull cliff is killed), outbox prune, and a `(user_id, updated_at)` index per synced table. Desktop surfaces sync state as a **status dot + expandable detail panel** (synced/syncing/offline · last-synced · pending count · manual sync · conflicts), collapsed by default to stay calm. Runs as a **parallel track** (fix-as-you-touch), with the sync push/pull + indexing core riding the Phase 3 dependencies data-layer PR.
+- **Offline + sync** — existing Tauri SQLite + Supabase sync. All new tables (category on tasks, recurrence, dependencies, abyss, planning/goals, values/About-me, self-care events) must respect the sync model. **Optimized model (Jun 24 pass — `kash-3.0-backend-optimization-spec.md`):** batched push + keyset-paginated pull (the unbounded full-table re-pull cliff is killed), outbox prune, and a `(user_id, updated_at)` index per synced table. Desktop surfaces sync state as a **status dot + expandable detail panel** (synced/syncing/offline · last-synced · pending count · manual sync · conflicts), **expanding from the sidebar footer dot (D2 — RESOLVED Jul 1 2026)**, collapsed by default to stay calm. Runs as a **parallel track** (fix-as-you-touch), with the sync push/pull + indexing core riding the Phase 3 dependencies data-layer PR.
 - **RLS & privacy** — every new table scoped to `auth.uid()` per repo conventions; the §13 About-me doc is especially sensitive (transparent, user-editable, never logged).
 
 ---
@@ -883,19 +891,19 @@ This is a _vision_ doc, so treat sequencing as a sketch, not a commitment. A sen
 
 Decisions to resolve as sections get expanded (collected from above):
 
-- **Categories:** ✅ RESOLVED (§2) — fixed 5, rename/recolor only, strict MECE, inherit-with-override, task-count balance. _Remaining:_ final labels, balance weighting, backfill method.
+- **Categories:** ✅ RESOLVED (§2; labels confirmed Jul 1 2026) — fixed 5, keep default labels (Professional, Personal Projects, Relationships, Adulting, Body & Mind), rename/recolor in settings, strict MECE, inherit-with-override, task-count balance.
 - **Navigation:** ✅ FULLY RESOLVED (§4, Jun 25) — three-column shell, grouped left rail (new Lucide icons), contextual inbox, in-page switchers. Routes Today `/today` + Plan `/plan`; Bingo = Plan sub-view; chat collapsed → "Ask Claude" chip + `⌘/` + push panel; mobile = hamburger drawer; Settings = top tab bar. _Nothing outstanding._
 - **Design:** ✅ RESOLVED (§5, Jun 24–25; accent states + animation forks closed Jul 1) — flat **black-and-white** (glass rejected), light-first (Abyss dark + garden lush exceptions), Pinterest+Finch feel. Accent states decided (checkbox = category-fill/ink-fallback, Top-3 star = category-colored, links always underlined, focus ring = AA-safe soft gray). _Remaining:_ apply the animation pass in code.
 - **Today:** ✅ RESOLVED (§6) — living-record timeline (+auto-draft later), soft Top-3 nudges, auto-DND, gentle self-care prompts.
 - **Week:** ✅ RESOLVED (§7) — placeholder+constraint protected blocks, colored task borders, soft over-commit warning.
-- **Planning:** ✅ RESOLVED (§8) — category-tagged bingo card, monthly+quarterly cadence, soft balance-pass closing step. _Remaining:_ year-viz form.
+- **Planning:** ✅ RESOLVED (§8; year view confirmed Jul 1 2026) — category-tagged bingo card, monthly+quarterly cadence, soft balance-pass closing step. **Year view = PM-A** (quarter cards + heatmap merged) — shipped.
 - **Projects:** ✅ RESOLVED (§9) — fixed nesting, tag+AI similarity, templates with learned durations, confirm-first re-plan.
 - **Abyss:** ✅ RESOLVED (§10) — Drop→Abyss (+ explicit Delete), category-tagged + AI theme clusters, periodic-review resurfacing.
-- **AI:** ✅ RESOLVED (§11) — tiered autonomy, specialized modes (Planner / Focus coach / Reflection & care guide) sharing one brain, single editable About-me doc. _Remaining:_ mode visual identity, About-me auto-draft behavior.
-- **Self-care:** ✅ RESOLVED (§12) — generative garden (stats-first), nourished by self-care + balance, both-channel reminders.
-- **Values:** ranked or flat? retroactive context edits?
+- **AI:** ✅ RESOLVED (§11; About-me mechanism Jul 1 2026) — tiered autonomy, specialized modes (Planner / Focus coach / Reflection & care guide) sharing one brain, single editable About-me doc with hybrid update UX.
+- **Self-care:** ✅ RESOLVED (§12; cadence + facet labels Jul 1 2026) — generative garden (stats-first, **procedural until illustrated art**), nourished by self-care + balance, both-channel reminders; **2–3 walk offers/day** + breathing on stress days; Daily Wins facets **Body · Mind · Soul**.
+- **Values:** ✅ RESOLVED (§13, Jul 1 2026) — flat 3–7 set (not ranked); future-only edits; hybrid update mechanism; `value_id` on goals only.
 - **Data:** ✅ RESOLVED (§14) — recurrence rule + generated occurrences, project-scoped dependencies, optional time-tracking on any task, category on tasks. _Remaining:_ tags timing, recurrence Repeat-picker polish (custom ends/interval UI), blocked-task RDM polish if any gaps remain.
-- **Backend optimization:** ✅ RESOLVED (`kash-3.0-backend-optimization-spec.md`, Jun 24) — parallel-track pass; sync batching + bounded pull (cliff killed), indexing standing-req, outbox prune, timestamp-seam normalization; UX calls D1 create-shimmer / D2 sync panel / D3 chat windowing. _Remaining:_ D1 shimmer motion + duration (Design Tokens / animation pass), D2 panel placement (settings vs shell status bar — §4 Nav), OPT-1 coalescing semantics for delete-after-update on the same offline row (confirm at re-audit).
+- **Backend optimization:** ✅ RESOLVED (`kash-3.0-backend-optimization-spec.md`, Jun 24) — parallel-track pass; sync batching + bounded pull (cliff killed), indexing standing-req, outbox prune, timestamp-seam normalization; UX calls D1 create-shimmer / D2 sync panel / D3 chat windowing. _Remaining:_ OPT-1 coalescing semantics for delete-after-update on the same offline row (confirm at re-audit). **D2 panel placement resolved Jul 1 2026** — expands from sidebar footer dot.
 
 ---
 

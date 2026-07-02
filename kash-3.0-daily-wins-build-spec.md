@@ -16,6 +16,9 @@ ensure a rough day still shows evidence of good.
 **Guardrails (locked, inherited):** no streaks, no red, no scoreboard, no "you missed it." A quiet day is
 allowed to be quiet. Wins are warm, never a performance metric.
 
+**Facet labels (DW-7):** UI copy uses **Body · Mind · Soul** (compact). Schema/code enum keys may remain
+`physical` / `mental` / `spiritual` where already built.
+
 Two homes (AN-B4):
 
 - **Today** — a **3-slot tracker** that surfaces at the **end-of-day wind-down**; wins **fill quietly
@@ -35,6 +38,7 @@ Two homes (AN-B4):
 | DW-5 | Garden nourish trigger | **Either, gently** — each win = a small drip; a **full set of 3** = a slightly bigger growth beat. No penalty for fewer.                                                                      |
 | DW-6 | Daily rollover         | Reset at **local midnight**, with a **morning grace window (until ~noon next day)** to backfill yesterday.                                                                                    |
 | 3a   | Today placement        | **EoD-only** — appears at the wind-down beat as a reflection moment, then tucks away.                                                                                                         |
+| DW-7 | Facet labels           | **Body · Mind · Soul** (display everywhere). Internal enum keys may stay `physical` / `mental` / `spiritual` in code — **RESOLVED Jul 1 2026**.                                               |
 
 ---
 

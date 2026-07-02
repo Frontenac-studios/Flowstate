@@ -1,11 +1,9 @@
 # Kash 3.0 — Today (§6) build-finish plan
 
-> Phased plan to finish the Today page. Decisions are all closed (Jun 25–27); this is build-only.
-> **Status (Jun 30): TD1–TD5 are BUILT** — `#91` shipped TD1–TD4 (balance bar, adaptive timeline,
-> living record, wind-down) and `#94` shipped TD5 (completion choreography + Completed section). **Only
-> TD6 (motion pass) remains**, in progress on `feat/today-td6-motion`. Phase set = **TD1–TD6**, sequenced
-> low-risk → high-choreography, animation last (per `kash-3.0-animation-sweep.md` + §3 of the
-> build-breakdown). Companions: `kash-3.0-design-prompt-today.md`, `kash-3.0-animation-sweep.md`,
+> Phased plan to finish the Today page. Decisions are all closed (Jun 25–27); **build complete (Jul 1 2026).**
+> **Status: TD1–TD6 are BUILT** — Phase 0 (#124) + prior PRs shipped balance bar, adaptive timeline,
+> living record, wind-down, completion choreography (#94), and arrival motion (`TodayList` AN-T2).
+> Companions: `kash-3.0-design-prompt-today.md`, `kash-3.0-animation-sweep.md`,
 > the Today decision records (`kash-3.0-today-q1/q1b/q2/q3`, `-t1/-t2/-t3.html`),
 > `kash-3.0-mockups.html` (visual ref), `kash-3.0-design-tokens.md` (§5 motion).
 
@@ -26,9 +24,9 @@
 
 ---
 
-## Current state (verified via code, Jun 30 — post #91 & #94)
+## Current state (verified via code, Jul 1 2026 — complete)
 
-**Built (TD1–TD5):**
+**Built (TD1–TD6):**
 
 - **TD1 balance bar** ✅ — Top-3-weighted, planned population, empty-category hatch + lopsided warning
   (`category-balance.ts` now carries the weighting).
@@ -40,11 +38,9 @@
   → settle into a persistent `CompletedSection` (cleared at local-midnight rollover).
 - Plus the prior base: list/calendar/review switcher, Top-3 slots + pin flight (`pin-to-top3.ts`),
   drag-drop timeline + protected blocks (all-day + timed), composer, focus mode, undo, lens engine.
+- **TD6 motion pass** ✅ — row arrival slide-in (AN-T2) in `TodayList`, motion tokens, `prefers-reduced-motion` respect.
 
-**Remaining gap:**
-
-- **TD6 motion pass** — row arrival slide-in (AN-T2), global motion-token wiring, and `prefers-reduced-motion`
-  full respect are **not yet merged** (in progress on `feat/today-td6-motion`). This is the last Today phase.
+**Remaining gap:** none — Today §6 is shipped.
 
 ---
 

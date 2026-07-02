@@ -31,7 +31,7 @@ Category, priority (`!`/`!!`/`!!!`), due date, **recurrence** (repeat badge), **
 
 ## Self-care
 
-A **Care** hub plus inline prompts: walks, breathing, reflection, and a generative **garden** (stats-first). **The 3 Daily Wins** — a gentle physical / mental / spiritual tracker (three rings; "2 of 3 — a little reflection would round out the day"), auto-detected, encouragement-only.
+A **Care** hub plus inline prompts: walks, breathing, reflection, and a generative **garden** (stats-first). **The 3 Daily Wins** — a gentle **Body · Mind · Soul** tracker (three rings; "2 of 3 — a little reflection would round out the day"), auto-detected, encouragement-only.
 
 ## Visual style (revised Jun 24 — black-and-white)
 

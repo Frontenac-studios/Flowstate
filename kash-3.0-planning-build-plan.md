@@ -1,9 +1,9 @@
 # Kash 3.0 — Planning Mode (§8) build-finish plan
 
 > Phased plan to finish Planning Mode. Decisions are all closed (Jun 22–25 gap-pass); this is **build-only**.
-> **Status (Jun 30):** foundation merged — schema + sync + RLS + `/plan` 5-tab shell + breadcrumb +
-> `GhostedAccept` + tRPC CRUD. **Horizon pages and Bingo gaps remain.** Phase set = **PB1–PB8**,
-> sequenced Bingo-first → horizons → cross-cutting → motion last (per `kash-3.0-animation-sweep.md` §2).
+> **Status (Jul 1 2026):** horizons shipped on `main` — Year / Quarter / Month / Week / Bingo views,
+> balance pass, check-in, bingo goal panel + list + onboarding + rewards. **Planning §8 is largely complete.**
+> Residual polish only. Phase set = **PB1–PB8** (historical); companions unchanged.
 > Companions: `kash-3.0-planning-mode.md`, `kash-3.0-plan.md` §8, `kash-3.0-build-breakdown.md`,
 > `kash-3.0-mockups.html` (Plan/Bingo pages), `kash-3.0-design-tokens.md` (§5 motion).
 
@@ -32,43 +32,26 @@
 
 ---
 
-## Current state (verified via code, Jun 30)
+## Current state (verified via code, Jul 1 2026)
 
-**Built (foundation + partial Bingo):**
+**Built:**
 
-| Layer           | Status | Notes                                                                                                                                                                         |
-| --------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Schema + sync   | ✅     | `bingo_cards`, `goals`, `goal_milestones`, `quarter_themes`, `month_intentions`, `reserved_days`, `planning_suggestions`; `tasks.milestone_id`, `tasks.time_estimate_minutes` |
-| tRPC            | ✅     | `planning.ts` — bingo CRUD, goals, milestones, quarter/month/reserved, suggestions stage/apply                                                                                |
-| Plan shell      | ✅     | `/plan` → `PlanHorizonView`: switcher + breadcrumb + localStorage resume                                                                                                      |
-| Bingo (partial) | 🏗️     | `BingoCard`, `BingoGrid`, `BingoCellTile`, `BingoQuickAdd`, `BingoBalanceLegend`; `bingo-grid.ts` line detection + winning-cell highlight                                     |
-| GhostedAccept   | ✅     | Shared component; `planning_suggestions` wired                                                                                                                                |
-| Stubs           | ✅     | `recordBingoReward()`, `fetchAbyssBalanceCandidates()` no-ops                                                                                                                 |
-| Horizon stubs   | ✅     | `PlanHorizonPlaceholder` — Week/Month/Quarter/Year show ON-2 copy                                                                                                             |
+| Layer         | Status | Notes                                                                                                                                                      |
+| ------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema + sync | ✅     | `bingo_cards`, `goals`, `goal_milestones`, `quarter_themes`, `month_intentions`, `reserved_days`, `planning_suggestions`; task milestone + estimate fields |
+| tRPC          | ✅     | `planning.ts` — full CRUD + suggestions stage/apply                                                                                                        |
+| Plan shell    | ✅     | `/plan` → `PlanHorizonView`: switcher + breadcrumb + localStorage resume                                                                                   |
+| Horizons      | ✅     | `YearView`, `QuarterView`, `MonthView`, `WeekPlanView`, `BingoCard` — all live (not placeholders)                                                          |
+| Bingo         | ✅     | Goal panel, list view, onboarding, spelling pass, line rewards → `care.recordBingoNourish`, finalize→lock animation                                        |
+| Balance pass  | ✅     | `BalancePassProvider` + chip + ghosts                                                                                                                      |
+| Check-in      | ✅     | `CheckInProvider` + modal + cadence nudge                                                                                                                  |
+| GhostedAccept | ✅     | Shared; wired across planning surfaces                                                                                                                     |
 
-**Bingo gaps vs spec:**
+**Residual gaps (polish, not blockers):**
 
-- **No goal panel (GP4-1)** — cells only toggle done/pause/remove; no tap-to-detail.
-- **No milestone UI (GP4-2/3)** — tRPC CRUD exists; no panel, no task linking (`tasks.update` lacks `milestoneId` / `timeEstimateMinutes`).
-- **No list toggle (ET-5)** — card-only surface.
-- **No onboarding (ON-1)** — single "Start your {year} card" CTA.
-- **Finalize lacks spelling pass (GP3)** — direct confirm; no ghosted typo fixes.
-- **Rewards not gated (GP3-1, RW-1–3)** — line count shows in draft; no toast, no `recordBingoReward()`, no escalating/blackout.
-- **No capacity nudge (PM11.3)** — field exists on tasks; no aggregation or UI.
-- **Minor:** `PlanHorizonView` title uses legacy `text-kash-ink` (should be `text-ink`).
-
-**Horizon gaps (all placeholder):**
-
-- **PM-2 Year** — quarter cards, merged heatmap (actual), light placement (ET-3), neglected-category callout.
-- **PM-3 Quarter** — theme picker (ET-1), ghosted month spread (PM-3-2b).
-- **PM-4 Month** — per-category intentions (ET-2), list/calendar toggle, reserved-day ghosts (ET-4).
-- **PM-5 Week** — embed `WeekCanvas` in `/plan` Week tab + `PlanModeToggle` + `WeekDraftPanel` ghosts.
-
-**Cross-cutting gaps:**
-
-- **PM-6 Balance pass** — not built.
-- **PM-7 Check-in** — not built.
-- **NAV-4 / AN-P1** — no zoom-grow transition.
+- Horizon UX refinement as usage feedback arrives
+- `recordBingoReward` now calls Care (no longer a no-op stub)
+- Optional zoom-grow transition (AN-P1) — page cross-fade ships instead
 
 ---
 
