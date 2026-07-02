@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import GhostedAccept from "@/components/kash/plan/GhostedAccept";
 import { GoalJourneyTimeline } from "./GoalJourneyTimeline";
+import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { computeGoalCapacity, formatCapacityMinutes } from "@/lib/planning/goal-capacity";
 import { categorySeedLabel, categorySolidVar } from "@/lib/projects/category-tokens";
 import type { ProjectCategory } from "@/lib/projects/categories";
@@ -20,6 +21,7 @@ type Props = {
 export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const localDate = useLocalCalendarDate();
 
   const detailQuery = useQuery(trpc.planning.getGoalDetail.queryOptions({ id: goalId }));
   const valuesQuery = useQuery(trpc.aboutMe.values.list.queryOptions());
@@ -54,6 +56,14 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
   );
   const promoteMutation = useMutation(
     trpc.planning.promoteGoalToProject.mutationOptions({ onSuccess: () => invalidate() })
+  );
+  const pullGoalStepMutation = useMutation(
+    trpc.planning.pullGoalStepToToday.mutationOptions({
+      onSuccess: () => {
+        invalidate();
+        void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+      },
+    })
   );
   const suggestBreakdownMutation = useMutation(
     trpc.planning.suggestMilestoneBreakdown.mutationOptions({
@@ -231,7 +241,11 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
 
       <section className="flex flex-col gap-2">
         <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">Journey</h3>
-        <GoalJourneyTimeline milestones={detail.milestones} />
+        <GoalJourneyTimeline
+          milestones={detail.milestones}
+          onWorkTowardToday={() => pullGoalStepMutation.mutate({ goalId: goal.id, localDate })}
+          workTowardPending={pullGoalStepMutation.isPending}
+        />
       </section>
 
       <section className="flex flex-col gap-2">

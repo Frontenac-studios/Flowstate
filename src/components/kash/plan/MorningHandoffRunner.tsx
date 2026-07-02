@@ -77,15 +77,25 @@ export function MorningHandoffRunner() {
     enabled,
   });
 
+  const { data: goalSteeringHandoff } = useQuery({
+    ...trpc.planning.getGoalSteeringOfferForHandoff.queryOptions({
+      localDate,
+      tzOffsetMinutes,
+    }),
+    enabled,
+  });
+
   const [dismissedLocally, setDismissedLocally] = useState(() =>
     isMorningHandoffDismissedForDate(localDate)
   );
   const [holdDeclined, setHoldDeclined] = useState(false);
+  const [goalOfferDismissed, setGoalOfferDismissed] = useState(false);
   const [actionPending, setActionPending] = useState(false);
 
   useEffect(() => {
     setDismissedLocally(isMorningHandoffDismissedForDate(localDate));
     setHoldDeclined(false);
+    setGoalOfferDismissed(false);
   }, [localDate]);
 
   const invalidateTasks = useCallback(() => {
@@ -126,6 +136,12 @@ export function MorningHandoffRunner() {
   );
   const confirmHoldMutation = useMutation(
     trpc.protectedBlocks.confirmTop3Hold.mutationOptions({ onSuccess: invalidateTasks })
+  );
+  const pullGoalStepMutation = useMutation(
+    trpc.planning.pullGoalStepToToday.mutationOptions({ onSuccess: invalidateTasks })
+  );
+  const dismissGoalOfferMutation = useMutation(
+    trpc.planning.dismissGoalSteeringOffer.mutationOptions()
   );
 
   const shouldShow = useMemo(
@@ -212,6 +228,9 @@ export function MorningHandoffRunner() {
 
   if (!shouldShow) return null;
 
+  const goalOffer =
+    goalOfferDismissed || goalSteeringHandoff?.offer == null ? null : goalSteeringHandoff.offer;
+
   return (
     <MorningHandoffModal
       localDate={localDate}
@@ -222,7 +241,13 @@ export function MorningHandoffRunner() {
       holdPreview={holdPreview}
       holdDeclined={holdDeclined}
       isOverCommitted={overCommit?.overCommitted ?? false}
-      isPending={actionPending || markSeen.isPending}
+      goalOffer={goalOffer}
+      isPending={
+        actionPending ||
+        markSeen.isPending ||
+        pullGoalStepMutation.isPending ||
+        dismissGoalOfferMutation.isPending
+      }
       onKeepCarryover={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onDropCarryover={(id) => dropMutation.mutate({ id })}
       onConfirmRecurring={() => {
@@ -234,6 +259,20 @@ export function MorningHandoffRunner() {
       }
       onConfirmProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onPullProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
+      onAcceptGoalOffer={() => {
+        if (!goalOffer) return;
+        pullGoalStepMutation.mutate(
+          { goalId: goalOffer.goalId, localDate },
+          { onSuccess: () => setGoalOfferDismissed(true) }
+        );
+      }}
+      onDismissGoalOffer={() => {
+        if (!goalOffer) return;
+        dismissGoalOfferMutation.mutate(
+          { goalId: goalOffer.goalId, localDate },
+          { onSuccess: () => setGoalOfferDismissed(true) }
+        );
+      }}
       onPinTop3={(id, slot) => pinMutation.mutate({ id, slot })}
       onUnpinTop3={(id) => unpinMutation.mutate({ id })}
       onConfirmHold={() => {

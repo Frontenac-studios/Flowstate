@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
 import {
   buildGoalAttentionHeatmap,
   buildGoalJourney,
@@ -12,13 +13,21 @@ import {
 type Props = {
   milestones: GoalMilestoneStop[];
   attentionDays?: Array<{ date: string; completions: number; focusMinutes: number }>;
+  onWorkTowardToday?: () => void;
+  workTowardPending?: boolean;
 };
 
-export function GoalJourneyTimeline({ milestones, attentionDays = [] }: Props) {
+export function GoalJourneyTimeline({
+  milestones,
+  attentionDays = [],
+  onWorkTowardToday,
+  workTowardPending = false,
+}: Props) {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const journey = useMemo(() => buildGoalJourney(milestones), [milestones]);
   const heatmap = useMemo(() => buildGoalAttentionHeatmap(attentionDays), [attentionDays]);
   const maxScore = Math.max(...heatmap.map((d) => d.score), 1);
+  const currentStop = journey.stops.find((stop) => stop.id === journey.currentStopId);
 
   if (journey.totalStops === 0) {
     return (
@@ -60,6 +69,17 @@ export function GoalJourneyTimeline({ milestones, attentionDays = [] }: Props) {
           );
         })}
       </ol>
+      {currentStop && onWorkTowardToday ? (
+        <Button
+          type="button"
+          variant="ghost"
+          className="self-start text-caption"
+          disabled={workTowardPending}
+          onClick={onWorkTowardToday}
+        >
+          {workTowardPending ? "Adding…" : "Work toward this today"}
+        </Button>
+      ) : null}
       <button
         type="button"
         className="self-start text-caption text-ink-muted hover:text-ink"

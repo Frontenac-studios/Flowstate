@@ -10,6 +10,7 @@ import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import { rankProblemNudges } from "@/lib/nudges/nudge-arbiter";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
@@ -62,9 +63,7 @@ export function useEssentialNudges() {
       if (incoming.length === 0) return;
 
       const reassurance = incoming.filter((c) => c.klass === "reassurance");
-      const problem = incoming
-        .filter((c) => c.klass === "problem")
-        .sort((a, b) => a.priority - b.priority);
+      const problem = rankProblemNudges(incoming);
 
       if (reassurance.length > 0) {
         setOpener((prev) => prev ?? reassurance[0] ?? null);

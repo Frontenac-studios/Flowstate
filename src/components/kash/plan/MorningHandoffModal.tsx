@@ -11,6 +11,7 @@ import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projec
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
+import type { GoalSteeringOffer } from "@/lib/planning/goal-journey";
 import {
   filterAssembledTodayList,
   filterProjectTasksDueToday,
@@ -43,6 +44,7 @@ type Props = {
   holdPreview: HoldPreview | null;
   holdDeclined: boolean;
   isOverCommitted: boolean;
+  goalOffer: GoalSteeringOffer | null;
   isPending: boolean;
   onKeepCarryover: (taskId: string) => void;
   onDropCarryover: (taskId: string) => void;
@@ -50,6 +52,8 @@ type Props = {
   onSkipRecurring: (recurrenceId: string, occurrenceDate: string) => void;
   onConfirmProjectTask: (taskId: string) => void;
   onPullProjectTask: (taskId: string) => void;
+  onAcceptGoalOffer: () => void;
+  onDismissGoalOffer: () => void;
   onPinTop3: (taskId: string, slot: 1 | 2 | 3) => void;
   onUnpinTop3: (taskId: string) => void;
   onConfirmHold: () => void;
@@ -111,6 +115,7 @@ export function MorningHandoffModal({
   holdPreview,
   holdDeclined,
   isOverCommitted,
+  goalOffer,
   isPending,
   onKeepCarryover,
   onDropCarryover,
@@ -118,6 +123,8 @@ export function MorningHandoffModal({
   onSkipRecurring,
   onConfirmProjectTask,
   onPullProjectTask,
+  onAcceptGoalOffer,
+  onDismissGoalOffer,
   onPinTop3,
   onUnpinTop3,
   onConfirmHold,
@@ -368,14 +375,47 @@ export function MorningHandoffModal({
           </div>
         </Section>
 
-        <Section title="Goal step offer">
-          <div className="rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)] opacity-70">
-            <p className="text-body text-ink-muted">
-              A gentle goal step may appear here when the day has room — load-aware steering lands
-              in the next release.
+        {goalOffer ? (
+          <Section title="Goal step offer">
+            <div className="flex items-start justify-between gap-3 rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)]">
+              <div className="min-w-0 flex-1">
+                <span className="mr-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
+                  ✦ suggested
+                </span>
+                <p className="text-body text-ink">
+                  Work toward {goalOffer.goalTitle}: {goalOffer.stepTitle}
+                </p>
+                <p className="mt-1 text-caption text-ink-muted">{goalOffer.milestoneTitle}</p>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <button
+                  type="button"
+                  aria-label={`Add ${goalOffer.stepTitle} to today`}
+                  className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-[var(--accent-soft)]"
+                  disabled={isPending}
+                  onClick={onAcceptGoalOffer}
+                >
+                  Add to today
+                </button>
+                <button
+                  type="button"
+                  aria-label="Dismiss goal step offer"
+                  className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink-muted transition hover:text-ink"
+                  disabled={isPending}
+                  onClick={onDismissGoalOffer}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </Section>
+        ) : isOverCommitted ? (
+          <Section title="Goal step offer">
+            <p className="text-caption text-ink-muted">
+              Today is already full — goal steering will wait for a lighter morning.
             </p>
-          </div>
-        </Section>
+          </Section>
+        ) : null}
 
         <Section title="Top 3">
           <p className="text-caption text-ink-muted">
