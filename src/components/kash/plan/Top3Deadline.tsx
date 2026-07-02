@@ -21,10 +21,12 @@ const WIND_DOWN_HOURS = Array.from(
  * derives from). The review nudge fires at wind-down; the target reads as a calm
  * "aim to finish by" cue, never a hard deadline.
  */
-export function Top3Deadline() {
+export function Top3Deadline({ visible = true }: { visible?: boolean }) {
   const [windDownHour, setWindDownHour] = useWindDownHour();
   const [editing, setEditing] = useState(false);
   const target = top3TargetHour(windDownHour);
+
+  if (!visible) return null;
 
   return (
     <div className="flex items-center gap-1.5 text-xs text-ink-muted">

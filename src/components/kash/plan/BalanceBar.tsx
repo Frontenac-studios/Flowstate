@@ -1,8 +1,9 @@
 "use client";
 
-import { categorySeedLabel, categorySolidVar } from "@/lib/projects/category-tokens";
 import type { ProjectCategory } from "@/lib/projects/categories";
+import { categorySeedLabel, categorySolidVar } from "@/lib/projects/category-tokens";
 import { computeCategoryBalance, type CategoryBalanceSegment } from "@/lib/tasks/category-balance";
+import { GhostCategoryStrip } from "@/components/kash/ui/GhostCategoryStrip";
 
 type BalanceTask = {
   category?: ProjectCategory | null;
@@ -14,6 +15,8 @@ type Props = {
   tasks: ReadonlyArray<BalanceTask>;
   /** Optional weekly tilt caption (BD2) — e.g. "tilted toward work this week". */
   weeklyTiltCaption?: string | null;
+  /** D10: when true and fewer than 2 tasks, render ghost legend instead of hiding. */
+  showGhostWhenSparse?: boolean;
 };
 
 const UNCATEGORISED_COLOR = "var(--ink-faint)";
@@ -43,9 +46,19 @@ function joinLabels(labels: string[]): string {
  * alarming nudge — calm and encouraging, not a scoreboard. Renders nothing when
  * the day is empty.
  */
-export function BalanceBar({ tasks, weeklyTiltCaption }: Props) {
+export function BalanceBar({ tasks, weeklyTiltCaption, showGhostWhenSparse = false }: Props) {
   const { segments, emptyCategories, totalTasks, dominant, lopsided } =
     computeCategoryBalance(tasks);
+
+  if (totalTasks < 2 && showGhostWhenSparse) {
+    return (
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <GhostCategoryStrip className="w-full max-w-md" />
+        <p className="text-meta text-ink-faint">Balance fills in as tasks land</p>
+      </div>
+    );
+  }
+
   if (totalTasks === 0) return null;
 
   const present = segments.map((s) => `${s.taskCount} ${segmentLabel(s).toLowerCase()}`).join(", ");

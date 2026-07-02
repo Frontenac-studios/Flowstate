@@ -3,6 +3,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { useEffect, useRef, useState } from "react";
 
+import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
 import { CompletedSection, type CompletedTaskRow } from "./CompletedSection";
@@ -96,13 +97,10 @@ export function TodayList({
           Loading…
         </p>
       ) : tasks.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-card border border-subtle bg-surface px-4 py-10 text-center">
-          <p className="text-sm text-ink">Nothing on deck yet.</p>
-          <p className="text-xs text-ink-muted">
-            Capture something above, or{" "}
-            <span className="text-accent">ask Claude what to focus on</span>.
-          </p>
-        </div>
+        <ColoredEmptyInvitation
+          title="Start your first task"
+          hint="Capture something above — property chips appear as you type."
+        />
       ) : (
         <ul className="space-y-2">
           {tasks.map((task) => (

@@ -575,7 +575,10 @@ export function DayPlanCanvas() {
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-h1 font-medium text-ink">
-              {weekdayLabel} <span className="text-ink-faint">· {monthDayLabel}</span>
+              Today
+              <span className="ml-2 text-subtitle font-normal text-ink-faint">
+                {weekdayLabel}, {monthDayLabel}
+              </span>
             </h1>
             <InPageSwitcher
               options={VIEW_OPTIONS}
@@ -605,17 +608,16 @@ export function DayPlanCanvas() {
             />
           ) : null}
 
-          {todayTasks.length > 0 ? (
-            <div className="flex items-center gap-3">
-              <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
-                Balance
-              </span>
-              <BalanceBar
-                tasks={todayTasks}
-                weeklyTiltCaption={weekPayload?.weeklyTiltCaption ?? null}
-              />
-            </div>
-          ) : null}
+          <div className="flex items-center gap-3">
+            <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
+              Balance
+            </span>
+            <BalanceBar
+              tasks={todayTasks}
+              weeklyTiltCaption={weekPayload?.weeklyTiltCaption ?? null}
+              showGhostWhenSparse
+            />
+          </div>
         </section>
 
         {view === "review" ? (
@@ -643,6 +645,7 @@ export function DayPlanCanvas() {
             ) : null}
             <div className="min-w-0 flex-1 lg:basis-0">
               <TimelinePane
+                planItemCount={todayTasks.length}
                 top3HoldOffer={
                   top3Assurance.showHoldGhost && top3Assurance.holdGhost
                     ? {
