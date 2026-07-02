@@ -105,6 +105,20 @@ Confirm-card + proposed-action pipeline built; write-tool catalog audited. Spec:
 Parallel track — batched sync, keyset pull, indexing, outbox prune. Lands with touched surfaces.
 Spec: `backend-optimization-spec.md`.
 
+### A.8 — Onboarding & first-run flow · ⬜ · M
+
+**New requirement (Jul 2).** An onboarding flow built from **immediate actions that bring the user
+excitement and delight but ARE USEFUL** — real captures, a first Top-3 pin, adoptable
+per-category starter templates — not a passive tour. Depends on the design-pass empty-state
+decisions (DP-2/DP-3/DP-4). Proposal + requirements: `kash-3.0-design-pass.md` §3. Full spec after
+the Today forks lock.
+
+### A.9 — Design pass (all pages) · ⬜ · L
+
+**New (Jul 2 screenshot review).** Full visual/UX pass: section delineation, color before data,
+no-cutoff-text rule, Today density, seeded/ghost empty-state content per category. Proposal-first,
+DP-n decision forks, Today first. Doc: `kash-3.0-design-pass.md`.
+
 ---
 
 ## B. Micro-decisions — RESOLVED (Jul 1 2026)
@@ -129,9 +143,11 @@ These were listed in the Jul 1 remaining-build doc; **now in code:**
 
 ## D. Suggested sequence
 
-1. **A.4 Legacy cleanup** — `glass.css` teardown when alias audit is clean
-2. **A.3 Garden illustration art** — optional full illustrated assets (sprites shipped)
-3. **A.5–A.7** — animation residual + backend optimization as you touch related code
+1. **A.9 Design pass** — Today proposal awaiting decisions (`kash-3.0-design-pass.md` DP-1…DP-6)
+2. **A.8 Onboarding & first-run** — spec after the Today design forks lock
+3. **A.4 Legacy cleanup** — `glass.css` teardown when alias audit is clean
+4. **A.3 Garden illustration art** — optional full illustrated assets (sprites shipped)
+5. **A.5–A.7** — animation residual + backend optimization as you touch related code
 
 ---
 
@@ -142,4 +158,5 @@ These were listed in the Jul 1 remaining-build doc; **now in code:**
 - Product spec: `kash-3.0-plan.md`
 - Gap audit: `kash-3.0-goals-vs-build.md`
 - Gap-audit specs: `kash-3.0-evidence-build-spec.md`, `kash-3.0-goals-view-build-spec.md`, `kash-3.0-balance-nudge-build-spec.md`, `kash-3.0-top3-assurance-build-spec.md`
+- Design pass + onboarding: `kash-3.0-design-pass.md`
 - Ideas backlog: `kash-3.0-ideas-backlog.md`
