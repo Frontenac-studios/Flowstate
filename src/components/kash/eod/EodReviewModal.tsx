@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { BalanceBar } from "@/components/kash/plan/BalanceBar";
 import {
   isGenerateAttemptedForDate,
   readEodStorage,
@@ -10,11 +11,15 @@ import {
 } from "@/lib/eod/eod-storage";
 import Button from "@/components/kash/ui/Button";
 import Textarea from "@/components/kash/ui/Textarea";
+import { RitualSheet } from "@/components/kash/ui/RitualSheet";
 import { templateEodReview } from "@/lib/eod/template-eod-review";
+import type { HandoffPlanTask } from "@/lib/morning-handoff/handoff-task-filters";
+import { filterAssembledTodayList } from "@/lib/morning-handoff/handoff-task-filters";
 import { renderInlineBold } from "@/lib/markdown/inline-bold";
 import { useTRPC } from "@/trpc/client";
 
 import { DailyWinsTracker } from "./DailyWinsTracker";
+import { EodLeftoverTriage } from "./EodLeftoverTriage";
 import { FocusTimeChart } from "./FocusTimeChart";
 import { Top3ReviewSummary } from "./Top3ReviewSummary";
 
@@ -39,8 +44,6 @@ export function EodReviewModal({
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  /** Calendar day last applied to form state; re-hydrate when localDate changes while modal stays open. */
   const hydratedForDateRef = useRef<string | null>(null);
   const summarySectionId = useId();
 
@@ -54,6 +57,16 @@ export function EodReviewModal({
     ...trpc.dayReviews.getPayload.queryOptions({ localDate, tzOffsetMinutes }),
     enabled: open,
   });
+
+  const { data: incompleteTasks = [] } = useQuery({
+    ...trpc.tasks.listIncomplete.queryOptions(),
+    enabled: open,
+  });
+
+  const todayTasks = useMemo(
+    () => filterAssembledTodayList(incompleteTasks as HandoffPlanTask[], localDate),
+    [incompleteTasks, localDate]
+  );
 
   const generateMutation = useMutation(trpc.dayReviews.generateSummary.mutationOptions());
   const upsertMutation = useMutation(trpc.dayReviews.upsert.mutationOptions());
@@ -127,9 +140,6 @@ export function EodReviewModal({
   useEffect(() => {
     if (!open) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
@@ -137,16 +147,8 @@ export function EodReviewModal({
     };
 
     window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onSnooze]);
-
-  useEffect(() => {
-    if (!open) return;
-    dialogRef.current?.focus();
-  }, [open]);
 
   const handleRegenerate = () => {
     void runGenerate();
@@ -187,93 +189,15 @@ export function EodReviewModal({
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-[var(--space-4)]"
-      role="presentation"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 z-base bg-black/20"
-        aria-label="Close review"
-        onClick={onClose}
-      />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="eod-review-title"
-        aria-describedby={payload && !payloadLoading ? summarySectionId : undefined}
-        tabIndex={-1}
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-subtle bg-surface p-[var(--space-6)]"
-      >
-        <h2 id="eod-review-title" className="text-title font-semibold text-ink">
-          End of day review
-        </h2>
-
-        {payloadLoading || !payload ? (
-          <p className="mt-[var(--space-4)] text-body text-ink-muted">Loading your day…</p>
-        ) : (
-          <div id={summarySectionId} className="mt-[var(--space-4)] space-y-[var(--space-5)]">
-            <p className="text-body text-ink">
-              <span className="font-semibold">{payload.completionsToday}</span> task
-              {payload.completionsToday === 1 ? "" : "s"} completed today
-            </p>
-
-            <section aria-label="Top 3 status">
-              <p className="mb-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
-                Top 3
-              </p>
-              <Top3ReviewSummary top3Status={payload.top3Status} />
-            </section>
-
-            <FocusTimeChart bars={payload.focusBars} overflowCount={payload.focusOverflowCount} />
-
-            <DailyWinsTracker winDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
-
-            <section className="space-y-[var(--space-2)]" aria-label="Reflection">
-              <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">
-                Summary
-              </p>
-              {aiLoading ? (
-                <p className="text-body text-ink-muted">Claude is reflecting on your day…</p>
-              ) : (
-                <p className="whitespace-pre-wrap text-body text-ink">
-                  {summary ? renderInlineBold(summary) : "—"}
-                </p>
-              )}
-
-              {reflectiveQuestion ? (
-                <>
-                  <p className="mt-[var(--space-3)] text-body font-medium text-ink">
-                    {reflectiveQuestion}
-                  </p>
-                  <label className="block text-caption text-ink-muted" htmlFor="eod-reflection">
-                    Your answer (optional)
-                  </label>
-                  <Textarea
-                    id="eod-reflection"
-                    className="mt-[var(--space-1)] w-full resize-y text-body"
-                    rows={3}
-                    value={reflection}
-                    onChange={(e) => setReflection(e.target.value)}
-                    placeholder="A sentence or two…"
-                  />
-                </>
-              ) : null}
-            </section>
-          </div>
-        )}
-
-        {saveError ? (
-          <p className="mt-[var(--space-4)] text-body text-critical" role="alert">
-            {saveError}
-          </p>
-        ) : null}
-
-        <div className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-2)]">
+    <RitualSheet
+      open={open}
+      title="End of day"
+      titleId="eod-review-title"
+      describedBy={payload && !payloadLoading ? summarySectionId : undefined}
+      onDismiss={onClose}
+      footer={
+        <div className="flex flex-wrap gap-[var(--space-2)]">
           <Button
             type="button"
             className="text-body"
@@ -298,7 +222,76 @@ export function EodReviewModal({
             Skip today
           </Button>
         </div>
-      </div>
-    </div>
+      }
+    >
+      {payloadLoading || !payload ? (
+        <p className="text-body text-ink-muted">Loading your day…</p>
+      ) : (
+        <div id={summarySectionId} className="space-y-[var(--space-6)]">
+          <section aria-label="Celebration" className="space-y-[var(--space-4)]">
+            <p className="text-body text-ink">
+              <span className="text-title font-semibold">{payload.completionsToday}</span> task
+              {payload.completionsToday === 1 ? "" : "s"} completed today
+            </p>
+            <BalanceBar tasks={todayTasks} showGhostWhenSparse />
+            <DailyWinsTracker winDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
+            <section aria-label="Top 3 status">
+              <p className="mb-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
+                Top 3
+              </p>
+              <Top3ReviewSummary top3Status={payload.top3Status} />
+            </section>
+            <FocusTimeChart bars={payload.focusBars} overflowCount={payload.focusOverflowCount} />
+          </section>
+
+          <section className="space-y-[var(--space-2)]" aria-label="Reflection">
+            <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">
+              Reflection
+            </p>
+            {aiLoading ? (
+              <p className="eod-reflecting-pulse text-body text-ink-muted">
+                Claude is reflecting on your day…
+              </p>
+            ) : (
+              <p className="whitespace-pre-wrap text-body text-ink">
+                {summary ? renderInlineBold(summary) : "—"}
+              </p>
+            )}
+
+            {reflectiveQuestion ? (
+              <>
+                <p className="mt-[var(--space-3)] text-body font-medium text-ink">
+                  {reflectiveQuestion}
+                </p>
+                <label className="block text-caption text-ink-muted" htmlFor="eod-reflection">
+                  Your answer (optional)
+                </label>
+                <Textarea
+                  id="eod-reflection"
+                  className="mt-[var(--space-1)] w-full resize-y text-body"
+                  rows={3}
+                  value={reflection}
+                  onChange={(e) => setReflection(e.target.value)}
+                  placeholder="A sentence or two…"
+                />
+              </>
+            ) : null}
+          </section>
+
+          <section aria-label="Leftover triage">
+            <p className="mb-[var(--space-3)] text-caption font-medium uppercase tracking-wide text-ink-muted">
+              Still open
+            </p>
+            <EodLeftoverTriage localDate={localDate} tasks={incompleteTasks as HandoffPlanTask[]} />
+          </section>
+        </div>
+      )}
+
+      {saveError ? (
+        <p className="mt-[var(--space-4)] text-body text-critical" role="alert">
+          {saveError}
+        </p>
+      ) : null}
+    </RitualSheet>
   );
 }

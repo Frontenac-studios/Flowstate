@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Pause, Play, kashIconProps } from "@/components/kash/ui/icon";
+import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { triggerEphemeralCelebration } from "@/components/kash/mechanics/EphemeralCelebration";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import { setOsDoNotDisturb } from "@/lib/about-me/os-dnd";
@@ -293,11 +294,11 @@ export function FocusCanvas() {
             <button
               type="button"
               onClick={() => void handleDone()}
-              className="rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
               disabled={doneFlash !== null}
             >
               Done
-              <span className="sr-only"> (Cmd+Enter)</span>
+              <KeyCap>⌘↵</KeyCap>
             </button>
             <button
               type="button"
@@ -330,7 +331,10 @@ export function FocusCanvas() {
               <Pause {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
             )}
           </button>
-          <span className="text-caption text-ink-faint">Esc to exit</span>
+          <span className="flex items-center gap-1.5 text-caption text-ink-faint">
+            <KeyCap>Esc</KeyCap>
+            <span>to exit</span>
+          </span>
         </div>
       </div>
 

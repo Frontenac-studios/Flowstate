@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Input from "@/components/kash/ui/Input";
+import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
 import { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
@@ -133,7 +134,8 @@ export function CommandPalette() {
       }}
     >
       <div
-        className="modal-backdrop absolute inset-0 bg-black/20"
+        className="modal-backdrop absolute inset-0"
+        style={{ background: "var(--backdrop)" }}
         aria-hidden
         onMouseDown={close}
       />
@@ -176,7 +178,7 @@ export function CommandPalette() {
                   }`}
                 >
                   <span>{cmd.label}</span>
-                  {cmd.hint ? <span className="text-xs text-ink-muted">{cmd.hint}</span> : null}
+                  {cmd.hint ? <KeyCap>{cmd.hint}</KeyCap> : null}
                 </button>
               </li>
             ))

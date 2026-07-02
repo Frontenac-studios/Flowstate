@@ -142,6 +142,8 @@
   /* ---- elevation (DT-5c — flat; shadow only for overlays) ---- */
   --shadow-none: none;
   --shadow-overlay: 0 8px 24px rgba(20, 28, 40, 0.12);
+  /* overlay scrim — Today stays readable behind ritual sheets (D38) */
+  --backdrop: rgba(0, 0, 0, 0.2);
 
   /* ---- density (DT-5a — compact) ---- */
   --row-min-height: 30px;

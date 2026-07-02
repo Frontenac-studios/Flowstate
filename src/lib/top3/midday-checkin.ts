@@ -16,7 +16,8 @@ export type MiddayCheckinInput = {
 export type MiddayCheckinState =
   | { visible: false }
   | { visible: true; variant: "win" }
-  | { visible: true; variant: "remaining"; hoursLeft: number };
+  | { visible: true; variant: "remaining"; hoursLeft: number }
+  | { visible: true; variant: "resting" };
 
 /**
  * Load-aware midday line on Top3Slots (TD1). Suppressed when over-committed or
@@ -33,11 +34,19 @@ export function computeMiddayCheckin(input: MiddayCheckinInput): MiddayCheckinSt
     incompleteCount,
   } = input;
 
-  if (!top3MiddayCheckinEnabled || isOverCommitted || pinnedCount === 0) {
+  if (!top3MiddayCheckinEnabled || pinnedCount === 0) {
     return { visible: false };
   }
 
   const localHour = getLocalHour(now, tzOffsetMinutes);
+
+  if (isOverCommitted) {
+    if (localHour < TOP3_MIDDAY_CHECKIN_HOUR) {
+      return { visible: false };
+    }
+    return { visible: true, variant: "resting" };
+  }
+
   if (localHour < TOP3_MIDDAY_CHECKIN_HOUR) {
     return { visible: false };
   }
@@ -53,6 +62,7 @@ export function computeMiddayCheckin(input: MiddayCheckinInput): MiddayCheckinSt
 
 export function formatMiddayCheckinLine(state: MiddayCheckinState): string | null {
   if (!state.visible) return null;
+  if (state.variant === "resting") return "Check-in resting — today is full";
   if (state.variant === "win") return "all done — nice";
   const h = state.hoursLeft;
   const unit = h === 1 ? "hour" : "hours";
