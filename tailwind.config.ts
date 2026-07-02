@@ -13,6 +13,7 @@ const config: Config = {
         foreground: "var(--foreground)",
         // flat-calm tokens (tokens.css)
         bg: "var(--bg)",
+        canvas: "var(--canvas)",
         surface: "var(--surface)",
         "surface-2": "var(--surface-2)",
         "active-surface": "var(--active-surface)",

@@ -421,9 +421,11 @@ type Top3HoldOffer = {
 
 type TimelinePaneProps = {
   top3HoldOffer?: Top3HoldOffer | null;
+  /** D14/V3: hide decide slot, gap rows, and sync badge until the day has tasks or blocks. */
+  planItemCount?: number;
 };
 
-export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
+export function TimelinePane({ top3HoldOffer = null, planItemCount = 0 }: TimelinePaneProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -581,6 +583,11 @@ export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
     nowMinutes != null ? largestOpenGap(selfCareBusy, nowMinutes, rangeEnd, 60) : null;
 
   const showNowLine = nowMinutes != null && nowMinutes >= rangeStart && nowMinutes <= rangeEnd;
+  const showTimelineChrome =
+    planItemCount > 0 ||
+    blocks.length > 0 ||
+    timedProtected.length > 0 ||
+    allDayProtected.length > 0;
 
   const openFocus = (taskId: string, blockId: string) => {
     router.push(`/today/focus?${new URLSearchParams({ taskId, blockId }).toString()}`);
@@ -596,12 +603,14 @@ export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
         <span className="text-xs text-ink-muted">
           · today · {formatHour(startHour)}–{formatHour(endHour)}
         </span>
-        <span
-          className="ml-auto rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
-          title="Calendar sync is coming in a later phase"
-        >
-          sync ○ off
-        </span>
+        {showTimelineChrome ? (
+          <span
+            className="ml-auto rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
+            title="Calendar sync is coming in a later phase"
+          >
+            sync ○ off
+          </span>
+        ) : null}
       </header>
 
       {allDayProtected.length > 0 ? (
@@ -620,7 +629,7 @@ export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="relative overflow-y-auto overflow-x-hidden"
+          className="relative overflow-y-auto overflow-x-hidden pt-2"
           style={{ height: VIEWPORT_HEIGHT }}
         >
           <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
@@ -694,7 +703,7 @@ export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
               </div>
             ))}
 
-            {selfCareGap ? (
+            {showTimelineChrome && selfCareGap ? (
               <div
                 className="pointer-events-none absolute left-11 right-1 flex items-center gap-1.5 rounded-md border border-dashed border-[var(--border)] px-2 py-1"
                 style={{
@@ -710,15 +719,19 @@ export function TimelinePane({ top3HoldOffer = null }: TimelinePaneProps) {
               </div>
             ) : null}
 
-            {decideSlotMin != null ? (
+            {showTimelineChrome && decideSlotMin != null ? (
               <div
-                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center rounded-md border border-dashed border-[var(--border)] text-caption text-ink-faint"
+                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-[var(--border)] text-caption text-ink-faint"
                 style={{
                   top: ((decideSlotMin - rangeStart) / 60) * HOUR_HEIGHT,
                   height: (NEXT_BLOCK_MIN / 60) * HOUR_HEIGHT - 4,
                 }}
               >
-                Decide (⌘D) drops the next block here
+                <span>Decide</span>
+                <kbd className="rounded border border-border bg-surface-2 px-1 py-0.5 font-sans text-caption">
+                  ⌘D
+                </kbd>
+                <span>drops the next block here</span>
               </div>
             ) : null}
 

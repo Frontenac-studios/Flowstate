@@ -5,7 +5,7 @@
 
 :root {
   /* legacy aliases → new tokens */
-  --kash-backdrop: var(--bg);
+  --kash-backdrop: var(--canvas);
   --kash-glass-bg: var(--surface);
   --kash-glass-bg-opaque: var(--surface);
   --kash-glass-border: var(--border);

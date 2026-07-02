@@ -1,5 +1,9 @@
+import type { CSSProperties } from "react";
+
 import { formatScheduledDateLabel } from "@/lib/dates/scheduled-date-input";
 import type { ParsedLine, ParseResult } from "@/lib/parser/parse-quick-input";
+import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
+import type { ProjectCategory } from "@/lib/projects/categories";
 import { priorityMeta } from "@/lib/tasks/priority";
 
 type Props = {
@@ -19,14 +23,25 @@ export function getParseChips(parse: ParseResult): string[] {
   return chips;
 }
 
-function ChipRow({ chips }: { chips: string[] }) {
+function chipStyle(category: ProjectCategory | null, chip: string): CSSProperties | undefined {
+  if (!category) return undefined;
+  if (chip.startsWith("#")) return undefined;
+  return {
+    backgroundColor: categoryFillVar(category),
+    borderColor: categorySolidVar(category),
+    color: categoryTextVar(category),
+  };
+}
+
+function ChipRow({ chips, category }: { chips: string[]; category: ProjectCategory | null }) {
   if (chips.length === 0) return null;
   return (
     <>
       {chips.map((chip) => (
         <span
           key={chip}
-          className="shrink-0 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
+          className="min-w-[2.5rem] shrink-0 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
+          style={chipStyle(category, chip)}
         >
           {chip}
         </span>
@@ -41,7 +56,7 @@ export function ParsePreviewChips({ parse }: Props) {
 
   return (
     <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite">
-      <ChipRow chips={chips} />
+      <ChipRow chips={chips} category={parse.category} />
     </div>
   );
 }
@@ -62,9 +77,9 @@ export function MultiLineParsePreview({ lines }: MultiLineProps) {
             key={line.lineIndex}
             className="flex min-w-0 items-center gap-2 text-xs text-ink-muted"
           >
-            <span className="min-w-0 flex-1 truncate">{line.parse.title}</span>
+            <span className="min-w-0 flex-1 break-words">{line.parse.title}</span>
             <span className="flex shrink-0 flex-wrap justify-end gap-1">
-              <ChipRow chips={chips} />
+              <ChipRow chips={chips} category={line.parse.category} />
             </span>
           </li>
         );

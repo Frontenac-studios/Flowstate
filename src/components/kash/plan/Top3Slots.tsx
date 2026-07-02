@@ -4,8 +4,13 @@ import Link from "next/link";
 import { forwardRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
-import { categorySolidVar } from "@/lib/projects/category-tokens";
-import { type ProjectCategory } from "@/lib/projects/categories";
+import {
+  categorySolidVar,
+  categoryFillVar,
+  categoryTextVar,
+  categorySeedLabel,
+} from "@/lib/projects/category-tokens";
+import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 
 import { Top3Deadline } from "./Top3Deadline";
 import { Top3SlipChip } from "./Top3SlipChip";
@@ -88,6 +93,27 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
   );
 }
 
+function Top3GhostSlot({ slot, category }: { slot: 1 | 2 | 3; category: ProjectCategory }) {
+  const label = SLOT_LABELS[slot - 1];
+  return (
+    <div
+      className="flex min-h-[var(--row-min-height)] items-center gap-2 rounded-pill border border-dashed px-3 py-[var(--row-py)]"
+      style={{
+        borderColor: categorySolidVar(category),
+        backgroundColor: categoryFillVar(category),
+      }}
+      aria-hidden
+    >
+      <span className="shrink-0 text-xs opacity-60" style={{ color: categoryTextVar(category) }}>
+        {label}
+      </span>
+      <span className="text-xs" style={{ color: categoryTextVar(category) }}>
+        Pin a {categorySeedLabel(category).toLowerCase()} priority
+      </span>
+    </div>
+  );
+}
+
 function Top3HintDropZone() {
   const { setNodeRef, isOver } = useDroppable({ id: "top3:next" });
 
@@ -95,11 +121,20 @@ function Top3HintDropZone() {
     <div
       ref={setNodeRef}
       data-top3-hint
-      className={`flex min-h-[var(--row-min-height)] w-full items-center text-center text-xs text-ink-muted transition ${
+      className={`flex flex-col gap-2 transition ${
         isOver ? "kash-section-drop-target rounded-[var(--radius-card)] ring-2 ring-accent" : ""
       }`}
     >
-      Swipe right on a task to your top three priorities for today
+      {([1, 2, 3] as const).map((slot) => (
+        <Top3GhostSlot
+          key={slot}
+          slot={slot}
+          category={PROJECT_CATEGORIES[(slot - 1) % PROJECT_CATEGORIES.length]!}
+        />
+      ))}
+      <p className="text-center text-xs text-ink-muted">
+        Swipe right on a task to pin your top three
+      </p>
     </div>
   );
 }
@@ -171,7 +206,7 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
         >
           Today&apos;s Priorities
         </h2>
-        <Top3Deadline />
+        <Top3Deadline visible={pinnedCount > 0} />
       </div>
       <div className="flex flex-col gap-2">
         {showHint ? <Top3HintDropZone /> : null}
