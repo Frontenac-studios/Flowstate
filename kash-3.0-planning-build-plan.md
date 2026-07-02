@@ -4,8 +4,8 @@
 > **Status (Jul 1 2026):** horizons shipped on `main` — Year / Quarter / Month / Week / Bingo views,
 > balance pass, check-in, bingo goal panel + list + onboarding + rewards. **Planning §8 is largely complete.**
 > Residual polish only. Phase set = **PB1–PB8** (historical); companions unchanged.
-> Companions: `kash-3.0-planning-mode.md`, `kash-3.0-plan.md` §8, `kash-3.0-build-breakdown.md`,
-> `kash-3.0-mockups.html` (Plan/Bingo pages), `kash-3.0-design-tokens.md` (§5 motion).
+> Companions: `kash-3.0-planning-mode.md` (incl. **§13 Tasks across horizons**), `kash-3.0-plan.md` §8,
+> `kash-3.0-build-breakdown.md`, `kash-3.0-mockups.html` (Plan/Bingo pages), `kash-3.0-design-tokens.md` (§5 motion).
 
 ---
 
@@ -27,7 +27,7 @@
 | ET-5    | Bingo list mode   | Dense manage view; category ↔ status grouping toggle                          | planning-mode §10  |
 | ON-1    | Bingo onboarding  | Three **equal** options: brain-dump / blank / guided                          | planning-mode §11  |
 | PM11.3  | Capacity nudge    | Committed = sum `time_estimate_minutes`; nudge at **~130%+** of weekly target | planning-mode §11  |
-| RW-1–3  | Line bingo reward | Line glow + toast; `recordBingoReward()` stub; escalating → blackout finale   | planning-mode §11  |
+| RW-1–3  | Line bingo reward | Line glow + toast; `recordBingoReward()` → Care; escalating → blackout finale | planning-mode §11  |
 | GA-1–5  | Ghosted-accept    | Reuse `GhostedAccept` for all AI suggestions                                  | planning-mode §9   |
 
 ---
@@ -36,22 +36,23 @@
 
 **Built:**
 
-| Layer         | Status | Notes                                                                                                                                                      |
-| ------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Schema + sync | ✅     | `bingo_cards`, `goals`, `goal_milestones`, `quarter_themes`, `month_intentions`, `reserved_days`, `planning_suggestions`; task milestone + estimate fields |
-| tRPC          | ✅     | `planning.ts` — full CRUD + suggestions stage/apply                                                                                                        |
-| Plan shell    | ✅     | `/plan` → `PlanHorizonView`: switcher + breadcrumb + localStorage resume                                                                                   |
-| Horizons      | ✅     | `YearView`, `QuarterView`, `MonthView`, `WeekPlanView`, `BingoCard` — all live (not placeholders)                                                          |
-| Bingo         | ✅     | Goal panel, list view, onboarding, spelling pass, line rewards → `care.recordBingoNourish`, finalize→lock animation                                        |
-| Balance pass  | ✅     | `BalancePassProvider` + chip + ghosts                                                                                                                      |
-| Check-in      | ✅     | `CheckInProvider` + modal + cadence nudge                                                                                                                  |
-| GhostedAccept | ✅     | Shared; wired across planning surfaces                                                                                                                     |
+| Layer          | Status | Notes                                                                                                                                                      |
+| -------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema + sync  | ✅     | `bingo_cards`, `goals`, `goal_milestones`, `quarter_themes`, `month_intentions`, `reserved_days`, `planning_suggestions`; task milestone + estimate fields |
+| tRPC           | ✅     | `planning.ts` — full CRUD + suggestions stage/apply                                                                                                        |
+| Plan shell     | ✅     | `/plan` → `PlanHorizonView`: switcher + breadcrumb + localStorage resume                                                                                   |
+| Horizons       | ✅     | `YearView`, `QuarterView`, `MonthView`, `WeekPlanView`, `BingoCard` — all live (not placeholders)                                                          |
+| Bingo          | ✅     | Goal panel, list view, onboarding, spelling pass, line rewards → `care.recordBingoNourish`, finalize→lock animation                                        |
+| Balance pass   | ✅     | `BalancePassProvider` + chip + ghosts                                                                                                                      |
+| Check-in       | ✅     | `CheckInProvider` + modal + cadence nudge                                                                                                                  |
+| GhostedAccept  | ✅     | Shared; wired across planning surfaces                                                                                                                     |
+| Tasks/horizons | ✅     | Per-tab task flows documented in **planning-mode §13**; milestone link + week rail shipped                                                                 |
 
 **Residual gaps (polish, not blockers):**
 
 - Horizon UX refinement as usage feedback arrives
-- `recordBingoReward` now calls Care (no longer a no-op stub)
 - Optional zoom-grow transition (AN-P1) — page cross-fade ships instead
+- Task **tags** (`tasks.tags`, §14) — global spine tail; not a planning-tab feature
 
 ---
 
@@ -189,12 +190,13 @@ Recommended order: **PB1 → PB2 → PB3 → PB4 → PB5 → PB6 → PB7 → PB8
 
 PB6 and PB7 may run in parallel with PB3–PB5 per §12 foundation fan-out.
 
-**Integration stubs (wire interfaces, empty OK):**
+**Integration seams (wired Jul 1 2026):**
 
-- §10 Abyss → `fetchAbyssBalanceCandidates()`
-- §12 Care → `recordBingoReward()`
-- §13 Values → `value_id` on goals (picker uses About-me list where available)
-- §11 AI persona → mock ghost payloads in `planning_suggestions` until persona refactor
+- §10 Abyss → `fetchAbyssBalanceCandidates()` (live)
+- §12 Care → `recordBingoReward()` → `care.recordBingoNourish`
+- §13 Values → `value_id` on goals; About-me picker in goal panel
+- §11 AI persona → mock ghost payloads in `planning_suggestions` until persona breadth complete
+- §14 Task tags → deferred; see `planning-mode.md` §13.7 + `data-spine-build-spec.md` Phase 5
 
 ---
 

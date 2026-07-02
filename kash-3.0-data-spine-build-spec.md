@@ -12,6 +12,7 @@
 | 3     | Task dependencies          | ⚠️ **superseded** — built to a revised design (3.g–3.l), not the 3A–3E below | ✅ **built (revised)** — `task_dependencies` join table (many-blockers, project/window edges + `expires_at` sweep), `dependencies` router, `lib/tasks/dependencies/blocked.ts`, RDM `pick-task` integration. 3A–3E below are the old blocked-by-one design and are obsolete.                                                                                                                                                                                              |
 | 4     | Recurrence                 | ✅ spec'd (4A–4G)                                                            | ✅ **built (Jun 25)** — migration `0014_vengeful_randall.sql`; `task_recurrence` + `task_occurrence_overrides`; `src/lib/recurrence/` (expand, parse-phrase, occurrence-id); tRPC `recurrence` router; virtual occurrences merged into `tasks.listIncomplete`; composer shorthand + ↻ chip; task-detail Repeat presets (`TaskRepeatSection`); week drag reschedule/skip; sync + RLS. _Tail:_ full Repeat picker (custom ends/interval), `editOccurrence` UI on plan rows. |
 | W     | Week protected blocks (§7) | ✅ spec'd (plan §7 + below)                                                  | ⬛ **built (Jul 1)** — templates + instances, Week chips, Today all-day + timed grid, Settings default-week editor, over-commit load, tally-on-demand, EoW chip, AI week-draft integration.                                                                                                                                                                                                                                                                               |
+| 5     | Task tags (§14)            | ✅ spec'd (5A–5E) below                                                      | ⬜ **not started** — `tasks.tags` column + composer/filter UI + sync parity. Cross-ref: `planning-mode.md` §13.7 (not a planning-tab feature).                                                                                                                                                                                                                                                                                                                            |
 
 > **Re-baselined Jul 1 2026** against `main` (Phases 0–6): Phases 1–4 + Week protected blocks are **built**. Active tail: **task tags** (decided v1, schema pending) + backend optimization parallel track.
 
@@ -258,3 +259,46 @@ Not a numbered spine phase — implements plan §7 protected blocks + the templa
 - **Accept:** offline CRUD parity.
 
 **Built (Jun 25):** W1–W4 shipped (`drizzle/0015_yummy_moondragon.sql`, `src/trpc/routers/protected-blocks.ts`, `ProtectedBlockChip`, `ProtectedWeekBar`, `TimelinePane` all-day chips). **Not yet:** Settings template editor, timed timeline placement, over-commit load counting, per-column tally on hover/tap, AI week-draft respecting protected blocks.
+
+---
+
+# Phase 5 — Task tags (§14)
+
+Freeform, many-per-task labels — **distinct from category** (§2 MECE) and from Abyss item tags.
+Decision locked Jun 27 (`kash-3.0-plan.md` §14). Planning horizons cross-link only (`planning-mode.md` §13.7).
+
+### 5A — Schema
+
+- Add `tags text[]` (or `jsonb` string array) to `src/db/schema/tasks.ts`, nullable, default `[]`.
+- No join table for v1 — tags live on the task row.
+- Index: optional GIN on `tags` if filter queries need it (add only if explain shows seq scan).
+- `db:generate` → review SQL → RLS unchanged (lives on `tasks`).
+- **Accept:** column exists; existing rows backfill to `[]` or NULL treated as empty.
+
+### 5B — tRPC
+
+- `tasks.create` / `tasks.update` Zod: `tags: z.array(z.string().min(1).max(64)).max(20).optional()`.
+- Normalize: trim, lowercase for storage or preserve case per product choice (recommend **preserve case, dedupe case-insensitive**).
+- `tasks.listIncomplete` (and any list used by Week lens): optional `tag` filter input.
+- **Accept:** create/update round-trip tags; filter returns only matching tasks.
+
+### 5C — Composer + task detail
+
+- Semicolon segment: `;tagname` or `;#tagname` (match existing composer property pattern from Phase 1D).
+- Autocomplete from user's existing tag vocabulary (distinct tags across their tasks).
+- `TaskDetail.tsx`: editable tag chips (add/remove).
+- **Accept:** quick-input `write report; work` attaches tag `work`; detail panel edits stick.
+
+### 5D — Filter UI
+
+- Week `LensControlBar` (and optionally Today/Projects filters): tag chip filter, multi-select OR semantics.
+- Distinct from category filter — both can combine.
+- **Accept:** filtering by tag narrows visible plan rows without hiding unrelated horizons.
+
+### 5E — Sync + offline
+
+- Mirror `tags` on SQLite `tasks` in `packages/db-local`; row-mapper round-trips array.
+- Offline create/update preserves tags locally; batched push per sync conventions.
+- **Accept:** tag edit on desktop offline syncs on reconnect.
+
+**Order:** `5A → 5B → (5C ∥ 5D) → 5E`. Independent of Planning §8. Size: **M** (see `kash-3.0-remaining-build.md` A.1).
