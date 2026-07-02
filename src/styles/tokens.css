@@ -76,6 +76,17 @@
   --cat-body-mind-solid: #61bb47;
   --cat-body-mind-text: #3a7026;
 
+  /* ---- daily wins facets (D16) — cool trio, separate from categories ---- */
+  --win-body-fill: color-mix(in srgb, #0f6e56 12%, var(--surface));
+  --win-body-solid: #0f6e56;
+  --win-body-text: #0f6e56;
+  --win-mind-fill: color-mix(in srgb, #3a46c0 12%, var(--surface));
+  --win-mind-solid: #3a46c0;
+  --win-mind-text: #3a46c0;
+  --win-soul-fill: color-mix(in srgb, #d4537e 12%, var(--surface));
+  --win-soul-solid: #d4537e;
+  --win-soul-text: #d4537e;
+
   /* reserved — yellow (status/highlight, never a category) */
   --reserved-yellow-fill: #fff4dc;
   --reserved-yellow-solid: #fcb827;

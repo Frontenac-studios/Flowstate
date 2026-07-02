@@ -9,6 +9,10 @@ export type EditionInput = {
   categoryCounts: Partial<Record<ProjectCategory, number>>;
 };
 
+const MAX_ANCHORS = 40;
+const MAX_THROUGHLINE_CHARS = 220;
+const THIN_WINDOW_WIN_CAP = 2;
+
 export function templateEvidenceNarrative(input: EditionInput): EvidenceNarrative {
   const winCount = input.anchors.filter((a) => a.type === "win").length;
   const reflectionCount = input.anchors.filter((a) => a.type === "reflection").length;
@@ -29,8 +33,37 @@ export function templateEvidenceNarrative(input: EditionInput): EvidenceNarrativ
       `You wrote ${reflectionCount} reflection${reflectionCount === 1 ? "" : "s"}. ${categoryLine}`.trim();
   }
 
+  return applyEditionGuardrails(
+    {
+      throughline,
+      anchors: input.anchors.slice(0, MAX_ANCHORS),
+    },
+    { winCount, reflectionCount }
+  );
+}
+
+/** C2 — thin windows stay short; mood-less periods skip reflection framing. */
+export function applyEditionGuardrails(
+  narrative: EvidenceNarrative,
+  context: { winCount: number; reflectionCount: number }
+): EvidenceNarrative {
+  let throughline = narrative.throughline.trim();
+
+  if (context.winCount > 0 && context.winCount <= THIN_WINDOW_WIN_CAP) {
+    const firstSentence = throughline.split(/(?<=[.!?])\s+/)[0] ?? throughline;
+    throughline = firstSentence.endsWith(".") ? firstSentence : `${firstSentence}.`;
+  }
+
+  if (context.reflectionCount === 0 && context.winCount > 0) {
+    throughline = throughline.replace(/\s*You wrote \d+ reflections?\.?/i, "").trim();
+  }
+
+  if (throughline.length > MAX_THROUGHLINE_CHARS) {
+    throughline = `${throughline.slice(0, MAX_THROUGHLINE_CHARS - 1).trimEnd()}…`;
+  }
+
   return {
     throughline,
-    anchors: input.anchors.slice(0, 40),
+    anchors: narrative.anchors.slice(0, MAX_ANCHORS),
   };
 }

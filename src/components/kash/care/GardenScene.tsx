@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
+import { Moon, Sparkles } from "lucide-react";
 
+import { kashIconProps } from "@/components/kash/ui/icon";
 import type { GardenLifeState } from "@/lib/care/garden-dormancy";
 import type { GardenNourishBeat } from "@/lib/care/garden-nourish";
 import { extraPlantCount, gardenGrowthStageLabel } from "@/lib/care/garden-growth";
@@ -53,7 +55,7 @@ export function GardenScene({
 
   return (
     <div
-      className="flex h-full flex-col overflow-hidden rounded-card border border-subtle"
+      className="flex h-full flex-col overflow-hidden rounded-card border border-subtle bg-[var(--g-sky)]"
       style={{
         ...gardenPalette,
         ...(isDormant
@@ -73,89 +75,93 @@ export function GardenScene({
             : {}),
       }}
     >
-      <svg
-        viewBox="0 0 380 250"
-        width="100%"
-        className="block"
-        role="img"
-        aria-label="An illustrated garden — your self-care, growing"
-      >
-        <rect x="0" y="0" width="380" height="250" fill="var(--g-sky)" />
-        <circle cx="312" cy="48" r="26" fill="var(--g-sun)" />
-        <path
-          d="M0 168 Q90 138 200 162 Q300 182 380 158 L380 250 L0 250 Z"
-          fill="var(--g-hill-1)"
-        />
-        <path
-          d="M0 196 Q120 172 230 192 Q320 208 380 192 L380 250 L0 250 Z"
-          fill="var(--g-hill-2)"
-        />
-        <path
-          d="M0 224 Q140 210 260 222 Q330 230 380 222 L380 250 L0 250 Z"
-          fill="var(--g-hill-3)"
-        />
-        <g
-          stroke="var(--g-stem)"
-          strokeWidth={3}
-          strokeLinecap="round"
-          fill="none"
-          opacity={isDormant ? 0.55 : 1}
-        >
-          <path d="M70 224 L70 188" />
-          <path d="M70 200 q-12 -6 -16 -16" />
-          <path d="M70 196 q12 -7 17 -17" />
-          <path d="M120 226 L120 182" />
-          <path d="M120 198 q-13 -5 -18 -16" />
-          <path d="M120 192 q13 -6 18 -16" />
-          <path d="M250 226 L250 178" />
-          <path d="M250 200 q-14 -6 -19 -18" />
-          <path d="M250 194 q14 -7 19 -18" />
-        </g>
-        <circle cx="70" cy="180" r="9" fill="var(--g-petal-a)" opacity={isDormant ? 0.5 : 1} />
-        <circle cx="70" cy="180" r="3.5" fill="var(--g-flower-core)" />
-        <circle cx="120" cy="174" r="9" fill="var(--g-petal-b)" opacity={isDormant ? 0.5 : 1} />
-        <circle cx="120" cy="174" r="3.5" fill="var(--g-flower-core)" />
-        <circle cx="250" cy="170" r="11" fill="var(--g-sun)" />
-        <circle cx="250" cy="170" r="4" fill="var(--g-flower-core)" />
-        <GardenSpeciesSprite species={species} grown={grown} x={186} y={224} />
-        <GardenSpeciesSprite species="fern" grown={grown} x={310} y={226} />
-        <g
-          key={nourishPulseKey}
-          className={
-            nourishBeat === "full_set"
-              ? "garden-nourish-full"
-              : nourishBeat === "drip"
-                ? "garden-nourish-drip"
-                : undefined
-          }
-        >
-          <circle cx="345" cy="214" r="7" fill="var(--g-petal-a)" />
-        </g>
-        {bonusPlants > 0
-          ? bonusOffsets.slice(0, bonusPlants).map((plant, index) => (
-              <g key={`bonus-${index}`} opacity={isDormant ? 0.45 : 1}>
-                <circle cx={plant.cx} cy={plant.cy} r={plant.r} fill="var(--g-leaf-soft)" />
-                <circle
-                  cx={plant.cx}
-                  cy={plant.cy - plant.r - 2}
-                  r={plant.r - 2}
-                  fill="var(--g-petal-b)"
-                />
-              </g>
-            ))
-          : null}
+      <div className="relative min-h-0 flex-1">
         {isReviving ? (
-          <text x="16" y="28" className="fill-[var(--cat-body-mind-text)] text-[11px]">
-            ✨ Waking up
-          </text>
+          <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 text-caption text-[var(--cat-body-mind-text)]">
+            <Sparkles {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
+            <span>Waking up</span>
+          </div>
         ) : null}
         {isDormant ? (
-          <text x="16" y="28" className="fill-[var(--ink-faint)] text-[11px]">
-            🌙 Resting gently
-          </text>
+          <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 text-caption text-ink-faint">
+            <Moon {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
+            <span>Resting gently</span>
+          </div>
         ) : null}
-      </svg>
-      <p className="border-t border-subtle bg-surface px-3 py-2 text-caption text-ink-muted">
+        <svg
+          viewBox="0 0 380 250"
+          width="100%"
+          className="block h-full min-h-[200px]"
+          role="img"
+          aria-label="An illustrated garden — your self-care, growing"
+        >
+          <rect x="0" y="0" width="380" height="250" fill="var(--g-sky)" />
+          <circle cx="312" cy="48" r="26" fill="var(--g-sun)" />
+          <path
+            d="M0 168 Q90 138 200 162 Q300 182 380 158 L380 250 L0 250 Z"
+            fill="var(--g-hill-1)"
+          />
+          <path
+            d="M0 196 Q120 172 230 192 Q320 208 380 192 L380 250 L0 250 Z"
+            fill="var(--g-hill-2)"
+          />
+          <path
+            d="M0 224 Q140 210 260 222 Q330 230 380 222 L380 250 L0 250 Z"
+            fill="var(--g-hill-3)"
+          />
+          <g
+            stroke="var(--g-stem)"
+            strokeWidth={3}
+            strokeLinecap="round"
+            fill="none"
+            opacity={isDormant ? 0.55 : 1}
+          >
+            <path d="M70 224 L70 188" />
+            <path d="M70 200 q-12 -6 -16 -16" />
+            <path d="M70 196 q12 -7 17 -17" />
+            <path d="M120 226 L120 182" />
+            <path d="M120 198 q-13 -5 -18 -16" />
+            <path d="M120 192 q13 -6 18 -16" />
+            <path d="M250 226 L250 178" />
+            <path d="M250 200 q-14 -6 -19 -18" />
+            <path d="M250 194 q14 -7 19 -18" />
+          </g>
+          <circle cx="70" cy="180" r="9" fill="var(--g-petal-a)" opacity={isDormant ? 0.5 : 1} />
+          <circle cx="70" cy="180" r="3.5" fill="var(--g-flower-core)" />
+          <circle cx="120" cy="174" r="9" fill="var(--g-petal-b)" opacity={isDormant ? 0.5 : 1} />
+          <circle cx="120" cy="174" r="3.5" fill="var(--g-flower-core)" />
+          <circle cx="250" cy="170" r="11" fill="var(--g-sun)" />
+          <circle cx="250" cy="170" r="4" fill="var(--g-flower-core)" />
+          <GardenSpeciesSprite species={species} grown={grown} x={186} y={224} />
+          <GardenSpeciesSprite species="fern" grown={grown} x={310} y={226} />
+          <g
+            key={nourishPulseKey}
+            className={
+              nourishBeat === "full_set"
+                ? "garden-nourish-full"
+                : nourishBeat === "drip"
+                  ? "garden-nourish-drip"
+                  : undefined
+            }
+          >
+            <circle cx="345" cy="214" r="7" fill="var(--g-petal-a)" />
+          </g>
+          {bonusPlants > 0
+            ? bonusOffsets.slice(0, bonusPlants).map((plant, index) => (
+                <g key={`bonus-${index}`} opacity={isDormant ? 0.45 : 1}>
+                  <circle cx={plant.cx} cy={plant.cy} r={plant.r} fill="var(--g-leaf-soft)" />
+                  <circle
+                    cx={plant.cx}
+                    cy={plant.cy - plant.r - 2}
+                    r={plant.r - 2}
+                    fill="var(--g-petal-b)"
+                  />
+                </g>
+              ))
+            : null}
+        </svg>
+      </div>
+      <p className="shrink-0 border-t border-subtle bg-surface px-3 py-2 text-caption text-ink-muted">
         Your garden — it grows as you tend yourself, and gently rests when you do.
         <span className="mt-0.5 block text-ink">
           {nourishCount > 0

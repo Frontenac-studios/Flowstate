@@ -4,8 +4,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useId, useState } from "react";
 
 import Input from "@/components/kash/ui/Input";
+import { WinFacetBadge } from "@/components/kash/daily-wins/WinFacetBadge";
 import { assignProposalsToEmptySlots } from "@/lib/daily-wins/assign-proposals";
 import { EMPTY_DAY_FOOTER, shouldShowEmptyDayFooter } from "@/lib/daily-wins/empty-day-tone";
+import {
+  facetInvitation,
+  inferWinFacet,
+  openFacetsFromSlots,
+  SLOT_FACET,
+} from "@/lib/daily-wins/facets";
 import {
   markDailyWinsExplainerSeen,
   readDailyWinsExplainerSeen,
@@ -78,6 +85,11 @@ function DailyWinSlotRow({
   }, [manualOpen]);
 
   if (accepted) {
+    const facet = inferWinFacet({
+      source: accepted.source,
+      label: winLabel(accepted),
+      slot,
+    });
     return (
       <li
         className={cn(
@@ -86,9 +98,7 @@ function DailyWinSlotRow({
         )}
       >
         <div className="min-w-0 flex-1">
-          <span className="mr-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
-            Win {slotLabel(slot)}
-          </span>
+          <WinFacetBadge facet={facet} className="mb-1" />
           <span className="text-ink">{winLabel(accepted)}</span>
         </div>
         {writable ? (
@@ -229,14 +239,15 @@ function DailyWinSlotRow({
   }
 
   return (
-    <li className="border-ink/25 bg-ink/[0.02] flex items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2 text-sm">
-      <span className="text-ink-muted">Slot {slotLabel(slot)} — open</span>
+    <li className="border-ink/25 bg-ink/[0.02] flex flex-col gap-1 rounded-lg border border-dashed px-3 py-2 text-sm">
+      <WinFacetBadge facet={SLOT_FACET[slot]} />
+      <span className="text-caption text-ink-muted">{facetInvitation(SLOT_FACET[slot])}</span>
       {writable ? (
         <button
           type="button"
           disabled={busy}
           onClick={onOpenManual}
-          className="hover:bg-ink/5 shrink-0 rounded px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          className="hover:bg-ink/5 self-start rounded px-2 py-1 text-xs text-ink-muted hover:text-ink"
         >
           + Add your own
         </button>
@@ -398,6 +409,7 @@ export function DailyWinsTracker({ winDate, tzOffsetMinutes }: Props) {
     filledCount,
     proposalCount: proposals.length,
   });
+  const openFacetInvitations = openFacetsFromSlots(slots).map((facet) => facetInvitation(facet));
 
   return (
     <section className="space-y-[var(--space-3)]" aria-label="Three daily wins">
@@ -411,6 +423,8 @@ export function DailyWinsTracker({ winDate, tzOffsetMinutes }: Props) {
           </p>
         ) : gentlePrompt ? (
           <p className="mt-[var(--space-1)] text-body text-ink-muted">{gentlePrompt}</p>
+        ) : openFacetInvitations.length > 0 && filledCount > 0 ? (
+          <p className="mt-[var(--space-1)] text-body text-ink-muted">{openFacetInvitations[0]}</p>
         ) : null}
       </div>
 

@@ -4,7 +4,11 @@ import type { EvidenceAnchor } from "@/db/schema/evidence-editions";
 
 import { monthPeriodForDate, quarterPeriodForDate } from "./evidence-periods";
 import { qualifiesGoalForEvidenceEdition } from "./qualifies-goal-for-evidence";
-import { templateEvidenceNarrative, type EditionInput } from "./template-evidence-narrative";
+import {
+  applyEditionGuardrails,
+  templateEvidenceNarrative,
+  type EditionInput,
+} from "./template-evidence-narrative";
 
 function editionInput(overrides?: Partial<EditionInput>): EditionInput {
   return {
@@ -54,13 +58,14 @@ describe("templateEvidenceNarrative", () => {
         anchors: [
           { type: "win", id: "w1", label: "Shipped the deck" },
           { type: "win", id: "w2", label: "Made dinner" },
+          { type: "win", id: "w3", label: "Walked outside" },
         ],
         categoryCounts: { body_mind: 4 },
       })
     );
-    expect(narrative.throughline).toContain("2 wins");
+    expect(narrative.throughline).toContain("3 wins");
     expect(narrative.throughline.toLowerCase()).toContain("body");
-    expect(narrative.anchors).toHaveLength(2);
+    expect(narrative.anchors).toHaveLength(3);
   });
 
   it("caps anchors at forty entries", () => {
@@ -71,6 +76,25 @@ describe("templateEvidenceNarrative", () => {
     }));
     const narrative = templateEvidenceNarrative(editionInput({ anchors }));
     expect(narrative.anchors).toHaveLength(40);
+  });
+
+  it("keeps thin windows short (C2)", () => {
+    const narrative = templateEvidenceNarrative(
+      editionInput({
+        anchors: [{ type: "win", id: "w1", label: "Walked outside" }],
+        categoryCounts: { body_mind: 2, professional: 5 },
+      })
+    );
+    expect(narrative.throughline.split(".").filter(Boolean)).toHaveLength(1);
+  });
+
+  it("applyEditionGuardrails caps throughline length", () => {
+    const long = "A".repeat(300);
+    const guarded = applyEditionGuardrails(
+      { throughline: long, anchors: [] },
+      { winCount: 5, reflectionCount: 0 }
+    );
+    expect(guarded.throughline.length).toBeLessThanOrEqual(220);
   });
 });
 

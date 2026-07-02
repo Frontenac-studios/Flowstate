@@ -9,6 +9,7 @@ import { toLocalISODate } from "@/lib/nudges/local-time";
 import { useTRPC } from "@/trpc/client";
 
 import { GardenScene } from "./GardenScene";
+import { RestorativeTimeCard } from "./RestorativeTimeCard";
 import { useGardenNourishPulse } from "./useGardenNourishPulse";
 
 function clientTzOffsetMinutes(): number {
@@ -120,10 +121,11 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
               </div>
             </section>
           ) : null}
+          <RestorativeTimeCard />
         </div>
       </div>
       <p className="px-0.5 text-caption text-ink-faint">
-        See your wins history and gentle trends in the Stats tab.
+        See your wins history and gentle trends in the Evidence tab.
       </p>
     </div>
   );
