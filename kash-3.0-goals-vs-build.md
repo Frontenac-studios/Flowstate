@@ -8,13 +8,10 @@
 
 ---
 
-> **⚠️ Status update (Jul 1 2026):** this audit captured the **pre-spec code state**. All three gaps
-> below (A progress/wins, B goal-steering, C balance) and Top-3 have **since been specced** — see
-> `kash-3.0-evidence-build-spec.md`, `kash-3.0-goals-view-build-spec.md`,
-> `kash-3.0-balance-nudge-build-spec.md`, `kash-3.0-top3-assurance-build-spec.md`, and the foundations
-> in `kash-3.0-morning-and-arbitration-build-spec.md`. The 🔴/🟡 scorecard verdicts still describe what's
-> **in code** (not yet built); the "no design behind it / isn't specced anywhere" prose below is now
-> **out of date** — kept as the audit's original finding, not the current state.
+> **⚠️ Status update (Jul 2 2026):** the gap-audit tracks identified below are **now built** on
+> `feat/kash-3.0-complete` — Foundations (morning hand-off + nudge arbiter), Evidence (wins memory +
+> Care shrine), Goals progress/steering (timeline + heatmap + Bingo→Goals), Balance nudge
+> (category-starvation), and Top-3 assurance. Scorecard verdicts below are **current as of Jul 2 2026**.
 
 ## The rubric (from the README)
 
@@ -34,23 +31,42 @@
 
 ## Scorecard
 
-| #   | Goal                                  | Verdict | One-line gap                                                                                                                              |
-| --- | ------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Kill decision paralysis (RDM)         | ✅      | Core loop is real and complete.                                                                                                           |
-| 9   | One inbox (Abyss)                     | ✅      | Capture, sky/list, archive, promote — delivered.                                                                                          |
-| 10  | Recurring tasks                       | ✅      | RRULE + virtual occurrences shipped.                                                                                                      |
-| 11  | Focus / fewer distractions            | ✅      | Focus timer + auto-DND shipped.                                                                                                           |
-| 7   | Weekly time-by-category               | ✅      | `WeeklySummaryCard` rolls focus time up per category **and** project. The strongest "invisible→visible" surface in the app.               |
-| 3   | You plan, Kash steers                 | ✅      | Confirm-card + reversible AI honor the contract.                                                                                          |
-| 2   | Balance across sectors                | 🟡      | Balance is **computed and displayed** (BalanceBar, neglect callouts) but only **1 of 5** categories gets an active nudge.                 |
-| 8   | Top 3 land                            | ✅      | One-tap timeline hold, load-aware midday check-in on slots, wind-down deadline, and persistent-slip chip (Jul 2026 assurance).            |
-| 4   | Steer toward goals in small steps     | 🔴      | Milestones must be **manually** linked to tasks; nothing surfaces the next small step into Today.                                         |
-| 5   | Progress visualization / see the path | 🔴      | Goal progress is a **text "% via milestones"** — no bar, timeline, or path. This is the #1 stated emotional need and the weakest surface. |
-| 6   | Remember & resurface wins             | 🔴      | Wins are stored but **never shown back**. No history, no wall, no reassurance lookback.                                                   |
+| #   | Goal                                  | Verdict | One-line gap                                                                                                                |
+| --- | ------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Kill decision paralysis (RDM)         | ✅      | Core loop is real and complete.                                                                                             |
+| 9   | One inbox (Abyss)                     | ✅      | Capture, sky/list, archive, promote — delivered.                                                                            |
+| 10  | Recurring tasks                       | ✅      | RRULE + virtual occurrences shipped.                                                                                        |
+| 11  | Focus / fewer distractions            | ✅      | Focus timer + auto-DND shipped.                                                                                             |
+| 7   | Weekly time-by-category               | ✅      | `WeeklySummaryCard` rolls focus time up per category **and** project. The strongest "invisible→visible" surface in the app. |
+| 3   | You plan, Kash steers                 | ✅      | Confirm-card + reversible AI honor the contract.                                                                            |
+| 2   | Balance across sectors                | ✅      | Category-starvation nudge + weekly digest shipped (Jul 2026). BalanceBar + neglect callouts remain. _Was 🟡._               |
+| 8   | Top 3 land                            | ✅      | One-tap timeline hold, load-aware midday check-in on slots, wind-down deadline, and persistent-slip chip.                   |
+| 4   | Steer toward goals in small steps     | ✅      | Next milestone step surfaces into Today (load-aware steering). _Was 🔴._                                                    |
+| 5   | Progress visualization / see the path | ✅      | Per-goal journey timeline + attention heatmap replace bare "% via milestones." _Was 🔴._                                    |
+| 6   | Remember & resurface wins             | ✅      | Evidence editions + Care shrine resurface wins in the user's own voice. _Was 🔴._                                           |
 
 ---
 
-## The three real gaps (feature ≠ promise)
+## The three real gaps (feature ≠ promise) — RESOLVED Jul 2 2026
+
+The gaps below were the audit's original findings (Jul 1). **All three are now addressed in code.**
+
+### Gap A — Progress is stored, never _shown as a picture_ · goals 5 + 6 · ✅ built
+
+**Evidence** (`evidence_editions` + Care shrine) resurfaces wins and reflections. **Goals progress**
+now includes a journey timeline and attention heatmap per goal.
+
+### Gap B — Goals don't steer the day · goal 4 · ✅ built
+
+Next incomplete milestone step surfaces into Today (load-aware). Goals horizon renamed Bingo → Goals.
+
+### Gap C — Balance is felt but barely acted on · goal 2 · ✅ built
+
+Category-starvation nudge + weekly digest close the §2 promise beyond body/mind self-care walks.
+
+---
+
+## Original gap analysis (Jul 1 audit — historical)
 
 ### Gap A — Progress is stored, never _shown as a picture_ · goals 5 + 6
 
@@ -105,9 +121,8 @@ Three different situations, worth separating:
 
 1. **Plan ✅ + Build ✅** — the daily loop, Abyss, recurrence, time rollups, focus. Coherent.
 
-2. **Plan promises it, Build lags** — **category-starvation balance nudges** (Gap C). The spec
-   describes them; the code stopped at self-care walks. This is a straightforward "finish what's
-   specced" item, not a new decision.
+2. **Plan ✅ + Build ✅ (Jul 2026)** — **category-starvation balance nudges** (Gap C). Shipped
+   alongside the weekly digest; self-care walks remain for body/mind.
 
 3. **The README wants it, the Plan itself under-specs or contradicts it** — the important one:
    - **Persistent wins memory (Gap A) is in direct tension with a locked decision.** Plan §15
@@ -126,17 +141,12 @@ is, ironically, the emotional core the README now names as the whole point.
 
 ---
 
-## Suggested next moves (product decisions, not just build)
+## Suggested next moves — DONE (Jul 2 2026)
 
-1. **Reopen the wins-memory fork.** Decide where a persistent, resurfacing view of wins/progress
-   lives — this is the **Evidence** concept. It reconciles §15's "no gamification" (still no
-   points/scores) with the goal of _being reminded_ (a calm wall of proof, not a scoreboard).
-2. **Spec goal-progress visualization.** What does "see the path to my goal" look like — a milestone
-   timeline? a progress bar per goal? a heatmap of attention over the year?
-3. **Spec goal→day steering.** Should the morning hand-off surface the next milestone step? Should
-   new milestone tasks default toward Today instead of "later"?
-4. **Finish the balance nudge** the plan already promises (category-starvation, not just walks).
-5. **Decide how far Top-3 "assurance" should go** — leave it as a soft stall nudge, or add protected
-   time / a stronger mid-day check.
+All five items from the Jul 1 audit have been specced and built:
 
-Items 1–3 are new/reopened product decisions. Items 4–5 are finishing specced-but-unbuilt work.
+1. ✅ Wins-memory fork reopened → **Evidence** built
+2. ✅ Goal-progress visualization specced → **journey timeline + heatmap** built
+3. ✅ Goal→day steering specced → **next-step into Today** built
+4. ✅ Balance nudge finished → **category-starvation nudge** built
+5. ✅ Top-3 assurance → **hold + check-ins + slip chip** built
