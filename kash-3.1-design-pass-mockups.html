@@ -1,416 +1,1194 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kash 3.1 — design pass mockups (chosen options)</title>
-<style>
-  :root{
-    --canvas:#f7f7f8; --surface:#ffffff; --border:#ececec; --border-strong:#e3e3e8;
-    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#8d93a0;
-    --pro:#009ddc; --per:#973d97; --rel:#e03a3e; --adu:#f6821f; --bm:#61bb47;
-    --yellow:#fcb827; --body-t:#0f6e56; --mind-i:#3a46c0; --soul-r:#d4537e;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Figtree,system-ui,-apple-system,sans-serif;background:#eef0f3;color:var(--ink);padding:28px 20px 60px}
-  header.page{max-width:1020px;margin:0 auto 18px}
-  header.page h1{font-size:20px;font-weight:500;margin:0 0 4px}
-  header.page p{font-size:13px;color:var(--ink-muted);margin:0;line-height:1.5}
-  nav.tabs{max-width:1020px;margin:0 auto 16px;display:flex;gap:6px;flex-wrap:wrap}
-  nav.tabs button{font:inherit;font-size:13px;padding:5px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#fff;color:var(--ink-muted);cursor:pointer}
-  nav.tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:500}
-  .pane{display:none;max-width:1020px;margin:0 auto}
-  .pane.on{display:block}
-  .frame{background:var(--canvas);border:1px solid var(--border-strong);border-radius:14px;padding:22px}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px}
-  .row{display:flex;align-items:center;gap:10px}
-  .h1{font-size:18px;font-weight:500}
-  .lab{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);font-weight:500}
-  .mut{font-size:13px;color:var(--ink-muted)}
-  .fnt{font-size:13px}
-  .seg{display:flex;background:#ededf0;border-radius:8px;padding:2px;gap:2px}
-  .seg span{font-size:12px;padding:3px 12px;border-radius:6px;color:var(--ink-muted)}
-  .seg .on{background:#fff;color:var(--ink);font-weight:500;border:1px solid var(--border-strong)}
-  .obtn{font-size:13px;font-weight:500;border:1.5px solid var(--ink);color:var(--ink);background:#fff;border-radius:8px;padding:4px 14px}
-  .gbar{display:flex;height:6px;border-radius:3px;overflow:hidden}
-  .gbar span{flex:1;opacity:.45}
-  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-  .slotdot{width:16px;height:16px;border-radius:50%;border:1.5px dashed;display:inline-block}
-  .stripe{width:3px;border-radius:1px;align-self:stretch;flex:none}
-  .pillk{font-size:12px;color:var(--ink-muted);background:#f0f0f3;border-radius:999px;padding:1px 10px;white-space:nowrap}
-  .decisions{margin:14px 2px 34px;display:flex;flex-wrap:wrap;gap:8px}
-  .decisions span{font-size:12px;background:#fff;border:1px solid var(--border-strong);border-radius:999px;padding:3px 12px;color:var(--ink-muted)}
-  .decisions b{color:var(--ink);font-weight:500}
-  .note{font-size:12px;color:var(--ink-faint);margin:10px 2px 0}
-  .fadeR{position:absolute;top:0;bottom:0;right:0;width:34px;background:linear-gradient(to right,rgba(247,247,248,0),var(--canvas))}
-</style>
-</head>
-<body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kash 3.1 — design pass mockups (chosen options)</title>
+    <style>
+      :root {
+        --canvas: #f7f7f8;
+        --surface: #ffffff;
+        --border: #ececec;
+        --border-strong: #e3e3e8;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #8d93a0;
+        --pro: #009ddc;
+        --per: #973d97;
+        --rel: #e03a3e;
+        --adu: #f6821f;
+        --bm: #61bb47;
+        --yellow: #fcb827;
+        --body-t: #0f6e56;
+        --mind-i: #3a46c0;
+        --soul-r: #d4537e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          Figtree,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #eef0f3;
+        color: var(--ink);
+        padding: 28px 20px 60px;
+      }
+      header.page {
+        max-width: 1020px;
+        margin: 0 auto 18px;
+      }
+      header.page h1 {
+        font-size: 20px;
+        font-weight: 500;
+        margin: 0 0 4px;
+      }
+      header.page p {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin: 0;
+        line-height: 1.5;
+      }
+      nav.tabs {
+        max-width: 1020px;
+        margin: 0 auto 16px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      nav.tabs button {
+        font: inherit;
+        font-size: 13px;
+        padding: 5px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border-strong);
+        background: #fff;
+        color: var(--ink-muted);
+        cursor: pointer;
+      }
+      nav.tabs button.on {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+        font-weight: 500;
+      }
+      .pane {
+        display: none;
+        max-width: 1020px;
+        margin: 0 auto;
+      }
+      .pane.on {
+        display: block;
+      }
+      .frame {
+        background: var(--canvas);
+        border: 1px solid var(--border-strong);
+        border-radius: 14px;
+        padding: 22px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .h1 {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .lab {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+        font-weight: 500;
+      }
+      .mut {
+        font-size: 13px;
+        color: var(--ink-muted);
+      }
+      .fnt {
+        font-size: 13px;
+      }
+      .seg {
+        display: flex;
+        background: #ededf0;
+        border-radius: 8px;
+        padding: 2px;
+        gap: 2px;
+      }
+      .seg span {
+        font-size: 12px;
+        padding: 3px 12px;
+        border-radius: 6px;
+        color: var(--ink-muted);
+      }
+      .seg .on {
+        background: #fff;
+        color: var(--ink);
+        font-weight: 500;
+        border: 1px solid var(--border-strong);
+      }
+      .obtn {
+        font-size: 13px;
+        font-weight: 500;
+        border: 1.5px solid var(--ink);
+        color: var(--ink);
+        background: #fff;
+        border-radius: 8px;
+        padding: 4px 14px;
+      }
+      .gbar {
+        display: flex;
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .gbar span {
+        flex: 1;
+        opacity: 0.45;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .slotdot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1.5px dashed;
+        display: inline-block;
+      }
+      .stripe {
+        width: 3px;
+        border-radius: 1px;
+        align-self: stretch;
+        flex: none;
+      }
+      .pillk {
+        font-size: 12px;
+        color: var(--ink-muted);
+        background: #f0f0f3;
+        border-radius: 999px;
+        padding: 1px 10px;
+        white-space: nowrap;
+      }
+      .decisions {
+        margin: 14px 2px 34px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .decisions span {
+        font-size: 12px;
+        background: #fff;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 3px 12px;
+        color: var(--ink-muted);
+      }
+      .decisions b {
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .note {
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin: 10px 2px 0;
+      }
+      .fadeR {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 34px;
+        background: linear-gradient(to right, rgba(247, 247, 248, 0), var(--canvas));
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>Kash 3.1 — design pass mockups</h1>
+      <p>
+        Chosen options only, one combined mockup per page. Decisions D9–D35 (see
+        <b>kash-3.1-consolidated-build-spec.md</b> §1 + Track V). Spacing and tint values are
+        illustrative — tokens in the spec govern. Jul 2 2026.
+      </p>
+    </header>
 
-<header class="page">
-  <h1>Kash 3.1 — design pass mockups</h1>
-  <p>Chosen options only, one combined mockup per page. Decisions D9–D35 (see
-  <b>kash-3.1-consolidated-build-spec.md</b> §1 + Track V). Spacing and tint values are
-  illustrative — tokens in the spec govern. Jul 2 2026.</p>
-</header>
+    <nav class="tabs">
+      <button data-t="global" class="on">Global</button>
+      <button data-t="today">Today</button>
+      <button data-t="week">This Week</button>
+      <button data-t="projects">Projects</button>
+      <button data-t="detail">Project detail</button>
+      <button data-t="backlog">Backlog</button>
+      <button data-t="care">Care</button>
+    </nav>
 
-<nav class="tabs">
-  <button data-t="global" class="on">Global</button>
-  <button data-t="today">Today</button>
-  <button data-t="week">This Week</button>
-  <button data-t="projects">Projects</button>
-  <button data-t="detail">Project detail</button>
-  <button data-t="backlog">Backlog</button>
-  <button data-t="care">Care</button>
-</nav>
-
-<section class="pane on" id="p-global">
-  <div class="frame">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div class="card" style="padding:16px">
-        <p class="lab" style="margin:0 0 10px">Canvas + cards (D9)</p>
-        <div style="background:var(--canvas);border:1px solid var(--border-strong);border-radius:8px;padding:12px;display:flex;gap:10px">
-          <div class="card" style="flex:1;height:52px"></div>
-          <div class="card" style="flex:1;height:52px"></div>
-        </div>
-        <p class="mut" style="margin:10px 0 0">Page canvas <b>--canvas #f7f7f8</b>; sections stay pure-white cards with #ececec hairlines. Ink unchanged.</p>
-      </div>
-      <div class="card" style="padding:16px">
-        <p class="lab" style="margin:0 0 10px">Category chrome pre-data (D10 · D12)</p>
-        <div class="gbar" style="margin:0 0 10px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-        <div class="row" style="gap:6px;margin:0 0 10px">
-          <span class="dot" style="background:var(--pro)"></span><span class="dot" style="background:var(--per)"></span><span class="dot" style="background:var(--rel)"></span><span class="dot" style="background:var(--adu)"></span><span class="dot" style="background:var(--bm)"></span>
-          <span class="mut">colored empty-state marks · no seeded rows</span>
-        </div>
-        <div class="row"><button class="obtn">Ask Claude</button><span class="mut">accent stays black (DT-2 intact)</span></div>
-      </div>
-      <div class="card" style="padding:16px">
-        <p class="lab" style="margin:0 0 10px">No-cutoff rule (D13)</p>
-        <p class="mut" style="margin:0 0 8px">Text never clips unless the container visibly scrolls — then only with a fade cue:</p>
-        <div style="position:relative;border:1px solid var(--border);border-radius:6px;padding:8px 10px;overflow:hidden">
-          <p class="fnt" style="margin:0 0 6px">Reschedule the plumber and confirm the…</p>
-          <p class="fnt" style="margin:0;opacity:.35">Draft the retro notes for the…</p>
-          <div style="position:absolute;left:0;right:0;bottom:0;height:16px;background:linear-gradient(to bottom,rgba(255,255,255,0),#fff)"></div>
-        </div>
-      </div>
-      <div class="card" style="padding:16px">
-        <p class="lab" style="margin:0 0 10px">Wins facet trio (D16 — own layer)</p>
-        <div class="row" style="gap:8px">
-          <span class="pillk" style="background:#e2f0ec;color:var(--body-t)">Body</span>
-          <span class="pillk" style="background:#e7e9f9;color:var(--mind-i)">Mind</span>
-          <span class="pillk" style="background:#fae8ef;color:var(--soul-r)">Soul</span>
-          <span class="mut">separate family from the five category hues</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="decisions">
-    <span><b>D9</b> tinted canvas, white cards</span><span><b>D10</b> category colors in the chrome</span>
-    <span><b>D12</b> colored empty states, no seeds</span><span><b>D13</b> no-cutoff standing rule</span>
-    <span><b>D16</b> wins facet trio</span>
-  </div>
-</section>
-
-<section class="pane" id="p-today">
-  <div class="frame">
-    <div class="card row" style="padding:12px 16px;margin:0 0 12px">
-      <span class="h1">Thursday · Jul 2</span>
-      <div class="seg" style="margin-left:auto"><span class="on">List</span><span>Calendar</span><span>Review</span></div>
-    </div>
-    <div class="card row" style="padding:10px 16px;margin:0 0 12px">
-      <span class="lab">Top 3</span>
-      <span class="slotdot" style="border-color:var(--pro);background:rgba(0,157,220,.08)"></span>
-      <span class="slotdot" style="border-color:var(--per);background:rgba(151,61,151,.08)"></span>
-      <span class="slotdot" style="border-color:var(--bm);background:rgba(97,187,71,.08)"></span>
-      <span class="mut">pin your first priority — the full slots appear then</span>
-      <div class="gbar" style="margin-left:auto;width:180px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-    </div>
-    <div style="display:flex;gap:12px;margin:0 0 12px">
-      <div class="card" style="flex:1;padding:14px 16px;min-height:220px;display:flex;flex-direction:column">
-        <p class="lab" style="margin:0 0 12px">Today</p>
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center">
-          <div class="row" style="gap:6px"><span class="dot" style="background:var(--pro)"></span><span class="dot" style="background:var(--per)"></span><span class="dot" style="background:var(--rel)"></span><span class="dot" style="background:var(--adu)"></span><span class="dot" style="background:var(--bm)"></span></div>
-          <p class="fnt" style="margin:0;font-weight:500">Start your day</p>
-          <p class="mut" style="margin:0">Capture something below — it lands here<br />with its category color.</p>
-        </div>
-      </div>
-      <div class="card" style="width:72px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:14px">
-        <span class="mut" style="font-size:11px">‹</span>
-        <span style="width:26px;border-top:2px solid var(--ink)"></span>
-        <span style="width:26px;border-top:2px solid #d5d5db"></span>
-        <span style="width:26px;border-top:2px solid #d5d5db"></span>
-        <span class="mut" style="font-size:11px;writing-mode:vertical-rl">timeline rail</span>
-      </div>
-    </div>
-    <div class="card" style="padding:12px 16px">
-      <div style="border:1px solid var(--border);border-radius:8px;padding:9px 12px">
-        <span class="mut">add tasks — one per line · ⌘↵ to add</span>
-      </div>
-    </div>
-  </div>
-  <p class="note">Property chips slide in on composer focus (D14). Rail expands to the full pane on click; Calendar view keeps the full timeline. The rail reserves a neutral block style for future synced calendar events (D11 forward constraint). Date appears once; no sync badge, no deadline chips until the first pin (D14).</p>
-  <div class="decisions">
-    <span><b>D11</b> progressive disclosure + slim rail</span><span><b>D12</b> colored empty state</span>
-    <span><b>D14</b> five micro-cleanups</span><span><b>D10</b> ghost balance legend + tinted Top-3 hints</span>
-  </div>
-</section>
-
-<section class="pane" id="p-week">
-  <div class="frame">
-    <div class="card row" style="padding:12px 16px;margin:0 0 12px">
-      <span class="h1">This Week · Jun 29 – Jul 5</span>
-    </div>
-    <div class="card" style="padding:10px 14px;margin:0 0 12px">
-      <span class="mut">add tasks — one per line · ⌘↵ to add</span>
-    </div>
-    <div style="position:relative;overflow:hidden;margin:0 0 12px">
-      <div style="display:flex;gap:10px">
-        <div class="card" style="flex:1;padding:10px;min-height:210px">
-          <p class="mut" style="margin:0 0 6px;text-align:center">Mon 29</p>
-          <div class="gbar" style="margin:0 0 10px;height:4px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-          <div style="border:1.5px dashed #d5d5db;border-radius:6px;height:26px"></div>
-        </div>
-        <div class="card" style="flex:1;padding:10px;min-height:210px">
-          <p class="mut" style="margin:0 0 6px;text-align:center">Tue 30</p>
-          <div class="gbar" style="margin:0 0 10px;height:4px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-          <div style="border:1.5px dashed #d5d5db;border-radius:6px;height:26px"></div>
-        </div>
-        <div class="card" style="flex:1;padding:10px;min-height:210px">
-          <p class="mut" style="margin:0 0 6px;text-align:center">Wed 1</p>
-          <div class="gbar" style="margin:0 0 10px;height:4px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-          <div style="border:1.5px dashed #d5d5db;border-radius:6px;height:26px"></div>
-        </div>
-        <div class="card" style="flex:1;padding:10px;min-height:210px;border:1.5px solid var(--ink)">
-          <p style="margin:0 auto 6px;text-align:center"><span style="font-size:12px;font-weight:500;background:var(--ink);color:#fff;border-radius:999px;padding:2px 12px">Thu 2 · today</span></p>
-          <div class="gbar" style="margin:0 0 10px;height:4px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-          <div style="border:1.5px dashed #d5d5db;border-radius:6px;height:26px"></div>
-          <p class="mut" style="font-size:11px;text-align:center;margin:8px 0 0">Swipe right on a task to pin</p>
-        </div>
-        <div class="card" style="flex:1;padding:10px;min-height:210px">
-          <p class="mut" style="margin:0 0 6px;text-align:center">Fri 3</p>
-          <div class="gbar" style="margin:0 0 10px;height:4px"><span style="background:var(--pro)"></span><span style="background:var(--per)"></span><span style="background:var(--rel)"></span><span style="background:var(--adu)"></span><span style="background:var(--bm)"></span></div>
-          <div style="border:1.5px dashed #d5d5db;border-radius:6px;height:26px"></div>
-        </div>
-        <div class="card" style="width:56px;flex:none;padding:10px;min-height:210px">
-          <p class="mut" style="margin:0;text-align:center">Sat…</p>
-        </div>
-      </div>
-      <div class="fadeR"></div>
-    </div>
-    <div class="card row" style="padding:10px 14px">
-      <span class="mut">Plan tasks · 0 unscheduled</span>
-      <button class="obtn" style="margin-left:auto">Draft my week</button>
-    </div>
-  </div>
-  <p class="note">Ghost tallies (~35–45% tint) become each day's real weighted tally as tasks land. Lens bar, ritual bar, and weekly summary mount once data exists (D21). "Protect time" appears on column hover. The cut Saturday column + edge fade marks the horizontal scroll (D13).</p>
-  <div class="decisions">
-    <span><b>D19</b> all-white columns, ink-marked today (supersedes Jun 24 inverted emphasis)</span>
-    <span><b>D20</b> ghost tally on every column</span><span><b>D21</b> chrome gated on data</span>
-  </div>
-</section>
-
-<section class="pane" id="p-projects">
-  <div class="frame">
-    <div class="card row" style="padding:12px 16px;margin:0 0 14px">
-      <span class="h1">Projects</span>
-      <div class="seg" style="margin-left:auto"><span class="on">Gallery</span><span>Calendar</span></div>
-      <button class="obtn">New project</button>
-    </div>
-    <div class="row" style="gap:6px;margin:0 0 8px"><span class="dot" style="background:var(--pro)"></span><span class="fnt" style="font-weight:500">Professional</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 0 16px">
-      <div class="card" style="padding:12px 14px">
-        <div class="row" style="gap:8px;margin:0 0 8px"><span class="stripe" style="background:var(--pro);height:16px"></span><span class="fnt" style="font-weight:500">Portfolio site</span></div>
-        <div style="height:5px;border-radius:3px;background:#ededf0;margin:0 0 6px"><div style="width:64%;height:100%;border-radius:3px;background:var(--pro)"></div></div>
-        <span class="mut" style="font-size:12px">64% · 9 of 14 tasks</span>
-      </div>
-      <div style="padding:12px 14px;border-radius:8px;border:1px solid rgba(0,157,220,.35);background:rgba(0,157,220,.06)">
-        <div class="row" style="gap:8px;margin:0 0 8px"><span class="stripe" style="background:var(--pro);height:16px"></span><span class="fnt" style="font-weight:500">Q3 talk</span></div>
-        <div style="height:5px;border-radius:3px;background:rgba(0,157,220,.16);margin:0 0 6px"><div style="width:88%;height:100%;border-radius:3px;background:var(--pro)"></div></div>
-        <span style="font-size:12px;color:#01679b">88% · 15 of 17 — almost there</span>
-      </div>
-      <div class="card" style="padding:12px 14px">
-        <div class="row" style="gap:8px;margin:0 0 8px"><span class="stripe" style="background:var(--pro);height:16px"></span><span class="fnt" style="font-weight:500">Inbox zero system</span></div>
-        <div style="height:5px;border-radius:3px;background:rgba(0,157,220,.2);margin:0 0 6px"></div>
-        <span class="mut" style="font-size:12px">No tasks yet</span>
-      </div>
-    </div>
-    <div class="row" style="gap:6px;margin:0 0 8px"><span class="dot" style="background:var(--per)"></span><span class="fnt" style="font-weight:500">Personal projects</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 0 16px">
-      <div class="card" style="padding:12px 14px">
-        <div class="row" style="gap:8px;margin:0 0 8px"><span class="stripe" style="background:var(--per);height:16px"></span><span class="fnt" style="font-weight:500">Zine issue 2</span></div>
-        <div style="height:5px;border-radius:3px;background:#ededf0;margin:0 0 6px"><div style="width:35%;height:100%;border-radius:3px;background:var(--per)"></div></div>
-        <span class="mut" style="font-size:12px">35% · 6 of 17 tasks</span>
-      </div>
-    </div>
-    <div class="row" style="gap:6px;margin:0 0 8px"><span class="dot" style="background:var(--rel)"></span><span class="fnt" style="font-weight:500">Relationships</span></div>
-    <div class="row" style="border:1.5px dashed rgba(224,58,62,.5);background:rgba(224,58,62,.05);border-radius:8px;padding:10px 14px;margin:0 0 16px">
-      <span style="font-size:13px;color:#9c2225">8 tasks, no project</span>
-      <span style="font-size:13px;color:#9c2225;font-weight:500;margin-left:auto">view →</span>
-    </div>
-    <div class="row" style="gap:6px;margin:0 0 8px"><span class="dot" style="background:var(--adu)"></span><span class="fnt" style="font-weight:500">Adulting</span></div>
-    <div class="row" style="border:1.5px dashed rgba(246,130,31,.5);background:rgba(246,130,31,.05);border-radius:8px;padding:10px 14px;margin:0 0 16px">
-      <span style="font-size:13px;color:#a3540f">5 tasks, no project</span>
-      <span style="font-size:13px;color:#a3540f;font-weight:500;margin-left:auto">view →</span>
-    </div>
-    <div class="row" style="gap:6px;margin:0 0 8px"><span class="dot" style="background:var(--bm)"></span><span class="fnt" style="font-weight:500">Body &amp; Mind</span></div>
-    <div class="card" style="padding:14px;text-align:center">
-      <span class="mut">Nothing here yet — start a project, or let it live as tasks.</span>
-    </div>
-  </div>
-  <p class="note">"view →" opens Backlog pre-filtered to that category lens (no new surface). The washed Q3 talk card is the ≥80% finishing glow (D24); below 80% cards stay pure white. CategoryFilter chips retire — the sections are the grouping (D26).</p>
-  <div class="decisions">
-    <span><b>D26</b> category-sectioned index + loose-task rows</span>
-    <span><b>D24</b> ghost track when empty · category wash ≥80%</span>
-    <span><b>D12</b> colored invitation for empty categories</span>
-  </div>
-</section>
-
-<section class="pane" id="p-detail">
-  <div class="frame">
-    <div class="card row" style="padding:12px 16px;margin:0 0 12px">
-      <span class="mut">← Projects</span>
-      <span class="h1">Kitchen reno</span>
-      <span class="pillk" style="background:rgba(246,130,31,.14);color:#a3540f">● Adulting</span>
-      <div class="seg" style="margin-left:auto"><span class="on">Columns</span><span>Calendar</span></div>
-      <span class="mut" style="font-size:16px">⋯</span>
-    </div>
-    <div class="card row" style="padding:10px 14px;margin:0 0 12px">
-      <span class="mut" style="flex:1">add phases and tasks — one per line</span>
-      <span class="pillk">syntax</span>
-    </div>
-    <div style="position:relative;overflow:hidden">
-      <div style="display:flex;gap:8px">
-        <div class="card" style="flex:1;padding:10px;min-height:190px;border:1.5px solid var(--ink)">
-          <div class="row" style="gap:8px;padding:5px 4px"><span class="dot" style="background:var(--adu)"></span><span class="fnt">Demo &amp; prep</span><span class="mut" style="margin-left:auto">3 ›</span></div>
-          <div class="row" style="gap:8px;padding:5px 4px;background:#f4f4f6;border-radius:6px"><span class="dot" style="background:var(--adu)"></span><span class="fnt">Cabinets</span><span class="mut" style="margin-left:auto">5 ›</span></div>
-          <div class="row" style="gap:8px;padding:5px 4px"><span style="width:13px;height:13px;border:1.5px solid var(--adu);border-radius:3px"></span><span class="fnt">Order the sink</span></div>
-        </div>
-        <div class="card" style="flex:1;padding:10px;min-height:190px">
-          <div class="row" style="gap:8px;padding:5px 4px"><span style="width:13px;height:13px;border:1.5px solid var(--adu);border-radius:3px"></span><span class="fnt">Measure uppers</span></div>
-          <div class="row" style="gap:8px;padding:5px 4px"><span style="width:13px;height:13px;border:1.5px solid var(--adu);border-radius:3px"></span><span class="fnt">Pick hardware</span></div>
-          <div class="row" style="gap:8px;padding:5px 4px"><span style="width:13px;height:13px;border:1.5px solid var(--adu);border-radius:3px"></span><span class="fnt">Book installer</span></div>
-        </div>
-        <div class="card" style="width:120px;flex:none;padding:10px;min-height:190px">
-          <div class="row" style="gap:6px;padding:5px 2px"><span style="width:13px;height:13px;border:1.5px solid var(--adu);border-radius:3px;flex:none"></span><span class="fnt">Compare quo…</span></div>
-        </div>
-      </div>
-      <div class="fadeR"></div>
-    </div>
-  </div>
-  <p class="note">Columns are white cards directly on the canvas — tight gap, no outer strip card, no ghost placeholder columns (drop targets appear during drag). Active level carries the ink border. Deeper trees scroll horizontally with the edge fade (D13/D23). Import history lives in the ⋯ menu; the syntax lesson lives behind the chip and on composer focus (D25).</p>
-  <div class="decisions">
-    <span><b>D23</b> column cards on canvas, tight gap, h-scroll kept</span>
-    <span><b>D25</b> syntax chip · ⋯ menu · no ghost columns</span>
-    <span><b>D22</b> calendar view stays phase-bars-only</span>
-  </div>
-</section>
-
-<section class="pane" id="p-backlog">
-  <div class="frame">
-    <div style="display:flex;gap:14px">
-      <div style="flex:1.6;display:flex;flex-direction:column;gap:12px">
-        <div class="card row" style="padding:10px 14px">
-          <span class="mut" style="flex:1">Search the backlog</span>
-          <span class="pillk">Archived · 4</span>
-          <div class="seg"><span class="on">List</span><span>Sky</span></div>
-        </div>
-        <div class="card" style="padding:10px 14px">
-          <div class="row" style="margin:0 0 8px"><span class="mut" style="flex:1">Park an idea or task in the deep…</span><button class="obtn" style="padding:2px 12px">Park</button></div>
-          <div class="row" style="gap:6px">
-            <span class="pillk" style="background:rgba(0,157,220,.12);color:#01679b">● Pro</span>
-            <span class="pillk" style="background:rgba(151,61,151,.12);color:#6e2c6e">● Personal</span>
-            <span class="pillk" style="background:rgba(224,58,62,.12);color:#9c2225">● Rel</span>
-            <span class="pillk" style="background:rgba(246,130,31,.12);color:#a3540f">● Adulting</span>
-            <span class="pillk" style="background:rgba(97,187,71,.12);color:#3a7527">● B&amp;M</span>
+    <section class="pane on" id="p-global">
+      <div class="frame">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <div class="card" style="padding: 16px">
+            <p class="lab" style="margin: 0 0 10px">Canvas + cards (D9)</p>
+            <div
+              style="
+                background: var(--canvas);
+                border: 1px solid var(--border-strong);
+                border-radius: 8px;
+                padding: 12px;
+                display: flex;
+                gap: 10px;
+              "
+            >
+              <div class="card" style="flex: 1; height: 52px"></div>
+              <div class="card" style="flex: 1; height: 52px"></div>
+            </div>
+            <p class="mut" style="margin: 10px 0 0">
+              Page canvas <b>--canvas #f7f7f8</b>; sections stay pure-white cards with #ececec
+              hairlines. Ink unchanged.
+            </p>
+          </div>
+          <div class="card" style="padding: 16px">
+            <p class="lab" style="margin: 0 0 10px">Category chrome pre-data (D10 · D12)</p>
+            <div class="gbar" style="margin: 0 0 10px">
+              <span style="background: var(--pro)"></span
+              ><span style="background: var(--per)"></span
+              ><span style="background: var(--rel)"></span
+              ><span style="background: var(--adu)"></span
+              ><span style="background: var(--bm)"></span>
+            </div>
+            <div class="row" style="gap: 6px; margin: 0 0 10px">
+              <span class="dot" style="background: var(--pro)"></span
+              ><span class="dot" style="background: var(--per)"></span
+              ><span class="dot" style="background: var(--rel)"></span
+              ><span class="dot" style="background: var(--adu)"></span
+              ><span class="dot" style="background: var(--bm)"></span>
+              <span class="mut">colored empty-state marks · no seeded rows</span>
+            </div>
+            <div class="row">
+              <button class="obtn">Ask Claude</button
+              ><span class="mut">accent stays black (DT-2 intact)</span>
+            </div>
+          </div>
+          <div class="card" style="padding: 16px">
+            <p class="lab" style="margin: 0 0 10px">No-cutoff rule (D13)</p>
+            <p class="mut" style="margin: 0 0 8px">
+              Text never clips unless the container visibly scrolls — then only with a fade cue:
+            </p>
+            <div
+              style="
+                position: relative;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 8px 10px;
+                overflow: hidden;
+              "
+            >
+              <p class="fnt" style="margin: 0 0 6px">Reschedule the plumber and confirm the…</p>
+              <p class="fnt" style="margin: 0; opacity: 0.35">Draft the retro notes for the…</p>
+              <div
+                style="
+                  position: absolute;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  height: 16px;
+                  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+                "
+              ></div>
+            </div>
+          </div>
+          <div class="card" style="padding: 16px">
+            <p class="lab" style="margin: 0 0 10px">Wins facet trio (D16 — own layer)</p>
+            <div class="row" style="gap: 8px">
+              <span class="pillk" style="background: #e2f0ec; color: var(--body-t)">Body</span>
+              <span class="pillk" style="background: #e7e9f9; color: var(--mind-i)">Mind</span>
+              <span class="pillk" style="background: #fae8ef; color: var(--soul-r)">Soul</span>
+              <span class="mut">separate family from the five category hues</span>
+            </div>
           </div>
         </div>
-        <div class="card" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
-          <p class="lab" style="margin:0">Keeps calling you</p>
-          <div class="row" style="gap:8px"><span class="stripe" style="background:var(--per);height:16px"></span><span class="fnt">Learn letterpress printing</span><span class="pillk" style="margin-left:auto">parked 3×</span><button class="obtn" style="padding:1px 10px;font-size:12px">Today</button></div>
-          <p class="lab" style="margin:6px 0 0">Everything else</p>
-          <div class="row" style="gap:8px"><span class="stripe" style="background:var(--adu);height:16px"></span><span class="fnt">Compare renters insurance</span><span class="pillk" style="margin-left:auto">→ in Today</span></div>
-          <div class="row" style="gap:8px;opacity:.6"><span class="stripe" style="background:var(--pro);height:16px"></span><span class="fnt">Write the API style guide</span><span class="pillk" style="margin-left:auto">parked 104d ago</span><button class="obtn" style="padding:1px 10px;font-size:12px">Today</button></div>
-        </div>
       </div>
-      <div style="flex:1;border-radius:10px;background:#0b0e14;position:relative;min-height:300px;overflow:hidden">
-        <span style="position:absolute;width:5px;height:5px;border-radius:50%;background:#3bb6e6;top:20%;left:24%"></span>
-        <span style="position:absolute;width:4px;height:4px;border-radius:50%;background:#c06fc0;top:34%;left:60%"></span>
-        <span style="position:absolute;width:6px;height:6px;border-radius:50%;background:#fb9d4b;top:52%;left:38%"></span>
-        <span style="position:absolute;width:4px;height:4px;border-radius:50%;background:#83cf6c;top:66%;left:64%"></span>
-        <span style="position:absolute;width:4px;height:4px;border-radius:50%;background:#f06366;top:28%;left:78%"></span>
-        <span style="position:absolute;width:3px;height:3px;border-radius:50%;background:#5c6478;top:74%;left:22%"></span>
-        <span style="position:absolute;top:22%;left:26%;width:120px;border-top:1px solid #2c3346;transform:rotate(22deg)"></span>
-        <p style="position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:12px;color:#79808f;margin:0">Sky — switch views and the deep goes dark</p>
+      <div class="decisions">
+        <span><b>D9</b> tinted canvas, white cards</span
+        ><span><b>D10</b> category colors in the chrome</span>
+        <span><b>D12</b> colored empty states, no seeds</span
+        ><span><b>D13</b> no-cutoff standing rule</span>
+        <span><b>D16</b> wins facet trio</span>
       </div>
-    </div>
-  </div>
-  <p class="note">List is light, always (D27) — no theme toggle. Pre-data the bar is search + tabs; group/type/age filters mount with items; "Archived · N" appears only when non-empty (D28/B4). Dimming = row opacity + "parked Nd ago" pill (D29). One-tap Today buttons are D6/B1. D13 fix: archived titles wrap instead of truncating.</p>
-  <div class="decisions">
-    <span><b>D27</b> light list, dark sky · toggle retired</span>
-    <span><b>D28</b> toolbar gated on data</span>
-    <span><b>D29</b> cleanups: deep-voiced empty state · clear-filters · age pill</span>
-  </div>
-</section>
+    </section>
 
-<section class="pane" id="p-care">
-  <div class="frame">
-    <div class="card row" style="padding:12px 16px;margin:0 0 12px">
-      <span class="h1">Care</span>
-      <div class="seg" style="margin-left:auto"><span class="on">Garden</span><span>Evidence</span><span>Tasks</span><span>Breathing</span><span>Reflection</span></div>
-    </div>
-    <div style="display:flex;gap:12px">
-      <div style="flex:1.4;border-radius:10px;border:1px solid var(--border);background:#eaf6e4;position:relative;min-height:300px;overflow:hidden">
-        <span style="position:absolute;width:26px;height:26px;border-radius:50%;background:var(--yellow);top:9%;right:10%"></span>
-        <span style="position:absolute;width:160%;height:70%;border-radius:50%;background:#cfe9c2;bottom:-36%;left:-24%"></span>
-        <span style="position:absolute;width:150%;height:58%;border-radius:50%;background:#b8dfa6;bottom:-34%;right:-30%"></span>
-        <span style="position:absolute;width:3px;height:44px;background:#3a7026;bottom:26%;left:26%"></span>
-        <span style="position:absolute;width:13px;height:13px;border-radius:50%;background:var(--yellow);border:4px solid #eaa6bf;bottom:39%;left:24.2%"></span>
-        <span style="position:absolute;width:3px;height:30px;background:#3a7026;bottom:26%;left:50%"></span>
-        <span style="position:absolute;width:11px;height:11px;border-radius:50%;background:var(--yellow);border:4px solid #cdb6e6;bottom:35%;left:48.5%"></span>
-        <span style="position:absolute;width:3px;height:38px;background:#3a7026;bottom:26%;left:72%"></span>
-        <span style="position:absolute;width:12px;height:12px;border-radius:50%;background:var(--yellow);border:4px solid #eaa6bf;bottom:37%;left:70.4%"></span>
-        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;padding:8px 14px;border-top:1px solid var(--border)">
-          <span class="mut">Your garden — it grows as you tend yourself, and gently rests when you do.</span>
-        </div>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px">
-        <div class="card" style="padding:12px 14px">
-          <p class="lab" style="margin:0 0 8px">Today's wins</p>
-          <div class="row" style="gap:8px;margin:0 0 6px"><span style="width:14px;height:14px;border-radius:50%;background:var(--body-t)"></span><span class="fnt">Morning walk before work</span></div>
-          <div class="row" style="gap:8px;margin:0 0 6px"><span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--mind-i)"></span><span class="mut">One more to notice…</span></div>
-          <div class="row" style="gap:8px"><span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--soul-r)"></span><span class="mut">Soul is open — evening reflection counts</span></div>
-        </div>
-        <div class="card" style="padding:12px 14px">
-          <p class="lab" style="margin:0 0 8px">What lifts me</p>
-          <div class="row" style="gap:6px;flex-wrap:wrap">
-            <span class="pillk" style="background:#ecf6e8;color:#3a7026">morning walks</span>
-            <span class="pillk" style="background:#ecf6e8;color:#3a7026">calling Jess</span>
+    <section class="pane" id="p-today">
+      <div class="frame">
+        <div class="card row" style="padding: 12px 16px; margin: 0 0 12px">
+          <span class="h1">Thursday · Jul 2</span>
+          <div class="seg" style="margin-left: auto">
+            <span class="on">List</span><span>Calendar</span><span>Review</span>
           </div>
         </div>
-        <div class="card" style="padding:12px 14px">
-          <p class="lab" style="margin:0 0 8px">Restorative time</p>
-          <p class="mut" style="margin:0 0 8px">Rest is part of the plan.</p>
-          <div class="row"><button class="obtn" style="font-size:12px;padding:2px 10px">Reserve a rest day</button><span class="mut" style="margin-left:auto;font-size:12px">Open month planning →</span></div>
+        <div class="card row" style="padding: 10px 16px; margin: 0 0 12px">
+          <span class="lab">Top 3</span>
+          <span
+            class="slotdot"
+            style="border-color: var(--pro); background: rgba(0, 157, 220, 0.08)"
+          ></span>
+          <span
+            class="slotdot"
+            style="border-color: var(--per); background: rgba(151, 61, 151, 0.08)"
+          ></span>
+          <span
+            class="slotdot"
+            style="border-color: var(--bm); background: rgba(97, 187, 71, 0.08)"
+          ></span>
+          <span class="mut">pin your first priority — the full slots appear then</span>
+          <div class="gbar" style="margin-left: auto; width: 180px">
+            <span style="background: var(--pro)"></span><span style="background: var(--per)"></span
+            ><span style="background: var(--rel)"></span><span style="background: var(--adu)"></span
+            ><span style="background: var(--bm)"></span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin: 0 0 12px">
+          <div
+            class="card"
+            style="
+              flex: 1;
+              padding: 14px 16px;
+              min-height: 220px;
+              display: flex;
+              flex-direction: column;
+            "
+          >
+            <p class="lab" style="margin: 0 0 12px">Today</p>
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                text-align: center;
+              "
+            >
+              <div class="row" style="gap: 6px">
+                <span class="dot" style="background: var(--pro)"></span
+                ><span class="dot" style="background: var(--per)"></span
+                ><span class="dot" style="background: var(--rel)"></span
+                ><span class="dot" style="background: var(--adu)"></span
+                ><span class="dot" style="background: var(--bm)"></span>
+              </div>
+              <p class="fnt" style="margin: 0; font-weight: 500">Start your day</p>
+              <p class="mut" style="margin: 0">
+                Capture something below — it lands here<br />with its category color.
+              </p>
+            </div>
+          </div>
+          <div
+            class="card"
+            style="
+              width: 72px;
+              padding: 10px 8px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 14px;
+            "
+          >
+            <span class="mut" style="font-size: 11px">‹</span>
+            <span style="width: 26px; border-top: 2px solid var(--ink)"></span>
+            <span style="width: 26px; border-top: 2px solid #d5d5db"></span>
+            <span style="width: 26px; border-top: 2px solid #d5d5db"></span>
+            <span class="mut" style="font-size: 11px; writing-mode: vertical-rl"
+              >timeline rail</span
+            >
+          </div>
+        </div>
+        <div class="card" style="padding: 12px 16px">
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px">
+            <span class="mut">add tasks — one per line · ⌘↵ to add</span>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-  <p class="note">Five tabs — Wins + Stats merged into Evidence (shrine leads, charts below; garden renders once, here). Travel's tab retired into the Restorative time card (D33). Garden art fills its card edge to edge with the caption on a solid strip (D34); the no-card version waits on A.3 illustrated art. Chrome emoji replaced by lucide icons + a drawn breathing orb; wins slots wear the D16 facet trio (D35).</p>
-  <div class="decisions">
-    <span><b>D33</b> five tabs · Evidence merge · Travel folds into hub</span>
-    <span><b>D34</b> full-bleed garden card</span>
-    <span><b>D35</b> cleanups: icons not emoji · facet-colored wins · rest-day CTA</span>
-  </div>
-</section>
+      <p class="note">
+        Property chips slide in on composer focus (D14). Rail expands to the full pane on click;
+        Calendar view keeps the full timeline. The rail reserves a neutral block style for future
+        synced calendar events (D11 forward constraint). Date appears once; no sync badge, no
+        deadline chips until the first pin (D14).
+      </p>
+      <div class="decisions">
+        <span><b>D11</b> progressive disclosure + slim rail</span
+        ><span><b>D12</b> colored empty state</span> <span><b>D14</b> five micro-cleanups</span
+        ><span><b>D10</b> ghost balance legend + tinted Top-3 hints</span>
+      </div>
+    </section>
 
-<script>
-  var tabs=document.querySelectorAll("nav.tabs button");
-  tabs.forEach(function(b){b.addEventListener("click",function(){
-    tabs.forEach(function(x){x.classList.remove("on")});
-    document.querySelectorAll(".pane").forEach(function(p){p.classList.remove("on")});
-    b.classList.add("on");
-    document.getElementById("p-"+b.getAttribute("data-t")).classList.add("on");
-  })});
-</script>
-</body>
+    <section class="pane" id="p-week">
+      <div class="frame">
+        <div class="card row" style="padding: 12px 16px; margin: 0 0 12px">
+          <span class="h1">This Week · Jun 29 – Jul 5</span>
+        </div>
+        <div class="card" style="padding: 10px 14px; margin: 0 0 12px">
+          <span class="mut">add tasks — one per line · ⌘↵ to add</span>
+        </div>
+        <div style="position: relative; overflow: hidden; margin: 0 0 12px">
+          <div style="display: flex; gap: 10px">
+            <div class="card" style="flex: 1; padding: 10px; min-height: 210px">
+              <p class="mut" style="margin: 0 0 6px; text-align: center">Mon 29</p>
+              <div class="gbar" style="margin: 0 0 10px; height: 4px">
+                <span style="background: var(--pro)"></span
+                ><span style="background: var(--per)"></span
+                ><span style="background: var(--rel)"></span
+                ><span style="background: var(--adu)"></span
+                ><span style="background: var(--bm)"></span>
+              </div>
+              <div style="border: 1.5px dashed #d5d5db; border-radius: 6px; height: 26px"></div>
+            </div>
+            <div class="card" style="flex: 1; padding: 10px; min-height: 210px">
+              <p class="mut" style="margin: 0 0 6px; text-align: center">Tue 30</p>
+              <div class="gbar" style="margin: 0 0 10px; height: 4px">
+                <span style="background: var(--pro)"></span
+                ><span style="background: var(--per)"></span
+                ><span style="background: var(--rel)"></span
+                ><span style="background: var(--adu)"></span
+                ><span style="background: var(--bm)"></span>
+              </div>
+              <div style="border: 1.5px dashed #d5d5db; border-radius: 6px; height: 26px"></div>
+            </div>
+            <div class="card" style="flex: 1; padding: 10px; min-height: 210px">
+              <p class="mut" style="margin: 0 0 6px; text-align: center">Wed 1</p>
+              <div class="gbar" style="margin: 0 0 10px; height: 4px">
+                <span style="background: var(--pro)"></span
+                ><span style="background: var(--per)"></span
+                ><span style="background: var(--rel)"></span
+                ><span style="background: var(--adu)"></span
+                ><span style="background: var(--bm)"></span>
+              </div>
+              <div style="border: 1.5px dashed #d5d5db; border-radius: 6px; height: 26px"></div>
+            </div>
+            <div
+              class="card"
+              style="flex: 1; padding: 10px; min-height: 210px; border: 1.5px solid var(--ink)"
+            >
+              <p style="margin: 0 auto 6px; text-align: center">
+                <span
+                  style="
+                    font-size: 12px;
+                    font-weight: 500;
+                    background: var(--ink);
+                    color: #fff;
+                    border-radius: 999px;
+                    padding: 2px 12px;
+                  "
+                  >Thu 2 · today</span
+                >
+              </p>
+              <div class="gbar" style="margin: 0 0 10px; height: 4px">
+                <span style="background: var(--pro)"></span
+                ><span style="background: var(--per)"></span
+                ><span style="background: var(--rel)"></span
+                ><span style="background: var(--adu)"></span
+                ><span style="background: var(--bm)"></span>
+              </div>
+              <div style="border: 1.5px dashed #d5d5db; border-radius: 6px; height: 26px"></div>
+              <p class="mut" style="font-size: 11px; text-align: center; margin: 8px 0 0">
+                Swipe right on a task to pin
+              </p>
+            </div>
+            <div class="card" style="flex: 1; padding: 10px; min-height: 210px">
+              <p class="mut" style="margin: 0 0 6px; text-align: center">Fri 3</p>
+              <div class="gbar" style="margin: 0 0 10px; height: 4px">
+                <span style="background: var(--pro)"></span
+                ><span style="background: var(--per)"></span
+                ><span style="background: var(--rel)"></span
+                ><span style="background: var(--adu)"></span
+                ><span style="background: var(--bm)"></span>
+              </div>
+              <div style="border: 1.5px dashed #d5d5db; border-radius: 6px; height: 26px"></div>
+            </div>
+            <div class="card" style="width: 56px; flex: none; padding: 10px; min-height: 210px">
+              <p class="mut" style="margin: 0; text-align: center">Sat…</p>
+            </div>
+          </div>
+          <div class="fadeR"></div>
+        </div>
+        <div class="card row" style="padding: 10px 14px">
+          <span class="mut">Plan tasks · 0 unscheduled</span>
+          <button class="obtn" style="margin-left: auto">Draft my week</button>
+        </div>
+      </div>
+      <p class="note">
+        Ghost tallies (~35–45% tint) become each day's real weighted tally as tasks land. Lens bar,
+        ritual bar, and weekly summary mount once data exists (D21). "Protect time" appears on
+        column hover. The cut Saturday column + edge fade marks the horizontal scroll (D13).
+      </p>
+      <div class="decisions">
+        <span
+          ><b>D19</b> all-white columns, ink-marked today (supersedes Jun 24 inverted
+          emphasis)</span
+        >
+        <span><b>D20</b> ghost tally on every column</span
+        ><span><b>D21</b> chrome gated on data</span>
+      </div>
+    </section>
+
+    <section class="pane" id="p-projects">
+      <div class="frame">
+        <div class="card row" style="padding: 12px 16px; margin: 0 0 14px">
+          <span class="h1">Projects</span>
+          <div class="seg" style="margin-left: auto">
+            <span class="on">Gallery</span><span>Calendar</span>
+          </div>
+          <button class="obtn">New project</button>
+        </div>
+        <div class="row" style="gap: 6px; margin: 0 0 8px">
+          <span class="dot" style="background: var(--pro)"></span
+          ><span class="fnt" style="font-weight: 500">Professional</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 0 0 16px">
+          <div class="card" style="padding: 12px 14px">
+            <div class="row" style="gap: 8px; margin: 0 0 8px">
+              <span class="stripe" style="background: var(--pro); height: 16px"></span
+              ><span class="fnt" style="font-weight: 500">Portfolio site</span>
+            </div>
+            <div style="height: 5px; border-radius: 3px; background: #ededf0; margin: 0 0 6px">
+              <div
+                style="width: 64%; height: 100%; border-radius: 3px; background: var(--pro)"
+              ></div>
+            </div>
+            <span class="mut" style="font-size: 12px">64% · 9 of 14 tasks</span>
+          </div>
+          <div
+            style="
+              padding: 12px 14px;
+              border-radius: 8px;
+              border: 1px solid rgba(0, 157, 220, 0.35);
+              background: rgba(0, 157, 220, 0.06);
+            "
+          >
+            <div class="row" style="gap: 8px; margin: 0 0 8px">
+              <span class="stripe" style="background: var(--pro); height: 16px"></span
+              ><span class="fnt" style="font-weight: 500">Q3 talk</span>
+            </div>
+            <div
+              style="
+                height: 5px;
+                border-radius: 3px;
+                background: rgba(0, 157, 220, 0.16);
+                margin: 0 0 6px;
+              "
+            >
+              <div
+                style="width: 88%; height: 100%; border-radius: 3px; background: var(--pro)"
+              ></div>
+            </div>
+            <span style="font-size: 12px; color: #01679b">88% · 15 of 17 — almost there</span>
+          </div>
+          <div class="card" style="padding: 12px 14px">
+            <div class="row" style="gap: 8px; margin: 0 0 8px">
+              <span class="stripe" style="background: var(--pro); height: 16px"></span
+              ><span class="fnt" style="font-weight: 500">Inbox zero system</span>
+            </div>
+            <div
+              style="
+                height: 5px;
+                border-radius: 3px;
+                background: rgba(0, 157, 220, 0.2);
+                margin: 0 0 6px;
+              "
+            ></div>
+            <span class="mut" style="font-size: 12px">No tasks yet</span>
+          </div>
+        </div>
+        <div class="row" style="gap: 6px; margin: 0 0 8px">
+          <span class="dot" style="background: var(--per)"></span
+          ><span class="fnt" style="font-weight: 500">Personal projects</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 0 0 16px">
+          <div class="card" style="padding: 12px 14px">
+            <div class="row" style="gap: 8px; margin: 0 0 8px">
+              <span class="stripe" style="background: var(--per); height: 16px"></span
+              ><span class="fnt" style="font-weight: 500">Zine issue 2</span>
+            </div>
+            <div style="height: 5px; border-radius: 3px; background: #ededf0; margin: 0 0 6px">
+              <div
+                style="width: 35%; height: 100%; border-radius: 3px; background: var(--per)"
+              ></div>
+            </div>
+            <span class="mut" style="font-size: 12px">35% · 6 of 17 tasks</span>
+          </div>
+        </div>
+        <div class="row" style="gap: 6px; margin: 0 0 8px">
+          <span class="dot" style="background: var(--rel)"></span
+          ><span class="fnt" style="font-weight: 500">Relationships</span>
+        </div>
+        <div
+          class="row"
+          style="
+            border: 1.5px dashed rgba(224, 58, 62, 0.5);
+            background: rgba(224, 58, 62, 0.05);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 0 0 16px;
+          "
+        >
+          <span style="font-size: 13px; color: #9c2225">8 tasks, no project</span>
+          <span style="font-size: 13px; color: #9c2225; font-weight: 500; margin-left: auto"
+            >view →</span
+          >
+        </div>
+        <div class="row" style="gap: 6px; margin: 0 0 8px">
+          <span class="dot" style="background: var(--adu)"></span
+          ><span class="fnt" style="font-weight: 500">Adulting</span>
+        </div>
+        <div
+          class="row"
+          style="
+            border: 1.5px dashed rgba(246, 130, 31, 0.5);
+            background: rgba(246, 130, 31, 0.05);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 0 0 16px;
+          "
+        >
+          <span style="font-size: 13px; color: #a3540f">5 tasks, no project</span>
+          <span style="font-size: 13px; color: #a3540f; font-weight: 500; margin-left: auto"
+            >view →</span
+          >
+        </div>
+        <div class="row" style="gap: 6px; margin: 0 0 8px">
+          <span class="dot" style="background: var(--bm)"></span
+          ><span class="fnt" style="font-weight: 500">Body &amp; Mind</span>
+        </div>
+        <div class="card" style="padding: 14px; text-align: center">
+          <span class="mut">Nothing here yet — start a project, or let it live as tasks.</span>
+        </div>
+      </div>
+      <p class="note">
+        "view →" opens Backlog pre-filtered to that category lens (no new surface). The washed Q3
+        talk card is the ≥80% finishing glow (D24); below 80% cards stay pure white. CategoryFilter
+        chips retire — the sections are the grouping (D26).
+      </p>
+      <div class="decisions">
+        <span><b>D26</b> category-sectioned index + loose-task rows</span>
+        <span><b>D24</b> ghost track when empty · category wash ≥80%</span>
+        <span><b>D12</b> colored invitation for empty categories</span>
+      </div>
+    </section>
+
+    <section class="pane" id="p-detail">
+      <div class="frame">
+        <div class="card row" style="padding: 12px 16px; margin: 0 0 12px">
+          <span class="mut">← Projects</span>
+          <span class="h1">Kitchen reno</span>
+          <span class="pillk" style="background: rgba(246, 130, 31, 0.14); color: #a3540f"
+            >● Adulting</span
+          >
+          <div class="seg" style="margin-left: auto">
+            <span class="on">Columns</span><span>Calendar</span>
+          </div>
+          <span class="mut" style="font-size: 16px">⋯</span>
+        </div>
+        <div class="card row" style="padding: 10px 14px; margin: 0 0 12px">
+          <span class="mut" style="flex: 1">add phases and tasks — one per line</span>
+          <span class="pillk">syntax</span>
+        </div>
+        <div style="position: relative; overflow: hidden">
+          <div style="display: flex; gap: 8px">
+            <div
+              class="card"
+              style="flex: 1; padding: 10px; min-height: 190px; border: 1.5px solid var(--ink)"
+            >
+              <div class="row" style="gap: 8px; padding: 5px 4px">
+                <span class="dot" style="background: var(--adu)"></span
+                ><span class="fnt">Demo &amp; prep</span
+                ><span class="mut" style="margin-left: auto">3 ›</span>
+              </div>
+              <div
+                class="row"
+                style="gap: 8px; padding: 5px 4px; background: #f4f4f6; border-radius: 6px"
+              >
+                <span class="dot" style="background: var(--adu)"></span
+                ><span class="fnt">Cabinets</span
+                ><span class="mut" style="margin-left: auto">5 ›</span>
+              </div>
+              <div class="row" style="gap: 8px; padding: 5px 4px">
+                <span
+                  style="
+                    width: 13px;
+                    height: 13px;
+                    border: 1.5px solid var(--adu);
+                    border-radius: 3px;
+                  "
+                ></span
+                ><span class="fnt">Order the sink</span>
+              </div>
+            </div>
+            <div class="card" style="flex: 1; padding: 10px; min-height: 190px">
+              <div class="row" style="gap: 8px; padding: 5px 4px">
+                <span
+                  style="
+                    width: 13px;
+                    height: 13px;
+                    border: 1.5px solid var(--adu);
+                    border-radius: 3px;
+                  "
+                ></span
+                ><span class="fnt">Measure uppers</span>
+              </div>
+              <div class="row" style="gap: 8px; padding: 5px 4px">
+                <span
+                  style="
+                    width: 13px;
+                    height: 13px;
+                    border: 1.5px solid var(--adu);
+                    border-radius: 3px;
+                  "
+                ></span
+                ><span class="fnt">Pick hardware</span>
+              </div>
+              <div class="row" style="gap: 8px; padding: 5px 4px">
+                <span
+                  style="
+                    width: 13px;
+                    height: 13px;
+                    border: 1.5px solid var(--adu);
+                    border-radius: 3px;
+                  "
+                ></span
+                ><span class="fnt">Book installer</span>
+              </div>
+            </div>
+            <div class="card" style="width: 120px; flex: none; padding: 10px; min-height: 190px">
+              <div class="row" style="gap: 6px; padding: 5px 2px">
+                <span
+                  style="
+                    width: 13px;
+                    height: 13px;
+                    border: 1.5px solid var(--adu);
+                    border-radius: 3px;
+                    flex: none;
+                  "
+                ></span
+                ><span class="fnt">Compare quo…</span>
+              </div>
+            </div>
+          </div>
+          <div class="fadeR"></div>
+        </div>
+      </div>
+      <p class="note">
+        Columns are white cards directly on the canvas — tight gap, no outer strip card, no ghost
+        placeholder columns (drop targets appear during drag). Active level carries the ink border.
+        Deeper trees scroll horizontally with the edge fade (D13/D23). Import history lives in the ⋯
+        menu; the syntax lesson lives behind the chip and on composer focus (D25).
+      </p>
+      <div class="decisions">
+        <span><b>D23</b> column cards on canvas, tight gap, h-scroll kept</span>
+        <span><b>D25</b> syntax chip · ⋯ menu · no ghost columns</span>
+        <span><b>D22</b> calendar view stays phase-bars-only</span>
+      </div>
+    </section>
+
+    <section class="pane" id="p-backlog">
+      <div class="frame">
+        <div style="display: flex; gap: 14px">
+          <div style="flex: 1.6; display: flex; flex-direction: column; gap: 12px">
+            <div class="card row" style="padding: 10px 14px">
+              <span class="mut" style="flex: 1">Search the backlog</span>
+              <span class="pillk">Archived · 4</span>
+              <div class="seg"><span class="on">List</span><span>Sky</span></div>
+            </div>
+            <div class="card" style="padding: 10px 14px">
+              <div class="row" style="margin: 0 0 8px">
+                <span class="mut" style="flex: 1">Park an idea or task in the deep…</span
+                ><button class="obtn" style="padding: 2px 12px">Park</button>
+              </div>
+              <div class="row" style="gap: 6px">
+                <span class="pillk" style="background: rgba(0, 157, 220, 0.12); color: #01679b"
+                  >● Pro</span
+                >
+                <span class="pillk" style="background: rgba(151, 61, 151, 0.12); color: #6e2c6e"
+                  >● Personal</span
+                >
+                <span class="pillk" style="background: rgba(224, 58, 62, 0.12); color: #9c2225"
+                  >● Rel</span
+                >
+                <span class="pillk" style="background: rgba(246, 130, 31, 0.12); color: #a3540f"
+                  >● Adulting</span
+                >
+                <span class="pillk" style="background: rgba(97, 187, 71, 0.12); color: #3a7527"
+                  >● B&amp;M</span
+                >
+              </div>
+            </div>
+            <div
+              class="card"
+              style="padding: 10px 14px; display: flex; flex-direction: column; gap: 8px"
+            >
+              <p class="lab" style="margin: 0">Keeps calling you</p>
+              <div class="row" style="gap: 8px">
+                <span class="stripe" style="background: var(--per); height: 16px"></span
+                ><span class="fnt">Learn letterpress printing</span
+                ><span class="pillk" style="margin-left: auto">parked 3×</span
+                ><button class="obtn" style="padding: 1px 10px; font-size: 12px">Today</button>
+              </div>
+              <p class="lab" style="margin: 6px 0 0">Everything else</p>
+              <div class="row" style="gap: 8px">
+                <span class="stripe" style="background: var(--adu); height: 16px"></span
+                ><span class="fnt">Compare renters insurance</span
+                ><span class="pillk" style="margin-left: auto">→ in Today</span>
+              </div>
+              <div class="row" style="gap: 8px; opacity: 0.6">
+                <span class="stripe" style="background: var(--pro); height: 16px"></span
+                ><span class="fnt">Write the API style guide</span
+                ><span class="pillk" style="margin-left: auto">parked 104d ago</span
+                ><button class="obtn" style="padding: 1px 10px; font-size: 12px">Today</button>
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              flex: 1;
+              border-radius: 10px;
+              background: #0b0e14;
+              position: relative;
+              min-height: 300px;
+              overflow: hidden;
+            "
+          >
+            <span
+              style="
+                position: absolute;
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: #3bb6e6;
+                top: 20%;
+                left: 24%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: #c06fc0;
+                top: 34%;
+                left: 60%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #fb9d4b;
+                top: 52%;
+                left: 38%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: #83cf6c;
+                top: 66%;
+                left: 64%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: #f06366;
+                top: 28%;
+                left: 78%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 3px;
+                height: 3px;
+                border-radius: 50%;
+                background: #5c6478;
+                top: 74%;
+                left: 22%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                top: 22%;
+                left: 26%;
+                width: 120px;
+                border-top: 1px solid #2c3346;
+                transform: rotate(22deg);
+              "
+            ></span>
+            <p
+              style="
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 12px;
+                text-align: center;
+                font-size: 12px;
+                color: #79808f;
+                margin: 0;
+              "
+            >
+              Sky — switch views and the deep goes dark
+            </p>
+          </div>
+        </div>
+      </div>
+      <p class="note">
+        List is light, always (D27) — no theme toggle. Pre-data the bar is search + tabs;
+        group/type/age filters mount with items; "Archived · N" appears only when non-empty
+        (D28/B4). Dimming = row opacity + "parked Nd ago" pill (D29). One-tap Today buttons are
+        D6/B1. D13 fix: archived titles wrap instead of truncating.
+      </p>
+      <div class="decisions">
+        <span><b>D27</b> light list, dark sky · toggle retired</span>
+        <span><b>D28</b> toolbar gated on data</span>
+        <span><b>D29</b> cleanups: deep-voiced empty state · clear-filters · age pill</span>
+      </div>
+    </section>
+
+    <section class="pane" id="p-care">
+      <div class="frame">
+        <div class="card row" style="padding: 12px 16px; margin: 0 0 12px">
+          <span class="h1">Care</span>
+          <div class="seg" style="margin-left: auto">
+            <span class="on">Garden</span><span>Evidence</span><span>Tasks</span
+            ><span>Breathing</span><span>Reflection</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px">
+          <div
+            style="
+              flex: 1.4;
+              border-radius: 10px;
+              border: 1px solid var(--border);
+              background: #eaf6e4;
+              position: relative;
+              min-height: 300px;
+              overflow: hidden;
+            "
+          >
+            <span
+              style="
+                position: absolute;
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                background: var(--yellow);
+                top: 9%;
+                right: 10%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 160%;
+                height: 70%;
+                border-radius: 50%;
+                background: #cfe9c2;
+                bottom: -36%;
+                left: -24%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 150%;
+                height: 58%;
+                border-radius: 50%;
+                background: #b8dfa6;
+                bottom: -34%;
+                right: -30%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 3px;
+                height: 44px;
+                background: #3a7026;
+                bottom: 26%;
+                left: 26%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 13px;
+                height: 13px;
+                border-radius: 50%;
+                background: var(--yellow);
+                border: 4px solid #eaa6bf;
+                bottom: 39%;
+                left: 24.2%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 3px;
+                height: 30px;
+                background: #3a7026;
+                bottom: 26%;
+                left: 50%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 11px;
+                height: 11px;
+                border-radius: 50%;
+                background: var(--yellow);
+                border: 4px solid #cdb6e6;
+                bottom: 35%;
+                left: 48.5%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 3px;
+                height: 38px;
+                background: #3a7026;
+                bottom: 26%;
+                left: 72%;
+              "
+            ></span>
+            <span
+              style="
+                position: absolute;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--yellow);
+                border: 4px solid #eaa6bf;
+                bottom: 37%;
+                left: 70.4%;
+              "
+            ></span>
+            <div
+              style="
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: #fff;
+                padding: 8px 14px;
+                border-top: 1px solid var(--border);
+              "
+            >
+              <span class="mut"
+                >Your garden — it grows as you tend yourself, and gently rests when you do.</span
+              >
+            </div>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+            <div class="card" style="padding: 12px 14px">
+              <p class="lab" style="margin: 0 0 8px">Today's wins</p>
+              <div class="row" style="gap: 8px; margin: 0 0 6px">
+                <span
+                  style="width: 14px; height: 14px; border-radius: 50%; background: var(--body-t)"
+                ></span
+                ><span class="fnt">Morning walk before work</span>
+              </div>
+              <div class="row" style="gap: 8px; margin: 0 0 6px">
+                <span
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    border: 2px solid var(--mind-i);
+                  "
+                ></span
+                ><span class="mut">One more to notice…</span>
+              </div>
+              <div class="row" style="gap: 8px">
+                <span
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    border: 2px solid var(--soul-r);
+                  "
+                ></span
+                ><span class="mut">Soul is open — evening reflection counts</span>
+              </div>
+            </div>
+            <div class="card" style="padding: 12px 14px">
+              <p class="lab" style="margin: 0 0 8px">What lifts me</p>
+              <div class="row" style="gap: 6px; flex-wrap: wrap">
+                <span class="pillk" style="background: #ecf6e8; color: #3a7026">morning walks</span>
+                <span class="pillk" style="background: #ecf6e8; color: #3a7026">calling Jess</span>
+              </div>
+            </div>
+            <div class="card" style="padding: 12px 14px">
+              <p class="lab" style="margin: 0 0 8px">Restorative time</p>
+              <p class="mut" style="margin: 0 0 8px">Rest is part of the plan.</p>
+              <div class="row">
+                <button class="obtn" style="font-size: 12px; padding: 2px 10px">
+                  Reserve a rest day</button
+                ><span class="mut" style="margin-left: auto; font-size: 12px"
+                  >Open month planning →</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">
+        Five tabs — Wins + Stats merged into Evidence (shrine leads, charts below; garden renders
+        once, here). Travel's tab retired into the Restorative time card (D33). Garden art fills its
+        card edge to edge with the caption on a solid strip (D34); the no-card version waits on A.3
+        illustrated art. Chrome emoji replaced by lucide icons + a drawn breathing orb; wins slots
+        wear the D16 facet trio (D35).
+      </p>
+      <div class="decisions">
+        <span><b>D33</b> five tabs · Evidence merge · Travel folds into hub</span>
+        <span><b>D34</b> full-bleed garden card</span>
+        <span><b>D35</b> cleanups: icons not emoji · facet-colored wins · rest-day CTA</span>
+      </div>
+    </section>
+
+    <script>
+      var tabs = document.querySelectorAll("nav.tabs button");
+      tabs.forEach(function (b) {
+        b.addEventListener("click", function () {
+          tabs.forEach(function (x) {
+            x.classList.remove("on");
+          });
+          document.querySelectorAll(".pane").forEach(function (p) {
+            p.classList.remove("on");
+          });
+          b.classList.add("on");
+          document.getElementById("p-" + b.getAttribute("data-t")).classList.add("on");
+        });
+      });
+    </script>
+  </body>
 </html>
