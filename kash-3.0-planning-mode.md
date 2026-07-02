@@ -335,12 +335,12 @@ Implementation contracts for the planning data spine. Parallel PRs branch from t
 
 Every table: `user_id`, `updated_at`, index `(user_id, updated_at)`, RLS owner-scoped, registered in `packages/sync/src/tables.ts` + SQLite mirror in `packages/db-local`.
 
-### 12.3 Stub seams (empty OK until integration PR)
+### 12.3 Integration seams (Jul 1 2026)
 
-- `recordBingoReward()` — no-op until §12 Care
-- `fetchAbyssBalanceCandidates()` — returns `[]` until §10 Abyss
-- Values picker — `value_id` nullable; disabled until §13 Values
-- AI ghosts — `planning_suggestions` + mock payloads until §11 persona refactor
+- `recordBingoReward()` — wired → `care.recordBingoNourish` (RW-2)
+- `fetchAbyssBalanceCandidates()` — wired → active Abyss items by category (PM6-1)
+- Values picker — `value_id` on goals; About-me list in goal panel (§13 Values)
+- AI ghosts — `planning_suggestions` + mock payloads until §11 persona breadth complete
 
 ### 12.4 Plan shell (PR1)
 
@@ -348,4 +348,118 @@ Every table: `user_id`, `updated_at`, index `(user_id, updated_at)`, RLS owner-s
 - Switcher: **Week · Month · Quarter · Year · Bingo**
 - Breadcrumb: Year › Q3 › Aug › wkN (NAV-3); resume last view (NAV-5, localStorage)
 - Shared **`GhostedAccept`** component (§9 GA-1–GA-5)
-- Placeholder panels per horizon until parallel PRs land (ON-2 copy)
+- `PlanHorizonPlaceholder` — fallback only when breadcrumb isn't scoped (steady-state = live horizon views)
+
+---
+
+## 13. Tasks across planning horizons
+
+> Consolidates how **tasks** appear and move across the five Plan horizon tabs (Week · Month ·
+> Quarter · Year · Bingo). Tasks are **global** (`tasks` table); horizons consume them via
+> `milestone_id`, scheduling, and `planning_suggestions` — there is no tab-scoped task store.
+> Companions: §1 decomposition spine, §7 GP4 goal panel, `kash-3.0-planning-build-plan.md`
+> (build audit), `kash-3.0-plan.md` §14 for task **tags** (global spine, not owned here).
+
+### 13.1 Locked task decisions (app-wide)
+
+| #         | Decision             | Choice                                                                       |
+| --------- | -------------------- | ---------------------------------------------------------------------------- |
+| PM1-3     | Progress model       | Hybrid — milestones auto-complete from linked tasks                          |
+| PM1-11    | Day-to-day marker    | **None** — goal-linked tasks look like any task                              |
+| PM5-3     | Week → Today handoff | Scheduling sets `scheduled_date`; today's column _is_ Today                  |
+| PM11.3    | Capacity nudge       | Committed = sum `time_estimate_minutes` on linked tasks; nudge at **~130%+** |
+| Values v1 | Value link           | `value_id` on **goals only** — no `tasks.value_id`                           |
+| GP4-3     | Bingo task link      | Create new or link existing tasks under a milestone                          |
+| PM6-1     | Balance pass         | Resurface Abyss backlog **+** generate suggestions (ghosted)                 |
+| GA-1–5    | AI suggestions       | Shared `GhostedAccept` — stage per item, Apply commits batch                 |
+
+**Data model:** `tasks.milestone_id` (nullable FK → `goal_milestones`), `tasks.time_estimate_minutes`
+(nullable). See §12.1.
+
+### 13.2 Per-horizon tab — task role
+
+| Tab         | Task role                                                                                      | Nested toggles                          | Spec refs         |
+| ----------- | ---------------------------------------------------------------------------------------------- | --------------------------------------- | ----------------- |
+| **Bingo**   | Milestone CRUD; create/link tasks in goal panel; capacity nudge; promote to Project            | Card ↔ List; Category ↔ Status grouping | GP4, PM11.3, ET-5 |
+| **Year**    | Indirect — drag goals onto quarters; heatmap from **completed task/time** (actual only)        | Breadcrumb zoom into quarter            | PM-2, PM2-2       |
+| **Quarter** | Indirect — distribute goals across months; theme biases balance pass                           | —                                       | PM-3, ET-1        |
+| **Month**   | Indirect — per-category intentions guide week; reserved days → suggested protected blocks      | List ↔ Calendar                         | PM-4, ET-2, ET-4  |
+| **Week**    | **Primary task surface** — same `WeekCanvas` as `/this-week`; unscheduled inbox; AI week draft | Execute ↔ Plan mode; lens group/filter  | PM5-1–3           |
+
+**Flow (high level):** Bingo goal panel → linked tasks → schedule on Week tab → appear on Today.
+Year/Quarter/Month shape _which goals and intentions_ feed the week; they do not host task lists.
+
+### 13.3 Week tab (primary task surface)
+
+- **Execute / Plan mode (PM5-1):** `PlanModeToggle` on `/plan` Week tab. Plan mode ON reveals the
+  planning rail (unscheduled inbox + "Draft my week" AI ghosts). Execute mode hides the rail for calm
+  daily use.
+- **WeekCanvas:** shared with `/this-week` — category-colored task borders, drag-to-schedule,
+  protected blocks, recurrence occurrences.
+- **Plan Tasks inbox:** unscheduled tasks for the scoped week (`partitionWeekTasks` + `tasks.listIncomplete`).
+  Collapsible section, not a second tab bar.
+- **Balance pass trigger:** closing Plan mode (toggle OFF) fires the balance pass chip (PM6-2).
+- **Lens bar:** group/filter by category, priority, due (data-spine VF-3) — lives on Week tab in Plan.
+
+### 13.4 Bingo tab (goal → task decomposition)
+
+- Tap a placed cell → **goal panel (GP4):** locked statement, category/value, hybrid progress %,
+  milestone list with per-milestone task counts, project link, promote-to-Project.
+- **Milestones:** manual add or AI "break this down" (ghosted, `surface: milestone_breakdown`).
+- **Tasks under milestone:** create via `tasks.create` with `milestoneId`, or link existing via
+  `planning.linkTaskToMilestone`. Tasks flow to Week/Today when scheduled; completing them advances
+  milestone → goal %.
+- **Capacity banner (PM11.3):** when linked estimates sum to ≥130% of weekly target, soft in-panel nudge.
+- **List mode (ET-5):** dense manage view; toggle group by category or status.
+
+### 13.5 Year · Quarter · Month (indirect task surfaces)
+
+- **Year:** quarter cards + merged heatmap encode **actual** attention from completed tasks / time
+  (PM2-2). Unplaced-goals tray; drag/tap assigns `target_horizon` — no task CRUD on this tab.
+- **Quarter:** theme phrase + focus-category chips; three month columns + unassigned tray; ghosted
+  month spread (`surface: quarter_spread`). Goals only.
+- **Month:** five category intention lines (empty = "—"); list default / calendar toggle for placing
+  reserved self-care days → ghosted dates → suggested protected blocks on Week (ET-4).
+
+### 13.6 Cross-tab mechanisms
+
+- **Balance pass (PM-6):** auto at end of planning session; two-tier floor + target; sources include
+  `fetchAbyssBalanceCandidates()` + generated suggestions; always dismissible.
+- **Check-in (PM-7):** on-demand + gentle cadence; proposals as `planning_suggestions`
+  (`surface: check_in`); apply via ghosts.
+- **Contextual inbox/triage:** in-content panel on Today, Week, and Plan only (`kash-3.0-plan.md` §4) —
+  not global.
+
+### 13.7 Explicit non-goals
+
+- **Task tags** (`tasks.tags`, freeform) — global §14 data spine; when built, surfaces in composer,
+  task detail, and Week lens/filters. Cross-link only; spec lives in `kash-3.0-plan.md` §14 and
+  `kash-3.0-data-spine-build-spec.md` Phase 5.
+- **Care "Tasks" tab** — self-care library at `/care`; unrelated to Plan horizons.
+
+### 13.8 Build status (verified Jul 1 2026)
+
+| Area                          | Status    | Code                                                                  |
+| ----------------------------- | --------- | --------------------------------------------------------------------- |
+| Plan shell + horizon tabs     | Built     | `PlanHorizonView`, `/plan`                                            |
+| Bingo task flows              | Built     | `BingoGoalPanel`, `BingoListView`                                     |
+| Year / Quarter / Month        | Built     | `YearView`, `QuarterView`, `MonthView`                                |
+| Week task surface + plan rail | Built     | `WeekPlanView`, `WeekCanvas`, `WeekInbox`, `WeekDraftGhosts`          |
+| Schema + tRPC                 | Built     | `tasks.milestone_id`, `planning.linkTaskToMilestone`, `getGoalDetail` |
+| Balance pass + Check-in       | Built     | `BalancePassProvider`, `CheckInProvider`                              |
+| Abyss + Care integration      | Built     | `fetchAbyssBalanceCandidates`, `recordBingoReward`                    |
+| Zoom-grow transition (AN-P1)  | Not built | Page cross-fade ships; optional PB8 polish                            |
+| Task tags (§14)               | Not built | No `tasks.tags` column yet                                            |
+
+**Verdict:** planning task-tab behavior is **shipped**; remaining work is motion polish (PB8) and
+global task-tags schema (§14), not net-new planning surfaces.
+
+### 13.9 Acceptance checklist (Jul 1 2026 audit)
+
+| Check                                        | Result                                                         |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| Link task to milestone from goal panel       | Pass — `BingoGoalPanel` → `planning.linkTaskToMilestone`       |
+| Goal-linked task has no special Today marker | Pass — `TaskRow` has no milestone/goal badge (PM1-11)          |
+| Week plan rail only in Plan mode             | Pass — `WeekPlanView` passes `showPlanningRail={planRailOpen}` |
+| Capacity nudge at ≥130%                      | Pass — `computeGoalCapacity` + banner in `BingoGoalPanel`      |
+| Balance pass on plan-mode exit               | Pass — `WeekPlanView` effect when `planRailOpen` → false       |
