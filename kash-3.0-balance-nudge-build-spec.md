@@ -23,13 +23,13 @@ gap into one easy action — without becoming the nag that gets muted.
 
 ### Functional
 
-| #   | Decision         | Choice                                                                                                                                                                                                           |
-| --- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B1  | "Starved" test   | **Learned baseline.** Kash learns each category's normal rhythm and flags when one drops **well below its own usual** — no arbitrary fixed numbers, adapts to the user.                                          |
-| B2  | Trigger scope    | **Overall lopsidedness.** The gate is "one sector is eating everything," not per-category alarms. This avoids crying wolf on a naturally-quiet category — the nudge only fires when the mix is truly tilted.     |
-| B3  | Nudge action     | **Offer something to do.** Surface a matching item from the **Abyss** in the thin category, or offer to add a small task/protected block. The gap becomes one tap.                                               |
-| B4  | Cadence          | **Both:** at most **one load-aware nudge/day** (goes silent when already over-committed; rotates so nothing nags) **and** a **weekly digest** folded into the Sunday / EoW review ("these got light this week"). |
-| B5  | Target selection | When lopsided (B2), use learned baselines (B1) to find the category(ies) below their usual and offer an action (B3) for the **most-starved** one.                                                                |
+| #   | Decision         | Choice                                                                                                                                                                                                                                                                                                             |
+| --- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B1  | "Starved" test   | **Learned baseline.** Kash learns each category's normal rhythm and flags when one drops **well below its own usual** — no arbitrary fixed numbers, adapts to the user.                                                                                                                                            |
+| B2  | Trigger scope    | **Overall lopsidedness.** The gate is "one sector is eating everything," not per-category alarms. This avoids crying wolf on a naturally-quiet category — the nudge only fires when the mix is truly tilted.                                                                                                       |
+| B3  | Nudge action     | **Offer something to do.** Surface a matching item from the **Abyss** in the thin category, or offer to add a small task/protected block. The gap becomes one tap.                                                                                                                                                 |
+| B4  | Cadence          | **Both:** at most **one load-aware nudge/day per kind** (`goal_step`, `balance_lopsided`, etc. — deduped via `nudge_events`; not one global cap) (goes silent when already over-committed; rotates so nothing nags) **and** a **weekly digest** folded into the Sunday / EoW review ("these got light this week"). |
+| B5  | Target selection | When lopsided (B2), use learned baselines (B1) to find the category(ies) below their usual and offer an action (B3) for the **most-starved** one.                                                                                                                                                                  |
 
 ### Visual design
 
@@ -81,7 +81,7 @@ Runs in the existing nudge evaluation pass (`src/server/nudges/run-nudge-evaluat
 - Delivered as a **category-tinted `EssentialNudgeChip`** on today/plan/care (same channel as walk /
   top3), tinted in the starved category's color, with the offered action inline ("Coffee with a
   friend? · Add it").
-- **At most one per day**, deduped via `nudge_events`. **Load-aware:** suppressed when the day is
+- **At most one per kind per day**, deduped via `nudge_events`. **Load-aware:** suppressed when the day is
   over-committed (reuse the over-commit signal), so it never piles onto a slammed day. Rotate the
   category across days so no single sector nags.
 - Accepting the action adds the task/pulls the Abyss item into the day (normal, category-carrying).

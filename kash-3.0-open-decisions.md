@@ -27,11 +27,12 @@ next-step offer**, the **Top-3 slip chip**, and **Evidence milestone-surfacing**
 independently says "one per day, load-aware" — but nothing stops _three different features_ from all
 firing on the same light morning. That directly breaks the "calm, low-chrome" promise.
 
-**Decision needed.** A single **nudge arbitration layer**: one shared daily budget (e.g. at most 1–2
-proactive chips/day total, not per-feature), a priority order when several qualify (slip > balance >
-goal-step > evidence?), and the shared over-commit suppression in one place instead of re-implemented
-per spec. Owner: a small new cross-cutting spec, or a `§15` addendum. **Every new spec's "one per day"
-line should defer to this.**
+**Decision needed.** A single **nudge arbitration layer**: adaptive client-side sequencing (reassurance
+opener + one problem chip after a beat, +1 for time-sensitive slip), a priority order when several
+qualify (slip > balance > goal-step), and the shared over-commit suppression in one place instead of
+re-implemented per spec. **Per-kind `nudge_events` dedupe** (D18): each kind may fire at most once per
+local date — not a single global nudge/day cap. Owner: `kash-3.0-morning-and-arbitration-build-spec.md`.
+**Every new spec's "one per day" line should defer to this.**
 
 ### A2. The "morning hand-off" surface doesn't exist · ✅ RESOLVED (Phase 1)
 

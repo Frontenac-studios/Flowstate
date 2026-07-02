@@ -1,37 +1,53 @@
 import "server-only";
 
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
-import { appSettings, goalMilestones, goals, tasks } from "@/db/tables";
+import { appSettings, goalMilestones, goals, nudgeEvents, tasks } from "@/db/tables";
 import { milestoneIsComplete } from "@/lib/planning/goal-progress";
 import type { GoalSteeringOffer } from "@/lib/planning/goal-journey";
+import {
+  goalSteeringNudgeTaskIds,
+  parseGoalIdFromNudgeTaskIds,
+  pickRotatedGoalId,
+} from "@/lib/planning/goal-steering-rotation";
 import type { ProjectCategory } from "@/lib/projects/categories";
 
-export async function fetchGoalSteeringOffer(userId: string): Promise<GoalSteeringOffer | null> {
-  const [settingsRow, goalRows] = await Promise.all([
-    db
-      .select({
-        goalSteering: appSettings.goalSteering,
-        assistanceEnabled: appSettings.assistanceEnabled,
-      })
-      .from(appSettings)
-      .where(eq(appSettings.userId, userId))
-      .limit(1),
-    db
-      .select()
-      .from(goals)
-      .where(and(eq(goals.userId, userId), eq(goals.state, "active")))
-      .orderBy(asc(goals.sortOrder)),
-  ]);
+type GoalRow = typeof goals.$inferSelect;
 
-  const enabled =
-    (settingsRow[0]?.assistanceEnabled ?? true) && (settingsRow[0]?.goalSteering ?? "on") === "on";
-  if (!enabled || goalRows.length === 0) return null;
+async function isGoalSteeringEnabled(userId: string): Promise<boolean> {
+  const [settingsRow] = await db
+    .select({
+      goalSteering: appSettings.goalSteering,
+      assistanceEnabled: appSettings.assistanceEnabled,
+    })
+    .from(appSettings)
+    .where(eq(appSettings.userId, userId))
+    .limit(1);
 
-  const goal = goalRows[0];
-  if (!goal) return null;
+  return (settingsRow?.assistanceEnabled ?? true) && (settingsRow?.goalSteering ?? "on") === "on";
+}
 
+async function fetchGoalSteeringHistory(userId: string): Promise<Map<string, string>> {
+  const rows = await db
+    .select({
+      localDate: nudgeEvents.localDate,
+      taskIds: nudgeEvents.taskIds,
+    })
+    .from(nudgeEvents)
+    .where(and(eq(nudgeEvents.userId, userId), eq(nudgeEvents.kind, "goal_step")))
+    .orderBy(desc(nudgeEvents.localDate));
+
+  const lastOfferedByGoal = new Map<string, string>();
+  for (const row of rows) {
+    const goalId = parseGoalIdFromNudgeTaskIds(row.taskIds);
+    if (!goalId || lastOfferedByGoal.has(goalId)) continue;
+    lastOfferedByGoal.set(goalId, row.localDate);
+  }
+  return lastOfferedByGoal;
+}
+
+async function buildOfferForGoal(userId: string, goal: GoalRow): Promise<GoalSteeringOffer | null> {
   const milestoneRows = await db
     .select()
     .from(goalMilestones)
@@ -80,11 +96,68 @@ export async function fetchGoalSteeringOffer(userId: string): Promise<GoalSteeri
   return null;
 }
 
+export async function fetchGoalSteeringOffer(userId: string): Promise<GoalSteeringOffer | null> {
+  if (!(await isGoalSteeringEnabled(userId))) return null;
+
+  const goalRows = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.state, "active")))
+    .orderBy(asc(goals.sortOrder));
+
+  if (goalRows.length === 0) return null;
+
+  const lastOfferedByGoal = await fetchGoalSteeringHistory(userId);
+  const rotatedGoalId = pickRotatedGoalId(
+    goalRows.map((goal) => goal.id),
+    lastOfferedByGoal
+  );
+  if (!rotatedGoalId) return null;
+
+  const goal = goalRows.find((row) => row.id === rotatedGoalId);
+  if (!goal) return null;
+
+  return buildOfferForGoal(userId, goal);
+}
+
+export async function fetchGoalSteeringOfferForGoal(
+  userId: string,
+  goalId: string
+): Promise<GoalSteeringOffer | null> {
+  if (!(await isGoalSteeringEnabled(userId))) return null;
+
+  const [goal] = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.id, goalId), eq(goals.state, "active")))
+    .limit(1);
+
+  if (!goal) return null;
+  return buildOfferForGoal(userId, goal);
+}
+
+export async function recordGoalSteeringNudge(
+  userId: string,
+  localDate: string,
+  goalId: string
+): Promise<void> {
+  try {
+    await db.insert(nudgeEvents).values({
+      userId,
+      kind: "goal_step",
+      localDate,
+      taskIds: goalSteeringNudgeTaskIds(goalId),
+    });
+  } catch {
+    // Unique (user, kind, local_date) — idempotent across tabs.
+  }
+}
+
 export async function pullGoalStepToToday(
   userId: string,
   offer: GoalSteeringOffer,
   localDate: string
-): Promise<string | null> {
+): Promise<{ taskId: string; created: boolean } | null> {
   const [existing] = await db
     .select({ id: tasks.id })
     .from(tasks)
@@ -103,7 +176,7 @@ export async function pullGoalStepToToday(
       .update(tasks)
       .set({ scheduledDate: localDate, bucketOverride: null, updatedAt: new Date() })
       .where(and(eq(tasks.id, existing.id), eq(tasks.userId, userId)));
-    return existing.id;
+    return { taskId: existing.id, created: false };
   }
 
   const [created] = await db
@@ -118,5 +191,6 @@ export async function pullGoalStepToToday(
     })
     .returning({ id: tasks.id });
 
-  return created?.id ?? null;
+  if (!created) return null;
+  return { taskId: created.id, created: true };
 }

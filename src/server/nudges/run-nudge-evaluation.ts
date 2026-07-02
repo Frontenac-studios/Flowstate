@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
+import { appSettings, nudgeEvents, taskTimeEntries, tasks } from "@/db/tables";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
 import { evaluateBalanceLopsided } from "@/lib/nudges/evaluate-balance-lopsided";
 import {
@@ -17,6 +17,8 @@ import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
 import { startedOnLocalDay } from "@/lib/nudges/local-time";
 import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
 import { evaluateGoalSteering } from "@/lib/nudges/evaluate-goal-steering";
+import { PROBLEM_NUDGE_PRIORITY } from "@/lib/nudges/nudge-arbiter";
+import { goalSteeringNudgeTaskIds } from "@/lib/planning/goal-steering-rotation";
 import { fetchBalanceNudgeContext } from "@/server/nudges/fetch-balance-nudge-context";
 import { fetchGoalSteeringOffer } from "@/server/planning/fetch-goal-steering-offer";
 import { getLatestEvidenceEdition } from "@/server/evidence/generate-edition";
@@ -145,11 +147,21 @@ export async function runNudgeEvaluation(params: {
       })
     : { shouldFire: false, localHour: 0 };
 
-  const [balanceContext, isOverCommitted, goalSteeringOffer] = await Promise.all([
+  const [balanceContext, isOverCommitted, goalSteeringOffer, settingsRow] = await Promise.all([
     fetchBalanceNudgeContext(userId),
     fetchIsOverCommittedForDate(userId, localDate, tzOffsetMinutes),
     fetchGoalSteeringOffer(userId),
+    db
+      .select({
+        goalSteering: appSettings.goalSteering,
+        assistanceEnabled: appSettings.assistanceEnabled,
+      })
+      .from(appSettings)
+      .where(eq(appSettings.userId, userId))
+      .limit(1),
   ]);
+  const goalSteeringEnabled =
+    (settingsRow[0]?.assistanceEnabled ?? true) && (settingsRow[0]?.goalSteering ?? "on") === "on";
 
   const balanceEvaluation = evaluateBalanceLopsided({
     historicalWeeks: balanceContext.historicalWeeks,
@@ -162,7 +174,7 @@ export async function runNudgeEvaluation(params: {
 
   const goalSteeringEvaluation = evaluateGoalSteering({
     offer: goalSteeringOffer,
-    goalSteeringEnabled: true,
+    goalSteeringEnabled,
     alreadyNudgedToday: nudgedKinds.has("goal_step"),
     isOverCommitted,
   });
@@ -184,7 +196,7 @@ export async function runNudgeEvaluation(params: {
           stallEvaluation.slippedTasks
         ),
         klass: "problem",
-        priority: 3,
+        priority: PROBLEM_NUDGE_PRIORITY.top3_stall,
         action: { type: "decide" },
       });
       fired = true;
@@ -206,7 +218,7 @@ export async function runNudgeEvaluation(params: {
           kind: "top3_slip",
           message: `'${slip.title}' keeps sliding. Break it down, or let it go?`,
           klass: "problem",
-          priority: 0,
+          priority: PROBLEM_NUDGE_PRIORITY.top3_slip,
           action: { type: "open_top3" },
         });
         fired = true;
@@ -222,7 +234,7 @@ export async function runNudgeEvaluation(params: {
         kind: "self_care_walk",
         message: templateSelfCareWalkMessage(),
         klass: "problem",
-        priority: 3,
+        priority: PROBLEM_NUDGE_PRIORITY.self_care_walk,
         action: { type: "open_care" },
       });
       fired = true;
@@ -255,7 +267,7 @@ export async function runNudgeEvaluation(params: {
         kind: "balance_lopsided",
         message: balanceEvaluation.message,
         klass: "problem",
-        priority: 1,
+        priority: PROBLEM_NUDGE_PRIORITY.balance_lopsided,
         action: balanceEvaluation.action,
         categoryTint: balanceEvaluation.category,
       });
@@ -268,13 +280,13 @@ export async function runNudgeEvaluation(params: {
         userId,
         kind: "goal_step",
         localDate,
-        taskIds: [],
+        taskIds: goalSteeringNudgeTaskIds(goalSteeringEvaluation.offer.goalId),
       });
       chips.push({
         kind: "goal_step",
         message: goalSteeringEvaluation.message,
         klass: "problem",
-        priority: 2,
+        priority: PROBLEM_NUDGE_PRIORITY.goal_step,
         action: {
           type: "goal_step_add",
           payload: JSON.stringify(goalSteeringEvaluation.offer),

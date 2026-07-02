@@ -9,6 +9,7 @@ import {
   goalMilestones,
   goals,
   monthIntentions,
+  nudgeEvents,
   phases,
   planningSuggestions,
   projects,
@@ -47,6 +48,13 @@ import { slugifyProjectName } from "@/lib/projects/slugify";
 import { fetchWeekDraftContext } from "@/server/claude/fetch-week-draft-context";
 import { generateWeekDraft } from "@/server/claude/generate-week-draft";
 import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
+import {
+  fetchGoalSteeringOffer,
+  fetchGoalSteeringOfferForGoal,
+  pullGoalStepToToday,
+  recordGoalSteeringNudge,
+} from "@/server/planning/fetch-goal-steering-offer";
+import { fetchIsOverCommittedForDate } from "@/server/week/fetch-over-commit-for-date";
 import { maybeTriggerEvidenceMilestoneEdition } from "@/server/evidence/maybe-trigger-milestone";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -1883,4 +1891,75 @@ export const planningRouter = createTRPCRouter({
 
     return { applied: rows.length };
   }),
+
+  getGoalSteeringOfferForHandoff: protectedProcedure
+    .input(
+      z.object({
+        localDate: isoDateSchema,
+        tzOffsetMinutes: z.number().int().min(-720).max(840),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const [nudgedToday, isOverCommitted, offer] = await Promise.all([
+        db
+          .select({ id: nudgeEvents.id })
+          .from(nudgeEvents)
+          .where(
+            and(
+              eq(nudgeEvents.userId, ctx.userId),
+              eq(nudgeEvents.kind, "goal_step"),
+              eq(nudgeEvents.localDate, input.localDate)
+            )
+          )
+          .limit(1),
+        fetchIsOverCommittedForDate(ctx.userId, input.localDate, input.tzOffsetMinutes),
+        fetchGoalSteeringOffer(ctx.userId),
+      ]);
+
+      if (nudgedToday.length > 0 || isOverCommitted || !offer) {
+        return { offer: null as null };
+      }
+
+      return { offer };
+    }),
+
+  pullGoalStepToToday: protectedProcedure
+    .input(
+      z.object({
+        goalId: z.string().uuid(),
+        localDate: isoDateSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const offer = await fetchGoalSteeringOfferForGoal(ctx.userId, input.goalId);
+      if (!offer) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No goal step to pull in." });
+      }
+
+      const pulled = await pullGoalStepToToday(ctx.userId, offer, input.localDate);
+      if (!pulled) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to pull goal step into today.",
+        });
+      }
+
+      await recordGoalSteeringNudge(ctx.userId, input.localDate, offer.goalId);
+
+      const [row] = await db
+        .select()
+        .from(tasks)
+        .where(and(eq(tasks.id, pulled.taskId), eq(tasks.userId, ctx.userId)))
+        .limit(1);
+      if (row) await syncTaskRow(row.id, pulled.created ? "insert" : "update", row);
+
+      return { taskId: pulled.taskId, offer };
+    }),
+
+  dismissGoalSteeringOffer: protectedProcedure
+    .input(z.object({ localDate: isoDateSchema, goalId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await recordGoalSteeringNudge(ctx.userId, input.localDate, input.goalId);
+      return { ok: true as const };
+    }),
 });
