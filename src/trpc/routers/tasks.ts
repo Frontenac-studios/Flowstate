@@ -944,7 +944,7 @@ export const tasksRouter = createTRPCRouter({
   listByProject: protectedProcedure
     .input(z.object({ projectId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      return db
+      const rows = await db
         .select({
           id: tasks.id,
           title: tasks.title,
@@ -965,6 +965,39 @@ export const tasksRouter = createTRPCRouter({
         .from(tasks)
         .where(and(eq(tasks.userId, ctx.userId), eq(tasks.projectId, input.projectId)))
         .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
+
+      const incompleteIds = rows.filter((r) => r.completedAt === null).map((r) => r.id);
+      if (incompleteIds.length === 0) {
+        return rows.map((row) => ({
+          ...row,
+          isBlocked: false,
+          blockedByIds: [] as string[],
+          blockerTitle: undefined as string | undefined,
+        }));
+      }
+
+      const edges = await db
+        .select({
+          blockerTaskId: taskDependencies.blockerTaskId,
+          blockedTaskId: taskDependencies.blockedTaskId,
+          expiresAt: taskDependencies.expiresAt,
+        })
+        .from(taskDependencies)
+        .where(eq(taskDependencies.userId, ctx.userId));
+
+      const depState = computeDependencyState(edges, incompleteIds);
+      const titleById = Object.fromEntries(rows.map((r) => [r.id, r.title]));
+
+      return rows.map((row) => {
+        const state = row.completedAt === null ? depState.get(row.id) : undefined;
+        return {
+          ...row,
+          isBlocked: state?.isBlocked ?? false,
+          blockedByIds: state?.blockedByIds ?? [],
+          blockerTitle:
+            state?.blockedByIds?.[0] != null ? titleById[state.blockedByIds[0]] : undefined,
+        };
+      });
     }),
 
   moveToPhase: protectedProcedure

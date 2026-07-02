@@ -284,6 +284,9 @@ export function WeekCanvas({
     recurrenceId: task.recurrenceId,
     occurrenceDate: task.occurrenceDate,
     templateTaskId: task.templateTaskId,
+    isBlocked: task.isBlocked,
+    blockedByIds: task.blockedByIds,
+    taskTitleById,
   });
 
   const findTaskById = (taskId: string) => tasks.find((t) => t.id === taskId);

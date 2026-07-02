@@ -144,7 +144,7 @@ export function LensControlBar() {
                     className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition focus:outline-none ${
                       selected.includes(opt.value)
                         ? "kash-focus-visible border-accent bg-active-surface text-ink outline-none"
-                        : "kash-focus-visible border-white/30 text-ink-muted outline-none hover:text-ink"
+                        : "kash-focus-visible border-border text-ink-muted outline-none hover:text-ink"
                     }`}
                   >
                     <span
