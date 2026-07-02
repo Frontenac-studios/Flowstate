@@ -434,7 +434,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 **Vision (additions / refinements):**
 
 - **Phases + subphases**, viewable as Miller columns _or_ as a calendar showing phase date ranges, _or_ as a multi-project calendar for cross-project visualization.
-- **Click-and-drag tasks** between phases (and across the calendar).
+- **Click-and-drag tasks** between phases (Miller drag). **Project calendar: phase bars only** — task dates move via Miller drag or the task-detail picker (D22 / Kash 3.1).
 - **Time-spent tracking per project task** (exists via time entries — surface it better).
 - **AI scoping & templating** (the big new capability):
   - Learn how long similar phases/tasks have taken historically.
@@ -447,7 +447,7 @@ Active/selected-state treatments (from the B&W redesign): nav-rail active = **so
 **1. Structure — fixed depth: project → phase → subphase → task.**
 
 - Bounded hierarchy that maps cleanly to Miller columns and the calendar; easy to visualize and timeline. _Rejected:_ arbitrary recursive nesting (invites over-nesting, hard to plan dates for).
-- **Drag tasks** between phases/subphases and across the calendar.
+- **Drag tasks** between phases/subphases (Miller). Calendar stays **phase-level** — no task-chip drag on the project calendar (D22).
 - Views (built): Miller columns · calendar of phase date ranges · multi-project calendar.
 - **Multi-project calendar coloring _(Resolved Jun 25)_: category/project toggle, default category.** The calendar opens in **category color** (honoring the locked "color = category stripe only" rule) and can **toggle to per-project hues** as an opt-in exception for tracking one project across the grid. _Build-spec flag:_ project-mode needs a distinct project-hue set that does **not** collide with the five category Apple hexes (define in Design Tokens). _Rejected:_ project-color as the default (makes the palette-exception the resting state).
 

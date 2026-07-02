@@ -24,7 +24,7 @@
   /* ---- ink — crisp near-black ---- */
   --ink: #16181d;
   --ink-muted: #6b7280;
-  --ink-faint: #9aa0ad; /* DT-9 */
+  --ink-faint: #767e8e; /* DT-9 — AA fix (was #9aa0ad) */
 
   /* ---- accent = black (DT-2 revised Jun 24, was graphite) ---- */
   --accent: #16181d;

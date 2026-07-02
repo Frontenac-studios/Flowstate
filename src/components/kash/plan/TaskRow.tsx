@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import { Lock, withKashIcon } from "@/components/kash/ui/icon";
+import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import Checkbox from "@/components/kash/ui/Checkbox";
 import Input from "@/components/kash/ui/Input";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
@@ -40,6 +42,11 @@ export type PlanTaskRow = {
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
   tags?: string[] | null;
+  /** Live dependency state (Phase 3 / F2). */
+  isBlocked?: boolean;
+  blockedByIds?: string[];
+  /** Optional title lookup for "waiting on X" copy. */
+  taskTitleById?: Record<string, string>;
   // Surfaced under the due lens as a relative label (VF-1).
   scheduledDate?: string | null;
   // Phase identity for the project lens (VF-4): name shown as "Project · Phase",
@@ -55,6 +62,7 @@ export type PlanTaskRow = {
 };
 
 const NEUTRAL_CATEGORY_STRIPE = "var(--ink-faint)";
+const LockIcon = withKashIcon(Lock);
 
 type Props = {
   task: PlanTaskRow;
@@ -133,6 +141,15 @@ export function TaskRow({
 
   const relativeDue =
     activeReveal.due && !suppressDue ? formatRelativeDue(task.scheduledDate) : null;
+  const isBlocked = task.isBlocked === true;
+  const blockerLabel = useMemo(() => {
+    if (!isBlocked || !task.blockedByIds?.length) return null;
+    const lookup = task.taskTitleById;
+    const firstId = task.blockedByIds[0];
+    const title = lookup?.[firstId];
+    if (title) return title;
+    return task.blockedByIds.length === 1 ? "blocker" : `${task.blockedByIds.length} blockers`;
+  }, [isBlocked, task.blockedByIds, task.taskTitleById]);
   const isOverdue = relativeDue?.emphasis === "danger";
   const dueEmphasisClass =
     relativeDue?.emphasis === "danger"
@@ -398,9 +415,9 @@ export function TaskRow({
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move ${
-            task.isTop3 ? "border-l-2 border-accent" : ""
-          } ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
+          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 rounded-card border bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move ${
+            isBlocked ? "border-dashed border-ink-faint" : "border-subtle"
+          } ${task.isTop3 ? "border-l-2 border-accent" : ""} ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
           style={{ transform: `translateX(${offset}px)` }}
           onClick={() => onSelect?.(task.id)}
           onDoubleClick={() => onActivate?.(task.id)}
@@ -462,12 +479,18 @@ export function TaskRow({
             accentColor={completing || resolvedCategory ? stripeColor : "var(--ink)"}
             aria-label={`Complete ${task.title}`}
             checked={completing}
-            disabled={isCompleting}
+            disabled={isCompleting || isBlocked}
             onClick={(e) => e.stopPropagation()}
             onChange={handleComplete}
           />
 
           <div className="min-w-0 flex-1">
+            {isBlocked && blockerLabel ? (
+              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-faint">
+                <LockIcon size={12} className="shrink-0" aria-hidden />
+                <span>Waiting on {blockerLabel}</span>
+              </p>
+            ) : null}
             {editing ? (
               <>
                 <Input
@@ -496,13 +519,18 @@ export function TaskRow({
                 ) : null}
               </>
             ) : (
-              <span
-                className={`block break-words ${
-                  completing ? "text-ink-faint line-through" : "text-ink"
-                } ${isOverdue ? "font-medium" : ""}`}
-              >
-                {task.title}
-              </span>
+              <>
+                <span
+                  className={`block break-words ${
+                    completing ? "text-ink-faint line-through" : "text-ink"
+                  } ${isOverdue ? "font-medium" : ""}`}
+                >
+                  {task.title}
+                </span>
+                {(task.tags?.length ?? 0) > 0 ? (
+                  <TaskTagChips tags={task.tags ?? []} className="mt-1" />
+                ) : null}
+              </>
             )}
           </div>
 

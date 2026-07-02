@@ -150,3 +150,9 @@ All five items from the Jul 1 audit have been specced and built:
 3. ✅ Goal→day steering specced → **next-step into Today** built
 4. ✅ Balance nudge finished → **category-starvation nudge** built
 5. ✅ Top-3 assurance → **hold + check-ins + slip chip** built
+
+---
+
+## Kash 3.1 follow-up (Jul 2 2026)
+
+The Jul 2 re-audit found the mechanical product is strong but several promises are **sensed/stored without acting or showing** — placeholder morning hand-off, non-tappable self-care gaps, goal steering without pull-in, wins facets not surfaced, Backlog BK3–BK5 overstated. **All new work is planned in `kash-3.1-consolidated-build-spec.md`.** Scorecard verdicts above remain accurate for what 3.0 delivered; 3.1 closes the last mile.

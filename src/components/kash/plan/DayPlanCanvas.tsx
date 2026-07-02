@@ -228,6 +228,11 @@ export function DayPlanCanvas() {
   const todayTasks =
     bucketMode === "named_days" ? partitionedNamed.today : partitionedRelative.today;
 
+  const taskTitleById = useMemo(
+    () => Object.fromEntries(tasks.map((t) => [t.id, t.title])),
+    [tasks]
+  );
+
   const triggerRdmPick = useCallback(() => {
     const pick = pickRdmTask(todayTasks, { lastWasLarge: lastWasLargeRef.current });
     if (!pick) return;
@@ -256,6 +261,9 @@ export function DayPlanCanvas() {
     recurrenceId: task.recurrenceId,
     occurrenceDate: task.occurrenceDate,
     templateTaskId: task.templateTaskId,
+    isBlocked: task.isBlocked,
+    blockedByIds: task.blockedByIds,
+    taskTitleById,
   });
 
   const pinnedBySlot = useMemo(() => {
