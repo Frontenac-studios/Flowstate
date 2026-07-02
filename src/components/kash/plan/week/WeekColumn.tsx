@@ -1,14 +1,16 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 
 import { formatHeaderDate, parseISODateString } from "@/lib/dates/local-day";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
+import { hasSeenWeekPinHint, markWeekPinHintSeen } from "@/lib/week/week-pin-hint-storage";
 
 import type { PlanTaskRow } from "../TaskRow";
 import { TaskRow } from "../TaskRow";
 import AddProtectedBlockButton from "./AddProtectedBlockButton";
+import { ColumnCategoryStrip } from "./ColumnCategoryStrip";
 import ColumnTallyPopover from "./ColumnTallyPopover";
 import DayPrioritiesSlots, { type DayPrioritySlotTask } from "./DayPrioritiesSlots";
 import ProtectedBlockChip, { type ProtectedBlockRow } from "./ProtectedBlockChip";
@@ -25,6 +27,7 @@ type Props = {
   protectedBlocks: ProtectedBlockRow[];
   overCommitted?: boolean;
   overCommitMode?: OverCommitThresholdMode;
+  showPinHint?: boolean;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onRemoveProtected: (id: string) => void;
@@ -33,9 +36,7 @@ type Props = {
   canPinMore: boolean;
 };
 
-/** Inverted "today" emphasis (Kash 3.0): the week is soft-gray, today is white. */
-const GRAY_COLUMN = "color-mix(in srgb, var(--ink) 4%, var(--surface))";
-
+/** D19 — white day cards on canvas; today marked with ink border + black date pill. */
 export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
   {
     isoDate,
@@ -47,6 +48,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     protectedBlocks,
     overCommitted = false,
     overCommitMode = "cold-start",
+    showPinHint = false,
     onComplete,
     onDelete,
     onRemoveProtected,
@@ -58,19 +60,23 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
 ) {
   const { setNodeRef, isOver } = useDroppable({ id: `week-day:${isoDate}` });
   const headerDate = formatHeaderDate(parseISODateString(isoDate));
+  const [pinHintDismissed, setPinHintDismissed] = useState(() => hasSeenWeekPinHint());
 
   const priorityTaskIds = new Set(Array.from(pinnedBySlot.values()).map((task) => task.id));
   const regularTasks = tasks.filter((task) => !priorityTaskIds.has(task.id));
 
+  const dismissPinHint = () => {
+    markWeekPinHintSeen();
+    setPinHintDismissed(true);
+  };
+
   return (
     <div
       ref={ref}
-      className="flex shrink-0 flex-col rounded-row"
-      style={{
-        width: `${columnWidthPercent}%`,
-        backgroundColor: isToday ? "var(--surface)" : GRAY_COLUMN,
-        boxShadow: isToday ? "inset 0 0 0 1px var(--border)" : undefined,
-      }}
+      className={`group/column flex shrink-0 flex-col rounded-card border bg-surface ${
+        isToday ? "border-ink" : "border-subtle"
+      }`}
+      style={{ width: `${columnWidthPercent}%` }}
     >
       <ColumnTallyPopover
         label={label}
@@ -79,6 +85,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
         tasks={tasks}
         overCommitted={overCommitted}
         overCommitMode={overCommitMode}
+        categoryStrip={<ColumnCategoryStrip tasks={tasks} />}
         droppableRef={setNodeRef}
         isDropOver={isOver}
       >
@@ -95,7 +102,12 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
             ))}
           </ul>
         ) : null}
-        <DayPrioritiesSlots pinnedBySlot={pinnedBySlot} onUnpin={onUnpinPriority} />
+        <DayPrioritiesSlots
+          pinnedBySlot={pinnedBySlot}
+          onUnpin={onUnpinPriority}
+          showPinHint={showPinHint && !pinHintDismissed}
+          onDismissPinHint={dismissPinHint}
+        />
         <ul className="mt-1 flex-1 space-y-1.5 px-1 pb-2" aria-label={`Tasks for ${isoDate}`}>
           {regularTasks.map((task) => (
             <TaskRow
@@ -111,7 +123,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
             />
           ))}
         </ul>
-        <div className="px-1 pb-2">
+        <div className="px-1 pb-2 [@media(hover:hover)]:invisible [@media(hover:hover)]:group-hover/column:visible">
           <AddProtectedBlockButton isoDate={isoDate} />
         </div>
       </ColumnTallyPopover>

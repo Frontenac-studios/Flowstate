@@ -12,7 +12,8 @@ import { PlanProvider } from "@/components/kash/plan/PlanProvider";
 import type { PlanningBreadcrumb } from "@/lib/planning/horizon-storage";
 import { resolveWeekAnchorDate } from "@/lib/planning/week-breadcrumb";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
-import { parseISODateString } from "@/lib/dates/local-day";
+import { weekHasPlanningData } from "@/lib/week/week-has-data";
+import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { useTRPC } from "@/trpc/client";
 
 import { WeekCanvas } from "./WeekCanvas";
@@ -50,9 +51,25 @@ export default function WeekPlanView({ breadcrumb }: Props) {
   }, [planRailOpen, triggerBalancePass, breadcrumb, anchorDate]);
 
   const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
-  const hasInboxTasks = useMemo(
-    () => partitionWeekTasks(tasks, weekRef).inbox.length > 0,
-    [tasks, weekRef]
+  const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
+  const { data: protectedBlocks = [] } = useQuery(
+    trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
+  );
+  const { data: dayPriorities = [] } = useQuery(
+    trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
+  );
+  const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
+  const weekDateIsos = useMemo(() => datesInIsoWeek(weekRef).map(toISODateString), [weekRef]);
+  const hasInboxTasks = partitioned.inbox.length > 0;
+  const hasWeekPlanData = useMemo(
+    () =>
+      weekHasPlanningData({
+        weekDates: weekDateIsos,
+        tasks,
+        protectedBlockCount: protectedBlocks.length,
+        dayPriorityCount: dayPriorities.length,
+      }) || hasInboxTasks,
+    [weekDateIsos, tasks, protectedBlocks.length, dayPriorities.length, hasInboxTasks]
   );
 
   return (
@@ -63,15 +80,21 @@ export default function WeekPlanView({ breadcrumb }: Props) {
         </div>
 
         <LensProvider scope="this-week">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <LensControlBar />
-          </div>
+          {hasWeekPlanData ? (
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <LensControlBar />
+            </div>
+          ) : null}
 
           {planRailOpen ? (
             <WeekDraftGhosts anchorDate={anchorDate} hasInboxTasks={hasInboxTasks} />
           ) : null}
 
-          <WeekCanvas anchorDate={anchorDate} showPlanningRail={planRailOpen} />
+          <WeekCanvas
+            anchorDate={anchorDate}
+            showPlanningRail={planRailOpen}
+            showWeekChrome={hasWeekPlanData}
+          />
         </LensProvider>
       </div>
     </PlanProvider>

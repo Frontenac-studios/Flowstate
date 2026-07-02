@@ -68,10 +68,18 @@ function DayPrioritySlot({ slot, task, onUnpin }: SlotProps) {
 type Props = {
   pinnedBySlot: Map<number, DayPrioritySlotTask>;
   onUnpin: (taskId: string) => void;
+  /** D21 — one-time pin hint on today's column. */
+  showPinHint?: boolean;
+  onDismissPinHint?: () => void;
 };
 
-/** Compact per-day priority slots for WeekColumn (WD1). */
-export default function DayPrioritiesSlots({ pinnedBySlot, onUnpin }: Props) {
+/** Compact per-day priority slots for WeekColumn (WD1 / D5). */
+export default function DayPrioritiesSlots({
+  pinnedBySlot,
+  onUnpin,
+  showPinHint = false,
+  onDismissPinHint,
+}: Props) {
   const pinnedTasks = ([1, 2, 3] as const)
     .map((slot) => {
       const task = pinnedBySlot.get(slot);
@@ -79,15 +87,29 @@ export default function DayPrioritiesSlots({ pinnedBySlot, onUnpin }: Props) {
     })
     .filter((entry): entry is { slot: 1 | 2 | 3; task: DayPrioritySlotTask } => entry !== null);
 
-  const showHint = pinnedTasks.length === 0;
+  const showDefaultHint = pinnedTasks.length === 0 && !showPinHint;
 
   return (
-    <section className="mt-1 px-1" aria-label="Day priorities">
+    <section className="mt-1 px-1" aria-label="Priorities">
       <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-ink-muted">
         Priorities
       </p>
       <div className="flex flex-col gap-1">
-        {showHint ? (
+        {showPinHint ? (
+          <p className="rounded-row bg-surface-2 px-2 py-1 text-center text-[10px] leading-snug text-ink-muted">
+            Swipe right on a task to pin
+            {onDismissPinHint ? (
+              <button
+                type="button"
+                className="ml-1 text-ink-faint underline underline-offset-2 hover:text-ink"
+                onClick={onDismissPinHint}
+              >
+                Got it
+              </button>
+            ) : null}
+          </p>
+        ) : null}
+        {showDefaultHint ? (
           <p className="px-1 py-0.5 text-center text-[10px] leading-snug text-ink-muted">
             Swipe right on a task to pin
           </p>

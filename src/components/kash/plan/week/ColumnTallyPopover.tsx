@@ -16,10 +16,9 @@ type Props = {
   tasks: PlanTaskRow[];
   overCommitted?: boolean;
   overCommitMode?: OverCommitThresholdMode;
-  /** Droppable ref + drag-over styling for the day column header. */
+  categoryStrip?: ReactNode;
   droppableRef: (node: HTMLElement | null) => void;
   isDropOver: boolean;
-  /** Content below the header (protected blocks, task list, etc.). */
   children: ReactNode;
 };
 
@@ -38,8 +37,8 @@ function useCanHover(): boolean {
 }
 
 /**
- * Week day column shell (WD2): category borders on tasks at rest; a proportional
- * category tally (Today's BalanceBar) on hover (desktop) or header tap (touch).
+ * Week day column shell (D19–D21): persistent category strip in header; balance
+ * detail on hover/tap when the day has tasks.
  */
 export default function ColumnTallyPopover({
   label,
@@ -50,6 +49,7 @@ export default function ColumnTallyPopover({
   isDropOver,
   overCommitted = false,
   overCommitMode = "cold-start",
+  categoryStrip,
   children,
 }: Props) {
   const tallyId = useId();
@@ -106,7 +106,7 @@ export default function ColumnTallyPopover({
     >
       <div
         ref={droppableRef}
-        className={`relative rounded-t-row ${isDropOver ? "outline-dashed outline-1 outline-[var(--accent)]" : ""}`}
+        className={`relative rounded-t-card ${isDropOver ? "outline-dashed outline-1 outline-[var(--accent)]" : ""}`}
       >
         {showTally ? (
           <div
@@ -130,17 +130,23 @@ export default function ColumnTallyPopover({
           aria-controls={hasTasks ? tallyId : undefined}
           onClick={canHover ? undefined : toggleTally}
         >
+          {categoryStrip ? <div className="mb-2">{categoryStrip}</div> : null}
           <p
             className={`text-caption uppercase tracking-wide ${
-              isToday ? "text-ink-muted" : "text-ink-faint"
+              isToday ? "font-medium text-ink" : "text-ink-faint"
             }`}
           >
             {label}
           </p>
-          <p className={isToday ? "text-body font-medium text-ink" : "text-meta text-ink-muted"}>
-            {headerDate}
-            {isToday ? <span className="text-ink-faint"> · today</span> : null}
-          </p>
+          {isToday ? (
+            <p className="mt-0.5">
+              <span className="text-on-accent inline-block rounded-pill bg-ink px-2 py-0.5 text-caption font-medium">
+                {headerDate}
+              </span>
+            </p>
+          ) : (
+            <p className="text-meta text-ink-muted">{headerDate}</p>
+          )}
           {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
         </button>
       </div>
