@@ -91,36 +91,40 @@ export function SettingsForm() {
   };
 
   return (
-    <section className="space-y-6 rounded-card border border-subtle bg-surface px-6 py-8">
+    <div className="space-y-6 rounded-card bg-canvas p-6">
       <h1 className="text-lg font-semibold text-ink">Settings</h1>
 
-      <div
-        role="tablist"
+      <nav
         aria-label="Settings sections"
-        className="inline-flex flex-wrap gap-0.5 rounded-[var(--radius-control)] bg-[var(--surface-selected)] p-0.5"
+        className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4"
       >
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              id={`settings-tab-${t.id}`}
-              aria-selected={active}
-              aria-controls={`settings-panel-${t.id}`}
-              onClick={() => setTab(t.id)}
-              className={`rounded-control px-3 py-1.5 text-sm transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
-                active
-                  ? "border border-active-raised-border bg-surface font-medium text-ink"
-                  : "border border-transparent text-ink-muted hover:text-ink"
-              }`}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+        <div
+          role="tablist"
+          className="inline-flex flex-wrap gap-0.5 rounded-[var(--radius-control)] bg-[var(--surface-selected)] p-0.5"
+        >
+          {TABS.map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                id={`settings-tab-${t.id}`}
+                aria-selected={active}
+                aria-controls={`settings-panel-${t.id}`}
+                onClick={() => setTab(t.id)}
+                className={`rounded-control px-3 py-1.5 text-sm transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
+                  active
+                    ? "border border-active-raised-border bg-surface font-medium text-ink"
+                    : "border border-transparent text-ink-muted hover:text-ink"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       <div
         role="tabpanel"
@@ -282,6 +286,6 @@ export function SettingsForm() {
       >
         Back to Today
       </Link>
-    </section>
+    </div>
   );
 }
