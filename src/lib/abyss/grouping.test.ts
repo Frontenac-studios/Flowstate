@@ -129,16 +129,16 @@ describe("groupItems", () => {
     expect(groups.map((g) => g.key)).toEqual(["fresh", "dimming"]);
   });
 
-  it("sorts within a group brightest-first", () => {
+  it("sorts within a group by recency (newest first)", () => {
     const groups = groupItems(
       [
-        item({ category: "professional", title: "dim", resurfaceCount: 0 }),
-        item({ category: "professional", title: "bright", resurfaceCount: 5 }),
+        item({ category: "professional", title: "older", lastTouchedAt: daysAgo(10) }),
+        item({ category: "professional", title: "newer", lastTouchedAt: daysAgo(1) }),
       ],
       "category",
       NOW
     );
-    expect(groups[0].items.map((i) => i.title)).toEqual(["bright", "dim"]);
+    expect(groups[0].items.map((i) => i.title)).toEqual(["newer", "older"]);
   });
 
   describe("pattern mode", () => {

@@ -151,6 +151,13 @@ export const abyssRouter = createTRPCRouter({
       .where(and(eq(abyssItems.userId, ctx.userId), eq(abyssItems.status, "archived")))
       .orderBy(desc(abyssItems.lastTouchedAt))
   ),
+
+  /** B4 — desktop daily sweep; web keeps lazy archive on list(). */
+  runArchiveSweep: protectedProcedure.mutation(async ({ ctx }) => {
+    const threshold = await getArchiveThresholdDays(ctx.userId);
+    await archiveStaleItems(ctx.userId, threshold);
+    return { ok: true as const };
+  }),
   restore: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {

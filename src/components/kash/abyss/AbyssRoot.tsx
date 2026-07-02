@@ -7,16 +7,19 @@ import { selectEmergingCluster } from "@/lib/abyss/clustering";
 import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/grouping";
 import { isMonthlyReviewDue } from "@/lib/abyss/monthly-review";
 import { readLastReviewMonth } from "@/lib/abyss/review-storage";
-import { readAbyssTheme, writeAbyssTheme, type AbyssTheme } from "@/lib/abyss/theme-storage";
+import { surfaceVariantForView, type AbyssViewMode } from "@/lib/abyss/surface-variant";
+import { useAbyssDailyArchiveSweep } from "@/hooks/useAbyssDailyArchiveSweep";
 import { useTRPC } from "@/trpc/client";
 import AbyssArchivedList from "./AbyssArchivedList";
 import AbyssComposer from "./AbyssComposer";
 import AbyssEmergingCard from "./AbyssEmergingCard";
-import AbyssFloatingBar, { type AbyssView } from "./AbyssFloatingBar";
+import AbyssFloatingBar from "./AbyssFloatingBar";
 import AbyssList, { type AbyssListItem } from "./AbyssList";
 import AbyssMonthlyReview from "./AbyssMonthlyReview";
 import AbyssSky from "./AbyssSky";
+import AbyssThemes from "./AbyssThemes";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
+
 function readCategoryLens(param: string | null): ProjectCategory | null {
   if (!param) return null;
   return PROJECT_CATEGORIES.includes(param as ProjectCategory) ? (param as ProjectCategory) : null;
@@ -27,9 +30,12 @@ export default function AbyssRoot() {
   const categoryLens = readCategoryLens(searchParams.get("category"));
   const trpc = useTRPC();
   const { data, isLoading } = useQuery(trpc.abyss.list.queryOptions());
+  const { data: archived } = useQuery(trpc.abyss.listArchived.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const embedAndStore = useAbyssEmbedding();
   const embedAttempted = useRef<Set<string>>(new Set());
+  useAbyssDailyArchiveSweep();
+
   useEffect(() => {
     if (!data) return;
     for (const item of data) {
@@ -42,8 +48,8 @@ export default function AbyssRoot() {
       void embedAndStore(item.id, item.title, false);
     }
   }, [data, embedAndStore]);
-  const [theme, setTheme] = useState<AbyssTheme>("dark");
-  const [view, setView] = useState<AbyssView>("list");
+
+  const [view, setView] = useState<AbyssViewMode>("list");
   const [showArchive, setShowArchive] = useState(false);
   const [showMonthlyReview, setShowMonthlyReview] = useState(false);
   const [groupMode, setGroupMode] = useState<AbyssGroupMode>("category");
@@ -52,6 +58,9 @@ export default function AbyssRoot() {
   const [query, setQuery] = useState("");
   const [now] = useState(() => new Date());
   const [dismissedCluster, setDismissedCluster] = useState<string | null>(null);
+
+  const surface = surfaceVariantForView(view);
+
   const emerging = useMemo(() => {
     const rows = data ?? [];
     const untagged = rows
@@ -75,17 +84,17 @@ export default function AbyssRoot() {
         .map((r) => ({ id: r!.id, title: r!.title, tags: r!.tags ?? null })),
     };
   }, [data, dismissedCluster]);
-  useEffect(() => {
-    setTheme(readAbyssTheme());
-  }, []);
+
   useEffect(() => {
     if (isMonthlyReviewDue(readLastReviewMonth(), now)) setShowMonthlyReview(true);
   }, [now]);
+
   const items = useMemo(() => {
     const rows = (data ?? []) as AbyssListItem[];
     if (!categoryLens) return rows;
     return rows.filter((item) => item.category === categoryLens);
   }, [data, categoryLens]);
+
   const reviewItems = useMemo(
     () =>
       items.map((i) => ({
@@ -100,22 +109,26 @@ export default function AbyssRoot() {
       })),
     [items]
   );
+
+  const clearFilters = () => {
+    setTypeFilter([]);
+    setAgeFilter("all");
+    setQuery("");
+  };
+
+  const archivedCount = archived?.length ?? 0;
+  const hasItems = items.length > 0;
+
   return (
     <div
-      className="abyss-root flex min-h-full flex-1 flex-col gap-3 rounded-card bg-abyss-bg p-3 text-abyss-ink"
-      data-abyss-theme={theme}
+      className={`abyss-root flex min-h-full flex-1 flex-col gap-3 text-abyss-ink ${
+        surface === "light" ? "bg-canvas" : "rounded-card bg-abyss-bg p-3"
+      }`}
+      data-abyss-theme={surface}
     >
       <AbyssFloatingBar
         view={view}
         onViewChange={setView}
-        theme={theme}
-        onThemeToggle={() =>
-          setTheme((p) => {
-            const n = p === "dark" ? "light" : "dark";
-            writeAbyssTheme(n);
-            return n;
-          })
-        }
         query={query}
         onQueryChange={setQuery}
         groupMode={groupMode}
@@ -126,6 +139,8 @@ export default function AbyssRoot() {
         onAgeFilterChange={setAgeFilter}
         showArchive={showArchive}
         onArchiveToggle={() => setShowArchive((v) => !v)}
+        hasItems={hasItems}
+        archivedCount={archivedCount}
       />
       {showMonthlyReview ? (
         <AbyssMonthlyReview
@@ -148,6 +163,14 @@ export default function AbyssRoot() {
           ageFilter={ageFilter}
           now={now}
           archiveAfterDays={settings?.abyssArchiveAfterDays}
+        />
+      ) : view === "themes" ? (
+        <AbyssThemes
+          items={items}
+          query={query}
+          typeFilter={typeFilter}
+          ageFilter={ageFilter}
+          now={now}
         />
       ) : (
         <>
@@ -172,6 +195,7 @@ export default function AbyssRoot() {
               ageFilter={ageFilter}
               query={query}
               now={now}
+              onClearFilters={clearFilters}
             />
           )}
         </>
