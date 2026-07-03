@@ -4,13 +4,10 @@ import Link from "next/link";
 import { forwardRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
-import {
-  categorySolidVar,
-  categoryFillVar,
-  categoryTextVar,
-  categorySeedLabel,
-} from "@/lib/projects/category-tokens";
+import { categorySolidVar, categoryFillVar } from "@/lib/projects/category-tokens";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+
+import { GhostCategoryStrip } from "@/components/kash/ui/GhostCategoryStrip";
 
 import { Top3Deadline } from "./Top3Deadline";
 import { Top3SlipChip } from "./Top3SlipChip";
@@ -93,48 +90,38 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
   );
 }
 
-function Top3GhostSlot({ slot, category }: { slot: 1 | 2 | 3; category: ProjectCategory }) {
-  const label = SLOT_LABELS[slot - 1];
-  return (
-    <div
-      className="flex min-h-[var(--row-min-height)] items-center gap-2 rounded-pill border border-dashed px-3 py-[var(--row-py)]"
-      style={{
-        borderColor: categorySolidVar(category),
-        backgroundColor: categoryFillVar(category),
-      }}
-      aria-hidden
-    >
-      <span className="shrink-0 text-xs opacity-60" style={{ color: categoryTextVar(category) }}>
-        {label}
-      </span>
-      <span className="text-xs" style={{ color: categoryTextVar(category) }}>
-        Pin a {categorySeedLabel(category).toLowerCase()} priority
-      </span>
-    </div>
-  );
-}
-
-function Top3HintDropZone() {
+/**
+ * D11/V3: one compact row until the first pin — category-tinted slot dots + invitation.
+ * Full ghost slots appear only after the first priority lands (via Top3NextDropZone).
+ */
+function Top3CompactRow() {
   const { setNodeRef, isOver } = useDroppable({ id: "top3:next" });
 
   return (
     <div
       ref={setNodeRef}
       data-top3-hint
-      className={`flex flex-col gap-2 transition ${
-        isOver ? "kash-section-drop-target rounded-[var(--radius-card)] ring-2 ring-accent" : ""
+      data-top3-compact
+      className={`flex flex-wrap items-center gap-2 rounded-pill border border-dashed border-border px-3 py-2 transition ${
+        isOver ? "kash-section-drop-target ring-2 ring-accent" : ""
       }`}
     >
-      {([1, 2, 3] as const).map((slot) => (
-        <Top3GhostSlot
-          key={slot}
-          slot={slot}
-          category={PROJECT_CATEGORIES[(slot - 1) % PROJECT_CATEGORIES.length]!}
+      <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">Top 3</span>
+      {PROJECT_CATEGORIES.slice(0, 3).map((category) => (
+        <span
+          key={category}
+          className="size-3 shrink-0 rounded-full border"
+          style={{
+            borderColor: categorySolidVar(category),
+            backgroundColor: categoryFillVar(category),
+          }}
+          aria-hidden
         />
       ))}
-      <p className="text-center text-xs text-ink-muted">
-        Swipe right on a task to pin your top three
-      </p>
+      <span className="min-w-0 flex-1 text-xs text-ink-muted">
+        Pin your first priority — full slots appear then
+      </span>
+      <GhostCategoryStrip className="hidden w-28 sm:flex sm:w-36" />
     </div>
   );
 }
@@ -192,6 +179,22 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
   const showHint = pinnedCount === 0;
   const showNextDropZone = pinnedCount > 0 && pinnedCount < 3;
 
+  if (showHint) {
+    return (
+      <section
+        ref={ref}
+        data-top3-section
+        className={`mt-4 ${highlighted ? "kash-section-pulse rounded-[var(--radius-card)]" : ""}`}
+        aria-labelledby="top3-heading"
+      >
+        <h2 id="top3-heading" className="sr-only">
+          Today&apos;s Priorities
+        </h2>
+        <Top3CompactRow />
+      </section>
+    );
+  }
+
   return (
     <section
       ref={ref}
@@ -209,7 +212,6 @@ export const Top3Slots = forwardRef<HTMLElement, Props>(function Top3Slots(
         <Top3Deadline visible={pinnedCount > 0} />
       </div>
       <div className="flex flex-col gap-2">
-        {showHint ? <Top3HintDropZone /> : null}
         {pinnedTasks.map(({ slot, task }) => (
           <Top3Slot key={task.id} slot={slot} task={task} onUnpin={onUnpin} />
         ))}

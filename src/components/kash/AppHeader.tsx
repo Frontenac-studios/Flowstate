@@ -1,5 +1,7 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import { Menu, kashIconProps } from "@/components/kash/ui/icon";
 import { formatHeaderDate } from "@/lib/dates/local-day";
 
@@ -8,7 +10,16 @@ import { OPEN_PALETTE_EVENT } from "./chrome-events";
 import { NAV_DRAWER_TOGGLE_EVENT } from "./LeftNavRail";
 import { ChatToggleButton } from "./chat/ChatToggleButton";
 
+/** D14/V6: Today keeps the date in the page heading only — hide it from the title bar there. */
+function showHeaderDate(pathname: string | null): boolean {
+  if (!pathname) return true;
+  return pathname !== "/today" && !pathname.startsWith("/today/");
+}
+
 export function AppHeader() {
+  const pathname = usePathname();
+  const includeDate = showHeaderDate(pathname);
+
   return (
     <header
       data-tauri-drag-region
@@ -23,12 +34,16 @@ export function AppHeader() {
         <Menu {...kashIconProps({ tokenSize: "md" })} aria-hidden />
       </IconButton>
       <span className="font-semibold tracking-tight">Kash</span>
-      <span className="text-ink-muted" aria-hidden>
-        ·
-      </span>
-      <time className="text-ink-muted" dateTime={new Date().toISOString().slice(0, 10)}>
-        {formatHeaderDate()}
-      </time>
+      {includeDate ? (
+        <>
+          <span className="text-ink-muted" aria-hidden>
+            ·
+          </span>
+          <time className="text-ink-muted" dateTime={new Date().toISOString().slice(0, 10)}>
+            {formatHeaderDate()}
+          </time>
+        </>
+      ) : null}
       <div className="ml-auto flex items-center gap-2">
         <button
           type="button"
