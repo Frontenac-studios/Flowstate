@@ -27,6 +27,7 @@ import {
   computeBalanceFlags,
   weightsFromActivity,
 } from "@/lib/planning/balance-pass";
+import { resolveBalancePassSuggestion } from "@/lib/planning/balance-pass-suggestion";
 import { checkInDepthSchema, checkInScopeKey } from "@/lib/planning/check-in";
 import { templateCheckInSuggestions } from "@/lib/planning/check-in-templates";
 import { runCheckInAboutMeProducer } from "@/server/about-me/register-hooks";
@@ -1535,7 +1536,7 @@ export const planningRouter = createTRPCRouter({
             categoryLabel(flag.category),
             flag.tier
           );
-          const taskTitle = abyss?.title ?? `Small win for ${categoryLabel(flag.category)}`;
+          const suggestion = resolveBalancePassSuggestion(abyss, categoryLabel(flag.category));
 
           const [row] = await db
             .insert(planningSuggestions)
@@ -1553,9 +1554,9 @@ export const planningRouter = createTRPCRouter({
                 tier: flag.tier,
                 rank: flag.rank,
                 label,
-                taskTitle,
-                taskId: abyss?.taskId ?? null,
-                source: abyss ? "abyss" : "generated",
+                taskTitle: suggestion.taskTitle,
+                taskId: suggestion.taskId,
+                source: suggestion.source,
               },
             })
             .returning();

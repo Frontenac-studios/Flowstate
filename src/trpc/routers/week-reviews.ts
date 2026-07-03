@@ -7,10 +7,12 @@ import { aggregateProjectPhaseProgress } from "@/lib/projects/aggregate-project-
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { buildBalanceDigestRows, templateBalanceDigest } from "@/lib/eow/balance-digest";
 import { categorySeedLabel } from "@/lib/projects/category-tokens";
+import { evaluateOverCommitDrift } from "@/lib/week/over-commit-drift";
 import { localIsoDateFromUtcInstant, localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 import { fetchWeeklyCategoryAttention } from "@/server/nudges/fetch-balance-nudge-context";
 import { evaluateCategoryBaseline } from "@/lib/tasks/category-baseline";
 import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
+import { fetchOverCommitThreshold } from "@/server/week/fetch-over-commit-threshold";
 import { generateEowReview } from "@/server/claude/generate-eow-review";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -113,6 +115,13 @@ async function fetchEowPayload(userId: string, tzOffsetMinutes: number) {
       ? `tilted toward ${categorySeedLabel(baseline.dominant).toLowerCase()} this week`
       : null;
 
+  const overCommitSnapshot = await fetchOverCommitThreshold(userId);
+  const overCommitDriftNote = evaluateOverCommitDrift({
+    threshold: overCommitSnapshot.threshold,
+    mode: overCommitSnapshot.mode,
+    weeksWithPlanningHistory: overCommitSnapshot.weeksWithPlanningHistory,
+  });
+
   return {
     weekStart: start,
     weekEnd: end,
@@ -122,6 +131,7 @@ async function fetchEowPayload(userId: string, tzOffsetMinutes: number) {
     balanceDigest,
     balanceDigestRows,
     weeklyTiltCaption,
+    overCommitDriftNote,
     ...rollup,
   };
 }
@@ -144,6 +154,7 @@ export const weekReviewsRouter = createTRPCRouter({
         byCategory: payload.byCategory,
         byProject: payload.byProject,
         projectProgress: payload.projectProgress,
+        overCommitDriftNote: payload.overCommitDriftNote?.message ?? null,
       });
     }),
 });

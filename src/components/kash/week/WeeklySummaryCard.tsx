@@ -111,12 +111,19 @@ export default function WeeklySummaryCard() {
         <WeekWindDownSetting />
       </div>
 
-      {summary ? (
+      {summary || data.overCommitDriftNote ? (
         <div className="mt-4 rounded-row border border-subtle bg-surface-2 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Reflection</p>
-          <p className="mt-2 text-sm text-ink">
-            {aiLoading ? "Reflecting on your week…" : renderInlineBold(summary)}
-          </p>
+          {summary ? (
+            <p className="mt-2 text-sm text-ink">
+              {aiLoading ? "Reflecting on your week…" : renderInlineBold(summary)}
+            </p>
+          ) : aiLoading ? (
+            <p className="mt-2 text-sm text-ink-muted">Reflecting on your week…</p>
+          ) : null}
+          {data.overCommitDriftNote ? (
+            <p className="mt-2 text-sm text-ink-muted">{data.overCommitDriftNote.message}</p>
+          ) : null}
         </div>
       ) : aiLoading ? (
         <p className="mt-4 text-sm text-ink-muted">Reflecting on your week…</p>
