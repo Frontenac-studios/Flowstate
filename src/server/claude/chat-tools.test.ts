@@ -4,6 +4,7 @@ import {
   toolsForRegister,
   toolsForSurface,
 } from "@/lib/chat/chat-tool-catalog";
+
 describe("toolsForRegister", () => {
   it("limits focus to minimal silent-capable tools", () => {
     expect(toolsForRegister("focus").map((t) => t.name)).toEqual([
@@ -11,6 +12,14 @@ describe("toolsForRegister", () => {
       "complete_task",
       "park_in_abyss",
     ]);
+  });
+
+  it("includes the expanded planning write catalog", () => {
+    const names = toolsForRegister("planning").map((t) => t.name);
+    expect(names).toContain("edit_task");
+    expect(names).toContain("delete_task");
+    expect(names).toContain("set_top3");
+    expect(names).toContain("replan_project_dates");
   });
 });
 describe("toolsForSurface", () => {

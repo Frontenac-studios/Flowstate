@@ -22,6 +22,18 @@ import {
 } from "@/lib/chat/chat-tool-catalog";
 
 import { applyProposedActionPayload, resolveOwnedTaskTitles } from "./apply-proposed-action";
+import {
+  buildApplyBalanceSuggestionsProposal,
+  buildCreateProjectProposal,
+  buildDeleteTaskProposal,
+  buildEditPhaseProposal,
+  buildEditTaskProposal,
+  buildMoveTaskToPhaseProposal,
+  buildReplanProjectDatesProposal,
+  buildSetDayPrioritiesProposal,
+  buildSetProtectedBlockProposal,
+  buildSetTop3Proposal,
+} from "./build-tool-proposals";
 import { assembleChatContext } from "./assemble-chat-context";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -379,6 +391,34 @@ export async function executeChatTool(
       };
     }
 
+    if (name === "edit_task") {
+      const built = await buildEditTaskProposal(
+        userId,
+        input as Parameters<typeof buildEditTaskProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "delete_task") {
+      const built = await buildDeleteTaskProposal(
+        userId,
+        input as { taskIds?: string[]; summary?: string }
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
     if (name === "complete_task") {
       const built = await buildCompleteTaskProposal(userId, input as CompleteTaskInput);
       if (!built.ok)
@@ -390,6 +430,115 @@ export async function executeChatTool(
           mutatedTasks: applied.applied > 0,
         };
       }
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "set_top3") {
+      const built = await buildSetTop3Proposal(
+        userId,
+        input as { slots?: { taskId?: string; slot?: number }[]; summary?: string }
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "set_protected_block") {
+      const built = buildSetProtectedBlockProposal(
+        input as Parameters<typeof buildSetProtectedBlockProposal>[0]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "set_day_priorities") {
+      const built = await buildSetDayPrioritiesProposal(
+        userId,
+        input as Parameters<typeof buildSetDayPrioritiesProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "apply_balance_suggestions") {
+      const built = buildApplyBalanceSuggestionsProposal(
+        input as Parameters<typeof buildApplyBalanceSuggestionsProposal>[0]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "create_project") {
+      const built = buildCreateProjectProposal(
+        input as Parameters<typeof buildCreateProjectProposal>[0]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "edit_phase") {
+      const built = await buildEditPhaseProposal(
+        userId,
+        input as Parameters<typeof buildEditPhaseProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "move_task_to_phase") {
+      const built = await buildMoveTaskToPhaseProposal(
+        userId,
+        input as Parameters<typeof buildMoveTaskToPhaseProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "replan_project_dates") {
+      const built = await buildReplanProjectDatesProposal(
+        userId,
+        input as Parameters<typeof buildReplanProjectDatesProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,

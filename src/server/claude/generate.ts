@@ -33,7 +33,7 @@ export async function generateNarration(
 ): Promise<string> {
   const anthropic = requireAnthropicClient();
   const config = getAnthropicConfig();
-  const { contextBlock } = await assembleChatContext(userId, threadId);
+  const { aboutMeBlock, contextBlock } = await assembleChatContext(userId, threadId);
 
   const userPayload = [
     "Generate a one-line RDM narration for this pick.",
@@ -42,6 +42,9 @@ export async function generateNarration(
     `Priority: ${task.priority}`,
     task.projectSlug ? `Project: #${task.projectSlug}` : null,
     `Pick reason: ${task.pickReason}`,
+    "",
+    "About me:",
+    aboutMeBlock,
     "",
     "Context:",
     contextBlock,

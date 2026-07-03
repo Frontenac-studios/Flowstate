@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
+import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
+import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { useTRPC } from "@/trpc/client";
 
 export type SendMessageSource = "composer" | "chip";
@@ -29,6 +31,7 @@ type ChatMessage = {
 export function useChatPanel(threadId: string) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { pushConfirmUndo } = useSessionUndo();
   const { railOpen, activeThreadId, planningSurface, notifyUnread, markRead } = useChat();
 
   const [streamingText, setStreamingText] = useState<string | null>(null);
@@ -266,11 +269,14 @@ export function useChatPanel(threadId: string) {
 
   const applyProposal = useCallback(
     async (messageId: string, enabledItemIds: string[]) => {
-      await applyProposalMutation.mutateAsync({ messageId, enabledItemIds });
+      const result = await applyProposalMutation.mutateAsync({ messageId, enabledItemIds });
+      if (result.undoFrames?.length) {
+        pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
+      }
       invalidateTaskQueries();
       await refreshMessages();
     },
-    [applyProposalMutation, invalidateTaskQueries, refreshMessages]
+    [applyProposalMutation, invalidateTaskQueries, pushConfirmUndo, refreshMessages]
   );
 
   const dismissProposal = useCallback(

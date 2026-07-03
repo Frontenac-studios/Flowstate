@@ -1434,7 +1434,7 @@ export const planningRouter = createTRPCRouter({
         return [];
       }
 
-      const proposal = await generateWeekDraft(draftContext);
+      const proposal = await generateWeekDraft(draftContext, ctx.userId);
 
       const inboxById = new Map(draftContext.inbox.map((task) => [task.id, task]));
 
