@@ -17,6 +17,10 @@ import {
   type OverCommitThreshold,
 } from "@/lib/week/over-commit-threshold";
 
+export type OverCommitThresholdSnapshot = OverCommitThreshold & {
+  weeksWithPlanningHistory: number;
+};
+
 function isoWeekKey(isoDate: string): string {
   return toISODateString(startOfIsoWeekMonday(parseISODateString(isoDate)));
 }
@@ -69,7 +73,9 @@ function buildHistoricalDailyLoads(input: {
   );
 }
 
-export async function fetchOverCommitThreshold(userId: string): Promise<OverCommitThreshold> {
+export async function fetchOverCommitThreshold(
+  userId: string
+): Promise<OverCommitThresholdSnapshot> {
   const todayIso = toISODateString(new Date());
   const lookbackStart = toISODateString(
     addDays(parseISODateString(todayIso), -(LEARNED_LOOKBACK_WEEKS * 7))
@@ -127,5 +133,11 @@ export async function fetchOverCommitThreshold(userId: string): Promise<OverComm
   for (const row of priorityRows) activityDates.add(row.scheduledDate);
   for (const row of protectedRows) activityDates.add(row.scheduledDate);
 
-  return resolveOverCommitThreshold(historicalDailyLoads, countWeeksWithActivity(activityDates));
+  const weeksWithPlanningHistory = countWeeksWithActivity(activityDates);
+  const resolved = resolveOverCommitThreshold(historicalDailyLoads, weeksWithPlanningHistory);
+
+  return {
+    ...resolved,
+    weeksWithPlanningHistory,
+  } satisfies OverCommitThresholdSnapshot;
 }

@@ -15,6 +15,7 @@ export type EowReviewGenerateInput = {
   byCategory: ReadonlyArray<{ category: string; seconds: number }>;
   byProject: ReadonlyArray<{ projectName: string | null; seconds: number }>;
   projectProgress: readonly ProjectProgressRow[];
+  overCommitDriftNote?: string | null;
 };
 
 export type EowReviewGenerateResult = {
@@ -99,7 +100,16 @@ export async function generateEowReview(
     "",
     "Weighted completion progress:",
     progressLines,
-  ].join("\n");
+    input.overCommitDriftNote
+      ? [
+          "",
+          "Reflection register note (include gently if relevant):",
+          input.overCommitDriftNote,
+        ].join("\n")
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   try {
     const anthropic = requireAnthropicClient();
