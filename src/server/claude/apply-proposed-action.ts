@@ -3,8 +3,8 @@ import "server-only";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
-import { syncTaskRow } from "@/db/record-sync-mutation";
-import { projects, tasks } from "@/db/tables";
+import { syncPhaseRow, syncTaskRow } from "@/db/record-sync-mutation";
+import { phases, projects, tasks } from "@/db/tables";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
 import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
@@ -114,6 +114,40 @@ export async function applyProposedActionPayload(
         if (row) {
           await syncTaskRow(row.id, "update", row);
           titles.push(row.title);
+          applied += 1;
+        }
+      }
+
+      return { applied, titles };
+    }
+
+    case "replan_project_dates": {
+      const titles: string[] = [];
+      let applied = 0;
+
+      for (const item of action.items) {
+        const [existing] = await db
+          .select()
+          .from(phases)
+          .where(and(eq(phases.id, item.phaseId), eq(phases.userId, userId)))
+          .limit(1);
+
+        if (!existing) continue;
+
+        const patch: Partial<typeof phases.$inferInsert> = { updatedAt: new Date() };
+        if (item.startDate !== undefined) patch.startDate = item.startDate;
+        if (item.endDate !== undefined) patch.endDate = item.endDate;
+        if (patch.startDate === undefined && patch.endDate === undefined) continue;
+
+        const [row] = await db
+          .update(phases)
+          .set(patch)
+          .where(and(eq(phases.id, item.phaseId), eq(phases.userId, userId)))
+          .returning();
+
+        if (row) {
+          await syncPhaseRow(row.id, "update", row);
+          titles.push(`${item.phaseName}: ${row.startDate ?? "?"} → ${row.endDate ?? "?"}`);
           applied += 1;
         }
       }

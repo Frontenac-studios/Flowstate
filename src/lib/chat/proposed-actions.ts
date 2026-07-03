@@ -50,10 +50,28 @@ export const completeTaskProposalSchema = z.object({
   items: z.array(completeTaskProposalItemSchema).min(1),
 });
 
+export const replanProjectDatesProposalItemSchema = proposalItemBaseSchema.extend({
+  phaseId: z.string().uuid(),
+  phaseName: z.string().min(1),
+  projectSlug: z.string().min(1).optional(),
+  startDate: isoDateSchema.nullable().optional(),
+  endDate: isoDateSchema.nullable().optional(),
+  previousStartDate: isoDateSchema.nullable().optional(),
+  previousEndDate: isoDateSchema.nullable().optional(),
+});
+
+export const replanProjectDatesProposalSchema = z.object({
+  kind: z.literal("replan_project_dates"),
+  status: proposalStatusSchema.default("pending"),
+  summary: z.string().optional(),
+  items: z.array(replanProjectDatesProposalItemSchema).min(1),
+});
+
 export const proposedActionSchema = z.discriminatedUnion("kind", [
   rescheduleTasksProposalSchema,
   createTaskProposalSchema,
   completeTaskProposalSchema,
+  replanProjectDatesProposalSchema,
 ]);
 
 export type ProposedAction = z.infer<typeof proposedActionSchema>;
@@ -90,6 +108,8 @@ export function proposalHeadline(action: ProposedAction): string {
       return `Create ${action.items.length} task${action.items.length === 1 ? "" : "s"}`;
     case "complete_task":
       return `Complete ${action.items.length} task${action.items.length === 1 ? "" : "s"}`;
+    case "replan_project_dates":
+      return `Replan dates for ${action.items.length} phase${action.items.length === 1 ? "" : "s"}`;
     default:
       return "Confirm changes";
   }
