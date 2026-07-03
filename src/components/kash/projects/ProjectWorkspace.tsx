@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { buildPhaseTree } from "@/lib/projects/phase-tree";
+import { isProjectComplete } from "@/lib/projects/is-project-complete";
 import { useTRPC } from "@/trpc/client";
 
 import CalendarBoardView from "./CalendarBoardView";
 import MillerColumnsView from "./MillerColumnsView";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
+import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
 export default function ProjectWorkspace({
@@ -45,18 +47,30 @@ export default function ProjectWorkspace({
     [phasesQuery.data, tasksQuery.data]
   );
 
+  const projectComplete = useMemo(() => {
+    const tasks = tasksQuery.data ?? [];
+    const completedCount = tasks.filter((task) => task.completedAt !== null).length;
+    return isProjectComplete({ taskCount: tasks.length, completedCount });
+  }, [tasksQuery.data]);
+
   const isLoading = phasesQuery.isLoading || tasksQuery.isLoading;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
-      <ProjectWorkspaceHeader
-        project={project}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        showBackToProjects={showBackToProjects}
-        timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
-        estimateSampleCount={estimateSampleCount}
-      />
+      <ProjectTemplateSuggestSlot
+        projectId={project.id}
+        projectName={project.name}
+        isComplete={projectComplete}
+      >
+        <ProjectWorkspaceHeader
+          project={project}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          showBackToProjects={showBackToProjects}
+          timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
+          estimateSampleCount={estimateSampleCount}
+        />
+      </ProjectTemplateSuggestSlot>
 
       {isLoading ? (
         <p className="text-ink-muted">Loading project…</p>
