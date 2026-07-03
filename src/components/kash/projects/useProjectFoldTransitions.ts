@@ -3,18 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { readMotionDurationMs, MOTION_TOKEN } from "@/lib/animate/motion-tokens";
-import { projectProgress } from "@/lib/projects/project-progress";
+import { isProjectComplete } from "@/lib/projects/is-project-complete";
 
 type ProjectProgressRow = {
   id: string;
   taskCount: number;
   completedCount: number;
 };
-
-function isProjectComplete(project: ProjectProgressRow): boolean {
-  const { percent, total } = projectProgress(project.completedCount, project.taskCount);
-  return total > 0 && percent === 100;
-}
 
 export function useProjectFoldTransitions<T extends ProjectProgressRow>(projects: T[]) {
   const seeded = useRef(false);

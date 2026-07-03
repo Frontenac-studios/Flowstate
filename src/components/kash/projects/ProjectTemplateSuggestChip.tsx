@@ -11,7 +11,7 @@ type Props = {
   onDismiss: () => void;
 };
 
-/** PR-5 tail: gentle template offer when a project completes (§9). */
+/** P3: gentle template offer when a project completes (§5). */
 export function ProjectTemplateSuggestChip({ projectId, projectName, onDismiss }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
