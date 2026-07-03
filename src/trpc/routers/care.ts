@@ -21,7 +21,7 @@ import { gardenLifeState } from "@/lib/care/garden-dormancy";
 import { formatReflectionPrompt, templateReflectionPrompt } from "@/lib/care/reflection-prompt";
 import { SEED_CATALOG } from "@/lib/care/seed-catalog";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
-import type { CareEventDailyWinMeta } from "@/db/schema/care-events";
+import type { CareEventBreathingMeta, CareEventDailyWinMeta } from "@/db/schema/care-events";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -472,6 +472,48 @@ export const careRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to log breathing session.",
+        });
+      }
+
+      await syncCareEventRow(row.id, "insert", row);
+      return row;
+    }),
+
+  /** One-tap timeline self-care (walk timer / breathing overlay) — no /care navigation (SC-1). */
+  logQuickSelfCare: protectedProcedure
+    .input(
+      z.object({
+        kind: z.enum(["walk", "breathe"]),
+        durationMinutes: z.number().int().min(1).max(120),
+        preset: z.enum(["box4", "relax4-6"]).optional(),
+        cycles: z.number().int().min(1).max(20).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const durationMinutes = Math.max(1, input.durationMinutes);
+      const meta: CareEventBreathingMeta | null =
+        input.kind === "breathe"
+          ? {
+              preset: input.preset ?? "box4",
+              cycles: input.cycles ?? 1,
+            }
+          : null;
+
+      const [row] = await db
+        .insert(careEvents)
+        .values({
+          userId: ctx.userId,
+          activityId: null,
+          source: input.kind === "breathe" ? "breathing" : "practice",
+          durationMinutes,
+          meta,
+        })
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to log self-care session.",
         });
       }
 

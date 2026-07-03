@@ -24,7 +24,13 @@ import { useTRPC } from "@/trpc/client";
 import ProtectedBlockChip, {
   type ProtectedBlockRow,
 } from "@/components/kash/plan/week/ProtectedBlockChip";
+import {
+  dispatchSelfCareBreatheStart,
+  dispatchSelfCareWalkStart,
+} from "@/lib/nudges/self-care-session-events";
 import { TOP3_HOLD_LABEL } from "@/lib/top3/constants";
+
+import { SelfCareGapRow } from "./SelfCareGapRow";
 
 const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
@@ -431,6 +437,12 @@ export function TimelinePane({ top3HoldOffer = null, planItemCount = 0 }: Timeli
   const queryClient = useQueryClient();
   const date = useLocalCalendarDate();
   const [now, setNow] = useState<Date | null>(null);
+  const gapDismissKey = `selfCareGapDismiss:${date}`;
+  const [gapDismissed, setGapDismissed] = useState(false);
+
+  useEffect(() => {
+    setGapDismissed(localStorage.getItem(gapDismissKey) === "1");
+  }, [gapDismissKey]);
 
   useEffect(() => {
     setNow(new Date());
@@ -703,20 +715,16 @@ export function TimelinePane({ top3HoldOffer = null, planItemCount = 0 }: Timeli
               </div>
             ))}
 
-            {showTimelineChrome && selfCareGap ? (
-              <div
-                className="pointer-events-none absolute left-11 right-1 flex items-center gap-1.5 rounded-md border border-dashed border-[var(--border)] px-2 py-1"
-                style={{
-                  top: ((selfCareGap.startMin - rangeStart) / 60) * HOUR_HEIGHT + 4,
+            {showTimelineChrome && selfCareGap && !gapDismissed ? (
+              <SelfCareGapRow
+                top={((selfCareGap.startMin - rangeStart) / 60) * HOUR_HEIGHT + 4}
+                onStartWalk={dispatchSelfCareWalkStart}
+                onStartBreathe={dispatchSelfCareBreatheStart}
+                onDismiss={() => {
+                  localStorage.setItem(gapDismissKey, "1");
+                  setGapDismissed(true);
                 }}
-              >
-                <span className="text-caption" style={{ color: categorySolidVar("body_mind") }}>
-                  ◵
-                </span>
-                <span className="truncate text-caption text-ink-muted">
-                  Good gap — a short walk?
-                </span>
-              </div>
+              />
             ) : null}
 
             {showTimelineChrome && decideSlotMin != null ? (

@@ -15,6 +15,12 @@ export function getLocalHour(now: Date, tzOffsetMinutes: number): number {
   return new Date(localMs).getUTCHours();
 }
 
+export function getLocalMinutes(now: Date, tzOffsetMinutes: number): number {
+  const localMs = now.getTime() + tzOffsetMinutes * 60_000;
+  const d = new Date(localMs);
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
 export function getLocalDayOfMonth(now: Date, tzOffsetMinutes: number): number {
   const localMs = now.getTime() + tzOffsetMinutes * 60_000;
   return new Date(localMs).getUTCDate();

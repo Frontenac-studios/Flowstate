@@ -2,6 +2,9 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::Duration;
 
+mod dnd;
+
+use dnd::{do_not_disturb_supported, set_do_not_disturb};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -178,6 +181,10 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .invoke_handler(tauri::generate_handler![
+            set_do_not_disturb,
+            do_not_disturb_supported
+        ])
         .manage(SidecarState {
             child: Mutex::new(None),
             port,
