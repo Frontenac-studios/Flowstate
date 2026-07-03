@@ -14,6 +14,7 @@ import {
   phases,
   planningSuggestions,
   projects,
+  projectSimilarity,
   projectTemplates,
   protectedBlockTemplates,
   protectedBlocks,
@@ -178,6 +179,22 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(projects.id, id));
       else await db.insert(projects).values(mapped as never);
+      return true;
+    }
+    case "project_similarity": {
+      const id = mapped.id as string;
+      const [existing] = await db
+        .select()
+        .from(projectSimilarity)
+        .where(eq(projectSimilarity.id, id))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(projectSimilarity)
+          .set(mapped as never)
+          .where(eq(projectSimilarity.id, id));
+      else await db.insert(projectSimilarity).values(mapped as never);
       return true;
     }
     case "tasks": {

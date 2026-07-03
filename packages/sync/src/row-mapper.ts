@@ -47,6 +47,11 @@ export function mapRemoteRow(
       typeof base.embedding === "string" ? base.embedding : JSON.stringify(base.embedding);
   }
 
+  if (table === "projects" && base.embedding != null) {
+    base.embedding =
+      typeof base.embedding === "string" ? base.embedding : JSON.stringify(base.embedding);
+  }
+
   if (table === "abyss_items" && base.tags != null) {
     base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
   }
@@ -132,6 +137,7 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   top3PinnedAt: "top_3_pinned_at",
   userId: "user_id",
   projectId: "project_id",
+  similarProjectId: "similar_project_id",
   parentPhaseId: "parent_phase_id",
   startDate: "start_date",
   endDate: "end_date",
@@ -277,6 +283,14 @@ export function mapPayloadToRemote(
     }
   }
 
+  if (table === "projects" && typeof out.embedding === "string") {
+    try {
+      out.embedding = JSON.parse(out.embedding as string);
+    } catch {
+      /* keep string */
+    }
+  }
+
   if (table === "abyss_items" && typeof out.tags === "string") {
     try {
       out.tags = JSON.parse(out.tags as string);
@@ -318,6 +332,10 @@ export function mapPayloadToRemote(
   }
 
   if (table === "abyss_items" && typeof out.embedding === "object" && out.embedding) {
+    out.embedding = JSON.stringify(out.embedding);
+  }
+
+  if (table === "projects" && typeof out.embedding === "object" && out.embedding) {
     out.embedding = JSON.stringify(out.embedding);
   }
 

@@ -1,12 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
 import { InPageSwitcher } from "@/components/kash/InPageSwitcher";
 import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
+import { ProjectSimilarityPicker } from "@/components/kash/projects/ProjectSimilarityPicker";
+import { useProjectEmbedding } from "@/hooks/useProjectEmbedding";
 import {
   categoryFillVar,
   categorySeedLabel,
@@ -31,28 +33,42 @@ const CREATION_MODES: { value: CreationMode; label: string }[] = [
 export default function NewProjectForm({ onCreated, onCancel }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const backfillEmbedding = useProjectEmbedding();
 
   const [mode, setMode] = useState<CreationMode>("blank");
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
   const [templateId, setTemplateId] = useState<string | null>(null);
+  const [similarProjectId, setSimilarProjectId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const similarProjectIds = useMemo(
+    () => (similarProjectId ? [similarProjectId] : undefined),
+    [similarProjectId]
+  );
+
   const { data: templates, isLoading: templatesLoading } = useQuery({
-    ...trpc.projects.listTemplates.queryOptions(),
+    ...trpc.projects.listTemplates.queryOptions(
+      similarProjectIds ? { similarProjectIds } : undefined
+    ),
     enabled: mode === "template",
   });
   const { data: estimateSampleCount = 0 } = useQuery({
-    ...trpc.projects.estimateSampleCount.queryOptions(),
+    ...trpc.projects.estimateSampleCount.queryOptions(
+      similarProjectIds ? { similarProjectIds } : undefined
+    ),
     enabled: mode === "template",
   });
 
+  const handleCreated = (project: { id: string; name: string }) => {
+    void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
+    void backfillEmbedding(project.id, project.name, true);
+    onCreated(project.id);
+  };
+
   const createMutation = useMutation(
     trpc.projects.create.mutationOptions({
-      onSuccess: (project) => {
-        void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
-        onCreated(project.id);
-      },
+      onSuccess: handleCreated,
       onError: (err) => {
         setError(
           err.data?.code === "CONFLICT"
@@ -65,10 +81,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
 
   const createFromTemplateMutation = useMutation(
     trpc.projects.createFromTemplate.mutationOptions({
-      onSuccess: (project) => {
-        void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
-        onCreated(project.id);
-      },
+      onSuccess: handleCreated,
       onError: (err) => {
         setError(
           err.data?.code === "CONFLICT"
@@ -98,10 +111,13 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
     if (!canSubmit || category === null) return;
     setError(null);
 
+    const similar = similarProjectId ? { similarProjectId } : {};
+
     if (mode === "blank") {
       createMutation.mutate({
         name: trimmedName,
         category,
+        ...similar,
       });
       return;
     }
@@ -111,6 +127,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
       templateId,
       name: trimmedName,
       category,
+      ...similar,
     });
   };
 
@@ -124,6 +141,27 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
         value={mode}
         onChange={setMode}
         ariaLabel="New project mode"
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="new-project-name" className="text-sm font-medium text-ink">
+          Name
+        </label>
+        <Input
+          id="new-project-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Q3 Marketing Refresh"
+          maxLength={120}
+          autoFocus
+        />
+      </div>
+
+      <ProjectSimilarityPicker
+        liveName={name}
+        preferredCategory={category}
+        selectedId={similarProjectId}
+        onSelect={setSimilarProjectId}
       />
 
       {mode === "template" ? (
@@ -169,20 +207,6 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
           )}
         </fieldset>
       ) : null}
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="new-project-name" className="text-sm font-medium text-ink">
-          Name
-        </label>
-        <Input
-          id="new-project-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Q3 Marketing Refresh"
-          maxLength={120}
-          autoFocus
-        />
-      </div>
 
       <fieldset className="flex flex-col gap-1.5">
         <legend className="mb-1 text-sm font-medium text-ink">

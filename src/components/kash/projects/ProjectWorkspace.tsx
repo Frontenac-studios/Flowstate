@@ -36,8 +36,17 @@ export default function ProjectWorkspace({
   const { data: timeRollups } = useQuery(
     trpc.projects.getTimeRollups.queryOptions({ projectId: initialProject.id })
   );
+  const { data: similarityLinks = [] } = useQuery(
+    trpc.projects.listSimilarityLinks.queryOptions({ projectId: initialProject.id })
+  );
+  const similarProjectIds = useMemo(
+    () => similarityLinks.map((link) => link.similarProjectId),
+    [similarityLinks]
+  );
   const { data: estimateSampleCount = 0 } = useQuery(
-    trpc.projects.estimateSampleCount.queryOptions()
+    trpc.projects.estimateSampleCount.queryOptions(
+      similarProjectIds.length > 0 ? { similarProjectIds } : undefined
+    )
   );
 
   const [viewMode, setViewMode] = useState<ProjectViewMode>("columns");
@@ -61,6 +70,7 @@ export default function ProjectWorkspace({
       <ProjectTemplateSuggestSlot
         projectId={project.id}
         projectName={project.name}
+        category={project.category}
         isComplete={projectComplete}
       >
         <ProjectWorkspaceHeader

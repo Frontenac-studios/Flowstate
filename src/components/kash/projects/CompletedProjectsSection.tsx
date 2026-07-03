@@ -58,6 +58,7 @@ export default function CompletedProjectsSection({
             <ProjectTemplateSuggestSlot
               projectId={project.id}
               projectName={project.name}
+              category={project.category}
               isComplete
             >
               <Link
