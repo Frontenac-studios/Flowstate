@@ -36,7 +36,32 @@ const KIND_META: Record<
   self_care_walk: {
     icon: Footprints,
     regionLabel: "Self-care nudge",
-    defaultAction: "Care",
+    defaultAction: "Walk",
+  },
+  self_care_walk_1: {
+    icon: Footprints,
+    regionLabel: "Walk reminder",
+    defaultAction: "Walk",
+  },
+  self_care_walk_2: {
+    icon: Footprints,
+    regionLabel: "Walk reminder",
+    defaultAction: "Walk",
+  },
+  self_care_walk_3: {
+    icon: Footprints,
+    regionLabel: "Walk reminder",
+    defaultAction: "Walk",
+  },
+  self_care_breathe_stress: {
+    icon: Sparkles,
+    regionLabel: "Breathing offer",
+    defaultAction: "Breathe",
+  },
+  self_care_lifts_me: {
+    icon: Footprints,
+    regionLabel: "What lifts me",
+    defaultAction: "Walk",
   },
   monthly_review: {
     icon: Sparkles,

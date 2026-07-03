@@ -135,10 +135,17 @@ export function evaluateProposedSlot(
  * In-app quiet (V3-3 / B3): suppress non-essential nudges outside working hours or
  * during commitment windows. Returns true when nudges should be hidden.
  */
+export type InAppNudgeSuppressOptions = {
+  /** Active focus session — suppress all in-app nudges (DND-2). */
+  focusSessionActive?: boolean;
+};
+
 export function shouldSuppressInAppNudges(
   now: Date,
-  constraints: readonly EvaluableConstraint[]
+  constraints: readonly EvaluableConstraint[],
+  options?: InAppNudgeSuppressOptions
 ): boolean {
+  if (options?.focusSessionActive) return true;
   if (constraints.length === 0) return false;
 
   const dateIso = toISODateString(startOfLocalDay(now));

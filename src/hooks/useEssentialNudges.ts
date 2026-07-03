@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -10,9 +10,30 @@ import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
-import { rankProblemNudges } from "@/lib/nudges/nudge-arbiter";
+import { rankProblemNudges, rankReassuranceNudges } from "@/lib/nudges/nudge-arbiter";
+import {
+  dispatchSelfCareBreatheStart,
+  dispatchSelfCareWalkStart,
+} from "@/lib/nudges/self-care-session-events";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
+
+const SELF_CARE_CHIP_KINDS = new Set<EssentialNudgeChipPayload["kind"]>([
+  "self_care_walk",
+  "self_care_walk_1",
+  "self_care_walk_2",
+  "self_care_walk_3",
+  "self_care_breathe_stress",
+  "self_care_lifts_me",
+  "monthly_review",
+  "evidence_surface",
+]);
+
+function partitionReassurance(chips: EssentialNudgeChipPayload[]) {
+  const chipReassurance = chips.filter((c) => SELF_CARE_CHIP_KINDS.has(c.kind));
+  const openerReassurance = chips.filter((c) => !SELF_CARE_CHIP_KINDS.has(c.kind));
+  return { chipReassurance, openerReassurance };
+}
 
 const INITIAL_DEFER_MS = 4_000;
 const RELEASE_BEAT_MS = 15_000;
@@ -23,12 +44,18 @@ function clientTzOffsetMinutes(): number {
 
 export function useEssentialNudges() {
   const router = useRouter();
+  const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { planningSurface } = useChat();
   const { constraints } = useUserConstraints();
   const evaluatingRef = useRef(false);
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+
+  const focusSessionActive = pathname.startsWith("/today/focus");
+  const suppressInAppNudges = shouldSuppressInAppNudges(new Date(), constraints, {
+    focusSessionActive,
+  });
 
   const promoteAbyss = useMutation(trpc.abyss.promote.mutationOptions());
   const createTask = useMutation(trpc.tasks.create.mutationOptions());
@@ -38,12 +65,12 @@ export function useEssentialNudges() {
   const [queue, setQueue] = useState<EssentialNudgeChipPayload[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
-  const canShowProblem =
-    (settings?.assistanceEnabled ?? true) && !shouldSuppressInAppNudges(new Date(), constraints);
+  const canShowProblem = (settings?.assistanceEnabled ?? true) && !suppressInAppNudges;
 
   const evaluate = useCallback(async () => {
     if (evaluatingRef.current) return;
     if (settings && !settings.notificationsEnabled) return;
+    if (suppressInAppNudges) return;
     evaluatingRef.current = true;
     try {
       const res = await fetch("/api/nudges/evaluate", {
@@ -62,11 +89,16 @@ export function useEssentialNudges() {
       const incoming = data.chips ?? [];
       if (incoming.length === 0) return;
 
-      const reassurance = incoming.filter((c) => c.klass === "reassurance");
+      const reassurance = rankReassuranceNudges(incoming);
       const problem = rankProblemNudges(incoming);
+      const { chipReassurance, openerReassurance } = partitionReassurance(reassurance);
 
-      if (reassurance.length > 0) {
-        setOpener((prev) => prev ?? reassurance[0] ?? null);
+      if (openerReassurance.length > 0) {
+        setOpener((prev) => prev ?? openerReassurance[0] ?? null);
+      }
+      if (canShowProblem && chipReassurance.length > 0) {
+        setChip((prev) => prev ?? chipReassurance[0] ?? null);
+        setQueue((prev) => [...prev, ...chipReassurance.slice(1)]);
       }
       if (canShowProblem && problem.length > 0) {
         setChip((prev) => prev ?? problem[0] ?? null);
@@ -75,7 +107,7 @@ export function useEssentialNudges() {
     } finally {
       evaluatingRef.current = false;
     }
-  }, [canShowProblem, planningSurface, settings]);
+  }, [canShowProblem, planningSurface, settings, suppressInAppNudges]);
 
   useEffect(() => {
     const id = window.setTimeout(() => void evaluate(), INITIAL_DEFER_MS);
@@ -107,6 +139,12 @@ export function useEssentialNudges() {
           break;
         case "open_care":
           router.push("/care");
+          break;
+        case "start_walk":
+          dispatchSelfCareWalkStart();
+          break;
+        case "start_breathe":
+          dispatchSelfCareBreatheStart();
           break;
         case "open_care_wins":
           router.push("/care?tab=evidence");

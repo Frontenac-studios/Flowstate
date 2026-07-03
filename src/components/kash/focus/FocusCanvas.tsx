@@ -60,6 +60,7 @@ export function FocusCanvas() {
   const [seconds, setSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [doneFlash, setDoneFlash] = useState<string | null>(null);
+  const [dndApplied, setDndApplied] = useState(false);
 
   const { mutateAsync: startTimeEntry } = useMutation(trpc.timeEntries.start.mutationOptions());
   const { mutateAsync: endTimeEntry } = useMutation(trpc.timeEntries.end.mutationOptions());
@@ -141,10 +142,33 @@ export function FocusCanvas() {
   );
 
   useEffect(() => {
-    if (!taskId || settings?.focusDndEnabled === false) return;
-    setOsDoNotDisturb(true);
-    return () => setOsDoNotDisturb(false);
+    if (!taskId || settings?.focusDndEnabled === false) {
+      setDndApplied(false);
+      return;
+    }
+    let active = true;
+    void setOsDoNotDisturb(true).then((applied) => {
+      if (active) setDndApplied(applied);
+    });
+    return () => {
+      active = false;
+      setDndApplied(false);
+      void setOsDoNotDisturb(false);
+    };
   }, [taskId, settings?.focusDndEnabled]);
+
+  const dndLabel =
+    settings?.focusDndEnabled === false
+      ? isPaused
+        ? "PAUSED"
+        : "FOCUSING"
+      : dndApplied
+        ? isPaused
+          ? "PAUSED · DND ON"
+          : "FOCUSING · DND ON"
+        : isPaused
+          ? "PAUSED"
+          : "FOCUSING";
 
   const handleDone = useCallback(async () => {
     if (!task || doneFlash) return;
@@ -312,9 +336,7 @@ export function FocusCanvas() {
         </div>
 
         <div className="flex w-full flex-col items-center justify-center gap-5 border-t border-subtle bg-surface-2 p-8 sm:w-[46%] sm:border-l sm:border-t-0">
-          <span className="text-caption tracking-[0.12em] text-ink-faint">
-            {isPaused ? "PAUSED" : "FOCUSING · DND ON"}
-          </span>
+          <span className="text-caption tracking-[0.12em] text-ink-faint">{dndLabel}</span>
           <div className="font-mono text-6xl font-medium tabular-nums text-ink">
             {timeString(seconds)}
           </div>

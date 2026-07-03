@@ -100,6 +100,11 @@ describe("shouldSuppressInAppNudges", () => {
     const evening = new Date(2026, 4, 27, 20, 0);
     expect(shouldSuppressInAppNudges(evening, [])).toBe(false);
   });
+
+  it("suppresses during an active focus session (DND-2)", () => {
+    const midday = new Date(2026, 4, 27, 12, 0);
+    expect(shouldSuppressInAppNudges(midday, [], { focusSessionActive: true })).toBe(true);
+  });
 });
 
 describe("softConstraintViolationCount", () => {

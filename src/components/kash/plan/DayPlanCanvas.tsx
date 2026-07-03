@@ -42,6 +42,12 @@ import { triggerEphemeralCelebration } from "../mechanics/EphemeralCelebration";
 import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
+import { BreathingOverlay } from "../care/BreathingOverlay";
+import { WalkTimerOverlay } from "../care/WalkTimerOverlay";
+import {
+  SELF_CARE_START_BREATHE,
+  SELF_CARE_START_WALK,
+} from "@/lib/nudges/self-care-session-events";
 import type { PlanTaskRow } from "./TaskRow";
 import { BalanceBar } from "./BalanceBar";
 import { LensControlBar } from "./LensControlBar";
@@ -88,6 +94,8 @@ export function DayPlanCanvas() {
   const [replacePickerTaskId, setReplacePickerTaskId] = useState<string | null>(null);
   const [top3Highlighted, setTop3Highlighted] = useState(false);
   const [view, setView] = useState<TodayView>("list");
+  const [walkOverlayOpen, setWalkOverlayOpen] = useState(false);
+  const [breatheOverlayOpen, setBreatheOverlayOpen] = useState(false);
   const top3CelebratedRef = useRef(false);
   const top3HighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -102,6 +110,17 @@ export function DayPlanCanvas() {
   const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
   const top3MiddayCheckin = settings?.top3MiddayCheckin ?? DEFAULT_TOP3_MIDDAY_CHECKIN;
   const { openRail } = useChat();
+
+  useEffect(() => {
+    const onWalk = () => setWalkOverlayOpen(true);
+    const onBreathe = () => setBreatheOverlayOpen(true);
+    window.addEventListener(SELF_CARE_START_WALK, onWalk);
+    window.addEventListener(SELF_CARE_START_BREATHE, onBreathe);
+    return () => {
+      window.removeEventListener(SELF_CARE_START_WALK, onWalk);
+      window.removeEventListener(SELF_CARE_START_BREATHE, onBreathe);
+    };
+  }, []);
 
   /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
   const now = useMemo(() => new Date(), []);
@@ -670,6 +689,8 @@ export function DayPlanCanvas() {
           />
         </div>
       </div>
+      <WalkTimerOverlay open={walkOverlayOpen} onClose={() => setWalkOverlayOpen(false)} />
+      <BreathingOverlay open={breatheOverlayOpen} onClose={() => setBreatheOverlayOpen(false)} />
     </DndContext>
   );
 }
