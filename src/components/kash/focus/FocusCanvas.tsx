@@ -46,7 +46,9 @@ export function FocusCanvas() {
   const taskId = searchParams.get("taskId");
   const blockId = searchParams.get("blockId");
 
-  const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const { data: tasks = [], isPending: tasksPending } = useQuery(
+    trpc.tasks.listIncomplete.queryOptions()
+  );
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
@@ -239,7 +241,34 @@ export function FocusCanvas() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleDone, handleEsc, taskId]);
 
-  if (!taskId || !task) {
+  if (!taskId) {
+    return (
+      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
+        <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
+        <p className="mt-2 text-ink-muted">No task selected. Returning to your plan.</p>
+        <div className="mt-5">
+          <button
+            type="button"
+            className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+            onClick={() => router.push("/today")}
+          >
+            Back to plan
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (tasksPending) {
+    return (
+      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
+        <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
+        <p className="mt-2 text-ink-muted">Loading…</p>
+      </section>
+    );
+  }
+
+  if (!task) {
     return (
       <section className="rounded-card border border-subtle bg-surface p-6 text-center">
         <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
