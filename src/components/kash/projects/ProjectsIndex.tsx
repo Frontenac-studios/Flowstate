@@ -173,6 +173,7 @@ export default function ProjectsIndex() {
                             key={project.id}
                             projectId={project.id}
                             projectName={project.name}
+                            category={project.category}
                             isComplete={isProjectComplete(project)}
                           >
                             <ProjectCard

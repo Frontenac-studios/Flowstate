@@ -75,6 +75,14 @@ export async function syncProjectTemplateRow(
   await recordSyncMutation({ table: "project_templates", rowId, op, payload });
 }
 
+export async function syncProjectSimilarityRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "project_similarity", rowId, op, payload });
+}
+
 export async function syncPhaseRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "phases", rowId, op, payload });
 }
