@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useEssentialNudges } from "@/hooks/useEssentialNudges";
+import { isOnboardingCompleted } from "@/lib/onboarding/onboarding-storage";
 import {
   isMorningHandoffDismissedForDate,
   markMorningHandoffDismissedForDate,
@@ -33,8 +34,13 @@ export function MorningHandoffRunner() {
   const dayStartHour = settings?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
   const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
 
+  // V8: first-run onboarding owns the sheet until completed — don't double-stack.
+  const onboardingDone = typeof window === "undefined" ? true : isOnboardingCompleted();
+
   const enabled =
-    settings?.assistanceEnabled !== false && (settings?.morningHandoff ?? "on") === "on";
+    onboardingDone &&
+    settings?.assistanceEnabled !== false &&
+    (settings?.morningHandoff ?? "on") === "on";
 
   const seenQueryKey = trpc.nudges.hasMorningHandoffForDate.queryKey({ localDate });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { lensFilterOptions } from "@/lib/tasks/lens-apply";
@@ -42,15 +42,24 @@ const LENS_META: Record<LensProperty, LensMeta> = {
   },
 };
 
+type Props = {
+  /**
+   * D11/V3: when true, hide the full bar behind a filter icon until the list is
+   * worth filtering (or the user expands it). Active lenses always force open.
+   */
+  collapseUntilUseful?: boolean;
+};
+
 /**
  * Lens control bar (VF-2 + VF-3): independent reveal toggles (top pill), plus —
  * once a lens is active — a single-select group/color control and stackable
  * value-filter chips per lens. Toggles mirror the c/p/r/d keystrokes; the 2-lens
  * cap (VF3) means a 3rd reveal unpresses the oldest.
  */
-export function LensControlBar() {
+export function LensControlBar({ collapseUntilUseful = false }: Props) {
   const trpc = useTRPC();
   const lens = useLens();
+  const [expanded, setExpanded] = useState(false);
   const { data: tagVocabulary = [] } = useQuery({
     ...trpc.tasks.listTagVocabulary.queryOptions(),
     enabled: lens?.scope === "this-week",
@@ -65,6 +74,26 @@ export function LensControlBar() {
   const { state } = lens;
   const showApplyControls = lens.scope === "this-week" && state.active.length > 0;
   const showTagFilter = lens.scope === "this-week" && tagOptions.length > 0;
+  const hasActiveLens = state.active.length > 0 || (lens.tagFilter?.length ?? 0) > 0;
+  const showCollapsed = collapseUntilUseful && !expanded && !hasActiveLens;
+
+  if (showCollapsed) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-2.5 py-1 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+        aria-expanded={false}
+        aria-label="Show filters"
+        title="Filters"
+      >
+        <span aria-hidden className="flex w-3 items-center justify-center">
+          <span className="h-2.5 w-2.5 rounded-full border-[1.5px] border-current" />
+        </span>
+        Filter
+      </button>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">

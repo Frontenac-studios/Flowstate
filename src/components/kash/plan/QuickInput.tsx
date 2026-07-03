@@ -60,6 +60,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   const textareaRef = useRef<ComposerTextareaHandle>(null);
   const [value, setValue] = useComposerDraft(draftStorageKey);
   const [cursor, setCursor] = useState(0);
+  const [focused, setFocused] = useState(false);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [lastProjectSlug, setLastProjectSlug] = useState<string | null>(() =>
@@ -287,13 +288,22 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     );
   }, [singleLineParse, categoryProjects, settings?.lastUsedCategory, aiInference]);
 
+  // D14/V6: one instruction line (placeholder); property chips slide in on focus.
+  const showPropertyBar = focused || value.trim().length > 0;
+
   return (
     <section className="rounded-card border border-subtle bg-surface p-4">
       <label htmlFor="kash-quick-input" className="sr-only">
         Add tasks
       </label>
 
-      <ComposerPropertyBar assist={assist} visible />
+      <div
+        className={`overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out ${
+          showPropertyBar ? "mb-2 max-h-10 opacity-100" : "mb-0 max-h-0 opacity-0"
+        }`}
+      >
+        <ComposerPropertyBar assist={assist} visible={showPropertyBar} />
+      </div>
 
       <ComposerCategoryAccent preview={categoryPreview}>
         <ComposerTextarea
@@ -303,8 +313,10 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
           onChange={setValue}
           onCursorChange={setCursor}
           ghostSuffix={assist.suggestionSuffix}
-          placeholder="add tasks — one per line. Use `;` for properties. ⌘↵ to add."
+          placeholder="add tasks — one per line · ⌘↵ to add"
           disabled={createTaskMutation.isPending}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
@@ -320,11 +332,13 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
         />
       </ComposerCategoryAccent>
 
-      <p className="mt-1.5 text-xs text-ink-muted">
-        Enter for new line · ⌘↵ to add tasks
-        {assist.suggestionSuffix ? " · ⇥ accept suggestion" : null}
-        {createTaskMutation.isPending ? " · Adding…" : null}
-      </p>
+      {assist.suggestionSuffix || createTaskMutation.isPending ? (
+        <p className="mt-1.5 text-xs text-ink-muted">
+          {assist.suggestionSuffix ? "⇥ accept suggestion" : null}
+          {assist.suggestionSuffix && createTaskMutation.isPending ? " · " : null}
+          {createTaskMutation.isPending ? "Adding…" : null}
+        </p>
+      ) : null}
 
       {lineLimitWarning ? (
         <p className="mt-2 text-sm text-critical" role="alert">
