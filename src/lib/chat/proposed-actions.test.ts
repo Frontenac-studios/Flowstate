@@ -36,14 +36,20 @@ describe("proposed-actions", () => {
 
   it("filterPayloadByEnabledItems keeps only enabled rows", () => {
     const filtered = filterPayloadByEnabledItems(reschedule);
-    expect(filtered?.items).toHaveLength(1);
-    expect(filtered?.items[0]?.title).toBe("Alpha");
+    expect(filtered?.kind).toBe("reschedule_tasks");
+    if (filtered?.kind === "reschedule_tasks") {
+      expect(filtered.items).toHaveLength(1);
+      expect(filtered.items[0]?.title).toBe("Alpha");
+    }
   });
 
   it("filterPayloadByItemIds respects explicit selection", () => {
     const filtered = filterPayloadByItemIds(reschedule, ["b"]);
-    expect(filtered?.items).toHaveLength(1);
-    expect(filtered?.items[0]?.title).toBe("Beta");
+    expect(filtered?.kind).toBe("reschedule_tasks");
+    if (filtered?.kind === "reschedule_tasks") {
+      expect(filtered.items).toHaveLength(1);
+      expect(filtered.items[0]?.title).toBe("Beta");
+    }
   });
 
   it("builds a headline for multi-task reschedule", () => {

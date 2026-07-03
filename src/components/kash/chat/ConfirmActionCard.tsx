@@ -23,7 +23,18 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
     if ("projectSlug" in item && item.projectSlug) parts.push(`#${item.projectSlug}`);
     return parts.join(" ");
   }
-  return item.title;
+  if (action.kind === "replan_project_dates" && "phaseName" in item) {
+    const start = "startDate" in item ? item.startDate : null;
+    const end = "endDate" in item ? item.endDate : null;
+    const prevEnd = "previousEndDate" in item ? item.previousEndDate : null;
+    const range =
+      start && end ? `${start} → ${end}` : end ? `→ ${end}` : start ? `${start} →` : "new dates";
+    return prevEnd ? `${item.phaseName}: ${range} (was ${prevEnd})` : `${item.phaseName}: ${range}`;
+  }
+  if ("title" in item && typeof item.title === "string") {
+    return item.title;
+  }
+  return "Change";
 }
 
 export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss }: Props) {

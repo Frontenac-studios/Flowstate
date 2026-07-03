@@ -10,6 +10,7 @@ import { useTRPC } from "@/trpc/client";
 import CalendarBoardView from "./CalendarBoardView";
 import MillerColumnsView from "./MillerColumnsView";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
+import { ProjectSlipReplanCard } from "./ProjectSlipReplanCard";
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
@@ -71,6 +72,8 @@ export default function ProjectWorkspace({
           estimateSampleCount={estimateSampleCount}
         />
       </ProjectTemplateSuggestSlot>
+
+      <ProjectSlipReplanCard projectId={project.id} />
 
       {isLoading ? (
         <p className="text-ink-muted">Loading project…</p>

@@ -26,7 +26,16 @@ import {
   projectTemplateStructureSchema,
 } from "@/lib/projects/template-structure";
 import { applyProjectTemplate, syncAppliedTemplateRows } from "@/server/projects/apply-template";
+import {
+  applyProjectSlipReplanProposal,
+  buildProjectSlipReplanProposal,
+} from "@/server/projects/slip-replan";
 import { countEstimateSamplesForUser } from "@/lib/projects/count-estimate-samples";
+import {
+  filterPayloadByItemIds,
+  proposedActionSchema,
+  replanProjectDatesProposalSchema,
+} from "@/lib/chat/proposed-actions";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -518,5 +527,33 @@ export const projectsRouter = createTRPCRouter({
 
       await syncProjectRow(input.id, "delete", { id: input.id, userId: ctx.userId });
       return { id: input.id };
+    }),
+
+  proposeSlipReplan: protectedProcedure
+    .input(z.object({ projectId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const proposal = await buildProjectSlipReplanProposal(ctx.userId, input.projectId);
+      return proposal;
+    }),
+
+  applySlipReplan: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string().uuid(),
+        proposal: replanProjectDatesProposalSchema,
+        enabledItemIds: z.array(z.string().min(1)).min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedProject(ctx.userId, input.projectId);
+      const parsed = proposedActionSchema.parse(input.proposal);
+      if (parsed.kind !== "replan_project_dates") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Expected a replan proposal." });
+      }
+      const filtered = filterPayloadByItemIds(parsed, input.enabledItemIds);
+      if (!filtered || filtered.kind !== "replan_project_dates") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No enabled phase updates." });
+      }
+      return applyProjectSlipReplanProposal(ctx.userId, filtered);
     }),
 });
