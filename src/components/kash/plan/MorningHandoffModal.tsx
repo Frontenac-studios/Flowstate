@@ -46,6 +46,9 @@ type Props = {
   isOverCommitted: boolean;
   goalOffer: GoalSteeringOffer | null;
   isPending: boolean;
+  /** V8: onboarding ends on a hand-off preview so day 2 opens familiar. */
+  previewBanner?: string | null;
+  beginLabel?: string;
   onKeepCarryover: (taskId: string) => void;
   onDropCarryover: (taskId: string) => void;
   onConfirmRecurring: (recurrenceId: string, occurrenceDate: string) => void;
@@ -117,6 +120,8 @@ export function MorningHandoffModal({
   isOverCommitted,
   goalOffer,
   isPending,
+  previewBanner = null,
+  beginLabel = "Begin day",
   onKeepCarryover,
   onDropCarryover,
   onConfirmRecurring,
@@ -208,12 +213,17 @@ export function MorningHandoffModal({
             Skip
           </Button>
           <Button type="button" className="text-body" onClick={onBegin} disabled={isPending}>
-            Begin day
+            {beginLabel}
           </Button>
         </div>
       }
     >
       <div className="space-y-[var(--space-6)]">
+        {previewBanner ? (
+          <p className="rounded-row border border-accent bg-[var(--accent-soft)] px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
+            {previewBanner}
+          </p>
+        ) : null}
         <p className="rounded-row border border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
           {openerText}
         </p>

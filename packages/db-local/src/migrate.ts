@@ -7,11 +7,29 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'adulting',
+  embedding TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS projects_user_id_slug_idx ON projects (user_id, slug);
 CREATE INDEX IF NOT EXISTS projects_user_id_updated_at_idx ON projects (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS project_similarity (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  similar_project_id TEXT NOT NULL,
+  source TEXT NOT NULL,
+  score REAL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS project_similarity_project_similar_uidx
+  ON project_similarity (user_id, project_id, similar_project_id);
+CREATE INDEX IF NOT EXISTS project_similarity_user_id_updated_at_idx
+  ON project_similarity (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS project_similarity_user_id_project_id_idx
+  ON project_similarity (user_id, project_id);
 
 CREATE TABLE IF NOT EXISTS project_templates (
   id TEXT PRIMARY KEY NOT NULL,
@@ -615,6 +633,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
     definition: "TEXT NOT NULL DEFAULT 'quarterly'",
   },
   { table: "protected_blocks", column: "source", definition: "TEXT" },
+  { table: "projects", column: "embedding", definition: "TEXT" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {

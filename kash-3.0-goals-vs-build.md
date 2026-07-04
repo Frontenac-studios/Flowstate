@@ -8,10 +8,12 @@
 
 ---
 
-> **⚠️ Status update (Jul 2 2026):** the gap-audit tracks identified below are **now built** on
-> `feat/kash-3.0-complete` — Foundations (morning hand-off + nudge arbiter), Evidence (wins memory +
-> Care shrine), Goals progress/steering (timeline + heatmap + Bingo→Goals), Balance nudge
-> (category-starvation), and Top-3 assurance. Scorecard verdicts below are **current as of Jul 2 2026**.
+> **⚠️ Status update (Jul 3 2026):** gap-audit tracks (Jul 2) and Kash 3.1 last-mile tracks are
+> largely built on `main` — full morning hand-off ritual, self-care acting layer, OS + in-app DND,
+> goal pull-in, Backlog B1–B4 (Themes / motion / archive), Care V13, design pass V1–V14. Scorecard
+> verdicts below remain accurate for README goals. **Open 3.1 gaps:** AI write-tool catalog (A1–A3/A5,
+> unmerged PR12), B5/B6. Checklist: `docs/kash-3.1-phase-a-completeness-audit.md`. Plan:
+> `kash-3.1-consolidated-build-spec.md`.
 
 ## The rubric (from the README)
 
@@ -36,7 +38,7 @@
 | 1   | Kill decision paralysis (RDM)         | ✅      | Core loop is real and complete.                                                                                             |
 | 9   | One inbox (Abyss)                     | ✅      | Capture, sky/list, archive, promote — delivered.                                                                            |
 | 10  | Recurring tasks                       | ✅      | RRULE + virtual occurrences shipped.                                                                                        |
-| 11  | Focus / fewer distractions            | ✅      | Focus timer + auto-DND shipped.                                                                                             |
+| 11  | Focus / fewer distractions            | ✅      | Focus timer + Tauri OS DND (`dnd.rs`) + in-app nudge quieting while focusing (3.1 T4).                                      |
 | 7   | Weekly time-by-category               | ✅      | `WeeklySummaryCard` rolls focus time up per category **and** project. The strongest "invisible→visible" surface in the app. |
 | 3   | You plan, Kash steers                 | ✅      | Confirm-card + reversible AI honor the contract.                                                                            |
 | 2   | Balance across sectors                | ✅      | Category-starvation nudge + weekly digest shipped (Jul 2026). BalanceBar + neglect callouts remain. _Was 🟡._               |
@@ -153,6 +155,19 @@ All five items from the Jul 1 audit have been specced and built:
 
 ---
 
-## Kash 3.1 follow-up (Jul 2 2026)
+## Kash 3.1 follow-up (Jul 2 → Jul 3 2026)
 
-The Jul 2 re-audit found the mechanical product is strong but several promises are **sensed/stored without acting or showing** — placeholder morning hand-off, non-tappable self-care gaps, goal steering without pull-in, wins facets not surfaced, Backlog BK3–BK5 overstated. **All new work is planned in `kash-3.1-consolidated-build-spec.md`.** Scorecard verdicts above remain accurate for what 3.0 delivered; 3.1 closes the last mile.
+The Jul 2 re-audit found promises **sensed/stored without acting or showing**. Phase A audit
+(`docs/kash-3.1-phase-a-completeness-audit.md`) held every 3.1 track against `main`:
+
+| Jul 2 finding                             | Jul 3 status                                                                                                   |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Placeholder morning hand-off              | **Built** — full ritual, right-side `RitualSheet` (T1/V14)                                                     |
+| Non-tappable self-care gaps               | **Built** — Walk/Breathe gap rows + walk/stress/lifts-me nudges (T2)                                           |
+| Goal steering without pull-in             | **Built** — journey CTA + morning offer + rotation (G1–G3)                                                     |
+| Wins facets not surfaced                  | **Built** — Body/Mind/Soul badges + Care Evidence (C1–C4/V13)                                                  |
+| Auto-DND overstated                       | **Built** — Tauri DND + in-app quieting (T4); scorecard goal 11 accurate                                       |
+| Backlog BK3–BK5 overstated                | **Mostly built** — Themes, motion, Archived · N (B2–B4). **Open:** B5 one-tap cluster naming, B6 park auto-tag |
+| Template chip / slip re-plan / similarity | **Built** (P1–P3)                                                                                              |
+
+**Still open (sensed without full act/show):** AI write-tool catalog + About-me/values/undo (A1–A3/A5 — land `feat/kash-3.1-pr12-ai-companion`); B5/B6. Plan remains `kash-3.1-consolidated-build-spec.md`.

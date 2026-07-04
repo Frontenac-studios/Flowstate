@@ -425,20 +425,43 @@ type Top3HoldOffer = {
   confirming?: boolean;
 };
 
+/** D14/V6: only surface the sync badge when sync is active or erroring — never "off". */
+export type TimelineSyncStatus = "off" | "on" | "error";
+
 type TimelinePaneProps = {
   top3HoldOffer?: Top3HoldOffer | null;
   /** D14/V3: hide decide slot, gap rows, and sync badge until the day has tasks or blocks. */
   planItemCount?: number;
+  /**
+   * D11/V3 slim rail: List view collapses the timeline to a mini-map that expands
+   * on click. Calendar view keeps the full pane (`"full"`).
+   */
+  density?: "full" | "rail";
+  /** Calendar sync status — badge only when `"on"` or `"error"`. */
+  syncStatus?: TimelineSyncStatus;
+  className?: string;
 };
 
-export function TimelinePane({ top3HoldOffer = null, planItemCount = 0 }: TimelinePaneProps) {
+export function TimelinePane({
+  top3HoldOffer = null,
+  planItemCount = 0,
+  density = "full",
+  syncStatus = "off",
+  className,
+}: TimelinePaneProps) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
   const date = useLocalCalendarDate();
   const [now, setNow] = useState<Date | null>(null);
+  const [railExpanded, setRailExpanded] = useState(false);
   const gapDismissKey = `selfCareGapDismiss:${date}`;
   const [gapDismissed, setGapDismissed] = useState(false);
+
+  useEffect(() => {
+    // Calendar view always shows the full pane; reset when switching back to list.
+    if (density === "full") setRailExpanded(false);
+  }, [density]);
 
   useEffect(() => {
     setGapDismissed(localStorage.getItem(gapDismissKey) === "1");
@@ -600,27 +623,100 @@ export function TimelinePane({ top3HoldOffer = null, planItemCount = 0 }: Timeli
     blocks.length > 0 ||
     timedProtected.length > 0 ||
     allDayProtected.length > 0;
+  const showSyncBadge = syncStatus === "on" || syncStatus === "error";
+  const showAsRail = density === "rail" && !railExpanded;
 
   const openFocus = (taskId: string, blockId: string) => {
     router.push(`/today/focus?${new URLSearchParams({ taskId, blockId }).toString()}`);
   };
 
+  if (showAsRail) {
+    const railHeight = VIEWPORT_HEIGHT;
+    const span = Math.max(1, rangeEnd - rangeStart);
+    const nowFrac =
+      nowMinutes != null ? Math.min(1, Math.max(0, (nowMinutes - rangeStart) / span)) : null;
+
+    return (
+      <section
+        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card border border-subtle bg-surface py-3 ${className ?? ""}`}
+        aria-label="Today timeline mini-map"
+      >
+        <button
+          type="button"
+          onClick={() => setRailExpanded(true)}
+          className="flex w-full flex-col items-center gap-2 px-1 focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          aria-expanded={false}
+          aria-label="Expand timeline"
+          title="Expand timeline"
+        >
+          <span className="text-caption uppercase tracking-wide text-ink-muted">‹</span>
+          <div
+            className="relative w-3 rounded-full bg-surface-2"
+            style={{ height: railHeight }}
+            aria-hidden
+          >
+            {laidOutGrid.map((item) => {
+              const top = ((item.startMin - rangeStart) / span) * railHeight;
+              const height = Math.max(3, ((item.endMin - item.startMin) / span) * railHeight);
+              const color =
+                item.kind === "protected"
+                  ? "var(--ink-faint)"
+                  : stripeColor(item.category, item.categoryUnresolved);
+              return (
+                <span
+                  key={`${item.kind}-${item.id}`}
+                  className="absolute inset-x-0 rounded-full"
+                  style={{ top, height, backgroundColor: color }}
+                />
+              );
+            })}
+            {/* Neutral tick reserved for future synced calendar events (D11). */}
+            {nowFrac != null ? (
+              <span
+                className="absolute inset-x-[-2px] h-0.5 rounded-full bg-accent"
+                style={{ top: nowFrac * railHeight }}
+              />
+            ) : null}
+          </div>
+          <span className="text-caption text-ink-faint" style={{ writingMode: "vertical-rl" }}>
+            timeline
+          </span>
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section
-      className="flex flex-col rounded-card border border-subtle bg-surface p-4"
+      className={`flex min-w-[16rem] flex-1 flex-col rounded-card border border-subtle bg-surface p-4 ${className ?? ""}`}
       aria-label="Today timeline"
     >
       <header className="mb-3 flex items-center gap-2">
+        {density === "rail" ? (
+          <button
+            type="button"
+            onClick={() => setRailExpanded(false)}
+            className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+            aria-label="Collapse timeline to mini-map"
+            title="Collapse timeline"
+          >
+            › rail
+          </button>
+        ) : null}
         <h2 className="text-sm font-medium uppercase tracking-wide text-ink-muted">Timeline</h2>
         <span className="text-xs text-ink-muted">
           · today · {formatHour(startHour)}–{formatHour(endHour)}
         </span>
-        {showTimelineChrome ? (
+        {showSyncBadge ? (
           <span
-            className="ml-auto rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted"
-            title="Calendar sync is coming in a later phase"
+            className={`ml-auto rounded-pill border px-2 py-0.5 text-xs ${
+              syncStatus === "error"
+                ? "border-critical text-critical"
+                : "border-border bg-surface text-ink-muted"
+            }`}
+            title={syncStatus === "error" ? "Calendar sync error" : "Calendar sync on"}
           >
-            sync ○ off
+            {syncStatus === "error" ? "sync ✕" : "sync ● on"}
           </span>
         ) : null}
       </header>

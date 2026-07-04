@@ -5,7 +5,7 @@ const anthropicEnvSchema = z.object({
   ANTHROPIC_MODEL: z.string().min(1).optional(),
 });
 
-export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929";
 
 export function getAnthropicConfig():
   | { configured: true; apiKey: string; model: string }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import Button from "@/components/kash/ui/Button";
-import { readMotionDurationMs, MOTION_TOKEN } from "@/lib/animate/motion-tokens";
+import { isProjectComplete } from "@/lib/projects/is-project-complete";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
@@ -15,7 +15,7 @@ import CompletedProjectsSection from "./CompletedProjectsSection";
 import MultiProjectCalendarView from "./MultiProjectCalendarView";
 import NewProjectForm from "./NewProjectForm";
 import ProjectCard, { LooseTasksRow, type ProjectListItem } from "./ProjectCard";
-import { ProjectTemplateSuggestChip } from "./ProjectTemplateSuggestChip";
+import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import { useProjectFoldTransitions } from "./useProjectFoldTransitions";
 
 import "./projects-motion.css";
@@ -34,7 +34,6 @@ export default function ProjectsIndex() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [indexView, setIndexView] = useState<IndexViewMode>("gallery");
-  const [templateSuggestId, setTemplateSuggestId] = useState<string | null>(null);
 
   const hasProjects = (projects?.length ?? 0) > 0;
   const looseCountByCategory = useMemo(
@@ -69,20 +68,6 @@ export default function ProjectsIndex() {
     }
     return map;
   }, [activeProjects, projectsByCategory]);
-
-  const templateSuggestProject = useMemo(() => {
-    if (!templateSuggestId) return null;
-    return allVisible.find((p) => p.id === templateSuggestId) ?? null;
-  }, [templateSuggestId, allVisible]);
-
-  useEffect(() => {
-    if (!foldingId) return;
-    const timer = window.setTimeout(
-      () => setTemplateSuggestId(foldingId),
-      readMotionDurationMs(MOTION_TOKEN.medium)
-    );
-    return () => window.clearTimeout(timer);
-  }, [foldingId]);
 
   return (
     <section className="flex flex-col gap-6">
@@ -141,14 +126,6 @@ export default function ProjectsIndex() {
         />
       ) : (
         <>
-          {templateSuggestProject ? (
-            <ProjectTemplateSuggestChip
-              projectId={templateSuggestProject.id}
-              projectName={templateSuggestProject.name}
-              onDismiss={() => setTemplateSuggestId(null)}
-            />
-          ) : null}
-
           <div className="flex flex-col gap-8">
             {PROJECT_CATEGORIES.map((category) => {
               const categoryProjects = activeByCategory.get(category) ?? [];
@@ -192,12 +169,19 @@ export default function ProjectsIndex() {
                     {categoryProjects.length > 0 ? (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {categoryProjects.map((project) => (
-                          <ProjectCard
+                          <ProjectTemplateSuggestSlot
                             key={project.id}
-                            project={project}
-                            folding={foldingId === project.id}
-                            estimateSampleCount={estimateSampleCount}
-                          />
+                            projectId={project.id}
+                            projectName={project.name}
+                            category={project.category}
+                            isComplete={isProjectComplete(project)}
+                          >
+                            <ProjectCard
+                              project={project}
+                              folding={foldingId === project.id}
+                              estimateSampleCount={estimateSampleCount}
+                            />
+                          </ProjectTemplateSuggestSlot>
                         ))}
                       </div>
                     ) : null}

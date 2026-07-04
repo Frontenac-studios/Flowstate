@@ -80,9 +80,14 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
         ProposedAction,
         { kind: "replan_project_dates" }
       >["items"][number];
-      const start = row.startDate ?? "?";
-      const end = row.endDate ?? "?";
-      return `${row.projectSlug} / ${row.phaseName}: ${start} → ${end}`;
+      const start = row.startDate;
+      const end = row.endDate;
+      const range =
+        start && end ? `${start} → ${end}` : end ? `→ ${end}` : start ? `${start} →` : "new dates";
+      const label = row.projectSlug ? `${row.projectSlug} / ${row.phaseName}` : row.phaseName;
+      return row.previousEndDate
+        ? `${label}: ${range} (was ${row.previousEndDate})`
+        : `${label}: ${range}`;
     }
     default:
       return "Change";

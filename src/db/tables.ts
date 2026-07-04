@@ -24,6 +24,7 @@ import { evidenceEditions as pgEvidenceEditions } from "./schema/evidence-editio
 import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { nudgeEvents as pgNudgeEvents } from "./schema/nudge-events";
 import { phases as pgPhases } from "./schema/phases";
+import { projectSimilarity as pgProjectSimilarity } from "./schema/project-similarity";
 import { projectTemplates as pgProjectTemplates } from "./schema/project-templates";
 import { projects as pgProjects } from "./schema/projects";
 import { protectedBlockTemplates as pgProtectedBlockTemplates } from "./schema/protected-block-templates";
@@ -44,6 +45,9 @@ import { isSqliteMode } from "./mode";
 /** Runtime table handles; typed as Postgres for Drizzle query compatibility. */
 export const tasks = (isSqliteMode() ? sqliteSchema.tasks : pgTasks) as typeof pgTasks;
 export const projects = (isSqliteMode() ? sqliteSchema.projects : pgProjects) as typeof pgProjects;
+export const projectSimilarity = (
+  isSqliteMode() ? sqliteSchema.projectSimilarity : pgProjectSimilarity
+) as typeof pgProjectSimilarity;
 export const projectTemplates = (
   isSqliteMode() ? sqliteSchema.projectTemplates : pgProjectTemplates
 ) as typeof pgProjectTemplates;

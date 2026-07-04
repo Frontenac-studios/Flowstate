@@ -118,9 +118,11 @@ export const moveTaskToPhaseProposalItemSchema = proposalItemBaseSchema.extend({
 export const replanProjectDatesProposalItemSchema = proposalItemBaseSchema.extend({
   phaseId: z.string().uuid(),
   phaseName: z.string().min(1),
-  projectSlug: z.string().min(1),
+  projectSlug: z.string().min(1).optional(),
   startDate: isoDateSchema.nullable().optional(),
   endDate: isoDateSchema.nullable().optional(),
+  previousStartDate: isoDateSchema.nullable().optional(),
+  previousEndDate: isoDateSchema.nullable().optional(),
 });
 
 export const rescheduleTasksProposalSchema = z.object({

@@ -7,6 +7,8 @@ import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { type ProjectCategory } from "@/lib/projects/categories";
 
+import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
+
 export type CompletedProjectRow = {
   id: string;
   name: string;
@@ -53,22 +55,29 @@ export default function CompletedProjectsSection({
       <ul id={panelId} hidden={!expanded} className="mt-3 space-y-2">
         {projects.map((project) => (
           <li key={project.id}>
-            <Link
-              href={`/projects/${project.id}`}
-              className="kash-focus-visible flex min-h-[var(--row-min-height)] items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] text-sm text-ink-muted outline-none transition hover:bg-surface-2"
+            <ProjectTemplateSuggestSlot
+              projectId={project.id}
+              projectName={project.name}
+              category={project.category}
+              isComplete
             >
-              <span
-                className="h-3 shrink-0 rounded-full"
-                style={{
-                  width: "var(--stripe-width)",
-                  backgroundColor: categorySolidVar(project.category),
-                }}
-                aria-hidden
-              />
-              <span className="min-w-0 truncate">
-                Completed · <span className="text-ink">{project.name}</span>
-              </span>
-            </Link>
+              <Link
+                href={`/projects/${project.id}`}
+                className="kash-focus-visible flex min-h-[var(--row-min-height)] items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] text-sm text-ink-muted outline-none transition hover:bg-surface-2"
+              >
+                <span
+                  className="h-3 shrink-0 rounded-full"
+                  style={{
+                    width: "var(--stripe-width)",
+                    backgroundColor: categorySolidVar(project.category),
+                  }}
+                  aria-hidden
+                />
+                <span className="min-w-0 truncate">
+                  Completed · <span className="text-ink">{project.name}</span>
+                </span>
+              </Link>
+            </ProjectTemplateSuggestSlot>
           </li>
         ))}
       </ul>

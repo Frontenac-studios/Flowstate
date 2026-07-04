@@ -627,16 +627,18 @@ export function DayPlanCanvas() {
             />
           ) : null}
 
-          <div className="flex items-center gap-3">
-            <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
-              Balance
-            </span>
-            <BalanceBar
-              tasks={todayTasks}
-              weeklyTiltCaption={weekPayload?.weeklyTiltCaption ?? null}
-              showGhostWhenSparse
-            />
-          </div>
+          {/* D11/V3: balance bar hidden until ≥2 tasks (ghost strip lives in compact Top-3). */}
+          {todayTasks.length >= 2 ? (
+            <div className="flex items-center gap-3">
+              <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
+                Balance
+              </span>
+              <BalanceBar
+                tasks={todayTasks}
+                weeklyTiltCaption={weekPayload?.weeklyTiltCaption ?? null}
+              />
+            </div>
+          ) : null}
         </section>
 
         {view === "review" ? (
@@ -646,7 +648,7 @@ export function DayPlanCanvas() {
             {view === "list" ? (
               <div className="min-w-0 flex-1 lg:basis-0">
                 <div className="mb-3">
-                  <LensControlBar />
+                  <LensControlBar collapseUntilUseful={todayTasks.length < 3} />
                 </div>
                 <TodayList
                   pulse={pulseTarget === "today"}
@@ -662,22 +664,22 @@ export function DayPlanCanvas() {
                 />
               </div>
             ) : null}
-            <div className="min-w-0 flex-1 lg:basis-0">
-              <TimelinePane
-                planItemCount={todayTasks.length}
-                top3HoldOffer={
-                  top3Assurance.showHoldGhost && top3Assurance.holdGhost
-                    ? {
-                        slot: top3Assurance.holdGhost,
-                        show: true,
-                        onConfirm: top3Assurance.confirmHold,
-                        onDismiss: top3Assurance.declineHold,
-                        confirming: top3Assurance.confirmingHold,
-                      }
-                    : null
-                }
-              />
-            </div>
+            <TimelinePane
+              planItemCount={todayTasks.length}
+              density={view === "list" ? "rail" : "full"}
+              className={view === "list" ? undefined : "min-w-0 flex-1 lg:basis-0"}
+              top3HoldOffer={
+                top3Assurance.showHoldGhost && top3Assurance.holdGhost
+                  ? {
+                      slot: top3Assurance.holdGhost,
+                      show: true,
+                      onConfirm: top3Assurance.confirmHold,
+                      onDismiss: top3Assurance.declineHold,
+                      confirming: top3Assurance.confirmingHold,
+                    }
+                  : null
+              }
+            />
           </div>
         )}
 
