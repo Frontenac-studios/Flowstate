@@ -1,6 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, withKashIcon } from "@/components/kash/ui/icon";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { useTRPC } from "@/trpc/client";
 const RestoreIcon = withKashIcon(ArchiveRestore);
 const ABYSS_BTN_FOCUS =
@@ -9,6 +10,7 @@ const ABYSS_BTN_FOCUS =
 export default function AbyssArchivedList() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data, isLoading } = useQuery(trpc.abyss.listArchived.queryOptions());
   const restoreMutation = useMutation(
     trpc.abyss.restore.mutationOptions({
@@ -16,6 +18,8 @@ export default function AbyssArchivedList() {
         void queryClient.invalidateQueries({ queryKey: trpc.abyss.listArchived.queryKey() });
         void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
       },
+      onError: () =>
+        toast({ message: "Couldn't restore that item. Please try again.", variant: "error" }),
     })
   );
   if (isLoading) return <div className="h-10 animate-pulse rounded-row bg-abyss-surface" />;

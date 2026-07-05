@@ -29,7 +29,7 @@ export default function AbyssRoot() {
   const searchParams = useSearchParams();
   const categoryLens = readCategoryLens(searchParams.get("category"));
   const trpc = useTRPC();
-  const { data, isLoading } = useQuery(trpc.abyss.list.queryOptions());
+  const { data, isLoading, isError, refetch } = useQuery(trpc.abyss.list.queryOptions());
   const { data: archived } = useQuery(trpc.abyss.listArchived.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const embedAndStore = useAbyssEmbedding();
@@ -186,6 +186,20 @@ export default function AbyssRoot() {
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-11 animate-pulse rounded-row bg-abyss-surface" />
               ))}
+            </div>
+          ) : isError ? (
+            <div
+              role="alert"
+              className="rounded-row border border-abyss-border bg-abyss-surface p-4 text-center text-meta text-abyss-ink-muted"
+            >
+              <p>The deep didn&apos;t load.</p>
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="mt-2 rounded-control px-3 py-1 text-abyss-ink underline underline-offset-2"
+              >
+                Try again
+              </button>
             </div>
           ) : (
             <AbyssList

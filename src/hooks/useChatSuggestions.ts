@@ -23,7 +23,12 @@ function clientTzOffsetMinutes(): number {
 
 export type SendMessageFn = (text: string, source?: "composer" | "chip") => Promise<void>;
 
-export function useChatSuggestions(threadId: string, enabled: boolean, sendMessage: SendMessageFn) {
+export function useChatSuggestions(
+  threadId: string,
+  enabled: boolean,
+  sendMessage: SendMessageFn,
+  onError?: (message: string) => void
+) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [usageTick, setUsageTick] = useState(0);
@@ -95,6 +100,10 @@ export function useChatSuggestions(threadId: string, enabled: boolean, sendMessa
         await queryClient.invalidateQueries({
           queryKey: trpc.chat.list.queryKey({ threadId }),
         });
+      } catch (err) {
+        onError?.(
+          err instanceof Error ? err.message : "Couldn't run that suggestion. Please try again."
+        );
       } finally {
         setIsRunning(false);
       }
@@ -102,6 +111,7 @@ export function useChatSuggestions(threadId: string, enabled: boolean, sendMessa
     [
       enabled,
       isRunning,
+      onError,
       queryClient,
       recordUsageMutation,
       sendMessage,

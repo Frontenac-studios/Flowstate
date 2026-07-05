@@ -1,6 +1,6 @@
 "use client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Sparkles, X, withKashIcon } from "@/components/kash/ui/icon";
 import type { ConstellationItem } from "@/lib/abyss/constellations";
 import { buildMonthlyReview } from "@/lib/abyss/monthly-review";
@@ -20,11 +20,31 @@ export default function AbyssMonthlyReview({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const review = useMemo(() => buildMonthlyReview(items, now), [items, now]);
-  const recordResurface = useMutation(
-    trpc.abyss.recordResurface.mutationOptions({
-      onSuccess: () => void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() }),
-    })
-  );
+  const recordResurface = useMutation(trpc.abyss.recordResurface.mutationOptions());
+  const [submitting, setSubmitting] = useState(false);
+
+  // ✕ also records the month so a dismissed review doesn't re-open next mount.
+  const dismissForMonth = () => {
+    writeLastReviewMonth(review.monthKey);
+    onDismiss();
+  };
+
+  const handleDone = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    const ids = [
+      ...review.constellations.flatMap((c) => c.memberIds),
+      ...review.keepsCalling.map((i) => i.id),
+    ];
+    // Best-effort resurface tracking — await the batch so the button can show a
+    // pending state instead of firing an unbounded fire-and-forget loop.
+    await Promise.allSettled(ids.map((id) => recordResurface.mutateAsync({ id })));
+    void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+    writeLastReviewMonth(review.monthKey);
+    setSubmitting(false);
+    onDismiss();
+  };
+
   return (
     <div className="flex flex-col gap-3 rounded-card border border-abyss-border bg-abyss-surface p-4">
       <div className="flex justify-between">
@@ -32,7 +52,7 @@ export default function AbyssMonthlyReview({
           <SparkleIcon size={18} />
           <h2 className="text-subtitle">Stargazing review</h2>
         </div>
-        <button type="button" onClick={onDismiss}>
+        <button type="button" onClick={dismissForMonth} aria-label="Dismiss review">
           <CloseIcon size={16} />
         </button>
       </div>
@@ -43,16 +63,11 @@ export default function AbyssMonthlyReview({
       ))}
       <button
         type="button"
-        onClick={() => {
-          for (const c of review.constellations)
-            for (const id of c.memberIds) recordResurface.mutate({ id });
-          for (const i of review.keepsCalling) recordResurface.mutate({ id: i.id });
-          writeLastReviewMonth(review.monthKey);
-          onDismiss();
-        }}
-        className="self-start rounded-control bg-abyss-accent px-3 py-1.5 text-meta text-abyss-on-accent"
+        onClick={() => void handleDone()}
+        disabled={submitting}
+        className="self-start rounded-control bg-abyss-accent px-3 py-1.5 text-meta text-abyss-on-accent disabled:opacity-50"
       >
-        Done stargazing
+        {submitting ? "Saving…" : "Done stargazing"}
       </button>
     </div>
   );

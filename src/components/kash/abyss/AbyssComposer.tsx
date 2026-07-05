@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Hash, Lightbulb, Plus, SquareCheck, X, withKashIcon } from "@/components/kash/ui/icon";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
@@ -30,6 +31,7 @@ type AbyssType = "idea" | "task";
 export default function AbyssComposer() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState<AbyssType>("idea");
@@ -55,6 +57,7 @@ export default function AbyssComposer() {
           setIsSinking(false);
         }, 280);
       },
+      onError: () => toast({ message: "Couldn't park that. Please try again.", variant: "error" }),
     })
   );
 

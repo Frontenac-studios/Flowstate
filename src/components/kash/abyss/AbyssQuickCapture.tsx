@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import { Lightbulb, Moon, SquareCheck, withKashIcon } from "@/components/kash/ui/icon";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
@@ -31,6 +32,7 @@ type AbyssType = "idea" | "task";
 export default function AbyssQuickCapture() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [open, setOpen] = useState(false);
@@ -58,6 +60,7 @@ export default function AbyssQuickCapture() {
         void embedAndStore(row.id, variables.title, true);
         close();
       },
+      onError: () => toast({ message: "Couldn't park that. Please try again.", variant: "error" }),
     })
   );
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import Button from "@/components/kash/ui/Button";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { defaultReservedDayLabel } from "@/lib/planning/reserved-day-category";
 import { useTRPC } from "@/trpc/client";
 
@@ -12,6 +13,7 @@ import { useTRPC } from "@/trpc/client";
 export function RestorativeTimeCard() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const now = useMemo(() => new Date(), []);
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
@@ -24,6 +26,8 @@ export function RestorativeTimeCard() {
           queryKey: trpc.planning.listReservedDays.queryKey({ year, month }),
         });
       },
+      onError: () =>
+        toast({ message: "Couldn't reserve that day. Please try again.", variant: "error" }),
     })
   );
 

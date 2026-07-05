@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 import { useTRPC } from "@/trpc/client";
 import Select from "@/components/kash/ui/Select";
@@ -59,16 +60,41 @@ export function AssistanceSettingsSection() {
   const evidenceCadence = (data?.evidenceCadence ?? "quarterly") as "monthly" | "quarterly" | "off";
   const busy = isLoading || mutation.isPending;
 
-  const save = (patch: Partial<Parameters<typeof mutation.mutate>[0]>) => {
-    mutation.mutate({
+  type AssistancePatch = Parameters<typeof mutation.mutate>[0];
+
+  // Track the latest applied settings so a rapid second toggle patches onto the value
+  // we just sent, not a stale render snapshot — otherwise back-to-back clicks clobber.
+  const latestRef = useRef<AssistancePatch | null>(null);
+  useEffect(() => {
+    latestRef.current = {
       assistanceEnabled,
       morningHandoff: morningHandoffOn ? "on" : "off",
       goalSteering: goalSteeringOn ? "on" : "off",
       balanceNudge: balanceNudgeOn ? "on" : "off",
       top3MiddayCheckin: middayOn ? "on" : "off",
       evidenceCadence,
-      ...patch,
-    });
+    };
+  }, [
+    assistanceEnabled,
+    morningHandoffOn,
+    goalSteeringOn,
+    balanceNudgeOn,
+    middayOn,
+    evidenceCadence,
+  ]);
+
+  const save = (patch: Partial<AssistancePatch>) => {
+    const base: AssistancePatch = latestRef.current ?? {
+      assistanceEnabled,
+      morningHandoff: morningHandoffOn ? "on" : "off",
+      goalSteering: goalSteeringOn ? "on" : "off",
+      balanceNudge: balanceNudgeOn ? "on" : "off",
+      top3MiddayCheckin: middayOn ? "on" : "off",
+      evidenceCadence,
+    };
+    const next: AssistancePatch = { ...base, ...patch };
+    latestRef.current = next;
+    mutation.mutate(next);
   };
 
   return (

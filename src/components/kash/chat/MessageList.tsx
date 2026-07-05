@@ -29,6 +29,7 @@ type Props = {
   threadId: string;
   messages: Message[];
   streamingText?: string | null;
+  isStreaming?: boolean;
   canEdit?: boolean;
   onEditUserMessage?: (messageId: string, text: string) => void;
   onApplyProposal?: (messageId: string, enabledItemIds: string[]) => void;
@@ -116,6 +117,7 @@ export function MessageList({
   threadId,
   messages,
   streamingText,
+  isStreaming = false,
   canEdit = false,
   onEditUserMessage,
   onApplyProposal,
@@ -146,7 +148,7 @@ export function MessageList({
     prevScrollHeightRef.current = el.scrollHeight;
   }, [messages, streamingText]);
 
-  if (messages.length === 0 && !streamingText) {
+  if (messages.length === 0 && !streamingText && !isStreaming) {
     return (
       <p className="px-1 py-4 text-sm text-ink-muted">
         Ask what&apos;s on deck, what to drop, or how to reshuffle today.
@@ -203,6 +205,18 @@ export function MessageList({
       {streamingText ? (
         <div className="mr-auto max-w-[95%] rounded-[var(--radius-row)] border border-border bg-surface px-3 py-2 text-sm text-ink">
           <p className="whitespace-pre-wrap">{renderChatMessage(streamingText)}</p>
+        </div>
+      ) : isStreaming ? (
+        <div
+          className="mr-auto max-w-[95%] rounded-[var(--radius-row)] border border-border bg-surface px-3 py-2 text-sm text-ink-muted"
+          role="status"
+          aria-label="Claude is thinking"
+        >
+          <span className="inline-flex gap-1" aria-hidden>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint [animation-delay:300ms]" />
+          </span>
         </div>
       ) : null}
       <div ref={bottomRef} />

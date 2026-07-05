@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Sparkles, X, withKashIcon } from "@/components/kash/ui/icon";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { normalizeTag } from "@/lib/abyss/tags";
 import { useTRPC } from "@/trpc/client";
 
@@ -24,6 +25,7 @@ type Props = { members: Member[]; onDismiss: () => void };
 export default function AbyssEmergingCard({ members, onDismiss }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [name, setName] = useState("");
 
   const setTags = useMutation(trpc.abyss.setTags.mutationOptions());
@@ -32,6 +34,8 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
       onSuccess: (result) => {
         if (result.name) setName(result.name);
       },
+      onError: () =>
+        toast({ message: "Couldn't suggest a name. Please try again.", variant: "error" }),
     })
   );
 
@@ -40,12 +44,22 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
 
   const apply = async () => {
     if (!tag) return;
-    await Promise.all(
+    // Tag each member independently so one failure doesn't abort the rest; report
+    // partial failure instead of silently leaving some members untagged.
+    const results = await Promise.allSettled(
       members.map((member) =>
         setTags.mutateAsync({ id: member.id, tags: [...(member.tags ?? []), tag] })
       )
     );
     void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      toast({
+        message: `Couldn't tag ${failed} of ${members.length}. Please try again.`,
+        variant: "error",
+      });
+      return;
+    }
     onDismiss();
   };
 

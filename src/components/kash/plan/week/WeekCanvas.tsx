@@ -13,6 +13,7 @@ import {
 
 import "./week-motion.css";
 
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { weekHasPlanningData } from "@/lib/week/week-has-data";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
@@ -87,6 +88,11 @@ export function WeekCanvas({
 }: WeekCanvasProps = {}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const notifyMutationError = useCallback(
+    () => toast({ message: "That change didn't save. Please try again.", variant: "error" }),
+    [toast]
+  );
   const { touchActivity } = usePlanMode();
   const { pushComplete, pushDelete } = useSessionUndo();
   const [draftOpen, setDraftOpen] = useState(false);
@@ -236,6 +242,7 @@ export function WeekCanvas({
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -245,6 +252,7 @@ export function WeekCanvas({
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -254,6 +262,7 @@ export function WeekCanvas({
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -263,6 +272,7 @@ export function WeekCanvas({
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -272,6 +282,7 @@ export function WeekCanvas({
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -281,6 +292,7 @@ export function WeekCanvas({
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 

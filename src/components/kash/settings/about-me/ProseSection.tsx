@@ -28,7 +28,7 @@ export default function ProseSection({
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState(body);
-  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedBody = useRef(body);
 
@@ -48,6 +48,11 @@ export default function ProseSection({
         savedBody.current = res.body;
         setStatus("saved");
         void queryClient.invalidateQueries({ queryKey: trpc.aboutMe.sections.get.queryKey() });
+      },
+      onError: () => {
+        // Clear "Saving…" and flag the failure so the draft isn't silently lost.
+        // savedBody stays behind the draft, so onBlur/onChange will retry the save.
+        setStatus("error");
       },
     })
   );
@@ -78,8 +83,25 @@ export default function ProseSection({
     <section id={`about-${section}`} className="scroll-mt-24">
       <div className="mb-2 flex items-baseline justify-between">
         <h3 className="text-subtitle font-medium text-ink">{title}</h3>
-        <span className="text-caption text-ink-faint" aria-live="polite">
-          {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : ""}
+        <span
+          className={`text-caption ${status === "error" ? "text-critical" : "text-ink-faint"}`}
+          aria-live="polite"
+        >
+          {status === "saving" ? (
+            "Saving…"
+          ) : status === "saved" ? (
+            "Saved"
+          ) : status === "error" ? (
+            <button
+              type="button"
+              onClick={() => save(draft)}
+              className="text-critical underline underline-offset-2"
+            >
+              Couldn&apos;t save — retry
+            </button>
+          ) : (
+            ""
+          )}
         </span>
       </div>
       <Textarea

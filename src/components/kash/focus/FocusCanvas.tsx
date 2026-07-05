@@ -63,6 +63,9 @@ export function FocusCanvas() {
   const [isPaused, setIsPaused] = useState(false);
   const [doneFlash, setDoneFlash] = useState<string | null>(null);
   const [dndApplied, setDndApplied] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  // Inline error — /today/focus (FocusLayout) has no ToastProvider.
+  const [exitError, setExitError] = useState<string | null>(null);
 
   const { mutateAsync: startTimeEntry } = useMutation(trpc.timeEntries.start.mutationOptions());
   const { mutateAsync: endTimeEntry } = useMutation(trpc.timeEntries.end.mutationOptions());
@@ -173,32 +176,43 @@ export function FocusCanvas() {
           : "FOCUSING";
 
   const handleDone = useCallback(async () => {
-    if (!task || doneFlash) return;
+    if (!task || doneFlash || exiting) return;
 
+    setExiting(true);
+    setExitError(null);
     setDoneFlash(`✓ done in ${Math.max(1, Math.round(seconds / 60))}m`);
     if (seconds >= 60 || blockId) triggerEphemeralCelebration("focus-done");
 
-    // Finish timing first so the DB records the "session", then complete the task.
-    await endSession("done");
-    await completeMutation.mutateAsync({ id: task.id });
+    try {
+      // Finish timing first so the DB records the "session", then complete the task.
+      await endSession("done");
+      await completeMutation.mutateAsync({ id: task.id });
 
-    // If we came from a timeline block, mark it done (the session above already
-    // recorded the actual time — no extra time entry is created here).
-    if (blockId) {
-      await completeBlockMutation.mutateAsync({ id: blockId });
+      // If we came from a timeline block, mark it done (the session above already
+      // recorded the actual time — no extra time entry is created here).
+      if (blockId) {
+        await completeBlockMutation.mutateAsync({ id: blockId });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+      await queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+      await queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
+      await queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
+
+      window.setTimeout(() => void rollNext(task.id), 1000);
+    } catch {
+      // Roll back the optimistic flash and let the user retry rather than
+      // silently leaving the task un-completed.
+      setDoneFlash(null);
+      setExiting(false);
+      setExitError("Couldn't finish this task. Please try again.");
     }
-
-    await queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
-    await queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
-    await queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
-    await queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
-
-    window.setTimeout(() => void rollNext(task.id), 1000);
   }, [
     blockId,
     completeBlockMutation,
     completeMutation,
     doneFlash,
+    exiting,
     endSession,
     queryClient,
     rollNext,
@@ -211,16 +225,30 @@ export function FocusCanvas() {
   ]);
 
   const handlePark = useCallback(async () => {
-    if (doneFlash) return;
-    await endSession("park");
-    router.push("/today");
-  }, [doneFlash, endSession, router]);
+    if (doneFlash || exiting) return;
+    setExiting(true);
+    setExitError(null);
+    try {
+      await endSession("park");
+      router.push("/today");
+    } catch {
+      setExiting(false);
+      setExitError("Couldn't park the session. Please try again.");
+    }
+  }, [doneFlash, exiting, endSession, router]);
 
   const handleEsc = useCallback(async () => {
-    if (doneFlash) return;
-    await endSession("esc");
-    router.push("/today");
-  }, [doneFlash, endSession, router]);
+    if (doneFlash || exiting) return;
+    setExiting(true);
+    setExitError(null);
+    try {
+      await endSession("esc");
+      router.push("/today");
+    } catch {
+      setExiting(false);
+      setExitError("Couldn't exit the session. Please try again.");
+    }
+  }, [doneFlash, exiting, endSession, router]);
 
   // Keyboard shortcuts.
   useEffect(() => {
@@ -348,7 +376,7 @@ export function FocusCanvas() {
               type="button"
               onClick={() => void handleDone()}
               className="inline-flex items-center gap-2 rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
-              disabled={doneFlash !== null}
+              disabled={doneFlash !== null || exiting}
             >
               Done
               <KeyCap>⌘↵</KeyCap>
@@ -357,11 +385,16 @@ export function FocusCanvas() {
               type="button"
               onClick={() => void handlePark()}
               className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
-              disabled={doneFlash !== null}
+              disabled={doneFlash !== null || exiting}
             >
               Park
             </button>
           </div>
+          {exitError ? (
+            <p className="mt-3 text-sm text-critical" role="alert">
+              {exitError}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-col items-center justify-center gap-5 border-t border-subtle bg-surface-2 p-8 sm:w-[46%] sm:border-l sm:border-t-0">
