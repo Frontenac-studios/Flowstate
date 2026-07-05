@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useComposerDraft } from "@/hooks/useComposerDraft";
 import {
@@ -38,6 +46,8 @@ import { MultiLineParsePreview, ParsePreviewChips } from "./ParsePreviewChips";
 export type QuickInputHandle = {
   focus: () => void;
   acceptSuggestion: () => boolean;
+  /** Persists valid composer lines; returns how many tasks were created. */
+  submitDraft: () => Promise<number>;
 };
 
 type Props = {
@@ -45,6 +55,8 @@ type Props = {
   onTaskCreated?: (pulse: TaskCreatedPulse) => void;
   /** When true, new tasks without an explicit date land in the inbox (scheduledDate null). */
   createInInbox?: boolean;
+  /** Fires when the count of valid unsubmitted lines changes (onboarding gate). */
+  onPendingValidLinesChange?: (count: number) => void;
 };
 
 function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
@@ -52,7 +64,7 @@ function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string)
 }
 
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
-  { draftStorageKey, onTaskCreated, createInInbox = false },
+  { draftStorageKey, onTaskCreated, createInInbox = false, onPendingValidLinesChange },
   ref
 ) {
   const trpc = useTRPC();
@@ -121,12 +133,6 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     return true;
   }, [assistCtx, setValue]);
 
-  useImperativeHandle(
-    ref,
-    () => ({ focus: () => textareaRef.current?.focus(), acceptSuggestion }),
-    [acceptSuggestion]
-  );
-
   const parsedLines = useMemo(
     () => parseQuickInputLines(value, { projects: projectRefs }),
     [value, projectRefs]
@@ -167,10 +173,10 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     writeLastProjectSlug(slug);
   }, []);
 
-  const invalidateToday = async () => {
+  const invalidateToday = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     await queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
-  };
+  }, [queryClient, trpc]);
 
   const createTaskMutation = useMutation(
     trpc.tasks.create.mutationOptions({
@@ -179,52 +185,61 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     })
   );
 
-  const resolveScheduledDate = (line: ParsedLine): string | null | undefined => {
-    if (line.parse.bucketOverride === "later") return null;
-    if (line.parse.scheduledDate != null) return line.parse.scheduledDate;
-    if (createInInbox) return null;
-    return undefined;
-  };
+  const resolveScheduledDate = useCallback(
+    (line: ParsedLine): string | null | undefined => {
+      if (line.parse.bucketOverride === "later") return null;
+      if (line.parse.scheduledDate != null) return line.parse.scheduledDate;
+      if (createInInbox) return null;
+      return undefined;
+    },
+    [createInInbox]
+  );
 
-  const createTaskForLine = async (line: ParsedLine) => {
-    await createTaskMutation.mutateAsync({
-      title: line.parse.title,
-      scheduledDate: resolveScheduledDate(line),
-      bucketOverride: line.parse.bucketOverride,
-      projectId: resolveProjectId(line),
-      priority: line.parse.priority,
-      category: line.parse.category ?? undefined,
-      tags: line.parse.tags.length > 0 ? line.parse.tags : undefined,
-      rrule: line.parse.rrule ?? undefined,
-      recurrenceStartDate:
-        line.parse.rrule && line.parse.scheduledDate ? line.parse.scheduledDate : undefined,
-    });
-    persistProjectSlug(line.parse.projectSlug);
-  };
+  const createTaskForLine = useCallback(
+    async (line: ParsedLine) => {
+      await createTaskMutation.mutateAsync({
+        title: line.parse.title,
+        scheduledDate: resolveScheduledDate(line),
+        bucketOverride: line.parse.bucketOverride,
+        projectId: resolveProjectId(line),
+        priority: line.parse.priority,
+        category: line.parse.category ?? undefined,
+        tags: line.parse.tags.length > 0 ? line.parse.tags : undefined,
+        rrule: line.parse.rrule ?? undefined,
+        recurrenceStartDate:
+          line.parse.rrule && line.parse.scheduledDate ? line.parse.scheduledDate : undefined,
+      });
+      persistProjectSlug(line.parse.projectSlug);
+    },
+    [createTaskMutation, persistProjectSlug, resolveProjectId, resolveScheduledDate]
+  );
 
-  const submitValidLines = async (lines: ParsedLine[]) => {
-    const valid = lines.filter((line) => isLineProjectValid(line.parse));
-    if (valid.length === 0) return { created: 0, remaining: lines.map((l) => l.raw) };
+  const submitValidLines = useCallback(
+    async (lines: ParsedLine[]) => {
+      const valid = lines.filter((line) => isLineProjectValid(line.parse));
+      if (valid.length === 0) return { created: 0, remaining: lines.map((l) => l.raw) };
 
-    for (const line of valid) {
-      await createTaskForLine(line);
-    }
-    await invalidateToday();
+      for (const line of valid) {
+        await createTaskForLine(line);
+      }
+      await invalidateToday();
 
-    const invalid = lines.filter((line) => !isLineProjectValid(line.parse));
-    return {
-      created: valid.length,
-      remaining: invalid.map((l) => l.raw),
-    };
-  };
+      const invalid = lines.filter((line) => !isLineProjectValid(line.parse));
+      return {
+        created: valid.length,
+        remaining: invalid.map((l) => l.raw),
+      };
+    },
+    [createTaskForLine, invalidateToday]
+  );
 
-  const handleBulkSubmit = async () => {
-    if (!value.trim() || createTaskMutation.isPending) return;
+  const submitDraft = useCallback(async (): Promise<number> => {
+    if (!value.trim() || createTaskMutation.isPending) return 0;
     setSubmitError(null);
 
     if (parsedLines.length > MAX_COMPOSER_LINES) {
       setLineLimitWarning(true);
-      return;
+      return 0;
     }
     setLineLimitWarning(false);
 
@@ -233,7 +248,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       .find((error) => error !== null);
     if (titleError) {
       setSubmitError(titleError);
-      return;
+      return 0;
     }
 
     const { created, remaining } = await submitValidLines(parsedLines);
@@ -256,6 +271,29 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     }
 
     setValue(remaining.join("\n"));
+    return created;
+  }, [createTaskMutation.isPending, onTaskCreated, parsedLines, setValue, submitValidLines, value]);
+
+  useImperativeHandle(
+    ref,
+    () => ({ focus: () => textareaRef.current?.focus(), acceptSuggestion, submitDraft }),
+    [acceptSuggestion, submitDraft]
+  );
+
+  const pendingValidLineCount = useMemo(
+    () =>
+      parsedLines.filter(
+        (line) => isLineProjectValid(line.parse) && getTaskTitleError(line.parse.title) === null
+      ).length,
+    [parsedLines]
+  );
+
+  useEffect(() => {
+    onPendingValidLinesChange?.(pendingValidLineCount);
+  }, [onPendingValidLinesChange, pendingValidLineCount]);
+
+  const handleBulkSubmit = async () => {
+    await submitDraft();
   };
 
   const handleApplySuggestion = (line: ParsedLine, suggestedSlug: string) => {

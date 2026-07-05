@@ -4,11 +4,14 @@ import { careActivities } from "./care-activities";
 import { goalMilestones } from "./goal-milestones";
 import { phases } from "./phases";
 import { PROJECT_CATEGORIES, projects } from "./projects";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 export const tasks = sqliteTable(
   "tasks",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => sqliteRowId()),
     userId: text("user_id").notNull(),
     projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
     phaseId: text("phase_id").references(() => phases.id, { onDelete: "set null" }),
@@ -33,8 +36,12 @@ export const tasks = sqliteTable(
     top3PinnedAt: integer("top_3_pinned_at", { mode: "timestamp_ms" }),
     timeEstimateMinutes: integer("time_estimate_minutes"),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
   },
   (table) => [index("tasks_user_id_scheduled_date_idx").on(table.userId, table.scheduledDate)]
 );
