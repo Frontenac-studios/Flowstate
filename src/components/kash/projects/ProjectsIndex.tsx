@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
@@ -24,6 +25,7 @@ type IndexViewMode = "gallery" | "calendar";
 
 export default function ProjectsIndex() {
   const trpc = useTRPC();
+  const router = useRouter();
   const { data: projects, isLoading } = useQuery(trpc.projects.list.queryOptions());
   const { data: looseByCategory = [] } = useQuery(
     trpc.projects.listLooseTaskCountsByCategory.queryOptions()
@@ -94,7 +96,13 @@ export default function ProjectsIndex() {
       </div>
 
       {formOpen ? (
-        <NewProjectForm onCreated={() => setFormOpen(false)} onCancel={() => setFormOpen(false)} />
+        <NewProjectForm
+          onCreated={(id) => {
+            setFormOpen(false);
+            router.push(`/projects/${id}`);
+          }}
+          onCancel={() => setFormOpen(false)}
+        />
       ) : null}
 
       {indexView === "calendar" ? (

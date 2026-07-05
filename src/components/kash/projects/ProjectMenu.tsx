@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
@@ -19,9 +20,11 @@ const MENU_BTN_FOCUS =
 
 export default function ProjectMenu({ project, onClose }: Props) {
   const trpc = useTRPC();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const ref = useRef<HTMLDivElement>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState(project.name);
 
   const saveTemplate = useMutation(
@@ -30,6 +33,17 @@ export default function ProjectMenu({ project, onClose }: Props) {
         void queryClient.invalidateQueries({ queryKey: trpc.projects.listTemplates.queryKey() });
         setSaveDialogOpen(false);
         onClose();
+      },
+    })
+  );
+
+  const archiveProject = useMutation(
+    trpc.projects.archive.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
+        setArchiveDialogOpen(false);
+        onClose();
+        router.push("/projects");
       },
     })
   );
@@ -80,6 +94,15 @@ export default function ProjectMenu({ project, onClose }: Props) {
         >
           Save as template
         </button>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => setArchiveDialogOpen(true)}
+          disabled={archiveProject.isPending}
+          className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-critical transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+        >
+          Archive project
+        </button>
       </div>
 
       <ConfirmDialog
@@ -117,6 +140,30 @@ export default function ProjectMenu({ project, onClose }: Props) {
             </p>
           ) : null}
         </div>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={archiveDialogOpen}
+        title="Archive project"
+        message={`Archive "${project.name}"? It leaves your projects list but keeps all its phases and tasks — you can restore it later.`}
+        confirmLabel={archiveProject.isPending ? "Archiving…" : "Archive project"}
+        cancelLabel="Keep"
+        destructive
+        confirmDisabled={archiveProject.isPending}
+        onCancel={() => {
+          if (archiveProject.isPending) return;
+          setArchiveDialogOpen(false);
+        }}
+        onConfirm={() => {
+          if (archiveProject.isPending) return;
+          archiveProject.mutate({ id: project.id });
+        }}
+      >
+        {archiveProject.isError ? (
+          <p role="alert" className="mt-4 text-sm text-critical">
+            Couldn&apos;t archive the project. Please try again.
+          </p>
+        ) : null}
       </ConfirmDialog>
     </>
   );

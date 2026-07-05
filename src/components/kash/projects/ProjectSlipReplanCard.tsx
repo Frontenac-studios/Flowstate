@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
 import { ConfirmActionCard } from "@/components/kash/chat/ConfirmActionCard";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
 import {
   dismissSlipReplan,
@@ -25,6 +26,7 @@ function phaseEndsFromProposal(proposal: ReplanProposal): Record<string, string 
 export function ProjectSlipReplanCard({ projectId }: { projectId: string }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [dismissedLocally, setDismissedLocally] = useState(false);
 
   const { data: proposal } = useQuery(
@@ -42,9 +44,16 @@ export function ProjectSlipReplanCard({ projectId }: { projectId: string }) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: trpc.projects.proposeSlipReplan.queryKey() }),
           queryClient.invalidateQueries({ queryKey: trpc.phases.listByProject.queryKey() }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.tasks.listByProject.queryKey({ projectId }),
+          }),
         ]);
         if (fingerprint) dismissSlipReplan(fingerprint);
         setDismissedLocally(true);
+      },
+      onError: () => {
+        // Keep the card mounted (no dismiss) so the user can retry the replan.
+        toast({ message: "Couldn't apply the re-plan. Please try again.", variant: "error" });
       },
     })
   );

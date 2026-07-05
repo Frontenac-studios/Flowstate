@@ -30,6 +30,8 @@ export const projects = pgTable(
      * Computed client-side (Backlog seam); server only stores and ranks.
      */
     embedding: jsonb("embedding").$type<number[]>(),
+    /** Soft-archive marker. Non-null hides the project from the index; data is retained. */
+    archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
