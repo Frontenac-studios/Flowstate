@@ -113,8 +113,6 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
             <TaskRow
               key={task.id}
               task={task}
-              showProject={false}
-              suppressDue
               weekDragLift
               canPin={canPinMore}
               onPin={onPinTask}

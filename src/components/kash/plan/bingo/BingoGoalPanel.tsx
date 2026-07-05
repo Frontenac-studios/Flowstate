@@ -35,7 +35,7 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
   const [expandedMilestoneId, setExpandedMilestoneId] = useState<string | null>(null);
   const [newMilestoneTitle, setNewMilestoneTitle] = useState("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [linkTaskId, setLinkTaskId] = useState("");
+  const [linkQuery, setLinkQuery] = useState("");
   const [stagedIds, setStagedIds] = useState<Set<string>>(new Set());
 
   const invalidate = useCallback(() => {
@@ -92,7 +92,12 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
     trpc.tasks.create.mutationOptions({ onSuccess: () => invalidate() })
   );
   const linkTaskMutation = useMutation(
-    trpc.planning.linkTaskToMilestone.mutationOptions({ onSuccess: () => invalidate() })
+    trpc.planning.linkTaskToMilestone.mutationOptions({
+      onSuccess: () => {
+        setLinkQuery("");
+        invalidate();
+      },
+    })
   );
 
   const detail = detailQuery.data;
@@ -125,6 +130,25 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
     }),
     enabled: !!expandedMilestoneId,
   });
+
+  // Task picker for "link an existing task" — searches incomplete tasks by title,
+  // excluding ones already linked to the expanded milestone. Replaces the raw-UUID
+  // field so a link can't silently no-op on a mistyped id.
+  const incompleteTasksQuery = useQuery({
+    ...trpc.tasks.listIncomplete.queryOptions(),
+    enabled: !!expandedMilestoneId,
+  });
+  const linkedTaskIds = useMemo(
+    () => new Set((expandedTasksQuery.data ?? []).map((t) => t.id)),
+    [expandedTasksQuery.data]
+  );
+  const linkCandidates = useMemo(() => {
+    const q = linkQuery.trim().toLowerCase();
+    if (!q) return [];
+    return (incompleteTasksQuery.data ?? [])
+      .filter((t) => !linkedTaskIds.has(t.id) && t.title.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [linkQuery, incompleteTasksQuery.data, linkedTaskIds]);
 
   if (detailQuery.isLoading || !goal || !category) {
     return (
@@ -358,30 +382,49 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
                         Add
                       </button>
                     </form>
-                    <form
-                      className="flex gap-2"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const id = linkTaskId.trim();
-                        if (!id) return;
-                        linkTaskMutation.mutate({ taskId: id, milestoneId: m.id });
-                        setLinkTaskId("");
-                      }}
-                    >
+                    <div className="flex flex-col gap-1">
                       <input
                         className="min-w-0 flex-1 rounded-control border border-subtle px-2 py-1 text-caption"
-                        placeholder="Link existing task ID…"
-                        value={linkTaskId}
-                        onChange={(e) => setLinkTaskId(e.target.value)}
+                        placeholder="Link an existing task…"
+                        value={linkQuery}
+                        onChange={(e) => setLinkQuery(e.target.value)}
+                        aria-label="Search tasks to link to this milestone"
                       />
-                      <button
-                        type="submit"
-                        disabled={linkTaskMutation.isPending}
-                        className="rounded-control border border-subtle px-2 py-1 text-caption disabled:opacity-40"
-                      >
-                        Link
-                      </button>
-                    </form>
+                      {linkQuery.trim() ? (
+                        <ul className="max-h-40 overflow-y-auto rounded-control border border-subtle">
+                          {linkCandidates.length === 0 ? (
+                            <li className="px-2 py-1 text-caption text-ink-muted">
+                              No matching tasks
+                            </li>
+                          ) : (
+                            linkCandidates.map((t) => (
+                              <li key={t.id}>
+                                <button
+                                  type="button"
+                                  disabled={linkTaskMutation.isPending}
+                                  onClick={() =>
+                                    linkTaskMutation.mutate({ taskId: t.id, milestoneId: m.id })
+                                  }
+                                  className="flex w-full items-center gap-2 px-2 py-1 text-left text-caption hover:bg-[var(--accent-soft)] disabled:opacity-40"
+                                >
+                                  <span className="min-w-0 flex-1 truncate">{t.title}</span>
+                                  {t.projectSlug ? (
+                                    <span className="shrink-0 text-ink-muted">
+                                      #{t.projectSlug}
+                                    </span>
+                                  ) : null}
+                                </button>
+                              </li>
+                            ))
+                          )}
+                        </ul>
+                      ) : null}
+                      {linkTaskMutation.isError ? (
+                        <p className="text-caption text-critical">
+                          Couldn&apos;t link that task — try again.
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                   {!locked ? (
                     <button
