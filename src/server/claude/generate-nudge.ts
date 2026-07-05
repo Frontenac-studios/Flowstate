@@ -24,7 +24,7 @@ export async function generateNudge(
     return templateStallNudge(stalled, slipped);
   }
 
-  const { contextBlock } = await assembleChatContext(userId, GLOBAL_THREAD_ID);
+  const { aboutMeBlock, contextBlock } = await assembleChatContext(userId, GLOBAL_THREAD_ID);
 
   const stalledLines =
     stalled.length === 0
@@ -47,6 +47,9 @@ export async function generateNudge(
     "",
     `Slipped 2+ days on Top 3:`,
     slippedLines,
+    "",
+    "About me:",
+    aboutMeBlock,
     "",
     "Context:",
     contextBlock,

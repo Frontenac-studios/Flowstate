@@ -17,6 +17,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
+import { taskTagsColumn } from "@/db/task-tags-for-db";
 import { syncRecurrenceRow, syncTaskRow } from "@/db/record-sync-mutation";
 import {
   phases,
@@ -714,7 +715,7 @@ export const tasksRouter = createTRPCRouter({
           priority: input.priority,
           category: resolved.category,
           categoryUnresolved: resolved.unresolved,
-          tags: input.tags ? normalizeTaskTags(input.tags) : [],
+          tags: taskTagsColumn(input.tags ? normalizeTaskTags(input.tags) : []),
         })
         .returning();
 
@@ -765,7 +766,7 @@ export const tasksRouter = createTRPCRouter({
           top3Order: input.top3Order,
           category: input.category,
           categoryUnresolved: input.categoryUnresolved,
-          tags: input.tags ? normalizeTaskTags(input.tags) : [],
+          tags: taskTagsColumn(input.tags ? normalizeTaskTags(input.tags) : []),
         })
         .returning();
 
@@ -818,7 +819,7 @@ export const tasksRouter = createTRPCRouter({
         patch.categoryUnresolved = false;
       }
       if (input.tags !== undefined) {
-        patch.tags = normalizeTaskTags(input.tags);
+        patch.tags = taskTagsColumn(normalizeTaskTags(input.tags));
       }
 
       const [row] = await db

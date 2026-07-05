@@ -18,6 +18,6 @@ export const weekDraftRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       void input?.tzOffsetMinutes;
       const context = await fetchWeekDraftContext(ctx.userId, input?.weekStartIso);
-      return generateWeekDraft(context);
+      return generateWeekDraft(context, ctx.userId);
     }),
 });

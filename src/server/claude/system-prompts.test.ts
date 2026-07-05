@@ -36,6 +36,12 @@ describe("system-prompts", () => {
     expect(buildSystemPrompt("eod")).toContain("Register: Reflection");
   });
 
+  it("includes values-alignment guidance in register prompts", () => {
+    expect(buildSystemPrompt("companion")).toContain("Values alignment");
+    expect(buildChatSystemPrompt(GLOBAL_THREAD_ID)).toContain("Values alignment");
+    expect(buildSystemPrompt("narration")).toContain("Values alignment");
+  });
+
   it("selects focus register for focus chat threads", () => {
     const focusId = focusThreadId("00000000-0000-4000-8000-000000000099");
     expect(buildChatSystemPrompt(focusId)).toContain("Register: Focus");

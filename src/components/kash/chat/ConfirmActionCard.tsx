@@ -14,27 +14,84 @@ type Props = {
 };
 
 function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]): string {
-  if (action.kind === "reschedule_tasks" && "scheduledDate" in item) {
-    return `${item.title} → ${item.scheduledDate}`;
+  switch (action.kind) {
+    case "reschedule_tasks": {
+      const row = item as Extract<ProposedAction, { kind: "reschedule_tasks" }>["items"][number];
+      return `${row.title} → ${row.scheduledDate}`;
+    }
+    case "create_task": {
+      const row = item as Extract<ProposedAction, { kind: "create_task" }>["items"][number];
+      const parts = [row.title];
+      if (row.scheduledDate) parts.push(`(${row.scheduledDate})`);
+      if (row.projectSlug) parts.push(`#${row.projectSlug}`);
+      return parts.join(" ");
+    }
+    case "complete_task": {
+      const row = item as Extract<ProposedAction, { kind: "complete_task" }>["items"][number];
+      return row.title;
+    }
+    case "edit_task": {
+      const row = item as Extract<ProposedAction, { kind: "edit_task" }>["items"][number];
+      const parts = [row.title];
+      if (row.nextTitle && row.nextTitle !== row.title) parts.push(`→ ${row.nextTitle}`);
+      if (row.scheduledDate !== undefined) parts.push(`due ${row.scheduledDate ?? "unscheduled"}`);
+      if (row.priority !== undefined) parts.push(`p${row.priority}`);
+      return parts.join(" · ");
+    }
+    case "delete_task": {
+      const row = item as Extract<ProposedAction, { kind: "delete_task" }>["items"][number];
+      return `Delete ${row.title}`;
+    }
+    case "set_top3": {
+      const row = item as Extract<ProposedAction, { kind: "set_top3" }>["items"][number];
+      return `Slot ${row.slot}: ${row.title}`;
+    }
+    case "set_protected_block": {
+      const row = item as Extract<ProposedAction, { kind: "set_protected_block" }>["items"][number];
+      const label = row.label ?? row.category;
+      return `${label} · ${row.scheduledDate}`;
+    }
+    case "set_day_priorities": {
+      const row = item as Extract<ProposedAction, { kind: "set_day_priorities" }>["items"][number];
+      return `${row.title} → priority ${row.slot} (${row.scheduledDate})`;
+    }
+    case "apply_balance_suggestions": {
+      const row = item as Extract<
+        ProposedAction,
+        { kind: "apply_balance_suggestions" }
+      >["items"][number];
+      return `${row.taskTitle} (${row.category})`;
+    }
+    case "create_project": {
+      const row = item as Extract<ProposedAction, { kind: "create_project" }>["items"][number];
+      return `${row.name} · ${row.category}`;
+    }
+    case "edit_phase": {
+      const row = item as Extract<ProposedAction, { kind: "edit_phase" }>["items"][number];
+      return `${row.projectSlug} / ${row.phaseName}`;
+    }
+    case "move_task_to_phase": {
+      const row = item as Extract<ProposedAction, { kind: "move_task_to_phase" }>["items"][number];
+      const dest = row.phaseName ?? "no phase";
+      return `${row.title} → ${dest}`;
+    }
+    case "replan_project_dates": {
+      const row = item as Extract<
+        ProposedAction,
+        { kind: "replan_project_dates" }
+      >["items"][number];
+      const start = row.startDate;
+      const end = row.endDate;
+      const range =
+        start && end ? `${start} → ${end}` : end ? `→ ${end}` : start ? `${start} →` : "new dates";
+      const label = row.projectSlug ? `${row.projectSlug} / ${row.phaseName}` : row.phaseName;
+      return row.previousEndDate
+        ? `${label}: ${range} (was ${row.previousEndDate})`
+        : `${label}: ${range}`;
+    }
+    default:
+      return "Change";
   }
-  if (action.kind === "create_task" && "title" in item) {
-    const parts = [item.title];
-    if ("scheduledDate" in item && item.scheduledDate) parts.push(`(${item.scheduledDate})`);
-    if ("projectSlug" in item && item.projectSlug) parts.push(`#${item.projectSlug}`);
-    return parts.join(" ");
-  }
-  if (action.kind === "replan_project_dates" && "phaseName" in item) {
-    const start = "startDate" in item ? item.startDate : null;
-    const end = "endDate" in item ? item.endDate : null;
-    const prevEnd = "previousEndDate" in item ? item.previousEndDate : null;
-    const range =
-      start && end ? `${start} → ${end}` : end ? `→ ${end}` : start ? `${start} →` : "new dates";
-    return prevEnd ? `${item.phaseName}: ${range} (was ${prevEnd})` : `${item.phaseName}: ${range}`;
-  }
-  if ("title" in item && typeof item.title === "string") {
-    return item.title;
-  }
-  return "Change";
 }
 
 export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss }: Props) {

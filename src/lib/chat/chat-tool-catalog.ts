@@ -92,6 +92,34 @@ const CREATE_TASK_TOOL: Anthropic.Tool = {
   },
 };
 
+const EDIT_TASK_TOOL: Anthropic.Tool = {
+  name: "edit_task",
+  description: "Propose edit task fields.",
+  input_schema: {
+    type: "object",
+    properties: {
+      edits: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["edits"],
+    additionalProperties: false,
+  },
+};
+
+const DELETE_TASK_TOOL: Anthropic.Tool = {
+  name: "delete_task",
+  description: "Propose delete tasks.",
+  input_schema: {
+    type: "object",
+    properties: {
+      taskIds: { type: "array", items: { type: "string" } },
+      summary: { type: "string" },
+    },
+    required: ["taskIds"],
+    additionalProperties: false,
+  },
+};
+
 const COMPLETE_TASK_TOOL: Anthropic.Tool = {
   name: "complete_task",
   description: "Propose complete task.",
@@ -102,6 +130,119 @@ const COMPLETE_TASK_TOOL: Anthropic.Tool = {
       summary: { type: "string" },
     },
     required: ["taskIds"],
+    additionalProperties: false,
+  },
+};
+
+const SET_TOP3_TOOL: Anthropic.Tool = {
+  name: "set_top3",
+  description: "Propose Top 3 slot assignments.",
+  input_schema: {
+    type: "object",
+    properties: {
+      slots: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["slots"],
+    additionalProperties: false,
+  },
+};
+
+const SET_PROTECTED_BLOCK_TOOL: Anthropic.Tool = {
+  name: "set_protected_block",
+  description: "Propose protected time blocks.",
+  input_schema: {
+    type: "object",
+    properties: {
+      blocks: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["blocks"],
+    additionalProperties: false,
+  },
+};
+
+const SET_DAY_PRIORITIES_TOOL: Anthropic.Tool = {
+  name: "set_day_priorities",
+  description: "Propose day priority pins for the week.",
+  input_schema: {
+    type: "object",
+    properties: {
+      priorities: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["priorities"],
+    additionalProperties: false,
+  },
+};
+
+const APPLY_BALANCE_SUGGESTIONS_TOOL: Anthropic.Tool = {
+  name: "apply_balance_suggestions",
+  description: "Propose balance-pass task additions.",
+  input_schema: {
+    type: "object",
+    properties: {
+      suggestions: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["suggestions"],
+    additionalProperties: false,
+  },
+};
+
+const CREATE_PROJECT_TOOL: Anthropic.Tool = {
+  name: "create_project",
+  description: "Propose create project.",
+  input_schema: {
+    type: "object",
+    properties: {
+      projects: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["projects"],
+    additionalProperties: false,
+  },
+};
+
+const EDIT_PHASE_TOOL: Anthropic.Tool = {
+  name: "edit_phase",
+  description: "Propose edit phase metadata or dates.",
+  input_schema: {
+    type: "object",
+    properties: {
+      phases: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["phases"],
+    additionalProperties: false,
+  },
+};
+
+const MOVE_TASK_TO_PHASE_TOOL: Anthropic.Tool = {
+  name: "move_task_to_phase",
+  description: "Propose move tasks between phases.",
+  input_schema: {
+    type: "object",
+    properties: {
+      moves: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["moves"],
+    additionalProperties: false,
+  },
+};
+
+const REPLAN_PROJECT_DATES_TOOL: Anthropic.Tool = {
+  name: "replan_project_dates",
+  description: "Propose updated phase date ranges from slip/time data.",
+  input_schema: {
+    type: "object",
+    properties: {
+      projectSlug: { type: "string" },
+      phases: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["phases"],
     additionalProperties: false,
   },
 };
@@ -143,7 +284,17 @@ const TOOL_BY_NAME: Record<string, Anthropic.Tool> = {
   draft_balance_pass: DRAFT_BALANCE_PASS_TOOL,
   reschedule_tasks: RESCHEDULE_TASKS_TOOL,
   create_task: CREATE_TASK_TOOL,
+  edit_task: EDIT_TASK_TOOL,
+  delete_task: DELETE_TASK_TOOL,
   complete_task: COMPLETE_TASK_TOOL,
+  set_top3: SET_TOP3_TOOL,
+  set_protected_block: SET_PROTECTED_BLOCK_TOOL,
+  set_day_priorities: SET_DAY_PRIORITIES_TOOL,
+  apply_balance_suggestions: APPLY_BALANCE_SUGGESTIONS_TOOL,
+  create_project: CREATE_PROJECT_TOOL,
+  edit_phase: EDIT_PHASE_TOOL,
+  move_task_to_phase: MOVE_TASK_TO_PHASE_TOOL,
+  replan_project_dates: REPLAN_PROJECT_DATES_TOOL,
   propose_about_me_edit: PROPOSE_ABOUT_ME_EDIT_TOOL,
   park_in_abyss: PARK_IN_ABYSS_TOOL,
 };
@@ -155,7 +306,10 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "query_state",
     "reschedule_tasks",
     "create_task",
+    "edit_task",
+    "delete_task",
     "complete_task",
+    "set_top3",
     "park_in_abyss",
   ],
   week: [
@@ -164,7 +318,12 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "draft_week",
     "reschedule_tasks",
     "create_task",
+    "edit_task",
+    "delete_task",
     "complete_task",
+    "set_top3",
+    "set_protected_block",
+    "set_day_priorities",
     "park_in_abyss",
   ],
   plan: [
@@ -175,9 +334,24 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "draft_eod",
     "reschedule_tasks",
     "create_task",
+    "edit_task",
+    "delete_task",
+    "apply_balance_suggestions",
     "propose_about_me_edit",
   ],
-  projects: ["query_tasks", "query_projects", "create_task", "reschedule_tasks", "complete_task"],
+  projects: [
+    "query_tasks",
+    "query_projects",
+    "create_project",
+    "create_task",
+    "edit_task",
+    "delete_task",
+    "reschedule_tasks",
+    "complete_task",
+    "edit_phase",
+    "move_task_to_phase",
+    "replan_project_dates",
+  ],
   backlog: ["query_abyss", "park_in_abyss", "query_tasks"],
   reviews: [
     "query_tasks",
@@ -186,6 +360,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "draft_eod",
     "draft_balance_pass",
     "complete_task",
+    "apply_balance_suggestions",
     "propose_about_me_edit",
   ],
   care: ["query_tasks", "query_state", "draft_eod", "complete_task", "propose_about_me_edit"],
@@ -201,7 +376,17 @@ export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [
   DRAFT_BALANCE_PASS_TOOL,
   RESCHEDULE_TASKS_TOOL,
   CREATE_TASK_TOOL,
+  EDIT_TASK_TOOL,
+  DELETE_TASK_TOOL,
   COMPLETE_TASK_TOOL,
+  SET_TOP3_TOOL,
+  SET_PROTECTED_BLOCK_TOOL,
+  SET_DAY_PRIORITIES_TOOL,
+  APPLY_BALANCE_SUGGESTIONS_TOOL,
+  CREATE_PROJECT_TOOL,
+  EDIT_PHASE_TOOL,
+  MOVE_TASK_TO_PHASE_TOOL,
+  REPLAN_PROJECT_DATES_TOOL,
   PROPOSE_ABOUT_ME_EDIT_TOOL,
   PARK_IN_ABYSS_TOOL,
 ];
@@ -220,6 +405,7 @@ export const REFLECTION_CHAT_TOOLS: Anthropic.Tool[] = [
   DRAFT_BALANCE_PASS_TOOL,
   RESCHEDULE_TASKS_TOOL,
   COMPLETE_TASK_TOOL,
+  APPLY_BALANCE_SUGGESTIONS_TOOL,
   PROPOSE_ABOUT_ME_EDIT_TOOL,
 ];
 

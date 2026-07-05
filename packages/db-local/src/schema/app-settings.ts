@@ -1,5 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { PROJECT_CATEGORIES } from "./projects";
+import { sqliteNow } from "../sqlite-defaults";
 export const appSettings = sqliteTable("app_settings", {
   userId: text("user_id").primaryKey(),
   bucketMode: text("bucket_mode").notNull().default("relative"),
@@ -17,6 +18,10 @@ export const appSettings = sqliteTable("app_settings", {
   evidenceCadence: text("evidence_cadence").notNull().default("quarterly"),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => sqliteNow()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => sqliteNow()),
 });

@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { chatMessages } from "@/db/tables";
 import { messageContentSchema, textContent } from "@/lib/chat/message-content";
 import { filterPayloadByItemIds, proposedActionSchema } from "@/lib/chat/proposed-actions";
+import { confirmUndoFrameSchema } from "@/lib/chat/confirm-undo";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";
 import { buildWorkOnSuggestion } from "@/server/chat/build-work-on-suggestion";
@@ -292,7 +293,8 @@ export const chatRouter = createTRPCRouter({
 
       const result = await applyProposedActionPayload(ctx.userId, filtered);
       await updateMessageProposalStatus(input.messageId, ctx.userId, "applied");
-      return { applied: result.applied, titles: result.titles };
+      const undoFrames = result.undoFrames.map((frame) => confirmUndoFrameSchema.parse(frame));
+      return { applied: result.applied, titles: result.titles, undoFrames };
     }),
 
   dismissProposedAction: protectedProcedure

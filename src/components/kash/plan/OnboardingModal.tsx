@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import {
@@ -10,7 +10,6 @@ import {
 import { MAX_CATEGORY_LABEL_LENGTH } from "@/lib/projects/category-settings";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
-import { matchesTodayList } from "@/lib/tasks/matches-today-list";
 import { cn } from "@/lib/cn";
 
 import Button from "@/components/kash/ui/Button";
@@ -18,7 +17,7 @@ import Input from "@/components/kash/ui/Input";
 import { RitualSheet } from "@/components/kash/ui/RitualSheet";
 
 import { MorningHandoffModal } from "./MorningHandoffModal";
-import { QuickInput } from "./QuickInput";
+import { QuickInput, type QuickInputHandle } from "./QuickInput";
 
 export type OnboardingStep = "capture" | "pin" | "hold" | "categories" | "handoff";
 
@@ -90,12 +89,21 @@ export function OnboardingModal({
   onSkipHold,
   onFinish,
 }: Props) {
-  const todayTasks = useMemo(
-    () => tasks.filter((t) => matchesTodayList(t, localDate)),
-    [tasks, localDate]
-  );
-  const captureCount = todayTasks.length;
+  const quickInputRef = useRef<QuickInputHandle>(null);
+  const [pendingCaptureLines, setPendingCaptureLines] = useState(0);
+
+  /** Onboarding counts any captured task — not only those on today's list (e.g. "tomorrow"). */
+  const capturedTasks = useMemo(() => tasks.filter((t) => t.bucketOverride !== "later"), [tasks]);
+  const captureCount = capturedTasks.length;
+  const effectiveCaptureCount = captureCount + pendingCaptureLines;
   const pinnedTask = pinnedBySlot.get(1) ?? null;
+
+  const handleCaptureContinue = async () => {
+    const created = await quickInputRef.current?.submitDraft();
+    const total = captureCount + (created ?? 0);
+    if (total < MIN_CAPTURE_TASKS) return;
+    onContinue();
+  };
 
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
     Object.fromEntries(categories.map((c) => [c.category, c.label]))
@@ -152,10 +160,13 @@ export function OnboardingModal({
       <Button
         type="button"
         className="text-body"
-        disabled={captureCount < MIN_CAPTURE_TASKS || isPending}
-        onClick={onContinue}
+        disabled={effectiveCaptureCount < MIN_CAPTURE_TASKS || isPending}
+        onClick={() => void handleCaptureContinue()}
       >
-        Continue{captureCount < MIN_CAPTURE_TASKS ? ` (${captureCount}/${MIN_CAPTURE_TASKS})` : ""}
+        Continue
+        {effectiveCaptureCount < MIN_CAPTURE_TASKS
+          ? ` (${effectiveCaptureCount}/${MIN_CAPTURE_TASKS})`
+          : ""}
       </Button>
     ) : step === "pin" ? (
       <Button
@@ -205,12 +216,14 @@ export function OnboardingModal({
               <span className="font-medium text-ink">!!</span>, or a category.
             </p>
             <QuickInput
+              ref={quickInputRef}
               draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
               onTaskCreated={onTaskCreated}
+              onPendingValidLinesChange={setPendingCaptureLines}
             />
             {captureCount > 0 ? (
               <ul className="space-y-1.5" aria-label="Captured tasks">
-                {todayTasks.map((task) => (
+                {capturedTasks.map((task) => (
                   <li
                     key={task.id}
                     className="flex items-center gap-2 rounded-row border border-subtle px-3 py-2"
@@ -242,7 +255,7 @@ export function OnboardingModal({
               #1.
             </p>
             <ul className="space-y-1.5">
-              {todayTasks.map((task) => {
+              {capturedTasks.map((task) => {
                 const isPinned = pinnedTask?.id === task.id;
                 return (
                   <li key={task.id}>

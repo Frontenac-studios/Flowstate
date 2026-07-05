@@ -55,4 +55,19 @@ describe("proposed-actions", () => {
   it("builds a headline for multi-task reschedule", () => {
     expect(proposalHeadline(reschedule)).toContain("Reschedule 2 tasks");
   });
+
+  it("parses delete_task proposals", () => {
+    const action = proposedActionSchema.parse({
+      kind: "delete_task",
+      items: [
+        {
+          itemId: "a",
+          enabled: true,
+          taskId: "00000000-0000-4000-8000-000000000001",
+          title: "Gone",
+        },
+      ],
+    });
+    expect(proposalHeadline(action)).toContain("Delete 1 task");
+  });
 });

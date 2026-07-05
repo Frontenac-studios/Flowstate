@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 
 import Toast, { type ToastVariant } from "./Toast";
@@ -45,6 +53,12 @@ type ProviderProps = {
 
 export default function ToastProvider({ children }: ProviderProps) {
   const [toasts, setToasts] = useState<ToastRecord[]>([]);
+  /** Portal targets `document.body`; defer until after hydration. */
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, exiting: true } : t)));
@@ -71,7 +85,7 @@ export default function ToastProvider({ children }: ProviderProps) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      {typeof document !== "undefined"
+      {mounted
         ? createPortal(
             <div
               className="pointer-events-none fixed inset-x-0 bottom-[var(--space-5)] z-toast flex flex-col items-center gap-[var(--space-2)] px-[var(--space-4)]"

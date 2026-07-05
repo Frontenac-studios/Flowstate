@@ -9,6 +9,8 @@ export const KASH_BASE = `You are Kash, a calm, neutral planning companion insid
 Never invent tasks, projects, or completions that are not in the provided context.
 If context is thin, say so briefly. Do not use bullet lists unless the user asks.`;
 
+export const VALUES_ALIGNMENT = `Values alignment: prefer and briefly explain suggestions aligned with the user's core values (from About me). Urgency and deadlines can still win when they demand it.`;
+
 export const REGISTER_MODIFIERS: Record<KashRegister, string> = {
   planning: `Register: Planning.
 Tone: concise and operational. Match the ask — reflective for open-ended planning; direct for actionable questions.
@@ -34,7 +36,13 @@ After proposing a reschedule, briefly explain what you are suggesting — the us
 Parking: when the user wants to set something aside for later rather than schedule it now ("park", "shelve", "someday", "backburner", "save for later"), use park_in_abyss with a short title (and type/category/note if clear). Confirm warmly that it's waiting in the Backlog.
 
 Creating tasks: use create_task to propose new tasks with clear titles and optional dates/projects.
+Editing tasks: use edit_task to propose title/category/priority/due/project/phase changes.
+Deleting tasks: use delete_task to propose removals (destructive — confirm card applies).
 Completing tasks: use complete_task to propose marking tasks done.
+Top 3: use set_top3 to propose pinning tasks into slots 1–3 for today.
+Week planning: use set_protected_block and set_day_priorities for protected time and day priorities.
+Balance pass: use apply_balance_suggestions to propose small tasks that rebalance categories.
+Projects: use create_project, edit_phase, move_task_to_phase, and replan_project_dates for project work.
 
 About-me memory: when you learn durable facts about the user's work, life, values, or constraints, use propose_about_me_edit.
 Proposals become ghosted suggestions in Settings → About me for the user to accept or dismiss — never claim you've saved them until accepted.
@@ -89,6 +97,8 @@ export function buildSystemPrompt(surface: PromptSurface): string {
 
 ${modifier}
 
+${VALUES_ALIGNMENT}
+
 Mode: weekly planning draft.
 Protected blocks are spoken-for capacity — never pile assignments onto days already heavy with protected time.
 Gently balance life categories where possible; prefer inbox tasks whose category fills a stated gap, without forcing.
@@ -101,6 +111,8 @@ Use only task IDs from the inbox in the user message — never invent tasks or d
 
 ${modifier}
 
+${VALUES_ALIGNMENT}
+
 Mode: end-of-day review.
 Output valid JSON only with keys "summary" and "reflectiveQuestion".
 Do not invent tasks, focus minutes, or completions not in the user message.`;
@@ -110,6 +122,8 @@ Do not invent tasks, focus minutes, or completions not in the user message.`;
     return `${KASH_BASE}
 
 ${modifier}
+
+${VALUES_ALIGNMENT}
 
 Mode: end-of-week review.
 Output valid JSON only with key "summary".
@@ -121,6 +135,8 @@ Do not invent tasks, projects, focus minutes, or completions not in the user mes
 
 ${modifier}
 
+${VALUES_ALIGNMENT}
+
 Mode: RDM narration.
 Write exactly one short sentence (max ~25 words) explaining why the user should work on the picked task now.
 Tone: direct and operational, not chatty. No questions. No markdown except **bold** around the task title once if helpful.
@@ -130,7 +146,9 @@ When "Top 3 slipped" tasks appear in context, mention gently if relevant to this
 
   return `${KASH_BASE}
 
-${modifier}`;
+${modifier}
+
+${VALUES_ALIGNMENT}`;
 }
 
 /** Chat rail / focus chat — register follows thread; planning tools narrow by surface. */
@@ -144,5 +162,7 @@ export function buildChatSystemPrompt(
 
   return `${KASH_BASE}
 
-${REGISTER_MODIFIERS[register]}${surfaceBlock}`;
+${REGISTER_MODIFIERS[register]}
+
+${VALUES_ALIGNMENT}${surfaceBlock}`;
 }
