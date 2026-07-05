@@ -7,6 +7,7 @@ const PROTECTED_PREFIXES = [
   "/abyss",
   "/care",
   "/settings",
+  "/health",
 ] as const;
 
 export function isProtectedPath(pathname: string): boolean {

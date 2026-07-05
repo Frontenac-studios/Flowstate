@@ -1,6 +1,11 @@
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 
+import type { RouterOutputs } from "@/trpc/client";
 import { getTRPCCaller } from "@/trpc/server";
+
+type HealthChecksList = RouterOutputs["healthChecks"]["list"];
+type LatestHealthCheck = RouterOutputs["healthChecks"]["getLatest"];
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -24,10 +29,21 @@ function formatTimestamp(date: Date): string {
 
 export default async function HealthPage() {
   const caller = await getTRPCCaller();
-  const [checks, latest] = await Promise.all([
-    caller.healthChecks.list({ limit: 20 }),
-    caller.healthChecks.getLatest({}),
-  ]);
+
+  let checks: HealthChecksList = [];
+  let latest: LatestHealthCheck | null = null;
+  let loadError = false;
+  try {
+    [checks, latest] = await Promise.all([
+      caller.healthChecks.list({ limit: 20 }),
+      caller.healthChecks.getLatest({}),
+    ]);
+  } catch (error) {
+    // Degrade gracefully: a DB failure (e.g. pool exhaustion) renders an error
+    // notice in the existing chrome instead of white-screening the route.
+    Sentry.captureException(error);
+    loadError = true;
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -44,6 +60,16 @@ export default async function HealthPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Health checks</h1>
           <p className="mt-2 text-ink-muted">Latest service status from the database via tRPC.</p>
         </header>
+
+        {loadError && (
+          <p
+            role="alert"
+            className="mb-10 rounded-card border border-critical bg-red-100/60 px-6 py-5 text-red-800"
+          >
+            Couldn&apos;t reach the database to load health checks. This usually means the
+            connection pool is momentarily exhausted — try again in a moment.
+          </p>
+        )}
 
         {latest ? (
           <section className="mb-10 rounded-card border border-subtle bg-surface px-6 py-5">
