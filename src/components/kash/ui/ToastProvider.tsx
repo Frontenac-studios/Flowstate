@@ -40,6 +40,16 @@ export function useToast(): ToastContextValue {
   return ctx;
 }
 
+/**
+ * Toast accessor that returns `null` instead of throwing when no provider is
+ * mounted (e.g. the `/today/focus` route, which has no ToastProvider). Callers
+ * that may render both inside and outside the shell should use this and no-op
+ * when it's null.
+ */
+export function useOptionalToast(): ToastContextValue | null {
+  return useContext(ToastContext);
+}
+
 let toastCounter = 0;
 
 function nextToastId(): string {

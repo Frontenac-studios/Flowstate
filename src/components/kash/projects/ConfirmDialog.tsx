@@ -33,6 +33,7 @@ export default function ConfirmDialog({
   onCancel,
 }: Props) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +45,9 @@ export default function ConfirmDialog({
       if (e.key === "Escape") {
         e.preventDefault();
         onCancel();
-      } else if (e.key === "Enter" && !confirmDisabled) {
+      } else if (e.key === "Enter" && !confirmDisabled && !destructive) {
+        // Destructive actions require an explicit click on the confirm button, so a
+        // stray Enter right after the dialog opens can't fire the irreversible action.
         e.preventDefault();
         onConfirm();
       }
@@ -55,11 +58,14 @@ export default function ConfirmDialog({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, confirmDisabled, onCancel, onConfirm]);
+  }, [open, confirmDisabled, destructive, onCancel, onConfirm]);
 
   useEffect(() => {
-    if (open) confirmRef.current?.focus();
-  }, [open]);
+    if (!open) return;
+    // For destructive dialogs, focus Cancel so a reflexive Enter/Space doesn't trigger confirm.
+    if (destructive) cancelRef.current?.focus();
+    else confirmRef.current?.focus();
+  }, [open, destructive]);
 
   if (!open) return null;
 
@@ -89,7 +95,7 @@ export default function ConfirmDialog({
         <p className="mt-2 text-sm text-ink-muted">{message}</p>
         {children}
         <div className="mt-6 flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button ref={cancelRef} type="button" variant="ghost" onClick={onCancel}>
             {cancelLabel}
           </Button>
           <Button

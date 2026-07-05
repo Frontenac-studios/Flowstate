@@ -31,14 +31,17 @@ export function ChatRail() {
     sendMessage,
     editAndResend,
     stopGeneration,
+    retry,
     applyProposal,
     dismissProposal,
     proposalBusy,
+    setStreamError,
   } = useChatPanel(threadId);
   const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
     threadId,
     railOpen && showSuggestions,
-    sendMessage
+    sendMessage,
+    setStreamError
   );
 
   useEffect(() => {
@@ -104,8 +107,17 @@ export function ChatRail() {
         ) : null}
 
         {streamError ? (
-          <p className="mb-2 text-xs text-critical" role="alert">
-            {streamError}
+          <p className="mb-2 flex items-center gap-2 text-xs text-critical" role="alert">
+            <span>{streamError}</span>
+            {!isStreaming ? (
+              <button
+                type="button"
+                onClick={retry}
+                className="shrink-0 font-medium underline underline-offset-2"
+              >
+                Retry
+              </button>
+            ) : null}
           </p>
         ) : null}
 
@@ -116,6 +128,7 @@ export function ChatRail() {
             threadId={threadId}
             messages={messages}
             streamingText={streamingText}
+            isStreaming={isStreaming}
             hasMoreOlder={hasMoreOlder}
             loadingOlder={loadingOlder}
             onLoadOlder={() => void loadOlderMessages()}

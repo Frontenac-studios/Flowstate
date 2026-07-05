@@ -6,9 +6,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { DECIDE_EVENT } from "@/components/kash/chrome-events";
 import { useChat } from "@/components/kash/chat/ChatProvider";
+import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
+import {
+  addDismissedNudgeKind,
+  readDismissedNudgeKinds,
+} from "@/lib/nudges/essential-nudge-storage";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
 import { rankProblemNudges, rankReassuranceNudges } from "@/lib/nudges/nudge-arbiter";
 import {
@@ -49,6 +54,7 @@ export function useEssentialNudges() {
   const queryClient = useQueryClient();
   const { planningSurface } = useChat();
   const { constraints } = useUserConstraints();
+  const toastCtx = useOptionalToast();
   const evaluatingRef = useRef(false);
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
@@ -63,7 +69,7 @@ export function useEssentialNudges() {
   const [opener, setOpener] = useState<EssentialNudgeChipPayload | null>(null);
   const [chip, setChip] = useState<EssentialNudgeChipPayload | null>(null);
   const [queue, setQueue] = useState<EssentialNudgeChipPayload[]>([]);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [dismissed, setDismissed] = useState<Set<string>>(() => readDismissedNudgeKinds());
 
   const canShowProblem = (settings?.assistanceEnabled ?? true) && !suppressInAppNudges;
 
@@ -86,7 +92,8 @@ export function useEssentialNudges() {
       });
       if (!res.ok) return;
       const data = (await res.json()) as { chips?: EssentialNudgeChipPayload[] };
-      const incoming = data.chips ?? [];
+      const dismissedNow = readDismissedNudgeKinds();
+      const incoming = (data.chips ?? []).filter((c) => !dismissedNow.has(c.kind));
       if (incoming.length === 0) return;
 
       const reassurance = rankReassuranceNudges(incoming);
@@ -126,7 +133,7 @@ export function useEssentialNudges() {
   }, [canShowProblem, chip, queue]);
 
   const dismiss = useCallback((kind: EssentialNudgeChipPayload["kind"]) => {
-    setDismissed((prev) => new Set(prev).add(kind));
+    setDismissed(addDismissedNudgeKind(kind));
     setChip((prev) => (prev?.kind === kind ? null : prev));
     setOpener((prev) => (prev?.kind === kind ? null : prev));
   }, []);
@@ -167,18 +174,33 @@ export function useEssentialNudges() {
           } catch {
             /* ignore */
           }
-          if (offer.milestoneId && offer.stepTitle && offer.category) {
-            void createTask.mutateAsync({
+          if (!(offer.milestoneId && offer.stepTitle && offer.category)) {
+            // Nothing actionable in the payload — safe to just dismiss the chip.
+            dismiss(payload.kind);
+            return;
+          }
+          // Only dismiss once the task actually persists; on failure keep the chip so
+          // the offered step isn't silently lost.
+          void createTask
+            .mutateAsync({
               title: offer.stepTitle,
               category: offer.category,
               milestoneId: offer.milestoneId,
               scheduledDate: localDate,
+            })
+            .then(() => {
+              void queryClient.invalidateQueries({
+                queryKey: trpc.tasks.listIncomplete.queryKey(),
+              });
+              dismiss(payload.kind);
+            })
+            .catch(() => {
+              toastCtx?.toast({
+                message: "Couldn't add that step. Please try again.",
+                variant: "error",
+              });
             });
-          }
-          void queryClient.invalidateQueries({
-            queryKey: trpc.tasks.listIncomplete.queryKey(),
-          });
-          break;
+          return;
         }
         case "balance_add": {
           const localDate = toISODateString(startOfLocalDay());
@@ -193,30 +215,35 @@ export function useEssentialNudges() {
             /* ignore */
           }
           void (async () => {
-            if (parsed.abyssItemId) {
-              await promoteAbyss.mutateAsync({
-                id: parsed.abyssItemId,
-                target: "today",
+            try {
+              if (parsed.abyssItemId) {
+                await promoteAbyss.mutateAsync({ id: parsed.abyssItemId, target: "today" });
+              } else if (parsed.title && parsed.category) {
+                await createTask.mutateAsync({
+                  title: parsed.title,
+                  category: parsed.category,
+                  scheduledDate: localDate,
+                });
+              }
+              void queryClient.invalidateQueries({
+                queryKey: trpc.tasks.listIncomplete.queryKey(),
               });
-            } else if (parsed.title && parsed.category) {
-              await createTask.mutateAsync({
-                title: parsed.title,
-                category: parsed.category,
-                scheduledDate: localDate,
+              dismiss(payload.kind);
+            } catch {
+              toastCtx?.toast({
+                message: "Couldn't add that to today. Please try again.",
+                variant: "error",
               });
             }
-            void queryClient.invalidateQueries({
-              queryKey: trpc.tasks.listIncomplete.queryKey(),
-            });
           })();
-          break;
+          return;
         }
         default:
           break;
       }
       dismiss(payload.kind);
     },
-    [createTask, dismiss, promoteAbyss, queryClient, router, trpc.tasks.listIncomplete]
+    [createTask, dismiss, promoteAbyss, queryClient, router, toastCtx, trpc.tasks.listIncomplete]
   );
 
   const visibleChip = useMemo(

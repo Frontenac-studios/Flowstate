@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import type { AboutMeSection } from "@/lib/about-me/constants";
 import { useTRPC } from "@/trpc/client";
 
@@ -14,6 +15,7 @@ import SuggestionGhost, { type Suggestion } from "./SuggestionGhost";
 export default function SectionSuggestions({ section }: { section: AboutMeSection }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: all = [] } = useQuery(trpc.aboutMe.suggestions.list.queryOptions());
   const suggestions = (all as Suggestion[]).filter((s) => s.targetSection === section);
@@ -26,10 +28,26 @@ export default function SectionSuggestions({ section }: { section: AboutMeSectio
   };
 
   const acceptMutation = useMutation(
-    trpc.aboutMe.suggestions.accept.mutationOptions({ onSuccess: invalidate })
+    trpc.aboutMe.suggestions.accept.mutationOptions({
+      onSuccess: invalidate,
+      onError: (err) => {
+        toast({
+          message:
+            err.data?.code === "BAD_REQUEST"
+              ? "You've reached the limit for this section. Remove one first."
+              : "Couldn't accept that suggestion. Please try again.",
+          variant: "error",
+        });
+      },
+    })
   );
   const dismissMutation = useMutation(
-    trpc.aboutMe.suggestions.dismiss.mutationOptions({ onSuccess: invalidate })
+    trpc.aboutMe.suggestions.dismiss.mutationOptions({
+      onSuccess: invalidate,
+      onError: () => {
+        toast({ message: "Couldn't dismiss that suggestion. Please try again.", variant: "error" });
+      },
+    })
   );
   const busy = acceptMutation.isPending || dismissMutation.isPending;
 

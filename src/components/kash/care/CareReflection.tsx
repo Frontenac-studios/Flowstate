@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Textarea from "@/components/kash/ui/Textarea";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { MOOD_OPTIONS } from "@/lib/care/reflection-prompt";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { useTRPC } from "@/trpc/client";
@@ -12,6 +13,7 @@ import { useTRPC } from "@/trpc/client";
 export function CareReflection() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const todayIso = useMemo(() => toISODateString(startOfLocalDay()), []);
 
   const promptQuery = useQuery(
@@ -49,10 +51,15 @@ export function CareReflection() {
         setSavedNotice(true);
         window.setTimeout(() => setSavedNotice(false), 2500);
       },
+      onError: () =>
+        toast({ message: "Couldn't save your reflection. Please try again.", variant: "error" }),
     })
   );
 
   const promptText = savedQuery.data?.promptText ?? promptQuery.data?.promptText ?? "";
+  // If the prompt failed to load, the user can still save with a neutral prompt label
+  // rather than being locked out of recording tonight's reflection.
+  const promptForSave = promptText || "Daily reflection";
 
   return (
     <div className="flex flex-col gap-5">
@@ -60,6 +67,10 @@ export function CareReflection() {
         <h2 className="mb-2 text-caption font-medium text-ink-muted">Tonight&apos;s frame</h2>
         {promptQuery.isLoading ? (
           <p className="text-meta text-ink-faint">Loading…</p>
+        ) : promptQuery.isError && !promptText ? (
+          <p className="text-meta text-ink-muted">
+            Tonight&apos;s frame didn&apos;t load — you can still write and save below.
+          </p>
         ) : (
           <div className="flex flex-col gap-2 text-body leading-snug text-ink">
             {promptQuery.data?.frame ? (
@@ -107,12 +118,12 @@ export function CareReflection() {
         <div className="flex items-center gap-3">
           <Button
             type="button"
-            disabled={saveReflection.isPending || !promptText}
+            disabled={saveReflection.isPending || promptQuery.isLoading}
             onClick={() =>
               saveReflection.mutate({
                 reflectionDate: todayIso,
                 scope: "daily",
-                promptText,
+                promptText: promptForSave,
                 bodyText: bodyText.trim() ? bodyText.trim() : null,
                 mood,
               })

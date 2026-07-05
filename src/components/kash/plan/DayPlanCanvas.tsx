@@ -102,6 +102,10 @@ export function DayPlanCanvas() {
   const lastWasLargeRef = useRef(false);
   const { pushComplete, pushDelete } = useSessionUndo();
   const { toast } = useToast();
+  const notifyMutationError = useCallback(
+    () => toast({ message: "That change didn't save. Please try again.", variant: "error" }),
+    [toast]
+  );
   const { constraints } = useUserConstraints();
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
@@ -332,6 +336,7 @@ export function DayPlanCanvas() {
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -341,6 +346,7 @@ export function DayPlanCanvas() {
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -350,6 +356,7 @@ export function DayPlanCanvas() {
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -359,6 +366,7 @@ export function DayPlanCanvas() {
         touchActivity();
         invalidatePlan();
       },
+      onError: notifyMutationError,
     })
   );
 
@@ -452,11 +460,17 @@ export function DayPlanCanvas() {
   }, [queryClient, todayIso, touchActivity, trpc.focusBlocks.listForDate]);
 
   const createBlockMutation = useMutation(
-    trpc.focusBlocks.create.mutationOptions({ onSuccess: invalidateBlocks })
+    trpc.focusBlocks.create.mutationOptions({
+      onSuccess: invalidateBlocks,
+      onError: notifyMutationError,
+    })
   );
 
   const moveBlockMutation = useMutation(
-    trpc.focusBlocks.move.mutationOptions({ onSuccess: invalidateBlocks })
+    trpc.focusBlocks.move.mutationOptions({
+      onSuccess: invalidateBlocks,
+      onError: notifyMutationError,
+    })
   );
 
   const validateFocusSlot = useCallback(

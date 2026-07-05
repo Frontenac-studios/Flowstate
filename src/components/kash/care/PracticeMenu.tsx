@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
@@ -26,8 +27,11 @@ const MENU_BTN_FOCUS =
 export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const ref = useRef<HTMLDivElement>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+
+  const notifyError = (message: string) => toast({ message, variant: "error" });
 
   const addToMyDay = useMutation(
     trpc.care.addToMyDay.mutationOptions({
@@ -37,6 +41,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
         onAddedToDay();
         onClose();
       },
+      onError: () => notifyError("Couldn't add this to your day. Please try again."),
     })
   );
 
@@ -49,6 +54,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
         void queryClient.invalidateQueries({ queryKey: trpc.care.getLiftsMe.queryKey() });
         onClose();
       },
+      onError: () => notifyError("Couldn't remove this practice. Please try again."),
     })
   );
 
@@ -59,6 +65,7 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
         void queryClient.invalidateQueries({ queryKey: trpc.care.getLiftsMe.queryKey() });
         onClose();
       },
+      onError: () => notifyError("Couldn't update this practice. Please try again."),
     })
   );
 

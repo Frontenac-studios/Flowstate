@@ -14,6 +14,7 @@ import {
   withKashIcon,
 } from "@/components/kash/ui/icon";
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import {
   ageInDays,
   filterItems,
@@ -89,6 +90,7 @@ function TypeGlyph({ type }: { type: AbyssItemType }) {
 function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: string[] }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [openPopover, setOpenPopover] = useState<"promote" | "tags" | null>(null);
   const [exitClass, setExitClass] = useState<string | null>(null);
 
@@ -102,6 +104,11 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
         setExitClass("abyss-archive-drift");
         window.setTimeout(invalidateList, EXIT_MS);
       },
+      onError: () =>
+        toast({
+          message: "Couldn't remove that from the deep. Please try again.",
+          variant: "error",
+        }),
     })
   );
 
@@ -111,6 +118,8 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
         setExitClass("abyss-promote-rise");
         window.setTimeout(invalidateList, EXIT_MS);
       },
+      onError: () =>
+        toast({ message: "Couldn't surface that item. Please try again.", variant: "error" }),
     })
   );
 

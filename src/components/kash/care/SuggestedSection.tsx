@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/kash/ui/Button";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { cadenceLabel, groupByTheme } from "@/lib/care/labels";
 import { useTRPC } from "@/trpc/client";
 import type { RouterOutputs } from "@/trpc/client";
@@ -21,6 +22,7 @@ type Props = {
 export default function SuggestedSection({ catalog }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const adopt = useMutation(
     trpc.care.adopt.mutationOptions({
@@ -28,6 +30,8 @@ export default function SuggestedSection({ catalog }: Props) {
         void queryClient.invalidateQueries({ queryKey: trpc.care.catalog.queryKey() });
         void queryClient.invalidateQueries({ queryKey: trpc.care.listActivities.queryKey() });
       },
+      onError: () =>
+        toast({ message: "Couldn't adopt this practice. Please try again.", variant: "error" }),
     })
   );
 

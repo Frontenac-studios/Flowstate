@@ -41,6 +41,10 @@ export function useChatPanel(threadId: string) {
   const [hasMoreOlder, setHasMoreOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  // Set when the user hits Stop before the stream's AbortController exists, so the
+  // send path can bail instead of streaming a response the user already cancelled.
+  const canceledRef = useRef(false);
+  const lastUserTextRef = useRef<string | null>(null);
 
   const { data: configuredData } = useQuery({
     ...trpc.chat.isConfigured.queryOptions(),
@@ -104,8 +108,15 @@ export function useChatPanel(threadId: string) {
 
   const runStream = useCallback(
     async (userMessageId: string, text: string) => {
+      if (canceledRef.current) {
+        setStreamingText(null);
+        setIsStreaming(false);
+        return;
+      }
       const controller = new AbortController();
       abortRef.current = controller;
+      // Stop pressed between controller creation and the first await.
+      if (canceledRef.current) controller.abort();
 
       let assistantText = "";
 
@@ -198,9 +209,17 @@ export function useChatPanel(threadId: string) {
       setStreamError(null);
       setIsStreaming(true);
       setStreamingText("");
+      canceledRef.current = false;
+      lastUserTextRef.current = text;
 
       try {
         const { id: userMessageId } = await appendUserMutation.mutateAsync({ threadId, text });
+
+        if (canceledRef.current) {
+          setStreamingText(null);
+          setIsStreaming(false);
+          return;
+        }
 
         if (threadId === GLOBAL_THREAD_ID && source === "composer") {
           void recordPhraseSendMutation
@@ -244,6 +263,8 @@ export function useChatPanel(threadId: string) {
       setStreamError(null);
       setIsStreaming(true);
       setStreamingText("");
+      canceledRef.current = false;
+      lastUserTextRef.current = trimmed;
 
       try {
         await editUserMessageMutation.mutateAsync({
@@ -251,6 +272,11 @@ export function useChatPanel(threadId: string) {
           messageId,
           text: trimmed,
         });
+        if (canceledRef.current) {
+          setStreamingText(null);
+          setIsStreaming(false);
+          return;
+        }
         setOlderMessages([]);
         await refreshMessages();
         await runStream(messageId, trimmed);
@@ -264,25 +290,46 @@ export function useChatPanel(threadId: string) {
   );
 
   const stopGeneration = useCallback(() => {
+    canceledRef.current = true;
     abortRef.current?.abort();
+    setStreamingText(null);
+    setIsStreaming(false);
   }, []);
+
+  const retry = useCallback(() => {
+    const text = lastUserTextRef.current;
+    if (!text) return;
+    void sendMessage(text);
+  }, [sendMessage]);
 
   const applyProposal = useCallback(
     async (messageId: string, enabledItemIds: string[]) => {
-      const result = await applyProposalMutation.mutateAsync({ messageId, enabledItemIds });
-      if (result.undoFrames?.length) {
-        pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
+      try {
+        const result = await applyProposalMutation.mutateAsync({ messageId, enabledItemIds });
+        if (result.undoFrames?.length) {
+          pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
+        }
+        invalidateTaskQueries();
+        await refreshMessages();
+      } catch (err) {
+        setStreamError(
+          err instanceof Error ? err.message : "Couldn't apply that. Please try again."
+        );
       }
-      invalidateTaskQueries();
-      await refreshMessages();
     },
     [applyProposalMutation, invalidateTaskQueries, pushConfirmUndo, refreshMessages]
   );
 
   const dismissProposal = useCallback(
     async (messageId: string) => {
-      await dismissProposalMutation.mutateAsync({ messageId });
-      await refreshMessages();
+      try {
+        await dismissProposalMutation.mutateAsync({ messageId });
+        await refreshMessages();
+      } catch (err) {
+        setStreamError(
+          err instanceof Error ? err.message : "Couldn't dismiss that. Please try again."
+        );
+      }
     },
     [dismissProposalMutation, refreshMessages]
   );
@@ -301,6 +348,7 @@ export function useChatPanel(threadId: string) {
     sendMessage,
     editAndResend,
     stopGeneration,
+    retry,
     applyProposal,
     dismissProposal,
     setStreamError,

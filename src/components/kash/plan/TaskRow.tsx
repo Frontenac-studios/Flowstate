@@ -13,6 +13,7 @@ import { Lock, withKashIcon } from "@/components/kash/ui/icon";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import Checkbox from "@/components/kash/ui/Checkbox";
 import Input from "@/components/kash/ui/Input";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
@@ -110,6 +111,7 @@ export function TaskRow({
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -246,6 +248,8 @@ export function TaskRow({
         hide();
         invalidatePlan();
       },
+      onError: () =>
+        toast({ message: "Couldn't skip this one. Please try again.", variant: "error" }),
     })
   );
 
@@ -268,6 +272,8 @@ export function TaskRow({
         hide();
         invalidatePlan();
       },
+      onError: () =>
+        toast({ message: "Couldn't delete this task. Please try again.", variant: "error" }),
     })
   );
 

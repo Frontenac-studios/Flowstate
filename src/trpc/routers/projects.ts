@@ -99,7 +99,7 @@ export const projectsRouter = createTRPCRouter({
           category: projects.category,
         })
         .from(projects)
-        .where(eq(projects.userId, ctx.userId))
+        .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt)))
         .orderBy(projects.name),
       db
         .select({
@@ -236,7 +236,7 @@ export const projectsRouter = createTRPCRouter({
           category: projects.category,
         })
         .from(projects)
-        .where(eq(projects.userId, ctx.userId))
+        .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt)))
         .orderBy(projects.name),
       db
         .select({
@@ -583,6 +583,28 @@ export const projectsRouter = createTRPCRouter({
 
       await syncProjectRow(row.id, "update", row);
       return row;
+    }),
+
+  archive: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedProject(ctx.userId, input.id);
+
+      const [row] = await db
+        .update(projects)
+        .set({ archivedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(projects.id, input.id), eq(projects.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to archive project.",
+        });
+      }
+
+      await syncProjectRow(row.id, "update", row);
+      return { id: row.id };
     }),
 
   delete: protectedProcedure
