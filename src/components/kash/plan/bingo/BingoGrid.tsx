@@ -31,7 +31,7 @@ export default function BingoGrid({
 
   return (
     <div
-      className={`grid grid-cols-5 gap-2${locking ? "bingo-lock-grid" : ""}`}
+      className={`grid grid-cols-5 gap-2 ${locking ? "bingo-lock-grid" : ""}`}
       role="grid"
       aria-label="Annual goals bingo card"
     >

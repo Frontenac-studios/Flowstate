@@ -94,7 +94,7 @@ export default function AbyssComposer() {
   return (
     <form
       onSubmit={handleSubmit}
-      className={`flex flex-col gap-2.5 rounded-card border border-abyss-border bg-abyss-surface p-2.5${isSinking ? "abyss-park-sink" : ""}`}
+      className={`flex flex-col gap-2.5 rounded-card border border-abyss-border bg-abyss-surface p-2.5 ${isSinking ? "abyss-park-sink" : ""}`}
     >
       <div className="flex items-center gap-2">
         <input
