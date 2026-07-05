@@ -135,33 +135,6 @@ export default function PracticeMenu({ activity, onClose, onEdit, onAddedToDay }
           <button
             type="button"
             role="menuitem"
-            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
-            disabled={busy}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-          >
-            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
-            disabled={busy}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-          >
-            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => toggleLiftsMe.mutate({ id: activity.id, liftsMe: !activity.liftsMe })}
-            disabled={busy}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-          >
-            {activity.liftsMe ? "Unmark lifts me" : "Mark lifts me"}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
             onClick={onEdit}
             disabled={busy}
             className="flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
