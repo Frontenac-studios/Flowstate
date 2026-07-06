@@ -3,11 +3,14 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 import { bingoCards } from "./bingo-cards";
 import { GOAL_STATE, OBLIGATION_DESIRE, TARGET_HORIZON } from "./planning-enums";
 import { PROJECT_CATEGORIES, projects } from "./projects";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 export const goals = sqliteTable(
   "goals",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => sqliteRowId()),
     userId: text("user_id").notNull(),
     bingoCardId: text("bingo_card_id").references(() => bingoCards.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
@@ -23,8 +26,12 @@ export const goals = sqliteTable(
     state: text("state", { enum: GOAL_STATE }).notNull().default("active"),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
     sortOrder: integer("sort_order").notNull().default(0),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
   },
   (table) => [
     index("goals_user_id_updated_at_idx").on(table.userId, table.updatedAt),
