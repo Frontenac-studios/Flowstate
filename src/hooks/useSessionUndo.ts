@@ -23,6 +23,7 @@ export type TaskSnapshot = {
 
 type UndoFrame =
   | { type: "complete"; taskId: string; previousCompletedAt: Date | null }
+  | { type: "uncomplete"; taskId: string }
   | { type: "delete"; snapshot: TaskSnapshot }
   | ConfirmUndoFrame;
 
@@ -63,6 +64,9 @@ export function useSessionUndo() {
     trpc.phases.listByProject,
   ]);
 
+  const completeMutation = useMutation(
+    trpc.tasks.complete.mutationOptions({ onSuccess: invalidatePlan })
+  );
   const uncompleteMutation = useMutation(
     trpc.tasks.uncomplete.mutationOptions({ onSuccess: invalidatePlan })
   );
@@ -105,6 +109,10 @@ export function useSessionUndo() {
 
   const pushComplete = useCallback((taskId: string, previousCompletedAt: Date | null) => {
     pushFrame(stackRef.current, { type: "complete", taskId, previousCompletedAt });
+  }, []);
+
+  const pushUncomplete = useCallback((taskId: string) => {
+    pushFrame(stackRef.current, { type: "uncomplete", taskId });
   }, []);
 
   const pushDelete = useCallback((snapshot: TaskSnapshot) => {
@@ -251,13 +259,18 @@ export function useSessionUndo() {
       return;
     }
 
+    if (frame.type === "uncomplete") {
+      await completeMutation.mutateAsync({ id: frame.taskId });
+      return;
+    }
+
     if (frame.type === "delete") {
       await restoreMutation.mutateAsync(frame.snapshot);
       return;
     }
 
     await undoConfirmFrame(frame);
-  }, [restoreMutation, uncompleteMutation, undoConfirmFrame]);
+  }, [completeMutation, restoreMutation, uncompleteMutation, undoConfirmFrame]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -279,5 +292,5 @@ export function useSessionUndo() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [undo]);
 
-  return { pushComplete, pushDelete, pushConfirmUndo, undo };
+  return { pushComplete, pushUncomplete, pushDelete, pushConfirmUndo, undo };
 }

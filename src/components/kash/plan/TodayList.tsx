@@ -19,6 +19,7 @@ type Props = {
   onSelectTask?: (taskId: string) => void;
   onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
+  onUncomplete?: (taskId: string) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onPin?: (taskId: string, sourceEl: HTMLElement) => void;
 };
@@ -68,6 +69,7 @@ export function TodayList({
   onSelectTask,
   onActivateTask,
   onComplete,
+  onUncomplete,
   onDelete,
   onPin,
 }: Props) {
@@ -120,7 +122,7 @@ export function TodayList({
         </ul>
       )}
 
-      <CompletedSection completions={completions} />
+      <CompletedSection completions={completions} onUncomplete={onUncomplete} />
     </section>
   );
 }

@@ -120,7 +120,7 @@ export function DayPlanCanvas() {
   const top3HighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastWasLargeRef = useRef(false);
-  const { pushComplete, pushDelete } = useSessionUndo();
+  const { pushComplete, pushUncomplete, pushDelete } = useSessionUndo();
   const { toast } = useToast();
   const notifyMutationError = useCallback(
     () => toast({ message: "That change didn't save. Please try again.", variant: "error" }),
@@ -705,6 +705,7 @@ export function DayPlanCanvas() {
                   onSelectTask={setSelectedTaskId}
                   onActivateTask={handleActivateTask}
                   onComplete={pushComplete}
+                  onUncomplete={pushUncomplete}
                   onDelete={pushDelete}
                   onPin={handlePinFromToday}
                 />
