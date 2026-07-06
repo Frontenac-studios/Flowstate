@@ -89,6 +89,10 @@ export default function QuarterSpreadGhosts({ year, quarter, hasUnassignedGoals 
         ) : null}
       </div>
 
+      {suggestMutation.isSuccess && ghostItems.length === 0 ? (
+        <p className="text-caption text-ink-muted">No spread to suggest right now.</p>
+      ) : null}
+
       {ghostItems.length > 0 ? (
         <GhostedAccept
           items={ghostItems}

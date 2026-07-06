@@ -91,6 +91,26 @@ const VIEW_OPTIONS: ReadonlyArray<SwitcherOption<TodayView>> = [
   { value: "review", label: "Review" },
 ];
 
+const TODAY_VIEW_STORAGE_KEY = "kash:today-view";
+
+function readStoredTodayView(): TodayView | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(TODAY_VIEW_STORAGE_KEY);
+    return raw === "list" || raw === "calendar" || raw === "review" ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredTodayView(view: TodayView): void {
+  try {
+    window.localStorage.setItem(TODAY_VIEW_STORAGE_KEY, view);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 function firstFreeSlot(pinnedBySlot: Map<number, Top3SlotTask>): 1 | 2 | 3 | null {
   for (const slot of [1, 2, 3] as const) {
     if (!pinnedBySlot.has(slot)) return slot;
@@ -113,7 +133,17 @@ export function DayPlanCanvas() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [replacePickerTaskId, setReplacePickerTaskId] = useState<string | null>(null);
   const [top3Highlighted, setTop3Highlighted] = useState(false);
+  // Default "list" on the server + first paint (avoids a hydration mismatch),
+  // then restore the persisted choice on mount.
   const [view, setView] = useState<TodayView>("list");
+  useEffect(() => {
+    const stored = readStoredTodayView();
+    if (stored) setView(stored);
+  }, []);
+  const changeView = useCallback((next: TodayView) => {
+    setView(next);
+    writeStoredTodayView(next);
+  }, []);
   const [walkOverlayOpen, setWalkOverlayOpen] = useState(false);
   const [breatheOverlayOpen, setBreatheOverlayOpen] = useState(false);
   const top3CelebratedRef = useRef(false);
@@ -648,7 +678,7 @@ export function DayPlanCanvas() {
             <InPageSwitcher
               options={VIEW_OPTIONS}
               value={view}
-              onChange={setView}
+              onChange={changeView}
               ariaLabel="Today view"
             />
           </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
+import { useDialogChrome } from "@/hooks/useDialogChrome";
 import {
   clearCheckInSnooze,
   markCheckInCompleted,
@@ -91,7 +92,7 @@ export default function CheckInModal({
 }: Props) {
   const trpc = useTRPC();
   const titleId = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useDialogChrome({ open, onClose });
   const [step, setStep] = useState<Step>("scope");
   const [depth, setDepth] = useState<CheckInDepth | null>(null);
   const [cadence, setCadence] = useState<CheckInCadence>("weekly");
@@ -116,15 +117,6 @@ export default function CheckInModal({
     setScopeKey(null);
     setMockReply(null);
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
 
   const handleCadenceChange = useCallback((next: CheckInCadence) => {
     setCadence(next);
@@ -182,7 +174,8 @@ export default function CheckInModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[min(90vh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-card border border-border bg-surface shadow-overlay"
+        tabIndex={-1}
+        className="flex max-h-[min(90vh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-card border border-border bg-surface shadow-overlay focus:outline-none"
       >
         <header className="border-ink/10 flex items-start justify-between gap-3 border-b px-5 py-4">
           <div>

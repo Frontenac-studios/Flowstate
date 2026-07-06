@@ -91,6 +91,14 @@ export default function ConstraintForm({
     e.preventDefault();
     const trimmed = label.trim();
     if (!trimmed || busy) return;
+
+    const startMin = timeInputToMinutes(start);
+    const endMin = timeInputToMinutes(end);
+    if (startMin != null && endMin != null && endMin <= startMin) {
+      setError("End time must be after the start time.");
+      return;
+    }
+
     setError(null);
     const schedule = buildSchedule();
     if (initial.id) {

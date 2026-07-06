@@ -201,6 +201,7 @@ export function MorningHandoffModal({
       open
       title="Good morning"
       dismissOnBackdrop={false}
+      onDismiss={onSkip}
       footer={
         <div className="flex flex-col gap-[var(--space-2)] sm:flex-row sm:justify-end">
           <Button

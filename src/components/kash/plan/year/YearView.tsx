@@ -17,6 +17,7 @@ import {
   type GoalHorizonFields,
 } from "@/lib/planning/year-goals";
 import { aggregateYearActivity } from "@/lib/planning/year-heat";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { useTRPC } from "@/trpc/client";
 
 import NeglectedCategoryCallout from "./NeglectedCategoryCallout";
@@ -111,6 +112,17 @@ export default function YearView({ year, onZoomQuarter }: Props) {
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div className="mx-auto flex max-w-[880px] flex-col gap-4">
         <NeglectedCategoryCallout categories={neglectedCategories} scope="year" />
+
+        {goalsQuery.isError || themesQuery.isError || activityQuery.isError ? (
+          <QueryErrorNotice
+            message="This year didn't fully load — some goals or activity may be missing."
+            onRetry={() => {
+              void goalsQuery.refetch();
+              void themesQuery.refetch();
+              void activityQuery.refetch();
+            }}
+          />
+        ) : null}
 
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           {quarters.map((quarter) => (

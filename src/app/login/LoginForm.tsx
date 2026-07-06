@@ -2,10 +2,16 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { z } from "zod";
 
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
 import { createClient } from "@/lib/supabase/client";
+
+const credentialsSchema = z.object({
+  email: z.string().trim().min(1, "Enter your email.").email("Enter a valid email address."),
+  password: z.string().min(1, "Enter your password."),
+});
 
 export function LoginForm() {
   const router = useRouter();
@@ -20,11 +26,21 @@ export function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const parsed = credentialsSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Check your details and try again.");
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
 
-    const result = await supabase.auth.signInWithPassword({ email, password });
+    const result = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
 
     setLoading(false);
 
@@ -50,6 +66,7 @@ export function LoginForm() {
         <Input
           type="email"
           required
+          autoFocus
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { Top3SlotTask } from "./Top3Slots";
 
@@ -36,7 +36,37 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [onDismiss]);
 
-  const anchorRect = anchorEl?.getBoundingClientRect();
+  // Track the anchor's position so the picker follows it on scroll/resize
+  // instead of detaching from a one-time measurement.
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(
+    () => anchorEl?.getBoundingClientRect() ?? null
+  );
+
+  useEffect(() => {
+    if (!anchorEl) {
+      setAnchorRect(null);
+      return;
+    }
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      setAnchorRect(anchorEl.getBoundingClientRect());
+    };
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    // Capture-phase scroll catches scrolling on any ancestor container.
+    window.addEventListener("scroll", schedule, true);
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule, true);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [anchorEl]);
+
   const top = anchorRect ? anchorRect.bottom + 8 : 80;
   const left = anchorRect ? anchorRect.left : 16;
   const width = anchorRect ? anchorRect.width : 320;

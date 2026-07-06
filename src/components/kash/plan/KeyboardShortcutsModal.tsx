@@ -21,12 +21,14 @@ const SHORTCUTS: Shortcut[] = [
   { keys: "⌘1 – ⌘3", description: "Pin selected Today row to Top 3 slot" },
   { keys: "C / P / R / D", description: "Toggle Category / Project / Priority / Due lens (max 2)" },
   { keys: "⌘D", description: "Random weighted pick (RDM) → Focus mode" },
-  { keys: "⌘Return", description: "Mark current focus task done" },
+  {
+    keys: "⌘Return",
+    description: "Submit composer lines (in the composer) · mark the focus task done (in Focus)",
+  },
   { keys: "Esc", description: "Exit Focus mode (or leave triage keyboard mode)" },
   { keys: "⌘K", description: "Open the command palette (search & navigate)" },
   { keys: "⌘/", description: "Toggle Claude chat side rail" },
   { keys: "⌘Z", description: "Undo complete, delete, or triage drop (this session)" },
-  { keys: "⌘Enter", description: "Submit all composer lines" },
   { keys: "?", description: "Open this shortcuts reference" },
 ];
 

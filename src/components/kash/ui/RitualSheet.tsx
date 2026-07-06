@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
+import { trapTab } from "@/lib/dom/focus-trap";
 
 import "@/styles/ritual-sheet.css";
 
@@ -53,10 +54,25 @@ export function RitualSheet({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    // Escape dismisses whenever the sheet offers a dismiss path. This is separate
+    // from `dismissOnBackdrop` (which governs stray clicks): the morning hand-off
+    // blocks backdrop clicks but still honors Escape/Skip. Forced flows like
+    // onboarding pass no `onDismiss` and stay put.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onDismiss) {
+        e.preventDefault();
+        onDismiss();
+        return;
+      }
+      if (e.key === "Tab") trapTab(e, panelRef.current);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
       document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, onDismiss]);
 
   useEffect(() => {
     if (!open) return;

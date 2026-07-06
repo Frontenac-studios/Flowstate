@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { InPageSwitcher } from "@/components/kash/InPageSwitcher";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { filterMonthGoals } from "@/lib/planning/month-goals";
 import { monthShortName } from "@/lib/planning/quarter-months";
 import type { QuarterGoalFields } from "@/lib/planning/quarter-goals";
@@ -55,6 +56,15 @@ export default function MonthView({ year, month }: Props) {
   const reservedDays = reservedQuery.data ?? [];
   const protectedBlocks = blocksQuery.data ?? [];
 
+  const isError =
+    goalsQuery.isError || intentionsQuery.isError || reservedQuery.isError || blocksQuery.isError;
+  const refetchAll = () => {
+    void goalsQuery.refetch();
+    void intentionsQuery.refetch();
+    void reservedQuery.refetch();
+    void blocksQuery.refetch();
+  };
+
   return (
     <div className="mx-auto flex max-w-[880px] flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
@@ -69,7 +79,9 @@ export default function MonthView({ year, month }: Props) {
         />
       </div>
 
-      {layout === "list" ? (
+      {isError ? (
+        <QueryErrorNotice message="This month didn't load." onRetry={refetchAll} />
+      ) : layout === "list" ? (
         <MonthListView
           year={year}
           month={month}
