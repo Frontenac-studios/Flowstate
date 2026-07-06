@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 
 import {
@@ -68,11 +68,13 @@ function NavLink({
   item,
   active,
   expanded,
+  index,
   onClick,
 }: {
   item: NavItem;
   active: boolean;
   expanded: boolean;
+  index: number;
   onClick?: () => void;
 }) {
   const Icon = item.icon;
@@ -96,12 +98,11 @@ function NavLink({
       >
         <Icon {...NAV_ICON_PROPS} />
       </span>
+      {/* Label is always rendered so the cascade can transition it; when collapsed
+          the full-width icon span pushes it past the rail's overflow-hidden edge. */}
       <span
-        className={
-          expanded
-            ? "whitespace-nowrap text-sm font-medium opacity-100 transition-opacity duration-150"
-            : "sr-only"
-        }
+        className="nav-cascade-item whitespace-nowrap text-sm font-medium"
+        style={{ "--nav-i": index } as CSSProperties}
       >
         {item.label}
       </span>
@@ -118,36 +119,45 @@ function NavSections({
   isActive: (item: NavItem) => boolean;
   onNavigate?: () => void;
 }) {
+  const settingsIndex = NAV_GROUPS.reduce((count, group) => count + group.items.length, 0);
   return (
     <>
-      {NAV_GROUPS.map((group, index) => (
-        <Fragment key={group.label}>
-          <div className="px-1 pb-1 pt-2">
-            {expanded ? (
-              <span className="px-1 text-caption font-semibold uppercase tracking-wide text-ink-muted">
-                {group.label}
-              </span>
-            ) : index > 0 ? (
-              <div className="mx-2 h-px bg-[var(--border-subtle)]" />
-            ) : null}
-          </div>
-          {group.items.map((item) => (
-            <NavLink
-              key={item.href}
-              item={item}
-              active={isActive(item)}
-              expanded={expanded}
-              onClick={onNavigate}
-            />
-          ))}
-        </Fragment>
-      ))}
+      {NAV_GROUPS.map((group, index) => {
+        const indexOffset = NAV_GROUPS.slice(0, index).reduce(
+          (count, prev) => count + prev.items.length,
+          0
+        );
+        return (
+          <Fragment key={group.label}>
+            <div className="px-1 pb-1 pt-2">
+              {expanded ? (
+                <span className="px-1 text-caption font-semibold uppercase tracking-wide text-ink-muted">
+                  {group.label}
+                </span>
+              ) : index > 0 ? (
+                <div className="mx-2 h-px bg-[var(--border-subtle)]" />
+              ) : null}
+            </div>
+            {group.items.map((item, itemIndex) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActive(item)}
+                expanded={expanded}
+                index={indexOffset + itemIndex}
+                onClick={onNavigate}
+              />
+            ))}
+          </Fragment>
+        );
+      })}
       <div className="mt-auto">
         <SyncFooterIndicator expanded={expanded} />
         <NavLink
           item={SETTINGS_ITEM}
           active={isActive(SETTINGS_ITEM)}
           expanded={expanded}
+          index={settingsIndex}
           onClick={onNavigate}
         />
       </div>
@@ -206,6 +216,7 @@ export function LeftNavRail() {
       >
         <nav
           aria-label="Primary"
+          data-expanded={expanded ? "true" : "false"}
           onMouseEnter={() => setPeek(true)}
           onMouseLeave={() => setPeek(false)}
           onFocus={() => setPeek(true)}
@@ -258,6 +269,7 @@ export function LeftNavRail() {
           />
           <nav
             aria-label="Primary"
+            data-expanded="true"
             className="fixed inset-y-3 left-3 z-modal flex w-nav-rail-expanded flex-col gap-1 overflow-y-auto rounded-card border border-border bg-surface p-3 shadow-overlay lg:hidden"
           >
             <div className="mb-1 flex h-8 items-center px-1">
