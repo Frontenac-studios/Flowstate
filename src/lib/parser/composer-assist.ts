@@ -1,23 +1,28 @@
 import { isScheduledDateToken, suggestScheduledDateToken } from "@/lib/dates/scheduled-date-input";
 import { parsePriorityWord, PRIORITY_WORD_SUGGESTIONS } from "@/lib/tasks/priority";
 
+import {
+  type AssistConfig,
+  type AssistState,
+  computeAssist,
+  computeSuggestionSuffix,
+  type FallbackSuggestion,
+  getAcceptInsertText as coreGetAcceptInsertText,
+  getLineAtCursor,
+  type PropertyStatus,
+  shouldAppendSemicolonAfterAccept as coreShouldAppendSemicolonAfterAccept,
+} from "./composer-assist-core";
 import { fuzzyCategorySuggestions, matchCategorySegment } from "./fuzzy-category";
 import { findProjectBySlug, fuzzyProjectSuggestions, type ProjectRef } from "./fuzzy-project";
+
+export { getLineAtCursor };
+export type { PropertyStatus };
 
 export const COMPOSER_PROPERTY_ORDER = ["title", "due", "priority", "project", "category"] as const;
 
 export type ComposerProperty = (typeof COMPOSER_PROPERTY_ORDER)[number];
 
-export type PropertyStatus = "active" | "filled" | "pending";
-
-export type ComposerAssistState = {
-  properties: Array<{ key: ComposerProperty; status: PropertyStatus }>;
-  activeProperty: ComposerProperty;
-  suggestion: string | null;
-  suggestionSuffix: string | null;
-  segmentIndex: number;
-  inSemicolonMode: boolean;
-};
+export type ComposerAssistState = AssistState<ComposerProperty>;
 
 export type ComposerAssistContext = {
   projects: ProjectRef[];
@@ -36,22 +41,6 @@ function matchesProjectToken(segment: string, projects: ProjectRef[]): boolean {
   const stripped = stripOptionalHash(segment);
   if (!/^[a-z0-9_-]+$/i.test(stripped)) return false;
   return findProjectBySlug(stripped, projects) !== null;
-}
-
-export function getLineAtCursor(
-  value: string,
-  cursor: number
-): { lineText: string; lineStart: number; cursorInLine: number } {
-  const safeCursor = Math.max(0, Math.min(cursor, value.length));
-  const before = value.slice(0, safeCursor);
-  const lineStart = before.lastIndexOf("\n") + 1;
-  const nextNewline = value.indexOf("\n", safeCursor);
-  const lineEnd = nextNewline === -1 ? value.length : nextNewline;
-  return {
-    lineText: value.slice(lineStart, lineEnd),
-    lineStart,
-    cursorInLine: safeCursor - lineStart,
-  };
 }
 
 function matchesDateToken(segment: string): boolean {
@@ -91,39 +80,6 @@ export function segmentMatchesProperty(
   }
 }
 
-function propertyForSegmentIndex(index: number): ComposerProperty | null {
-  if (index <= 0) return "title";
-  if (index === 1) return "due";
-  if (index === 2) return "priority";
-  if (index === 3) return "project";
-  if (index === 4) return "category";
-  return null;
-}
-
-function nextProperty(property: ComposerProperty): ComposerProperty | null {
-  const idx = COMPOSER_PROPERTY_ORDER.indexOf(property);
-  if (idx < 0 || idx >= COMPOSER_PROPERTY_ORDER.length - 1) return null;
-  return COMPOSER_PROPERTY_ORDER[idx + 1] ?? null;
-}
-
-function splitLineSegments(lineText: string): string[] {
-  return lineText.split(";").map((s) => s.trim());
-}
-
-function getSegmentIndexAtCursor(lineText: string, cursorInLine: number): number {
-  let segmentIndex = 0;
-  for (let i = 0; i < cursorInLine; i += 1) {
-    if (lineText[i] === ";") segmentIndex += 1;
-  }
-  return segmentIndex;
-}
-
-function getCurrentSegmentRaw(lineText: string, cursorInLine: number): string {
-  const prevSemi = lineText.lastIndexOf(";", cursorInLine - 1);
-  const segmentStart = prevSemi + 1;
-  return lineText.slice(segmentStart, cursorInLine);
-}
-
 function getProjectSuggestion(partial: string, ctx: ComposerAssistContext): string | null {
   const stripped = stripOptionalHash(partial);
   if (stripped) {
@@ -132,7 +88,9 @@ function getProjectSuggestion(partial: string, ctx: ComposerAssistContext): stri
 
     const suggestions = fuzzyProjectSuggestions(stripped, ctx.projects, 1);
     const top = suggestions[0];
-    if (top && top.slug.toLowerCase().startsWith(stripped.toLowerCase())) {
+    if (!top) return null;
+    const lower = stripped.toLowerCase();
+    if (top.slug.toLowerCase().startsWith(lower) || top.name.toLowerCase().startsWith(lower)) {
       return top.slug;
     }
     return null;
@@ -143,6 +101,29 @@ function getProjectSuggestion(partial: string, ctx: ComposerAssistContext): stri
     if (match) return match.slug;
   }
   return ctx.projects[0]?.slug ?? null;
+}
+
+function looksLikeProjectPartial(partial: string): boolean {
+  return /^#?[a-z0-9_-]*$/i.test(partial.trim());
+}
+
+/** When the cursor is on a non-title segment that doesn't match that slot, still offer project completion. */
+function tryProjectFallbackSuggestion(
+  segmentTrimmed: string,
+  ctx: ComposerAssistContext
+): FallbackSuggestion<ComposerProperty> | null {
+  if (!segmentTrimmed || !looksLikeProjectPartial(segmentTrimmed)) return null;
+  if (matchesDateToken(segmentTrimmed)) return null;
+  if (matchesPriorityToken(segmentTrimmed) || getPrioritySuggestion(segmentTrimmed) !== null) {
+    return null;
+  }
+  if (matchCategorySegment(segmentTrimmed) !== null) return null;
+
+  const suggestion = getProjectSuggestion(segmentTrimmed, ctx);
+  if (!suggestion) return null;
+  const suggestionSuffix = computeSuggestionSuffix(segmentTrimmed, suggestion, stripOptionalHash);
+  if (!suggestionSuffix) return null;
+  return { property: "project", suggestion, suggestionSuffix };
 }
 
 // Complete a partial category name to its label (or key) when one is a prefix of
@@ -187,57 +168,43 @@ function getDefaultSuggestion(
   }
 }
 
-function getExtraSegmentSuggestion(partial: string, ctx: ComposerAssistContext): string | null {
-  return getTagSuggestion(partial, ctx.tagVocabulary ?? []);
-}
+export type BuildComposerConfigOptions = {
+  /** Property segments to expose, in order. Defaults to the full grammar. */
+  properties?: readonly ComposerProperty[];
+  /** Offer a project-slug completion in any non-title segment. Default true. */
+  projectFallback?: boolean;
+  /** Offer tag completion in trailing segments past the last property. Default true. */
+  tagSegments?: boolean;
+};
 
-function computeSuggestionSuffix(partial: string, suggestion: string): string | null {
-  if (!suggestion) return null;
-  const normalizedPartial = stripOptionalHash(partial);
-  if (!normalizedPartial) return suggestion;
-  if (suggestion.toLowerCase().startsWith(normalizedPartial.toLowerCase())) {
-    return suggestion.slice(normalizedPartial.length);
-  }
-  return null;
-}
-
-function isPropertyFilled(
-  segments: string[],
-  property: ComposerProperty,
-  projects: ProjectRef[]
-): boolean {
-  const index = COMPOSER_PROPERTY_ORDER.indexOf(property);
-  const segment = segments[index];
-  if (segment === undefined) return false;
-  return segmentMatchesProperty(segment, property, projects);
-}
-
-function buildPropertyStatuses(
-  segments: string[],
-  activeProperty: ComposerProperty | null,
-  inSemicolonMode: boolean,
-  projects: ProjectRef[]
-): Array<{ key: ComposerProperty; status: PropertyStatus }> {
-  return COMPOSER_PROPERTY_ORDER.map((key) => {
-    if (activeProperty && key === activeProperty) {
-      return { key, status: "active" as const };
-    }
-    if (key === "title") {
-      const filled = inSemicolonMode
-        ? isPropertyFilled(segments, "title", projects)
-        : segments[0]?.trim().length > 0;
-      return { key, status: filled ? ("filled" as const) : ("pending" as const) };
-    }
-    if (!inSemicolonMode) {
-      return { key, status: "pending" as const };
-    }
-    return {
-      key,
-      status: isPropertyFilled(segments, key, projects)
-        ? ("filled" as const)
-        : ("pending" as const),
-    };
-  });
+/**
+ * Build an assist config for a composer input. Callers that only support a
+ * subset of task properties (e.g. inline edit can't set a due date, backlog
+ * capture has no project/priority) pass a reduced `properties` list so the
+ * engine never ghosts an affordance the surface can't persist.
+ */
+export function buildComposerConfig(
+  ctx: ComposerAssistContext,
+  options: BuildComposerConfigOptions = {}
+): AssistConfig<ComposerProperty> {
+  const {
+    properties = COMPOSER_PROPERTY_ORDER,
+    projectFallback = true,
+    tagSegments = true,
+  } = options;
+  return {
+    order: properties,
+    matchProperty: (segment, property) => segmentMatchesProperty(segment, property, ctx.projects),
+    suggest: (property, partial) => getDefaultSuggestion(property, ctx, partial),
+    usesPartial: (property) => property !== "title",
+    normalizeForSuffix: stripOptionalHash,
+    extraSegmentSuggestion: tagSegments
+      ? (segmentTrimmed) => getTagSuggestion(segmentTrimmed, ctx.tagVocabulary ?? [])
+      : undefined,
+    fallbackSuggestion: projectFallback
+      ? (segmentTrimmed) => tryProjectFallbackSuggestion(segmentTrimmed, ctx)
+      : undefined,
+  };
 }
 
 export function getComposerAssist(
@@ -245,99 +212,7 @@ export function getComposerAssist(
   cursorInLine: number,
   ctx: ComposerAssistContext
 ): ComposerAssistState {
-  const inSemicolonMode = lineText.includes(";");
-  const segments = splitLineSegments(lineText);
-  const segmentIndex = getSegmentIndexAtCursor(lineText, cursorInLine);
-  const segmentRaw = getCurrentSegmentRaw(lineText, cursorInLine);
-  const segmentTrimmed = segmentRaw.trim();
-
-  let activeProperty: ComposerProperty = "title";
-  let suggestion: string | null = null;
-  let suggestionSuffix: string | null = null;
-
-  if (inSemicolonMode) {
-    const segmentProperty = propertyForSegmentIndex(segmentIndex);
-
-    if (segmentProperty === null) {
-      const properties = buildPropertyStatuses(segments, null, inSemicolonMode, ctx.projects);
-      const tagSuggestion = getExtraSegmentSuggestion(segmentTrimmed, ctx);
-      const tagSuffix = tagSuggestion
-        ? computeSuggestionSuffix(segmentTrimmed, tagSuggestion)
-        : null;
-      return {
-        properties,
-        activeProperty: "category",
-        suggestion: tagSuggestion,
-        suggestionSuffix: tagSuffix,
-        segmentIndex,
-        inSemicolonMode,
-      };
-    }
-
-    activeProperty = segmentProperty;
-
-    if (
-      segmentProperty !== "title" &&
-      segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects)
-    ) {
-      const advanced = nextProperty(segmentProperty);
-      if (advanced) activeProperty = advanced;
-    }
-
-    const editingProperty =
-      segmentProperty !== "title" &&
-      !segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects)
-        ? segmentProperty
-        : activeProperty !== segmentProperty &&
-            segmentIndex >= 1 &&
-            segmentIndex <= 3 &&
-            !segmentTrimmed
-          ? activeProperty
-          : null;
-
-    const suggestFor =
-      editingProperty ??
-      (segmentProperty !== "title" &&
-      !segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects)
-        ? segmentProperty
-        : null);
-
-    const propertyToSuggest = suggestFor && suggestFor !== "title" ? suggestFor : null;
-
-    if (propertyToSuggest) {
-      const partial =
-        propertyToSuggest === "project" ||
-        propertyToSuggest === "due" ||
-        propertyToSuggest === "category" ||
-        propertyToSuggest === "priority"
-          ? segmentTrimmed
-          : "";
-      suggestion = getDefaultSuggestion(propertyToSuggest, ctx, partial);
-      if (suggestion) {
-        suggestionSuffix = computeSuggestionSuffix(segmentTrimmed, suggestion);
-      }
-    }
-
-    if (
-      segmentProperty !== "title" &&
-      segmentMatchesProperty(segmentTrimmed, segmentProperty, ctx.projects) &&
-      !suggestionSuffix
-    ) {
-      suggestion = null;
-      suggestionSuffix = null;
-    }
-  }
-
-  const properties = buildPropertyStatuses(segments, activeProperty, inSemicolonMode, ctx.projects);
-
-  return {
-    properties,
-    activeProperty,
-    suggestion,
-    suggestionSuffix,
-    segmentIndex,
-    inSemicolonMode,
-  };
+  return computeAssist(lineText, cursorInLine, buildComposerConfig(ctx));
 }
 
 export function getComposerAssistFromValue(
@@ -351,8 +226,7 @@ export function getComposerAssistFromValue(
 
 /** Text to insert when accepting a suggestion (suffix only). */
 export function getAcceptInsertText(state: ComposerAssistState): string | null {
-  if (!state.suggestionSuffix) return null;
-  return state.suggestionSuffix;
+  return coreGetAcceptInsertText(state);
 }
 
 /** Whether accepting should append `; ` to advance to the next property segment. */
@@ -361,12 +235,12 @@ export function shouldAppendSemicolonAfterAccept(
   cursorInLine: number,
   state: ComposerAssistState
 ): boolean {
-  if (!state.suggestion || state.activeProperty === "title") return false;
-  if (nextProperty(state.activeProperty) === null) return false;
-  const afterInsert = lineText.slice(cursorInLine);
-  const trimmedAfter = afterInsert.trimStart();
-  if (trimmedAfter.startsWith(";")) return false;
-  return true;
+  return coreShouldAppendSemicolonAfterAccept(
+    COMPOSER_PROPERTY_ORDER,
+    lineText,
+    cursorInLine,
+    state
+  );
 }
 
 export const LAST_PROJECT_SLUG_KEY = "kash:last-project-slug";

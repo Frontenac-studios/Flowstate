@@ -1,21 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
+import { ComposerAssistInput } from "@/components/kash/composer/ComposerAssistInput";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import { Lock, withKashIcon } from "@/components/kash/ui/icon";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import Checkbox from "@/components/kash/ui/Checkbox";
-import Input from "@/components/kash/ui/Input";
 import { useToast } from "@/components/kash/ui/ToastProvider";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
+import { buildComposerConfig } from "@/lib/parser/composer-assist";
+import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
@@ -116,6 +118,30 @@ export function TaskRow({
   const [reducedMotion, setReducedMotion] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Composer autocomplete for inline edit — same grammar as capture, minus a
+  // `due` segment (tasks.update can't persist scheduledDate). Both queries are
+  // shared/cached across rows and only run once a row enters edit mode.
+  const { data: projects = [] } = useQuery({
+    ...trpc.projects.list.queryOptions(),
+    enabled: editing,
+  });
+  const { data: tagVocabulary = [] } = useQuery({
+    ...trpc.tasks.listTagVocabulary.queryOptions(),
+    enabled: editing,
+  });
+  const projectRefs = useMemo(
+    () => projects.map((p) => ({ slug: p.slug, name: p.name })),
+    [projects]
+  );
+  const editAssistConfig = useMemo(
+    () =>
+      buildComposerConfig(
+        { projects: projectRefs, tagVocabulary },
+        { properties: ["title", "priority", "project", "category"] }
+      ),
+    [projectRefs, tagVocabulary]
+  );
   // AN-T1: drives the completion choreography — category-color checkbox, struck
   // title, slide-out — set optimistically on check so it plays before the
   // server round-trip resolves.
@@ -289,28 +315,67 @@ export function TaskRow({
   };
 
   const saveTitle = () => {
-    const trimmed = editTitle.trim();
-    if (trimmed === task.title) {
-      setEditing(false);
-      setEditError(null);
-      setEditTitle(task.title);
-      return;
-    }
-    const titleError = getTaskTitleError(editTitle);
+    const parsed = parseQuickInput(editTitle, { projects: projectRefs });
+    const cleanTitle = parsed.title.trim();
+
+    const titleError = getTaskTitleError(parsed.title);
     if (titleError) {
       setEditError(titleError);
       return;
     }
+    // An unresolved `#project` shouldn't silently drop — surface it.
+    if (parsed.warnings.some((w) => w.code === "project_not_found")) {
+      setEditError("No project matches that name — check the spelling.");
+      return;
+    }
     setEditError(null);
+
+    // Recurring occurrences are virtual: only the title is editable per instance.
     if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+      if (cleanTitle === task.title) {
+        setEditing(false);
+        setEditTitle(task.title);
+        return;
+      }
       editOccurrenceMutation.mutate({
         recurrenceId: task.recurrenceId,
         occurrenceDate: task.occurrenceDate,
-        patch: { title: trimmed },
+        patch: { title: cleanTitle },
       });
       return;
     }
-    updateMutation.mutate({ id: task.id, title: trimmed });
+
+    // Grammar only ever sets properties; an absent segment leaves the existing
+    // value untouched (never clears it).
+    const priority = parsed.priority > 0 ? parsed.priority : undefined;
+    const projectId = parsed.projectSlug
+      ? (projects.find((p) => p.slug.toLowerCase() === parsed.projectSlug?.toLowerCase())?.id ??
+        undefined)
+      : undefined;
+    const category = parsed.category ?? undefined;
+    const tags = parsed.tags.length > 0 ? parsed.tags : undefined;
+
+    const titleChanged = cleanTitle !== task.title;
+    if (
+      !titleChanged &&
+      priority === undefined &&
+      projectId === undefined &&
+      category === undefined &&
+      tags === undefined
+    ) {
+      setEditing(false);
+      setEditTitle(task.title);
+      return;
+    }
+
+    updateMutation.mutate({
+      id: task.id,
+      title: cleanTitle,
+      priority,
+      projectId,
+      category,
+      tags,
+    });
   };
 
   const handleComplete = () => {
@@ -499,14 +564,15 @@ export function TaskRow({
             ) : null}
             {editing ? (
               <>
-                <Input
-                  type="text"
-                  className="w-full py-1 text-sm"
+                <ComposerAssistInput
                   value={editTitle}
+                  onChange={setEditTitle}
+                  config={editAssistConfig}
                   autoFocus
                   aria-invalid={editError != null}
+                  wrapperClassName="relative block w-full"
+                  className="kash-focus-visible w-full rounded-control border border-border bg-surface px-3 py-1 text-sm text-ink outline-none transition-shadow"
                   onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => setEditTitle(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();

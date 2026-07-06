@@ -188,4 +188,38 @@ describe("getComposerAssist", () => {
     expect(state.activeProperty).toBe("due");
     expect(shouldAppendSemicolonAfterAccept(line, line.length, state)).toBe(true);
   });
+
+  it("suggests project when slug is typed in the due slot (flexible segment order)", () => {
+    const line = "walk dog; r";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("project");
+    expect(state.suggestion).toBe("rdm");
+    expect(state.suggestionSuffix).toBe("dm");
+  });
+
+  it("suggests project when slug is typed in the priority slot", () => {
+    const line = "walk dog; today; r";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("project");
+    expect(state.suggestion).toBe("rdm");
+    expect(state.suggestionSuffix).toBe("dm");
+  });
+
+  it("completes a partial project name to its slug", () => {
+    const line = "walk dog; today; !; great";
+    const state = assist(line, line.length);
+    expect(state.activeProperty).toBe("project");
+    expect(state.suggestion).toBe("great-white-client-build");
+    expect(state.suggestionSuffix).toBe("-white-client-build");
+  });
+
+  it("prefers tag suggestions over project when both could match in extra segments", () => {
+    const line = "walk dog; today; !; rdm; relationships; urg";
+    const state = getComposerAssist(line, line.length, {
+      ...ctx,
+      tagVocabulary: ["urgent", "waiting"],
+    });
+    expect(state.suggestion).toBe("urgent");
+    expect(state.suggestionSuffix).toBe("ent");
+  });
 });
