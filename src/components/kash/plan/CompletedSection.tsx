@@ -1,10 +1,14 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useId, useState } from "react";
 
-import { Check, ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
+import Checkbox from "@/components/kash/ui/Checkbox";
+import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
+import { useToast } from "@/components/kash/ui/ToastProvider";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { useTRPC } from "@/trpc/client";
 
 const NEUTRAL_CHECK = "var(--ink-faint)";
 
@@ -22,6 +26,7 @@ function completedTime(at: Date): string {
 
 type Props = {
   completions: CompletedTaskRow[];
+  onUncomplete?: (taskId: string) => void;
 };
 
 /**
@@ -31,9 +36,38 @@ type Props = {
  * default, with a manual toggle — the day's record is there without crowding the
  * live list.
  */
-export function CompletedSection({ completions }: Props) {
+export function CompletedSection({ completions, onUncomplete }: Props) {
   const regionId = useId();
   const [collapsed, setCollapsed] = useState(true);
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [uncompletingId, setUncompletingId] = useState<string | null>(null);
+
+  const invalidatePlan = () => {
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listRecentlyCompleted.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
+  };
+
+  const uncompleteMutation = useMutation(
+    trpc.tasks.uncomplete.mutationOptions({
+      onSuccess: (row) => {
+        onUncomplete?.(row.id);
+        invalidatePlan();
+        setUncompletingId(null);
+      },
+      onError: () => {
+        setUncompletingId(null);
+        toast({ message: "Couldn't uncomplete this task. Please try again.", variant: "error" });
+      },
+    })
+  );
+
+  const handleUncomplete = (taskId: string) => {
+    setUncompletingId(taskId);
+    uncompleteMutation.mutate({ id: taskId });
+  };
 
   if (completions.length === 0) return null;
 
@@ -71,22 +105,24 @@ export function CompletedSection({ completions }: Props) {
           const resolved = task.categoryUnresolved ? null : task.category;
           const checkColor = resolved ? categorySolidVar(resolved) : NEUTRAL_CHECK;
           const label = resolved ? categoryLabel(resolved) : "No category yet";
+          const isUncompleting = uncompletingId === task.id;
           return (
             <li
               key={task.id}
-              className="flex min-h-[var(--row-min-height)] items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)]"
+              className={`flex min-h-[var(--row-min-height)] items-start gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] ${
+                isUncompleting ? "opacity-60" : ""
+              }`}
             >
-              <span
-                className="mt-0.5 flex h-icon-md w-icon-md shrink-0 items-center justify-center rounded text-white"
-                style={{ backgroundColor: checkColor }}
-                aria-label={label}
+              <Checkbox
+                className="mt-0.5"
+                accentColor={checkColor}
+                aria-label={`Uncomplete ${task.title}`}
                 title={label}
-              >
-                <Check
-                  {...kashIconProps({ tokenSize: "sm", className: "text-white" })}
-                  aria-hidden
-                />
-              </span>
+                checked
+                disabled={uncompleteMutation.isPending}
+                onClick={(e) => e.stopPropagation()}
+                onChange={() => handleUncomplete(task.id)}
+              />
               <span className="min-w-0 flex-1 break-words text-ink-faint line-through">
                 {task.title}
               </span>
