@@ -268,6 +268,26 @@ html.is-desktop[data-spacing-variant="b"] {
   animation: row-arrive var(--motion-medium) var(--ease-enter) both;
 }
 
+/* Left nav rail — label cascade on expand (reuses the gentle-calm motion tokens).
+   Labels start hidden and slide + fade in, staggered top-to-bottom, whenever an
+   ancestor nav is marked [data-expanded="true"]. Driven by the attribute (not a
+   per-instance style) so the reveal is identical everywhere the rail renders:
+   the desktop rail and the mobile drawer. Stagger is keyed off --nav-i, set per
+   label in render order. */
+.nav-cascade-item {
+  opacity: 0;
+  transform: translateX(-0.625rem);
+  transition:
+    opacity var(--motion-short) var(--ease-enter),
+    transform var(--motion-medium) var(--ease-overshoot);
+}
+
+[data-expanded="true"] .nav-cascade-item {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: calc(80ms + var(--nav-i, 0) * 40ms);
+}
+
 @keyframes plan-zoom-in {
   from {
     opacity: 0;
@@ -508,6 +528,15 @@ html.is-desktop[data-spacing-variant="b"] {
   /* AN-0c: transform-based entrances → opacity fade at --motion-short */
   .row-arrive {
     animation: row-arrive-reduce var(--motion-short) var(--ease-enter) both;
+  }
+
+  /* AN-0c: nav labels fade only — no slide, no stagger */
+  .nav-cascade-item {
+    transform: none;
+    transition: opacity var(--motion-short) var(--ease-enter);
+  }
+  [data-expanded="true"] .nav-cascade-item {
+    transition-delay: 0ms;
   }
 
   .focus-ring-arrive {
