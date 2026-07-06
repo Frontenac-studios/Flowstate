@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { taskRecurrence } from "./task-recurrence";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 export const occurrenceOverrideStatusValues = [
   "completed",
@@ -12,7 +13,9 @@ export const occurrenceOverrideStatusValues = [
 export const taskOccurrenceOverrides = sqliteTable(
   "task_occurrence_overrides",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => sqliteRowId()),
     userId: text("user_id").notNull(),
     recurrenceId: text("recurrence_id")
       .notNull()
@@ -22,8 +25,12 @@ export const taskOccurrenceOverrides = sqliteTable(
     movedToDate: text("moved_to_date"),
     patch: text("patch"),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
   },
   (table) => [
     index("task_occurrence_overrides_recurrence_date_idx").on(

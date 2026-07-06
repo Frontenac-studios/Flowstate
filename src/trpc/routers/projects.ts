@@ -396,7 +396,15 @@ export const projectsRouter = createTRPCRouter({
         });
       }
 
-      await syncProjectRow(row.id, "insert", row);
+      try {
+        await syncProjectRow(row.id, "insert", row);
+      } catch (error) {
+        console.error(
+          `[projects.create] failed to enqueue sync mutation for project ${row.id}`,
+          error instanceof Error ? { cause: error.message, stack: error.stack } : error
+        );
+        throw error;
+      }
 
       if (input.similarProjectId) {
         await upsertProjectSimilarity({

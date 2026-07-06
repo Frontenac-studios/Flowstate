@@ -25,9 +25,30 @@ const t = initTRPC.context<Awaited<ReturnType<typeof createTRPCContext>>>().crea
 
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
-export const baseProcedure = t.procedure;
 
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+/**
+ * Logs the real cause of any failed procedure. tRPC wraps thrown errors (e.g. a
+ * SQLite `NOT NULL constraint failed: …`) into a TRPCError and hides the message
+ * from the client, so without this the underlying failure is invisible on the
+ * server too. We log path/code/message/cause — never the raw input, which may
+ * contain sensitive data (see CLAUDE.md "never log secrets").
+ */
+const errorLoggingMiddleware = t.middleware(async ({ path, type, next }) => {
+  const result = await next();
+  if (!result.ok) {
+    const { error } = result;
+    const cause = error.cause;
+    console.error(
+      `[trpc] ${type} ${path} failed: ${error.code} — ${error.message}`,
+      cause instanceof Error ? { cause: cause.message, stack: cause.stack } : (cause ?? "")
+    );
+  }
+  return result;
+});
+
+export const baseProcedure = t.procedure.use(errorLoggingMiddleware);
+
+export const protectedProcedure = t.procedure.use(errorLoggingMiddleware).use(({ ctx, next }) => {
   if (!ctx.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }

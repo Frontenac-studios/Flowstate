@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { tasks } from "./tasks";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 // Offline mirror of Postgres abyss_items (kash-3.0-abyss-build-spec.md §6). Enums
 // become text columns; `links` jsonb is stored as a JSON string (see row-mapper).
@@ -11,7 +12,9 @@ export const ABYSS_ITEM_STATUS = ["active", "promoted", "archived"] as const;
 export const abyssItems = sqliteTable(
   "abyss_items",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => sqliteRowId()),
     userId: text("user_id").notNull(),
     title: text("title").notNull(),
     type: text("type", { enum: ABYSS_ITEM_TYPE }).notNull().default("idea"),
@@ -26,9 +29,15 @@ export const abyssItems = sqliteTable(
     status: text("status", { enum: ABYSS_ITEM_STATUS }).notNull().default("active"),
     resurfaceCount: integer("resurface_count").notNull().default(0),
     lastResurfacedAt: integer("last_resurfaced_at", { mode: "timestamp_ms" }),
-    lastTouchedAt: integer("last_touched_at", { mode: "timestamp_ms" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    lastTouchedAt: integer("last_touched_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
     promotedTaskId: text("promoted_task_id").references(() => tasks.id, { onDelete: "set null" }),
     promotedTarget: text("promoted_target"),
   },
