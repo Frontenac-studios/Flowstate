@@ -351,7 +351,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
           onChange={setValue}
           onCursorChange={setCursor}
           ghostSuffix={assist.suggestionSuffix}
-          placeholder="add tasks — one per line · ⌘↵ to add"
+          placeholder="add tasks — one per line · add ⌘↵"
           disabled={createTaskMutation.isPending}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}

@@ -52,4 +52,15 @@ describe("shouldShowMorningHandoff", () => {
       })
     ).toBe(false);
   });
+
+  it("yields to another blocking ritual (e.g. Monday entry)", () => {
+    expect(
+      shouldShowMorningHandoff({
+        enabled: true,
+        dismissedLocally: false,
+        seen: false,
+        blockedByOtherRitual: true,
+      })
+    ).toBe(false);
+  });
 });

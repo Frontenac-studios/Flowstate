@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 const SYNTAX_HINT =
-  "Parent//+ Child nests a sub-directory · ;;; + Phase creates directories only · one task per line · ⌘↵ to add";
+  "Parent//+ Child nests a sub-directory · ;;; + Phase creates directories only · one task per line · add ⌘↵";
 
 type Props = {
   showOnFocus?: boolean;

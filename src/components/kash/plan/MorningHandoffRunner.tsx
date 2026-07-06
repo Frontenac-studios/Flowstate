@@ -19,6 +19,7 @@ import type { HandoffPlanTask } from "@/lib/morning-handoff/handoff-task-filters
 import { useTRPC } from "@/trpc/client";
 
 import { MorningHandoffModal } from "./MorningHandoffModal";
+import { usePlanMode } from "./PlanProvider";
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
@@ -28,6 +29,7 @@ export function MorningHandoffRunner() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const localDate = useLocalCalendarDate();
+  const { mondayBlocked } = usePlanMode();
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const { opener } = useEssentialNudges();
@@ -156,8 +158,9 @@ export function MorningHandoffRunner() {
         enabled,
         dismissedLocally,
         seen: seenData?.seen,
+        blockedByOtherRitual: mondayBlocked,
       }),
-    [enabled, dismissedLocally, seenData?.seen]
+    [enabled, dismissedLocally, seenData?.seen, mondayBlocked]
   );
 
   const finish = useCallback(() => {

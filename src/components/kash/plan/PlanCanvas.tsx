@@ -6,11 +6,9 @@ import { useEffect, useState } from "react";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
 import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
-import { usePlanMode } from "./PlanProvider";
 import { DayPlanCanvas } from "./DayPlanCanvas";
 
 export function PlanCanvas() {
-  const { mondayBlocked } = usePlanMode();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const searchParams = useSearchParams();
 
@@ -35,10 +33,6 @@ export function PlanCanvas() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
-
-  if (mondayBlocked) {
-    return <div className="min-h-[50vh]" aria-hidden />;
-  }
 
   return (
     <>

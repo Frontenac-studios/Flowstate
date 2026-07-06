@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Inbox, kashIconProps } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
+import { ShortcutHint } from "@/components/kash/ui/ShortcutHint";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { useTRPC } from "@/trpc/client";
 
@@ -51,7 +52,11 @@ export function ContextualInbox() {
                 </span>
               ) : null}
             </button>
-            <span className="ml-auto hidden text-xs text-ink-muted sm:block">⌃I inbox</span>
+            <ShortcutHint
+              label="inbox"
+              keys="⌃I"
+              className="ml-auto hidden text-xs text-ink-muted sm:inline-flex"
+            />
           </div>
         ) : (
           <div className="flex max-h-[42vh] flex-col">
