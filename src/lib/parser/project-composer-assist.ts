@@ -1,21 +1,23 @@
 import { isScheduledDateToken, suggestScheduledDateToken } from "@/lib/dates/scheduled-date-input";
-import { getLineAtCursor } from "@/lib/parser/composer-assist";
 import type { PhaseRef } from "@/lib/projects/find-phase-by-name";
+
+import {
+  type AssistConfig,
+  type AssistState,
+  computeAssist,
+  getAcceptInsertText as coreGetAcceptInsertText,
+  getLineAtCursor,
+  type PropertyStatus,
+  shouldAppendSemicolonAfterAccept as coreShouldAppendSemicolonAfterAccept,
+} from "./composer-assist-core";
+
+export type { PropertyStatus };
 
 export const PROJECT_COMPOSER_PROPERTY_ORDER = ["title", "due", "priority", "parentDir"] as const;
 
 export type ProjectComposerProperty = (typeof PROJECT_COMPOSER_PROPERTY_ORDER)[number];
 
-export type PropertyStatus = "active" | "filled" | "pending";
-
-export type ProjectComposerAssistState = {
-  properties: Array<{ key: ProjectComposerProperty; status: PropertyStatus }>;
-  activeProperty: ProjectComposerProperty;
-  suggestion: string | null;
-  suggestionSuffix: string | null;
-  segmentIndex: number;
-  inSemicolonMode: boolean;
-};
+export type ProjectComposerAssistState = AssistState<ProjectComposerProperty>;
 
 export type ProjectComposerAssistContext = {
   phases: PhaseRef[];
@@ -30,6 +32,11 @@ function matchesDateToken(segment: string): boolean {
 
 function matchesPriorityToken(segment: string): boolean {
   return PRIORITY_PATTERN.test(segment.trim());
+}
+
+function getSiblingPhases(ctx: ProjectComposerAssistContext): PhaseRef[] {
+  const parentPhaseId = ctx.parentPhaseId ?? null;
+  return ctx.phases.filter((phase) => phase.parentPhaseId === parentPhaseId);
 }
 
 function matchesParentDirToken(segment: string, ctx: ProjectComposerAssistContext): boolean {
@@ -57,43 +64,6 @@ export function projectSegmentMatchesProperty(
     case "parentDir":
       return ctx ? matchesParentDirToken(segment, ctx) : trimmed.length > 0;
   }
-}
-
-function propertyForSegmentIndex(index: number): ProjectComposerProperty | null {
-  if (index <= 0) return "title";
-  if (index === 1) return "due";
-  if (index === 2) return "priority";
-  if (index === 3) return "parentDir";
-  return null;
-}
-
-function nextProperty(property: ProjectComposerProperty): ProjectComposerProperty | null {
-  const idx = PROJECT_COMPOSER_PROPERTY_ORDER.indexOf(property);
-  if (idx < 0 || idx >= PROJECT_COMPOSER_PROPERTY_ORDER.length - 1) return null;
-  return PROJECT_COMPOSER_PROPERTY_ORDER[idx + 1] ?? null;
-}
-
-function splitLineSegments(lineText: string): string[] {
-  return lineText.split(";").map((s) => s.trim());
-}
-
-function getSegmentIndexAtCursor(lineText: string, cursorInLine: number): number {
-  let segmentIndex = 0;
-  for (let i = 0; i < cursorInLine; i += 1) {
-    if (lineText[i] === ";") segmentIndex += 1;
-  }
-  return segmentIndex;
-}
-
-function getCurrentSegmentRaw(lineText: string, cursorInLine: number): string {
-  const prevSemi = lineText.lastIndexOf(";", cursorInLine - 1);
-  const segmentStart = prevSemi + 1;
-  return lineText.slice(segmentStart, cursorInLine);
-}
-
-function getSiblingPhases(ctx: ProjectComposerAssistContext): PhaseRef[] {
-  const parentPhaseId = ctx.parentPhaseId ?? null;
-  return ctx.phases.filter((phase) => phase.parentPhaseId === parentPhaseId);
 }
 
 function getParentDirSuggestion(partial: string, ctx: ProjectComposerAssistContext): string | null {
@@ -130,53 +100,23 @@ function getDefaultSuggestion(
   }
 }
 
-function computeSuggestionSuffix(partial: string, suggestion: string): string | null {
-  if (!suggestion) return null;
-  if (!partial) return suggestion;
-  if (suggestion.toLowerCase().startsWith(partial.toLowerCase())) {
-    return suggestion.slice(partial.length);
-  }
-  return null;
+function buildConfig(ctx: ProjectComposerAssistContext): AssistConfig<ProjectComposerProperty> {
+  return {
+    order: PROJECT_COMPOSER_PROPERTY_ORDER,
+    matchProperty: (segment, property) => projectSegmentMatchesProperty(segment, property, ctx),
+    suggest: (property, partial) => getDefaultSuggestion(property, ctx, partial),
+    usesPartial: (property) => property === "due" || property === "parentDir",
+    suppressSuggestion: (property, lineText) =>
+      property === "parentDir" && !parentDirSegmentSupportsCompletion(lineText),
+  };
 }
 
-function isPropertyFilled(
-  segments: string[],
-  property: ProjectComposerProperty,
+export function getProjectComposerAssist(
+  lineText: string,
+  cursorInLine: number,
   ctx: ProjectComposerAssistContext
-): boolean {
-  const index = PROJECT_COMPOSER_PROPERTY_ORDER.indexOf(property);
-  const segment = segments[index];
-  if (segment === undefined) return false;
-  if (property === "due" || property === "priority") {
-    if (!segment.trim()) return false;
-  }
-  return projectSegmentMatchesProperty(segment, property, ctx);
-}
-
-function buildPropertyStatuses(
-  segments: string[],
-  activeProperty: ProjectComposerProperty | null,
-  inSemicolonMode: boolean,
-  ctx: ProjectComposerAssistContext
-): Array<{ key: ProjectComposerProperty; status: PropertyStatus }> {
-  return PROJECT_COMPOSER_PROPERTY_ORDER.map((key) => {
-    if (activeProperty && key === activeProperty) {
-      return { key, status: "active" as const };
-    }
-    if (key === "title") {
-      const filled = inSemicolonMode
-        ? isPropertyFilled(segments, "title", ctx)
-        : segments[0]?.trim().length > 0;
-      return { key, status: filled ? ("filled" as const) : ("pending" as const) };
-    }
-    if (!inSemicolonMode) {
-      return { key, status: "pending" as const };
-    }
-    return {
-      key,
-      status: isPropertyFilled(segments, key, ctx) ? ("filled" as const) : ("pending" as const),
-    };
-  });
+): ProjectComposerAssistState {
+  return computeAssist(lineText, cursorInLine, buildConfig(ctx));
 }
 
 export function getProjectComposerAssistFromValue(
@@ -188,105 +128,9 @@ export function getProjectComposerAssistFromValue(
   return getProjectComposerAssist(lineText, cursorInLine, ctx);
 }
 
-export function getProjectComposerAssist(
-  lineText: string,
-  cursorInLine: number,
-  ctx: ProjectComposerAssistContext
-): ProjectComposerAssistState {
-  const inSemicolonMode = lineText.includes(";");
-  const segments = splitLineSegments(lineText);
-  const segmentIndex = getSegmentIndexAtCursor(lineText, cursorInLine);
-  const segmentRaw = getCurrentSegmentRaw(lineText, cursorInLine);
-  const segmentTrimmed = segmentRaw.trim();
-
-  let activeProperty: ProjectComposerProperty = "title";
-  let suggestion: string | null = null;
-  let suggestionSuffix: string | null = null;
-
-  if (inSemicolonMode) {
-    const segmentProperty = propertyForSegmentIndex(segmentIndex);
-
-    if (segmentProperty === null) {
-      const properties = buildPropertyStatuses(segments, null, inSemicolonMode, ctx);
-      return {
-        properties,
-        activeProperty: "parentDir",
-        suggestion: null,
-        suggestionSuffix: null,
-        segmentIndex,
-        inSemicolonMode,
-      };
-    }
-
-    activeProperty = segmentProperty;
-
-    if (
-      segmentProperty !== "title" &&
-      projectSegmentMatchesProperty(segmentTrimmed, segmentProperty, ctx)
-    ) {
-      const advanced = nextProperty(segmentProperty);
-      if (advanced) activeProperty = advanced;
-    }
-
-    const editingProperty =
-      segmentProperty !== "title" &&
-      !projectSegmentMatchesProperty(segmentTrimmed, segmentProperty, ctx)
-        ? segmentProperty
-        : activeProperty !== segmentProperty &&
-            segmentIndex >= 1 &&
-            segmentIndex <= 3 &&
-            !segmentTrimmed
-          ? activeProperty
-          : null;
-
-    const suggestFor =
-      editingProperty ??
-      (segmentProperty !== "title" &&
-      !projectSegmentMatchesProperty(segmentTrimmed, segmentProperty, ctx)
-        ? segmentProperty
-        : null);
-
-    const propertyToSuggest = suggestFor && suggestFor !== "title" ? suggestFor : null;
-
-    if (propertyToSuggest) {
-      const skipParentDir =
-        propertyToSuggest === "parentDir" && !parentDirSegmentSupportsCompletion(lineText);
-      if (!skipParentDir) {
-        const partial =
-          propertyToSuggest === "due" || propertyToSuggest === "parentDir" ? segmentTrimmed : "";
-        suggestion = getDefaultSuggestion(propertyToSuggest, ctx, partial);
-        if (suggestion) {
-          suggestionSuffix = computeSuggestionSuffix(segmentTrimmed, suggestion);
-        }
-      }
-    }
-
-    if (
-      segmentProperty !== "title" &&
-      projectSegmentMatchesProperty(segmentTrimmed, segmentProperty, ctx) &&
-      !suggestionSuffix
-    ) {
-      suggestion = null;
-      suggestionSuffix = null;
-    }
-  }
-
-  const properties = buildPropertyStatuses(segments, activeProperty, inSemicolonMode, ctx);
-
-  return {
-    properties,
-    activeProperty,
-    suggestion,
-    suggestionSuffix,
-    segmentIndex,
-    inSemicolonMode,
-  };
-}
-
 /** Text to insert when accepting a suggestion (suffix only). */
 export function getProjectAcceptInsertText(state: ProjectComposerAssistState): string | null {
-  if (!state.suggestionSuffix) return null;
-  return state.suggestionSuffix;
+  return coreGetAcceptInsertText(state);
 }
 
 /** Whether accepting should append `; ` to advance to the next property segment. */
@@ -295,10 +139,10 @@ export function shouldAppendSemicolonAfterProjectAccept(
   cursorInLine: number,
   state: ProjectComposerAssistState
 ): boolean {
-  if (!state.suggestion || state.activeProperty === "title") return false;
-  if (nextProperty(state.activeProperty) === null) return false;
-  const afterInsert = lineText.slice(cursorInLine);
-  const trimmedAfter = afterInsert.trimStart();
-  if (trimmedAfter.startsWith(";")) return false;
-  return true;
+  return coreShouldAppendSemicolonAfterAccept(
+    PROJECT_COMPOSER_PROPERTY_ORDER,
+    lineText,
+    cursorInLine,
+    state
+  );
 }

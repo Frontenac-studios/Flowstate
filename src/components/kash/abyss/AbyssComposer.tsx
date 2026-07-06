@@ -1,10 +1,13 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
+import { ComposerAssistInput } from "@/components/kash/composer/ComposerAssistInput";
 import { Hash, Lightbulb, Plus, SquareCheck, X, withKashIcon } from "@/components/kash/ui/icon";
 import { useToast } from "@/components/kash/ui/ToastProvider";
+import { buildComposerConfig } from "@/lib/parser/composer-assist";
+import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
@@ -39,8 +42,39 @@ export default function AbyssComposer() {
   const [tags, setTags] = useState<string[]>([]);
   const [isSinking, setIsSinking] = useState(false);
 
+  const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
+  const { data: tagVocabulary = [] } = useQuery(trpc.tasks.listTagVocabulary.queryOptions());
+
+  const projectRefs = useMemo(
+    () => projects.map((p) => ({ slug: p.slug, name: p.name })),
+    [projects]
+  );
+
+  // Backlog items carry only a title, category and tags — expose exactly those
+  // composer segments (no project/priority/due, which abyss.create can't store).
+  const assistConfig = useMemo(
+    () =>
+      buildComposerConfig(
+        { projects: projectRefs, tagVocabulary },
+        { properties: ["title", "category"], projectFallback: false }
+      ),
+    [projectRefs, tagVocabulary]
+  );
+
+  const parsed = useMemo(
+    () => parseQuickInput(title, { projects: projectRefs }),
+    [title, projectRefs]
+  );
+
+  // Merge grammar-parsed category/tags with the chip selections below.
+  const effectiveCategory = parsed.category ?? category;
+  const effectiveTags = useMemo(
+    () => Array.from(new Set([...tags, ...parsed.tags])),
+    [tags, parsed.tags]
+  );
+
   const embedAndStore = useAbyssEmbedding();
-  const suggested = useAbyssTagSuggest(title, tags);
+  const suggested = useAbyssTagSuggest(parsed.title, effectiveTags);
 
   const createMutation = useMutation(
     trpc.abyss.create.mutationOptions({
@@ -61,13 +95,18 @@ export default function AbyssComposer() {
     })
   );
 
-  const trimmed = title.trim();
-  const canSubmit = trimmed.length > 0 && !createMutation.isPending;
+  const cleanTitle = parsed.title.trim();
+  const canSubmit = cleanTitle.length > 0 && !createMutation.isPending;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSubmit) return;
-    createMutation.mutate({ title: trimmed, type, category, tags });
+    createMutation.mutate({
+      title: cleanTitle,
+      type,
+      category: effectiveCategory,
+      tags: effectiveTags,
+    });
   };
 
   const TypeToggle = ({
@@ -100,12 +139,15 @@ export default function AbyssComposer() {
       className={`flex flex-col gap-2.5 rounded-card border border-abyss-border bg-abyss-surface p-2.5 ${isSinking ? "abyss-park-sink" : ""}`}
     >
       <div className="flex items-center gap-2">
-        <input
+        <ComposerAssistInput
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={setTitle}
+          config={assistConfig}
           placeholder="Park an idea or task in the deep…"
           maxLength={200}
-          className={`min-w-0 flex-1 bg-transparent text-body text-abyss-ink placeholder:text-abyss-ink-faint ${ABYSS_INPUT_FOCUS}`}
+          wrapperClassName="relative block min-w-0 flex-1"
+          className={`w-full bg-transparent text-body text-abyss-ink placeholder:text-abyss-ink-faint ${ABYSS_INPUT_FOCUS}`}
+          ghostClassName="italic text-abyss-ink-faint"
           aria-label="New abyss item"
         />
         <button
