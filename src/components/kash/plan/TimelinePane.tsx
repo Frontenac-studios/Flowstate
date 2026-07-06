@@ -91,6 +91,21 @@ function TimelineSlot({ min, top }: { min: number; top: number }) {
   );
 }
 
+/** Drop on the live "now" line to block + start focus immediately. */
+function TimelineNowDrop({ nowMin, rangeStart }: { nowMin: number; rangeStart: number }) {
+  const { setNodeRef, isOver } = useDroppable({ id: "timeline:now" });
+  const centerTop = ((nowMin - rangeStart) / 60) * HOUR_HEIGHT;
+  const slotHeight = (SLOT_MINUTES / 60) * HOUR_HEIGHT;
+  return (
+    <div
+      ref={setNodeRef}
+      className={`absolute left-11 right-1 z-sticky rounded ${isOver ? "bg-[var(--accent-soft)]" : ""}`}
+      style={{ top: centerTop - slotHeight, height: slotHeight * 2 }}
+      title="Drop to start focus now"
+    />
+  );
+}
+
 type BlockProps = {
   block: ReturnType<typeof layoutBlocks<Block>>[number];
   rangeStart: number;
@@ -838,6 +853,8 @@ export function TimelinePane({
                 <span>drops the next block here</span>
               </div>
             ) : null}
+
+            {showNowLine ? <TimelineNowDrop nowMin={nowMinutes!} rangeStart={rangeStart} /> : null}
 
             {showNowLine ? (
               <div
