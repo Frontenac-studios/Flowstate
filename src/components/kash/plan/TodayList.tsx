@@ -77,7 +77,7 @@ export function TodayList({
   return (
     <section
       ref={setNodeRef}
-      className={`mt-6 ${
+      className={`mt-section ${
         pulse ? "kash-section-pulse rounded-[var(--radius-card)]" : ""
       } ${isOver ? "kash-section-drop-target rounded-[var(--radius-card)]" : ""}`}
       aria-labelledby="today-heading"

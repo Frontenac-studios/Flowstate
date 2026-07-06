@@ -19,7 +19,7 @@ export function AppShell({
         {proactiveNudges ? <ProactiveNudgesRunner /> : null}
         <EphemeralCelebrationHost />
         <div className="relative min-h-screen">
-          <div className="kash-shell-inner relative z-sticky mx-auto flex min-h-screen w-full max-w-[110rem] gap-6 px-4 py-6 sm:px-6 lg:px-10">
+          <div className="kash-shell-inner relative z-sticky mx-auto flex min-h-screen w-full max-w-[110rem]">
             <LeftNavRail />
             <div className="flex min-w-0 flex-1 flex-col">
               <AppHeader />

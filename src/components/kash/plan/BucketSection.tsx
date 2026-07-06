@@ -60,7 +60,9 @@ export function BucketSection({
   const showBody = !collapsed && hasTasks;
 
   return (
-    <section className={`mt-6 ${pulse ? "kash-section-pulse rounded-[var(--radius-card)]" : ""}`}>
+    <section
+      className={`mt-section ${pulse ? "kash-section-pulse rounded-[var(--radius-card)]" : ""}`}
+    >
       <button
         ref={setNodeRef}
         type="button"

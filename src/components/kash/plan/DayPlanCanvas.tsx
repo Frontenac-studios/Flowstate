@@ -601,9 +601,9 @@ export function DayPlanCanvas() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-stack">
         <section
-          className="flex flex-col gap-4 rounded-card border border-subtle bg-surface px-5 py-4"
+          className="flex flex-col gap-stack rounded-card border border-subtle bg-surface px-card-x py-card-y"
           aria-label="Today summary"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -658,7 +658,7 @@ export function DayPlanCanvas() {
         {view === "review" ? (
           <TodayReviewPanel localDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
         ) : (
-          <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="flex flex-col gap-stack lg:flex-row">
             {view === "list" ? (
               <div className="min-w-0 flex-1 lg:basis-0">
                 <div className="mb-3">

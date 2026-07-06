@@ -74,7 +74,7 @@ export default function WeekPlanView({ breadcrumb }: Props) {
 
   return (
     <PlanProvider>
-      <div className="mx-auto flex max-w-[880px] flex-col gap-4">
+      <div className="mx-auto flex max-w-[880px] flex-col gap-stack">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <PlanModeToggle variant="weekPlanning" value={planRailOpen} onChange={setPlanRailOpen} />
         </div>

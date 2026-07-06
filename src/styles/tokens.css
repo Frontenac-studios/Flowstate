@@ -162,6 +162,55 @@
   --ease-breath: cubic-bezier(0.37, 0, 0.63, 1);
   --motion-celebrate: 540ms;
   --breath-pulse: 2400ms;
+
+  /* ---- layout spacing (web defaults — match current Tailwind literals) ---- */
+  --nav-rail-width: 4rem;
+  --nav-rail-width-expanded: 11rem;
+  --nav-item-height: 3rem;
+  --shell-gap: 1.5rem;
+  --shell-pad-x: 1rem;
+  --shell-pad-x-sm: 1.5rem;
+  --shell-pad-x-lg: 2.5rem;
+  --shell-pad-y: 1.5rem;
+  --shell-sticky-top: 1.5rem;
+  --stack-gap: 1rem;
+  --section-gap: 1.5rem;
+  --header-gap: 1.5rem;
+  --card-pad-x: 1.25rem;
+  --card-pad-y: 1rem;
+  --chat-rail-width: 22rem;
+}
+
+/* Desktop (Tauri) — rail-scaled spacing; variant A is default. Toggle variant B via
+   data-spacing-variant="b" on <html> (dev preview at /dev/spacing-preview). */
+html.is-desktop {
+  --nav-rail-width: 3rem;
+  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 2.75);
+  --nav-item-height: calc(var(--nav-rail-width) * 0.75);
+  --shell-gap: calc(var(--nav-rail-width) * 0.5);
+  --shell-pad: calc(var(--nav-rail-width) * 0.5);
+  --shell-pad-x: var(--shell-pad);
+  --shell-pad-x-sm: var(--shell-pad);
+  --shell-pad-x-lg: var(--shell-pad);
+  --shell-pad-y: var(--shell-pad);
+  --shell-sticky-top: var(--shell-pad-y);
+  --stack-gap: calc(var(--nav-rail-width) * 0.375);
+  --section-gap: calc(var(--nav-rail-width) * 0.375);
+  --header-gap: var(--section-gap);
+  --card-pad-x: calc(var(--nav-rail-width) * 0.417);
+  --card-pad-y: calc(var(--nav-rail-width) * 0.417);
+  --chat-rail-width: calc(var(--nav-rail-width) * 7);
+}
+
+html.is-desktop[data-spacing-variant="b"] {
+  --nav-rail-width: 4rem;
+  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 2.75);
+  --shell-gap: calc(var(--nav-rail-width) * 0.3125);
+  --shell-pad: calc(var(--nav-rail-width) * 0.3125);
+  --card-pad-x: calc(var(--nav-rail-width) * 0.25);
+  --card-pad-y: calc(var(--nav-rail-width) * 0.25);
+  --stack-gap: calc(var(--nav-rail-width) * 0.3125);
+  --section-gap: calc(var(--nav-rail-width) * 0.3125);
 }
 
 @keyframes row-arrive {

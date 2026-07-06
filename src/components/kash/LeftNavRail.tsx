@@ -83,13 +83,13 @@ function NavLink({
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
       title={item.label}
-      className={`flex h-12 items-center rounded-control pr-2 transition ${NAV_LINK_FOCUS} ${
+      className={`flex h-nav-item items-center rounded-control pr-2 transition ${NAV_LINK_FOCUS} ${
         active
           ? "bg-[var(--surface-selected)] text-ink"
           : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
       }`}
     >
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center">
+      <span className="flex h-nav-item w-nav-rail shrink-0 items-center justify-center">
         <Icon {...NAV_ICON_PROPS} />
       </span>
       <span
@@ -194,8 +194,8 @@ export function LeftNavRail() {
   return (
     <>
       <div
-        className={`sticky top-6 z-sticky hidden h-[calc(100vh-3rem)] shrink-0 transition-[width] duration-200 lg:block ${
-          pinned ? "w-44" : "w-16"
+        className={`top-shell sticky z-sticky hidden h-[calc(100vh-var(--shell-pad-y)*2)] shrink-0 transition-[width] duration-200 lg:block ${
+          pinned ? "w-nav-rail-expanded" : "w-nav-rail"
         }`}
       >
         <nav
@@ -205,7 +205,7 @@ export function LeftNavRail() {
           onFocus={() => setPeek(true)}
           onBlur={() => setPeek(false)}
           className={`absolute inset-y-0 left-0 z-sticky flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
-            expanded ? "w-44" : "w-16"
+            expanded ? "w-nav-rail-expanded" : "w-nav-rail"
           } ${
             expanded && !pinned
               ? "rounded-card border border-subtle bg-surface shadow-overlay"
@@ -250,7 +250,7 @@ export function LeftNavRail() {
           />
           <nav
             aria-label="Primary"
-            className="fixed inset-y-3 left-3 z-modal flex w-44 flex-col gap-1 overflow-y-auto rounded-card border border-border bg-surface p-3 shadow-overlay lg:hidden"
+            className="fixed inset-y-3 left-3 z-modal flex w-nav-rail-expanded flex-col gap-1 overflow-y-auto rounded-card border border-border bg-surface p-3 shadow-overlay lg:hidden"
           >
             <div className="mb-1 flex h-8 items-center px-1">
               <span

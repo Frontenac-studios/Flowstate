@@ -33,10 +33,33 @@ a:not([class]) {
   }
 }
 
+/* App shell — spacing from layout tokens (web responsive; desktop overrides in tokens.css). */
+.kash-shell-inner {
+  gap: var(--shell-gap);
+  padding-bottom: var(--shell-pad-y);
+  padding-left: var(--shell-pad-x);
+  padding-right: var(--shell-pad-x);
+  padding-top: var(--shell-pad-y);
+}
+
+@media (min-width: 640px) {
+  .kash-shell-inner {
+    padding-left: var(--shell-pad-x-sm);
+    padding-right: var(--shell-pad-x-sm);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kash-shell-inner {
+    padding-left: var(--shell-pad-x-lg);
+    padding-right: var(--shell-pad-x-lg);
+  }
+}
+
 /* Desktop (Tauri) parity: the frameless window uses titleBarStyle "Overlay", so
    the macOS traffic lights float over the top-left of the content. Add clearance
    above the shell so the left rail's top controls aren't covered. `is-desktop`
    is applied to <html> only inside the Tauri runtime, so web is unaffected. */
 html.is-desktop .kash-shell-inner {
-  padding-top: 2.25rem;
+  padding-top: max(var(--shell-pad-y), 2.25rem);
 }

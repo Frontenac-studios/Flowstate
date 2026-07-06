@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 
 import { AppBackdrop } from "@/components/kash/AppBackdrop";
 import { DesktopRuntimeFlag } from "@/components/kash/DesktopRuntimeFlag";
+import { SpacingVariantInit } from "@/components/kash/dev/SpacingVariantInit";
 import { TRPCReactProvider } from "@/trpc/client";
 
 import "./globals.css";
@@ -48,6 +49,7 @@ export default function RootLayout({
       >
         <AppBackdrop />
         <DesktopRuntimeFlag />
+        {process.env.NODE_ENV === "development" ? <SpacingVariantInit /> : null}
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>

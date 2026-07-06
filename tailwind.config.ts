@@ -90,12 +90,17 @@ const config: Config = {
         "icon-md": "var(--icon-md)",
         "icon-lg": "var(--icon-lg)",
         "icon-xl": "var(--icon-xl)",
+        "nav-rail": "var(--nav-rail-width)",
+        "nav-rail-expanded": "var(--nav-rail-width-expanded)",
+        "chat-rail": "var(--chat-rail-width)",
       },
       height: {
         "icon-sm": "var(--icon-sm)",
         "icon-md": "var(--icon-md)",
         "icon-lg": "var(--icon-lg)",
         "icon-xl": "var(--icon-xl)",
+        "kash-row": "var(--kash-row-min-height)",
+        "nav-item": "var(--nav-item-height)",
       },
       minWidth: {
         "icon-sm": "var(--icon-sm)",
@@ -125,6 +130,21 @@ const config: Config = {
       padding: {
         "kash-task-y": "var(--kash-task-row-py)",
         "kash-task-y-compact": "var(--kash-task-row-py-compact)",
+        "card-x": "var(--card-pad-x)",
+        "card-y": "var(--card-pad-y)",
+      },
+      margin: {
+        section: "var(--section-gap)",
+        header: "var(--header-gap)",
+        stack: "var(--stack-gap)",
+      },
+      gap: {
+        shell: "var(--shell-gap)",
+        stack: "var(--stack-gap)",
+        section: "var(--section-gap)",
+      },
+      top: {
+        shell: "var(--shell-sticky-top)",
       },
       transitionDuration: {
         micro: "var(--motion-micro)",
