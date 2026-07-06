@@ -502,11 +502,11 @@ export function WeekCanvas({
 
           <div
             ref={dayScrollRef}
-            className="week-day-scroll mt-4 overflow-x-auto rounded-card p-2"
+            className="week-day-scroll mt-stack overflow-x-auto rounded-card p-2"
             style={{ backgroundColor: WEEK_CANVAS_BG }}
           >
             <div
-              className="flex gap-2"
+              className="flex gap-stack"
               style={{ width: `${(dayCount / VISIBLE_DAY_COUNT) * 100}%` }}
             >
               {weekDates.map((date, index) => {

@@ -23,7 +23,7 @@ export function AppHeader() {
   return (
     <header
       data-tauri-drag-region
-      className="mb-6 flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface px-4 py-3 text-ink shadow-overlay"
+      className="mb-header flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface px-card-x py-card-y text-ink shadow-overlay"
     >
       <IconButton
         type="button"

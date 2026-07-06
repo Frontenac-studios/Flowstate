@@ -34,7 +34,7 @@ export function ContextualInbox() {
 
   return (
     <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
-      <div className="mb-4 overflow-hidden rounded-card border border-border bg-surface shadow-overlay">
+      <div className="mb-stack overflow-hidden rounded-card border border-border bg-surface shadow-overlay">
         {!open ? (
           <div className="flex items-center gap-2 px-4 py-2">
             <button
