@@ -70,6 +70,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
     trpc.projects.create.mutationOptions({
       onSuccess: handleCreated,
       onError: (err) => {
+        console.error("[NewProjectForm] projects.create failed", err);
         setError(
           err.data?.code === "CONFLICT"
             ? "A project with that name already exists."
@@ -83,6 +84,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
     trpc.projects.createFromTemplate.mutationOptions({
       onSuccess: handleCreated,
       onError: (err) => {
+        console.error("[NewProjectForm] projects.createFromTemplate failed", err);
         setError(
           err.data?.code === "CONFLICT"
             ? "A project with that name already exists."

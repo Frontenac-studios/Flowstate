@@ -1,11 +1,14 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { tasks } from "./tasks";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 // Offline mirror of Postgres task_dependencies (Phase 3). expires_at nullable:
 // null = durable project edge, set = window edge (read-time guard ignores expired).
 export const taskDependencies = sqliteTable("task_dependencies", {
-  id: text("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => sqliteRowId()),
   userId: text("user_id").notNull(),
   blockerTaskId: text("blocker_task_id")
     .notNull()
@@ -14,6 +17,10 @@ export const taskDependencies = sqliteTable("task_dependencies", {
     .notNull()
     .references(() => tasks.id, { onDelete: "cascade" }),
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => sqliteNow()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => sqliteNow()),
 });

@@ -1,9 +1,12 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { tasks } from "./tasks";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 export const focusBlocks = sqliteTable("focus_blocks", {
-  id: text("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => sqliteRowId()),
   userId: text("user_id").notNull(),
   taskId: text("task_id")
     .notNull()
@@ -12,6 +15,10 @@ export const focusBlocks = sqliteTable("focus_blocks", {
   startMin: integer("start_min").notNull(),
   endMin: integer("end_min").notNull(),
   status: text("status").notNull().default("planned"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => sqliteNow()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => sqliteNow()),
 });

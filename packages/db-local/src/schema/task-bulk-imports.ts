@@ -2,18 +2,25 @@ import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlit
 
 import { projects } from "./projects";
 import { tasks } from "./tasks";
+import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 export const taskBulkImports = sqliteTable(
   "task_bulk_imports",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => sqliteRowId()),
     userId: text("user_id").notNull(),
     projectId: text("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
     taskCount: integer("task_count").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
     undoneAt: integer("undone_at", { mode: "timestamp_ms" }),
   },
   (table) => [
@@ -35,7 +42,9 @@ export const taskBulkImportItems = sqliteTable(
       .notNull()
       .references(() => tasks.id, { onDelete: "cascade" }),
     userId: text("user_id").notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => sqliteNow()),
   },
   (table) => [
     primaryKey({ columns: [table.importId, table.taskId] }),

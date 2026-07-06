@@ -1,11 +1,8 @@
 import { TRPCError } from "@trpc/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
-import { AppShell } from "@/components/kash/AppShell";
 import ImportHistoryView from "@/components/kash/projects/ImportHistoryView";
 import type { ProjectDetail } from "@/components/kash/projects/types";
-import { isAuthBypassed } from "@/lib/auth/auth-bypass";
-import { createClient } from "@/lib/supabase/server";
 import { getTRPCCaller } from "@/trpc/server";
 
 type Props = {
@@ -14,14 +11,6 @@ type Props = {
 
 export default async function ProjectImportsPage({ params }: Props) {
   const { id } = await params;
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user && !isAuthBypassed()) {
-    redirect("/login");
-  }
 
   const caller = await getTRPCCaller();
   let project: ProjectDetail;
@@ -38,9 +27,5 @@ export default async function ProjectImportsPage({ params }: Props) {
     throw error;
   }
 
-  return (
-    <AppShell>
-      <ImportHistoryView projectId={project.id} projectName={project.name} />
-    </AppShell>
-  );
+  return <ImportHistoryView projectId={project.id} projectName={project.name} />;
 }

@@ -9,10 +9,10 @@ import {
   Calendar,
   Compass,
   Folder,
+  GalleryVerticalEnd,
   kashIconProps,
   Pin,
   SlidersHorizontal,
-  Sparkles,
   Sprout,
   Sun,
 } from "@/components/kash/ui/icon";
@@ -47,7 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Reflect & plan",
     items: [
       { href: "/plan", label: "Plan", icon: Compass, match: ["/plan"] },
-      { href: "/backlog", label: "Backlog", icon: Sparkles, match: ["/backlog"] },
+      { href: "/backlog", label: "Backlog", icon: GalleryVerticalEnd, match: ["/backlog"] },
       { href: "/care", label: "Care", icon: Sprout, match: ["/care"] },
     ],
   },
@@ -67,26 +67,32 @@ const NAV_LINK_FOCUS = "focus:outline-none focus-visible:bg-ink focus-visible:te
 function NavLink({
   item,
   active,
+  pending,
   expanded,
   index,
-  onClick,
+  onSelect,
 }: {
   item: NavItem;
   active: boolean;
+  pending: boolean;
   expanded: boolean;
   index: number;
-  onClick?: () => void;
+  onSelect?: (href: string) => void;
 }) {
   const Icon = item.icon;
+  // `pending` highlights the just-clicked item immediately, before the
+  // destination commits, so repeated clicks feel acknowledged.
+  const highlighted = active || pending;
   return (
     <Link
       href={item.href}
-      onClick={onClick}
+      onClick={() => onSelect?.(item.href)}
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
+      aria-busy={pending || undefined}
       title={item.label}
       className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : "justify-center"} ${NAV_LINK_FOCUS} ${
-        active
+        highlighted
           ? "bg-[var(--surface-selected)] text-ink"
           : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
       }`}
@@ -113,11 +119,13 @@ function NavLink({
 function NavSections({
   expanded,
   isActive,
-  onNavigate,
+  isPending,
+  onSelect,
 }: {
   expanded: boolean;
   isActive: (item: NavItem) => boolean;
-  onNavigate?: () => void;
+  isPending: (item: NavItem) => boolean;
+  onSelect?: (href: string) => void;
 }) {
   const settingsIndex = NAV_GROUPS.reduce((count, group) => count + group.items.length, 0);
   return (
@@ -143,9 +151,10 @@ function NavSections({
                 key={item.href}
                 item={item}
                 active={isActive(item)}
+                pending={isPending(item)}
                 expanded={expanded}
                 index={indexOffset + itemIndex}
-                onClick={onNavigate}
+                onSelect={onSelect}
               />
             ))}
           </Fragment>
@@ -156,9 +165,10 @@ function NavSections({
         <NavLink
           item={SETTINGS_ITEM}
           active={isActive(SETTINGS_ITEM)}
+          pending={isPending(SETTINGS_ITEM)}
           expanded={expanded}
           index={settingsIndex}
-          onClick={onNavigate}
+          onSelect={onSelect}
         />
       </div>
     </>
@@ -170,6 +180,7 @@ export function LeftNavRail() {
   const [pinned, setPinned] = useState(false);
   const [peek, setPeek] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   useEffect(() => {
     setPinned(readNavRailPinned());
@@ -183,7 +194,14 @@ export function LeftNavRail() {
 
   useEffect(() => {
     setMobileOpen(false);
+    // Destination committed — drop the optimistic pending highlight.
+    setPendingHref(null);
   }, [pathname]);
+
+  const onSelect = (href: string) => {
+    setPendingHref(href);
+    setMobileOpen(false);
+  };
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -199,6 +217,8 @@ export function LeftNavRail() {
   const isActive = (item: NavItem) =>
     item.match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 
+  const isPending = (item: NavItem) => pendingHref === item.href && !isActive(item);
+
   const togglePinned = () => {
     setPinned((prev) => {
       const next = !prev;
@@ -210,7 +230,7 @@ export function LeftNavRail() {
   return (
     <>
       <div
-        className={`top-shell sticky z-sticky hidden h-[calc(100vh-var(--shell-pad-y)*2)] shrink-0 transition-[width] duration-200 lg:block ${
+        className={`top-shell sticky z-sticky hidden h-full shrink-0 transition-[width] duration-200 lg:block ${
           pinned ? "w-nav-rail-expanded" : "w-nav-rail"
         }`}
       >
@@ -256,7 +276,12 @@ export function LeftNavRail() {
             ) : null}
           </div>
 
-          <NavSections expanded={expanded} isActive={isActive} />
+          <NavSections
+            expanded={expanded}
+            isActive={isActive}
+            isPending={isPending}
+            onSelect={onSelect}
+          />
         </nav>
       </div>
 
@@ -289,7 +314,7 @@ export function LeftNavRail() {
               </IconButton>
             </div>
 
-            <NavSections expanded isActive={isActive} onNavigate={() => setMobileOpen(false)} />
+            <NavSections expanded isActive={isActive} isPending={isPending} onSelect={onSelect} />
           </nav>
         </>
       ) : null}
