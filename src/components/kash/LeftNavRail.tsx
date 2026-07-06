@@ -83,19 +83,25 @@ function NavLink({
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
       title={item.label}
-      className={`flex h-nav-item items-center rounded-control pr-2 transition ${NAV_LINK_FOCUS} ${
+      className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : "justify-center"} ${NAV_LINK_FOCUS} ${
         active
           ? "bg-[var(--surface-selected)] text-ink"
           : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
       }`}
     >
-      <span className="flex h-nav-item w-nav-rail shrink-0 items-center justify-center">
+      <span
+        className={`flex h-nav-item shrink-0 items-center justify-center ${
+          expanded ? "w-nav-rail" : "w-full"
+        }`}
+      >
         <Icon {...NAV_ICON_PROPS} />
       </span>
       <span
-        className={`whitespace-nowrap text-sm font-medium transition-opacity duration-150 ${
-          expanded ? "opacity-100" : "opacity-0"
-        }`}
+        className={
+          expanded
+            ? "whitespace-nowrap text-sm font-medium opacity-100 transition-opacity duration-150"
+            : "sr-only"
+        }
       >
         {item.label}
       </span>
@@ -212,29 +218,31 @@ export function LeftNavRail() {
               : "rounded-card border border-subtle bg-surface"
           }`}
         >
-          <div className="mb-1 flex h-8 items-center px-1">
+          <div
+            className={`mb-1 flex h-8 items-center ${expanded ? "justify-between px-1" : "justify-center"}`}
+          >
             <span
               className="select-none text-base font-semibold tracking-tight text-ink"
               aria-hidden
             >
               K
             </span>
-            <button
-              type="button"
-              onClick={togglePinned}
-              aria-pressed={pinned}
-              aria-label={pinned ? "Unpin navigation" : "Pin navigation"}
-              title={pinned ? "Unpin navigation" : "Pin navigation"}
-              className={`ml-auto flex h-8 w-8 items-center justify-center rounded-control transition ${NAV_LINK_FOCUS} ${
-                expanded ? "opacity-100" : "pointer-events-none opacity-0"
-              } ${
-                pinned
-                  ? "bg-[var(--surface-selected)] text-ink"
-                  : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
-              }`}
-            >
-              <Pin {...kashIconProps({ tokenSize: "md" })} />
-            </button>
+            {expanded ? (
+              <button
+                type="button"
+                onClick={togglePinned}
+                aria-pressed={pinned}
+                aria-label={pinned ? "Unpin navigation" : "Pin navigation"}
+                title={pinned ? "Unpin navigation" : "Pin navigation"}
+                className={`flex h-8 w-8 items-center justify-center rounded-control transition ${NAV_LINK_FOCUS} ${
+                  pinned
+                    ? "bg-[var(--surface-selected)] text-ink"
+                    : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
+                }`}
+              >
+                <Pin {...kashIconProps({ tokenSize: "md" })} />
+              </button>
+            ) : null}
           </div>
 
           <NavSections expanded={expanded} isActive={isActive} />

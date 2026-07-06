@@ -416,8 +416,8 @@ export function FocusCanvas() {
             )}
           </button>
           <span className="flex items-center gap-1.5 text-caption text-ink-faint">
+            <span>Exit</span>
             <KeyCap>Esc</KeyCap>
-            <span>to exit</span>
           </span>
         </div>
       </div>

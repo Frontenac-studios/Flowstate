@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 
+import Button from "@/components/kash/ui/Button";
+import { RitualSheet } from "@/components/kash/ui/RitualSheet";
+
 import { usePlanMode } from "./PlanProvider";
 
 export function MondayEntryModal() {
@@ -18,36 +21,32 @@ export function MondayEntryModal() {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center bg-black/20 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="monday-entry-title"
-    >
-      <div className="max-w-md rounded-card border border-border bg-surface p-8 text-center shadow-overlay">
-        <h2 id="monday-entry-title" className="text-xl font-semibold text-ink">
-          Good morning — plan the week or dive into today?
-        </h2>
-        <p className="mt-3 text-sm text-ink-muted">
-          Choose how you want to start Monday. You can switch anytime from the sidebar.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <button
-            type="button"
-            className="rounded-pill border-[1.5px] border-ink bg-surface px-6 py-2.5 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
-            onClick={planTheWeek}
-          >
+    <RitualSheet
+      open
+      title="Good morning"
+      dismissOnBackdrop={false}
+      footer={
+        <div className="flex flex-col gap-[var(--space-2)] sm:flex-row sm:justify-end">
+          <Button type="button" variant="primary" className="text-body" onClick={planTheWeek}>
             Plan the week
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="rounded-pill border border-border bg-surface px-6 py-2.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+            variant="ghost"
+            className="text-body"
             onClick={() => resolveMondayChoice("today")}
           >
             Jump into today
-          </button>
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-[var(--space-3)]">
+        <p className="text-body font-medium text-ink">Plan the week or dive into today?</p>
+        <p className="text-body text-ink-muted">
+          Choose how you want to start Monday. You can switch anytime from the sidebar.
+        </p>
       </div>
-    </div>
+    </RitualSheet>
   );
 }

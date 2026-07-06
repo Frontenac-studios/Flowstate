@@ -231,7 +231,7 @@ export default function NewItemRow({
       />
 
       <p className="mt-1.5 text-xs text-ink-muted">
-        Enter for new line · ⌘↵ to add tasks
+        Enter for new line · add tasks ⌘↵
         {!cursorOnPlusParentDirLine && assist?.suggestionSuffix ? " · ⇥ accept suggestion" : null}
         {isBusy ? " · Adding…" : null}
       </p>
