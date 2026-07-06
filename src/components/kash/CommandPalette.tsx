@@ -7,7 +7,7 @@ import Input from "@/components/kash/ui/Input";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
-import { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
+import { DECIDE_EVENT, OPEN_ABYSS_CAPTURE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
 
 export { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
 
@@ -74,6 +74,13 @@ export function CommandPalette() {
         hint: "Focus",
         keywords: "random pick rdm",
         run: () => window.dispatchEvent(new CustomEvent(DECIDE_EVENT)),
+      },
+      {
+        id: "quick-capture",
+        label: "Quick-capture to Backlog",
+        hint: "⌘⇧A",
+        keywords: "abyss capture park idea note backlog deep",
+        run: () => window.dispatchEvent(new CustomEvent(OPEN_ABYSS_CAPTURE_EVENT)),
       },
     ],
     [router]

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import Button from "@/components/kash/ui/Button";
 import { isProjectComplete } from "@/lib/projects/is-project-complete";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
@@ -26,7 +27,12 @@ type IndexViewMode = "gallery" | "calendar";
 export default function ProjectsIndex() {
   const trpc = useTRPC();
   const router = useRouter();
-  const { data: projects, isLoading } = useQuery(trpc.projects.list.queryOptions());
+  const {
+    data: projects,
+    isLoading,
+    isError,
+    refetch: refetchProjects,
+  } = useQuery(trpc.projects.list.queryOptions());
   const { data: looseByCategory = [] } = useQuery(
     trpc.projects.listLooseTaskCountsByCategory.queryOptions()
   );
@@ -107,6 +113,11 @@ export default function ProjectsIndex() {
 
       {indexView === "calendar" ? (
         <MultiProjectCalendarView />
+      ) : isError ? (
+        <QueryErrorNotice
+          message="Your projects didn't load."
+          onRetry={() => void refetchProjects()}
+        />
       ) : isLoading ? (
         <div
           className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"

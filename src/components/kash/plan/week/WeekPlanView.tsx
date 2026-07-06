@@ -9,6 +9,7 @@ import { LensControlBar } from "@/components/kash/plan/LensControlBar";
 import { LensProvider } from "@/components/kash/plan/LensProvider";
 import { PlanModeToggle } from "@/components/kash/plan/PlanModeToggle";
 import { PlanProvider } from "@/components/kash/plan/PlanProvider";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import type { PlanningBreadcrumb } from "@/lib/planning/horizon-storage";
 import { resolveWeekAnchorDate } from "@/lib/planning/week-breadcrumb";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
@@ -50,14 +51,14 @@ export default function WeekPlanView({ breadcrumb }: Props) {
     prevPlanRailRef.current = planRailOpen;
   }, [planRailOpen, triggerBalancePass, breadcrumb, anchorDate]);
 
-  const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const tasksQuery = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const tasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data]);
   const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
-  const { data: protectedBlocks = [] } = useQuery(
-    trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
-  );
-  const { data: dayPriorities = [] } = useQuery(
-    trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
-  );
+  const blocksQuery = useQuery(trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput));
+  const protectedBlocks = blocksQuery.data ?? [];
+  const prioritiesQuery = useQuery(trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput));
+  const dayPriorities = prioritiesQuery.data ?? [];
+  const isError = tasksQuery.isError || blocksQuery.isError || prioritiesQuery.isError;
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
   const weekDateIsos = useMemo(() => datesInIsoWeek(weekRef).map(toISODateString), [weekRef]);
   const hasInboxTasks = partitioned.inbox.length > 0;
@@ -80,6 +81,17 @@ export default function WeekPlanView({ breadcrumb }: Props) {
         </div>
 
         <LensProvider scope="this-week">
+          {isError ? (
+            <QueryErrorNotice
+              message="This week didn't load."
+              onRetry={() => {
+                void tasksQuery.refetch();
+                void blocksQuery.refetch();
+                void prioritiesQuery.refetch();
+              }}
+            />
+          ) : null}
+
           {hasWeekPlanData ? (
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <LensControlBar />

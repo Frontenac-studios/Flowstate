@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { buildPhaseTree } from "@/lib/projects/phase-tree";
 import { isProjectComplete } from "@/lib/projects/is-project-complete";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { useTRPC } from "@/trpc/client";
 
 import CalendarBoardView from "./CalendarBoardView";
@@ -64,6 +65,7 @@ export default function ProjectWorkspace({
   }, [tasksQuery.data]);
 
   const isLoading = phasesQuery.isLoading || tasksQuery.isLoading;
+  const isError = phasesQuery.isError || tasksQuery.isError;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -87,6 +89,14 @@ export default function ProjectWorkspace({
 
       {isLoading ? (
         <p className="text-ink-muted">Loading project…</p>
+      ) : isError ? (
+        <QueryErrorNotice
+          message="This project's board didn't load."
+          onRetry={() => {
+            void phasesQuery.refetch();
+            void tasksQuery.refetch();
+          }}
+        />
       ) : viewMode === "columns" ? (
         <MillerColumnsView
           tree={tree}

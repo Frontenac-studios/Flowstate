@@ -52,6 +52,14 @@ export default function ReservedDaysPanel({ year, month, reservedDays }: Props) 
 
   const canAdd = reservedDays.length < 2;
 
+  // Bound the manual date picker to this month so a reserved day can't resolve
+  // to a date outside the month it belongs to.
+  const monthStr = String(month).padStart(2, "0");
+  const monthMin = `${year}-${monthStr}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const monthMax = `${year}-${monthStr}-${String(lastDay).padStart(2, "0")}`;
+  const pickWithinMonth = pickDate >= monthMin && pickDate <= monthMax;
+
   return (
     <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
       <div className="flex items-center justify-between gap-2">
@@ -128,12 +136,14 @@ export default function ReservedDaysPanel({ year, month, reservedDays }: Props) 
                       <input
                         type="date"
                         value={pickDate}
+                        min={monthMin}
+                        max={monthMax}
                         onChange={(e) => setPickDate(e.target.value)}
                         className="rounded-control border border-subtle px-2 py-1 text-sm"
                       />
                       <button
                         type="button"
-                        disabled={!pickDate || resolveMutation.isPending}
+                        disabled={!pickDate || !pickWithinMonth || resolveMutation.isPending}
                         onClick={() =>
                           resolveMutation.mutate({ id: day.id, resolvedDate: pickDate })
                         }

@@ -95,6 +95,10 @@ export default function ReservedDayGhosts({ year, month, hasUnresolvedReservedDa
         ) : null}
       </div>
 
+      {suggestMutation.isSuccess && ghostItems.length === 0 ? (
+        <p className="text-caption text-ink-muted">No dates to suggest right now.</p>
+      ) : null}
+
       {ghostItems.length > 0 ? (
         <GhostedAccept
           items={ghostItems}

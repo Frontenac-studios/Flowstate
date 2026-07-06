@@ -283,9 +283,13 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
             onClick={() => suggestBreakdownMutation.mutate({ goalId: goal.id })}
             className="text-caption text-ink-muted transition hover:text-ink disabled:opacity-40"
           >
-            AI break down
+            {suggestBreakdownMutation.isPending ? "Breaking down…" : "AI break down"}
           </button>
         </div>
+
+        {suggestBreakdownMutation.isSuccess && ghostItems.length === 0 ? (
+          <p className="text-caption text-ink-muted">No milestones to suggest right now.</p>
+        ) : null}
 
         {ghostItems.length > 0 ? (
           <GhostedAccept

@@ -3,7 +3,10 @@
 import EssentialNudgeChip from "@/components/kash/nudges/EssentialNudgeChip";
 import { useEssentialNudges } from "@/hooks/useEssentialNudges";
 
-/** Mount inside ChatProvider on /today, /plan, and /today/focus. */
+/**
+ * Essential-nudge chip runner. Mounted via `AppShell proactiveNudges` on
+ * /today, /plan and /care, and directly in the /today/focus layout.
+ */
 export function ProactiveNudgesRunner() {
   const { chip, dismiss, handleAction } = useEssentialNudges();
 

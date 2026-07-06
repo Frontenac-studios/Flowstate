@@ -151,6 +151,7 @@ function DailyWinSlotRow({
           value={manualDraft}
           onChange={(e) => setManualDraft(e.target.value)}
           placeholder="Something good from today…"
+          maxLength={500}
           className="w-full text-sm"
           onKeyDown={(e) => {
             if (e.key === "Escape") {

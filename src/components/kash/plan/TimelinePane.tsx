@@ -640,6 +640,9 @@ export function TimelinePane({
     allDayProtected.length > 0;
   const showSyncBadge = syncStatus === "on" || syncStatus === "error";
   const showAsRail = density === "rail" && !railExpanded;
+  // A day with nothing scheduled, blocked, protected, or completed — the grid
+  // would otherwise render as bare hour lines with no guidance.
+  const isDayEmpty = !showTimelineChrome && untimedCompletions.length === 0;
 
   const openFocus = (taskId: string, blockId: string) => {
     router.push(`/today/focus?${new URLSearchParams({ taskId, blockId }).toString()}`);
@@ -856,6 +859,16 @@ export function TimelinePane({
 
             {showNowLine ? <TimelineNowDrop nowMin={nowMinutes!} rangeStart={rangeStart} /> : null}
 
+            {isDayEmpty ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
+                <p className="max-w-[16rem] text-center text-caption text-ink-muted">
+                  Nothing scheduled yet. Drag a task onto the timeline to block time, or press{" "}
+                  <kbd className="rounded border border-border bg-surface-2 px-1 font-sans">⌘D</kbd>{" "}
+                  to drop the next block.
+                </p>
+              </div>
+            ) : null}
+
             {showNowLine ? (
               <div
                 className="pointer-events-none absolute inset-x-0 z-sticky flex items-center"
@@ -888,7 +901,7 @@ export function TimelinePane({
         ) : null}
       </div>
 
-      {blocks.length === 0 ? (
+      {blocks.length === 0 && !isDayEmpty ? (
         <p className="mt-3 text-center text-xs text-ink-muted">Drag a task here to block 45 min.</p>
       ) : null}
     </section>

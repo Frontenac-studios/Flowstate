@@ -17,6 +17,7 @@ import {
   monthAssignmentPayload,
   type QuarterGoalFields,
 } from "@/lib/planning/quarter-goals";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { monthsForQuarter } from "@/lib/planning/quarter-months";
 import { detectQuarterNeglected } from "@/lib/planning/year-heat";
 import type { ProjectCategory } from "@/lib/projects/categories";
@@ -145,26 +146,35 @@ export default function QuarterView({ year, quarter, onZoomMonth }: Props) {
           hasUnassignedGoals={unassignedGoals.length > 0}
         />
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {months.map((month) => (
-            <MonthColumn
-              key={month}
-              month={month}
-              goals={goalsByMonth.get(month) ?? []}
-              selectedGoalId={selectedGoalId}
-              onAssignSelected={() => {
-                if (selectedGoalId) assignGoalToMonth(selectedGoalId, month);
-              }}
-              onZoomMonth={onZoomMonth ? () => onZoomMonth(month) : undefined}
-            />
-          ))}
-        </div>
+        {goalsQuery.isError ? (
+          <QueryErrorNotice
+            message="This quarter's goals didn't load."
+            onRetry={() => void goalsQuery.refetch()}
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {months.map((month) => (
+                <MonthColumn
+                  key={month}
+                  month={month}
+                  goals={goalsByMonth.get(month) ?? []}
+                  selectedGoalId={selectedGoalId}
+                  onAssignSelected={() => {
+                    if (selectedGoalId) assignGoalToMonth(selectedGoalId, month);
+                  }}
+                  onZoomMonth={onZoomMonth ? () => onZoomMonth(month) : undefined}
+                />
+              ))}
+            </div>
 
-        <QuarterUnassignedTray
-          goals={unassignedGoals}
-          selectedGoalId={selectedGoalId}
-          onSelectGoal={setSelectedGoalId}
-        />
+            <QuarterUnassignedTray
+              goals={unassignedGoals}
+              selectedGoalId={selectedGoalId}
+              onSelectGoal={setSelectedGoalId}
+            />
+          </>
+        )}
       </div>
     </DndContext>
   );
