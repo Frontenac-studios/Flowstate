@@ -213,6 +213,37 @@ html.is-desktop[data-spacing-variant="b"] {
   --section-gap: calc(var(--nav-rail-width) * 0.3125);
 }
 
+@keyframes focus-ring-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes focus-ring-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.92;
+  }
+}
+
+.focus-ring-arrive {
+  animation: focus-ring-arrive var(--motion-medium) var(--ease-enter) both;
+}
+
+.focus-ring-breathe {
+  animation: focus-ring-breathe 4s var(--ease-enter) infinite;
+}
+
 @keyframes row-arrive {
   from {
     opacity: 0;
@@ -477,6 +508,14 @@ html.is-desktop[data-spacing-variant="b"] {
   /* AN-0c: transform-based entrances → opacity fade at --motion-short */
   .row-arrive {
     animation: row-arrive-reduce var(--motion-short) var(--ease-enter) both;
+  }
+
+  .focus-ring-arrive {
+    animation: row-arrive-reduce var(--motion-short) var(--ease-enter) both;
+  }
+
+  .focus-ring-breathe {
+    animation: none !important;
   }
 
   .plan-zoom-enter {

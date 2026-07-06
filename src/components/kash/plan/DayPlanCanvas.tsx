@@ -61,6 +61,26 @@ import { useChat } from "../chat/ChatProvider";
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
 
 const DEFAULT_FOCUS_BLOCK_MIN = 45;
+const TIMELINE_SNAP_MINUTES = 15;
+
+function snapNowToSlot(): number {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return Math.round(nowMin / TIMELINE_SNAP_MINUTES) * TIMELINE_SNAP_MINUTES;
+}
+
+function overlapsNow(startMin: number, durationMin: number): boolean {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return nowMin >= startMin && nowMin < startMin + durationMin;
+}
+
+function timelineDropStartMin(overId: string): number | null {
+  if (overId === "timeline:now") return snapNowToSlot();
+  if (!overId.startsWith("timeline:")) return null;
+  const startMin = Number(overId.slice("timeline:".length));
+  return Number.isNaN(startMin) ? null : startMin;
+}
 
 /** Today's main-area views (VF redesign): the list, the full-width schedule, or the day review. */
 type TodayView = "list" | "calendar" | "review";
@@ -546,8 +566,8 @@ export function DayPlanCanvas() {
     // Moving an existing focus block onto a timeline slot.
     if (activeId.startsWith("block:")) {
       if (!overId.startsWith("timeline:")) return;
-      const startMin = Number(overId.slice("timeline:".length));
-      if (Number.isNaN(startMin)) return;
+      const startMin = timelineDropStartMin(overId);
+      if (startMin == null) return;
       const blockId = activeId.slice("block:".length);
       if (validateFocusSlot(todayIso, startMin, DEFAULT_FOCUS_BLOCK_MIN)) {
         moveBlockMutation.mutate({ id: blockId, startMin });
@@ -574,10 +594,22 @@ export function DayPlanCanvas() {
     }
 
     if (overId.startsWith("timeline:")) {
-      const startMin = Number(overId.slice("timeline:".length));
-      if (Number.isNaN(startMin)) return;
+      const startMin = timelineDropStartMin(overId);
+      if (startMin == null) return;
       if (validateFocusSlot(todayIso, startMin, DEFAULT_FOCUS_BLOCK_MIN)) {
-        createBlockMutation.mutate({ taskId, date: todayIso, startMin });
+        const droppedOnNow = overId === "timeline:now";
+        const shouldOpenFocus = droppedOnNow || overlapsNow(startMin, DEFAULT_FOCUS_BLOCK_MIN);
+        createBlockMutation.mutate(
+          { taskId, date: todayIso, startMin },
+          {
+            onSuccess: (block) => {
+              if (shouldOpenFocus) {
+                const params = new URLSearchParams({ taskId, blockId: block.id });
+                router.push(`/today/focus?${params.toString()}`);
+              }
+            },
+          }
+        );
       }
       return;
     }

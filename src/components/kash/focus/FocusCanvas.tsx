@@ -8,8 +8,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, kashIconProps } from "@/components/kash/ui/icon";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { triggerEphemeralCelebration } from "@/components/kash/mechanics/EphemeralCelebration";
+import { useFocusSession } from "@/hooks/useFocusSession";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
+import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { setOsDoNotDisturb } from "@/lib/about-me/os-dnd";
+import { resolveFocusWorkDurationSeconds } from "@/lib/focus/resolve-focus-duration";
 import {
   categoryFillVar,
   categorySeedLabel,
@@ -17,31 +20,22 @@ import {
   categoryTextVar,
 } from "@/lib/projects/category-tokens";
 import { pickRdmTask } from "@/lib/rdm/pick-task";
+import { playFocusChime } from "@/lib/sound/play-chime";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
-import { priorityMeta } from "@/lib/tasks/priority";
 import { useTRPC } from "@/trpc/client";
 
+import { FocusTimerRing } from "./FocusTimerRing";
 import { timeString } from "./timeString";
 
 type ExitReason = "done" | "park" | "esc";
-
-function priorityDots(priority: number) {
-  const meta = priorityMeta(priority);
-  if (meta.dots === 0) return null;
-  return (
-    <span className="inline-flex items-center gap-0.5" aria-label={`Priority ${meta.label}`}>
-      {Array.from({ length: meta.dots }, (_, i) => (
-        <span key={i} className={`h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
-      ))}
-    </span>
-  );
-}
 
 export function FocusCanvas() {
   const trpc = useTRPC();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const localDate = useLocalCalendarDate();
+  const todayIso = localDate;
 
   const taskId = searchParams.get("taskId");
   const blockId = searchParams.get("blockId");
@@ -51,6 +45,14 @@ export function FocusCanvas() {
   );
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+  const { data: blocks = [] } = useQuery(
+    trpc.focusBlocks.listForDate.queryOptions({ date: todayIso })
+  );
+
+  const block = useMemo(
+    () => (blockId ? (blocks.find((b) => b.id === blockId) ?? null) : null),
+    [blockId, blocks]
+  );
 
   const triageIds = useMemo(() => new Set(triageTasks.map((t) => t.id)), [triageTasks]);
   const task = useMemo(() => {
@@ -59,24 +61,24 @@ export function FocusCanvas() {
   }, [taskId, tasks]);
 
   const lastWasLargeRef = useRef(false);
-  const [seconds, setSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [doneFlash, setDoneFlash] = useState<string | null>(null);
   const [dndApplied, setDndApplied] = useState(false);
   const [exiting, setExiting] = useState(false);
-  // Inline error — /today/focus (FocusLayout) has no ToastProvider.
   const [exitError, setExitError] = useState<string | null>(null);
+  const [sessionElapsedSeconds, setSessionElapsedSeconds] = useState(0);
 
-  const { mutateAsync: startTimeEntry } = useMutation(trpc.timeEntries.start.mutationOptions());
-  const { mutateAsync: endTimeEntry } = useMutation(trpc.timeEntries.end.mutationOptions());
   const completeMutation = useMutation(trpc.tasks.complete.mutationOptions());
   const completeBlockMutation = useMutation(trpc.focusBlocks.complete.mutationOptions());
 
   const resetSessionUi = useCallback(() => {
-    setSeconds(0);
     setDoneFlash(null);
     setIsPaused(false);
+    setSessionElapsedSeconds(0);
   }, []);
+
+  const { mutateAsync: startTimeEntry } = useMutation(trpc.timeEntries.start.mutationOptions());
+  const { mutateAsync: endTimeEntry } = useMutation(trpc.timeEntries.end.mutationOptions());
 
   const entryIdRef = useFocusTimeEntry({
     taskId,
@@ -84,40 +86,88 @@ export function FocusCanvas() {
     onSessionStart: resetSessionUi,
   });
 
-  const endSession = useCallback(
-    async (reason: ExitReason) => {
-      // When paused there is no running entry — the prior segment is already
-      // closed, so we just complete the exit without ending anything.
+  const startWorkEntry = useCallback(async () => {
+    if (!taskId || entryIdRef.current) return;
+    const { entryId } = await startTimeEntry({ taskId });
+    entryIdRef.current = entryId;
+  }, [startTimeEntry, taskId, entryIdRef]);
+
+  const endWorkEntry = useCallback(
+    async (reason: ExitReason | "pause") => {
       if (!entryIdRef.current) return;
-      await endTimeEntry({ entryId: entryIdRef.current, reason });
+      const id = entryIdRef.current;
       entryIdRef.current = null;
+      await endTimeEntry({ entryId: id, reason });
     },
     [endTimeEntry, entryIdRef]
   );
 
-  // The clock only advances while a segment is running.
+  const handleWorkSegmentEnd = useCallback(() => {
+    playFocusChime({ notificationsEnabled: settings?.notificationsEnabled });
+    void endWorkEntry("pause");
+    setIsPaused(true);
+  }, [endWorkEntry, settings?.notificationsEnabled]);
+
+  const resolvedWorkSeconds = useMemo(() => {
+    if (!task) return resolveFocusWorkDurationSeconds({});
+    return resolveFocusWorkDurationSeconds({
+      blockStartMin: block?.startMin,
+      blockEndMin: block?.endMin,
+      timeEstimateMinutes: task.timeEstimateMinutes,
+    });
+  }, [task, block]);
+
+  const {
+    phase,
+    workTotalSeconds,
+    workRemainingSeconds,
+    breakTotalSeconds,
+    breakRemainingSeconds,
+    workElapsedSeconds,
+    setWorkDuration,
+    setBreakDuration,
+    skipBreak,
+    continueWork,
+    resetForNewTask,
+  } = useFocusSession({
+    initialWorkSeconds: resolvedWorkSeconds,
+    isPaused,
+    onWorkSegmentEnd: handleWorkSegmentEnd,
+  });
+
+  const lastInitKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!taskId || isPaused) return;
-    const id = window.setInterval(() => setSeconds((s) => s + 1), 1000);
+    if (!taskId || !task) return;
+    const key = `${taskId}:${blockId ?? ""}:${resolvedWorkSeconds}`;
+    if (lastInitKeyRef.current === key) return;
+    lastInitKeyRef.current = key;
+    resetForNewTask(resolvedWorkSeconds);
+    resetSessionUi();
+  }, [taskId, task, blockId, resolvedWorkSeconds, resetForNewTask, resetSessionUi]);
+
+  useEffect(() => {
+    if (!taskId) return;
+    const id = window.setInterval(() => setSessionElapsedSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, [taskId, isPaused]);
+  }, [taskId]);
 
   const handlePause = useCallback(async () => {
-    if (doneFlash || isPaused || !taskId) return;
+    if (doneFlash || isPaused || !taskId || phase !== "work") return;
     setIsPaused(true);
-    if (entryIdRef.current) {
-      const id = entryIdRef.current;
-      entryIdRef.current = null;
-      await endTimeEntry({ entryId: id, reason: "pause" });
-    }
-  }, [doneFlash, isPaused, taskId, endTimeEntry, entryIdRef]);
+    await endWorkEntry("pause");
+  }, [doneFlash, isPaused, taskId, phase, endWorkEntry]);
 
   const handleResume = useCallback(async () => {
-    if (doneFlash || !isPaused || !taskId) return;
+    if (doneFlash || !isPaused || !taskId || phase !== "work") return;
     setIsPaused(false);
-    const { entryId } = await startTimeEntry({ taskId });
-    entryIdRef.current = entryId;
-  }, [doneFlash, isPaused, taskId, startTimeEntry, entryIdRef]);
+    await startWorkEntry();
+  }, [doneFlash, isPaused, taskId, phase, startWorkEntry]);
+
+  const handleContinueAfterBreak = useCallback(async () => {
+    continueWork();
+    setIsPaused(false);
+    await startWorkEntry();
+  }, [continueWork, startWorkEntry]);
 
   const rollNext = useCallback(
     async (excludeTaskId?: string) => {
@@ -180,16 +230,13 @@ export function FocusCanvas() {
 
     setExiting(true);
     setExitError(null);
-    setDoneFlash(`✓ done in ${Math.max(1, Math.round(seconds / 60))}m`);
-    if (seconds >= 60 || blockId) triggerEphemeralCelebration("focus-done");
+    setDoneFlash(`✓ done in ${Math.max(1, Math.round(workElapsedSeconds / 60))}m`);
+    if (workElapsedSeconds >= 60 || blockId) triggerEphemeralCelebration("focus-done");
 
     try {
-      // Finish timing first so the DB records the "session", then complete the task.
-      await endSession("done");
+      await endWorkEntry("done");
       await completeMutation.mutateAsync({ id: task.id });
 
-      // If we came from a timeline block, mark it done (the session above already
-      // recorded the actual time — no extra time entry is created here).
       if (blockId) {
         await completeBlockMutation.mutateAsync({ id: blockId });
       }
@@ -201,8 +248,6 @@ export function FocusCanvas() {
 
       window.setTimeout(() => void rollNext(task.id), 1000);
     } catch {
-      // Roll back the optimistic flash and let the user retry rather than
-      // silently leaving the task un-completed.
       setDoneFlash(null);
       setExiting(false);
       setExitError("Couldn't finish this task. Please try again.");
@@ -213,10 +258,10 @@ export function FocusCanvas() {
     completeMutation,
     doneFlash,
     exiting,
-    endSession,
+    endWorkEntry,
     queryClient,
     rollNext,
-    seconds,
+    workElapsedSeconds,
     task,
     trpc.tasks.listIncomplete,
     trpc.tasks.listTop3Slots,
@@ -229,28 +274,27 @@ export function FocusCanvas() {
     setExiting(true);
     setExitError(null);
     try {
-      await endSession("park");
+      await endWorkEntry("park");
       router.push("/today");
     } catch {
       setExiting(false);
       setExitError("Couldn't park the session. Please try again.");
     }
-  }, [doneFlash, exiting, endSession, router]);
+  }, [doneFlash, exiting, endWorkEntry, router]);
 
   const handleEsc = useCallback(async () => {
     if (doneFlash || exiting) return;
     setExiting(true);
     setExitError(null);
     try {
-      await endSession("esc");
+      await endWorkEntry("esc");
       router.push("/today");
     } catch {
       setExiting(false);
       setExitError("Couldn't exit the session. Please try again.");
     }
-  }, [doneFlash, exiting, endSession, router]);
+  }, [doneFlash, exiting, endWorkEntry, router]);
 
-  // Keyboard shortcuts.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!taskId) return;
@@ -271,162 +315,215 @@ export function FocusCanvas() {
 
   if (!taskId) {
     return (
-      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
-        <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
-        <p className="mt-2 text-ink-muted">No task selected. Returning to your plan.</p>
-        <div className="mt-5">
-          <button
-            type="button"
-            className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
-            onClick={() => router.push("/today")}
-          >
-            Back to plan
-          </button>
-        </div>
-      </section>
+      <FocusEmptyState
+        message="No task selected. Returning to your plan."
+        onBack={() => router.push("/today")}
+      />
     );
   }
 
   if (tasksPending) {
-    return (
-      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
-        <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
-        <p className="mt-2 text-ink-muted">Loading…</p>
-      </section>
-    );
+    return <FocusEmptyState message="Loading…" />;
   }
 
   if (!task) {
     return (
-      <section className="rounded-card border border-subtle bg-surface p-6 text-center">
-        <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
-        <p className="mt-2 text-ink-muted">Task not found. Returning to your plan.</p>
-        <div className="mt-5">
-          <button
-            type="button"
-            className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
-            onClick={() => router.push("/today")}
-          >
-            Back to plan
-          </button>
-        </div>
-      </section>
+      <FocusEmptyState
+        message="Task not found. Returning to your plan."
+        onBack={() => router.push("/today")}
+      />
     );
   }
 
   const showCategory = !task.categoryUnresolved;
+  const workDurationEditable =
+    phase === "work" && (isPaused || workRemainingSeconds === workTotalSeconds);
 
   return (
-    <section
-      key={taskId}
-      className="row-arrive relative overflow-hidden rounded-card border border-subtle bg-surface"
-    >
-      <div className="flex min-h-[440px] flex-col sm:flex-row">
-        <div className="flex flex-1 flex-col p-7 sm:p-8">
-          <span className="text-caption text-ink-faint">Focus session</span>
+    <div key={taskId} className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <div className="row-arrive flex min-h-0 flex-1 flex-col p-8 lg:p-12">
+        <span className="text-caption text-ink-faint">Focus session</span>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span
+            className="h-4 w-[var(--stripe-width)] shrink-0 rounded-full"
+            style={{
+              backgroundColor: showCategory ? categorySolidVar(task.category) : "var(--ink-faint)",
+            }}
+            aria-hidden
+          />
+          {showCategory ? (
             <span
-              className="h-4 w-[var(--stripe-width)] shrink-0 rounded-full"
+              className="rounded-chip px-2 py-0.5 text-caption"
               style={{
-                backgroundColor: showCategory
-                  ? categorySolidVar(task.category)
-                  : "var(--ink-faint)",
+                backgroundColor: categoryFillVar(task.category),
+                color: categoryTextVar(task.category),
               }}
-              aria-hidden
-            />
-            {showCategory ? (
-              <span
-                className="rounded-chip px-2 py-0.5 text-caption"
-                style={{
-                  backgroundColor: categoryFillVar(task.category),
-                  color: categoryTextVar(task.category),
-                }}
-              >
-                {categorySeedLabel(task.category)}
-              </span>
-            ) : null}
-            {task.isTop3 ? (
-              <span
-                className="rounded-chip border border-subtle px-2 py-0.5 text-caption text-ink"
-                aria-label="Top 3"
-              >
-                ★ Top 3
-              </span>
-            ) : null}
-          </div>
-
-          <h1 className="mt-4 text-2xl font-medium leading-snug text-ink">{task.title}</h1>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-meta text-ink-muted">
-            {task.projectSlug ? (
-              task.projectId ? (
-                <Link href={`/projects/${task.projectId}`} className="transition hover:text-ink">
-                  #{task.projectSlug}
-                </Link>
-              ) : (
-                <span>#{task.projectSlug}</span>
-              )
-            ) : null}
-            {task.priority > 0 ? priorityDots(task.priority) : null}
-          </div>
-
-          <div className="mt-auto flex items-center gap-3 pt-8">
-            <button
-              type="button"
-              onClick={() => void handleDone()}
-              className="inline-flex items-center gap-2 rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
-              disabled={doneFlash !== null || exiting}
             >
-              Done
-              <KeyCap>⌘↵</KeyCap>
-            </button>
-            <button
-              type="button"
-              onClick={() => void handlePark()}
-              className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
-              disabled={doneFlash !== null || exiting}
+              {categorySeedLabel(task.category)}
+            </span>
+          ) : null}
+          {task.isTop3 ? (
+            <span
+              className="rounded-chip border border-subtle px-2 py-0.5 text-caption text-ink"
+              aria-label="Top 3"
             >
-              Park
-            </button>
-          </div>
-          {exitError ? (
-            <p className="mt-3 text-sm text-critical" role="alert">
-              {exitError}
-            </p>
+              ★ Top 3
+            </span>
           ) : null}
         </div>
 
-        <div className="flex w-full flex-col items-center justify-center gap-5 border-t border-subtle bg-surface-2 p-8 sm:w-[46%] sm:border-l sm:border-t-0">
-          <span className="text-caption tracking-[0.12em] text-ink-faint">{dndLabel}</span>
-          <div className="font-mono text-6xl font-medium tabular-nums text-ink">
-            {timeString(seconds)}
+        <h1 className="mt-4 text-2xl font-medium leading-snug text-ink lg:text-3xl">
+          {task.title}
+        </h1>
+
+        {task.projectSlug ? (
+          <div className="mt-3 text-meta text-ink-muted">
+            {task.projectId ? (
+              <Link href={`/projects/${task.projectId}`} className="transition hover:text-ink">
+                #{task.projectSlug}
+              </Link>
+            ) : (
+              <span>#{task.projectSlug}</span>
+            )}
           </div>
+        ) : null}
+
+        <div className="mt-auto flex flex-wrap items-center gap-3 pt-8">
           <button
             type="button"
-            onClick={() => void (isPaused ? handleResume() : handlePause())}
-            disabled={doneFlash !== null}
-            aria-label={isPaused ? "Resume" : "Pause"}
-            className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-ink text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
+            onClick={() => void handleDone()}
+            className="inline-flex items-center gap-2 rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+            disabled={doneFlash !== null || exiting}
           >
-            {isPaused ? (
-              <Play {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
-            ) : (
-              <Pause {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
-            )}
+            Done
+            <KeyCap>⌘↵</KeyCap>
           </button>
-          <span className="flex items-center gap-1.5 text-caption text-ink-faint">
-            <span>Exit</span>
-            <KeyCap>Esc</KeyCap>
-          </span>
+          <button
+            type="button"
+            onClick={() => void handlePark()}
+            className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+            disabled={doneFlash !== null || exiting}
+          >
+            Park
+          </button>
         </div>
+        {exitError ? (
+          <p className="mt-3 text-sm text-critical" role="alert">
+            {exitError}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex min-h-[280px] w-full flex-col items-center justify-center gap-5 border-t border-subtle bg-surface-2 p-8 lg:min-h-0 lg:w-[42%] lg:border-l lg:border-t-0">
+        {phase === "work" ? (
+          <>
+            <FocusTimerRing
+              remainingSeconds={workRemainingSeconds}
+              totalSeconds={workTotalSeconds}
+              onDurationCommit={setWorkDuration}
+              label={dndLabel}
+              elapsedWorkSeconds={workElapsedSeconds}
+              showElapsed
+              durationEditable={workDurationEditable}
+            />
+            <button
+              type="button"
+              onClick={() => void (isPaused ? handleResume() : handlePause())}
+              disabled={doneFlash !== null}
+              aria-label={isPaused ? "Resume" : "Pause"}
+              className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-ink text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
+            >
+              {isPaused ? (
+                <Play {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
+              ) : (
+                <Pause {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
+              )}
+            </button>
+          </>
+        ) : null}
+
+        {phase === "break" ? (
+          <>
+            <FocusTimerRing
+              remainingSeconds={breakRemainingSeconds}
+              totalSeconds={breakTotalSeconds}
+              onDurationCommit={setBreakDuration}
+              label="BREAK · Take a break"
+              durationEditable
+            />
+            <p className="max-w-xs text-center text-caption text-ink-muted">
+              Session {timeString(sessionElapsedSeconds)} — work time pauses during breaks.
+            </p>
+            <button
+              type="button"
+              onClick={skipBreak}
+              className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink"
+            >
+              Skip break
+            </button>
+          </>
+        ) : null}
+
+        {phase === "postBreak" ? (
+          <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+            <p className="text-subtitle font-medium text-ink">Ready for another block?</p>
+            <p className="text-caption text-ink-muted">
+              {Math.max(1, Math.round(workElapsedSeconds / 60))} min worked · session{" "}
+              {timeString(sessionElapsedSeconds)}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleContinueAfterBreak()}
+                className="rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
+              >
+                Continue
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDone()}
+                className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+                disabled={doneFlash !== null || exiting}
+              >
+                Done
+              </button>
+              <button
+                type="button"
+                onClick={() => void handlePark()}
+                className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+                disabled={doneFlash !== null || exiting}
+              >
+                Park
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {doneFlash ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-ink">
+        <div className="pointer-events-none fixed inset-x-0 bottom-8 z-sticky text-center text-lg text-ink">
           {doneFlash}
         </div>
       ) : null}
-    </section>
+    </div>
+  );
+}
+
+function FocusEmptyState({ message, onBack }: { message: string; onBack?: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <h2 className="text-subtitle font-medium text-ink">Focus mode</h2>
+      <p className="text-ink-muted">{message}</p>
+      {onBack ? (
+        <button
+          type="button"
+          className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+          onClick={onBack}
+        >
+          Back to plan
+        </button>
+      ) : null}
+    </div>
   );
 }
