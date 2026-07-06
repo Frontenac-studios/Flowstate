@@ -9,10 +9,10 @@ import {
   Calendar,
   Compass,
   Folder,
+  GalleryVerticalEnd,
   kashIconProps,
   Pin,
   SlidersHorizontal,
-  Sparkles,
   Sprout,
   Sun,
 } from "@/components/kash/ui/icon";
@@ -47,7 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Reflect & plan",
     items: [
       { href: "/plan", label: "Plan", icon: Compass, match: ["/plan"] },
-      { href: "/backlog", label: "Backlog", icon: Sparkles, match: ["/backlog"] },
+      { href: "/backlog", label: "Backlog", icon: GalleryVerticalEnd, match: ["/backlog"] },
       { href: "/care", label: "Care", icon: Sprout, match: ["/care"] },
     ],
   },
