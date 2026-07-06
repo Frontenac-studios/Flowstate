@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/kash/AppShell";
-import ProjectsIndex from "@/components/kash/projects/ProjectsIndex";
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ProjectsPage() {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
   const {
     data: { user },
@@ -15,9 +14,5 @@ export default async function ProjectsPage() {
     redirect("/login");
   }
 
-  return (
-    <AppShell>
-      <ProjectsIndex />
-    </AppShell>
-  );
+  return <AppShell>{children}</AppShell>;
 }

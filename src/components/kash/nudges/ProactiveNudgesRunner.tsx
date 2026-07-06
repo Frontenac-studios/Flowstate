@@ -1,13 +1,30 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import EssentialNudgeChip from "@/components/kash/nudges/EssentialNudgeChip";
 import { useEssentialNudges } from "@/hooks/useEssentialNudges";
 
 /**
- * Essential-nudge chip runner. Mounted via `AppShell proactiveNudges` on
- * /today, /plan and /care, and directly in the /today/focus layout.
+ * Proactive nudges are only surfaced on the planning-focused surfaces:
+ * /today (incl. /today/focus), /plan, and /care. The runner self-gates on the
+ * current path so it can be mounted unconditionally inside the shared AppShell —
+ * the nudge-evaluation hook only runs when the path is enabled.
  */
+const NUDGE_PATH_PREFIXES = ["/today", "/plan", "/care"];
+
 export function ProactiveNudgesRunner() {
+  const pathname = usePathname();
+  const enabled = NUDGE_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
+  if (!enabled) return null;
+
+  return <ActiveNudges />;
+}
+
+function ActiveNudges() {
   const { chip, dismiss, handleAction } = useEssentialNudges();
 
   if (!chip) return null;
