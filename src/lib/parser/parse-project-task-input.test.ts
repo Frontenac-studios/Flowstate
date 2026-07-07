@@ -4,6 +4,7 @@ import {
   isProjectTaskLineValid,
   parseProjectTaskInput,
   parseProjectTaskInputLines,
+  removeSubmittedLines,
 } from "./parse-project-task-input";
 
 const wed = new Date(2026, 4, 27); // Wed May 27 2026
@@ -172,5 +173,27 @@ describe("parseProjectTaskInputLines", () => {
     ].join("\n");
     const lines = parseProjectTaskInputLines(raw, ctx);
     expect(lines.every((l) => isProjectTaskLineValid(l.parse))).toBe(true);
+  });
+});
+
+describe("removeSubmittedLines", () => {
+  it("removes all submitted lines when batch is fully valid", () => {
+    const value = "Task A\nTask B";
+    const submitted = parseProjectTaskInputLines(value, ctx);
+    expect(removeSubmittedLines(value, submitted)).toBe("");
+  });
+
+  it("keeps invalid lines and removes only submitted ones", () => {
+    const value = "Task A\nTask; ; ; Missing\nTask B";
+    const lines = parseProjectTaskInputLines(value, ctx);
+    const valid = lines.filter((line) => isProjectTaskLineValid(line.parse));
+    expect(valid).toHaveLength(2);
+    expect(removeSubmittedLines(value, valid)).toBe("Task; ; ; Missing");
+  });
+
+  it("drops blank lines left behind after removing submitted lines", () => {
+    const value = "Task A\n\nTask B\n";
+    const submitted = parseProjectTaskInputLines(value, ctx);
+    expect(removeSubmittedLines(value, submitted)).toBe("");
   });
 });
