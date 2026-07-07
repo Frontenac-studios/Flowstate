@@ -23,6 +23,7 @@ import { evaluateProposedSlot } from "@/lib/about-me/constraint-eval";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { toISODateString } from "@/lib/dates/local-day";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
+import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 import { partitionNamedDays } from "@/lib/tasks/partition-named-days";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { resolvePulseTarget, type TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
@@ -34,7 +35,7 @@ import {
   DEFAULT_TOP3_MIDDAY_CHECKIN,
 } from "@/lib/settings/constants";
 import { selectCompletionsToday } from "@/lib/today/select-completions-today";
-import { useTRPC } from "@/trpc/client";
+import { useTRPC, type RouterOutputs } from "@/trpc/client";
 
 import { InPageSwitcher, type SwitcherOption } from "../InPageSwitcher";
 import { CHAT_SEND_EVENT, DECIDE_EVENT } from "../chrome-events";
@@ -57,6 +58,10 @@ import { TodayReviewPanel } from "./TodayReviewPanel";
 import { Top3ReplacePicker } from "./Top3ReplacePicker";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 import { useChat } from "../chat/ChatProvider";
+import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
+
+type IncompleteTask = RouterOutputs["tasks"]["listIncomplete"][number];
+type Top3SlotRow = RouterOutputs["tasks"]["listTop3Slots"][number];
 
 const RELATIVE_BUCKETS = new Set<string>(["today", "tomorrow", "this_week", "later"]);
 
@@ -380,43 +385,140 @@ export function DayPlanCanvas() {
     top3MiddayCheckin,
   });
 
+  // Hot-path drag/pin actions: patch the cache in onMutate so the list
+  // repartitions / the Top-3 slot fills instantly, roll back on error, and let
+  // onSettled's invalidatePlan reconcile against the server.
   const moveMutation = useMutation(
     trpc.tasks.moveToBucket.mutationOptions({
-      onSuccess: () => {
-        touchActivity();
-        invalidatePlan();
+      onMutate: async ({ id, bucket }) => {
+        const fields = bucketToSchedulingFields(bucket);
+        const snapshot = await optimisticPatch<IncompleteTask[]>(
+          queryClient,
+          trpc.tasks.listIncomplete.queryKey(),
+          (old) => old.map((t) => (t.id === id ? { ...t, ...fields } : t))
+        );
+        return { snapshots: [snapshot] };
       },
-      onError: notifyMutationError,
+      onSuccess: () => touchActivity(),
+      onError: (_err, _vars, ctx) => {
+        rollbackPatches(queryClient, ctx?.snapshots);
+        notifyMutationError();
+      },
+      onSettled: () => invalidatePlan(),
     })
   );
 
   const scheduleMutation = useMutation(
     trpc.tasks.scheduleToDate.mutationOptions({
-      onSuccess: () => {
-        touchActivity();
-        invalidatePlan();
+      onMutate: async ({ id, scheduledDate }) => {
+        const snapshot = await optimisticPatch<IncompleteTask[]>(
+          queryClient,
+          trpc.tasks.listIncomplete.queryKey(),
+          (old) =>
+            old.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    scheduledDate,
+                    bucketOverride: scheduledDate !== null ? null : t.bucketOverride,
+                  }
+                : t
+            )
+        );
+        return { snapshots: [snapshot] };
       },
-      onError: notifyMutationError,
+      onSuccess: () => touchActivity(),
+      onError: (_err, _vars, ctx) => {
+        rollbackPatches(queryClient, ctx?.snapshots);
+        notifyMutationError();
+      },
+      onSettled: () => invalidatePlan(),
     })
   );
 
   const pinMutation = useMutation(
     trpc.tasks.pinTop3.mutationOptions({
-      onSuccess: () => {
-        touchActivity();
-        invalidatePlan();
+      onMutate: async ({ id, slot }) => {
+        const todayFields = bucketToSchedulingFields("today");
+        const pinnedAt = new Date();
+        const incompleteKey = trpc.tasks.listIncomplete.queryKey();
+        const top3Key = trpc.tasks.listTop3Slots.queryKey(top3QueryInput);
+
+        const incompleteSnap = await optimisticPatch<IncompleteTask[]>(
+          queryClient,
+          incompleteKey,
+          (old) =>
+            old.map((t) => {
+              if (t.id === id) return { ...t, isTop3: true, top3Order: slot, ...todayFields };
+              // Pinning evicts whoever held this slot (the server does the same).
+              if (t.isTop3 && t.top3Order === slot) {
+                return { ...t, isTop3: false, top3Order: null };
+              }
+              return t;
+            })
+        );
+
+        const source = queryClient
+          .getQueryData<IncompleteTask[]>(incompleteKey)
+          ?.find((t) => t.id === id);
+
+        const top3Snap = await optimisticPatch<Top3SlotRow[]>(queryClient, top3Key, (old) => {
+          const withoutSlotAndSelf = old.filter((t) => t.top3Order !== slot && t.id !== id);
+          if (!source) return withoutSlotAndSelf;
+          const entry: Top3SlotRow = {
+            id: source.id,
+            title: source.title,
+            priority: source.priority,
+            scheduledDate: todayFields.scheduledDate,
+            bucketOverride: todayFields.bucketOverride,
+            projectId: source.projectId,
+            isTop3: true,
+            top3Order: slot,
+            top3PinnedAt: pinnedAt,
+            completedAt: source.completedAt,
+            createdAt: source.createdAt,
+            projectSlug: source.projectSlug,
+            projectName: source.projectName,
+            category: source.category,
+            categoryUnresolved: source.categoryUnresolved,
+          };
+          return [...withoutSlotAndSelf, entry].sort(
+            (a, b) => (a.top3Order ?? 0) - (b.top3Order ?? 0)
+          );
+        });
+
+        return { snapshots: [incompleteSnap, top3Snap] };
       },
-      onError: notifyMutationError,
+      onSuccess: () => touchActivity(),
+      onError: (_err, _vars, ctx) => {
+        rollbackPatches(queryClient, ctx?.snapshots);
+        notifyMutationError();
+      },
+      onSettled: () => invalidatePlan(),
     })
   );
 
   const unpinMutation = useMutation(
     trpc.tasks.unpinTop3.mutationOptions({
-      onSuccess: () => {
-        touchActivity();
-        invalidatePlan();
+      onMutate: async ({ id }) => {
+        const incompleteSnap = await optimisticPatch<IncompleteTask[]>(
+          queryClient,
+          trpc.tasks.listIncomplete.queryKey(),
+          (old) => old.map((t) => (t.id === id ? { ...t, isTop3: false, top3Order: null } : t))
+        );
+        const top3Snap = await optimisticPatch<Top3SlotRow[]>(
+          queryClient,
+          trpc.tasks.listTop3Slots.queryKey(top3QueryInput),
+          (old) => old.filter((t) => t.id !== id)
+        );
+        return { snapshots: [incompleteSnap, top3Snap] };
       },
-      onError: notifyMutationError,
+      onSuccess: () => touchActivity(),
+      onError: (_err, _vars, ctx) => {
+        rollbackPatches(queryClient, ctx?.snapshots);
+        notifyMutationError();
+      },
+      onSettled: () => invalidatePlan(),
     })
   );
 
