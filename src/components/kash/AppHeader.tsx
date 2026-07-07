@@ -39,7 +39,17 @@ export function AppHeader() {
           <span className="text-ink-muted" aria-hidden>
             ·
           </span>
-          <time className="text-ink-muted" dateTime={new Date().toISOString().slice(0, 10)}>
+          {/*
+           * The date is derived from `new Date()`, so the server-rendered value
+           * (request time) and the client value (hydration time) can differ —
+           * a legitimate time-varying value. suppressHydrationWarning stops the
+           * mismatch (React #418) that otherwise fires on every route.
+           */}
+          <time
+            className="text-ink-muted"
+            dateTime={new Date().toISOString().slice(0, 10)}
+            suppressHydrationWarning
+          >
             {formatHeaderDate()}
           </time>
         </>
