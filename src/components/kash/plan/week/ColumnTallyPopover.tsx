@@ -140,7 +140,7 @@ export default function ColumnTallyPopover({
           </p>
           {isToday ? (
             <p className="mt-0.5">
-              <span className="text-on-accent inline-block rounded-pill bg-ink px-2 py-0.5 text-caption font-medium">
+              <span className="inline-block rounded-pill border border-subtle bg-surface px-2 py-0.5 text-caption font-medium text-ink">
                 {headerDate}
               </span>
             </p>

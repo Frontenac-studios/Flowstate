@@ -1,8 +1,10 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useId, useState, type ReactNode } from "react";
 
 import { useDroppable } from "@dnd-kit/core";
+
+import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 
 import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
@@ -34,11 +36,19 @@ type Props = {
   shellClassName?: string;
   phaseMetrics?: Map<string, PhaseMetrics>;
   blankInvitation?: ReactNode;
+  /** D39-B — PhaseDetail panel that heads this column (detail of the phase whose children it shows). */
+  detailHeader?: ReactNode;
   renderDetail: (item: ColumnItem) => ReactNode;
   onOpenPhase: (node: Node) => void;
   onOpenTaskDetail: (task: ProjectTask) => void;
   onToggleTask: (task: ProjectTask) => void;
 };
+
+function isItemComplete(item: ColumnItem): boolean {
+  return item.kind === "phase"
+    ? item.node.phase.completedAt !== null
+    : item.task.completedAt !== null;
+}
 
 export default function MillerColumn({
   level,
@@ -52,6 +62,7 @@ export default function MillerColumn({
   shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
   phaseMetrics,
   blankInvitation,
+  detailHeader,
   renderDetail,
   onOpenPhase,
   onOpenTaskDetail,
@@ -61,67 +72,110 @@ export default function MillerColumn({
     id: `column:${level}`,
     data: { kind: "column", parentPhaseId },
   });
+  const completedPanelId = useId();
+  const [completedCollapsed, setCompletedCollapsed] = useState(true);
+
+  const renderItem = (item: ColumnItem, index: number): ReactNode => {
+    const focused = focusIndex === index;
+    if (item.kind === "phase") {
+      const expanded = detail?.type === "phase" && detail.id === item.node.phase.id;
+      const metrics = phaseMetrics?.get(item.node.phase.id);
+      return (
+        <Fragment key={`p:${item.node.phase.id}`}>
+          <MillerPhaseRow
+            node={item.node}
+            parentPhaseId={parentPhaseId}
+            category={category}
+            isOpen={openPhaseId === item.node.phase.id}
+            selected={expanded}
+            focused={focused}
+            progressPercent={metrics?.percent}
+            timeSpentSeconds={metrics?.timeSpentSeconds}
+            onOpen={() => onOpenPhase(item.node)}
+          />
+          {/* D39-B — phase detail no longer renders inline here; it heads the child column
+              (see detailHeader). Task detail (ID-1) stays inline below. */}
+        </Fragment>
+      );
+    }
+    const expanded = detail?.type === "task" && detail.id === item.task.id;
+    return (
+      <Fragment key={`t:${item.task.id}`}>
+        <MillerTaskRow
+          task={item.task}
+          parentPhaseId={parentPhaseId}
+          selected={expanded}
+          focused={focused}
+          onOpenDetail={() => onOpenTaskDetail(item.task)}
+          onToggleComplete={() => onToggleTask(item.task)}
+        />
+        {expanded ? (
+          <li data-miller-detail className="mb-1 rounded-row border border-subtle bg-surface-2 p-3">
+            {renderDetail(item)}
+          </li>
+        ) : null}
+      </Fragment>
+    );
+  };
+
+  const activeItems: { item: ColumnItem; index: number }[] = [];
+  const completedItems: { item: ColumnItem; index: number }[] = [];
+  items.forEach((item, index) => {
+    (isItemComplete(item) ? completedItems : activeItems).push({ item, index });
+  });
+
+  // Keyboard focus lands on a completed row → force the group open so it's visible.
+  const focusInCompleted =
+    focusIndex !== null && completedItems.some((entry) => entry.index === focusIndex);
+  const completedExpanded = !completedCollapsed || focusInCompleted;
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-card border bg-surface p-2 transition ${shellClassName} ${
+      className={`flex flex-col rounded-card border bg-surface p-2 shadow-surface transition ${shellClassName} ${
         isActive ? "border-ink" : "border-subtle"
       } ${isOver ? "ring-1 ring-inset ring-ink" : ""}`}
     >
+      {detailHeader ? (
+        <div className="mb-1.5 shrink-0 rounded-row border border-subtle bg-surface-2 p-3">
+          {detailHeader}
+        </div>
+      ) : null}
       {blankInvitation}
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
-        {items.map((item, index) => {
-          const focused = focusIndex === index;
-          if (item.kind === "phase") {
-            const expanded = detail?.type === "phase" && detail.id === item.node.phase.id;
-            const metrics = phaseMetrics?.get(item.node.phase.id);
-            return (
-              <Fragment key={`p:${item.node.phase.id}`}>
-                <MillerPhaseRow
-                  node={item.node}
-                  parentPhaseId={parentPhaseId}
-                  category={category}
-                  isOpen={openPhaseId === item.node.phase.id}
-                  selected={expanded}
-                  focused={focused}
-                  progressPercent={metrics?.percent}
-                  timeSpentSeconds={metrics?.timeSpentSeconds}
-                  onOpen={() => onOpenPhase(item.node)}
-                />
-                {expanded ? (
-                  <li
-                    data-miller-detail
-                    className="mb-1 rounded-row border border-subtle bg-surface-2 p-3"
-                  >
-                    {renderDetail(item)}
-                  </li>
-                ) : null}
-              </Fragment>
-            );
-          }
-          const expanded = detail?.type === "task" && detail.id === item.task.id;
-          return (
-            <Fragment key={`t:${item.task.id}`}>
-              <MillerTaskRow
-                task={item.task}
-                parentPhaseId={parentPhaseId}
-                selected={expanded}
-                focused={focused}
-                onOpenDetail={() => onOpenTaskDetail(item.task)}
-                onToggleComplete={() => onToggleTask(item.task)}
+        {activeItems.map(({ item, index }) => renderItem(item, index))}
+        {completedItems.length > 0 ? (
+          <li className="mt-1">
+            <button
+              type="button"
+              className="kash-focus-visible flex w-full items-center gap-1.5 rounded-row px-1.5 py-1 text-left outline-none"
+              aria-expanded={completedExpanded}
+              aria-controls={completedPanelId}
+              onClick={() => setCompletedCollapsed((value) => !value)}
+            >
+              <ChevronRight
+                {...kashIconProps({
+                  tokenSize: "sm",
+                  className: `text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
+                    completedExpanded ? "rotate-90" : ""
+                  }`,
+                })}
+                aria-hidden
               />
-              {expanded ? (
-                <li
-                  data-miller-detail
-                  className="mb-1 rounded-row border border-subtle bg-surface-2 p-3"
-                >
-                  {renderDetail(item)}
-                </li>
-              ) : null}
-            </Fragment>
-          );
-        })}
+              <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">
+                Completed
+              </span>
+              <span className="text-caption text-ink-faint">· {completedItems.length}</span>
+            </button>
+            <ul
+              id={completedPanelId}
+              hidden={!completedExpanded}
+              className="mt-0.5 flex flex-col gap-0.5"
+            >
+              {completedItems.map(({ item, index }) => renderItem(item, index))}
+            </ul>
+          </li>
+        ) : null}
       </ul>
     </div>
   );

@@ -91,7 +91,7 @@ export function CareBreathing() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6">
-      <div className="flex w-full flex-col gap-2 rounded-card border border-subtle bg-surface p-4">
+      <div className="flex w-full flex-col gap-2 rounded-card border border-subtle bg-surface p-4 shadow-surface">
         <h2 className="text-caption font-medium text-ink-muted">Preset</h2>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(BREATHING_PRESETS) as BreathingPreset[]).map((key) => (
@@ -113,7 +113,7 @@ export function CareBreathing() {
         <p className="text-meta leading-snug text-ink-faint">{config.description}</p>
       </div>
 
-      <div className="relative flex h-56 w-full items-center justify-center rounded-card border border-subtle bg-surface-2">
+      <div className="relative flex h-56 w-full items-center justify-center rounded-card border border-subtle bg-surface-2 shadow-surface">
         <div
           className={`care-breathing-orb relative flex h-32 w-32 items-center justify-center ${running ? "care-breathing-orb-active" : ""}`}
           style={{ transform: running ? `scale(${orbScale})` : undefined }}

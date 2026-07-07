@@ -20,7 +20,7 @@ export default function HealthError({
   return (
     <div className="relative min-h-screen">
       <div className="relative z-sticky mx-auto flex min-h-screen max-w-3xl flex-col items-start gap-6 px-6 py-12">
-        <header className="rounded-card border border-subtle bg-surface px-6 py-5">
+        <header className="rounded-card border border-subtle bg-surface px-6 py-5 shadow-surface">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Health checks</h1>
           <p className="mt-2 text-ink-muted">
             Something went wrong loading the health page. The database may be temporarily

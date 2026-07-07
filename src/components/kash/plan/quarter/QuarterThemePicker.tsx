@@ -70,7 +70,7 @@ export default function QuarterThemePicker({ year, quarter, phrase, focusCategor
   };
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
       <div className="flex flex-col gap-1">
         <label
           htmlFor={`quarter-theme-${quarter}`}

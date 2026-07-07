@@ -71,9 +71,11 @@ Defined in [`src/lib/projects/categories.ts`](../src/lib/projects/categories.ts)
 
 ### 5. Miller columns view
 
-- Horizontally scrolling columns. Column 1 = top-level phases + loose tasks (`phase_id = null`). Selecting a phase opens the next column with its child phases + tasks. Rightmost column = selected task/phase detail.
+> **Source of truth for the columns UX:** [`kash-3.0-projects-miller.md`](../kash-3.0-projects-miller.md) (MC-1/MC-2, ID-1, ID-3, PROJ-A, PROJ-C), reconciled in `kash-3.1-consolidated-build-spec.md` D39. This section is aligned to it.
+
+- Horizontally scrolling columns of **fixed, equal width** (256px; the strip scrolls, columns never stretch — Finder-style). Column 1 = top-level phases + loose tasks (`phase_id = null`). Selecting a **phase** opens the next column with its child phases + tasks **and expands an inline phase-detail panel in place** (progress / rename / dates; ID-3/PROJ-C — inline, not a column header). Selecting a **task** (leaf) **expands the row in place**, inline-editable — **no separate detail column** (ID-1). Depth is **unlimited**.
 - Inline **"+ new"** row per column: type a name → create phase or task at that level (`phases.create` / `tasks.create` with `bucketOverride: "later"` so new project tasks stay out of Today).
-- Completed items **dimmed + sorted to bottom**.
+- Completed items **dimmed + sunk to a per-column collapsible "Completed · n" group** (PROJ-A).
 - Phase cross-off: confirm dialog **only if** the subtree has incomplete tasks (compute from loaded tree); then `phases.setComplete({ completed: true })`.
 - Task complete/uncomplete via existing `tasks.complete` / `tasks.uncomplete`.
 - Drag tasks between phases/root → `tasks.moveToPhase`.

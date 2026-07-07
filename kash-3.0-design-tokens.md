@@ -110,6 +110,9 @@ fill). Yellow is reserved (not a category) for status/highlight use.
 > **Canonical hexes (do not substitute):** Professional `#009ddc` · Personal Projects `#973d97` ·
 > Relationships `#e03a3e` · Adulting `#f6821f` · Body & Mind `#61bb47`. These match the built tokens.
 > _(Mockups that used iOS system hexes like `#0A84FF` are off-palette.)_
+>
+> **Naming note:** where `kash-3.1-consolidated-build-spec.md` (D17, D39) calls this the "Apple
+> palette," it means **this same curated set** — the label is legacy, the hexes above are authoritative.
 
 > **AA notes (verified Jun 25):** All five `-text`/`-fill` pairs pass WCAG AA (5.3–7.9:1). **Caveat:**
 > the Adulting (`#f6821f`, 2.58:1) and Body & Mind (`#61bb47`, 2.41:1) **solids** fall below the 3:1

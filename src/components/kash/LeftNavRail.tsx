@@ -246,7 +246,7 @@ export function LeftNavRail() {
           } ${
             expanded && !pinned
               ? "rounded-card border border-subtle bg-surface shadow-overlay"
-              : "rounded-card border border-subtle bg-surface"
+              : "rounded-card border border-subtle bg-surface shadow-surface"
           }`}
         >
           <div

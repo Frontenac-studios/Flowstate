@@ -152,7 +152,7 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
 
   if (detailQuery.isLoading || !goal || !category) {
     return (
-      <div className="rounded-card border border-subtle bg-surface p-4 text-ink-muted">
+      <div className="rounded-card border border-subtle bg-surface p-4 text-ink-muted shadow-surface">
         Loading goal…
       </div>
     );
@@ -162,7 +162,7 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
 
   return (
     <aside
-      className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-4"
+      className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-4 shadow-surface"
       aria-label={`Goal: ${goal.title}`}
     >
       <div className="flex items-start justify-between gap-2">

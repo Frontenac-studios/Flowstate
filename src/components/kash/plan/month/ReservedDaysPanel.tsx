@@ -61,7 +61,7 @@ export default function ReservedDaysPanel({ year, month, reservedDays }: Props) 
   const pickWithinMonth = pickDate >= monthMin && pickDate <= monthMax;
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">
           Reserved days

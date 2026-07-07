@@ -63,7 +63,7 @@ export default function MonthCalendarView({ year, month, protectedBlocks, reserv
   }, [protectedBlocks, reservedDays]);
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
       <h3 className="text-sm font-semibold text-ink">
         {monthShortName(month)} {year}
       </h3>

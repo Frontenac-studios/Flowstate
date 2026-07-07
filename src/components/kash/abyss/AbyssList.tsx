@@ -302,7 +302,7 @@ export default function AbyssList({
   }
 
   return (
-    <div className="flex flex-col rounded-card border border-abyss-border bg-abyss-surface p-1">
+    <div className="flex flex-col rounded-card border border-abyss-border bg-abyss-surface p-1 shadow-surface">
       {keepsCalling.length > 0 ? (
         <section className="bg-abyss-surface-2/60 mb-1 rounded-card p-1">
           <div className="flex items-center gap-2 px-2.5 pb-1 pt-2">

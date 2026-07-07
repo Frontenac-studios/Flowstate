@@ -7,6 +7,13 @@
 > views/flows**. Ships in one coordinated rename sweep with Bingo → Goals.
 >
 > **Status:** shaped Jul 1 2026 (decision session). Ready to slice.
+>
+> **⚠️ Partially superseded by D27 (`kash-3.1-consolidated-build-spec.md`, Jul 2 2026).** The Sky was
+> **kept**, not dropped: the shipped Backlog is **List (light) · Sky (dark, immersive) · Themes**, with
+> the view switch carrying the theme and only the manual theme toggle retired. Wherever this doc says
+> to **drop / replace / retire the Sky** (BK3, BKD3, §3c, build-order step 4), read it as
+> **superseded** — the Themes lens is **additive** alongside Sky, not a replacement for it. The rename
+> (BK1/BK2), List-recency (BK4), and pull actions (BK5) are unaffected.
 
 ---
 
@@ -22,13 +29,13 @@ with the app's light B&W surface. This retires the Abyss's deliberate dark excep
 
 ### Functional / IA
 
-| #   | Decision    | Choice                                                                                                                                                                                       |
-| --- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BK1 | Rename      | **Abyss → Backlog.** User-facing everywhere: nav label, route `/abyss` → `/backlog` (redirect), capture copy, AI tool names. Ships in the **one coordinated sweep** with Bingo → Goals.      |
-| BK2 | Table name  | Keep `abyss_items` **internally** (no data migration churn); rename only user-facing + route + tool surfaces. Revisit an internal rename later if desired.                                   |
-| BK3 | Sky view    | **Drop the dark constellation Sky.** Replace with a **light "Themes" lens** — "keeps calling you" cluster cards (the embedding clustering stays, presented as light cards, not a starfield). |
-| BK4 | List order  | **By recency (newest first)** as the default. The Themes lens carries the "what keeps pulling at me" insight; the list stays a simple, honest pile.                                          |
-| BK5 | Pull action | **Both:** a one-tap **"Today"** on every row (fast path) **plus** a **"…" menu** for the full target-picker (Week / Project / Goal). Fast by default, full control when needed.              |
+| #   | Decision    | Choice                                                                                                                                                                                                                                                                 |
+| --- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BK1 | Rename      | **Abyss → Backlog.** User-facing everywhere: nav label, route `/abyss` → `/backlog` (redirect), capture copy, AI tool names. Ships in the **one coordinated sweep** with Bingo → Goals.                                                                                |
+| BK2 | Table name  | Keep `abyss_items` **internally** (no data migration churn); rename only user-facing + route + tool surfaces. Revisit an internal rename later if desired.                                                                                                             |
+| BK3 | Sky view    | ~~**Drop the dark constellation Sky.**~~ **Superseded by D27 — Sky is kept (dark/immersive).** The **light "Themes" lens** ships **alongside** Sky (not as a replacement): "keeps calling you" cluster cards from the same embedding clustering, on the light surface. |
+| BK4 | List order  | **By recency (newest first)** as the default. The Themes lens carries the "what keeps pulling at me" insight; the list stays a simple, honest pile.                                                                                                                    |
+| BK5 | Pull action | **Both:** a one-tap **"Today"** on every row (fast path) **plus** a **"…" menu** for the full target-picker (Week / Project / Goal). Fast by default, full control when needed.                                                                                        |
 
 ### Visual design
 

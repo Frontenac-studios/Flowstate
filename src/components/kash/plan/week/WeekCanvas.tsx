@@ -37,7 +37,7 @@ import { WeekLaterBacklog } from "./WeekLaterBacklog";
 import ProtectedWeekBar from "./ProtectedWeekBar";
 import type { ProtectedBlockRow } from "./ProtectedBlockChip";
 
-/** D19 — canvas tint behind white day-column cards (no gray track). */
+/** D40 (reverses D19) — neutral canvas-tint field behind the day columns; soft-gray day columns with the white today column popping against them (WeekColumn). */
 const WEEK_CANVAS_BG = "var(--canvas)";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

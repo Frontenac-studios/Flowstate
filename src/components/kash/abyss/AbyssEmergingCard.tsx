@@ -64,7 +64,7 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
   };
 
   return (
-    <section className="rounded-card border border-abyss-border-strong bg-abyss-surface p-3">
+    <section className="rounded-card border border-abyss-border-strong bg-abyss-surface p-3 shadow-surface">
       <div className="flex items-center gap-2">
         <SparkleIcon size={14} className="text-cat-adulting" />
         <span className="text-meta font-medium text-abyss-ink">

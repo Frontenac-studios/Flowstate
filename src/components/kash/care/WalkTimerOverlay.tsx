@@ -77,7 +77,7 @@ export function WalkTimerOverlay({ open, onClose, durationMinutes = 15 }: Props)
       role="dialog"
       aria-label="Walk timer"
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-card border border-subtle bg-surface p-6 shadow-lg">
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-card border border-subtle bg-surface p-6 shadow-overlay">
         <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">Walk</p>
         <p className="font-mono text-5xl tabular-nums text-ink">
           {running || done ? formatCountdown(secondsLeft) : `${durationMinutes}:00`}

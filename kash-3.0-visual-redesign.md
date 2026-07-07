@@ -1,6 +1,8 @@
 # Kash 3.0 — Visual Redesign (Jun 24)
 
 > A live redesign session: revising the design tokens (the "too gray" flat-calm system → a Pinterest-style black-and-white) and wireframing each page (object placement, removing clutter). **Supersedes parts of `design-tokens.md`'s palette** and adds per-page layout decisions.
+>
+> **⚠️ Some Jun-24 layout decisions were revisited in `kash-3.1-consolidated-build-spec.md` — check there before building from this doc.** Superseded: the flat-white page surface became a **tinted canvas + white cards** (D9); Projects/Miller layout is now governed by D23/D39 (`kash-3.0-projects-miller.md` is source-of-truth), not the projects wireframe here. **Reaffirmed:** the **Week "inverted emphasis" today-marker** below (soft-gray days / lone white today) — reversed by D19, then **restored as the shipped design by D40** (Jul 7). So the Week block here is current again; the palette and canvas notes are not.
 
 ## Palette direction (revises `design-tokens.md`)
 

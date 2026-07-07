@@ -51,7 +51,7 @@ export default function ProtectedWeekBar({ anchorDate }: Props) {
 
   if (templates.length === 0 && proposed.length === 0) {
     return (
-      <div className="mt-4 rounded-card border border-dashed border-subtle bg-surface px-3 py-2 text-sm">
+      <div className="mt-4 rounded-card border border-dashed border-subtle bg-surface px-3 py-2 text-sm shadow-surface">
         <p className="text-ink-muted">
           Set up a{" "}
           <Link href="/settings" className="text-accent underline-offset-2 hover:underline">
@@ -67,7 +67,7 @@ export default function ProtectedWeekBar({ anchorDate }: Props) {
 
   return (
     <section
-      className="mt-4 rounded-card border border-subtle bg-surface px-3 py-3 text-sm"
+      className="mt-4 rounded-card border border-subtle bg-surface px-3 py-3 text-sm shadow-surface"
       aria-label="Protected time planning"
     >
       <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1">

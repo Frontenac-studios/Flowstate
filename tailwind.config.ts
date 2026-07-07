@@ -76,6 +76,7 @@ const config: Config = {
         pill: "var(--radius-pill)",
       },
       boxShadow: {
+        surface: "var(--shadow-surface)",
         overlay: "var(--shadow-overlay)",
       },
       zIndex: {

@@ -16,8 +16,9 @@
 
 - Each column lists the **contents of the item selected in the column to its left** — **phases
   (directories, marked ▸) and tasks (leaves) intermixed**, not pre-split into "Phases" then "Tasks."
-- Selecting a **phase** opens its contents in the next column. Depth is **fixed: project → phase →
-  subphase → task** (two directory levels max), not arbitrary.
+- Selecting a **phase** opens its contents in the next column. Depth is **arbitrary** — phases nest
+  as deeply as you like (directories inside directories, no limit); each level opens one more
+  column. _(Corrected Jul 7 2026: supersedes the original "two directory levels max" cap.)_
 - **MC-2 · Widths:** **equal columns.**
 
 ## 3. Detail behavior (ID)
@@ -25,9 +26,11 @@
 - **Task (leaf) — inline expansion (ID-1):** selecting a task **expands the row in place** to reveal its
   detail; **inline-editable** (ID-2) — title, category, due, priority, time-estimate, path, blocked-by,
   notes. `⎋` collapses. (No separate preview column; the docked panel was retired Jun 26.)
-- **Phase (directory) — phase-detail (ID-3, proposed reconciliation, _pending final confirm_):** clicking
-  a phase opens its **contents in the next column, headed by a phase-detail panel** (progress / rename /
-  dates); the drill continues from those contents. _(The confirm question wasn't answered — revisit.)_
+- **Phase (directory) — phase-detail (ID-3, resolved Jul 7 2026 — inline, not a column header):**
+  clicking a phase **expands an inline phase-detail panel in place** (progress / rename / dates) —
+  the same inline treatment as a task (ID-1) — **and** opens the phase's contents in the next column;
+  the drill continues from those contents. _(Supersedes the earlier "headed by a phase-detail panel"
+  proposal.)_
 
 ## 4. Settled elsewhere
 
@@ -57,5 +60,7 @@
   per-column **"Completed · n"** group (collapsible). (See `kash-3.0-animation-sweep.md`.)
 - **PROJ-B · Views & lenses:** Miller / Gantt / Calendar = a **segmented switch** (content cross-fades);
   **priority + category are clean-by-default filter lenses** (VF-style), off until toggled.
-- **PROJ-C · Phase detail (ID-3, confirmed):** clicking a phase opens its **contents column headed by
-  the phase-detail** (progress / rename / dates); the drill continues from those contents. Pure cascade.
+- **PROJ-C · Phase detail (ID-3, resolved Jul 7 2026 — inline):** clicking a phase **expands an inline
+  phase-detail panel in place** (progress / rename / dates) — same inline treatment as a task (ID-1) —
+  **and** opens its contents in the next column; the drill continues from those contents. _(Supersedes
+  the earlier "column headed by the phase-detail" wording.)_

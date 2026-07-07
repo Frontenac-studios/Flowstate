@@ -45,7 +45,7 @@ export default function QuarterCard({
       ref={setNodeRef}
       type="button"
       onClick={handleClick}
-      className={`rounded-card border p-4 text-left transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+      className={`rounded-card border p-4 text-left shadow-surface transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
         emptyQuarter ? "border-dashed border-subtle opacity-70" : "border-subtle bg-surface"
       } ${isFutureQuarter && !emptyQuarter ? "opacity-85" : ""} ${
         isOver || isDropTarget ? "ring-2 ring-ink-muted" : "hover:border-ink-muted"

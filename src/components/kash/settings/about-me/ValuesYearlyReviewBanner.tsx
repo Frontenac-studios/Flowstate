@@ -42,7 +42,7 @@ export default function ValuesYearlyReviewBanner({ valueCount }: Props) {
   return (
     <div
       role="status"
-      className="mb-4 rounded-card border border-dashed border-border bg-surface-2 px-4 py-3"
+      className="mb-4 rounded-card border border-dashed border-border bg-surface-2 px-4 py-3 shadow-surface"
     >
       <p className="text-body text-ink">
         A new year is a good moment to glance at your core values — still feel right?

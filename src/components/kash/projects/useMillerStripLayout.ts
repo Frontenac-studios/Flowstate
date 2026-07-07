@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   ghostColumnCount as computeGhostColumnCount,
-  millerColumnWidthClass,
+  MILLER_COLUMN_WIDTH_CLASS,
   MIN_VISIBLE_COLUMNS,
   visibleColumnTarget,
 } from "./miller-columns";
@@ -36,8 +36,11 @@ export function useMillerStripLayout(realColumnCount: number) {
   }, [updateTarget]);
 
   const ghostColumnCount = computeGhostColumnCount(realColumnCount, targetVisibleColumns);
-  const flexFit = realColumnCount < targetVisibleColumns;
-  const widthClassName = millerColumnWidthClass(flexFit);
 
-  return { stripRef, ghostColumnCount, widthClassName, targetVisibleColumns };
+  return {
+    stripRef,
+    ghostColumnCount,
+    widthClassName: MILLER_COLUMN_WIDTH_CLASS,
+    targetVisibleColumns,
+  };
 }

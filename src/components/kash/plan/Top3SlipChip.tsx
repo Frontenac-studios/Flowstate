@@ -33,7 +33,7 @@ export function Top3SlipChip({ task, onBreakDown, onDrop, onKeep, className }: P
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-row border border-l-[length:var(--stripe-width)] border-amber-200/80 border-l-amber-500 bg-amber-50/80 px-[var(--space-3)] py-[var(--space-2)] shadow-sm",
+        "flex flex-col gap-2 rounded-row border border-l-[length:var(--stripe-width)] border-amber-200/80 border-l-amber-500 bg-amber-50/80 px-[var(--space-3)] py-[var(--space-2)] shadow-surface",
         exiting ? "nudge-fade-out" : "nudge-fade-in",
         className
       )}

@@ -35,7 +35,7 @@ function ClusterCard({
   members: AbyssListItem[];
 }) {
   return (
-    <article className="rounded-card border border-abyss-border bg-abyss-surface p-3">
+    <article className="rounded-card border border-abyss-border bg-abyss-surface p-3 shadow-surface">
       <div className="flex items-center gap-2">
         <SparkleIcon size={14} className="text-cat-adulting" />
         <h3 className="text-meta font-medium text-abyss-ink">{title}</h3>

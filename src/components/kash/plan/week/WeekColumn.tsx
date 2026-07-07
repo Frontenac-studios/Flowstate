@@ -36,7 +36,7 @@ type Props = {
   canPinMore: boolean;
 };
 
-/** D19 — white day cards on canvas; today marked with ink border + black date pill. */
+/** D40 (reverses D19) — Jun-24 inverted emphasis: soft-gray day columns, today the lone white column + white date pill. Contrast carries the signal, not an ink border. */
 export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
   {
     isoDate,
@@ -73,8 +73,8 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
   return (
     <div
       ref={ref}
-      className={`group/column flex shrink-0 flex-col rounded-card border bg-surface ${
-        isToday ? "border-ink" : "border-subtle"
+      className={`group/column flex shrink-0 flex-col rounded-card border border-subtle shadow-surface ${
+        isToday ? "bg-surface" : "bg-active-surface"
       }`}
       style={{ width: `${columnWidthPercent}%` }}
     >

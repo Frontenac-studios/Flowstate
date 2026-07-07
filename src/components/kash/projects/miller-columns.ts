@@ -45,9 +45,12 @@ export function ghostColumnCount(realCount: number, target: number): number {
   return realCount >= target ? 0 : target - realCount;
 }
 
-export function millerColumnWidthClass(flexFit: boolean): string {
-  return flexFit ? "flex-1 min-w-0" : "w-64 shrink-0";
-}
+/**
+ * Fixed Miller column width (Tailwind `w-64` = 256px). Columns never stretch to
+ * fill the strip: shallow trees leave open canvas to the right, deeper trees
+ * scroll horizontally (Finder-style).
+ */
+export const MILLER_COLUMN_WIDTH_CLASS = "w-64 shrink-0";
 
 /** Minimum Miller column card height (Tailwind min-h-60 = 240px). */
 export const MILLER_COLUMN_MIN_HEIGHT_CLASS = "min-h-60";

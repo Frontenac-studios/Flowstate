@@ -27,7 +27,7 @@ export function SelfCareGapRow({ top, onStartWalk, onStartBreathe, onDismiss }: 
 
   return (
     <div
-      className="bg-surface/95 absolute left-11 right-1 z-sticky flex flex-wrap items-center gap-1.5 rounded-md border border-dashed border-[var(--border)] px-2 py-1 shadow-sm"
+      className="bg-surface/95 absolute left-11 right-1 z-sticky flex flex-wrap items-center gap-1.5 rounded-md border border-dashed border-[var(--border)] px-2 py-1 shadow-surface"
       style={{ top }}
     >
       <span className="text-caption" style={{ color: categorySolidVar("body_mind") }} aria-hidden>

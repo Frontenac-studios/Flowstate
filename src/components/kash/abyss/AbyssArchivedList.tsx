@@ -26,7 +26,7 @@ export default function AbyssArchivedList() {
   if (!data?.length)
     return <p className="text-meta text-abyss-ink-muted">No archived items yet.</p>;
   return (
-    <ul className="flex flex-col gap-1.5 rounded-card border border-abyss-border bg-abyss-surface p-2">
+    <ul className="flex flex-col gap-1.5 rounded-card border border-abyss-border bg-abyss-surface p-2 shadow-surface">
       {data.map((row) => (
         <li
           key={row.id}

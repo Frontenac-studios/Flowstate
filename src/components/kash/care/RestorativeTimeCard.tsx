@@ -34,7 +34,7 @@ export function RestorativeTimeCard() {
   const reservedDays = reservedQuery.data ?? [];
 
   return (
-    <section className="rounded-card border border-subtle bg-surface p-3">
+    <section className="rounded-card border border-subtle bg-surface p-3 shadow-surface">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-caption font-medium text-ink-muted">Restorative time</h2>
         <Link href="/plan?horizon=month" className="text-meta text-accent hover:underline">

@@ -34,7 +34,7 @@ export default function MonthColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[160px] flex-col gap-2 rounded-card border p-3 transition ${
+      className={`flex min-h-[160px] flex-col gap-2 rounded-card border p-3 shadow-surface transition ${
         isOver ? "border-ink-muted ring-2 ring-ink-muted" : "border-subtle bg-surface"
       }`}
     >

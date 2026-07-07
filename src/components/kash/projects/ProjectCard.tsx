@@ -37,7 +37,7 @@ export default function ProjectCard({
   return (
     <Link
       href={`/projects/${project.id}`}
-      className={`kash-focus-visible block rounded-card border p-4 outline-none transition hover:bg-surface-2 ${
+      className={`kash-focus-visible block rounded-card border p-4 shadow-surface outline-none transition hover:bg-surface-2 ${
         finishing ? "border-subtle" : "border-subtle bg-surface"
       }${folding ? "project-fold-to-filed" : ""}`}
       style={
@@ -100,7 +100,7 @@ export function LooseTasksRow({ category, count }: { category: ProjectCategory; 
   return (
     <Link
       href={`/backlog?category=${category}`}
-      className="kash-focus-visible flex items-center justify-between rounded-card border border-dashed px-3.5 py-2.5 text-sm outline-none transition hover:opacity-90"
+      className="kash-focus-visible flex items-center justify-between rounded-card border border-dashed px-3.5 py-2.5 text-sm shadow-surface outline-none transition hover:opacity-90"
       style={{
         borderColor: `color-mix(in srgb, ${stripe} 50%, transparent)`,
         backgroundColor: fill,
