@@ -183,7 +183,9 @@ export default function MillerColumnsView({
 
   const activeColumnLevel = selectedPath.length;
 
-  const { stripRef, widthClassName, targetVisibleColumns } = useMillerStripLayout(columns.length);
+  const { stripRef, ghostColumnCount, widthClassName, targetVisibleColumns } = useMillerStripLayout(
+    columns.length
+  );
 
   useEffect(() => {
     const basePath =
@@ -518,9 +520,9 @@ export default function MillerColumnsView({
                 blankInvitation={
                   isBlank && col.level === 0 ? (
                     <ColoredEmptyInvitation
-                      title="Nothing here yet"
-                      hint="Add phases and tasks below — one per line."
-                      className="mx-1 my-2 border-none bg-transparent py-6 shadow-none"
+                      title="Add your first phase"
+                      hint="Use the box above — one per line. Start a line with ;;; to add a phase."
+                      className="mx-1 my-2 border-none bg-transparent px-3 py-6 shadow-none"
                     />
                   ) : null
                 }
@@ -530,6 +532,15 @@ export default function MillerColumnsView({
                 onToggleTask={toggleTask}
               />
             ))}
+            {isBlank
+              ? Array.from({ length: ghostColumnCount }).map((_, i) => (
+                  <div
+                    key={`ghost:${i}`}
+                    aria-hidden
+                    className={`${millerColumnShellClass(widthClassName)} rounded-card border border-dashed border-subtle bg-surface-2 p-2 opacity-50`}
+                  />
+                ))
+              : null}
           </div>
         </div>
       </DndContext>

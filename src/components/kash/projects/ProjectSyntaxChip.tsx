@@ -52,7 +52,7 @@ export default function ProjectSyntaxChip({ showOnFocus = false, focused = false
         <div
           id={hintId}
           role="tooltip"
-          className="absolute left-0 top-full z-overlay mt-1 w-72 rounded-card border border-subtle bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-overlay"
+          className="absolute bottom-full left-0 z-overlay mb-1 w-72 rounded-card border border-subtle bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-overlay"
         >
           {SYNTAX_HINT}
         </div>
