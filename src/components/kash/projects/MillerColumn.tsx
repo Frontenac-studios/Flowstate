@@ -36,8 +36,6 @@ type Props = {
   shellClassName?: string;
   phaseMetrics?: Map<string, PhaseMetrics>;
   blankInvitation?: ReactNode;
-  /** D39-B — PhaseDetail panel that heads this column (detail of the phase whose children it shows). */
-  detailHeader?: ReactNode;
   renderDetail: (item: ColumnItem) => ReactNode;
   onOpenPhase: (node: Node) => void;
   onOpenTaskDetail: (task: ProjectTask) => void;
@@ -62,7 +60,6 @@ export default function MillerColumn({
   shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
   phaseMetrics,
   blankInvitation,
-  detailHeader,
   renderDetail,
   onOpenPhase,
   onOpenTaskDetail,
@@ -93,8 +90,14 @@ export default function MillerColumn({
             timeSpentSeconds={metrics?.timeSpentSeconds}
             onOpen={() => onOpenPhase(item.node)}
           />
-          {/* D39-B — phase detail no longer renders inline here; it heads the child column
-              (see detailHeader). Task detail (ID-1) stays inline below. */}
+          {expanded ? (
+            <li
+              data-miller-detail
+              className="mb-1 rounded-row border border-subtle bg-surface-2 p-3"
+            >
+              {renderDetail(item)}
+            </li>
+          ) : null}
         </Fragment>
       );
     }
@@ -136,11 +139,6 @@ export default function MillerColumn({
         isActive ? "border-ink" : "border-subtle"
       } ${isOver ? "ring-1 ring-inset ring-ink" : ""}`}
     >
-      {detailHeader ? (
-        <div className="mb-1.5 shrink-0 rounded-row border border-subtle bg-surface-2 p-3">
-          {detailHeader}
-        </div>
-      ) : null}
       {blankInvitation}
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
         {activeItems.map(({ item, index }) => renderItem(item, index))}
