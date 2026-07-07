@@ -20,7 +20,7 @@ import { resolveEffectivePhaseRange, type ProjectTree } from "@/lib/projects/pha
 import { InPageSwitcher } from "../InPageSwitcher";
 import GanttAxis from "./GanttAxis";
 import GanttRow, { GANTT_LABEL_WIDTH, GANTT_ROW_HEIGHT } from "./GanttRow";
-import type { ProjectPhase, ProjectTask } from "./types";
+import type { ProjectMilestone, ProjectPhase, ProjectTask } from "./types";
 import { useProjectMutations } from "./useProjectMutations";
 
 type Tree = ProjectTree<ProjectPhase, ProjectTask>;
@@ -29,6 +29,7 @@ type Props = {
   tree: Tree;
   projectId: string;
   category: ProjectCategory;
+  milestones?: ProjectMilestone[];
 };
 
 const MIN_PX_PER_DAY = 3;
@@ -44,7 +45,7 @@ function clampPxPerDay(px: number): number {
   return Math.min(MAX_PX_PER_DAY, Math.max(MIN_PX_PER_DAY, px));
 }
 
-export default function CalendarBoardView({ tree, projectId, category }: Props) {
+export default function CalendarBoardView({ tree, projectId, category, milestones = [] }: Props) {
   const m = useProjectMutations(projectId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -171,6 +172,26 @@ export default function CalendarBoardView({ tree, projectId, category }: Props) 
                   aria-hidden
                 />
               ) : null}
+              {milestones.map((mi) => {
+                if (!mi.targetDate) return null;
+                const off = dayIndex(mi.targetDate, span.start);
+                if (off < 0 || off >= total) return null;
+                return (
+                  <div
+                    key={mi.id}
+                    className="pointer-events-none absolute top-0 z-base"
+                    style={{
+                      left: GANTT_LABEL_WIDTH + off * pxPerDay,
+                      height: boardRows.length * GANTT_ROW_HEIGHT,
+                    }}
+                  >
+                    <div className="border-ink/40 h-full border-l border-dashed" />
+                    <span className="bg-surface/90 absolute left-1 top-0 whitespace-nowrap rounded px-1 text-[10px] font-medium text-ink-muted">
+                      {mi.title}
+                    </span>
+                  </div>
+                );
+              })}
               {boardRows.map((r) => (
                 <GanttRow
                   key={r.node.phase.id}

@@ -20,6 +20,7 @@ type Props = {
   showBackToProjects?: boolean;
   timeSpentSeconds?: number;
   estimateSampleCount?: number;
+  onOpenSetup?: () => void;
 };
 
 const VIEW_MODES: { value: ProjectViewMode; label: string }[] = [
@@ -34,6 +35,7 @@ export default function ProjectWorkspaceHeader({
   showBackToProjects = false,
   timeSpentSeconds = 0,
   estimateSampleCount = 0,
+  onOpenSetup,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
@@ -79,7 +81,13 @@ export default function ProjectWorkspaceHeader({
           >
             <MoreHorizontal {...kashIconProps({ tokenSize: "md" })} aria-hidden />
           </IconButton>
-          {menuOpen ? <ProjectMenu project={project} onClose={() => setMenuOpen(false)} /> : null}
+          {menuOpen ? (
+            <ProjectMenu
+              project={project}
+              onClose={() => setMenuOpen(false)}
+              onOpenSetup={onOpenSetup}
+            />
+          ) : null}
         </div>
       </div>
     </header>

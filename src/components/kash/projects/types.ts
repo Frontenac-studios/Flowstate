@@ -7,5 +7,6 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type ProjectDetail = RouterOutputs["projects"]["getById"];
 export type ProjectPhase = RouterOutputs["phases"]["listByProject"][number];
 export type ProjectTask = RouterOutputs["tasks"]["listByProject"][number];
+export type ProjectMilestone = RouterOutputs["projectMilestones"]["listByProject"][number];
 
 export type ProjectViewMode = "columns" | "calendar";
