@@ -129,13 +129,13 @@ export default function MultiProjectCalendarView() {
         projects={projects.map((p) => ({ ...p, projectIndex: projectIndexes.get(p.id) ?? 0 }))}
       />
       {span === null || rows.length === 0 ? (
-        <div className="rounded-card border border-subtle bg-surface px-6 py-10 text-center text-ink-muted">
+        <div className="rounded-card border border-subtle bg-surface px-6 py-10 text-center text-ink-muted shadow-surface">
           No dated phases yet across your projects.
         </div>
       ) : (
         <div
           ref={scrollRef}
-          className="overflow-x-auto rounded-card border border-subtle bg-surface"
+          className="overflow-x-auto rounded-card border border-subtle bg-surface shadow-surface"
         >
           <div style={{ width: MULTI_GANTT_LABEL_WIDTH + boardWidth }}>
             <GanttAxis

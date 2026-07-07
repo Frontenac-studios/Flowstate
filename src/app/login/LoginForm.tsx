@@ -56,7 +56,7 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto w-full max-w-sm space-y-4 rounded-card border border-subtle bg-surface p-6"
+      className="mx-auto w-full max-w-sm space-y-4 rounded-card border border-subtle bg-surface p-6 shadow-surface"
     >
       <h1 className="text-xl font-semibold text-ink">Sign in to Kash</h1>
       <p className="text-sm text-ink-muted">Use your email and password.</p>

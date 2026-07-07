@@ -28,7 +28,7 @@ export default function BingoOnboarding({
 
   if (mode === "pick") {
     return (
-      <div className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-8">
+      <div className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-8 shadow-surface">
         <h2 className="text-body font-semibold text-ink">Your {year} bingo card</h2>
         <p className="text-body text-ink-muted">
           A 5×5 grid of goals — line up five done squares for a win. How would you like to start?
@@ -86,7 +86,7 @@ export default function BingoOnboarding({
     };
 
     return (
-      <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-6">
+      <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-6 shadow-surface">
         <h2 className="text-body font-semibold text-ink">Brain-dump your goals</h2>
         <p className="text-caption text-ink-muted">
           One goal per line — we&apos;ll tag categories in rotation until AI persona ships (§11).
@@ -122,7 +122,7 @@ export default function BingoOnboarding({
   const isLast = guidedIndex >= PROJECT_CATEGORIES.length - 1;
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-6">
+    <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-6 shadow-surface">
       <div className="flex items-center gap-2">
         <span
           className="h-3 w-3 rounded-full"

@@ -48,7 +48,7 @@ export default async function HealthPage() {
   return (
     <div className="relative min-h-screen">
       <div className="relative z-sticky mx-auto min-h-screen max-w-3xl px-6 py-12">
-        <header className="mb-10 rounded-card border border-subtle bg-surface px-6 py-5">
+        <header className="mb-10 rounded-card border border-subtle bg-surface px-6 py-5 shadow-surface">
           <p className="mb-2 text-sm text-ink-muted">
             <Link
               href="/today"
@@ -64,7 +64,7 @@ export default async function HealthPage() {
         {loadError && (
           <p
             role="alert"
-            className="mb-10 rounded-card border border-critical bg-red-100/60 px-6 py-5 text-red-800"
+            className="mb-10 rounded-card border border-critical bg-red-100/60 px-6 py-5 text-red-800 shadow-surface"
           >
             Couldn&apos;t reach the database to load health checks. This usually means the
             connection pool is momentarily exhausted — try again in a moment.
@@ -72,7 +72,7 @@ export default async function HealthPage() {
         )}
 
         {latest ? (
-          <section className="mb-10 rounded-card border border-subtle bg-surface px-6 py-5">
+          <section className="mb-10 rounded-card border border-subtle bg-surface px-6 py-5 shadow-surface">
             <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-muted">
               Latest check
             </h2>
@@ -85,12 +85,12 @@ export default async function HealthPage() {
             </div>
           </section>
         ) : (
-          <p className="mb-10 rounded-card border border-dashed border-subtle bg-surface px-6 py-5 text-center text-ink-muted">
+          <p className="mb-10 rounded-card border border-dashed border-subtle bg-surface px-6 py-5 text-center text-ink-muted shadow-surface">
             No health checks recorded yet.
           </p>
         )}
 
-        <section className="rounded-card border border-subtle bg-surface px-2 py-2">
+        <section className="rounded-card border border-subtle bg-surface px-2 py-2 shadow-surface">
           <h2 className="mb-4 px-4 pt-2 text-lg font-medium text-ink">Recent checks</h2>
           {checks.length === 0 ? (
             <p className="px-4 pb-4 text-ink-muted">No rows in health_checks.</p>

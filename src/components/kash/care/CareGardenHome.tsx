@@ -52,7 +52,7 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
           nourishPulseKey={pulseKey}
         />
         <div className="flex flex-col gap-3">
-          <section className="rounded-card border border-subtle bg-surface p-3">
+          <section className="rounded-card border border-subtle bg-surface p-3 shadow-surface">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">Today&apos;s wins</h2>
             {dayQuery.isLoading && !dayQuery.data ? (
               <p className="text-meta text-ink-faint">Loading…</p>
@@ -78,7 +78,7 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
               </ul>
             )}
           </section>
-          <section className="rounded-card border border-subtle bg-surface p-3">
+          <section className="rounded-card border border-subtle bg-surface p-3 shadow-surface">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">What lifts me</h2>
             {liftsQuery.isLoading ? (
               <p className="text-meta text-ink-faint">Loading…</p>
@@ -101,7 +101,7 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
             )}
           </section>
           {!promptDismissed ? (
-            <section className="rounded-card border border-subtle bg-surface-2 p-3">
+            <section className="rounded-card border border-subtle bg-surface-2 p-3 shadow-surface">
               <h2 className="mb-1.5 text-caption font-medium text-ink-muted">A gentle prompt</h2>
               <p className="mb-2.5 text-body leading-snug text-ink">
                 You&apos;ve been heads-down a while. Want to take five slow breaths?

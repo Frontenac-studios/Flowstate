@@ -13,7 +13,7 @@ type Props = {
 export function ColoredEmptyInvitation({ title, hint, action, className = "" }: Props) {
   return (
     <div
-      className={`flex flex-col items-center gap-3 rounded-card border border-subtle bg-surface px-6 py-10 text-center ${className}`}
+      className={`flex flex-col items-center gap-3 rounded-card border border-subtle bg-surface px-6 py-10 text-center shadow-surface ${className}`}
     >
       <GhostCategoryStrip className="w-32" opacity={0.55} />
       <p className="text-sm font-medium text-ink">{title}</p>

@@ -63,7 +63,7 @@ export default function CompletedProjectsSection({
             >
               <Link
                 href={`/projects/${project.id}`}
-                className="kash-focus-visible flex min-h-[var(--row-min-height)] items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] text-sm text-ink-muted outline-none transition hover:bg-surface-2"
+                className="kash-focus-visible flex min-h-[var(--row-min-height)] items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-[var(--row-py)] text-sm text-ink-muted shadow-surface outline-none transition hover:bg-surface-2"
               >
                 <span
                   className="h-3 shrink-0 rounded-full"

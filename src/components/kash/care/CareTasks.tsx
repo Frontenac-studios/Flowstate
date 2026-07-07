@@ -54,7 +54,7 @@ export function CareTasks() {
         {activitiesQuery.isLoading ? (
           <p className="px-2 text-meta text-ink-faint">Loading…</p>
         ) : groups.length === 0 ? (
-          <p className="rounded-card border border-subtle bg-surface px-4 py-6 text-center text-meta text-ink-faint">
+          <p className="rounded-card border border-subtle bg-surface px-4 py-6 text-center text-meta text-ink-faint shadow-surface">
             No practices yet. Adopt a suggestion below, or create your own.
           </p>
         ) : (

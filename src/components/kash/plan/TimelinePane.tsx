@@ -171,7 +171,7 @@ function ProtectedTimelineBlock({
         proposed
           ? "border-dashed border-[var(--border)] bg-[var(--surface-2)] opacity-90"
           : "border-[var(--border-subtle)] bg-[var(--surface-2)]"
-      } ${interactive ? "z-sticky shadow-sm" : "pointer-events-none"}`}
+      } ${interactive ? "z-sticky shadow-surface" : "pointer-events-none"}`}
       style={{
         top,
         height,
@@ -656,7 +656,7 @@ export function TimelinePane({
 
     return (
       <section
-        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card border border-subtle bg-surface py-3 ${className ?? ""}`}
+        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card border border-subtle bg-surface py-3 shadow-surface ${className ?? ""}`}
         aria-label="Today timeline mini-map"
       >
         <button
@@ -706,7 +706,7 @@ export function TimelinePane({
 
   return (
     <section
-      className={`flex min-w-[16rem] flex-1 flex-col rounded-card border border-subtle bg-surface p-4 ${className ?? ""}`}
+      className={`flex min-w-[16rem] flex-1 flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface ${className ?? ""}`}
       aria-label="Today timeline"
     >
       <header className="mb-3 flex items-center gap-2">
@@ -891,7 +891,7 @@ export function TimelinePane({
           <button
             type="button"
             onClick={scrollToNow}
-            className="absolute bottom-2 right-2 z-sticky rounded-pill border bg-surface px-2 py-0.5 text-caption font-medium text-accent shadow-sm"
+            className="absolute bottom-2 right-2 z-sticky rounded-pill border bg-surface px-2 py-0.5 text-caption font-medium text-accent shadow-surface"
           >
             {nowTopPx != null && scrollRef.current && nowTopPx < scrollRef.current.scrollTop
               ? "↑"

@@ -302,12 +302,14 @@ export default function BingoCard({ year }: Props) {
   };
 
   if (cardQuery.isLoading) {
-    return <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted" />;
+    return (
+      <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted shadow-surface" />
+    );
   }
 
   if (!card) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8">
+      <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8 shadow-surface">
         <p className="text-body text-ink">
           Your {year} bingo card is a 5×5 grid of goals. Fill the squares, then check them off as
           you go — line up five for a win.
@@ -384,7 +386,7 @@ export default function BingoCard({ year }: Props) {
 
             {!locked ? (
               confirmingFinalize ? (
-                <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-3">
+                <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-3 shadow-surface">
                   {spellingGhostItems.length > 0 ? (
                     <GhostedAccept
                       items={spellingGhostItems}

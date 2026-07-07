@@ -84,7 +84,7 @@ export function CareEvidence() {
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-card border border-subtle bg-surface p-4">
+      <section className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-caption font-medium uppercase tracking-wide text-ink-muted">
             Evidence
@@ -147,7 +147,7 @@ export function CareEvidence() {
         ) : null}
       </section>
 
-      <section className="rounded-card border border-subtle bg-surface p-4">
+      <section className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
         <h2 className="text-caption font-medium text-ink-muted">Gentle hit-rate</h2>
         {historyQuery.isLoading ? (
           <p className="mt-2 text-body text-ink-faint">Loading…</p>
@@ -162,7 +162,7 @@ export function CareEvidence() {
       </section>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+        <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
           <h2 className="text-caption font-medium text-ink-muted">Self-care frequency</h2>
           {statsQuery.isLoading ? (
             <p className="text-meta text-ink-faint">Loading…</p>
@@ -188,7 +188,7 @@ export function CareEvidence() {
           )}
         </section>
         {hasMoodData ? (
-          <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+          <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
             <h2 className="text-caption font-medium text-ink-muted">Mood trend</h2>
             {statsQuery.isLoading ? (
               <p className="text-meta text-ink-faint">Loading…</p>
@@ -213,7 +213,7 @@ export function CareEvidence() {
       </div>
 
       {stats?.facetFrequencies.length ? (
-        <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+        <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
           <h2 className="text-caption font-medium text-ink-muted">By facet</h2>
           <p className="text-meta leading-snug text-ink-faint">
             Body · Mind · Soul — gentle counts, no targets.
@@ -244,7 +244,7 @@ export function CareEvidence() {
         {historyQuery.isLoading ? (
           <p className="text-meta text-ink-faint">Loading…</p>
         ) : history?.days.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-card border border-subtle bg-surface px-6 py-10 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-card border border-subtle bg-surface px-6 py-10 text-center shadow-surface">
             <GhostFacetStrip className="w-32" />
             <p className="text-sm font-medium text-ink">Wins gather here as you notice them</p>
             <p className="max-w-sm text-xs text-ink-muted">
@@ -254,7 +254,10 @@ export function CareEvidence() {
         ) : (
           <ul className="flex flex-col gap-2">
             {history?.days.map((day) => (
-              <li key={day.winDate} className="rounded-card border border-subtle bg-surface p-3">
+              <li
+                key={day.winDate}
+                className="rounded-card border border-subtle bg-surface p-3 shadow-surface"
+              >
                 <h3 className="mb-2 text-caption font-medium text-ink-muted">
                   {formatWinCardDate(day.winDate, history.today)}
                 </h3>

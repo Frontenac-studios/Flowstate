@@ -41,7 +41,7 @@ export default function ProjectWorkspaceHeader({
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
 
   return (
-    <header className="relative z-sticky flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-overlay">
+    <header className="relative z-sticky flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-surface">
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-3">
           {showBackToProjects ? (

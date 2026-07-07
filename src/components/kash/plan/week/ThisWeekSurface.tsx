@@ -53,7 +53,7 @@ export function ThisWeekSurface() {
           <WeeklySummaryCard />
         </div>
       ) : (
-        <div className="mb-4 rounded-card border border-subtle bg-surface px-4 py-3">
+        <div className="mb-4 rounded-card border border-subtle bg-surface px-4 py-3 shadow-surface">
           <GhostCategoryStrip className="mx-auto w-40" />
           <p className="mt-2 text-center text-sm text-ink-muted">
             Schedule tasks on the week grid — summary fills in as your plan takes shape.

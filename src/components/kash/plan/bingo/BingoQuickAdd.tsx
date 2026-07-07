@@ -41,7 +41,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4"
+      className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface"
     >
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bingo-goal-title" className="text-caption font-medium text-ink">

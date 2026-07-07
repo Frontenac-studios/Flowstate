@@ -34,7 +34,7 @@ export function WeekInbox({
 
   return (
     <section
-      className="mt-4 flex flex-col rounded-card border border-subtle bg-surface p-4"
+      className="mt-4 flex flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface"
       style={{ height: showTasks ? heightPx : undefined }}
       aria-label="Plan tasks"
     >

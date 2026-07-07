@@ -34,7 +34,7 @@ export default function ProjectMilestoneStrip({ milestones, onEdit }: Props) {
   if (ordered.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2 shadow-surface">
       <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Milestones</span>
       <ul className="flex flex-wrap items-center gap-1.5">
         {ordered.map((mi) => {

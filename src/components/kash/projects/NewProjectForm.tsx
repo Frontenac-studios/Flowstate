@@ -136,7 +136,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-4"
+      className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-4 shadow-surface"
     >
       <InPageSwitcher
         options={CREATION_MODES}

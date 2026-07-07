@@ -46,7 +46,7 @@ export default function AbyssMonthlyReview({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-abyss-border bg-abyss-surface p-4">
+    <div className="flex flex-col gap-3 rounded-card border border-abyss-border bg-abyss-surface p-4 shadow-surface">
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           <SparkleIcon size={18} />

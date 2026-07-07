@@ -118,7 +118,7 @@ export default function EssentialNudgeChip({
   return (
     <div
       className={cn(
-        "flex items-center gap-[var(--space-3)] rounded-row border border-l-[length:var(--stripe-width)] border-border border-l-ink bg-surface px-[var(--space-3)] py-[var(--space-2)] shadow-sm",
+        "flex items-center gap-[var(--space-3)] rounded-row border border-l-[length:var(--stripe-width)] border-border border-l-ink bg-surface px-[var(--space-3)] py-[var(--space-2)] shadow-surface",
         exiting ? "nudge-fade-out" : "nudge-fade-in",
         className
       )}

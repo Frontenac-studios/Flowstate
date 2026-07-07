@@ -42,7 +42,7 @@ export default function SuggestedSection({ catalog }: Props) {
       <h2 className="text-subtitle font-medium text-ink">Suggested</h2>
 
       {groups.length === 0 ? (
-        <p className="rounded-card border border-subtle bg-surface px-4 py-6 text-center text-meta text-ink-faint">
+        <p className="rounded-card border border-subtle bg-surface px-4 py-6 text-center text-meta text-ink-faint shadow-surface">
           You&apos;ve adopted every suggestion. Create your own above any time.
         </p>
       ) : (

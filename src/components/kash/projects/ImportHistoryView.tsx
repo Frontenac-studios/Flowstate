@@ -105,7 +105,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
       {importsQuery.isLoading ? (
         <p className="text-body text-ink-muted">Loading…</p>
       ) : imports.length === 0 ? (
-        <div className="rounded-card border border-subtle bg-surface px-6 py-12 text-center">
+        <div className="rounded-card border border-subtle bg-surface px-6 py-12 text-center shadow-surface">
           <p className="font-medium text-ink">No bulk imports yet</p>
           <p className="mt-1 text-meta text-ink-muted">
             Paste multiple lines in a column and press ⌘↵ to create an import.

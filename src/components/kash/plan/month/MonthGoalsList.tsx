@@ -11,7 +11,7 @@ export default function MonthGoalsList({ goals }: Props) {
   if (goals.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-2 rounded-card border border-subtle bg-surface p-4">
+    <section className="flex flex-col gap-2 rounded-card border border-subtle bg-surface p-4 shadow-surface">
       <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">
         Goals this month
       </h3>

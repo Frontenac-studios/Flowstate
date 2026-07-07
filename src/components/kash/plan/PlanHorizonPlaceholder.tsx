@@ -13,7 +13,7 @@ export default function PlanHorizonPlaceholder({ horizon }: Props) {
         : "Nothing planned yet.";
 
   return (
-    <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted">
+    <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted shadow-surface">
       <p className="text-sm">{copy}</p>
     </div>
   );

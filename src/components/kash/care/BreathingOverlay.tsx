@@ -122,7 +122,7 @@ export function BreathingOverlay({ open, onClose, targetMinutes = 2 }: Props) {
       role="dialog"
       aria-label="Breathing session"
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-card border border-subtle bg-surface p-6 shadow-lg">
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-card border border-subtle bg-surface p-6 shadow-overlay">
         <div className="relative flex h-40 w-full items-center justify-center rounded-card bg-surface-2">
           <div
             className={`care-breathing-orb relative flex h-28 w-28 items-center justify-center ${running ? "care-breathing-orb-active" : ""}`}

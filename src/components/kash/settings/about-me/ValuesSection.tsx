@@ -73,7 +73,7 @@ export default function ValuesSection() {
 
       <ValuesYearlyReviewBanner valueCount={count} />
 
-      <div className="rounded-card border border-subtle bg-surface p-4">
+      <div className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
         {count === 0 ? (
           <ColoredEmptyInvitation
             title="Add your first value"

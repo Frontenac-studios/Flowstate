@@ -63,7 +63,7 @@ export function CareReflection() {
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-card border border-subtle bg-surface p-4">
+      <section className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
         <h2 className="mb-2 text-caption font-medium text-ink-muted">Tonight&apos;s frame</h2>
         {promptQuery.isLoading ? (
           <p className="text-meta text-ink-faint">Loading…</p>
@@ -86,7 +86,7 @@ export function CareReflection() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4">
+      <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
         <label htmlFor="care-reflection-body" className="text-caption font-medium text-ink-muted">
           Your reflection
         </label>
@@ -140,13 +140,16 @@ export function CareReflection() {
         {archiveQuery.isLoading ? (
           <p className="text-meta text-ink-faint">Loading…</p>
         ) : archiveQuery.data?.length === 0 ? (
-          <div className="rounded-card border border-subtle bg-surface px-4 py-8 text-center">
+          <div className="rounded-card border border-subtle bg-surface px-4 py-8 text-center shadow-surface">
             <p className="text-body text-ink-muted">Your archive will grow here.</p>
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
             {archiveQuery.data?.map((entry) => (
-              <li key={entry.id} className="rounded-card border border-subtle bg-surface p-3">
+              <li
+                key={entry.id}
+                className="rounded-card border border-subtle bg-surface p-3 shadow-surface"
+              >
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <h3 className="text-caption font-medium text-ink-muted">
                     {entry.reflectionDate}
