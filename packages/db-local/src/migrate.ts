@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS projects (
   slug TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'adulting',
   embedding TEXT,
+  archived_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
@@ -634,6 +635,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   { table: "protected_blocks", column: "source", definition: "TEXT" },
   { table: "projects", column: "embedding", definition: "TEXT" },
+  { table: "projects", column: "archived_at", definition: "INTEGER" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {
