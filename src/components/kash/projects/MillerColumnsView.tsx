@@ -9,7 +9,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import Button from "@/components/kash/ui/Button";
@@ -413,23 +413,34 @@ export default function MillerColumnsView({
   const composerParentPhaseId =
     selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
 
+  // D39-B — the selected phase's detail heads its child column (the column whose parentPhaseId is
+  // the selected phase), replacing the interim inline accordion in the parent column.
+  const renderPhaseHeader = useCallback(
+    (parentPhaseId: string | null): ReactNode => {
+      if (parentPhaseId === null) return null;
+      if (!(detail?.type === "phase" && detail.id === parentPhaseId)) return null;
+      const node = nodeById.get(parentPhaseId);
+      if (!node) return null;
+      return (
+        <PhaseDetail
+          node={node}
+          category={category}
+          dayPriorityTaskIds={dayPriorityTaskIds}
+          timeSpentSeconds={timeRollups?.byPhaseId[parentPhaseId] ?? 0}
+          estimateSampleCount={estimateSampleCount}
+          pending={m.deletePhase.isPending}
+          onUpdate={(patch) => m.updatePhase.mutate({ id: parentPhaseId, ...patch })}
+          onRequestDelete={() => setConfirm({ kind: "phase-delete", id: parentPhaseId })}
+        />
+      );
+    },
+    [detail, nodeById, category, dayPriorityTaskIds, timeRollups?.byPhaseId, estimateSampleCount, m]
+  );
+
+  // Task detail (ID-1) still expands inline in the row.
   const renderDetail = useCallback(
     (item: ColumnItem) => {
-      if (item.kind === "phase") {
-        if (!(detail?.type === "phase" && detail.id === item.node.phase.id)) return null;
-        return (
-          <PhaseDetail
-            node={item.node}
-            category={category}
-            dayPriorityTaskIds={dayPriorityTaskIds}
-            timeSpentSeconds={timeRollups?.byPhaseId[item.node.phase.id] ?? 0}
-            estimateSampleCount={estimateSampleCount}
-            pending={m.deletePhase.isPending}
-            onUpdate={(patch) => m.updatePhase.mutate({ id: item.node.phase.id, ...patch })}
-            onRequestDelete={() => setConfirm({ kind: "phase-delete", id: item.node.phase.id })}
-          />
-        );
-      }
+      if (item.kind !== "task") return null;
       if (!(detail?.type === "task" && detail.id === item.task.id)) return null;
       return (
         <TaskDetail
@@ -442,15 +453,7 @@ export default function MillerColumnsView({
         />
       );
     },
-    [
-      detail,
-      m,
-      toggleTask,
-      category,
-      dayPriorityTaskIds,
-      timeRollups?.byPhaseId,
-      estimateSampleCount,
-    ]
+    [detail, m, toggleTask]
   );
 
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
@@ -477,7 +480,7 @@ export default function MillerColumnsView({
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div
-            className="shrink-0 rounded-card border border-subtle bg-surface p-4"
+            className="shrink-0 rounded-card border border-subtle bg-surface p-4 shadow-surface"
             data-miller-composer
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -536,6 +539,7 @@ export default function MillerColumnsView({
                     />
                   ) : null
                 }
+                detailHeader={renderPhaseHeader(col.parentPhaseId)}
                 renderDetail={renderDetail}
                 onOpenPhase={(node) => openPhase(col.level, node)}
                 onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
