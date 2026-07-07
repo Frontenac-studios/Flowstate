@@ -25,9 +25,12 @@ import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
-import { useTRPC } from "@/trpc/client";
+import { useTRPC, type RouterOutputs } from "@/trpc/client";
 
 import { useReveal } from "./LensProvider";
+import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
+
+type RecentlyCompletedRow = RouterOutputs["tasks"]["listRecentlyCompleted"][number];
 
 export type PlanTaskRow = {
   id: string;
@@ -238,11 +241,37 @@ export function TaskRow({
 
   const completeMutation = useMutation(
     trpc.tasks.complete.mutationOptions({
+      // The row's slide-out is already optimistic via `completing`; this also
+      // drops the task into the "Completed" tail instantly (its feed only
+      // refetches after the slide, so without this the tail lags a beat).
+      onMutate: async () => {
+        const category = task.category;
+        if (!category) return undefined;
+        const snapshot = await optimisticPatch<RecentlyCompletedRow[]>(
+          queryClient,
+          trpc.tasks.listRecentlyCompleted.queryKey(),
+          (old) => [
+            {
+              id: task.id,
+              title: task.title,
+              completedAt: new Date(),
+              projectSlug: task.projectSlug,
+              category,
+              categoryUnresolved: task.categoryUnresolved ?? false,
+            },
+            ...old.filter((t) => t.id !== task.id),
+          ]
+        );
+        return { snapshots: [snapshot] };
+      },
       onSuccess: (data) => {
         onComplete(data.task.id, data.previousCompletedAt);
         invalidatePlanAfterSlide();
       },
-      onError: () => setCompleting(false),
+      onError: (_err, _vars, ctx) => {
+        setCompleting(false);
+        rollbackPatches(queryClient, ctx?.snapshots);
+      },
     })
   );
 

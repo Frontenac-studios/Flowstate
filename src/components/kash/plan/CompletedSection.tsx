@@ -8,7 +8,11 @@ import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import { useToast } from "@/components/kash/ui/ToastProvider";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
-import { useTRPC } from "@/trpc/client";
+import { useTRPC, type RouterOutputs } from "@/trpc/client";
+
+import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
+
+type RecentlyCompletedRow = RouterOutputs["tasks"]["listRecentlyCompleted"][number];
 
 const NEUTRAL_CHECK = "var(--ink-faint)";
 
@@ -52,15 +56,26 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
 
   const uncompleteMutation = useMutation(
     trpc.tasks.uncomplete.mutationOptions({
+      // Drop the row out of the "Completed" tail instantly; onSettled's
+      // invalidatePlan refetches both lists to reconcile.
+      onMutate: async ({ id }) => {
+        const snapshot = await optimisticPatch<RecentlyCompletedRow[]>(
+          queryClient,
+          trpc.tasks.listRecentlyCompleted.queryKey(),
+          (old) => old.filter((t) => t.id !== id)
+        );
+        return { snapshots: [snapshot] };
+      },
       onSuccess: (row) => {
         onUncomplete?.(row.id);
-        invalidatePlan();
         setUncompletingId(null);
       },
-      onError: () => {
+      onError: (_err, _vars, ctx) => {
         setUncompletingId(null);
+        rollbackPatches(queryClient, ctx?.snapshots);
         toast({ message: "Couldn't uncomplete this task. Please try again.", variant: "error" });
       },
+      onSettled: () => invalidatePlan(),
     })
   );
 
