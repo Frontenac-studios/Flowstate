@@ -341,6 +341,18 @@ function collectBatchPlusPaths(rawLines: string[]): Set<string> {
   return paths;
 }
 
+/** Remove successfully submitted lines from composer text; keep invalid lines as typed. */
+export function removeSubmittedLines(value: string, submitted: ParsedProjectLine[]): string {
+  const submittedTrimmed = new Set(submitted.map((line) => line.raw));
+  return value
+    .split("\n")
+    .filter((line) => {
+      const trimmed = line.trim();
+      return trimmed.length > 0 && !submittedTrimmed.has(trimmed);
+    })
+    .join("\n");
+}
+
 export function parseProjectTaskInputLines(
   raw: string,
   ctx: ParseProjectTaskContext

@@ -9,6 +9,7 @@ import {
   isProjectTaskLineValid,
   MAX_COMPOSER_LINES,
   parseProjectTaskInputLines,
+  removeSubmittedLines,
   type ParsedProjectLine,
 } from "@/lib/parser/parse-project-task-input";
 import {
@@ -191,8 +192,7 @@ export default function NewItemRow({
     setSubmitting(true);
     try {
       await onSubmitComposer(valid);
-      const invalid = parsedLines.filter((line) => !isProjectTaskLineValid(line.parse));
-      setValue(invalid.map((l) => l.raw).join("\n"));
+      setValue(removeSubmittedLines(value, valid));
     } catch {
       setSubmitError("Couldn't add your tasks — please try again.");
     } finally {

@@ -36,9 +36,14 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
   const importsQuery = useQuery(trpc.taskBulkImports.listByProject.queryOptions({ projectId }));
 
   const undoTasksQuery = useQuery({
-    ...trpc.taskBulkImports.listTasksForImport.queryOptions({
-      importId: undoTarget?.importId ?? "",
-    }),
+    ...(undoTarget
+      ? trpc.taskBulkImports.listTasksForImport.queryOptions({ importId: undoTarget.importId })
+      : {
+          queryKey: trpc.taskBulkImports.listTasksForImport.queryKey({
+            importId: "00000000-0000-0000-0000-000000000000",
+          }),
+          queryFn: async () => [] as { id: string; title: string }[],
+        }),
     enabled: undoTarget !== null,
   });
 
@@ -67,6 +72,13 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
             ? "Undid import — 1 task removed."
             : `Undid import — ${result.deletedCount} tasks removed.`
         );
+      },
+      onError: (error) => {
+        setUndoTarget(null);
+        void queryClient.invalidateQueries({
+          queryKey: trpc.taskBulkImports.listByProject.queryKey({ projectId }),
+        });
+        setStatusMessage(error.message);
       },
     })
   );
@@ -155,17 +167,24 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
             : ""
         }
         confirmLabel={undoMutation.isPending ? "Undoing…" : "Undo import"}
-        confirmDisabled={undoTasksQuery.isLoading || undoMutation.isPending}
+        confirmDisabled={undoMutation.isPending}
         destructive
-        onCancel={() => setUndoTarget(null)}
+        onCancel={() => {
+          if (undoMutation.isPending) return;
+          setUndoTarget(null);
+        }}
         onConfirm={() => {
-          if (!undoTarget) return;
+          if (!undoTarget || undoMutation.isPending) return;
           undoMutation.mutate({ importId: undoTarget.importId });
         }}
       >
         <section aria-label="Tasks to remove">
           {undoTasksQuery.isLoading ? (
             <p className="mt-3 text-body text-ink-muted">Loading tasks…</p>
+          ) : undoTasksQuery.isError ? (
+            <p className="mt-3 text-body text-ink-muted">
+              Couldn&apos;t load task preview — you can still undo.
+            </p>
           ) : (
             <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-row border border-subtle px-3 py-2">
               {(undoTasksQuery.data ?? []).map((task) => (
@@ -176,6 +195,11 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
             </ul>
           )}
         </section>
+        {undoMutation.isError ? (
+          <p role="alert" className="mt-4 text-sm text-critical">
+            Couldn&apos;t undo this import. Please try again.
+          </p>
+        ) : null}
       </ConfirmDialog>
     </section>
   );
