@@ -1,3 +1,5 @@
+use std::fs::OpenOptions;
+use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use std::time::Duration;
@@ -18,7 +20,7 @@ struct SidecarState {
     port: u16,
 }
 
-fn sidecar_script_path(app: &AppHandle) -> Option<std::path::PathBuf> {
+fn sidecar_script_path(app: &AppHandle) -> Option<PathBuf> {
     if cfg!(debug_assertions) {
         return None;
     }
@@ -26,17 +28,88 @@ fn sidecar_script_path(app: &AppHandle) -> Option<std::path::PathBuf> {
     Some(resource.join("sidecar").join("run-sidecar.sh"))
 }
 
-fn wait_for_health(port: u16) -> bool {
+/// Path to the app data dir (`~/Library/Application Support/com.frontenac.kash`),
+/// where the SQLite db, sidecar pid file, and sidecar log live.
+fn data_dir(app: &AppHandle) -> PathBuf {
+    app.path()
+        .app_data_dir()
+        .unwrap_or_else(|_| PathBuf::from("."))
+}
+
+fn sidecar_pid_path(app: &AppHandle) -> PathBuf {
+    data_dir(app).join("sidecar.pid")
+}
+
+fn sidecar_log_path(app: &AppHandle) -> PathBuf {
+    data_dir(app).join("sidecar.log")
+}
+
+/// Build id baked into the bundled sidecar (`.next/BUILD_ID`). Compared against
+/// the running sidecar's `/api/health` `build` field so the shell never attaches
+/// to a sidecar from a different Kash build squatting the shared port.
+fn expected_build_id(app: &AppHandle) -> Option<String> {
+    let resource = app.path().resource_dir().ok()?;
+    let path = resource.join("sidecar").join(".next").join("BUILD_ID");
+    std::fs::read_to_string(path)
+        .ok()
+        .map(|s| s.trim().to_string())
+}
+
+/// Single `/api/health` probe. Returns the parsed JSON body on a 2xx response,
+/// or `None` if nothing healthy is listening.
+fn probe_health(port: u16) -> Option<serde_json::Value> {
     let url = format!("http://127.0.0.1:{port}/api/health");
+    let res = reqwest::blocking::get(&url).ok()?;
+    if !res.status().is_success() {
+        return None;
+    }
+    let body = res.text().ok()?;
+    serde_json::from_str(&body).ok()
+}
+
+/// Poll `/api/health` for up to 30s. Returns the health body once ready.
+fn wait_for_health(port: u16) -> Option<serde_json::Value> {
     for _ in 0..120 {
-        if let Ok(res) = reqwest::blocking::get(&url) {
-            if res.status().is_success() {
-                return true;
-            }
+        if let Some(body) = probe_health(port) {
+            return Some(body);
         }
         std::thread::sleep(Duration::from_millis(250));
     }
-    false
+    None
+}
+
+/// Reap a sidecar recorded by a previous launch. The child is only killed on a
+/// *clean* exit, so a crash or force-quit leaves the Node sidecar orphaned and
+/// still holding the port — this cleans it up on the next launch. Guarded by a
+/// command-line check so pid reuse can't take out an unrelated process.
+fn kill_recorded_sidecar(app: &AppHandle) {
+    let pid_path = sidecar_pid_path(app);
+    let Ok(contents) = std::fs::read_to_string(&pid_path) else {
+        return;
+    };
+    if let Ok(pid) = contents.trim().parse::<u32>() {
+        let script = format!("ps -p {pid} -o command= | grep -q server.js && kill -9 {pid} || true");
+        let _ = Command::new("/bin/bash")
+            .arg("-c")
+            .arg(script)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
+    let _ = std::fs::remove_file(&pid_path);
+}
+
+/// Force-reclaim the fixed port by killing whatever is still bound to it. Used
+/// only when a *foreign* sidecar (e.g. a different Kash build with a mismatched
+/// BUILD_ID) is squatting the port after the recorded-pid reap.
+fn reclaim_port(port: u16) {
+    let script = format!("lsof -ti tcp:{port} | xargs kill -9 2>/dev/null || true");
+    let _ = Command::new("/bin/bash")
+        .arg("-c")
+        .arg(script)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
 }
 
 fn start_sidecar(app: &AppHandle, port: u16) -> Result<Option<Child>, String> {
@@ -49,14 +122,45 @@ fn start_sidecar(app: &AppHandle, port: u16) -> Result<Option<Child>, String> {
         return Err(format!("Missing sidecar launcher: {}", script.display()));
     }
 
+    // Ensure the data dir exists so the pid file, log, and SQLite db have a home.
+    let _ = std::fs::create_dir_all(data_dir(app));
+
+    // Reap a sidecar orphaned by a previous crash/force-quit. If something is
+    // still answering on the port afterwards, it's a foreign/stale server
+    // (attaching to it would serve mismatched JS/CSS chunks and hang the
+    // WebView on an unstyled first paint) — take the port back by force.
+    kill_recorded_sidecar(app);
+    if let Some(body) = probe_health(port) {
+        eprintln!(
+            "Reclaiming port {port} from another sidecar (build {:?}, expected {:?})",
+            body.get("build").and_then(|b| b.as_str()),
+            expected_build_id(app)
+        );
+        reclaim_port(port);
+        std::thread::sleep(Duration::from_millis(300));
+    }
+
+    // Capture sidecar stdout/stderr instead of discarding it, so a boot failure
+    // (EADDRINUSE, missing env, crash) is diagnosable from sidecar.log.
+    let log_path = sidecar_log_path(app);
+    let log = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_path)
+        .map_err(|e| format!("Cannot open sidecar log {}: {e}", log_path.display()))?;
+    let log_err = log.try_clone().map_err(|e| e.to_string())?;
+
     let child = Command::new("/bin/bash")
         .arg(script)
         .env("KASH_SIDECAR_PORT", port.to_string())
         .env("KASH_DATA_DIR", app_data_dir(app))
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stdout(Stdio::from(log))
+        .stderr(Stdio::from(log_err))
         .spawn()
         .map_err(|e| e.to_string())?;
+
+    // Record the pid so the next launch can reap this sidecar even if we crash.
+    let _ = std::fs::write(sidecar_pid_path(app), child.id().to_string());
 
     Ok(Some(child))
 }
@@ -197,10 +301,31 @@ pub fn run() {
                 if let Some(c) = child {
                     *handle.state::<SidecarState>().child.lock().unwrap() = Some(c);
                 }
-                if !wait_for_health(port) {
-                    return Err("Kash server did not become ready".into());
+                match wait_for_health(port) {
+                    Some(body) => {
+                        // Belt-and-braces: confirm the server that answered is the
+                        // sidecar we just started, not something else that grabbed
+                        // the port. A mismatch means our spawn failed to bind.
+                        if let Some(expected) = expected_build_id(&handle) {
+                            let got = body.get("build").and_then(|b| b.as_str());
+                            if got != Some(expected.as_str()) {
+                                return Err(format!(
+                                    "Kash server build mismatch (expected {expected}, got {got:?}); see {}",
+                                    sidecar_log_path(&handle).display()
+                                )
+                                .into());
+                            }
+                        }
+                    }
+                    None => {
+                        return Err(format!(
+                            "Kash server did not become ready on :{port}; see {}",
+                            sidecar_log_path(&handle).display()
+                        )
+                        .into());
+                    }
                 }
-            } else if !wait_for_health(port) {
+            } else if wait_for_health(port).is_none() {
                 eprintln!("Warning: dev server not ready at :{port}");
             }
 
@@ -219,6 +344,9 @@ pub fn run() {
                         }
                     }
                 }
+                // Clean exit reaped the child — drop the pid file so the next
+                // launch doesn't try to kill a pid that's already gone.
+                let _ = std::fs::remove_file(sidecar_pid_path(app));
             }
         });
 }
