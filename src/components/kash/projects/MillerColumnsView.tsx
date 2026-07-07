@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
+import Button from "@/components/kash/ui/Button";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { defaultMillerPath, expandMillerPath } from "@/lib/projects/miller-path";
@@ -59,6 +60,7 @@ type Props = {
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
   estimateSampleCount?: number;
+  onOpenSetup?: () => void;
 };
 
 function orderItems(phases: Node[], tasks: ProjectTask[]): ColumnItem[] {
@@ -82,6 +84,7 @@ export default function MillerColumnsView({
   selectedPath,
   onSelectPath,
   estimateSampleCount = 0,
+  onOpenSetup,
 }: Props) {
   const trpc = useTRPC();
   const { data: pinnedTaskIds = [] } = useQuery(
@@ -523,6 +526,13 @@ export default function MillerColumnsView({
                       title="Add your first phase"
                       hint="Use the box above — one per line. Start a line with ;;; to add a phase."
                       className="mx-1 my-2 border-none bg-transparent px-3 py-6 shadow-none"
+                      action={
+                        onOpenSetup ? (
+                          <Button type="button" variant="ghost" onClick={onOpenSetup}>
+                            Set up project
+                          </Button>
+                        ) : undefined
+                      }
                     />
                   ) : null
                 }
