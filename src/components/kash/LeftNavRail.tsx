@@ -91,7 +91,7 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       aria-busy={pending || undefined}
       title={item.label}
-      className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : "justify-center"} ${NAV_LINK_FOCUS} ${
+      className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : ""} ${NAV_LINK_FOCUS} ${
         highlighted
           ? "bg-[var(--surface-selected)] text-ink"
           : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
