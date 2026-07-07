@@ -22,6 +22,10 @@ export const projects = sqliteTable(
     category: text("category", { enum: PROJECT_CATEGORIES }).notNull(),
     // jsonb number[] in Postgres; stored as a JSON string here (see row-mapper).
     embedding: text("embedding"),
+    // Soft-archive marker (mirrors Postgres). Non-null hides the project from the
+    // index; list queries filter on `isNull(archivedAt)`, so this column must exist
+    // or Drizzle emits a dangling `IS NULL` and SQLite errors.
+    archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),
