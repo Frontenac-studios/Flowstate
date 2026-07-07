@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { isAuthBypassed } from "@/lib/auth/auth-bypass";
 import { isAuthPath, isProtectedPath } from "@/lib/auth/paths";
+import { getVerifiedUser } from "@/lib/auth/verify-jwt";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -26,9 +27,7 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   const { pathname } = request.nextUrl;
 

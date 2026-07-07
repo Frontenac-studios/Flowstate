@@ -2,14 +2,13 @@ import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 
 import { resolveAuthContext } from "@/lib/auth/auth-bypass";
+import { getVerifiedUser } from "@/lib/auth/verify-jwt";
 import { createClient } from "@/lib/supabase/server";
 
 export const createTRPCContext = async ({ headers }: { headers: Headers }) => {
   void headers;
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   const auth = resolveAuthContext(user);
 
