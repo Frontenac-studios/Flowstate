@@ -6,7 +6,7 @@ import {
   MILLER_STRIP_PADDING_X_PX,
   MIN_VISIBLE_COLUMNS,
   millerColumnShellClass,
-  millerColumnWidthClass,
+  MILLER_COLUMN_WIDTH_CLASS,
   MILLER_COLUMN_MIN_HEIGHT_CLASS,
   VIEWPORT_MIN_FOR_FIVE_COLUMNS,
   visibleColumnTarget,
@@ -51,20 +51,16 @@ describe("ghostColumnCount", () => {
 
 describe("millerColumnShellClass", () => {
   it("includes width, minimum height, and stretch layout", () => {
-    const shell = millerColumnShellClass("flex-1 min-w-0");
-    expect(shell).toContain("flex-1 min-w-0");
+    const shell = millerColumnShellClass(MILLER_COLUMN_WIDTH_CLASS);
+    expect(shell).toContain(MILLER_COLUMN_WIDTH_CLASS);
     expect(shell).toContain(MILLER_COLUMN_MIN_HEIGHT_CLASS);
     expect(shell).toContain("h-full");
     expect(shell).toContain("self-stretch");
   });
 });
 
-describe("millerColumnWidthClass", () => {
-  it("uses flex fit when columns share the strip width", () => {
-    expect(millerColumnWidthClass(true)).toBe("flex-1 min-w-0");
-  });
-
-  it("uses fixed width when scrolling", () => {
-    expect(millerColumnWidthClass(false)).toBe("w-64 shrink-0");
+describe("MILLER_COLUMN_WIDTH_CLASS", () => {
+  it("is a fixed, non-stretching column width", () => {
+    expect(MILLER_COLUMN_WIDTH_CLASS).toBe("w-64 shrink-0");
   });
 });
