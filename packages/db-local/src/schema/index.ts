@@ -21,6 +21,7 @@ export * from "./nudge-events";
 export * from "./phases";
 export * from "./planning-enums";
 export * from "./planning-suggestions";
+export * from "./project-milestones";
 export * from "./project-similarity";
 export * from "./project-templates";
 export * from "./projects";

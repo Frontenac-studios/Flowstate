@@ -64,6 +64,20 @@ CREATE INDEX IF NOT EXISTS phases_user_id_project_id_idx ON phases (user_id, pro
 CREATE INDEX IF NOT EXISTS phases_parent_phase_id_idx ON phases (parent_phase_id);
 CREATE INDEX IF NOT EXISTS phases_user_id_updated_at_idx ON phases (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS project_milestones (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  target_date TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  completed_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS project_milestones_user_id_project_id_idx ON project_milestones (user_id, project_id);
+CREATE INDEX IF NOT EXISTS project_milestones_user_id_target_date_idx ON project_milestones (user_id, target_date);
+
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
