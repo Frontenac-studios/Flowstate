@@ -16,6 +16,7 @@ import { meRouter } from "./me";
 import { nudgesRouter } from "./nudges";
 import { phasesRouter } from "./phases";
 import { planningRouter } from "./planning";
+import { projectMilestonesRouter } from "./project-milestones";
 import { projectsRouter } from "./projects";
 import { protectedBlocksRouter } from "./protected-blocks";
 import { recurrenceRouter } from "./recurrence";
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   nudges: nudgesRouter,
   phases: phasesRouter,
   planning: planningRouter,
+  projectMilestones: projectMilestonesRouter,
   projects: projectsRouter,
   protectedBlocks: protectedBlocksRouter,
   recurrence: recurrenceRouter,

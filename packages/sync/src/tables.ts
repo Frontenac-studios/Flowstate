@@ -4,6 +4,7 @@ export const SYNC_TABLES = [
   "project_similarity",
   "project_templates",
   "phases",
+  "project_milestones",
   "protected_block_templates",
   "protected_blocks",
   "week_day_priorities",

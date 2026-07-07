@@ -24,6 +24,7 @@ import { evidenceEditions as pgEvidenceEditions } from "./schema/evidence-editio
 import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { nudgeEvents as pgNudgeEvents } from "./schema/nudge-events";
 import { phases as pgPhases } from "./schema/phases";
+import { projectMilestones as pgProjectMilestones } from "./schema/project-milestones";
 import { projectSimilarity as pgProjectSimilarity } from "./schema/project-similarity";
 import { projectTemplates as pgProjectTemplates } from "./schema/project-templates";
 import { projects as pgProjects } from "./schema/projects";
@@ -52,6 +53,9 @@ export const projectTemplates = (
   isSqliteMode() ? sqliteSchema.projectTemplates : pgProjectTemplates
 ) as typeof pgProjectTemplates;
 export const phases = (isSqliteMode() ? sqliteSchema.phases : pgPhases) as typeof pgPhases;
+export const projectMilestones = (
+  isSqliteMode() ? sqliteSchema.projectMilestones : pgProjectMilestones
+) as typeof pgProjectMilestones;
 export const taskBulkImports = (
   isSqliteMode() ? sqliteSchema.taskBulkImports : pgTaskBulkImports
 ) as typeof pgTaskBulkImports;

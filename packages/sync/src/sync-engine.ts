@@ -13,6 +13,7 @@ import {
   nudgeEvents,
   phases,
   planningSuggestions,
+  projectMilestones,
   projects,
   projectSimilarity,
   projectTemplates,
@@ -494,6 +495,7 @@ async function upsertRow(
       else await db.insert(taskBulkImportItems).values(mapped as never);
       return true;
     }
+    case "project_milestones":
     case "bingo_cards":
     case "goals":
     case "goal_milestones":
@@ -502,6 +504,7 @@ async function upsertRow(
     case "reserved_days":
     case "planning_suggestions": {
       const tableMap = {
+        project_milestones: projectMilestones,
         bingo_cards: bingoCards,
         goals,
         goal_milestones: goalMilestones,
