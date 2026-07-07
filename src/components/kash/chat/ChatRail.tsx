@@ -89,7 +89,7 @@ export function ChatRail() {
         onClick={closeRail}
       />
       <aside
-        className="lg:top-shell fixed inset-y-3 right-3 z-modal flex w-[min(100%-1.5rem,var(--chat-rail-width))] flex-col rounded-card border border-border bg-surface p-card-x shadow-overlay lg:sticky lg:inset-auto lg:z-auto lg:h-full lg:w-[min(100%,var(--chat-rail-width))] lg:shrink-0"
+        className="lg:top-shell fixed inset-y-3 right-3 z-modal flex w-[min(100%-1.5rem,var(--chat-rail-width))] flex-col rounded-card border border-border bg-surface p-card-x shadow-overlay lg:sticky lg:inset-auto lg:z-auto lg:h-full lg:w-[min(100%,var(--chat-rail-width))] lg:shrink-0 lg:shadow-surface"
         aria-label="Claude chat"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
