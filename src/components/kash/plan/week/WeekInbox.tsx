@@ -1,8 +1,9 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { prefersReducedMotion } from "@/lib/animate/motion-tokens";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
 import type { PlanTaskRow } from "../TaskRow";
@@ -13,6 +14,10 @@ type Props = {
   heightPx: number;
   /** Start collapsed while empty and auto-expand once tasks arrive (execution surface). */
   collapseWhenEmpty?: boolean;
+  /** Chat-created task ids to pulse + scroll into view (post-create feedback, P6). */
+  highlightTaskIds?: Set<string>;
+  /** Force the inbox open (overrides the collapse-while-empty policy). */
+  forceExpanded?: boolean;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onDraftClick: () => void;
@@ -24,6 +29,8 @@ export function WeekInbox({
   tasks,
   heightPx,
   collapseWhenEmpty = false,
+  highlightTaskIds,
+  forceExpanded = false,
   onComplete,
   onDelete,
   onDraftClick,
@@ -34,10 +41,29 @@ export function WeekInbox({
   // explicit user override from the double-click/keyboard toggle.
   const [override, setOverride] = useState<boolean | null>(null);
   const { setNodeRef, isOver } = useDroppable({ id: "week-inbox" });
+  const firstHighlightedRef = useRef<HTMLLIElement | null>(null);
 
   const autoCollapsed = collapseWhenEmpty && tasks.length === 0;
-  const collapsed = override ?? autoCollapsed;
+  // A forced expand (a chat-created task just landed here) wins over both the
+  // auto policy and any prior user collapse for the duration of the signal.
+  const collapsed = forceExpanded ? false : (override ?? autoCollapsed);
   const toggleCollapsed = () => setOverride(!collapsed);
+
+  const firstHighlightedId = useMemo(() => {
+    if (!highlightTaskIds || highlightTaskIds.size === 0) return null;
+    return tasks.find((task) => highlightTaskIds.has(task.id))?.id ?? null;
+  }, [tasks, highlightTaskIds]);
+
+  const highlightKey = highlightTaskIds ? Array.from(highlightTaskIds).sort().join(",") : "";
+
+  useEffect(() => {
+    const el = firstHighlightedRef.current;
+    if (!el) return;
+    el.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "nearest",
+    });
+  }, [highlightKey]);
 
   const showTasks = !collapsed;
 
@@ -95,17 +121,22 @@ export function WeekInbox({
             <p className="text-sm text-ink-muted">No unscheduled tasks</p>
           ) : (
             <ul className="h-full space-y-2 overflow-y-auto pb-1">
-              {tasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  showProject={false}
-                  weekDragLift
-                  showSuggestedDate
-                  onComplete={onComplete}
-                  onDelete={onDelete}
-                />
-              ))}
+              {tasks.map((task) => {
+                const highlighted = highlightTaskIds?.has(task.id) ?? false;
+                return (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    showProject={false}
+                    weekDragLift
+                    showSuggestedDate
+                    onComplete={onComplete}
+                    onDelete={onDelete}
+                    highlightClassName={highlighted ? "kash-section-pulse" : undefined}
+                    highlightRef={task.id === firstHighlightedId ? firstHighlightedRef : undefined}
+                  />
+                );
+              })}
             </ul>
           )}
         </div>

@@ -32,6 +32,7 @@ import { useTRPC } from "@/trpc/client";
 
 import { useChat } from "../../chat/ChatProvider";
 import { createCaptureContext } from "@/lib/chat/capture-context";
+import { onChatTasksCreated } from "@/lib/chat/chat-task-created-events";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "../AddTaskPopover";
 import { usePlanMode } from "../PlanProvider";
 import { QuickInput, type QuickInputHandle } from "../QuickInput";
@@ -122,6 +123,9 @@ export function WeekCanvas({
   const [draftOpen, setDraftOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
+  // Ids of chat-created tasks to pulse; cleared ~2s after the create event.
+  const [chatHighlightIds, setChatHighlightIds] = useState<Set<string>>(new Set());
+  const highlightClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [composerHeight, setComposerHeight] = useState(DEFAULT_COMPOSER_HEIGHT_PX);
   const [replacePicker, setReplacePicker] = useState<{
     taskId: string;
@@ -189,6 +193,36 @@ export function WeekCanvas({
   }, [protectedBlocks]);
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
+
+  useEffect(() => {
+    const unsubscribe = onChatTasksCreated((detail) => {
+      const ids = detail.tasks.map((task) => task.id);
+      if (ids.length === 0) return;
+      setChatHighlightIds(new Set(ids));
+      if (highlightClearRef.current) clearTimeout(highlightClearRef.current);
+      highlightClearRef.current = setTimeout(() => setChatHighlightIds(new Set()), 2000);
+    });
+    return () => {
+      unsubscribe();
+      if (highlightClearRef.current) clearTimeout(highlightClearRef.current);
+    };
+  }, []);
+
+  const inboxTaskIds = useMemo(
+    () => new Set(partitioned.inbox.map((task) => task.id)),
+    [partitioned.inbox]
+  );
+
+  // Only the created tasks that actually landed unscheduled (in the inbox) drive
+  // the inbox pulse + force-expand; project/day-scheduled creates are ignored here.
+  const inboxHighlightIds = useMemo(() => {
+    if (chatHighlightIds.size === 0) return null;
+    const result = new Set<string>();
+    for (const id of Array.from(chatHighlightIds)) {
+      if (inboxTaskIds.has(id)) result.add(id);
+    }
+    return result.size > 0 ? result : null;
+  }, [chatHighlightIds, inboxTaskIds]);
 
   const weekDateIsos = useMemo(() => weekDates.map(toISODateString), [weekDates]);
 
@@ -576,6 +610,8 @@ export function WeekCanvas({
       tasks={partitioned.inbox.map(toRow)}
       heightPx={inboxHeightPx}
       collapseWhenEmpty={surface === "week"}
+      highlightTaskIds={inboxHighlightIds ?? undefined}
+      forceExpanded={(inboxHighlightIds?.size ?? 0) > 0}
       onComplete={pushComplete}
       onDelete={pushDelete}
       onDraftClick={() => {

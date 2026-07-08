@@ -21,6 +21,11 @@ type Props = {
   focused: boolean;
   onOpenDetail: () => void;
   onToggleComplete: () => void;
+  /**
+   * P6 post-create feedback: pulse class applied to the row's own `<li>` (rather
+   * than wrapping it in another `<li>`, which would nest list items).
+   */
+  highlightClassName?: string;
 };
 
 export default function MillerTaskRow({
@@ -30,6 +35,7 @@ export default function MillerTaskRow({
   focused,
   onOpenDetail,
   onToggleComplete,
+  highlightClassName,
 }: Props) {
   const completed = task.completedAt !== null;
   const isBlocked = !completed && task.isBlocked === true;
@@ -69,7 +75,7 @@ export default function MillerTaskRow({
         focused ? "ring-2 ring-inset ring-[var(--accent-soft)]" : ""
       } ${isDragging ? "opacity-50" : ""} ${
         isOver ? "border-t-2 border-ink" : "border-t-2 border-transparent"
-      }`}
+      } ${highlightClassName ?? ""}`}
     >
       <Checkbox
         checked={completed}

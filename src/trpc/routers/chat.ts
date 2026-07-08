@@ -313,7 +313,13 @@ export const chatRouter = createTRPCRouter({
       });
       await updateMessageProposalStatus(input.messageId, ctx.userId, "applied");
       const undoFrames = result.undoFrames.map((frame) => confirmUndoFrameSchema.parse(frame));
-      return { applied: result.applied, titles: result.titles, undoFrames };
+      return {
+        applied: result.applied,
+        titles: result.titles,
+        undoFrames,
+        createdTasks: result.createdTasks,
+        placementSummary: result.placementSummary,
+      };
     }),
 
   dismissProposedAction: protectedProcedure

@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type Ref,
+} from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -104,6 +112,13 @@ type Props = {
    * shows a chip + Accept button that commits the chat-suggested day.
    */
   showSuggestedDate?: boolean;
+  /**
+   * P6 post-create feedback: pulse class applied to the row's own `<li>` (rather
+   * than wrapping it in another `<li>`, which would nest list items).
+   */
+  highlightClassName?: string;
+  /** P6: ref to the row's `<li>` so a surface can scroll the created task into view. */
+  highlightRef?: Ref<HTMLLIElement>;
 };
 
 const ACTION_WIDTH_PX = 72;
@@ -138,6 +153,8 @@ export function TaskRow({
   arriveIndex,
   weekDragLift = false,
   showSuggestedDate = false,
+  highlightClassName,
+  highlightRef,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -270,6 +287,20 @@ export function TaskRow({
 
   const { tabIndex, ...dragAttributes } = attributes;
   void tabIndex;
+
+  // Compose the dnd node ref with the optional highlight ref so a single `<li>`
+  // serves as both the drag node and the scroll target (no nested wrapper).
+  const setRootRef = useCallback(
+    (node: HTMLLIElement | null) => {
+      setNodeRef(node);
+      if (typeof highlightRef === "function") {
+        highlightRef(node);
+      } else if (highlightRef) {
+        (highlightRef as MutableRefObject<HTMLLIElement | null>).current = node;
+      }
+    },
+    [setNodeRef, highlightRef]
+  );
 
   const completeMutation = useMutation(
     trpc.tasks.complete.mutationOptions({
@@ -488,7 +519,7 @@ export function TaskRow({
 
   return (
     <li
-      ref={setNodeRef}
+      ref={setRootRef}
       className={`relative overflow-hidden rounded-[var(--radius-card)] ${
         arriveIndex != null ? "row-arrive" : ""
       } ${
@@ -505,7 +536,7 @@ export function TaskRow({
               : weekDragLift
                 ? ""
                 : "transition-transform"
-      }`}
+      } ${highlightClassName ?? ""}`}
       style={{
         transform: completing ? undefined : dragTransform || undefined,
         ...(arriveIndex != null
