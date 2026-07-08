@@ -309,6 +309,7 @@ export function WeekCanvas({
     categoryUnresolved: task.categoryUnresolved,
     tags: task.tags ?? [],
     scheduledDate: task.scheduledDate,
+    suggestedScheduledDate: task.suggestedScheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,
     isRecurringOccurrence: task.isRecurringOccurrence,

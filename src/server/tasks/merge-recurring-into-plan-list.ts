@@ -11,6 +11,8 @@ export type PlanListTaskRow = {
   priority: number;
   scheduledDate: string | null;
   bucketOverride: string | null;
+  /** Chat-proposed day carried on an inbox task until Accept/drag commits it. */
+  suggestedScheduledDate: string | null;
   projectId: string | null;
   phaseId: string | null;
   isTop3: boolean;
@@ -119,6 +121,7 @@ export function mergeRecurringIntoPlanList({
         priority: patched.priority,
         scheduledDate: occurrence.displayDate,
         bucketOverride: null,
+        suggestedScheduledDate: null,
         projectId: template.projectId,
         phaseId: template.phaseId,
         isTop3: template.isTop3,

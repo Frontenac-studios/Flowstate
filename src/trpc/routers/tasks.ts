@@ -133,6 +133,7 @@ export const tasksRouter = createTRPCRouter({
           priority: tasks.priority,
           scheduledDate: tasks.scheduledDate,
           bucketOverride: tasks.bucketOverride,
+          suggestedScheduledDate: tasks.suggestedScheduledDate,
           projectId: tasks.projectId,
           phaseId: tasks.phaseId,
           isTop3: tasks.isTop3,
@@ -526,6 +527,10 @@ export const tasksRouter = createTRPCRouter({
 
       if (input.scheduledDate !== null) {
         patch.bucketOverride = null;
+        // Committing a real day resolves any chat-suggested day (dragging onto a
+        // weekday clears the suggestion the same way Accept does). Dropping back
+        // to the inbox (null date) leaves the suggestion intact.
+        patch.suggestedScheduledDate = null;
       }
 
       const [row] = await db
@@ -543,6 +548,49 @@ export const tasksRouter = createTRPCRouter({
 
       await clearWeekDayPrioritiesForTask(ctx.userId, input.id, {
         exceptDate: input.scheduledDate ?? undefined,
+      });
+
+      return row;
+    }),
+
+  /**
+   * Commit an inbox task's chat-suggested day. Unlike {@link scheduleToDate},
+   * this deliberately has NO ISO-week guard — a suggestion can be weeks out, and
+   * accepting it should land the task in the Later backlog rather than throw.
+   */
+  acceptSuggestedDate: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const task = await getOwnedTask(ctx.userId, input.id);
+
+      if (task.suggestedScheduledDate === null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Task has no suggested date to accept.",
+        });
+      }
+
+      const [row] = await db
+        .update(tasks)
+        .set({
+          scheduledDate: task.suggestedScheduledDate,
+          bucketOverride: null,
+          suggestedScheduledDate: null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)))
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to accept suggested date.",
+        });
+      }
+
+      await syncTaskRow(row.id, "update", row);
+      await clearWeekDayPrioritiesForTask(ctx.userId, input.id, {
+        exceptDate: task.suggestedScheduledDate,
       });
 
       return row;
