@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
+import { ChevronDown, kashIconProps } from "@/components/kash/ui/icon";
 import { categoryLabel } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
@@ -11,15 +13,18 @@ import ProtectedBlockChip from "./ProtectedBlockChip";
 
 type Props = {
   anchorDate: string;
+  /** Execution surface: render the "no default week yet" prompt as a slim expandable hint. */
+  compact?: boolean;
 };
 
 /**
  * Weekly protected-time ritual (WD4): propose the default week, review proposed
  * blocks, then confirm — never auto-applied.
  */
-export default function ProtectedWeekBar({ anchorDate }: Props) {
+export default function ProtectedWeekBar({ anchorDate, compact = false }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const [hintOpen, setHintOpen] = useState(false);
   const weekInput = { anchorDate };
 
   const { data: blocks = [] } = useQuery(trpc.protectedBlocks.listForWeek.queryOptions(weekInput));
@@ -50,15 +55,40 @@ export default function ProtectedWeekBar({ anchorDate }: Props) {
   );
 
   if (templates.length === 0 && proposed.length === 0) {
+    const hintBody = (
+      <p className="text-ink-muted">
+        Set up a{" "}
+        <Link href="/settings" className="text-accent underline-offset-2 hover:underline">
+          default week
+        </Link>{" "}
+        in Settings to propose protected time each week.
+      </p>
+    );
+
+    if (compact) {
+      return (
+        <div className="mt-stack">
+          <button
+            type="button"
+            onClick={() => setHintOpen((v) => !v)}
+            className="flex w-full items-center gap-2 rounded-card border border-subtle bg-surface px-4 py-3 text-left text-sm text-ink-muted shadow-surface transition hover:text-ink"
+            aria-expanded={hintOpen}
+          >
+            <span>Set up a default week</span>
+            <ChevronDown
+              {...kashIconProps({ tokenSize: "sm" })}
+              aria-hidden
+              className={`ml-auto transition-transform ${hintOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {hintOpen ? <div className="mt-1 px-4 text-sm">{hintBody}</div> : null}
+        </div>
+      );
+    }
+
     return (
       <div className="mt-4 rounded-card border border-dashed border-subtle bg-surface px-3 py-2 text-sm shadow-surface">
-        <p className="text-ink-muted">
-          Set up a{" "}
-          <Link href="/settings" className="text-accent underline-offset-2 hover:underline">
-            default week
-          </Link>{" "}
-          in Settings to propose protected time each week.
-        </p>
+        {hintBody}
       </div>
     );
   }

@@ -11,6 +11,8 @@ import { TaskRow } from "../TaskRow";
 type Props = {
   tasks: PlanTaskRow[];
   heightPx: number;
+  /** Start collapsed while empty and auto-expand once tasks arrive (execution surface). */
+  collapseWhenEmpty?: boolean;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onDraftClick: () => void;
@@ -21,14 +23,21 @@ type Props = {
 export function WeekInbox({
   tasks,
   heightPx,
+  collapseWhenEmpty = false,
   onComplete,
   onDelete,
   onDraftClick,
   appliedMessage,
   draftPanel,
 }: Props) {
-  const [collapsed, setCollapsed] = useState(false);
+  // null = follow the auto policy (collapsed while empty); a boolean is an
+  // explicit user override from the double-click/keyboard toggle.
+  const [override, setOverride] = useState<boolean | null>(null);
   const { setNodeRef, isOver } = useDroppable({ id: "week-inbox" });
+
+  const autoCollapsed = collapseWhenEmpty && tasks.length === 0;
+  const collapsed = override ?? autoCollapsed;
+  const toggleCollapsed = () => setOverride(!collapsed);
 
   const showTasks = !collapsed;
 
@@ -43,7 +52,7 @@ export function WeekInbox({
         className={`mb-2 flex shrink-0 items-start justify-between gap-3 rounded-[var(--radius-card)] ${
           isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""
         }`}
-        onDoubleClick={() => setCollapsed((value) => !value)}
+        onDoubleClick={toggleCollapsed}
         role="button"
         tabIndex={0}
         aria-expanded={showTasks}
@@ -51,7 +60,7 @@ export function WeekInbox({
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setCollapsed((value) => !value);
+            toggleCollapsed();
           }
         }}
       >

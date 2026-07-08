@@ -18,7 +18,13 @@ import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { weekHasPlanningData } from "@/lib/week/week-has-data";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
-import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
+import {
+  addDays,
+  datesInIsoWeek,
+  parseISODateString,
+  startOfIsoWeekMonday,
+  toISODateString,
+} from "@/lib/dates/local-day";
 import { computeWeekDayLoads } from "@/lib/week/day-load";
 import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
@@ -32,10 +38,16 @@ import { Top3ReplacePicker } from "../Top3ReplacePicker";
 import type { Top3SlotTask } from "../Top3Slots";
 import type { PlanTaskRow } from "../TaskRow";
 import type { DayPrioritySlotTask } from "./DayPrioritiesSlots";
+
 import { WeekColumn } from "./WeekColumn";
 import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
 import { WeekLaterBacklog } from "./WeekLaterBacklog";
+import {
+  WEEK_LATER_BACKLOG_DROP_ID,
+  WEEK_LATER_NEXT_WEEK_DROP_ID,
+  WeekLaterColumn,
+} from "./WeekLaterColumn";
 import ProtectedWeekBar from "./ProtectedWeekBar";
 import type { ProtectedBlockRow } from "./ProtectedBlockChip";
 
@@ -43,7 +55,8 @@ import type { ProtectedBlockRow } from "./ProtectedBlockChip";
 const WEEK_CANVAS_BG = "var(--canvas)";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const VISIBLE_DAY_COUNT = 4;
+/** Floor a day column can shrink to before the strip scrolls horizontally (narrow screens). */
+const MIN_DAY_COLUMN = "8rem";
 const DEFAULT_COMPOSER_HEIGHT_PX = 128;
 
 function firstFreeSlot(pinnedBySlot: Map<number, DayPrioritySlotTask>): 1 | 2 | 3 | null {
@@ -81,12 +94,19 @@ type WeekCanvasProps = {
   showPlanningRail?: boolean;
   /** D21 — hide ritual bar when the week has no plan data yet. */
   showWeekChrome?: boolean;
+  /**
+   * "week" (this-week execution surface): grid leads as a horizontal scroll
+   * strip with an 8th "Later" defer column; composer/inbox/ritual collapse
+   * below it. "plan" keeps the fill-width grid with planning chrome above.
+   */
+  surface?: "week" | "plan";
 };
 
 export function WeekCanvas({
   anchorDate: anchorDateProp,
   showPlanningRail = true,
   showWeekChrome = true,
+  surface = "plan",
 }: WeekCanvasProps = {}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -99,8 +119,8 @@ export function WeekCanvas({
   const { openRail } = useChat();
   const { pushComplete, pushDelete } = useSessionUndo();
   const [draftOpen, setDraftOpen] = useState(false);
-  const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
   const [composerHeight, setComposerHeight] = useState(DEFAULT_COMPOSER_HEIGHT_PX);
   const [replacePicker, setReplacePicker] = useState<{
     taskId: string;
@@ -120,7 +140,6 @@ export function WeekCanvas({
   const weekRef = useMemo(() => parseISODateString(anchorDate), [anchorDate]);
   const weekDates = useMemo(() => datesInIsoWeek(weekRef), [weekRef]);
   const dayCount = weekDates.length;
-  const columnWidthPercent = 100 / dayCount;
   const todayInWeek = weekDates.some((date) => toISODateString(date) === todayIso);
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
@@ -272,6 +291,17 @@ export function WeekCanvas({
     })
   );
 
+  const dropToAbyssMutation = useMutation(
+    trpc.abyss.dropFromTask.mutationOptions({
+      onSuccess: () => {
+        touchActivity();
+        invalidatePlan();
+        void queryClient.invalidateQueries({ queryKey: trpc.abyss.list.queryKey() });
+      },
+      onError: notifyMutationError,
+    })
+  );
+
   const removeProtectedMutation = useMutation(
     trpc.protectedBlocks.remove.mutationOptions({
       onSuccess: () => {
@@ -393,6 +423,36 @@ export function WeekCanvas({
       return;
     }
 
+    if (overId === WEEK_LATER_NEXT_WEEK_DROP_ID) {
+      const nextMondayIso = toISODateString(addDays(startOfIsoWeekMonday(weekRef), 7));
+      if (task?.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+        rescheduleOccurrenceMutation.mutate({
+          recurrenceId: task.recurrenceId,
+          occurrenceDate: task.occurrenceDate,
+          movedToDate: nextMondayIso,
+        });
+        return;
+      }
+      scheduleMutation.mutate({ id: taskId, scheduledDate: nextMondayIso });
+      return;
+    }
+
+    if (overId === WEEK_LATER_BACKLOG_DROP_ID) {
+      // Parking one occurrence of a recurring task in the backlog would delete
+      // the whole series — skip just this week's occurrence instead.
+      if (task?.isRecurringOccurrence) {
+        if (task.recurrenceId && task.occurrenceDate) {
+          skipOccurrenceMutation.mutate({
+            recurrenceId: task.recurrenceId,
+            occurrenceDate: task.occurrenceDate,
+          });
+        }
+        return;
+      }
+      dropToAbyssMutation.mutate({ id: taskId });
+      return;
+    }
+
     if (overId.startsWith("week-day:")) {
       const iso = overId.slice("week-day:".length);
       if (task?.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
@@ -467,118 +527,149 @@ export function WeekCanvas({
   // the rail keeps a sane size when collapsed instead of shrinking to the "+".
   const inboxHeightPx = (composerOpen ? composerHeight : DEFAULT_COMPOSER_HEIGHT_PX) * 1.5;
 
-  return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <div ref={composerMeasureRef}>
-        {composerOpen ? (
-          <div
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.stopPropagation();
-                setComposerOpen(false);
-                requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
-              }
-            }}
-          >
-            <QuickInput
-              ref={quickInputRef}
-              draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
-              createInInbox
-              onTaskCreated={() => touchActivity()}
+  const gridTemplateColumns =
+    surface === "week"
+      ? `repeat(${dayCount}, 150px) 168px`
+      : `repeat(${dayCount}, minmax(${MIN_DAY_COLUMN}, 1fr))`;
+
+  const dayGrid = (
+    <div
+      ref={dayScrollRef}
+      className="week-day-scroll mt-stack shrink-0 overflow-x-auto rounded-card p-2"
+      style={{ backgroundColor: WEEK_CANVAS_BG }}
+    >
+      <div className="grid gap-stack" style={{ gridTemplateColumns }}>
+        {weekDates.map((date, index) => {
+          const iso = toISODateString(date);
+          const isToday = iso === todayIso;
+          const pinnedBySlot = prioritiesByDate[iso] ?? new Map<number, DayPrioritySlotTask>();
+          return (
+            <WeekColumn
+              key={iso}
+              ref={isToday ? todayColumnRef : undefined}
+              isoDate={iso}
+              label={WEEKDAY_LABELS[index]!}
+              isToday={isToday}
+              tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
+              pinnedBySlot={pinnedBySlot}
+              protectedBlocks={protectedByDate[iso] ?? []}
+              overCommitted={overCommittedByDate[iso] ?? false}
+              overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
+              onComplete={pushComplete}
+              onDelete={pushDelete}
+              onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
+              onPinTask={(taskId, sourceEl) => handlePinTask(iso, taskId, sourceEl)}
+              onUnpinPriority={(taskId) => handleUnpinPriority(iso, taskId)}
+              canPinMore={pinnedBySlot.size < 3}
+              showPinHint={isToday && pinnedBySlot.size === 0}
             />
-          </div>
-        ) : (
-          <AddTaskPopover
-            ref={addTaskRef}
-            onAskChat={() => openRail()}
-            onTypeManually={() => {
-              setComposerOpen(true);
-              requestAnimationFrame(() => quickInputRef.current?.focus());
+          );
+        })}
+        {surface === "week" ? <WeekLaterColumn /> : null}
+      </div>
+    </div>
+  );
+
+  const inboxRail = showPlanningRail ? (
+    <WeekInbox
+      tasks={partitioned.inbox.map(toRow)}
+      heightPx={inboxHeightPx}
+      collapseWhenEmpty={surface === "week"}
+      onComplete={pushComplete}
+      onDelete={pushDelete}
+      onDraftClick={() => {
+        setDraftOpen(true);
+        setAppliedMessage(null);
+      }}
+      appliedMessage={appliedMessage}
+      draftPanel={
+        draftOpen ? (
+          <WeekDraftPanel
+            anchorDate={anchorDate}
+            taskTitleById={taskTitleById}
+            onClose={() => setDraftOpen(false)}
+            onApplied={(count) => {
+              setAppliedMessage(`Moved ${count} task${count === 1 ? "" : "s"}`);
+              setDraftOpen(false);
             }}
           />
-        )}
-      </div>
+        ) : null
+      }
+    />
+  ) : null;
 
-      {isLoading ? (
-        <p className="mt-4 px-2 text-sm text-ink-muted">Loading…</p>
+  const chromeBar = showChrome ? (
+    <ProtectedWeekBar anchorDate={anchorDate} compact={surface === "week"} />
+  ) : null;
+
+  const loadingNote = <p className="mt-4 px-2 text-sm text-ink-muted">Loading…</p>;
+
+  // Chat-first composer (#194): collapses to a "+" popover offering "ask chat"
+  // or "type manually"; shared by both surfaces (positioned per surface below).
+  const composerBlock = (
+    <div ref={composerMeasureRef}>
+      {composerOpen ? (
+        <div
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              setComposerOpen(false);
+              requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+            }
+          }}
+        >
+          <QuickInput
+            ref={quickInputRef}
+            draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
+            createInInbox
+            onTaskCreated={() => touchActivity()}
+          />
+        </div>
+      ) : (
+        <AddTaskPopover
+          ref={addTaskRef}
+          onAskChat={() => openRail()}
+          onTypeManually={() => {
+            setComposerOpen(true);
+            requestAnimationFrame(() => quickInputRef.current?.focus());
+          }}
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      {surface === "week" ? (
+        isLoading ? (
+          loadingNote
+        ) : (
+          <>
+            {dayGrid}
+            {composerBlock}
+            {inboxRail}
+            {chromeBar}
+          </>
+        )
       ) : (
         <>
-          {showPlanningRail ? (
-            <WeekInbox
-              tasks={partitioned.inbox.map(toRow)}
-              heightPx={inboxHeightPx}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-              onDraftClick={() => {
-                setDraftOpen(true);
-                setAppliedMessage(null);
-              }}
-              appliedMessage={appliedMessage}
-              draftPanel={
-                draftOpen ? (
-                  <WeekDraftPanel
-                    anchorDate={anchorDate}
-                    taskTitleById={taskTitleById}
-                    onClose={() => setDraftOpen(false)}
-                    onApplied={(count) => {
-                      setAppliedMessage(`Moved ${count} task${count === 1 ? "" : "s"}`);
-                      setDraftOpen(false);
-                    }}
-                  />
-                ) : null
-              }
-            />
-          ) : null}
-
-          {showChrome ? <ProtectedWeekBar anchorDate={anchorDate} /> : null}
-
-          <div
-            ref={dayScrollRef}
-            className="week-day-scroll mt-stack overflow-x-auto rounded-card p-2"
-            style={{ backgroundColor: WEEK_CANVAS_BG }}
-          >
-            <div
-              className="flex gap-stack"
-              style={{ width: `${(dayCount / VISIBLE_DAY_COUNT) * 100}%` }}
-            >
-              {weekDates.map((date, index) => {
-                const iso = toISODateString(date);
-                const isToday = iso === todayIso;
-                const pinnedBySlot =
-                  prioritiesByDate[iso] ?? new Map<number, DayPrioritySlotTask>();
-                return (
-                  <WeekColumn
-                    key={iso}
-                    ref={isToday ? todayColumnRef : undefined}
-                    isoDate={iso}
-                    label={WEEKDAY_LABELS[index]!}
-                    isToday={isToday}
-                    columnWidthPercent={columnWidthPercent}
-                    tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
-                    pinnedBySlot={pinnedBySlot}
-                    protectedBlocks={protectedByDate[iso] ?? []}
-                    overCommitted={overCommittedByDate[iso] ?? false}
-                    overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
-                    onComplete={pushComplete}
-                    onDelete={pushDelete}
-                    onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
-                    onPinTask={(taskId, sourceEl) => handlePinTask(iso, taskId, sourceEl)}
-                    onUnpinPriority={(taskId) => handleUnpinPriority(iso, taskId)}
-                    canPinMore={pinnedBySlot.size < 3}
-                    showPinHint={isToday && pinnedBySlot.size === 0}
-                  />
-                );
-              })}
-            </div>
-          </div>
-
-          {showPlanningRail ? (
-            <WeekLaterBacklog
-              tasks={partitioned.later.map(toRow)}
-              onComplete={pushComplete}
-              onDelete={pushDelete}
-            />
-          ) : null}
+          {composerBlock}
+          {isLoading ? (
+            loadingNote
+          ) : (
+            <>
+              {inboxRail}
+              {chromeBar}
+              {dayGrid}
+              {showPlanningRail ? (
+                <WeekLaterBacklog
+                  tasks={partitioned.later.map(toRow)}
+                  onComplete={pushComplete}
+                  onDelete={pushDelete}
+                />
+              ) : null}
+            </>
+          )}
         </>
       )}
 
