@@ -312,6 +312,7 @@ export function useChatPanel(threadId: string) {
           messageId,
           enabledItemIds,
           editedItems,
+          captureContext,
         });
         if (result.undoFrames?.length) {
           pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
@@ -324,7 +325,7 @@ export function useChatPanel(threadId: string) {
         );
       }
     },
-    [applyProposalMutation, invalidateTaskQueries, pushConfirmUndo, refreshMessages]
+    [applyProposalMutation, captureContext, invalidateTaskQueries, pushConfirmUndo, refreshMessages]
   );
 
   const dismissProposal = useCallback(

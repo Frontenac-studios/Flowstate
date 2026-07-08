@@ -112,6 +112,59 @@ describe("proposed-actions", () => {
     }
   });
 
+  it("mergeCreateTaskEdits overlays category and phase fields", () => {
+    const withPlacement = proposedActionSchema.parse({
+      kind: "create_task",
+      status: "pending",
+      items: [
+        {
+          itemId: "a",
+          enabled: true,
+          title: "Order dumpster",
+          projectSlug: "reno",
+          phaseName: "Demolition",
+          category: "professional",
+        },
+      ],
+    });
+    const merged = mergeCreateTaskEdits(withPlacement, [
+      {
+        itemId: "a",
+        title: "Order the dumpster",
+        category: "adulting",
+        phaseId: "00000000-0000-4000-8000-000000000099",
+      },
+    ]);
+    if (merged?.kind === "create_task") {
+      expect(merged.items[0]?.title).toBe("Order the dumpster");
+      expect(merged.items[0]?.category).toBe("adulting");
+      expect(merged.items[0]?.phaseId).toBe("00000000-0000-4000-8000-000000000099");
+    }
+  });
+
+  it("parses create_task items with richer placement fields", () => {
+    const action = proposedActionSchema.parse({
+      kind: "create_task",
+      status: "pending",
+      items: [
+        {
+          itemId: "a",
+          enabled: true,
+          title: "Rough-in plumbing",
+          projectSlug: "reno",
+          phaseId: "00000000-0000-4000-8000-000000000001",
+          category: "professional",
+          tags: ["plumber"],
+          timeEstimateMinutes: 120,
+        },
+      ],
+    });
+    if (action.kind === "create_task") {
+      expect(action.items[0]?.tags).toEqual(["plumber"]);
+      expect(action.items[0]?.timeEstimateMinutes).toBe(120);
+    }
+  });
+
   it("mergeCreateTaskEdits returns null when no rows are kept", () => {
     expect(mergeCreateTaskEdits(createTask, [])).toBeNull();
   });

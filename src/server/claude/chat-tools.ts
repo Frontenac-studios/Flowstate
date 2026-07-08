@@ -22,6 +22,7 @@ import {
 } from "@/lib/chat/chat-tool-catalog";
 
 import { applyProposedActionPayload, resolveOwnedTaskTitles } from "./apply-proposed-action";
+import type { CaptureContext } from "@/lib/chat/capture-context";
 import {
   buildApplyBalanceSuggestionsProposal,
   buildCreateProjectProposal,
@@ -55,7 +56,17 @@ type RescheduleTasksInput = {
 };
 
 type CreateTaskInput = {
-  tasks: { title: string; scheduledDate?: string; projectSlug?: string; priority?: number }[];
+  tasks: {
+    title: string;
+    scheduledDate?: string;
+    projectSlug?: string;
+    phaseId?: string | null;
+    phaseName?: string;
+    category?: string;
+    tags?: string[];
+    timeEstimateMinutes?: number;
+    priority?: number;
+  }[];
   summary?: string;
 };
 
@@ -263,8 +274,13 @@ async function buildRescheduleProposal(
   };
 }
 
+function isCategory(value: string | undefined): value is ProjectCategory {
+  return value != null && (PROJECT_CATEGORIES as readonly string[]).includes(value);
+}
+
 async function buildCreateTaskProposal(
-  input: CreateTaskInput
+  input: CreateTaskInput,
+  captureContext?: CaptureContext | null
 ): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
   const rows = input.tasks?.filter((t) => t.title?.trim()) ?? [];
   if (rows.length === 0) return { ok: false, error: "tasks array is required" };
@@ -279,11 +295,14 @@ async function buildCreateTaskProposal(
         itemId: newProposalItemId(),
         enabled: true,
         title: t.title.trim(),
-        // The model's date becomes a suggestion; the task is created unscheduled
-        // (inbox) and the user commits the day via Accept/drag.
         suggestedDate: t.scheduledDate && ISO_DATE.test(t.scheduledDate) ? t.scheduledDate : null,
         scheduledDate: null,
-        projectSlug: t.projectSlug ?? null,
+        projectSlug: t.projectSlug ?? captureContext?.projectSlug ?? null,
+        phaseId: t.phaseId !== undefined ? t.phaseId : captureContext?.phaseId,
+        phaseName: t.phaseName ?? captureContext?.phaseName ?? null,
+        category: t.category && isCategory(t.category) ? t.category : captureContext?.category,
+        tags: t.tags,
+        timeEstimateMinutes: t.timeEstimateMinutes,
         priority: t.priority,
       })),
     }),
@@ -328,7 +347,7 @@ export async function executeChatTool(
   userId: string,
   name: string,
   input: unknown,
-  options?: { register?: KashRegister; threadId?: string }
+  options?: { register?: KashRegister; threadId?: string; captureContext?: CaptureContext | null }
 ): Promise<ChatToolResult> {
   const register = options?.register ?? "planning";
 
@@ -384,7 +403,10 @@ export async function executeChatTool(
     }
 
     if (name === "create_task") {
-      const built = await buildCreateTaskProposal(input as CreateTaskInput);
+      const built = await buildCreateTaskProposal(
+        input as CreateTaskInput,
+        options?.captureContext
+      );
       if (!built.ok)
         return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
       return {

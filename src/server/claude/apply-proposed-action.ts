@@ -11,8 +11,14 @@ import {
   syncWeekDayPriorityRow,
 } from "@/db/record-sync-mutation";
 import { phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
+import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
-import type { ProposedAction } from "@/lib/chat/proposed-actions";
+import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
+import {
+  mergeCreateTaskPlacementSources,
+  resolveCreateTaskCategory,
+  resolvePhaseIdForProject,
+} from "@/lib/chat/resolve-create-task-placement";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
@@ -77,11 +83,20 @@ async function resolveProjectId(
   return projectRows.find((p) => p.slug === match?.slug)?.id ?? null;
 }
 
+export type ApplyProposedActionOptions = {
+  captureContext?: CaptureContext | null;
+  /** Inline confirm edits keyed by itemId (create_task only). */
+  createTaskEdits?: readonly CreateTaskItemEdit[];
+};
+
 export async function applyProposedActionPayload(
   userId: string,
-  action: ProposedAction
+  action: ProposedAction,
+  options?: ApplyProposedActionOptions
 ): Promise<ApplyProposedActionResult> {
   const undoFrames: ConfirmUndoFrame[] = [];
+  const captureContext = options?.captureContext ?? null;
+  const editByItemId = new Map((options?.createTaskEdits ?? []).map((e) => [e.itemId, e]));
 
   switch (action.kind) {
     case "reschedule_tasks": {
@@ -126,9 +141,16 @@ export async function applyProposedActionPayload(
 
     case "create_task": {
       const projectRows = await db
-        .select({ id: projects.id, slug: projects.slug, name: projects.name })
+        .select({
+          id: projects.id,
+          slug: projects.slug,
+          name: projects.name,
+          category: projects.category,
+        })
         .from(projects)
         .where(eq(projects.userId, userId));
+
+      const projectCategoryById = new Map(projectRows.map((p) => [p.id, p.category]));
 
       const titles: string[] = [];
       const createdIds: string[] = [];
@@ -138,35 +160,77 @@ export async function applyProposedActionPayload(
         const title = item.title.trim();
         if (!title) continue;
 
+        const edit = editByItemId.get(item.itemId);
+        const placement = mergeCreateTaskPlacementSources(
+          {
+            projectSlug: item.projectSlug,
+            phaseId: item.phaseId,
+            phaseName: item.phaseName,
+          },
+          edit,
+          captureContext
+        );
+
         let projectId: string | null = null;
-        if (item.projectSlug?.trim()) {
-          const match = findProjectBySlug(item.projectSlug.trim(), projectRows);
+        if (placement.projectSlug?.trim()) {
+          const match = findProjectBySlug(placement.projectSlug.trim(), projectRows);
           projectId = projectRows.find((p) => p.slug === match?.slug)?.id ?? null;
         }
 
-        const resolved = await resolveTaskCategoryForUser({
-          userId,
-          title,
-          explicit: null,
-          projectId,
+        let phaseId: string | null = null;
+        if (projectId) {
+          const phaseRows = await db
+            .select({
+              id: phases.id,
+              name: phases.name,
+              parentPhaseId: phases.parentPhaseId,
+              projectId: phases.projectId,
+            })
+            .from(phases)
+            .where(and(eq(phases.userId, userId), eq(phases.projectId, projectId)));
+
+          phaseId = resolvePhaseIdForProject(phaseRows, placement.phaseId, placement.phaseName);
+
+          if (phaseId) {
+            const phase = phaseRows.find((p) => p.id === phaseId);
+            if (phase) projectId = phase.projectId;
+          }
+        }
+
+        const explicitCategory = edit?.category ?? item.category ?? null;
+        const preResolvedCategory = resolveCreateTaskCategory({
+          explicit: explicitCategory,
+          projectCategory: projectId ? (projectCategoryById.get(projectId) ?? null) : null,
+          captureContextCategory: captureContext?.category ?? null,
         });
+
+        const resolved = preResolvedCategory
+          ? { category: preResolvedCategory, unresolved: false }
+          : await resolveTaskCategoryForUser({
+              userId,
+              title,
+              explicit: null,
+              projectId,
+            });
+
+        const suggestedDate = item.suggestedDate ?? item.scheduledDate ?? null;
+        const commitSchedule = edit?.commitSuggestedDate === true && suggestedDate;
 
         const [row] = await db
           .insert(tasks)
           .values({
             userId,
             title,
-            // Chat-created tasks land in the inbox: unscheduled + "later" keeps
-            // them out of Today (listToday excludes "later") while still showing
-            // in the Week inbox rail (which keys only on scheduledDate === null).
-            // Mirrors the apply_balance_suggestions recipe below.
-            scheduledDate: null,
-            bucketOverride: "later",
-            suggestedScheduledDate: item.suggestedDate ?? item.scheduledDate ?? null,
+            scheduledDate: commitSchedule ? suggestedDate : null,
+            bucketOverride: commitSchedule ? null : "later",
+            suggestedScheduledDate: commitSchedule ? null : suggestedDate,
             projectId,
+            phaseId,
             priority: item.priority ?? 0,
             category: resolved.category,
             categoryUnresolved: resolved.unresolved,
+            tags: item.tags ?? [],
+            timeEstimateMinutes: item.timeEstimateMinutes ?? null,
           })
           .returning();
 

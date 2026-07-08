@@ -156,6 +156,7 @@ export async function streamCompanionReply(params: {
         const result = await executeChatTool(params.userId, toolUse.name, toolUse.input, {
           register,
           threadId: params.threadId,
+          captureContext: params.captureContext,
         });
         if (result.mutatedTasks) state.mutatedTasks = true;
         if (result.proposal) {
