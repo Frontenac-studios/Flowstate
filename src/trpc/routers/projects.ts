@@ -33,6 +33,7 @@ import {
   replanProjectDatesProposalSchema,
 } from "@/lib/chat/proposed-actions";
 import { applyProjectTemplate, syncAppliedTemplateRows } from "@/server/projects/apply-template";
+import { commitProjectSetup } from "@/server/projects/commit-setup";
 import {
   backfillProjectEmbedding,
   clearUserSimilarityLink,
@@ -591,6 +592,66 @@ export const projectsRouter = createTRPCRouter({
 
       await syncProjectRow(row.id, "update", row);
       return row;
+    }),
+
+  commitSetup: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string().uuid(),
+        project: z
+          .object({
+            name: z.string().min(1).max(120).optional(),
+            category: categorySchema.optional(),
+          })
+          .optional(),
+        phases: z.array(
+          z.object({
+            key: z.string().min(1),
+            id: z.string().uuid().nullable().optional(),
+            name: z.string().min(1).max(200),
+            startDate: z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .nullable()
+              .optional(),
+            endDate: z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .nullable()
+              .optional(),
+          })
+        ),
+        milestones: z.array(
+          z.object({
+            id: z.string().uuid().nullable().optional(),
+            title: z.string().min(1).max(200),
+            targetDate: z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .nullable()
+              .optional(),
+          })
+        ),
+        taskSeeds: z.array(
+          z
+            .object({
+              phaseKey: z.string().min(1).optional(),
+              phaseId: z.string().uuid().optional(),
+              title: z.string().min(1).max(500),
+              suggestedScheduledDate: z
+                .string()
+                .regex(/^\d{4}-\d{2}-\d{2}$/)
+                .nullable()
+                .optional(),
+            })
+            .refine((seed) => seed.phaseKey != null || seed.phaseId != null, {
+              message: "Each task seed must reference a phaseKey or phaseId.",
+            })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return commitProjectSetup(ctx.userId, input);
     }),
 
   archive: protectedProcedure
