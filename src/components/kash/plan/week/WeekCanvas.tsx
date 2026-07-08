@@ -24,8 +24,10 @@ import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
+import { useChat } from "../../chat/ChatProvider";
+import { AddTaskPopover, type AddTaskPopoverHandle } from "../AddTaskPopover";
 import { usePlanMode } from "../PlanProvider";
-import { QuickInput } from "../QuickInput";
+import { QuickInput, type QuickInputHandle } from "../QuickInput";
 import { Top3ReplacePicker } from "../Top3ReplacePicker";
 import type { Top3SlotTask } from "../Top3Slots";
 import type { PlanTaskRow } from "../TaskRow";
@@ -94,9 +96,11 @@ export function WeekCanvas({
     [toast]
   );
   const { touchActivity } = usePlanMode();
+  const { openRail } = useChat();
   const { pushComplete, pushDelete } = useSessionUndo();
   const [draftOpen, setDraftOpen] = useState(false);
   const [appliedMessage, setAppliedMessage] = useState<string | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [composerHeight, setComposerHeight] = useState(DEFAULT_COMPOSER_HEIGHT_PX);
   const [replacePicker, setReplacePicker] = useState<{
     taskId: string;
@@ -105,6 +109,8 @@ export function WeekCanvas({
   } | null>(null);
 
   const composerMeasureRef = useRef<HTMLDivElement>(null);
+  const quickInputRef = useRef<QuickInputHandle>(null);
+  const addTaskRef = useRef<AddTaskPopoverHandle>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
   const todayColumnRef = useRef<HTMLDivElement>(null);
   const hasPinnedTodayRef = useRef(false);
@@ -456,16 +462,41 @@ export function WeekCanvas({
     };
   }, [isLoading, todayIso, dayCount, todayInWeek, anchorDate]);
 
-  const inboxHeightPx = composerHeight * 1.5;
+  // The inbox rail height tracks the composer, but the composer collapses to a
+  // small "+" by default (Phase 5). Fall back to the default composer height so
+  // the rail keeps a sane size when collapsed instead of shrinking to the "+".
+  const inboxHeightPx = (composerOpen ? composerHeight : DEFAULT_COMPOSER_HEIGHT_PX) * 1.5;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div ref={composerMeasureRef}>
-        <QuickInput
-          draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
-          createInInbox
-          onTaskCreated={() => touchActivity()}
-        />
+        {composerOpen ? (
+          <div
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.stopPropagation();
+                setComposerOpen(false);
+                requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+              }
+            }}
+          >
+            <QuickInput
+              ref={quickInputRef}
+              draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
+              createInInbox
+              onTaskCreated={() => touchActivity()}
+            />
+          </div>
+        ) : (
+          <AddTaskPopover
+            ref={addTaskRef}
+            onAskChat={() => openRail()}
+            onTypeManually={() => {
+              setComposerOpen(true);
+              requestAnimationFrame(() => quickInputRef.current?.focus());
+            }}
+          />
+        )}
       </div>
 
       {isLoading ? (
