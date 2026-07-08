@@ -104,7 +104,7 @@ export default function BingoCellTile({
 
   return (
     <div
-      className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-[1.5px] bg-surface p-2 shadow-surface ${
+      className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-emphasis bg-surface p-2 shadow-surface ${
         backburnered ? "opacity-40" : ""
       } ${ring} ${lockable} ${inWinningLine ? "bingo-line-bounce" : ""}`}
       style={{ borderColor: solid }}
@@ -123,7 +123,7 @@ export default function BingoCellTile({
             onToggleDone(goal);
           }}
           disabled={busy}
-          className="absolute right-1.5 top-1.5 z-sticky flex h-icon-md w-icon-md items-center justify-center rounded-full border-[1.5px] text-transparent transition hover:text-current focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
+          className="absolute right-1.5 top-1.5 z-sticky flex h-icon-md w-icon-md items-center justify-center rounded-full border-emphasis text-transparent transition hover:text-current focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
           style={{ borderColor: solid, color: solid }}
           aria-label={`Mark "${goal.title}" done`}
         >

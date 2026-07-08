@@ -318,7 +318,7 @@ export default function BingoCard({ year }: Props) {
           type="button"
           onClick={() => startMutation.mutate({ cardYear: year })}
           disabled={startMutation.isPending}
-          className="rounded-control border-[1.5px] border-ink px-4 py-2 text-body font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+          className="rounded-control border-emphasis border-ink px-4 py-2 text-body font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
         >
           {startMutation.isPending ? "Creating…" : `Start your ${year} card`}
         </button>
@@ -412,7 +412,7 @@ export default function BingoCard({ year }: Props) {
                         type="button"
                         onClick={() => finalizeMutation.mutate({ id: card.id })}
                         disabled={finalizeMutation.isPending}
-                        className="rounded-control border-[1.5px] border-ink px-3 py-1 font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+                        className="rounded-control border-emphasis border-ink px-3 py-1 font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
                       >
                         {finalizeMutation.isPending ? "Finalizing…" : "Finalize"}
                       </button>
@@ -431,7 +431,7 @@ export default function BingoCard({ year }: Props) {
                   type="button"
                   onClick={() => setConfirmingFinalize(true)}
                   disabled={total === 0}
-                  className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+                  className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
                 >
                   Finalize card
                 </button>

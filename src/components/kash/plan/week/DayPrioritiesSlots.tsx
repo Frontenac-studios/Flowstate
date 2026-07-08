@@ -30,7 +30,7 @@ function DayPrioritySlot({ slot, task, onUnpin }: SlotProps) {
           isCompleted ? "opacity-90" : ""
         }`}
       >
-        <span className="mt-0.5 shrink-0 text-[10px] text-accent" aria-hidden>
+        <span className="mt-0.5 shrink-0 text-micro text-accent" aria-hidden>
           {label}
         </span>
         <span className="mt-0.5 shrink-0 text-xs text-accent" aria-hidden>
@@ -46,7 +46,7 @@ function DayPrioritySlot({ slot, task, onUnpin }: SlotProps) {
         {task.projectSlug && task.projectId ? (
           <Link
             href={`/projects/${task.projectId}`}
-            className="mt-0.5 shrink-0 rounded-pill border border-border bg-surface px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-accent"
+            className="mt-0.5 shrink-0 rounded-pill border border-border bg-surface px-1.5 py-0.5 text-micro text-ink-muted hover:text-accent"
             onClick={(e) => e.stopPropagation()}
           >
             #{task.projectSlug}
@@ -91,12 +91,12 @@ export default function DayPrioritiesSlots({
 
   return (
     <section className="mt-1 px-1" aria-label="Priorities">
-      <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-ink-muted">
+      <p className="mb-1 text-micro font-medium uppercase tracking-wide text-ink-muted">
         Priorities
       </p>
       <div className="flex flex-col gap-1">
         {showPinHint ? (
-          <p className="rounded-row bg-surface-2 px-2 py-1 text-center text-[10px] leading-snug text-ink-muted">
+          <p className="rounded-row bg-surface-2 px-2 py-1 text-center text-micro leading-snug text-ink-muted">
             Swipe right on a task to pin
             {onDismissPinHint ? (
               <button
@@ -110,7 +110,7 @@ export default function DayPrioritiesSlots({
           </p>
         ) : null}
         {showDefaultHint ? (
-          <p className="px-1 py-0.5 text-center text-[10px] leading-snug text-ink-muted">
+          <p className="px-1 py-0.5 text-center text-micro leading-snug text-ink-muted">
             Swipe right on a task to pin
           </p>
         ) : null}

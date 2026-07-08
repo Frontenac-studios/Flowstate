@@ -129,7 +129,7 @@ export default function BingoQuickAdd({ squareLabel, busy, error, onSubmit, onCa
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+          className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
         >
           {busy ? "Adding…" : "Add goal"}
         </button>

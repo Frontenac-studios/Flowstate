@@ -186,7 +186,7 @@ export default function CalendarBoardView({ tree, projectId, category, milestone
                     }}
                   >
                     <div className="border-ink/40 h-full border-l border-dashed" />
-                    <span className="bg-surface/90 absolute left-1 top-0 whitespace-nowrap rounded px-1 text-[10px] font-medium text-ink-muted">
+                    <span className="bg-surface/90 absolute left-1 top-0 whitespace-nowrap rounded px-1 text-micro font-medium text-ink-muted">
                       {mi.title}
                     </span>
                   </div>

@@ -64,7 +64,7 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
                       className={
                         win.done
                           ? "text-on-accent flex h-4 w-4 items-center justify-center rounded-[4px] bg-cat-body-mind text-caption"
-                          : "h-4 w-4 rounded-[4px] border-[1.5px] border-[var(--priority-low)]"
+                          : "h-4 w-4 rounded-[4px] border-emphasis border-[var(--priority-low)]"
                       }
                       aria-hidden
                     >

@@ -14,14 +14,15 @@
   --bg: #ffffff;
   --surface: #ffffff;
   --surface-2: #fafafa;
-  /* page canvas tint — white cards sit on this (D9) */
-  --canvas: #f7f7f8;
+  /* page canvas tint — white cards sit on this (D9). Medium "tray" gray so cards
+     clearly lift off the background (layer-delineation pass, Jul 7). Was #f7f7f8. */
+  --canvas: #f1f2f4;
   /* selected/active neutral — the soft-gray pill (nav-rail active, gray selections) */
   --surface-selected: #f1f1f2;
 
-  /* ---- borders (hairline, B&W redesign) ---- */
-  --border: #ececec;
-  --border-subtle: #f4f4f4;
+  /* ---- borders (hairline, B&W redesign; strengthened for layer delineation Jul 7) ---- */
+  --border: #e2e4e8; /* visible hairline that reads against the medium canvas (was #ececec) */
+  --border-subtle: #edeff2; /* inner dividers stay a hair below --border (was #f4f4f4) */
 
   /* ---- ink — crisp near-black ---- */
   --ink: #16181d;
@@ -38,6 +39,7 @@
   --focus-ring-offset: 2px;
   --mark-ring: rgba(22, 24, 29, 0.35); /* DT-10 */
   --stripe-width: 3px; /* DT-18 */
+  --border-emphasis-width: 1.5px; /* emphasis stroke — outline buttons, chips, emblems, selected tiles */
   --tooltip-bg: var(--ink); /* DT-16 */
   --tooltip-ink: var(--on-accent);
   --z-base: 0; /* DT-19 */
@@ -112,12 +114,16 @@
    * Scale bumped for full-screen readability (Spacious). Prior compact scale
    * (11/12/13/15/17/20) was too small at desktop widths. */
   --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Screenshot-match hierarchy (Jul 7): stronger header emphasis + a smaller,
+     muted meta so each layer's title anchors it. Tailwind text-* tiers below are
+     bumped in lockstep. Prior Spacious scale: 13/14/16/18/21/26. */
+  --text-micro: 11px; /* sub-caption micro labels (badges, calendar cells); was ad-hoc text-[10px] */
   --text-caption: 13px;
-  --text-meta: 14px;
-  --text-body: 16px;
-  --text-subtitle: 18px;
-  --text-title: 21px;
-  --text-h1: 26px;
+  --text-meta: 13px;
+  --text-body: 17px;
+  --text-subtitle: 19px;
+  --text-title: 22px;
+  --text-h1: 30px;
   --weight-regular: 400;
   --weight-medium: 500;
   --leading-tight: 1.25;
@@ -134,9 +140,9 @@
   --space-7: 24px;
   --space-8: 32px;
 
-  /* ---- radius (DT-5c — crisp) ---- */
-  --radius-card: 8px;
-  --radius-row: 5px;
+  /* ---- radius (DT-5c; card/row softened for clearer object layering Jul 7) ---- */
+  --radius-card: 14px; /* was 8px — larger outer corners separate card layers */
+  --radius-row: 8px; /* was 5px — inner rows track the softer card corner */
   --radius-control: 5px;
   --radius-chip: 5px;
   --radius-pill: 9999px;
@@ -153,7 +159,7 @@
   /* ---- density (DT-5a — compact) ---- */
   --row-min-height: 30px;
   --row-py: 3px;
-  --density-base: 16px;
+  --density-base: 17px; /* body base font-size — tracks --text-body (was 16px) */
 
   /* ---- motion (AN-0b — gentle-calm) ---- */
   --motion-micro: 90ms;

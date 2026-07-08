@@ -147,7 +147,7 @@ export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss
           onClick={() =>
             onConfirm(proposal.items.filter((i) => enabledIds.has(i.itemId)).map((i) => i.itemId))
           }
-          className="rounded-control border-[1.5px] border-ink px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
+          className="rounded-control border-emphasis border-ink px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
         >
           Confirm
           {enabledCount > 0 && enabledCount < proposal.items.length ? ` ${enabledCount}` : ""}
