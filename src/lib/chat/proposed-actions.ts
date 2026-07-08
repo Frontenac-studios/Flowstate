@@ -24,6 +24,10 @@ export const rescheduleProposalItemSchema = proposalItemBaseSchema.extend({
 
 export const createTaskProposalItemSchema = proposalItemBaseSchema.extend({
   title: z.string().min(1).max(500),
+  // A chat-created task lands in the inbox unscheduled; the proposed day is a
+  // suggestion the user commits later via Accept/drag. `scheduledDate` is kept
+  // for back-compat but is null on the current create path.
+  suggestedDate: isoDateSchema.nullable().optional(),
   scheduledDate: isoDateSchema.nullable().optional(),
   projectSlug: z.string().nullable().optional(),
   priority: z.number().int().min(0).max(3).optional(),
@@ -252,6 +256,55 @@ export function filterPayloadByItemIds(
   const items = action.items.filter((item) => allowed.has(item.itemId));
   if (items.length === 0) return null;
   return { ...action, items: items.map((item) => ({ ...item, enabled: true })) } as ProposedAction;
+}
+
+/**
+ * A user's inline edit to a proposed create_task row before confirming. `itemId`
+ * identifies the row; its presence in the edit list also marks the row as enabled
+ * (rows omitted here are dropped). Only whitelisted fields are editable — never
+ * trust arbitrary client fields.
+ */
+export const createTaskItemEditSchema = z.object({
+  itemId: z.string().min(1),
+  title: z.string().min(1).max(500),
+  suggestedDate: isoDateSchema.nullable().optional(),
+  projectSlug: z.string().max(64).nullable().optional(),
+  priority: z.number().int().min(0).max(3).optional(),
+});
+
+export type CreateTaskItemEdit = z.infer<typeof createTaskItemEditSchema>;
+
+/**
+ * Merge inline edits into a create_task proposal: keep only rows the user left
+ * enabled (present in `edits`), overlay their edited fields, and re-validate the
+ * whole action through the schema so malformed edits are rejected server-side.
+ */
+export function mergeCreateTaskEdits(
+  action: ProposedAction,
+  edits: readonly CreateTaskItemEdit[]
+): ProposedAction | null {
+  if (action.kind !== "create_task") {
+    return filterPayloadByItemIds(
+      action,
+      edits.map((e) => e.itemId)
+    );
+  }
+  const byId = new Map(edits.map((e) => [e.itemId, e]));
+  const items = action.items
+    .filter((item) => byId.has(item.itemId))
+    .map((item) => {
+      const edit = byId.get(item.itemId)!;
+      return {
+        ...item,
+        enabled: true,
+        title: edit.title,
+        suggestedDate: edit.suggestedDate !== undefined ? edit.suggestedDate : item.suggestedDate,
+        projectSlug: edit.projectSlug !== undefined ? edit.projectSlug : item.projectSlug,
+        priority: edit.priority !== undefined ? edit.priority : item.priority,
+      };
+    });
+  if (items.length === 0) return null;
+  return proposedActionSchema.parse({ ...action, items });
 }
 
 export function proposalHeadline(action: ProposedAction): string {

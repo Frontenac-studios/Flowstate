@@ -13,7 +13,6 @@ import {
 import { phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
-import { toISODateString, startOfLocalDay } from "@/lib/dates/local-day";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
@@ -126,7 +125,6 @@ export async function applyProposedActionPayload(
     }
 
     case "create_task": {
-      const todayIso = toISODateString(startOfLocalDay());
       const projectRows = await db
         .select({ id: projects.id, slug: projects.slug, name: projects.name })
         .from(projects)
@@ -158,8 +156,13 @@ export async function applyProposedActionPayload(
           .values({
             userId,
             title,
-            scheduledDate: item.scheduledDate ?? todayIso,
-            bucketOverride: null,
+            // Chat-created tasks land in the inbox: unscheduled + "later" keeps
+            // them out of Today (listToday excludes "later") while still showing
+            // in the Week inbox rail (which keys only on scheduledDate === null).
+            // Mirrors the apply_balance_suggestions recipe below.
+            scheduledDate: null,
+            bucketOverride: "later",
+            suggestedScheduledDate: item.suggestedDate ?? item.scheduledDate ?? null,
             projectId,
             priority: item.priority ?? 0,
             category: resolved.category,

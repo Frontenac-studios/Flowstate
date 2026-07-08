@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
-import type { ProposedAction } from "@/lib/chat/proposed-actions";
+import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { useTRPC } from "@/trpc/client";
@@ -303,9 +303,13 @@ export function useChatPanel(threadId: string) {
   }, [sendMessage]);
 
   const applyProposal = useCallback(
-    async (messageId: string, enabledItemIds: string[]) => {
+    async (messageId: string, enabledItemIds: string[], editedItems?: CreateTaskItemEdit[]) => {
       try {
-        const result = await applyProposalMutation.mutateAsync({ messageId, enabledItemIds });
+        const result = await applyProposalMutation.mutateAsync({
+          messageId,
+          enabledItemIds,
+          editedItems,
+        });
         if (result.undoFrames?.length) {
           pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
         }
