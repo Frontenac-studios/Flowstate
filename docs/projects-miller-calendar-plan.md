@@ -75,6 +75,7 @@ Defined in [`src/lib/projects/categories.ts`](../src/lib/projects/categories.ts)
 
 - Horizontally scrolling columns of **fixed, equal width** (256px; the strip scrolls, columns never stretch — Finder-style). Column 1 = top-level phases + loose tasks (`phase_id = null`). Selecting a **phase** opens the next column with its child phases + tasks **and expands an inline phase-detail panel in place** (progress / rename / dates; ID-3/PROJ-C — inline, not a column header). Selecting a **task** (leaf) **expands the row in place**, inline-editable — **no separate detail column** (ID-1). Depth is **unlimited**.
 - Inline **"+ new"** row per column: type a name → create phase or task at that level (`phases.create` / `tasks.create` with `bucketOverride: "later"` so new project tasks stay out of Today).
+- **Suggested date chip** on Miller task rows when `suggestedScheduledDate` is set and task is unscheduled — shared `SuggestedDateChip` + Accept (same contract as Week inbox). Shipped [#202](https://github.com/Frontenac-studios/Flowstate/pull/202).
 - Completed items **dimmed + sunk to a per-column collapsible "Completed · n" group** (PROJ-A).
 - Phase cross-off: confirm dialog **only if** the subtree has incomplete tasks (compute from loaded tree); then `phases.setComplete({ completed: true })`.
 - Task complete/uncomplete via existing `tasks.complete` / `tasks.uncomplete`.
@@ -89,6 +90,18 @@ Defined in [`src/lib/projects/categories.ts`](../src/lib/projects/categories.ts)
 - Phases without an effective range: not drawn (or shown in an "undated" tray when no manual dates and no scheduled tasks).
 - Category color theming on bars.
 - Zoom/scroll controls; today marker.
+
+## Project setup backlog (Jul 2026 — shipped)
+
+Setup wizard and template seeding now follow the same backlog contract as inline Miller create (`bucketOverride: "later"`, not Today).
+
+| PR                                                              | What shipped                                                                                                                                                                                                                                                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#200](https://github.com/Frontenac-studios/Flowstate/pull/200) | `resolveProjectBacklogCreateFields` helper; template apply uses backlog fields; `projects.commitSetup` (single transaction for phases/milestones/tasks + bulk import); bulk import accepts optional `suggestedScheduledDate`; phase `startDate` maps to task `suggestedScheduledDate` |
+| [#201](https://github.com/Frontenac-studios/Flowstate/pull/201) | `ProjectSetupWizard` → `commitSetup`; template projects skip wizard auto-open; blank projects open at Phases (Basics captured in `NewProjectForm`); edit mode warns about duplicate tasks on Tasks step                                                                               |
+| [#202](https://github.com/Frontenac-studios/Flowstate/pull/202) | `SuggestedDateChip` on Miller task rows; `tasks.listByProject` returns `suggestedScheduledDate`                                                                                                                                                                                       |
+
+See also [`chat-first-task-creation-plan.md`](./chat-first-task-creation-plan.md) — inbox model row and "Shipped — Project setup backlog" section.
 
 ## Notes / gotchas
 

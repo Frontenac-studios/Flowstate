@@ -15,18 +15,30 @@ Chat-first is complete when:
 
 ## Current state (Jul 2026)
 
-| Layer               | Built                                                  | Gap                                                                                                 |
-| ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| + popover           | Week, Today, Projects (`AddTaskPopover`)               | Opens chat with no capture intent — bare `openRail()`                                               |
-| Inbox model         | `suggestedScheduledDate`, Accept chip, Week inbox      | Today manual path schedules to today; manual Week path doesn't always set `bucketOverride: "later"` |
-| `create_task` tool  | Inbox landing, optional `#projectSlug`, suggested date | No `category`, `phaseId`/`phaseName`, tags, estimate; tool item schema underspecified               |
-| Confirm card        | Editable title, date, project, priority                | No category or phase picker; no category preview stripe                                             |
-| Category resolution | AI ladder at apply time                                | Hidden at confirm; chat can't set category explicitly on create                                     |
-| Phase placement     | `move_task_to_phase` on Projects surface               | Not on create — two-step for structured projects                                                    |
-| Chat context        | Today/Week buckets, Top 3, `#slug`                     | No category balance, loose-task counts, phase trees, selected project/phase                         |
-| Surface tools       | Per-surface subsets in `chat-tool-catalog.ts`          | Projects chat lacks selected project/phase in context                                               |
+| Layer               | Built                                                                                                       | Gap                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| + popover           | Week, Today, Projects (`AddTaskPopover`)                                                                    | Opens chat with no capture intent — bare `openRail()`                                               |
+| Inbox model         | `suggestedScheduledDate`, Accept chip, Week inbox; **project setup/template seeding → backlog** (#200–#202) | Today manual path schedules to today; manual Week path doesn't always set `bucketOverride: "later"` |
+| `create_task` tool  | Inbox landing, optional `#projectSlug`, suggested date                                                      | No `category`, `phaseId`/`phaseName`, tags, estimate; tool item schema underspecified               |
+| Confirm card        | Editable title, date, project, priority                                                                     | No category or phase picker; no category preview stripe                                             |
+| Category resolution | AI ladder at apply time                                                                                     | Hidden at confirm; chat can't set category explicitly on create                                     |
+| Phase placement     | `move_task_to_phase` on Projects surface                                                                    | Not on create — two-step for structured projects                                                    |
+| Chat context        | Today/Week buckets, Top 3, `#slug`                                                                          | No category balance, loose-task counts, phase trees, selected project/phase                         |
+| Surface tools       | Per-surface subsets in `chat-tool-catalog.ts`                                                               | Projects chat lacks selected project/phase in context                                               |
 
 **Spine that works:** propose → confirm card → apply → inbox (`apply-proposed-action`, `ConfirmActionCard`, `WeekInbox`).
+
+### Shipped — Project setup backlog (Jul 2026)
+
+Setup wizard, template apply, and bulk import no longer schedule seeded project tasks to Today. Split across three PRs:
+
+| PR                                                              | Branch                                        | Scope                                                                                                                                                                                                                            |
+| --------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#200](https://github.com/Frontenac-studios/Flowstate/pull/200) | `feat/project-backlog-server`                 | Server: `resolveProjectBacklogCreateFields` (`bucketOverride: "later"`, phase `startDate` → `suggestedScheduledDate`); template task inserts fixed; `projects.commitSetup` atomic mutation; bulk import `suggestedScheduledDate` |
+| [#201](https://github.com/Frontenac-studios/Flowstate/pull/201) | `feat/project-setup-wizard` (stacked on #200) | Wizard UX: calls `commitSetup`; skip auto-open for template projects; blank projects start at Phases; edit-mode duplicate-task warning on Tasks step                                                                             |
+| [#202](https://github.com/Frontenac-studios/Flowstate/pull/202) | `feat/project-suggested-date-chip`            | Shared `SuggestedDateChip`; Miller task rows show suggested date + Accept (`tasks.listByProject` exposes `suggestedScheduledDate`)                                                                                               |
+
+**Resolved gap:** project setup wizard and template tasks were landing on Today instead of the Later backlog with optional suggested dates — now aligned with the inbox contract (`scheduledDate: null`, `bucketOverride: "later"`, optional `suggestedScheduledDate`).
 
 ## Product decisions
 
