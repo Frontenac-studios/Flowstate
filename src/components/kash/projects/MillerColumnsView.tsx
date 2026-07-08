@@ -9,7 +9,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import Button from "@/components/kash/ui/Button";
@@ -36,6 +36,8 @@ import { executeComposerSubmit } from "@/lib/projects/execute-composer-submit";
 import type { ParsedProjectLine } from "@/lib/parser/parse-project-task-input";
 import { useTRPC } from "@/trpc/client";
 
+import { useChat } from "../chat/ChatProvider";
+import { AddTaskPopover, type AddTaskPopoverHandle } from "../plan/AddTaskPopover";
 import NewItemRow from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
@@ -98,6 +100,9 @@ export default function MillerColumnsView({
   const [focus, setFocus] = useState({ col: 0, index: 0 });
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [composerFocused, setComposerFocused] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const { openRail } = useChat();
+  const addTaskRef = useRef<AddTaskPopoverHandle>(null);
 
   const [priorityLevels, setPriorityLevels] = useState<Set<number>>(new Set());
   useEffect(() => setPriorityLevels(readPriorityFilter()), []);
@@ -480,18 +485,37 @@ export default function MillerColumnsView({
             className="shrink-0 rounded-card border border-subtle bg-surface p-4 shadow-surface"
             data-miller-composer
           >
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <ProjectSyntaxChip showOnFocus focused={composerFocused} />
-            </div>
-            <NewItemRow
-              projectId={projectId}
-              phases={phases}
-              tasks={tasks}
-              defaultPhaseId={composerParentPhaseId}
-              pending={createPending}
-              onSubmitComposer={handleSubmitComposer}
-              onFocusChange={setComposerFocused}
-            />
+            {composerOpen ? (
+              <div
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.stopPropagation();
+                    setComposerOpen(false);
+                    requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+                  }
+                }}
+              >
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <ProjectSyntaxChip showOnFocus focused={composerFocused} />
+                </div>
+                <NewItemRow
+                  projectId={projectId}
+                  phases={phases}
+                  tasks={tasks}
+                  defaultPhaseId={composerParentPhaseId}
+                  pending={createPending}
+                  onSubmitComposer={handleSubmitComposer}
+                  onFocusChange={setComposerFocused}
+                  autoFocus
+                />
+              </div>
+            ) : (
+              <AddTaskPopover
+                ref={addTaskRef}
+                onAskChat={() => openRail()}
+                onTypeManually={() => setComposerOpen(true)}
+              />
+            )}
           </div>
 
           {!isBlank ? (

@@ -30,13 +30,14 @@ import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
+import { useChat } from "../../chat/ChatProvider";
+import { AddTaskPopover, type AddTaskPopoverHandle } from "../AddTaskPopover";
 import { usePlanMode } from "../PlanProvider";
-import { QuickInput } from "../QuickInput";
+import { QuickInput, type QuickInputHandle } from "../QuickInput";
 import { Top3ReplacePicker } from "../Top3ReplacePicker";
 import type { Top3SlotTask } from "../Top3Slots";
 import type { PlanTaskRow } from "../TaskRow";
 import type { DayPrioritySlotTask } from "./DayPrioritiesSlots";
-import { Plus, kashIconProps } from "@/components/kash/ui/icon";
 
 import { WeekColumn } from "./WeekColumn";
 import { WeekDraftPanel } from "./WeekDraftPanel";
@@ -115,6 +116,7 @@ export function WeekCanvas({
     [toast]
   );
   const { touchActivity } = usePlanMode();
+  const { openRail } = useChat();
   const { pushComplete, pushDelete } = useSessionUndo();
   const [draftOpen, setDraftOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -127,6 +129,8 @@ export function WeekCanvas({
   } | null>(null);
 
   const composerMeasureRef = useRef<HTMLDivElement>(null);
+  const quickInputRef = useRef<QuickInputHandle>(null);
+  const addTaskRef = useRef<AddTaskPopoverHandle>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
   const todayColumnRef = useRef<HTMLDivElement>(null);
   const hasPinnedTodayRef = useRef(false);
@@ -341,6 +345,7 @@ export function WeekCanvas({
     categoryUnresolved: task.categoryUnresolved,
     tags: task.tags ?? [],
     scheduledDate: task.scheduledDate,
+    suggestedScheduledDate: task.suggestedScheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,
     isRecurringOccurrence: task.isRecurringOccurrence,
@@ -517,7 +522,10 @@ export function WeekCanvas({
     };
   }, [isLoading, todayIso, dayCount, todayInWeek, anchorDate]);
 
-  const inboxHeightPx = composerHeight * 1.5;
+  // The inbox rail height tracks the composer, but the composer collapses to a
+  // small "+" by default (Phase 5). Fall back to the default composer height so
+  // the rail keeps a sane size when collapsed instead of shrinking to the "+".
+  const inboxHeightPx = (composerOpen ? composerHeight : DEFAULT_COMPOSER_HEIGHT_PX) * 1.5;
 
   const gridTemplateColumns =
     surface === "week"
@@ -596,6 +604,40 @@ export function WeekCanvas({
 
   const loadingNote = <p className="mt-4 px-2 text-sm text-ink-muted">Loading…</p>;
 
+  // Chat-first composer (#194): collapses to a "+" popover offering "ask chat"
+  // or "type manually"; shared by both surfaces (positioned per surface below).
+  const composerBlock = (
+    <div ref={composerMeasureRef}>
+      {composerOpen ? (
+        <div
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              setComposerOpen(false);
+              requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+            }
+          }}
+        >
+          <QuickInput
+            ref={quickInputRef}
+            draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
+            createInInbox
+            onTaskCreated={() => touchActivity()}
+          />
+        </div>
+      ) : (
+        <AddTaskPopover
+          ref={addTaskRef}
+          onAskChat={() => openRail()}
+          onTypeManually={() => {
+            setComposerOpen(true);
+            requestAnimationFrame(() => quickInputRef.current?.focus());
+          }}
+        />
+      )}
+    </div>
+  );
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       {surface === "week" ? (
@@ -604,39 +646,14 @@ export function WeekCanvas({
         ) : (
           <>
             {dayGrid}
-            {composerOpen ? (
-              <div className="mt-stack">
-                <QuickInput
-                  draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
-                  createInInbox
-                  onTaskCreated={() => touchActivity()}
-                />
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setComposerOpen(true)}
-                className="mt-stack flex w-full items-center gap-2 rounded-card border border-subtle bg-surface px-4 py-3 text-left text-sm text-ink-muted shadow-surface transition hover:text-ink"
-              >
-                <Plus {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
-                <span>Add tasks</span>
-                <span className="ml-auto text-meta text-ink-faint">⌘↵</span>
-              </button>
-            )}
+            {composerBlock}
             {inboxRail}
             {chromeBar}
           </>
         )
       ) : (
         <>
-          <div ref={composerMeasureRef}>
-            <QuickInput
-              draftStorageKey={COMPOSER_DRAFT_KEYS.planWeek}
-              createInInbox
-              onTaskCreated={() => touchActivity()}
-            />
-          </div>
-
+          {composerBlock}
           {isLoading ? (
             loadingNote
           ) : (

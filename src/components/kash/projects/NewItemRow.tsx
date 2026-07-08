@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { useComposerDraft } from "@/hooks/useComposerDraft";
 import { projectComposerDraftScope } from "@/lib/composer/composer-draft-constants";
@@ -42,6 +42,8 @@ type Props = {
   onSubmitComposer: (lines: ParsedProjectLine[]) => Promise<void>;
   pending: boolean;
   onFocusChange?: (focused: boolean) => void;
+  /** Focus the composer on mount — used when revealed from the collapsed "+". */
+  autoFocus?: boolean;
 };
 
 export default function NewItemRow({
@@ -52,6 +54,7 @@ export default function NewItemRow({
   onSubmitComposer,
   pending,
   onFocusChange,
+  autoFocus = false,
 }: Props) {
   const [value, setValue] = useComposerDraft(projectComposerDraftScope(projectId));
   const [cursor, setCursor] = useState(0);
@@ -60,6 +63,10 @@ export default function NewItemRow({
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<ComposerTextareaHandle>(null);
   const inputId = useId();
+
+  useEffect(() => {
+    if (autoFocus) textareaRef.current?.focus();
+  }, [autoFocus]);
 
   const phaseRefs = useMemo(
     (): PhaseRef[] =>

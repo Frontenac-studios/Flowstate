@@ -19,6 +19,7 @@ import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
+import { parseISODateString } from "@/lib/dates/local-day";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
@@ -55,6 +56,11 @@ export type PlanTaskRow = {
   taskTitleById?: Record<string, string>;
   // Surfaced under the due lens as a relative label (VF-1).
   scheduledDate?: string | null;
+  /**
+   * Chat-proposed day carried on an unscheduled inbox task. When set with a null
+   * scheduledDate, the inbox surfaces a chip + Accept button (chat-first creation).
+   */
+  suggestedScheduledDate?: string | null;
   // Phase identity for the project lens (VF-4): name shown as "Project · Phase",
   // sortOrder drives the phase-ramp dot color.
   phaseName?: string | null;
@@ -93,11 +99,29 @@ type Props = {
   arriveIndex?: number;
   /** AN §5 / WD7: scale + shadow lift while dragging on the Week surface. */
   weekDragLift?: boolean;
+  /**
+   * Inbox-only: when true, an unscheduled task carrying a `suggestedScheduledDate`
+   * shows a chip + Accept button that commits the chat-suggested day.
+   */
+  showSuggestedDate?: boolean;
 };
 
 const ACTION_WIDTH_PX = 72;
 const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
 const MAX_ARRIVE_STAGGER = 12;
+
+const SHORT_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** "Thu 10" — weekday + day-of-month, unambiguous for out-of-week suggestions. */
+function suggestionLabel(iso: string): string {
+  const date = parseISODateString(iso);
+  return `${SHORT_WEEKDAYS[date.getDay()]} ${date.getDate()}`;
+}
+
+/** "Thu" — short weekday for the compact Accept button. */
+function suggestionWeekday(iso: string): string {
+  return SHORT_WEEKDAYS[parseISODateString(iso).getDay()];
+}
 
 export function TaskRow({
   task,
@@ -113,6 +137,7 @@ export function TaskRow({
   suppressDue = false,
   arriveIndex,
   weekDragLift = false,
+  showSuggestedDate = false,
 }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -172,6 +197,13 @@ export function TaskRow({
 
   const relativeDue =
     activeReveal.due && !suppressDue ? formatRelativeDue(task.scheduledDate) : null;
+  // Inbox-only: an unscheduled task carrying a chat-suggested day offers a
+  // one-tap Accept that commits the suggestion (Phase 4). A committed task
+  // (non-null scheduledDate) never shows it.
+  const suggestion =
+    showSuggestedDate && task.suggestedScheduledDate && !task.scheduledDate
+      ? task.suggestedScheduledDate
+      : null;
   const isBlocked = task.isBlocked === true;
   const blockerLabel = useMemo(() => {
     if (!isBlocked || !task.blockedByIds?.length) return null;
@@ -329,6 +361,20 @@ export function TaskRow({
       },
       onError: () =>
         toast({ message: "Couldn't delete this task. Please try again.", variant: "error" }),
+    })
+  );
+
+  const acceptSuggestedDateMutation = useMutation(
+    trpc.tasks.acceptSuggestedDate.mutationOptions({
+      onSuccess: () => {
+        hide();
+        invalidatePlan();
+      },
+      onError: () =>
+        toast({
+          message: "Couldn't schedule that task. Please try again.",
+          variant: "error",
+        }),
     })
   );
 
@@ -651,6 +697,32 @@ export function TaskRow({
                 {task.phaseName ? ` · ${task.phaseName}` : ""}
               </span>
             </Link>
+          ) : null}
+
+          {suggestion ? (
+            <div
+              className="mt-0.5 flex shrink-0 items-center gap-1.5 self-start"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span
+                className="rounded-pill border border-border px-2 py-0.5 text-xs text-ink-muted"
+                title={`Suggested for ${suggestion}`}
+              >
+                {suggestionLabel(suggestion)}
+              </span>
+              <button
+                type="button"
+                className="kash-focus-visible rounded-pill border border-accent px-2 py-0.5 text-xs font-medium text-accent transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+                disabled={acceptSuggestedDateMutation.isPending}
+                aria-label={`Accept suggested date, schedule for ${suggestion}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  acceptSuggestedDateMutation.mutate({ id: task.id });
+                }}
+              >
+                Accept → {suggestionWeekday(suggestion)}
+              </button>
+            </div>
           ) : null}
 
           {relativeDue ? (
