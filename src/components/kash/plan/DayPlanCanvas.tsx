@@ -59,6 +59,7 @@ import { TodayReviewPanel } from "./TodayReviewPanel";
 import { Top3ReplacePicker } from "./Top3ReplacePicker";
 import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 import { useChat } from "../chat/ChatProvider";
+import { createCaptureContext } from "@/lib/chat/capture-context";
 import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
 
 type IncompleteTask = RouterOutputs["tasks"]["listIncomplete"][number];
@@ -885,7 +886,14 @@ export function DayPlanCanvas() {
           ) : (
             <AddTaskPopover
               ref={addTaskRef}
-              onAskChat={() => openRail()}
+              onAskChat={() =>
+                openRail({
+                  captureContext: createCaptureContext({
+                    surface: "today",
+                    defaultBucket: "today",
+                  }),
+                })
+              }
               onTypeManually={() => {
                 setComposerOpen(true);
                 requestAnimationFrame(() => quickInputRef.current?.focus());

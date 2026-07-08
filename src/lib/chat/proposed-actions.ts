@@ -30,6 +30,16 @@ export const createTaskProposalItemSchema = proposalItemBaseSchema.extend({
   suggestedDate: isoDateSchema.nullable().optional(),
   scheduledDate: isoDateSchema.nullable().optional(),
   projectSlug: z.string().nullable().optional(),
+  phaseId: z.string().uuid().nullable().optional(),
+  phaseName: z.string().min(1).nullable().optional(),
+  category: categorySchema.optional(),
+  tags: z.array(z.string().min(1).max(64)).max(20).optional(),
+  timeEstimateMinutes: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 60)
+    .optional(),
   priority: z.number().int().min(0).max(3).optional(),
 });
 
@@ -269,7 +279,19 @@ export const createTaskItemEditSchema = z.object({
   title: z.string().min(1).max(500),
   suggestedDate: isoDateSchema.nullable().optional(),
   projectSlug: z.string().max(64).nullable().optional(),
+  phaseId: z.string().uuid().nullable().optional(),
+  phaseName: z.string().min(1).nullable().optional(),
+  category: categorySchema.optional(),
+  tags: z.array(z.string().min(1).max(64)).max(20).optional(),
+  timeEstimateMinutes: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 60)
+    .optional(),
   priority: z.number().int().min(0).max(3).optional(),
+  /** When true, commit suggestedDate as scheduledDate in one step (Apply & schedule). */
+  commitSuggestedDate: z.boolean().optional(),
 });
 
 export type CreateTaskItemEdit = z.infer<typeof createTaskItemEditSchema>;
@@ -300,6 +322,14 @@ export function mergeCreateTaskEdits(
         title: edit.title,
         suggestedDate: edit.suggestedDate !== undefined ? edit.suggestedDate : item.suggestedDate,
         projectSlug: edit.projectSlug !== undefined ? edit.projectSlug : item.projectSlug,
+        phaseId: edit.phaseId !== undefined ? edit.phaseId : item.phaseId,
+        phaseName: edit.phaseName !== undefined ? edit.phaseName : item.phaseName,
+        category: edit.category !== undefined ? edit.category : item.category,
+        tags: edit.tags !== undefined ? edit.tags : item.tags,
+        timeEstimateMinutes:
+          edit.timeEstimateMinutes !== undefined
+            ? edit.timeEstimateMinutes
+            : item.timeEstimateMinutes,
         priority: edit.priority !== undefined ? edit.priority : item.priority,
       };
     });

@@ -29,6 +29,7 @@ import {
 } from "@/lib/parser/parse-quick-input";
 import { deriveBucket } from "@/lib/tasks/derive-bucket";
 import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
+import { resolveInboxCreateFields } from "@/lib/tasks/inbox-create";
 import { previewLineCategory } from "@/lib/tasks/preview-line-category";
 import type { TaskCreatedPulse } from "@/lib/tasks/resolve-pulse-target";
 import { getTaskTitleError } from "@/lib/taskValidation";
@@ -185,33 +186,34 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
     })
   );
 
-  const resolveScheduledDate = useCallback(
-    (line: ParsedLine): string | null | undefined => {
-      if (line.parse.bucketOverride === "later") return null;
-      if (line.parse.scheduledDate != null) return line.parse.scheduledDate;
-      if (createInInbox) return null;
-      return undefined;
-    },
-    [createInInbox]
-  );
+  const resolveScheduledDate = useCallback((line: ParsedLine): string | null | undefined => {
+    if (line.parse.bucketOverride === "later") return null;
+    if (line.parse.scheduledDate != null) return line.parse.scheduledDate;
+    return undefined;
+  }, []);
 
   const createTaskForLine = useCallback(
     async (line: ParsedLine) => {
+      const inboxFields = createInInbox ? resolveInboxCreateFields(line.parse) : null;
+      const scheduledDate = inboxFields ? inboxFields.scheduledDate : resolveScheduledDate(line);
+      const recurrenceAnchor =
+        inboxFields?.suggestedScheduledDate ?? line.parse.scheduledDate ?? undefined;
+
       await createTaskMutation.mutateAsync({
         title: line.parse.title,
-        scheduledDate: resolveScheduledDate(line),
-        bucketOverride: line.parse.bucketOverride,
+        scheduledDate,
+        bucketOverride: inboxFields?.bucketOverride ?? line.parse.bucketOverride,
+        suggestedScheduledDate: inboxFields?.suggestedScheduledDate ?? undefined,
         projectId: resolveProjectId(line),
         priority: line.parse.priority,
         category: line.parse.category ?? undefined,
         tags: line.parse.tags.length > 0 ? line.parse.tags : undefined,
         rrule: line.parse.rrule ?? undefined,
-        recurrenceStartDate:
-          line.parse.rrule && line.parse.scheduledDate ? line.parse.scheduledDate : undefined,
+        recurrenceStartDate: line.parse.rrule && recurrenceAnchor ? recurrenceAnchor : undefined,
       });
       persistProjectSlug(line.parse.projectSlug);
     },
-    [createTaskMutation, persistProjectSlug, resolveProjectId, resolveScheduledDate]
+    [createInInbox, createTaskMutation, persistProjectSlug, resolveProjectId, resolveScheduledDate]
   );
 
   const submitValidLines = useCallback(
@@ -257,12 +259,16 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
       const pulses: TaskCreatedPulse[] = [];
       for (const line of parsedLines) {
         if (!isLineProjectValid(line.parse)) continue;
+        const inboxFields = createInInbox ? resolveInboxCreateFields(line.parse) : null;
         pulses.push({
           bucket: deriveBucket(
-            { scheduledDate: line.parse.scheduledDate, bucketOverride: line.parse.bucketOverride },
+            inboxFields ?? {
+              scheduledDate: line.parse.scheduledDate,
+              bucketOverride: line.parse.bucketOverride,
+            },
             new Date()
           ),
-          scheduledDate: line.parse.scheduledDate,
+          scheduledDate: inboxFields ? null : line.parse.scheduledDate,
         });
       }
       const pulse =
@@ -272,7 +278,15 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
     setValue(remaining.join("\n"));
     return created;
-  }, [createTaskMutation.isPending, onTaskCreated, parsedLines, setValue, submitValidLines, value]);
+  }, [
+    createInInbox,
+    createTaskMutation.isPending,
+    onTaskCreated,
+    parsedLines,
+    setValue,
+    submitValidLines,
+    value,
+  ]);
 
   useImperativeHandle(
     ref,
@@ -392,9 +406,9 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
       {value.trim() ? (
         parsedLines.length === 1 && singleLineParse ? (
-          <ParsePreviewChips parse={singleLineParse} />
+          <ParsePreviewChips parse={singleLineParse} inboxMode={createInInbox} />
         ) : parsedLines.length > 1 ? (
-          <MultiLineParsePreview lines={parsedLines} />
+          <MultiLineParsePreview lines={parsedLines} inboxMode={createInInbox} />
         ) : null
       ) : null}
 

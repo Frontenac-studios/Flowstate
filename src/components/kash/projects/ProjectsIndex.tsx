@@ -12,6 +12,9 @@ import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/p
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
+import { createCaptureContext } from "@/lib/chat/capture-context";
+
+import { useChat } from "../chat/ChatProvider";
 import { InPageSwitcher } from "../InPageSwitcher";
 import CompletedProjectsSection from "./CompletedProjectsSection";
 import MultiProjectCalendarView from "./MultiProjectCalendarView";
@@ -27,6 +30,7 @@ type IndexViewMode = "gallery" | "calendar";
 export default function ProjectsIndex() {
   const trpc = useTRPC();
   const router = useRouter();
+  const { openRail } = useChat();
   const {
     data: projects,
     isLoading,
@@ -183,7 +187,19 @@ export default function ProjectsIndex() {
                   </header>
                   <div className="flex flex-col gap-2">
                     {looseCount > 0 ? (
-                      <LooseTasksRow category={category} count={looseCount} />
+                      <LooseTasksRow
+                        category={category}
+                        count={looseCount}
+                        onAskChat={() =>
+                          openRail({
+                            captureContext: createCaptureContext({
+                              surface: "projects",
+                              category,
+                              defaultBucket: "inbox",
+                            }),
+                          })
+                        }
+                      />
                     ) : null}
                     {categoryProjects.length > 0 ? (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

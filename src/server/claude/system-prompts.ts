@@ -1,3 +1,4 @@
+import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { parseFocusTaskId } from "@/lib/chat/threads";
 
@@ -66,7 +67,8 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   week: "Surface: Week — seven-day layout, draft_week, moving tasks across days, protected time.",
   plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions. propose_about_me_edit is available here.",
   projects: "Surface: Projects — project slugs, phases, creating and scheduling project tasks.",
-  backlog: "Surface: Backlog — parked ideas and tasks to pull from later.",
+  backlog:
+    "Surface: Backlog — parked ideas and tasks to pull from later. Prefer park_in_abyss when the user wants to shelve, save for someday, or backburner something; use create_task only when they clearly want an actionable planning task (it lands in the inbox).",
   reviews:
     "Surface: Reviews — EoD/EoW/monthly reflection, wins, Backlog themes, About-me. Warm and celebratory.",
   care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",
@@ -151,18 +153,57 @@ ${modifier}
 ${VALUES_ALIGNMENT}`;
 }
 
+export function buildCaptureContextModifier(ctx: CaptureContext): string {
+  const lines = [`Capture mode: the user opened + to add tasks from ${ctx.surface}.`];
+
+  if (ctx.surface === "today") {
+    lines.push(
+      "Propose create_task items that land in the inbox (unscheduled). If the user names a day, treat it as a suggested date — don't imply the task is already scheduled. (Typing directly in the Today composer adds to today's list; this chat path captures to the inbox.)"
+    );
+  } else if (ctx.surface === "backlog") {
+    lines.push(
+      "Prefer park_in_abyss when the user wants to shelve, save for someday, or backburner an idea. Use create_task only when the user clearly wants an actionable planning task — those land in the inbox unscheduled."
+    );
+  } else if (ctx.surface === "projects") {
+    if (ctx.projectSlug) {
+      const phase =
+        ctx.phaseName != null
+          ? `the "${ctx.phaseName}" phase`
+          : ctx.phaseId === null
+            ? "the project's loose bucket"
+            : null;
+      const target = [`#${ctx.projectSlug}`, phase].filter(Boolean).join(" · ");
+      lines.push(`Default new tasks to ${target} unless the user specifies otherwise.`);
+    } else if (ctx.category) {
+      lines.push(
+        `Default new tasks to loose ${ctx.category} tasks (a category, no project) unless the user specifies otherwise.`
+      );
+    }
+    lines.push("New tasks land in the inbox unscheduled unless the user asks to schedule.");
+  } else {
+    lines.push("New tasks land in the inbox unscheduled unless the user asks to schedule.");
+  }
+
+  return lines.join("\n");
+}
+
 /** Chat rail / focus chat — register follows thread; planning tools narrow by surface. */
 export function buildChatSystemPrompt(
   threadId: string,
-  surface?: PlanningChatSurface | null
+  surface?: PlanningChatSurface | null,
+  captureContext?: CaptureContext | null
 ): string {
   const register = registerForThread(threadId);
   const surfaceBlock =
     register === "planning" && surface ? `\n\n${SURFACE_MODIFIERS[surface]}` : "";
+  const captureBlock =
+    register === "planning" && captureContext
+      ? `\n\n${buildCaptureContextModifier(captureContext)}`
+      : "";
 
   return `${KASH_BASE}
 
 ${REGISTER_MODIFIERS[register]}
 
-${VALUES_ALIGNMENT}${surfaceBlock}`;
+${VALUES_ALIGNMENT}${surfaceBlock}${captureBlock}`;
 }

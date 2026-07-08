@@ -4,8 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
 import Checkbox from "@/components/kash/ui/Checkbox";
+import { ComposerCategoryAccent } from "@/components/kash/plan/ComposerCategoryAccent";
 import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import { proposalHeadline } from "@/lib/chat/proposed-actions";
+import { formatCreateTaskPlacementSummary } from "@/lib/chat/resolve-create-task-placement";
+import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { flattenPhasesForSelect } from "@/lib/projects/flatten-phases-for-select";
+import { previewLineCategory } from "@/lib/tasks/preview-line-category";
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
@@ -23,8 +28,19 @@ type DraftRow = {
   title: string;
   suggestedDate: string; // "" == no suggestion (stays in inbox)
   projectSlug: string; // "" == no project
+  phaseId: string; // "" == project loose when project set; "__unset__" == inherit proposal
+  category: ProjectCategory | "";
   priority: number;
 };
+
+const PHASE_UNSET = "__unset__";
+const PHASE_LOOSE = "";
+
+function phaseIdFromItem(item: CreateTaskItem): string {
+  if (item.phaseId === null) return PHASE_LOOSE;
+  if (item.phaseId) return item.phaseId;
+  return PHASE_UNSET;
+}
 
 function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]): string {
   switch (action.kind) {
@@ -111,7 +127,155 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
 const inputClass =
   "min-w-0 rounded-control border border-border bg-surface px-2 py-1 text-xs text-ink focus:border-ink focus:outline-none";
 
-/** Editable create_task draft: title, suggested date, project, priority. */
+function CreateTaskDraftRow({
+  item,
+  row,
+  busy,
+  projects,
+  categoryProjects,
+  lastUsedCategory,
+  onUpdate,
+}: {
+  item: CreateTaskItem;
+  row: DraftRow;
+  busy: boolean;
+  projects: { id: string; slug: string; name: string; category: ProjectCategory }[];
+  categoryProjects: { slug: string; category: ProjectCategory }[];
+  lastUsedCategory: ProjectCategory | null;
+  onUpdate: (patch: Partial<DraftRow>) => void;
+}) {
+  const trpc = useTRPC();
+  const project = row.projectSlug ? projects.find((p) => p.slug === row.projectSlug) : undefined;
+  const projectId = project?.id ?? null;
+
+  const { data: projectPhases = [] } = useQuery({
+    ...trpc.phases.listByProject.queryOptions({ projectId: projectId ?? "" }),
+    enabled: Boolean(projectId),
+  });
+
+  const phaseOptions = useMemo(() => flattenPhasesForSelect(projectPhases), [projectPhases]);
+
+  const categoryPreview = previewLineCategory(
+    {
+      title: row.title,
+      category: row.category || null,
+      projectSlug: row.projectSlug || null,
+    },
+    categoryProjects,
+    lastUsedCategory
+  );
+
+  const resolvedPhaseName =
+    row.phaseId && row.phaseId !== PHASE_UNSET && row.phaseId !== PHASE_LOOSE
+      ? (projectPhases.find((p) => p.id === row.phaseId)?.name ?? item.phaseName ?? null)
+      : null;
+
+  const placementSummary = formatCreateTaskPlacementSummary({
+    category: categoryPreview.category,
+    categoryUnresolved: categoryPreview.unresolved,
+    projectName: project?.name ?? null,
+    phaseName: row.projectSlug ? resolvedPhaseName : null,
+    landing: "inbox",
+  });
+
+  return (
+    <ComposerCategoryAccent preview={row.enabled ? categoryPreview : null}>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={`draft-${item.itemId}`}
+          checked={row.enabled}
+          disabled={busy}
+          onChange={() => onUpdate({ enabled: !row.enabled })}
+        />
+        <input
+          aria-label="Task title"
+          className={`${inputClass} flex-1 ${row.enabled ? "" : "opacity-50"}`}
+          value={row.title}
+          disabled={busy || !row.enabled}
+          onChange={(e) => onUpdate({ title: e.target.value })}
+        />
+      </div>
+      <div className={`flex flex-wrap gap-1 ${row.enabled ? "" : "opacity-50"}`}>
+        <select
+          aria-label="Category"
+          className={inputClass}
+          value={row.category}
+          disabled={busy || !row.enabled}
+          onChange={(e) => onUpdate({ category: (e.target.value || "") as ProjectCategory | "" })}
+        >
+          <option value="">Auto</option>
+          {PROJECT_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>
+              {categoryLabel(cat)}
+            </option>
+          ))}
+        </select>
+        <input
+          aria-label="Suggested date"
+          type="date"
+          className={inputClass}
+          value={row.suggestedDate}
+          disabled={busy || !row.enabled}
+          onChange={(e) => onUpdate({ suggestedDate: e.target.value })}
+        />
+        <select
+          aria-label="Project"
+          className={inputClass}
+          value={row.projectSlug}
+          disabled={busy || !row.enabled}
+          onChange={(e) =>
+            onUpdate({
+              projectSlug: e.target.value,
+              phaseId: e.target.value ? PHASE_LOOSE : PHASE_UNSET,
+            })
+          }
+        >
+          <option value="">No project</option>
+          {projects.map((p) => (
+            <option key={p.slug} value={p.slug}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        {row.projectSlug && projectId ? (
+          <select
+            aria-label="Phase"
+            className={inputClass}
+            value={row.phaseId === PHASE_UNSET ? PHASE_LOOSE : row.phaseId}
+            disabled={busy || !row.enabled}
+            onChange={(e) =>
+              onUpdate({
+                phaseId: e.target.value === PHASE_LOOSE ? PHASE_LOOSE : e.target.value,
+              })
+            }
+          >
+            <option value={PHASE_LOOSE}>Project loose</option>
+            {phaseOptions.map((phase) => (
+              <option key={phase.id} value={phase.id}>
+                {phase.label}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <select
+          aria-label="Priority"
+          className={inputClass}
+          value={row.priority}
+          disabled={busy || !row.enabled}
+          onChange={(e) => onUpdate({ priority: Number(e.target.value) })}
+        >
+          <option value={0}>No priority</option>
+          <option value={1}>P1</option>
+          <option value={2}>P2</option>
+          <option value={3}>P3</option>
+        </select>
+      </div>
+      {row.enabled ? <p className="text-xs text-ink-muted">{placementSummary}</p> : null}
+    </ComposerCategoryAccent>
+  );
+}
+
+/** Editable create_task draft: title, placement, category, and scheduling. */
 function CreateTaskDraftEditor({
   items,
   busy,
@@ -125,6 +289,7 @@ function CreateTaskDraftEditor({
 }) {
   const trpc = useTRPC();
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
   const [rows, setRows] = useState<Record<string, DraftRow>>(() =>
     Object.fromEntries(
@@ -135,10 +300,17 @@ function CreateTaskDraftEditor({
           title: item.title,
           suggestedDate: item.suggestedDate ?? item.scheduledDate ?? "",
           projectSlug: item.projectSlug ?? "",
+          phaseId: phaseIdFromItem(item),
+          category: item.category ?? "",
           priority: item.priority ?? 0,
         } satisfies DraftRow,
       ])
     )
+  );
+
+  const categoryProjects = useMemo(
+    () => projects.map((p) => ({ slug: p.slug, category: p.category })),
+    [projects]
   );
 
   const update = useCallback((itemId: string, patch: Partial<DraftRow>) => {
@@ -150,100 +322,85 @@ function CreateTaskDraftEditor({
     [items, rows]
   );
 
-  const confirm = useCallback(() => {
-    const edits: CreateTaskItemEdit[] = items
-      .filter((i) => rows[i.itemId]?.enabled && rows[i.itemId]?.title.trim())
-      .map((i) => {
-        const r = rows[i.itemId]!;
-        return {
-          itemId: i.itemId,
-          title: r.title.trim(),
-          suggestedDate: r.suggestedDate ? r.suggestedDate : null,
-          projectSlug: r.projectSlug ? r.projectSlug : null,
-          priority: r.priority,
-        };
-      });
-    onConfirm(
-      edits.map((e) => e.itemId),
-      edits
-    );
-  }, [items, rows, onConfirm]);
+  const buildEdits = useCallback(
+    (commitSuggestedDate: boolean): CreateTaskItemEdit[] =>
+      items
+        .filter((i) => rows[i.itemId]?.enabled && rows[i.itemId]?.title.trim())
+        .map((i) => {
+          const r = rows[i.itemId]!;
+          const edit: CreateTaskItemEdit = {
+            itemId: i.itemId,
+            title: r.title.trim(),
+            suggestedDate: r.suggestedDate ? r.suggestedDate : null,
+            projectSlug: r.projectSlug ? r.projectSlug : null,
+            priority: r.priority,
+            commitSuggestedDate: commitSuggestedDate || undefined,
+          };
+          if (r.category) edit.category = r.category;
+          if (r.projectSlug && r.phaseId !== PHASE_UNSET) {
+            edit.phaseId = r.phaseId ? r.phaseId : null;
+          }
+          return edit;
+        }),
+    [items, rows]
+  );
+
+  const confirm = useCallback(
+    (commitSuggestedDate = false) => {
+      const edits = buildEdits(commitSuggestedDate);
+      onConfirm(
+        edits.map((e) => e.itemId),
+        edits
+      );
+    },
+    [buildEdits, onConfirm]
+  );
+
+  const anySuggestedDate = useMemo(
+    () => items.some((i) => rows[i.itemId]?.enabled && rows[i.itemId]?.suggestedDate),
+    [items, rows]
+  );
 
   return (
     <div className="mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm">
       <p className="mb-2 font-medium text-ink">
         Create {items.length} task{items.length === 1 ? "" : "s"} in your inbox
       </p>
-      <ul className="mb-3 flex flex-col gap-2" aria-label="Draft tasks">
-        {items.map((item) => {
-          const r = rows[item.itemId]!;
-          return (
-            <li key={item.itemId} className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id={`draft-${item.itemId}`}
-                  checked={r.enabled}
-                  disabled={busy}
-                  onChange={() => update(item.itemId, { enabled: !r.enabled })}
-                />
-                <input
-                  aria-label="Task title"
-                  className={`${inputClass} flex-1 ${r.enabled ? "" : "opacity-50"}`}
-                  value={r.title}
-                  disabled={busy || !r.enabled}
-                  onChange={(e) => update(item.itemId, { title: e.target.value })}
-                />
-              </div>
-              <div className={`flex flex-wrap gap-1 pl-6 ${r.enabled ? "" : "opacity-50"}`}>
-                <input
-                  aria-label="Suggested date"
-                  type="date"
-                  className={inputClass}
-                  value={r.suggestedDate}
-                  disabled={busy || !r.enabled}
-                  onChange={(e) => update(item.itemId, { suggestedDate: e.target.value })}
-                />
-                <select
-                  aria-label="Project"
-                  className={inputClass}
-                  value={r.projectSlug}
-                  disabled={busy || !r.enabled}
-                  onChange={(e) => update(item.itemId, { projectSlug: e.target.value })}
-                >
-                  <option value="">No project</option>
-                  {projects.map((p) => (
-                    <option key={p.slug} value={p.slug}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  aria-label="Priority"
-                  className={inputClass}
-                  value={r.priority}
-                  disabled={busy || !r.enabled}
-                  onChange={(e) => update(item.itemId, { priority: Number(e.target.value) })}
-                >
-                  <option value={0}>No priority</option>
-                  <option value={1}>P1</option>
-                  <option value={2}>P2</option>
-                  <option value={3}>P3</option>
-                </select>
-              </div>
-            </li>
-          );
-        })}
+      <ul className="mb-3 flex flex-col gap-3" aria-label="Draft tasks">
+        {items.map((item) => (
+          <li key={item.itemId} className="flex flex-col gap-1">
+            <CreateTaskDraftRow
+              item={item}
+              row={rows[item.itemId]!}
+              busy={busy}
+              projects={projects}
+              categoryProjects={categoryProjects}
+              lastUsedCategory={settings?.lastUsedCategory ?? null}
+              onUpdate={(patch) => update(item.itemId, patch)}
+            />
+          </li>
+        ))}
       </ul>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={busy || enabledCount === 0}
-          onClick={confirm}
+          onClick={() => confirm(false)}
           className="rounded-control border-emphasis border-ink px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
         >
           Add to inbox
           {enabledCount > 0 && enabledCount < items.length ? ` ${enabledCount}` : ""}
         </button>
+        {anySuggestedDate ? (
+          <button
+            type="button"
+            disabled={busy || enabledCount === 0}
+            onClick={() => confirm(true)}
+            className="rounded-control border border-border px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
+          >
+            Apply &amp; schedule
+          </button>
+        ) : null}
         <button
           type="button"
           disabled={busy}

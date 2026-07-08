@@ -11,6 +11,7 @@ import {
   mergeCreateTaskEdits,
   proposedActionSchema,
 } from "@/lib/chat/proposed-actions";
+import { captureContextSchema } from "@/lib/chat/capture-context";
 import { confirmUndoFrameSchema } from "@/lib/chat/confirm-undo";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";
@@ -270,6 +271,7 @@ export const chatRouter = createTRPCRouter({
         // Inline edits from the draft card (create_task only). When present these
         // both select the enabled rows and carry edited field values.
         editedItems: z.array(createTaskItemEditSchema).optional(),
+        captureContext: captureContextSchema.nullish(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -305,7 +307,10 @@ export const chatRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "No items selected to apply." });
       }
 
-      const result = await applyProposedActionPayload(ctx.userId, filtered);
+      const result = await applyProposedActionPayload(ctx.userId, filtered, {
+        captureContext: input.captureContext ?? null,
+        createTaskEdits: input.editedItems,
+      });
       await updateMessageProposalStatus(input.messageId, ctx.userId, "applied");
       const undoFrames = result.undoFrames.map((frame) => confirmUndoFrameSchema.parse(frame));
       return { applied: result.applied, titles: result.titles, undoFrames };

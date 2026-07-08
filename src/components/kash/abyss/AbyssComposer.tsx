@@ -6,11 +6,14 @@ import { useMemo, useState } from "react";
 import { ComposerAssistInput } from "@/components/kash/composer/ComposerAssistInput";
 import { Hash, Lightbulb, Plus, SquareCheck, X, withKashIcon } from "@/components/kash/ui/icon";
 import { useToast } from "@/components/kash/ui/ToastProvider";
+import { createCaptureContext } from "@/lib/chat/capture-context";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
+
+import { useChat } from "../chat/ChatProvider";
 
 import "./abyss-motion.css";
 import { useAbyssEmbedding } from "./useAbyssEmbedding";
@@ -35,6 +38,7 @@ export default function AbyssComposer() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { openRail } = useChat();
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState<AbyssType>("idea");
@@ -109,6 +113,18 @@ export default function AbyssComposer() {
     });
   };
 
+  // "Park" (submit) shelves an idea in the Backlog; "Ask chat" hands off to Kash
+  // to draft an actionable planning task that lands in the inbox instead.
+  const handleAskChat = () => {
+    openRail({
+      captureContext: createCaptureContext({
+        surface: "backlog",
+        defaultBucket: "inbox",
+        category: effectiveCategory ?? undefined,
+      }),
+    });
+  };
+
   const TypeToggle = ({
     value,
     label,
@@ -150,6 +166,14 @@ export default function AbyssComposer() {
           ghostClassName="italic text-abyss-ink-faint"
           aria-label="New abyss item"
         />
+        <button
+          type="button"
+          onClick={handleAskChat}
+          title="Ask chat to draft a planning task for your inbox"
+          className={`shrink-0 rounded-control px-2 py-1.5 text-meta font-medium text-abyss-ink-muted transition-colors hover:text-abyss-ink ${ABYSS_BTN_FOCUS}`}
+        >
+          Ask chat
+        </button>
         <button
           type="submit"
           disabled={!canSubmit}

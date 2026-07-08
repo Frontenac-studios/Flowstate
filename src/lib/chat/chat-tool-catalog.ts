@@ -78,13 +78,41 @@ const RESCHEDULE_TASKS_TOOL: Anthropic.Tool = {
   },
 };
 
+const CREATE_TASK_ITEM_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: "string", description: "Task title (required)." },
+    scheduledDate: {
+      type: "string",
+      description:
+        "Optional suggested day (YYYY-MM-DD). Task lands in inbox unscheduled; this becomes suggestedScheduledDate.",
+    },
+    projectSlug: { type: "string", description: "Optional #project slug." },
+    phaseId: {
+      type: "string",
+      description: "Optional phase UUID. Use null for project loose bucket when project is set.",
+    },
+    phaseName: {
+      type: "string",
+      description: "Optional phase name (resolved within project when phaseId omitted).",
+    },
+    category: { type: "string", enum: [...PROJECT_CATEGORIES] },
+    tags: { type: "array", items: { type: "string" } },
+    timeEstimateMinutes: { type: "number", description: "Optional time estimate in minutes." },
+    priority: { type: "number", description: "0–3 priority slot." },
+  },
+  required: ["title"],
+  additionalProperties: false,
+} as const;
+
 const CREATE_TASK_TOOL: Anthropic.Tool = {
   name: "create_task",
-  description: "Propose create task.",
+  description:
+    "Propose create task. Tasks land in the inbox (unscheduled) with optional suggested day.",
   input_schema: {
     type: "object",
     properties: {
-      tasks: { type: "array", items: { type: "object" } },
+      tasks: { type: "array", items: CREATE_TASK_ITEM_SCHEMA },
       summary: { type: "string" },
     },
     required: ["tasks"],
@@ -352,7 +380,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "move_task_to_phase",
     "replan_project_dates",
   ],
-  backlog: ["query_abyss", "park_in_abyss", "query_tasks"],
+  backlog: ["query_abyss", "park_in_abyss", "query_tasks", "create_task"],
   reviews: [
     "query_tasks",
     "query_state",

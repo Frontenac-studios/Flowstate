@@ -146,3 +146,44 @@ describe("suggested-date inbox commit (sqlite)", () => {
     expect(row.suggestedScheduledDate).toBe(IN_WEEK);
   });
 });
+
+describe("manual inbox create with suggested date (sqlite)", () => {
+  const userId = randomUUID();
+  let db: ReturnType<typeof createSqliteDb>["db"];
+
+  beforeEach(() => {
+    db = createSqliteDb(":memory:").db;
+  });
+
+  /** Replicates tasksRouter.create inbox landing from QuickInput createInInbox. */
+  function createInboxTask(suggestedScheduledDate: string) {
+    const now = new Date();
+    return db
+      .insert(tasks)
+      .values({
+        id: randomUUID(),
+        userId,
+        title: "Pay water bill",
+        category: "adulting",
+        scheduledDate: null,
+        bucketOverride: "later",
+        suggestedScheduledDate,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+      .get();
+  }
+
+  it("lands in the Week inbox with suggestion intact", () => {
+    const row = createInboxTask(IN_WEEK);
+
+    expect(row.scheduledDate).toBeNull();
+    expect(row.bucketOverride).toBe("later");
+    expect(row.suggestedScheduledDate).toBe(IN_WEEK);
+
+    const part = partitionWeekTasks([row], REF);
+    expect(part.inbox).toHaveLength(1);
+    expect(part.byDate[IN_WEEK] ?? []).toHaveLength(0);
+  });
+});

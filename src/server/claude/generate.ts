@@ -7,6 +7,7 @@ import type { ProposedAction } from "@/lib/chat/proposed-actions";
 
 import { assembleChatContext } from "./assemble-chat-context";
 import { requireAnthropicClient } from "./client";
+import { formatCaptureContextBlock, type CaptureContext } from "@/lib/chat/capture-context";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { executeChatTool, toolsForSurface } from "./chat-tools";
 import { buildChatSystemPrompt, buildSystemPrompt, registerForThread } from "./system-prompts";
@@ -91,6 +92,7 @@ export async function streamCompanionReply(params: {
   threadId: string;
   userText: string;
   planningSurface?: PlanningChatSurface | null;
+  captureContext?: CaptureContext | null;
   signal?: AbortSignal;
 }): Promise<{
   stream: AsyncIterable<CompanionStreamDelta>;
@@ -103,7 +105,11 @@ export async function streamCompanionReply(params: {
   const register = registerForThread(params.threadId);
   const tools = toolsForSurface(register, params.planningSurface);
   const { contextBlock, history } = await assembleChatContext(params.userId, params.threadId);
-  let messages = buildAnthropicMessages(history, contextBlock, params.userText);
+  const captureBlock = params.captureContext
+    ? formatCaptureContextBlock(params.captureContext)
+    : null;
+  const enrichedContext = captureBlock ? `${contextBlock}\n\n${captureBlock}` : contextBlock;
+  let messages = buildAnthropicMessages(history, enrichedContext, params.userText);
 
   const state = {
     fullText: "",
@@ -118,7 +124,11 @@ export async function streamCompanionReply(params: {
       const stream = anthropic.messages.stream({
         model: config.model,
         max_tokens: 2048,
-        system: buildChatSystemPrompt(params.threadId, params.planningSurface),
+        system: buildChatSystemPrompt(
+          params.threadId,
+          params.planningSurface,
+          params.captureContext
+        ),
         messages,
         tools,
       });
@@ -146,6 +156,7 @@ export async function streamCompanionReply(params: {
         const result = await executeChatTool(params.userId, toolUse.name, toolUse.input, {
           register,
           threadId: params.threadId,
+          captureContext: params.captureContext,
         });
         if (result.mutatedTasks) state.mutatedTasks = true;
         if (result.proposal) {
