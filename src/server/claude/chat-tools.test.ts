@@ -23,6 +23,12 @@ describe("toolsForRegister", () => {
   });
 });
 describe("toolsForSurface", () => {
+  it("exposes both park_in_abyss and create_task on the backlog surface", () => {
+    const names = toolsForSurface("planning", "backlog").map((t) => t.name);
+    expect(names).toContain("park_in_abyss");
+    expect(names).toContain("create_task");
+  });
+
   it("covers all planning surfaces", () => {
     for (const surface of [
       "today",

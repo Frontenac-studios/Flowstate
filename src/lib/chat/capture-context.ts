@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+import { categoryLabel, PROJECT_CATEGORIES } from "@/lib/projects/categories";
 
 import { planningSurfaceSchema } from "./planning-surface";
 
@@ -33,10 +33,14 @@ export function formatCaptureContextBlock(ctx: CaptureContext): string {
 }
 
 export function captureContextPlaceholder(ctx: CaptureContext): string {
-  if (ctx.surface === "projects" && ctx.phaseName) {
-    return `Add tasks for ${ctx.phaseName}…`;
+  if (ctx.surface === "projects") {
+    if (ctx.phaseName) return `Add tasks for ${ctx.phaseName}…`;
+    // Loose-tasks row on the projects index: category preset, no project.
+    if (ctx.category && !ctx.projectSlug) return `Add ${categoryLabel(ctx.category)} tasks…`;
   }
   if (ctx.surface === "week") return "Add tasks to inbox…";
-  if (ctx.surface === "today") return "Add tasks for today…";
+  // Today capture (Option B): chat lands in the inbox, not today's list.
+  if (ctx.surface === "today") return "Add tasks to your inbox…";
+  if (ctx.surface === "backlog") return "Describe a task to plan…";
   return "Message Claude…";
 }

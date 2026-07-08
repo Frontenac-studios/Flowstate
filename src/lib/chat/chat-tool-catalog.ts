@@ -380,7 +380,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "move_task_to_phase",
     "replan_project_dates",
   ],
-  backlog: ["query_abyss", "park_in_abyss", "query_tasks"],
+  backlog: ["query_abyss", "park_in_abyss", "query_tasks", "create_task"],
   reviews: [
     "query_tasks",
     "query_state",

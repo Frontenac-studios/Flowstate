@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  captureContextPlaceholder,
   captureContextSchema,
   createCaptureContext,
   formatCaptureContextBlock,
@@ -101,5 +102,47 @@ describe("capture-context", () => {
       })
     );
     expect(block).toContain("Phase: (project loose)");
+  });
+});
+
+describe("captureContextPlaceholder", () => {
+  it("clarifies Today chat captures to the inbox (Option B)", () => {
+    expect(captureContextPlaceholder(createCaptureContext({ surface: "today" }))).toBe(
+      "Add tasks to your inbox…"
+    );
+  });
+
+  it("keeps the week inbox placeholder", () => {
+    expect(
+      captureContextPlaceholder(createCaptureContext({ surface: "week", defaultBucket: "inbox" }))
+    ).toBe("Add tasks to inbox…");
+  });
+
+  it("names the phase when capturing on a project", () => {
+    expect(
+      captureContextPlaceholder(
+        createCaptureContext({
+          surface: "projects",
+          projectSlug: "kitchen-reno",
+          phaseName: "Demolition",
+        })
+      )
+    ).toBe("Add tasks for Demolition…");
+  });
+
+  it("names the category for a loose-tasks row (no project)", () => {
+    expect(
+      captureContextPlaceholder(
+        createCaptureContext({ surface: "projects", category: "adulting", defaultBucket: "inbox" })
+      )
+    ).toBe("Add Adulting tasks…");
+  });
+
+  it("prompts to plan a task from the backlog", () => {
+    expect(
+      captureContextPlaceholder(
+        createCaptureContext({ surface: "backlog", defaultBucket: "inbox" })
+      )
+    ).toBe("Describe a task to plan…");
   });
 });

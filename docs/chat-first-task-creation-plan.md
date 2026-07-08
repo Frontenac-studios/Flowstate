@@ -163,10 +163,12 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Today: implement chosen inbox policy
-- [ ] Projects: chat defaults match `NewItemRow` phase targeting
-- [ ] Backlog: add `create_task` or route to `park_in_abyss` with clear copy
-- [ ] Projects index loose-tasks row: optional capture with `category` preset
+- [x] Today: implement chosen inbox policy — placeholder now reads "Add tasks to your inbox…" and the capture modifier tells Kash to land in the inbox while noting manual typing on Today adds straight to today (Option B). Manual `QuickInput` on Today is unchanged (still schedules today).
+- [x] Projects: chat defaults match `NewItemRow` phase targeting — `MillerColumnsView` already feeds the same `composerParentPhaseId` into both `NewItemRow.defaultPhaseId` and the capture context `phaseId`; the capture modifier now says "Default new tasks to #slug · the \"Phase\" phase unless the user specifies otherwise."
+- [x] Backlog: **chose the recommended path** — added `create_task` to the backlog surface tool subset and an "Ask chat" entry point on `AbyssComposer` (park = shelve via `abyss.create`; Ask chat = plan an actionable task in the inbox). Backlog surface modifier + capture modifier tell Kash to prefer `park_in_abyss` for shelve/someday and use `create_task` only for explicit planning tasks.
+- [x] Projects index loose-tasks row: `LooseTasksRow` now has a "+ Ask chat" action that opens the rail with `{ surface: "projects", category, defaultBucket: "inbox" }` (no project/phase); the "view →" link to the category lens is preserved.
+
+Plan surface: `/plan` already exposes chat-first capture on its Week horizon via `WeekCanvas` (`AddTaskPopover` + inbox-mode `QuickInput`); other horizons (goals/year/quarter/month) intentionally have no task composer, so nothing added there.
 
 ---
 

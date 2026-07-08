@@ -71,6 +71,50 @@ describe("system-prompts", () => {
     expect(prompt).toContain("opened + to add tasks from projects");
   });
 
+  it("tells Today capture to land in the inbox, not today's list", () => {
+    const ctx = createCaptureContext({ surface: "today", defaultBucket: "today" });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "today", ctx);
+    expect(prompt).toContain("land in the inbox");
+    expect(prompt).toContain("Today composer adds to today's list");
+  });
+
+  it("tells Backlog capture to prefer park_in_abyss over create_task", () => {
+    const ctx = createCaptureContext({ surface: "backlog", defaultBucket: "inbox" });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "backlog", ctx);
+    expect(prompt).toContain("Prefer park_in_abyss");
+    expect(prompt).toContain("create_task only when the user clearly wants an actionable");
+  });
+
+  it("defaults Projects capture to the selected project and phase", () => {
+    const ctx = createCaptureContext({
+      surface: "projects",
+      projectSlug: "kitchen-reno",
+      phaseName: "Demolition",
+    });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "projects", ctx);
+    expect(prompt).toContain('Default new tasks to #kitchen-reno · the "Demolition" phase');
+  });
+
+  it("marks the project loose bucket when phaseId is null", () => {
+    const ctx = createCaptureContext({
+      surface: "projects",
+      projectSlug: "kitchen-reno",
+      phaseId: null,
+    });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "projects", ctx);
+    expect(prompt).toContain("the project's loose bucket");
+  });
+
+  it("defaults loose-row capture to a category with no project", () => {
+    const ctx = createCaptureContext({
+      surface: "projects",
+      category: "adulting",
+      defaultBucket: "inbox",
+    });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "projects", ctx);
+    expect(prompt).toContain("Default new tasks to loose adulting tasks (a category, no project)");
+  });
+
   it("omits capture modifier when capture context is absent", () => {
     expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "week")).not.toContain("Capture mode:");
   });

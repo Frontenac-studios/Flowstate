@@ -91,26 +91,51 @@ export default function ProjectCard({
   );
 }
 
-/** D26 — dashed row linking loose tasks to Backlog category lens. */
-export function LooseTasksRow({ category, count }: { category: ProjectCategory; count: number }) {
+/**
+ * D26 — dashed row for a category's loose tasks (no project). "Ask chat" captures
+ * a new loose task in this category via the rail; "view →" browses existing ones.
+ */
+export function LooseTasksRow({
+  category,
+  count,
+  onAskChat,
+}: {
+  category: ProjectCategory;
+  count: number;
+  onAskChat: () => void;
+}) {
   const stripe = categorySolidVar(category);
   const fill = categoryFillVar(category);
   const text = categoryTextVar(category);
 
   return (
-    <Link
-      href={`/backlog?category=${category}`}
-      className="kash-focus-visible flex items-center justify-between rounded-card border border-dashed px-3.5 py-2.5 text-sm shadow-surface outline-none transition hover:opacity-90"
+    <div
+      className="flex items-center justify-between gap-3 rounded-card border border-dashed px-3.5 py-2.5 text-sm shadow-surface"
       style={{
         borderColor: `color-mix(in srgb, ${stripe} 50%, transparent)`,
         backgroundColor: fill,
         color: text,
       }}
     >
-      <span>
+      <span className="min-w-0 truncate">
         {count} {count === 1 ? "task" : "tasks"}, no project
       </span>
-      <span className="font-medium">view →</span>
-    </Link>
+      <div className="flex shrink-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={onAskChat}
+          aria-label={`Add a ${category} task via chat`}
+          className="kash-focus-visible rounded-control font-medium underline-offset-2 outline-none transition hover:underline"
+        >
+          + Ask chat
+        </button>
+        <Link
+          href={`/backlog?category=${category}`}
+          className="kash-focus-visible rounded-control font-medium underline-offset-2 outline-none transition hover:underline"
+        >
+          view →
+        </Link>
+      </div>
+    </div>
   );
 }
