@@ -82,6 +82,29 @@ describe("row-mapper", () => {
     expect(remote.category_unresolved).toBe(true);
   });
 
+  it("keeps tasks.suggested_scheduled_date a plain date string (not a Date) round-trip", () => {
+    const local = mapRemoteRow("tasks", {
+      id: "t1",
+      user_id: "u1",
+      title: "Ship deck",
+      category: "professional",
+      scheduled_date: null,
+      bucket_override: "later",
+      suggested_scheduled_date: "2026-07-10",
+      created_at: "2026-07-07T00:00:00Z",
+      updated_at: "2026-07-07T00:00:00Z",
+    });
+    expect(local.suggestedScheduledDate).toBe("2026-07-10");
+    expect(local).not.toHaveProperty("suggested_scheduled_date");
+
+    const remote = mapPayloadToRemote("tasks", {
+      id: "t1",
+      userId: "u1",
+      suggestedScheduledDate: "2026-07-10",
+    });
+    expect(remote.suggested_scheduled_date).toBe("2026-07-10");
+  });
+
   it("converts care_events date fields to Date and camel-cases keys", () => {
     const local = mapRemoteRow("care_events", {
       id: "e1",

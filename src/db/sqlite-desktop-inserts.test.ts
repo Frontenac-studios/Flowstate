@@ -53,6 +53,28 @@ describe("desktop sqlite inserts", () => {
     expect(read?.content).toEqual(content);
   });
 
+  it("creates an inbox task carrying a suggested scheduled date", () => {
+    const row = db
+      .insert(tasks)
+      .values({
+        userId,
+        title: "Ship the deck",
+        category: "professional",
+        scheduledDate: null,
+        bucketOverride: "later",
+        suggestedScheduledDate: "2026-07-10",
+      })
+      .returning()
+      .get();
+
+    expect(row.scheduledDate).toBeNull();
+    expect(row.bucketOverride).toBe("later");
+    expect(row.suggestedScheduledDate).toBe("2026-07-10");
+
+    const read = db.select().from(tasks).where(eq(tasks.id, row.id)).get();
+    expect(read?.suggestedScheduledDate).toBe("2026-07-10");
+  });
+
   it("upserts lastUsedCategory via onConflictDoUpdate", () => {
     db.insert(appSettings)
       .values({ userId, lastUsedCategory: "professional" })

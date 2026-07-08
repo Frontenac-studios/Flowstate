@@ -24,6 +24,8 @@ export const tasks = sqliteTable(
     sortOrder: integer("sort_order").notNull().default(0),
     scheduledDate: text("scheduled_date"),
     bucketOverride: text("bucket_override"),
+    // Chat-proposed day for an inbox task; a plain date string mirroring Postgres.
+    suggestedScheduledDate: text("suggested_scheduled_date"),
     // NOT NULL to mirror the Postgres schema (1B): the resolver always produces a value.
     category: text("category", { enum: PROJECT_CATEGORIES }).notNull(),
     categoryUnresolved: integer("category_unresolved", { mode: "boolean" })

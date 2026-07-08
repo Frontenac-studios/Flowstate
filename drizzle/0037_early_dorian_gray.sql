@@ -1,0 +1,1 @@
+ALTER TABLE "tasks" ADD COLUMN "suggested_scheduled_date" date;
