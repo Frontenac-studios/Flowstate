@@ -53,6 +53,11 @@
   phases/subphases + task lists + **durations learned** from past similar projects (§9). Applied via PR-1.
 - **PR-6 · Project lifecycle (⋯ menu):** **rename · change category** (re-colors its tasks) ·
   **archive** (hide, keep history, restorable) · **delete** (crimson, confirm-first).
+- **PR-7 · Setup wizard backlog (Jul 2026 — shipped [#200](https://github.com/Frontenac-studios/Flowstate/pull/200)–[#202](https://github.com/Frontenac-studios/Flowstate/pull/202)):**
+  - Seeded tasks (wizard, template apply, bulk import) land in **Later backlog** via `resolveProjectBacklogCreateFields` (`scheduledDate: null`, `bucketOverride: "later"`); phase `startDate` → `suggestedScheduledDate`.
+  - **`projects.commitSetup`** — atomic phase/milestone/task seeding (replaces piecemeal creates from the wizard).
+  - **Wizard UX ([#201](https://github.com/Frontenac-studios/Flowstate/pull/201)):** skip auto-open for template projects; blank projects start at Phases; edit mode duplicate-task warning on Tasks step.
+  - **Miller suggested-date chip ([#202](https://github.com/Frontenac-studios/Flowstate/pull/202)):** backlog tasks with a suggestion show Accept on Miller rows (parity with Week inbox).
 
 ## 6. Resolved Jun 27 (was open)
 
