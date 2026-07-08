@@ -21,7 +21,6 @@ type Props = {
   isoDate: string;
   label: string;
   isToday: boolean;
-  columnWidthPercent: number;
   tasks: PlanTaskRow[];
   pinnedBySlot: Map<number, DayPrioritySlotTask>;
   protectedBlocks: ProtectedBlockRow[];
@@ -42,7 +41,6 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     isoDate,
     label,
     isToday,
-    columnWidthPercent,
     tasks,
     pinnedBySlot,
     protectedBlocks,
@@ -73,10 +71,9 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
   return (
     <div
       ref={ref}
-      className={`group/column flex shrink-0 flex-col rounded-card border border-subtle shadow-surface ${
+      className={`group/column flex min-w-0 flex-col rounded-card border border-subtle shadow-surface ${
         isToday ? "bg-surface" : "bg-active-surface"
       }`}
-      style={{ width: `${columnWidthPercent}%` }}
     >
       <ColumnTallyPopover
         label={label}

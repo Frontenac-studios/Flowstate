@@ -48,26 +48,26 @@ export function ThisWeekSurface() {
   return (
     <PlanSurface>
       <ContextualInbox />
-      {hasWeekPlanData ? (
-        <div className="mb-4">
-          <WeeklySummaryCard />
-        </div>
-      ) : (
-        <div className="mb-4 rounded-card border border-subtle bg-surface px-4 py-3 shadow-surface">
-          <GhostCategoryStrip className="mx-auto w-40" />
-          <p className="mt-2 text-center text-sm text-ink-muted">
-            Schedule tasks on the week grid — summary fills in as your plan takes shape.
-          </p>
-        </div>
-      )}
       <LensProvider scope="this-week">
         {hasWeekPlanData ? (
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <LensControlBar />
           </div>
         ) : null}
-        <WeekCanvas showWeekChrome={hasWeekPlanData} />
+        <WeekCanvas surface="week" showWeekChrome={hasWeekPlanData} />
       </LensProvider>
+      {hasWeekPlanData ? (
+        <div className="mt-4">
+          <WeeklySummaryCard />
+        </div>
+      ) : (
+        <div className="mt-4 rounded-card border border-subtle bg-surface px-4 py-3 shadow-surface">
+          <GhostCategoryStrip className="mx-auto w-40" />
+          <p className="mt-2 text-center text-sm text-ink-muted">
+            Schedule tasks on the week grid — summary fills in as your plan takes shape.
+          </p>
+        </div>
+      )}
     </PlanSurface>
   );
 }
