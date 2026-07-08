@@ -56,6 +56,38 @@ describe("proposed-actions", () => {
     expect(proposalHeadline(reschedule)).toContain("Reschedule 2 tasks");
   });
 
+  it("parses a create_task proposal carrying a suggested date and null schedule", () => {
+    const action = proposedActionSchema.parse({
+      kind: "create_task",
+      status: "pending",
+      items: [
+        {
+          itemId: "a",
+          enabled: true,
+          title: "Ship the deck",
+          suggestedDate: "2026-07-10",
+          scheduledDate: null,
+          projectSlug: null,
+          priority: 2,
+        },
+      ],
+    });
+    expect(action.kind).toBe("create_task");
+    if (action.kind === "create_task") {
+      expect(action.items[0]?.suggestedDate).toBe("2026-07-10");
+      expect(action.items[0]?.scheduledDate).toBeNull();
+    }
+  });
+
+  it("rejects a malformed suggested date", () => {
+    const result = proposedActionSchema.safeParse({
+      kind: "create_task",
+      status: "pending",
+      items: [{ itemId: "a", enabled: true, title: "Bad date", suggestedDate: "07/10/2026" }],
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("parses delete_task proposals", () => {
     const action = proposedActionSchema.parse({
       kind: "delete_task",

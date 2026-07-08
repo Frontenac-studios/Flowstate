@@ -24,6 +24,10 @@ export const rescheduleProposalItemSchema = proposalItemBaseSchema.extend({
 
 export const createTaskProposalItemSchema = proposalItemBaseSchema.extend({
   title: z.string().min(1).max(500),
+  // A chat-created task lands in the inbox unscheduled; the proposed day is a
+  // suggestion the user commits later via Accept/drag. `scheduledDate` is kept
+  // for back-compat but is null on the current create path.
+  suggestedDate: isoDateSchema.nullable().optional(),
   scheduledDate: isoDateSchema.nullable().optional(),
   projectSlug: z.string().nullable().optional(),
   priority: z.number().int().min(0).max(3).optional(),

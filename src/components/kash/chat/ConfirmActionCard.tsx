@@ -22,7 +22,8 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
     case "create_task": {
       const row = item as Extract<ProposedAction, { kind: "create_task" }>["items"][number];
       const parts = [row.title];
-      if (row.scheduledDate) parts.push(`(${row.scheduledDate})`);
+      const suggested = row.suggestedDate ?? row.scheduledDate;
+      if (suggested) parts.push(`(${suggested})`);
       if (row.projectSlug) parts.push(`#${row.projectSlug}`);
       return parts.join(" ");
     }

@@ -279,7 +279,10 @@ async function buildCreateTaskProposal(
         itemId: newProposalItemId(),
         enabled: true,
         title: t.title.trim(),
-        scheduledDate: t.scheduledDate && ISO_DATE.test(t.scheduledDate) ? t.scheduledDate : null,
+        // The model's date becomes a suggestion; the task is created unscheduled
+        // (inbox) and the user commits the day via Accept/drag.
+        suggestedDate: t.scheduledDate && ISO_DATE.test(t.scheduledDate) ? t.scheduledDate : null,
+        scheduledDate: null,
         projectSlug: t.projectSlug ?? null,
         priority: t.priority,
       })),
