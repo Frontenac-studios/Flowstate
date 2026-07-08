@@ -10,13 +10,27 @@ const bulkCreateInputSchema = z.object({
   projectId: z.string().uuid(),
   tasks: z
     .array(
-      z.object({
-        title: z.string().min(1).max(500),
-        scheduledDate: z.string().nullable(),
-        bucketOverride: z.enum(["later"]).nullable(),
-        priority: z.number().int().min(0).max(3),
-        phaseId: z.string().uuid().nullable(),
-      })
+      z
+        .object({
+          title: z.string().min(1).max(500),
+          scheduledDate: z.string().nullable(),
+          bucketOverride: z.enum(["later"]).nullable(),
+          priority: z.number().int().min(0).max(3),
+          phaseId: z.string().uuid().nullable(),
+          suggestedScheduledDate: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .nullable()
+            .optional(),
+        })
+        .superRefine((task, ctx) => {
+          if (task.suggestedScheduledDate != null && task.bucketOverride !== "later") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Suggested dates require bucketOverride later.",
+            });
+          }
+        })
     )
     .min(2)
     .max(50),
@@ -54,6 +68,31 @@ describe("taskBulkImports bulkCreate input", () => {
       tasks: [task, { ...task, title: "Task 2" }],
     });
     expect(result.success).toBe(true);
+  });
+
+  it("accepts suggested dates only with bucketOverride later", () => {
+    const task = {
+      title: "Task",
+      scheduledDate: null,
+      bucketOverride: "later" as const,
+      priority: 0,
+      phaseId: null,
+      suggestedScheduledDate: "2026-07-15",
+    };
+    const valid = bulkCreateInputSchema.safeParse({
+      projectId,
+      tasks: [task, { ...task, title: "Task 2" }],
+    });
+    expect(valid.success).toBe(true);
+
+    const invalid = bulkCreateInputSchema.safeParse({
+      projectId,
+      tasks: [
+        { ...task, bucketOverride: null },
+        { ...task, title: "Task 2", bucketOverride: null },
+      ],
+    });
+    expect(invalid.success).toBe(false);
   });
 });
 

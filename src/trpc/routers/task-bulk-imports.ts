@@ -12,13 +12,37 @@ import { projects, taskBulkImportItems, taskBulkImports, tasks } from "@/db/tabl
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
-const bulkTaskInputSchema = z.object({
-  title: z.string().min(1).max(500),
-  scheduledDate: z.string().nullable(),
-  bucketOverride: z.enum(["later"]).nullable(),
-  priority: z.number().int().min(0).max(3),
-  phaseId: z.string().uuid().nullable(),
-});
+const bulkTaskInputSchema = z
+  .object({
+    title: z.string().min(1).max(500),
+    scheduledDate: z.string().nullable(),
+    bucketOverride: z.enum(["later"]).nullable(),
+    priority: z.number().int().min(0).max(3),
+    phaseId: z.string().uuid().nullable(),
+    suggestedScheduledDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+  })
+  .superRefine((task, ctx) => {
+    if (task.suggestedScheduledDate != null && task.bucketOverride !== "later") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Suggested dates require bucketOverride later.",
+      });
+    }
+    if (
+      task.suggestedScheduledDate != null &&
+      task.bucketOverride === "later" &&
+      task.scheduledDate !== null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Suggested dates require scheduledDate null with bucketOverride later.",
+      });
+    }
+  });
 
 async function assertOwnedProject(userId: string, projectId: string) {
   const [row] = await db
@@ -128,6 +152,8 @@ export const taskBulkImportsRouter = createTRPCRouter({
               title: t.title.trim(),
               scheduledDate: t.bucketOverride === "later" ? null : t.scheduledDate,
               bucketOverride: t.bucketOverride,
+              suggestedScheduledDate:
+                t.bucketOverride === "later" ? (t.suggestedScheduledDate ?? null) : null,
               priority: t.priority,
               // Imported tasks belong to a project, so they inherit its category
               // (resolver layer 2 — project context); a real categorization, not unresolved.

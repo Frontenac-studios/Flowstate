@@ -37,6 +37,9 @@ function taskValues(
     priority: 0,
     sortOrder,
     timeEstimateMinutes: task.timeEstimateMinutes ?? null,
+    scheduledDate: null,
+    bucketOverride: "later" as const,
+    suggestedScheduledDate: null,
   };
 }
 
