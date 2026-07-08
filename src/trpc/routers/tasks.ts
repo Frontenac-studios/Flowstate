@@ -1020,6 +1020,7 @@ export const tasksRouter = createTRPCRouter({
           priority: tasks.priority,
           scheduledDate: tasks.scheduledDate,
           bucketOverride: tasks.bucketOverride,
+          suggestedScheduledDate: tasks.suggestedScheduledDate,
           projectId: tasks.projectId,
           phaseId: tasks.phaseId,
           sortOrder: tasks.sortOrder,

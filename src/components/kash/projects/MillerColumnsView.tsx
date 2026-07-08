@@ -603,6 +603,7 @@ export default function MillerColumnsView({
             {columns.map((col) => (
               <MillerColumn
                 key={col.level}
+                projectId={projectId}
                 level={col.level}
                 parentPhaseId={col.parentPhaseId}
                 category={category}
