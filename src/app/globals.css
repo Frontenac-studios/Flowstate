@@ -63,3 +63,9 @@ a:not([class]) {
 html.is-desktop .kash-shell-inner {
   padding-top: max(var(--shell-pad-y), 2.25rem);
 }
+
+/* Desktop fullscreen — stretch the shell edge-to-edge instead of capping at 110rem. */
+html.is-desktop.is-fullscreen .kash-shell-inner {
+  max-width: none;
+  padding-top: var(--shell-pad-y);
+}
