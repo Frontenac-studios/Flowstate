@@ -43,6 +43,12 @@ export const tasks = pgTable(
     priority: integer("priority").notNull().default(0),
     scheduledDate: date("scheduled_date", { mode: "string" }),
     bucketOverride: text("bucket_override"),
+    /**
+     * Chat-proposed day for an inbox task (§chat-first creation). The task stays
+     * unscheduled (scheduledDate null, bucketOverride "later") and shows this as a
+     * suggestion until the user commits it via Accept or drag, which clears it.
+     */
+    suggestedScheduledDate: date("suggested_scheduled_date", { mode: "string" }),
     sortOrder: integer("sort_order").notNull().default(0),
     isTop3: boolean("is_top_3").notNull().default(false),
     top3Order: integer("top_3_order"),
