@@ -17,9 +17,6 @@ type Props = {
   overCommitted?: boolean;
   overCommitMode?: OverCommitThresholdMode;
   categoryStrip?: ReactNode;
-  droppableRef: (node: HTMLElement | null) => void;
-  isDropOver: boolean;
-  children: ReactNode;
 };
 
 function useCanHover(): boolean {
@@ -37,20 +34,18 @@ function useCanHover(): boolean {
 }
 
 /**
- * Week day column shell (D19–D21): persistent category strip in header; balance
- * detail on hover/tap when the day has tasks.
+ * Week day column header (D19–D21): persistent category strip; balance detail on
+ * hover/tap when the day has tasks. Body content (priorities, tasks) lives in
+ * {@link WeekColumn} as siblings below this header.
  */
 export default function ColumnTallyPopover({
   label,
   headerDate,
   isToday,
   tasks,
-  droppableRef,
-  isDropOver,
   overCommitted = false,
   overCommitMode = "cold-start",
   categoryStrip,
-  children,
 }: Props) {
   const tallyId = useId();
   const canHover = useCanHover();
@@ -100,58 +95,51 @@ export default function ColumnTallyPopover({
   return (
     <div
       ref={columnRef}
-      className="relative flex shrink-0 flex-col"
+      className="relative shrink-0"
       onMouseEnter={canHover ? openTally : undefined}
       onMouseLeave={canHover ? closeTally : undefined}
     >
-      <div
-        ref={droppableRef}
-        className={`relative rounded-t-card ${isDropOver ? "outline-dashed outline-1 outline-[var(--accent)]" : ""}`}
-      >
-        {showTally ? (
-          <div
-            ref={panelRef}
-            id={tallyId}
-            role="region"
-            aria-label={`${label} category balance`}
-            className="absolute bottom-full left-1/2 z-overlay mb-2 w-[min(16rem,calc(100vw-2rem))] -translate-x-1/2 rounded-card border border-subtle bg-surface p-3 shadow-overlay"
-          >
-            <BalanceBar tasks={tasks} />
-          </div>
-        ) : null}
-
-        <button
-          ref={headerRef}
-          type="button"
-          className={`w-full px-2 py-2 text-center focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
-            hasTasks && !canHover ? "cursor-pointer" : "cursor-default"
-          }`}
-          aria-expanded={hasTasks ? open : undefined}
-          aria-controls={hasTasks ? tallyId : undefined}
-          onClick={canHover ? undefined : toggleTally}
+      {showTally ? (
+        <div
+          ref={panelRef}
+          id={tallyId}
+          role="region"
+          aria-label={`${label} category balance`}
+          className="absolute bottom-full left-1/2 z-overlay mb-2 w-[min(16rem,calc(100vw-2rem))] -translate-x-1/2 rounded-card border border-subtle bg-surface p-3 shadow-overlay"
         >
-          {categoryStrip ? <div className="mb-2">{categoryStrip}</div> : null}
-          <p
-            className={`text-caption uppercase tracking-wide ${
-              isToday ? "font-medium text-ink" : "text-ink-faint"
-            }`}
-          >
-            {label}
-          </p>
-          {isToday ? (
-            <p className="mt-0.5">
-              <span className="inline-block rounded-pill border border-subtle bg-surface px-2 py-0.5 text-caption font-medium text-ink">
-                {headerDate}
-              </span>
-            </p>
-          ) : (
-            <p className="text-meta text-ink-muted">{headerDate}</p>
-          )}
-          {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
-        </button>
-      </div>
+          <BalanceBar tasks={tasks} />
+        </div>
+      ) : null}
 
-      {children}
+      <button
+        ref={headerRef}
+        type="button"
+        className={`w-full rounded-t-card px-2 py-2 text-center focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
+          hasTasks && !canHover ? "cursor-pointer" : "cursor-default"
+        }`}
+        aria-expanded={hasTasks ? open : undefined}
+        aria-controls={hasTasks ? tallyId : undefined}
+        onClick={canHover ? undefined : toggleTally}
+      >
+        {categoryStrip ? <div className="mb-2">{categoryStrip}</div> : null}
+        <p
+          className={`text-caption uppercase tracking-wide ${
+            isToday ? "font-medium text-ink" : "text-ink-faint"
+          }`}
+        >
+          {label}
+        </p>
+        {isToday ? (
+          <p className="mt-0.5">
+            <span className="inline-block rounded-pill border border-subtle bg-surface px-2 py-0.5 text-caption font-medium text-ink">
+              {headerDate}
+            </span>
+          </p>
+        ) : (
+          <p className="text-meta text-ink-muted">{headerDate}</p>
+        )}
+        {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
+      </button>
     </div>
   );
 }

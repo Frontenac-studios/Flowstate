@@ -69,15 +69,15 @@ export function WeekInbox({
 
   return (
     <section
-      className="mt-4 flex flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface"
+      ref={setNodeRef}
+      className={`mt-4 flex flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface ${
+        isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""
+      }`}
       style={{ height: showTasks ? heightPx : undefined }}
       aria-label="Plan tasks"
     >
       <div
-        ref={setNodeRef}
-        className={`mb-2 flex shrink-0 items-start justify-between gap-3 rounded-[var(--radius-card)] ${
-          isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""
-        }`}
+        className="mb-2 flex shrink-0 items-start justify-between gap-3 rounded-[var(--radius-card)]"
         onDoubleClick={toggleCollapsed}
         role="button"
         tabIndex={0}

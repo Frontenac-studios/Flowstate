@@ -5,8 +5,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closestCenter,
   DndContext,
+  DragOverlay,
+  type CollisionDetection,
   type DragEndEvent,
+  type DragStartEvent,
   PointerSensor,
+  pointerWithin,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -42,6 +46,7 @@ import type { PlanTaskRow } from "../TaskRow";
 import type { DayPrioritySlotTask } from "./DayPrioritiesSlots";
 
 import { WeekColumn } from "./WeekColumn";
+import { WeekDragOverlay } from "./WeekDragOverlay";
 import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
 import { WeekLaterBacklog } from "./WeekLaterBacklog";
@@ -59,7 +64,24 @@ const WEEK_CANVAS_BG = "var(--canvas)";
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /** Floor a day column can shrink to before the strip scrolls horizontally (narrow screens). */
 const MIN_DAY_COLUMN = "8rem";
+const MIN_DAY_COLUMN_PX = 128;
+const LATER_COLUMN_WIDTH_PX = 168;
+const VISIBLE_DAY_COLUMNS = 3;
+const WEEK_GRID_HORIZONTAL_PAD_PX = 16;
+const WEEK_GRID_GAP_PX = 16;
 const DEFAULT_COMPOSER_HEIGHT_PX = 128;
+
+function computeExecutionDayColumnWidth(viewportWidth: number): number {
+  const gaps = VISIBLE_DAY_COLUMNS * WEEK_GRID_GAP_PX;
+  const available = viewportWidth - WEEK_GRID_HORIZONTAL_PAD_PX - LATER_COLUMN_WIDTH_PX - gaps;
+  return Math.max(MIN_DAY_COLUMN_PX, Math.floor(available / VISIBLE_DAY_COLUMNS));
+}
+
+const weekCollisionDetection: CollisionDetection = (args) => {
+  const pointerHits = pointerWithin(args);
+  if (pointerHits.length > 0) return pointerHits;
+  return closestCenter(args);
+};
 
 function firstFreeSlot(pinnedBySlot: Map<number, DayPrioritySlotTask>): 1 | 2 | 3 | null {
   for (const slot of [1, 2, 3] as const) {
@@ -132,6 +154,8 @@ export function WeekCanvas({
     isoDate: string;
     anchorEl: HTMLElement;
   } | null>(null);
+  const [dayColumnWidthPx, setDayColumnWidthPx] = useState(MIN_DAY_COLUMN_PX);
+  const [activeDragTask, setActiveDragTask] = useState<PlanTaskRow | null>(null);
 
   const composerMeasureRef = useRef<HTMLDivElement>(null);
   const quickInputRef = useRef<QuickInputHandle>(null);
@@ -436,7 +460,18 @@ export function WeekCanvas({
     [replacePicker, pinPriorityMutation]
   );
 
+  const onDragStart = (event: DragStartEvent) => {
+    const activeId = String(event.active.id);
+    if (!activeId.startsWith("task:")) return;
+
+    const taskId = activeId.slice("task:".length);
+    const task = findTaskById(taskId);
+    if (task) setActiveDragTask(toRow(task));
+  };
+
   const onDragEnd = (event: DragEndEvent) => {
+    setActiveDragTask(null);
+
     const overId = event.over?.id;
     if (!overId || typeof overId !== "string") return;
 
@@ -516,8 +551,27 @@ export function WeekCanvas({
   }, []);
 
   useEffect(() => {
+    if (surface !== "week") return;
+
+    const scrollEl = dayScrollRef.current;
+    if (!scrollEl || typeof ResizeObserver === "undefined") return;
+
+    const measureWidth = () => {
+      const width = scrollEl.clientWidth;
+      if (width > 0) {
+        setDayColumnWidthPx(computeExecutionDayColumnWidth(width));
+      }
+    };
+
+    measureWidth();
+    const observer = new ResizeObserver(measureWidth);
+    observer.observe(scrollEl);
+    return () => observer.disconnect();
+  }, [surface, isLoading, dayCount]);
+
+  useEffect(() => {
     hasPinnedTodayRef.current = false;
-  }, [todayIso, anchorDate]);
+  }, [todayIso, anchorDate, dayColumnWidthPx]);
 
   useEffect(() => {
     if (isLoading || !todayInWeek) return;
@@ -555,7 +609,7 @@ export function WeekCanvas({
       cancelAnimationFrame(innerFrame);
       observer?.disconnect();
     };
-  }, [isLoading, todayIso, dayCount, todayInWeek, anchorDate]);
+  }, [isLoading, todayIso, dayCount, todayInWeek, anchorDate, dayColumnWidthPx]);
 
   // The inbox rail height tracks the composer, but the composer collapses to a
   // small "+" by default (Phase 5). Fall back to the default composer height so
@@ -564,16 +618,23 @@ export function WeekCanvas({
 
   const gridTemplateColumns =
     surface === "week"
-      ? `repeat(${dayCount}, 150px) 168px`
+      ? `repeat(${dayCount}, ${dayColumnWidthPx}px) ${LATER_COLUMN_WIDTH_PX}px`
       : `repeat(${dayCount}, minmax(${MIN_DAY_COLUMN}, 1fr))`;
 
   const dayGrid = (
     <div
       ref={dayScrollRef}
-      className="week-day-scroll mt-stack shrink-0 overflow-x-auto rounded-card p-2"
+      className={`week-day-scroll mt-stack rounded-card p-2 ${
+        surface === "week"
+          ? "min-h-0 flex-1 overflow-x-auto overflow-y-hidden"
+          : "shrink-0 overflow-x-auto"
+      }`}
       style={{ backgroundColor: WEEK_CANVAS_BG }}
     >
-      <div className="grid gap-stack" style={{ gridTemplateColumns }}>
+      <div
+        className={`grid gap-stack ${surface === "week" ? "h-full min-h-0 items-stretch" : ""}`}
+        style={{ gridTemplateColumns }}
+      >
         {weekDates.map((date, index) => {
           const iso = toISODateString(date);
           const isToday = iso === todayIso;
@@ -590,6 +651,7 @@ export function WeekCanvas({
               protectedBlocks={protectedByDate[iso] ?? []}
               overCommitted={overCommittedByDate[iso] ?? false}
               overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
+              fillHeight={surface === "week"}
               onComplete={pushComplete}
               onDelete={pushDelete}
               onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
@@ -600,7 +662,11 @@ export function WeekCanvas({
             />
           );
         })}
-        {surface === "week" ? <WeekLaterColumn /> : null}
+        {surface === "week" ? (
+          <div className="h-full min-h-0">
+            <WeekLaterColumn />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -683,17 +749,22 @@ export function WeekCanvas({
   );
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={weekCollisionDetection}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
       {surface === "week" ? (
         isLoading ? (
           loadingNote
         ) : (
-          <>
+          <div className="flex min-h-0 flex-1 flex-col">
             {dayGrid}
-            {composerBlock}
+            <div className="shrink-0">{composerBlock}</div>
             {inboxRail}
             {chromeBar}
-          </>
+          </div>
         )
       ) : (
         <>
@@ -727,6 +798,15 @@ export function WeekCanvas({
           onDismiss={() => setReplacePicker(null)}
         />
       ) : null}
+
+      <DragOverlay
+        dropAnimation={{
+          duration: 200,
+          easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
+        }}
+      >
+        <WeekDragOverlay task={activeDragTask} />
+      </DragOverlay>
     </DndContext>
   );
 }
