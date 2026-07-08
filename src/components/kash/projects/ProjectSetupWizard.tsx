@@ -18,11 +18,14 @@ import { useTRPC } from "@/trpc/client";
 import { useProjectMutations } from "./useProjectMutations";
 import type { ProjectDetail, ProjectMilestone, ProjectPhase } from "./types";
 
+type SetupMode = "edit" | "new-blank";
+
 type Props = {
   open: boolean;
   project: ProjectDetail;
   phases: ProjectPhase[];
   milestones: ProjectMilestone[];
+  setupMode?: SetupMode;
   onClose: () => void;
 };
 
@@ -44,7 +47,7 @@ type MilestoneDraft = {
   original: { title: string; targetDate: string } | null;
 };
 
-const STEPS = ["Basics", "Phases", "Dates", "Milestones", "Tasks"] as const;
+const ALL_STEPS = ["Basics", "Phases", "Dates", "Milestones", "Tasks"] as const;
 
 const DATE_INPUT_CLASS =
   "rounded-control border border-subtle bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
@@ -55,14 +58,24 @@ function draftKey(): string {
     : `k-${Math.random().toString(36).slice(2)}`;
 }
 
-export default function ProjectSetupWizard({ open, project, phases, milestones, onClose }: Props) {
+function stepsForMode(setupMode: SetupMode) {
+  return setupMode === "new-blank" ? ALL_STEPS.slice(1) : ALL_STEPS;
+}
+
+export default function ProjectSetupWizard({
+  open,
+  project,
+  phases,
+  milestones,
+  setupMode = "edit",
+  onClose,
+}: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const m = useProjectMutations(project.id);
+  const steps = stepsForMode(setupMode);
 
-  const updateProject = useMutation(trpc.projects.update.mutationOptions());
-  const createMilestone = useMutation(trpc.projectMilestones.create.mutationOptions());
-  const updateMilestone = useMutation(trpc.projectMilestones.update.mutationOptions());
+  const commitSetup = useMutation(trpc.projects.commitSetup.mutationOptions());
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState(project.name);
@@ -71,6 +84,9 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
   const [milestoneDrafts, setMilestoneDrafts] = useState<MilestoneDraft[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isEditing = setupMode === "edit" && (phases.length > 0 || milestones.length > 0);
+  const currentStepLabel = steps[step] ?? steps[0]!;
 
   // (Re)seed the editable draft from live data each time the wizard opens. Only
   // root-level phases are managed here; deeper nesting stays on the board.
@@ -127,8 +143,6 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
 
   if (!open) return null;
 
-  const isEditing = phases.length > 0 || milestones.length > 0;
-
   const updatePhaseDraft = (key: string, patch: Partial<PhaseDraft>) =>
     setPhaseDrafts((prev) => prev.map((p) => (p.key === key ? { ...p, ...patch } : p)));
 
@@ -165,58 +179,55 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
     setError(null);
     try {
       const trimmedName = name.trim();
-      if (
+      const projectPatch =
+        setupMode === "edit" &&
         trimmedName.length > 0 &&
         (trimmedName !== project.name || category !== project.category)
-      ) {
-        await updateProject.mutateAsync({ id: project.id, name: trimmedName, category });
-      }
+          ? { name: trimmedName, category }
+          : setupMode === "new-blank" && category !== project.category
+            ? { category }
+            : undefined;
 
-      for (const p of phaseDrafts) {
-        const phaseName = p.name.trim();
-        if (!phaseName) continue;
+      const phaseInputs = phaseDrafts
+        .filter((p) => p.name.trim().length > 0)
+        .map((p) => ({
+          key: p.key,
+          id: p.id,
+          name: p.name.trim(),
+          startDate: p.startDate || null,
+          endDate: p.endDate || null,
+        }));
 
-        let id = p.id;
-        if (!id) {
-          const row = await m.createPhase.mutateAsync({ projectId: project.id, name: phaseName });
-          id = row.id;
-        } else if (p.original && phaseName !== p.original.name) {
-          await m.updatePhase.mutateAsync({ id, name: phaseName });
-        }
+      const milestoneInputs = milestoneDrafts
+        .filter((mi) => mi.title.trim().length > 0)
+        .map((mi) => ({
+          id: mi.id,
+          title: mi.title.trim(),
+          targetDate: mi.targetDate || null,
+        }));
 
-        const start = p.startDate || null;
-        const end = p.endDate || null;
-        const datesChanged =
-          !p.original ||
-          start !== (p.original.startDate || null) ||
-          end !== (p.original.endDate || null);
-        if (datesChanged && (start !== null || end !== null || p.original)) {
-          await m.updatePhase.mutateAsync({ id, startDate: start, endDate: end });
-        }
-
-        for (const line of p.tasks
+      const taskSeeds = phaseDrafts.flatMap((p) => {
+        const lines = p.tasks
           .split("\n")
           .map((l) => l.trim())
-          .filter(Boolean)) {
-          await m.createTask.mutateAsync({ projectId: project.id, phaseId: id, title: line });
-        }
-      }
+          .filter(Boolean);
+        if (lines.length === 0) return [];
+        return lines.map((title) => ({
+          phaseKey: p.key,
+          phaseId: p.id ?? undefined,
+          title,
+        }));
+      });
 
-      for (const mi of milestoneDrafts) {
-        const title = mi.title.trim();
-        if (!title) continue;
-        const date = mi.targetDate || null;
-        if (!mi.id) {
-          await createMilestone.mutateAsync({ projectId: project.id, title, targetDate: date });
-        } else if (
-          mi.original &&
-          (title !== mi.original.title || date !== (mi.original.targetDate || null))
-        ) {
-          await updateMilestone.mutateAsync({ id: mi.id, title, targetDate: date });
-        }
-      }
+      await commitSetup.mutateAsync({
+        projectId: project.id,
+        project: projectPatch,
+        phases: phaseInputs,
+        milestones: milestoneInputs,
+        taskSeeds,
+      });
 
-      m.invalidate();
+      m.invalidateAll();
       await queryClient.invalidateQueries({
         queryKey: trpc.projectMilestones.listByProject.queryKey({ projectId: project.id }),
       });
@@ -236,7 +247,12 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
     }
   }
 
-  const isLast = step === STEPS.length - 1;
+  const isLast = step === steps.length - 1;
+  const showBasics = currentStepLabel === "Basics";
+  const showPhases = currentStepLabel === "Phases";
+  const showDates = currentStepLabel === "Dates";
+  const showMilestones = currentStepLabel === "Milestones";
+  const showTasks = currentStepLabel === "Tasks";
 
   return createPortal(
     <div
@@ -259,11 +275,11 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
               {isEditing ? "Edit project setup" : "Set up your project"}
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Step {step + 1} of {STEPS.length} · {STEPS[step]}
+              Step {step + 1} of {steps.length} · {currentStepLabel}
             </p>
           </div>
           <ol className="hidden items-center gap-1.5 pt-1 sm:flex" aria-hidden>
-            {STEPS.map((label, i) => (
+            {steps.map((label, i) => (
               <li
                 key={label}
                 className={`h-1.5 w-6 rounded-full transition ${
@@ -275,7 +291,7 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
-          {step === 0 ? (
+          {showBasics ? (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="wizard-name" className="text-sm font-medium text-ink">
@@ -331,7 +347,7 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
             </div>
           ) : null}
 
-          {step === 1 ? (
+          {showPhases ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-ink-muted">
                 Break the project into phases. You can add more later on the board.
@@ -368,7 +384,7 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
             </div>
           ) : null}
 
-          {step === 2 ? (
+          {showDates ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-ink-muted">
                 Optional start and end dates per phase. Leave blank to derive them from tasks later.
@@ -405,7 +421,7 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
             </div>
           ) : null}
 
-          {step === 3 ? (
+          {showMilestones ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-ink-muted">
                 Add key dates for the project — a lease signing, a launch, a deadline.
@@ -451,11 +467,17 @@ export default function ProjectSetupWizard({ open, project, phases, milestones, 
             </div>
           ) : null}
 
-          {step === 4 ? (
+          {showTasks ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-ink-muted">
-                Seed a few starting tasks under each phase — one per line. This only adds tasks.
+                Seed starting tasks under each phase — one per line. New tasks land in the project
+                backlog (not Today).
               </p>
+              {isEditing ? (
+                <p className="rounded-control border border-subtle bg-surface-2 px-3 py-2 text-sm text-ink-muted">
+                  Lines here add new tasks only — existing tasks are not changed or removed.
+                </p>
+              ) : null}
               {namedPhases.length === 0 ? (
                 <p className="text-sm text-ink-muted">Add a phase first to seed tasks.</p>
               ) : (
