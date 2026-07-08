@@ -12,7 +12,9 @@ export type CreateTaskPlacementSource = {
 
 export type ResolvedCreateTaskPlacement = {
   projectSlug: string | null;
-  phaseId: string | null;
+  // Tri-state: a resolved id, explicit `null` (project loose), or `undefined`
+  // when no source pinned a phase — `undefined` lets phase-name resolution run.
+  phaseId: string | null | undefined;
   phaseName: string | null;
   category: ProjectCategory | null;
 };
@@ -34,9 +36,18 @@ export function mergeCreateTaskPlacementSources(
         ? proposalVal
         : (captureVal ?? null);
 
+  // phaseId keeps its tri-state (never coerce an unspecified id to `null`, or we
+  // would force the project-loose bucket and skip phase-name resolution).
+  const pickPhaseId = (
+    editVal: string | null | undefined,
+    proposalVal: string | null | undefined,
+    captureVal: string | null | undefined
+  ): string | null | undefined =>
+    editVal !== undefined ? editVal : proposalVal !== undefined ? proposalVal : captureVal;
+
   return {
     projectSlug: pick(edit?.projectSlug, proposal.projectSlug, captureContext?.projectSlug ?? null),
-    phaseId: pick(edit?.phaseId, proposal.phaseId, captureContext?.phaseId),
+    phaseId: pickPhaseId(edit?.phaseId, proposal.phaseId, captureContext?.phaseId),
     phaseName: pick(edit?.phaseName, proposal.phaseName, captureContext?.phaseName ?? null),
     category: pick(edit?.category, proposal.category, captureContext?.category),
   };
