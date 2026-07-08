@@ -56,6 +56,15 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
     onCursorChange?.(el.selectionStart ?? 0);
   }, [onCursorChange]);
 
+  // Keep the visible ghost-text overlay aligned with the textarea once the
+  // content grows past the height cap and the textarea starts scrolling.
+  const syncScroll = useCallback(() => {
+    const el = textareaRef.current;
+    const mirror = mirrorRef.current;
+    if (!el || !mirror) return;
+    mirror.scrollTop = el.scrollTop;
+  }, []);
+
   useImperativeHandle(ref, () => ({
     focus: () => textareaRef.current?.focus(),
     getSelectionStart: () => textareaRef.current?.selectionStart ?? 0,
@@ -72,7 +81,7 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
       <div
         ref={mirrorRef}
         aria-hidden
-        className="pointer-events-none absolute inset-0 min-h-14 w-full overflow-hidden whitespace-pre-wrap break-words rounded-control border border-transparent bg-transparent px-3 py-2 text-body text-ink [field-sizing:content]"
+        className="pointer-events-none absolute inset-0 max-h-[40vh] min-h-14 w-full overflow-hidden whitespace-pre-wrap break-words rounded-control border border-transparent bg-transparent px-3 py-2 text-body text-ink [field-sizing:content]"
       >
         {value}
         {ghostText}
@@ -82,13 +91,15 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
         data-quick-input
         ref={textareaRef}
         rows={rows}
-        className="relative min-h-14 w-full resize-y rounded-control border border-transparent bg-transparent px-3 py-2 text-body text-transparent caret-ink outline-none transition-shadow [field-sizing:content] focus:shadow-[0_0_0_2px_var(--focus-ring)]"
+        className="relative max-h-[40vh] min-h-14 w-full resize-y overflow-y-auto rounded-control border border-transparent bg-transparent px-3 py-2 text-body text-transparent caret-ink outline-none transition-shadow [field-sizing:content] focus:shadow-[0_0_0_2px_var(--focus-ring)]"
         placeholder={placeholder}
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
           onCursorChange?.(e.target.selectionStart ?? 0);
+          syncScroll();
         }}
+        onScroll={syncScroll}
         onSelect={syncCursor}
         onKeyUp={syncCursor}
         onClick={syncCursor}
