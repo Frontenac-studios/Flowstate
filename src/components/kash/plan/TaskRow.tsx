@@ -513,9 +513,13 @@ export function TaskRow({
   };
 
   const dndTransform = CSS.Transform.toString(transform);
-  const weekLiftActive = weekDragLift && isDragging && !completing;
+  const weekDragWithOverlay = weekDragLift && isDragging && !completing;
   const dragTransform =
-    weekLiftActive && dndTransform && !reducedMotion ? `${dndTransform} scale(1.02)` : dndTransform;
+    weekDragWithOverlay || completing
+      ? undefined
+      : weekDragLift && dndTransform && !reducedMotion
+        ? `${dndTransform} scale(1.02)`
+        : dndTransform;
 
   return (
     <li
@@ -523,14 +527,14 @@ export function TaskRow({
       className={`relative overflow-hidden rounded-[var(--radius-card)] ${
         arriveIndex != null ? "row-arrive" : ""
       } ${
-        weekDragLift
+        weekDragLift && !isDragging && !completing
           ? "transition-[transform,box-shadow,opacity] duration-short ease-move motion-reduce:transition-opacity motion-reduce:duration-short"
           : ""
       } ${
         completing
           ? "translate-x-6 opacity-0 transition-[transform,opacity] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
-          : weekLiftActive
-            ? `z-sticky ${reducedMotion ? "opacity-75" : "shadow-overlay"}`
+          : weekDragWithOverlay
+            ? "opacity-40"
             : isDragging
               ? "opacity-60"
               : weekDragLift

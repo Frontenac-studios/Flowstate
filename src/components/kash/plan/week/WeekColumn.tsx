@@ -1,7 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, type MutableRefObject, type Ref } from "react";
 
 import { formatHeaderDate, parseISODateString } from "@/lib/dates/local-day";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
@@ -27,6 +27,8 @@ type Props = {
   overCommitted?: boolean;
   overCommitMode?: OverCommitThresholdMode;
   showPinHint?: boolean;
+  /** Execution week surface: column fills grid height and tasks scroll internally. */
+  fillHeight?: boolean;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onRemoveProtected: (id: string) => void;
@@ -34,6 +36,16 @@ type Props = {
   onUnpinPriority: (taskId: string) => void;
   canPinMore: boolean;
 };
+
+function mergeRefs<T>(...refs: Array<Ref<T> | undefined>) {
+  return (node: T | null) => {
+    for (const ref of refs) {
+      if (!ref) continue;
+      if (typeof ref === "function") ref(node);
+      else (ref as MutableRefObject<T | null>).current = node;
+    }
+  };
+}
 
 /** D40 (reverses D19) — Jun-24 inverted emphasis: soft-gray day columns, today the lone white column + white date pill. Contrast carries the signal, not an ink border. */
 export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
@@ -47,6 +59,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     overCommitted = false,
     overCommitMode = "cold-start",
     showPinHint = false,
+    fillHeight = false,
     onComplete,
     onDelete,
     onRemoveProtected,
@@ -70,9 +83,11 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
 
   return (
     <div
-      ref={ref}
+      ref={mergeRefs(ref, setNodeRef)}
       className={`group/column flex min-w-0 flex-col rounded-card border border-subtle shadow-surface ${
-        isToday ? "bg-surface" : "bg-active-surface"
+        fillHeight ? "h-full max-h-full overflow-hidden" : ""
+      } ${isToday ? "bg-surface" : "bg-active-surface"} ${
+        isOver ? "outline-dashed outline-1 outline-[var(--accent)]" : ""
       }`}
     >
       <ColumnTallyPopover
@@ -83,45 +98,51 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
         overCommitted={overCommitted}
         overCommitMode={overCommitMode}
         categoryStrip={<ColumnCategoryStrip tasks={tasks} />}
-        droppableRef={setNodeRef}
-        isDropOver={isOver}
-      >
-        {protectedBlocks.length > 0 ? (
-          <ul className="mt-1 space-y-1 px-1" aria-label={`Protected time for ${isoDate}`}>
-            {protectedBlocks.map((block) => (
-              <ProtectedBlockChip
-                key={block.id}
-                block={block}
-                compact
-                animatePlace
-                onRemove={onRemoveProtected}
-              />
-            ))}
-          </ul>
-        ) : null}
-        <DayPrioritiesSlots
-          pinnedBySlot={pinnedBySlot}
-          onUnpin={onUnpinPriority}
-          showPinHint={showPinHint && !pinHintDismissed}
-          onDismissPinHint={dismissPinHint}
-        />
-        <ul className="mt-1 flex-1 space-y-1.5 px-1 pb-2" aria-label={`Tasks for ${isoDate}`}>
-          {regularTasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              weekDragLift
-              canPin={canPinMore}
-              onPin={onPinTask}
-              onComplete={onComplete}
-              onDelete={onDelete}
+      />
+
+      {protectedBlocks.length > 0 ? (
+        <ul className="mt-1 shrink-0 space-y-1 px-1" aria-label={`Protected time for ${isoDate}`}>
+          {protectedBlocks.map((block) => (
+            <ProtectedBlockChip
+              key={block.id}
+              block={block}
+              compact
+              animatePlace
+              onRemove={onRemoveProtected}
             />
           ))}
         </ul>
-        <div className="px-1 pb-2 [@media(hover:hover)]:invisible [@media(hover:hover)]:group-hover/column:visible">
-          <AddProtectedBlockButton isoDate={isoDate} />
-        </div>
-      </ColumnTallyPopover>
+      ) : null}
+
+      <DayPrioritiesSlots
+        pinnedBySlot={pinnedBySlot}
+        onUnpin={onUnpinPriority}
+        showPinHint={showPinHint && !pinHintDismissed}
+        onDismissPinHint={dismissPinHint}
+      />
+
+      <ul
+        className={`mt-1 space-y-1.5 px-1 pb-2 ${
+          fillHeight ? "week-column-tasks min-h-0 flex-1 overflow-y-auto" : "flex-1"
+        }`}
+        aria-label={`Tasks for ${isoDate}`}
+      >
+        {regularTasks.map((task) => (
+          <TaskRow
+            key={task.id}
+            task={task}
+            weekDragLift
+            canPin={canPinMore}
+            onPin={onPinTask}
+            onComplete={onComplete}
+            onDelete={onDelete}
+          />
+        ))}
+      </ul>
+
+      <div className="shrink-0 px-1 pb-2 [@media(hover:hover)]:invisible [@media(hover:hover)]:group-hover/column:visible">
+        <AddProtectedBlockButton isoDate={isoDate} />
+      </div>
     </div>
   );
 });

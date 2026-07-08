@@ -47,27 +47,31 @@ export function ThisWeekSurface() {
 
   return (
     <PlanSurface>
-      <ContextualInbox />
-      <LensProvider scope="this-week">
-        {hasWeekPlanData ? (
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <LensControlBar />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <ContextualInbox />
+        <LensProvider scope="this-week">
+          <div className="flex min-h-0 flex-1 flex-col">
+            {hasWeekPlanData ? (
+              <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+                <LensControlBar />
+              </div>
+            ) : null}
+            <WeekCanvas surface="week" showWeekChrome={hasWeekPlanData} />
           </div>
-        ) : null}
-        <WeekCanvas surface="week" showWeekChrome={hasWeekPlanData} />
-      </LensProvider>
-      {hasWeekPlanData ? (
-        <div className="mt-4">
-          <WeeklySummaryCard />
-        </div>
-      ) : (
-        <div className="mt-4 rounded-card border border-subtle bg-surface px-4 py-3 shadow-surface">
-          <GhostCategoryStrip className="mx-auto w-40" />
-          <p className="mt-2 text-center text-sm text-ink-muted">
-            Schedule tasks on the week grid — summary fills in as your plan takes shape.
-          </p>
-        </div>
-      )}
+        </LensProvider>
+        {hasWeekPlanData ? (
+          <div className="mt-4 shrink-0">
+            <WeeklySummaryCard />
+          </div>
+        ) : (
+          <div className="mt-4 shrink-0 rounded-card border border-subtle bg-surface px-4 py-3 shadow-surface">
+            <GhostCategoryStrip className="mx-auto w-40" />
+            <p className="mt-2 text-center text-sm text-ink-muted">
+              Schedule tasks on the week grid — summary fills in as your plan takes shape.
+            </p>
+          </div>
+        )}
+      </div>
     </PlanSurface>
   );
 }

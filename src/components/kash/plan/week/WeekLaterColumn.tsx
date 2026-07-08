@@ -46,7 +46,7 @@ function LaterZone({ id, icon, title, caption, tint }: ZoneProps) {
 export function WeekLaterColumn() {
   return (
     <div
-      className="flex min-w-0 flex-col overflow-hidden rounded-card border border-dashed border-subtle bg-surface-2"
+      className="flex h-full min-w-0 flex-col overflow-hidden rounded-card border border-dashed border-subtle bg-surface-2"
       aria-label="Defer to next week or backlog"
     >
       <div className="px-2 pb-2 pt-3 text-center">

@@ -31,6 +31,21 @@
   -webkit-mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent 100%);
 }
 
+/* Per-day task scroll on execution week surface */
+.week-column-tasks {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink-muted) 35%, transparent) transparent;
+}
+
+.week-column-tasks::-webkit-scrollbar {
+  width: 6px;
+}
+
+.week-column-tasks::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-muted) 35%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .protected-place {
     animation: protected-place-reduce var(--motion-short) var(--ease-enter) both;
