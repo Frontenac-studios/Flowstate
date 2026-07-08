@@ -12,9 +12,9 @@ export function mapRemoteRow(
     delete base.date;
   }
 
-  if (table === "chat_messages" && base.content && typeof base.content === "object") {
-    base.content = JSON.stringify(base.content);
-  }
+  // `content` is a JSON-mode column in the local schema, so Drizzle serializes
+  // the object itself on insert. Passing an already-stringified value here would
+  // double-encode it.
 
   if (table === "nudge_events" && base.task_ids != null) {
     base.taskIds =

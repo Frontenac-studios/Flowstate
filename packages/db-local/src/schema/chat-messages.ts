@@ -12,7 +12,11 @@ export const chatMessages = sqliteTable(
     userId: text("user_id").notNull(),
     threadId: text("thread_id").notNull(),
     role: text("role").notNull(),
-    content: text("content").notNull(),
+    // JSON mode mirrors the Postgres `jsonb` column: Drizzle serializes the
+    // object on write and parses it on read. Plain `text` would bind the raw
+    // object, which better-sqlite3 misreads as a named-parameter bundle and
+    // rejects with "Too few parameter values were provided".
+    content: text("content", { mode: "json" }).notNull(),
     taskId: text("task_id").references(() => tasks.id, { onDelete: "set null" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()

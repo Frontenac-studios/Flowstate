@@ -28,6 +28,23 @@ describe("row-mapper", () => {
     expect(mapped).not.toHaveProperty("task_ids");
   });
 
+  it("passes chat_messages content through as an object (json-mode column serializes)", () => {
+    const content = { type: "text", text: "hi" };
+    const mapped = mapRemoteRow("chat_messages", {
+      id: "c1",
+      user_id: "u",
+      thread_id: "global",
+      role: "assistant",
+      content,
+      created_at: "2026-05-27T00:00:00Z",
+      updated_at: "2026-05-27T00:00:00Z",
+    });
+    // Must stay an object — the local column is json-mode and stringifies on write.
+    // Pre-stringifying here would double-encode the value.
+    expect(mapped.content).toEqual(content);
+    expect(typeof mapped.content).toBe("object");
+  });
+
   it("maps task payload to remote snake_case", () => {
     const remote = mapPayloadToRemote("tasks", {
       id: "t1",
