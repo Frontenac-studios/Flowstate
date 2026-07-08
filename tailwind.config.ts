@@ -127,6 +127,20 @@ const config: Config = {
         subtitle: "var(--text-subtitle)",
         title: "var(--text-title)",
         h1: "var(--text-h1)",
+        // Stock Tailwind sizes are overridden to match the bumped token scale
+        // (Spacious). Many components still use text-xs/sm/base/... directly,
+        // so these must scale in lockstep with the tokens above to stay
+        // coherent. Kept monotonic through 6xl to avoid size inversions.
+        xs: ["14px", "20px"],
+        sm: ["16px", "22px"],
+        base: ["18px", "26px"],
+        lg: ["22px", "30px"],
+        xl: ["26px", "32px"],
+        "2xl": ["30px", "36px"],
+        "3xl": ["36px", "42px"],
+        "4xl": ["42px", "46px"],
+        "5xl": ["52px", "1"],
+        "6xl": ["64px", "1"],
       },
       padding: {
         "kash-task-y": "var(--kash-task-row-py)",
