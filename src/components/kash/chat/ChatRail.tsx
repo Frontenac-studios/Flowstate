@@ -36,6 +36,7 @@ export function ChatRail() {
     applyProposal,
     dismissProposal,
     proposalBusy,
+    placementSummaryByMessageId,
     setStreamError,
   } = useChatPanel(threadId);
   const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
@@ -143,6 +144,7 @@ export function ChatRail() {
             }
             onDismissProposal={(messageId) => void dismissProposal(messageId)}
             proposalBusy={proposalBusy}
+            placementSummaryByMessageId={placementSummaryByMessageId}
           />
         )}
 

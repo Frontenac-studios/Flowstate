@@ -104,7 +104,11 @@ export async function streamCompanionReply(params: {
   const config = getAnthropicConfig();
   const register = registerForThread(params.threadId);
   const tools = toolsForSurface(register, params.planningSurface);
-  const { contextBlock, history } = await assembleChatContext(params.userId, params.threadId);
+  const { contextBlock, history } = await assembleChatContext(
+    params.userId,
+    params.threadId,
+    params.captureContext
+  );
   const captureBlock = params.captureContext
     ? formatCaptureContextBlock(params.captureContext)
     : null;

@@ -11,10 +11,13 @@ import {
   syncWeekDayPriorityRow,
 } from "@/db/record-sync-mutation";
 import { phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
+import { buildCreateTaskPlacementSummary } from "@/lib/chat/build-create-task-placement-summary";
 import type { CaptureContext } from "@/lib/chat/capture-context";
+import type { ChatCreatedTask } from "@/lib/chat/chat-task-created-events";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
 import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import {
+  formatCreateTaskPlacementSummary,
   mergeCreateTaskPlacementSources,
   resolveCreateTaskCategory,
   resolvePhaseIdForProject,
@@ -43,6 +46,10 @@ export type ApplyProposedActionResult = {
   applied: number;
   titles: string[];
   undoFrames: ConfirmUndoFrame[];
+  /** Tasks inserted by a create_task apply; empty for every other action kind. */
+  createdTasks: ChatCreatedTask[];
+  /** Human-readable placement line for the create_task ack (single-item creates). */
+  placementSummary?: string;
 };
 
 async function getOwnedTaskRow(userId: string, taskId: string) {
@@ -136,7 +143,7 @@ export async function applyProposedActionPayload(
         });
       }
 
-      return { applied: result.applied, titles: result.titles, undoFrames };
+      return { applied: result.applied, titles: result.titles, undoFrames, createdTasks: [] };
     }
 
     case "create_task": {
@@ -151,14 +158,19 @@ export async function applyProposedActionPayload(
         .where(eq(projects.userId, userId));
 
       const projectCategoryById = new Map(projectRows.map((p) => [p.id, p.category]));
+      const projectNameById = new Map(projectRows.map((p) => [p.id, p.name]));
 
       const titles: string[] = [];
       const createdIds: string[] = [];
+      const createdTasks: ChatCreatedTask[] = [];
+      const placementLines: string[] = [];
       let applied = 0;
 
       for (const item of action.items) {
         const title = item.title.trim();
         if (!title) continue;
+
+        let resolvedPhaseName: string | null = null;
 
         const edit = editByItemId.get(item.itemId);
         const placement = mergeCreateTaskPlacementSources(
@@ -193,7 +205,10 @@ export async function applyProposedActionPayload(
 
           if (phaseId) {
             const phase = phaseRows.find((p) => p.id === phaseId);
-            if (phase) projectId = phase.projectId;
+            if (phase) {
+              projectId = phase.projectId;
+              resolvedPhaseName = phase.name;
+            }
           }
         }
 
@@ -238,6 +253,23 @@ export async function applyProposedActionPayload(
           await syncTaskRow(row.id, "insert", row);
           titles.push(row.title);
           createdIds.push(row.id);
+          createdTasks.push({
+            id: row.id,
+            title: row.title,
+            projectId: row.projectId,
+            phaseId: row.phaseId,
+            category: row.category,
+            suggestedScheduledDate: row.suggestedScheduledDate,
+          });
+          placementLines.push(
+            formatCreateTaskPlacementSummary({
+              category: resolved.category,
+              categoryUnresolved: resolved.unresolved,
+              projectName: row.projectId ? (projectNameById.get(row.projectId) ?? null) : null,
+              phaseName: resolvedPhaseName,
+              landing: commitSchedule ? "today" : "inbox",
+            })
+          );
           applied += 1;
         }
       }
@@ -246,7 +278,12 @@ export async function applyProposedActionPayload(
         undoFrames.push({ type: "create_tasks", taskIds: createdIds });
       }
 
-      return { applied, titles, undoFrames };
+      const placementSummary = buildCreateTaskPlacementSummary(
+        createdTasks.map((task) => task.title),
+        placementLines
+      );
+
+      return { applied, titles, undoFrames, createdTasks, placementSummary };
     }
 
     case "complete_task": {
@@ -278,7 +315,7 @@ export async function applyProposedActionPayload(
         }
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "edit_task": {
@@ -338,7 +375,7 @@ export async function applyProposedActionPayload(
         }
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "delete_task": {
@@ -372,7 +409,7 @@ export async function applyProposedActionPayload(
         });
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "set_top3": {
@@ -450,7 +487,7 @@ export async function applyProposedActionPayload(
       }
 
       if (slotUndo.slots.length > 0) undoFrames.push(slotUndo);
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "set_protected_block": {
@@ -486,7 +523,7 @@ export async function applyProposedActionPayload(
         undoFrames.push({ type: "create_protected_blocks", blockIds });
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "set_day_priorities": {
@@ -569,7 +606,7 @@ export async function applyProposedActionPayload(
       }
 
       if (rowsUndo.rows.length > 0) undoFrames.push(rowsUndo);
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "apply_balance_suggestions": {
@@ -637,7 +674,7 @@ export async function applyProposedActionPayload(
         undoFrames.push({ type: "reschedule", assignments: rescheduleUndo });
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "create_project": {
@@ -669,7 +706,7 @@ export async function applyProposedActionPayload(
         undoFrames.push({ type: "create_projects", projectIds });
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "edit_phase": {
@@ -709,7 +746,7 @@ export async function applyProposedActionPayload(
         }
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "move_task_to_phase": {
@@ -750,7 +787,7 @@ export async function applyProposedActionPayload(
         }
       }
 
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     case "replan_project_dates": {
@@ -789,13 +826,13 @@ export async function applyProposedActionPayload(
       }
 
       if (phasesUndo.phases.length > 0) undoFrames.push(phasesUndo);
-      return { applied, titles, undoFrames };
+      return { applied, titles, undoFrames, createdTasks: [] };
     }
 
     default: {
       const _exhaustive: never = action;
       void _exhaustive;
-      return { applied: 0, titles: [], undoFrames: [] };
+      return { applied: 0, titles: [], undoFrames: [], createdTasks: [] };
     }
   }
 }

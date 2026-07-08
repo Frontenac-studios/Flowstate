@@ -42,6 +42,8 @@ type Props = {
   loadingOlder?: boolean;
   onLoadOlder?: () => void;
   proposalBusy?: boolean;
+  /** Placement ack lines keyed by the assistant message whose create_task applied. */
+  placementSummaryByMessageId?: Record<string, string>;
 };
 
 function UserMessageRow({
@@ -130,6 +132,7 @@ export function MessageList({
   loadingOlder = false,
   onLoadOlder,
   proposalBusy = false,
+  placementSummaryByMessageId,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -175,6 +178,10 @@ export function MessageList({
       {messages.map((m) => {
         const isNudge = m.role === "assistant" && m.content.meta?.source === "nudge";
         const proposal = m.content.meta?.proposal;
+        const placementAck =
+          proposal?.kind === "create_task" && proposal.status === "applied"
+            ? placementSummaryByMessageId?.[m.id]
+            : undefined;
 
         if (m.role === "user") {
           return (
@@ -204,6 +211,11 @@ export function MessageList({
                 }
                 onDismiss={() => onDismissProposal(m.id)}
               />
+            ) : null}
+            {placementAck ? (
+              <p className="mt-1.5 text-xs text-ink-muted" role="status">
+                {renderChatMessage(placementAck)}
+              </p>
             ) : null}
           </div>
         );

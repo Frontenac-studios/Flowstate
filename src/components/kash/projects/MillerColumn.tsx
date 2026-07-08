@@ -35,6 +35,8 @@ type Props = {
   isActive: boolean;
   shellClassName?: string;
   phaseMetrics?: Map<string, PhaseMetrics>;
+  /** Chat-created task ids to pulse (post-create feedback, P6). */
+  highlightTaskIds?: Set<string>;
   blankInvitation?: ReactNode;
   renderDetail: (item: ColumnItem) => ReactNode;
   onOpenPhase: (node: Node) => void;
@@ -59,6 +61,7 @@ export default function MillerColumn({
   isActive,
   shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
   phaseMetrics,
+  highlightTaskIds,
   blankInvitation,
   renderDetail,
   onOpenPhase,
@@ -102,6 +105,7 @@ export default function MillerColumn({
       );
     }
     const expanded = detail?.type === "task" && detail.id === item.task.id;
+    const highlighted = highlightTaskIds?.has(item.task.id) ?? false;
     return (
       <Fragment key={`t:${item.task.id}`}>
         <MillerTaskRow
@@ -111,6 +115,7 @@ export default function MillerColumn({
           focused={focused}
           onOpenDetail={() => onOpenTaskDetail(item.task)}
           onToggleComplete={() => onToggleTask(item.task)}
+          highlightClassName={highlighted ? "kash-section-pulse" : undefined}
         />
         {expanded ? (
           <li data-miller-detail className="mb-1 rounded-row border border-subtle bg-surface-2 p-3">

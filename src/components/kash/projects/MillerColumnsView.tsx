@@ -38,6 +38,7 @@ import { useTRPC } from "@/trpc/client";
 
 import { useChat } from "../chat/ChatProvider";
 import { createCaptureContext } from "@/lib/chat/capture-context";
+import { onChatTasksCreated } from "@/lib/chat/chat-task-created-events";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "../plan/AddTaskPopover";
 import NewItemRow from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
@@ -104,6 +105,9 @@ export default function MillerColumnsView({
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [composerFocused, setComposerFocused] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  // Chat-created task ids to pulse; cleared ~2s after the create event.
+  const [highlightTaskIds, setHighlightTaskIds] = useState<Set<string>>(new Set());
+  const highlightClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { openRail } = useChat();
   const addTaskRef = useRef<AddTaskPopoverHandle>(null);
 
@@ -206,6 +210,54 @@ export default function MillerColumnsView({
       onSelectPath(expanded);
     }
   }, [tree, selectedPath, targetVisibleColumns, onSelectPath]);
+
+  const parentByPhaseId = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const phase of phases) map.set(phase.id, phase.parentPhaseId ?? null);
+    return map;
+  }, [phases]);
+
+  // Root → phase chain of ids, used to reveal the column holding a phase's tasks.
+  const phasePathTo = useCallback(
+    (phaseId: string): string[] => {
+      const chain: string[] = [];
+      const seen = new Set<string>();
+      let current: string | null = phaseId;
+      while (current && !seen.has(current)) {
+        seen.add(current);
+        chain.unshift(current);
+        current = parentByPhaseId.get(current) ?? null;
+      }
+      return chain;
+    },
+    [parentByPhaseId]
+  );
+
+  useEffect(() => {
+    const unsubscribe = onChatTasksCreated((detail) => {
+      const mine = detail.tasks.filter((task) => task.projectId === projectId);
+      if (mine.length === 0) return;
+
+      setHighlightTaskIds(new Set(mine.map((task) => task.id)));
+
+      // Reveal the column containing the first phase-scoped create; loose creates
+      // (phaseId null) already live in the always-visible level-0 column.
+      const withPhase = mine.find((task) => task.phaseId != null);
+      if (withPhase?.phaseId) {
+        const chain = phasePathTo(withPhase.phaseId);
+        if (chain.length > 0) {
+          onSelectPath(expandMillerPath(tree, chain, targetVisibleColumns));
+        }
+      }
+
+      if (highlightClearRef.current) clearTimeout(highlightClearRef.current);
+      highlightClearRef.current = setTimeout(() => setHighlightTaskIds(new Set()), 2000);
+    });
+    return () => {
+      unsubscribe();
+      if (highlightClearRef.current) clearTimeout(highlightClearRef.current);
+    };
+  }, [projectId, phasePathTo, tree, targetVisibleColumns, onSelectPath]);
 
   useEffect(() => {
     setFocus((f) => {
@@ -561,6 +613,7 @@ export default function MillerColumnsView({
                 isActive={col.level === activeColumnLevel}
                 shellClassName={millerColumnShellClass(widthClassName)}
                 phaseMetrics={phaseMetrics}
+                highlightTaskIds={highlightTaskIds}
                 blankInvitation={
                   isBlank && col.level === 0 ? (
                     <ColoredEmptyInvitation

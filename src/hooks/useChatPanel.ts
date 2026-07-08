@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useChat } from "@/components/kash/chat/ChatProvider";
+import {
+  dispatchChatTasksCreated,
+  type ChatCreatedTask,
+} from "@/lib/chat/chat-task-created-events";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
 import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
@@ -39,6 +43,12 @@ export function useChatPanel(threadId: string) {
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [olderMessages, setOlderMessages] = useState<ChatMessage[]>([]);
+  // Placement ack lines keyed by the assistant message whose create_task
+  // proposal was applied. Held in hook state so it survives refreshMessages
+  // (the confirm card unmounts once the proposal is no longer pending).
+  const [placementSummaryByMessageId, setPlacementSummaryByMessageId] = useState<
+    Record<string, string>
+  >({});
   const [hasMoreOlder, setHasMoreOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -317,6 +327,18 @@ export function useChatPanel(threadId: string) {
         if (result.undoFrames?.length) {
           pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
         }
+        if (result.createdTasks?.length) {
+          dispatchChatTasksCreated({
+            tasks: result.createdTasks as ChatCreatedTask[],
+            surface: captureContext?.surface ?? planningSurface,
+          });
+        }
+        if (result.placementSummary) {
+          setPlacementSummaryByMessageId((prev) => ({
+            ...prev,
+            [messageId]: result.placementSummary as string,
+          }));
+        }
         invalidateTaskQueries();
         await refreshMessages();
       } catch (err) {
@@ -325,7 +347,14 @@ export function useChatPanel(threadId: string) {
         );
       }
     },
-    [applyProposalMutation, captureContext, invalidateTaskQueries, pushConfirmUndo, refreshMessages]
+    [
+      applyProposalMutation,
+      captureContext,
+      invalidateTaskQueries,
+      planningSurface,
+      pushConfirmUndo,
+      refreshMessages,
+    ]
   );
 
   const dismissProposal = useCallback(
@@ -359,6 +388,7 @@ export function useChatPanel(threadId: string) {
     retry,
     applyProposal,
     dismissProposal,
+    placementSummaryByMessageId,
     setStreamError,
   };
 }
