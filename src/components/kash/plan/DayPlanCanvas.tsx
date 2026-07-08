@@ -42,6 +42,7 @@ import { CHAT_SEND_EVENT, DECIDE_EVENT } from "../chrome-events";
 import { triggerEphemeralCelebration } from "../mechanics/EphemeralCelebration";
 import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
+import { AddTaskPopover, type AddTaskPopoverHandle } from "./AddTaskPopover";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import { BreathingOverlay } from "../care/BreathingOverlay";
 import { WalkTimerOverlay } from "../care/WalkTimerOverlay";
@@ -132,6 +133,8 @@ export function DayPlanCanvas() {
   const queryClient = useQueryClient();
   const { touchActivity } = usePlanMode();
   const quickInputRef = useRef<QuickInputHandle>(null);
+  const addTaskRef = useRef<AddTaskPopoverHandle>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
   const top3SectionRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const [pulseTarget, setPulseTarget] = useState<string | null>(null);
@@ -863,11 +866,32 @@ export function DayPlanCanvas() {
         )}
 
         <div className="sticky bottom-0 z-sticky border-t border-border bg-surface pb-1 pt-3">
-          <QuickInput
-            ref={quickInputRef}
-            draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
-            onTaskCreated={handleTaskCreated}
-          />
+          {composerOpen ? (
+            <div
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setComposerOpen(false);
+                  requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+                }
+              }}
+            >
+              <QuickInput
+                ref={quickInputRef}
+                draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
+                onTaskCreated={handleTaskCreated}
+              />
+            </div>
+          ) : (
+            <AddTaskPopover
+              ref={addTaskRef}
+              onAskChat={() => openRail()}
+              onTypeManually={() => {
+                setComposerOpen(true);
+                requestAnimationFrame(() => quickInputRef.current?.focus());
+              }}
+            />
+          )}
         </div>
       </div>
       <WalkTimerOverlay open={walkOverlayOpen} onClose={() => setWalkOverlayOpen(false)} />
