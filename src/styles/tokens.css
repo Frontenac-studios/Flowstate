@@ -169,8 +169,8 @@
   --breath-pulse: 2400ms;
 
   /* ---- layout spacing (web defaults — match current Tailwind literals) ---- */
-  --nav-rail-width: 4rem;
-  --nav-rail-width-expanded: 11rem;
+  --nav-rail-width: 3rem; /* 0.75× narrower collapsed rail (was 4rem) */
+  --nav-rail-width-expanded: 11rem; /* expanded keeps full label room */
   --nav-item-height: 3rem;
   --shell-gap: 1.5rem;
   --shell-pad-x: 1rem;
@@ -189,33 +189,48 @@
 /* Desktop (Tauri) — rail-scaled spacing; variant A is default. Toggle variant B via
    data-spacing-variant="b" on <html> (dev preview at /dev/spacing-preview). */
 html.is-desktop {
-  --nav-rail-width: 3rem;
-  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 2.75);
-  --nav-item-height: calc(var(--nav-rail-width) * 0.75);
-  --shell-gap: calc(var(--nav-rail-width) * 0.5);
-  --shell-pad: calc(var(--nav-rail-width) * 0.5);
+  /* Shell spacing unit — formerly the rail width itself. Decoupled Jul 7 so the
+     collapsed rail can be narrowed without shrinking page padding, gaps, card
+     padding, or the chat rail. Everything except the collapsed rail width stays
+     anchored to this unit, so those values are unchanged from the prior 3rem base. */
+  --shell-unit: 3rem;
+  --nav-rail-width: calc(var(--shell-unit) * 0.75); /* 0.75× narrower collapsed rail (2.25rem) */
+  --nav-rail-width-expanded: calc(var(--shell-unit) * 2.75); /* expanded keeps full label room */
+  --nav-item-height: calc(
+    var(--shell-unit) * 0.75
+  ); /* item height unchanged — only width shrinks */
+  --shell-gap: calc(var(--shell-unit) * 0.5);
+  --shell-pad: calc(var(--shell-unit) * 0.5);
   --shell-pad-x: var(--shell-pad);
   --shell-pad-x-sm: var(--shell-pad);
   --shell-pad-x-lg: var(--shell-pad);
   --shell-pad-y: var(--shell-pad);
   --shell-sticky-top: var(--shell-pad-y);
-  --stack-gap: calc(var(--nav-rail-width) * 0.375);
-  --section-gap: calc(var(--nav-rail-width) * 0.375);
+  --stack-gap: calc(var(--shell-unit) * 0.375);
+  --section-gap: calc(var(--shell-unit) * 0.375);
   --header-gap: var(--section-gap);
-  --card-pad-x: calc(var(--nav-rail-width) * 0.417);
-  --card-pad-y: calc(var(--nav-rail-width) * 0.417);
-  --chat-rail-width: calc(var(--nav-rail-width) * 7);
+  --card-pad-x: calc(var(--shell-unit) * 0.417);
+  --card-pad-y: calc(var(--shell-unit) * 0.417);
+  --chat-rail-width: calc(var(--shell-unit) * 7);
+}
+
+/* Desktop fullscreen — nav rail stays expanded at double the normal expanded width. */
+html.is-desktop.is-fullscreen {
+  --nav-rail-width-expanded: calc(
+    var(--shell-unit) * 5.5
+  ); /* anchored to unit — keeps label room */
 }
 
 html.is-desktop[data-spacing-variant="b"] {
-  --nav-rail-width: 4rem;
-  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 2.75);
-  --shell-gap: calc(var(--nav-rail-width) * 0.3125);
-  --shell-pad: calc(var(--nav-rail-width) * 0.3125);
-  --card-pad-x: calc(var(--nav-rail-width) * 0.25);
-  --card-pad-y: calc(var(--nav-rail-width) * 0.25);
-  --stack-gap: calc(var(--nav-rail-width) * 0.3125);
-  --section-gap: calc(var(--nav-rail-width) * 0.3125);
+  --shell-unit: 4rem;
+  --nav-rail-width: calc(var(--shell-unit) * 0.75); /* 0.75× narrower collapsed rail (3rem) */
+  --nav-rail-width-expanded: calc(var(--shell-unit) * 2.75);
+  --shell-gap: calc(var(--shell-unit) * 0.3125);
+  --shell-pad: calc(var(--shell-unit) * 0.3125);
+  --card-pad-x: calc(var(--shell-unit) * 0.25);
+  --card-pad-y: calc(var(--shell-unit) * 0.25);
+  --stack-gap: calc(var(--shell-unit) * 0.3125);
+  --section-gap: calc(var(--shell-unit) * 0.3125);
 }
 
 @keyframes focus-ring-arrive {

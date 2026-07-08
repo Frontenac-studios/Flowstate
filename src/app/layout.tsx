@@ -4,6 +4,7 @@ import { Figtree } from "next/font/google";
 import localFont from "next/font/local";
 
 import { AppBackdrop } from "@/components/kash/AppBackdrop";
+import { DesktopFullscreenFlag } from "@/components/kash/DesktopFullscreenFlag";
 import { DesktopRuntimeFlag } from "@/components/kash/DesktopRuntimeFlag";
 import { SpacingVariantInit } from "@/components/kash/dev/SpacingVariantInit";
 import { TRPCReactProvider } from "@/trpc/client";
@@ -49,6 +50,7 @@ export default function RootLayout({
       >
         <AppBackdrop />
         <DesktopRuntimeFlag />
+        <DesktopFullscreenFlag />
         {process.env.NODE_ENV === "development" ? <SpacingVariantInit /> : null}
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>

@@ -18,6 +18,7 @@ import {
 } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
 import { SyncFooterIndicator } from "@/components/kash/nav/SyncFooterIndicator";
+import { useDesktopFullscreen } from "@/hooks/useDesktopFullscreen";
 import { readNavRailPinned, writeNavRailPinned } from "@/lib/nav/nav-rail-storage";
 
 type NavItem = {
@@ -177,6 +178,7 @@ function NavSections({
 
 export function LeftNavRail() {
   const pathname = usePathname();
+  const isFullscreen = useDesktopFullscreen();
   const [pinned, setPinned] = useState(false);
   const [peek, setPeek] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -212,7 +214,8 @@ export function LeftNavRail() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
 
-  const expanded = pinned || peek;
+  const expanded = pinned || peek || isFullscreen;
+  const railExpanded = pinned || isFullscreen;
 
   const isActive = (item: NavItem) =>
     item.match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
@@ -231,20 +234,28 @@ export function LeftNavRail() {
     <>
       <div
         className={`top-shell sticky z-sticky hidden h-full shrink-0 transition-[width] duration-200 lg:block ${
-          pinned ? "w-nav-rail-expanded" : "w-nav-rail"
+          railExpanded ? "w-nav-rail-expanded" : "w-nav-rail"
         }`}
       >
         <nav
           aria-label="Primary"
           data-expanded={expanded ? "true" : "false"}
-          onMouseEnter={() => setPeek(true)}
-          onMouseLeave={() => setPeek(false)}
-          onFocus={() => setPeek(true)}
-          onBlur={() => setPeek(false)}
+          onMouseEnter={() => {
+            if (!isFullscreen) setPeek(true);
+          }}
+          onMouseLeave={() => {
+            if (!isFullscreen) setPeek(false);
+          }}
+          onFocus={() => {
+            if (!isFullscreen) setPeek(true);
+          }}
+          onBlur={() => {
+            if (!isFullscreen) setPeek(false);
+          }}
           className={`absolute inset-y-0 left-0 z-sticky flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
             expanded ? "w-nav-rail-expanded" : "w-nav-rail"
           } ${
-            expanded && !pinned
+            expanded && !railExpanded
               ? "rounded-card border border-subtle bg-surface shadow-overlay"
               : "rounded-card border border-subtle bg-surface shadow-surface"
           }`}
@@ -258,7 +269,7 @@ export function LeftNavRail() {
             >
               K
             </span>
-            {expanded ? (
+            {expanded && !isFullscreen ? (
               <button
                 type="button"
                 onClick={togglePinned}
