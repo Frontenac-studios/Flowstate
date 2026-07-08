@@ -1,16 +1,29 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
 import Checkbox from "@/components/kash/ui/Checkbox";
-import type { ProposedAction } from "@/lib/chat/proposed-actions";
+import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import { proposalHeadline } from "@/lib/chat/proposed-actions";
+import { useTRPC } from "@/trpc/client";
 
 type Props = {
   proposal: ProposedAction;
   busy?: boolean;
-  onConfirm: (enabledItemIds: string[]) => void;
+  onConfirm: (enabledItemIds: string[], editedItems?: CreateTaskItemEdit[]) => void;
   onDismiss: () => void;
+};
+
+type CreateTaskItem = Extract<ProposedAction, { kind: "create_task" }>["items"][number];
+
+/** Per-row editable state for a create_task draft. */
+type DraftRow = {
+  enabled: boolean;
+  title: string;
+  suggestedDate: string; // "" == no suggestion (stays in inbox)
+  projectSlug: string; // "" == no project
+  priority: number;
 };
 
 function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]): string {
@@ -20,7 +33,7 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
       return `${row.title} → ${row.scheduledDate}`;
     }
     case "create_task": {
-      const row = item as Extract<ProposedAction, { kind: "create_task" }>["items"][number];
+      const row = item as CreateTaskItem;
       const parts = [row.title];
       const suggested = row.suggestedDate ?? row.scheduledDate;
       if (suggested) parts.push(`(${suggested})`);
@@ -95,6 +108,155 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
   }
 }
 
+const inputClass =
+  "min-w-0 rounded-control border border-border bg-surface px-2 py-1 text-xs text-ink focus:border-ink focus:outline-none";
+
+/** Editable create_task draft: title, suggested date, project, priority. */
+function CreateTaskDraftEditor({
+  items,
+  busy,
+  onConfirm,
+  onDismiss,
+}: {
+  items: CreateTaskItem[];
+  busy: boolean;
+  onConfirm: Props["onConfirm"];
+  onDismiss: () => void;
+}) {
+  const trpc = useTRPC();
+  const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
+
+  const [rows, setRows] = useState<Record<string, DraftRow>>(() =>
+    Object.fromEntries(
+      items.map((item) => [
+        item.itemId,
+        {
+          enabled: item.enabled,
+          title: item.title,
+          suggestedDate: item.suggestedDate ?? item.scheduledDate ?? "",
+          projectSlug: item.projectSlug ?? "",
+          priority: item.priority ?? 0,
+        } satisfies DraftRow,
+      ])
+    )
+  );
+
+  const update = useCallback((itemId: string, patch: Partial<DraftRow>) => {
+    setRows((prev) => ({ ...prev, [itemId]: { ...prev[itemId]!, ...patch } }));
+  }, []);
+
+  const enabledCount = useMemo(
+    () => items.filter((i) => rows[i.itemId]?.enabled && rows[i.itemId]?.title.trim()).length,
+    [items, rows]
+  );
+
+  const confirm = useCallback(() => {
+    const edits: CreateTaskItemEdit[] = items
+      .filter((i) => rows[i.itemId]?.enabled && rows[i.itemId]?.title.trim())
+      .map((i) => {
+        const r = rows[i.itemId]!;
+        return {
+          itemId: i.itemId,
+          title: r.title.trim(),
+          suggestedDate: r.suggestedDate ? r.suggestedDate : null,
+          projectSlug: r.projectSlug ? r.projectSlug : null,
+          priority: r.priority,
+        };
+      });
+    onConfirm(
+      edits.map((e) => e.itemId),
+      edits
+    );
+  }, [items, rows, onConfirm]);
+
+  return (
+    <div className="mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm">
+      <p className="mb-2 font-medium text-ink">
+        Create {items.length} task{items.length === 1 ? "" : "s"} in your inbox
+      </p>
+      <ul className="mb-3 flex flex-col gap-2" aria-label="Draft tasks">
+        {items.map((item) => {
+          const r = rows[item.itemId]!;
+          return (
+            <li key={item.itemId} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={`draft-${item.itemId}`}
+                  checked={r.enabled}
+                  disabled={busy}
+                  onChange={() => update(item.itemId, { enabled: !r.enabled })}
+                />
+                <input
+                  aria-label="Task title"
+                  className={`${inputClass} flex-1 ${r.enabled ? "" : "opacity-50"}`}
+                  value={r.title}
+                  disabled={busy || !r.enabled}
+                  onChange={(e) => update(item.itemId, { title: e.target.value })}
+                />
+              </div>
+              <div className={`flex flex-wrap gap-1 pl-6 ${r.enabled ? "" : "opacity-50"}`}>
+                <input
+                  aria-label="Suggested date"
+                  type="date"
+                  className={inputClass}
+                  value={r.suggestedDate}
+                  disabled={busy || !r.enabled}
+                  onChange={(e) => update(item.itemId, { suggestedDate: e.target.value })}
+                />
+                <select
+                  aria-label="Project"
+                  className={inputClass}
+                  value={r.projectSlug}
+                  disabled={busy || !r.enabled}
+                  onChange={(e) => update(item.itemId, { projectSlug: e.target.value })}
+                >
+                  <option value="">No project</option>
+                  {projects.map((p) => (
+                    <option key={p.slug} value={p.slug}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Priority"
+                  className={inputClass}
+                  value={r.priority}
+                  disabled={busy || !r.enabled}
+                  onChange={(e) => update(item.itemId, { priority: Number(e.target.value) })}
+                >
+                  <option value={0}>No priority</option>
+                  <option value={1}>P1</option>
+                  <option value={2}>P2</option>
+                  <option value={3}>P3</option>
+                </select>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={busy || enabledCount === 0}
+          onClick={confirm}
+          className="rounded-control border-emphasis border-ink px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
+        >
+          Add to inbox
+          {enabledCount > 0 && enabledCount < items.length ? ` ${enabledCount}` : ""}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onDismiss}
+          className="rounded-control border border-border px-3 py-1 text-xs text-ink-muted transition hover:text-ink disabled:opacity-50"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss }: Props) {
   const [enabledIds, setEnabledIds] = useState<Set<string>>(
     () => new Set(proposal.items.map((item) => item.itemId))
@@ -115,6 +277,18 @@ export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss
   );
 
   if (proposal.status !== "pending") return null;
+
+  // create_task drafts are fully editable inline; every other kind is toggle-only.
+  if (proposal.kind === "create_task") {
+    return (
+      <CreateTaskDraftEditor
+        items={proposal.items}
+        busy={busy}
+        onConfirm={onConfirm}
+        onDismiss={onDismiss}
+      />
+    );
+  }
 
   return (
     <div className="mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm">

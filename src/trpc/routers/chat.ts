@@ -5,7 +5,12 @@ import { z } from "zod";
 import { db } from "@/db";
 import { chatMessages } from "@/db/tables";
 import { messageContentSchema, textContent } from "@/lib/chat/message-content";
-import { filterPayloadByItemIds, proposedActionSchema } from "@/lib/chat/proposed-actions";
+import {
+  createTaskItemEditSchema,
+  filterPayloadByItemIds,
+  mergeCreateTaskEdits,
+  proposedActionSchema,
+} from "@/lib/chat/proposed-actions";
 import { confirmUndoFrameSchema } from "@/lib/chat/confirm-undo";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
 import { isAnthropicConfigured } from "@/lib/env";
@@ -262,6 +267,9 @@ export const chatRouter = createTRPCRouter({
       z.object({
         messageId: z.string().uuid(),
         enabledItemIds: z.array(z.string().min(1)).optional(),
+        // Inline edits from the draft card (create_task only). When present these
+        // both select the enabled rows and carry edited field values.
+        editedItems: z.array(createTaskItemEditSchema).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -283,9 +291,15 @@ export const chatRouter = createTRPCRouter({
       }
 
       const parsedProposal = proposedActionSchema.parse(proposal);
-      const filtered = input.enabledItemIds?.length
-        ? filterPayloadByItemIds(parsedProposal, input.enabledItemIds)
-        : parsedProposal;
+      let filtered: ReturnType<typeof filterPayloadByItemIds>;
+      if (input.editedItems?.length) {
+        // Re-validates the edited items against the schema (throws on bad input).
+        filtered = mergeCreateTaskEdits(parsedProposal, input.editedItems);
+      } else if (input.enabledItemIds?.length) {
+        filtered = filterPayloadByItemIds(parsedProposal, input.enabledItemIds);
+      } else {
+        filtered = parsedProposal;
+      }
 
       if (!filtered) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "No items selected to apply." });
