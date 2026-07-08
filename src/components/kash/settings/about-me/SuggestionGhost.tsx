@@ -73,7 +73,7 @@ export default function SuggestionGhost({
           type="button"
           onClick={onAccept}
           disabled={busy}
-          className="rounded-control border-[1.5px] border-ink px-3 py-1 text-meta text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
+          className="rounded-control border-emphasis border-ink px-3 py-1 text-meta text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
         >
           Add to doc
         </button>

@@ -12,7 +12,7 @@ export function WinFacetBadge({ facet, className }: Props) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center rounded-chip px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+        "inline-flex shrink-0 items-center rounded-chip px-1.5 py-0.5 text-micro font-medium uppercase tracking-wide",
         className
       )}
       style={{

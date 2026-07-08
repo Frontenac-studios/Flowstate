@@ -102,7 +102,7 @@ export default function BingoOnboarding({
             type="button"
             disabled={busy || !brainDumpText.trim()}
             onClick={parseLines}
-            className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+            className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
           >
             {busy ? "Creating…" : "Draft goals"}
           </button>
@@ -154,7 +154,7 @@ export default function BingoOnboarding({
               setGuidedIndex((i) => i + 1);
             }
           }}
-          className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+          className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
         >
           {busy ? "Saving…" : isLast ? "Finish guided setup" : "Next area"}
         </button>

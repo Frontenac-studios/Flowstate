@@ -90,7 +90,7 @@ export function WeekDraftPanel({ taskTitleById, anchorDate, onClose, onApplied }
           {error ? (
             <button
               type="button"
-              className="rounded-pill border-[1.5px] border-ink bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
+              className="rounded-pill border-emphasis border-ink bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
               onClick={() => void runGenerate()}
             >
               Retry
@@ -146,7 +146,7 @@ export function WeekDraftPanel({ taskTitleById, anchorDate, onClose, onApplied }
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          className="rounded-pill border-[1.5px] border-ink bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+          className="rounded-pill border-emphasis border-ink bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
           disabled={applyMutation.isPending || proposal.assignments.length === 0}
           onClick={() =>
             applyMutation.mutate({

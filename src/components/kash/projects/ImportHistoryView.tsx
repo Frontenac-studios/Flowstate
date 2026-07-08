@@ -144,7 +144,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
                 {!undone ? (
                   <button
                     type="button"
-                    className="focus-visible:text-on-accent shrink-0 rounded-control border-[1.5px] border-ink px-3 py-1 text-meta text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
+                    className="focus-visible:text-on-accent shrink-0 rounded-control border-emphasis border-ink px-3 py-1 text-meta text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
                     disabled={undoMutation.isPending}
                     onClick={() => setUndoTarget({ importId: row.id, taskCount: row.taskCount })}
                   >

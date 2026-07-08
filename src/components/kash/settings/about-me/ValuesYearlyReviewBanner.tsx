@@ -51,7 +51,7 @@ export default function ValuesYearlyReviewBanner({ valueCount }: Props) {
         <button
           type="button"
           onClick={dismissForYear}
-          className="rounded-control border-[1.5px] border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface"
+          className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface"
         >
           Looks good
         </button>

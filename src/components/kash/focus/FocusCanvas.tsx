@@ -393,7 +393,7 @@ export function FocusCanvas() {
           <button
             type="button"
             onClick={() => void handleDone()}
-            className="inline-flex items-center gap-2 rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control border-emphasis border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
             disabled={doneFlash !== null || exiting}
           >
             Done
@@ -402,7 +402,7 @@ export function FocusCanvas() {
           <button
             type="button"
             onClick={() => void handlePark()}
-            className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+            className="rounded-control border-emphasis border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
             disabled={doneFlash !== null || exiting}
           >
             Park
@@ -432,7 +432,7 @@ export function FocusCanvas() {
               onClick={() => void (isPaused ? handleResume() : handlePause())}
               disabled={doneFlash !== null}
               aria-label={isPaused ? "Resume" : "Pause"}
-              className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-ink text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
+              className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-emphasis border-ink text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
             >
               {isPaused ? (
                 <Play {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
@@ -458,7 +458,7 @@ export function FocusCanvas() {
             <button
               type="button"
               onClick={skipBreak}
-              className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink"
+              className="rounded-control border-emphasis border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink"
             >
               Skip break
             </button>
@@ -476,14 +476,14 @@ export function FocusCanvas() {
               <button
                 type="button"
                 onClick={() => void handleContinueAfterBreak()}
-                className="rounded-control border-[1.5px] border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
+                className="rounded-control border-emphasis border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
               >
                 Continue
               </button>
               <button
                 type="button"
                 onClick={() => void handleDone()}
-                className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+                className="rounded-control border-emphasis border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
                 disabled={doneFlash !== null || exiting}
               >
                 Done
@@ -491,7 +491,7 @@ export function FocusCanvas() {
               <button
                 type="button"
                 onClick={() => void handlePark()}
-                className="rounded-control border-[1.5px] border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
+                className="rounded-control border-emphasis border-subtle px-5 py-2 text-sm font-medium text-ink-muted transition hover:text-ink disabled:opacity-50"
                 disabled={doneFlash !== null || exiting}
               >
                 Park

@@ -35,7 +35,7 @@ const LENS_META: Record<LensProperty, LensMeta> = {
   },
   due: {
     label: "Due",
-    emblem: <span className="h-2.5 w-2.5 rounded-full border-[1.5px] border-current" />,
+    emblem: <span className="h-2.5 w-2.5 rounded-full border-emphasis border-current" />,
   },
 };
 
@@ -74,7 +74,7 @@ export function LensControlBar({ collapseUntilUseful = false }: Props) {
         title="Filters"
       >
         <span aria-hidden className="flex w-3 items-center justify-center">
-          <span className="h-2.5 w-2.5 rounded-full border-[1.5px] border-current" />
+          <span className="h-2.5 w-2.5 rounded-full border-emphasis border-current" />
         </span>
         Filter
       </button>

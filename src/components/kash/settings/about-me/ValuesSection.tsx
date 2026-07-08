@@ -84,7 +84,7 @@ export default function ValuesSection() {
           <ul className="flex flex-wrap gap-2" aria-label="Your values">
             {values.map((v) => (
               <li key={v.id}>
-                <span className="inline-flex items-center gap-2 rounded-chip border-[1.5px] border-ink px-3 py-1.5 text-body text-ink">
+                <span className="inline-flex items-center gap-2 rounded-chip border-emphasis border-ink px-3 py-1.5 text-body text-ink">
                   {v.label}
                   <button
                     type="button"

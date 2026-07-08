@@ -60,6 +60,10 @@ const config: Config = {
           glass: "var(--kash-glass-bg)",
         },
       },
+      borderWidth: {
+        // Emphasis stroke token — replaces ad-hoc border-[1.5px] literals.
+        emphasis: "var(--border-emphasis-width)",
+      },
       borderColor: {
         // The flat `border` color key already yields `.border-border`; the hairline
         // panel border needs `.border-subtle`, which the `border-subtle` color key
@@ -121,26 +125,28 @@ const config: Config = {
       },
       fontSize: {
         kash: "var(--kash-density-base)",
+        micro: "var(--text-micro)",
         caption: "var(--text-caption)",
         meta: "var(--text-meta)",
         body: "var(--text-body)",
         subtitle: "var(--text-subtitle)",
         title: "var(--text-title)",
         h1: "var(--text-h1)",
-        // Stock Tailwind sizes are overridden to match the bumped token scale
-        // (Spacious). Many components still use text-xs/sm/base/... directly,
-        // so these must scale in lockstep with the tokens above to stay
-        // coherent. Kept monotonic through 6xl to avoid size inversions.
-        xs: ["14px", "20px"],
-        sm: ["16px", "22px"],
-        base: ["18px", "26px"],
+        // Stock Tailwind sizes are overridden to match the token scale. Many
+        // components use text-xs/sm/base/... directly, so these scale in lockstep
+        // with the tokens above. Screenshot-match pass (Jul 7): xs=meta(13),
+        // sm=body(17), base=subtitle(19), lg=title(22), xl=h1(30); display tiers
+        // grown to stay monotonic. Prior: 14/16/18/22/26/30/36/42/52/64.
+        xs: ["13px", "18px"],
+        sm: ["17px", "24px"],
+        base: ["19px", "27px"],
         lg: ["22px", "30px"],
-        xl: ["26px", "32px"],
-        "2xl": ["30px", "36px"],
-        "3xl": ["36px", "42px"],
-        "4xl": ["42px", "46px"],
-        "5xl": ["52px", "1"],
-        "6xl": ["64px", "1"],
+        xl: ["30px", "36px"],
+        "2xl": ["34px", "40px"],
+        "3xl": ["40px", "46px"],
+        "4xl": ["46px", "50px"],
+        "5xl": ["58px", "1"],
+        "6xl": ["70px", "1"],
       },
       padding: {
         "kash-task-y": "var(--kash-task-row-py)",
