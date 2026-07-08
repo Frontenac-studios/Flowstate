@@ -3,6 +3,7 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
+import SuggestedDateChip from "@/components/kash/plan/SuggestedDateChip";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import Checkbox from "@/components/kash/ui/Checkbox";
@@ -10,11 +11,13 @@ import { Lock, withKashIcon } from "@/components/kash/ui/icon";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 
+import { useProjectMutations } from "./useProjectMutations";
 import type { ProjectTask } from "./types";
 
 const LockIcon = withKashIcon(Lock);
 
 type Props = {
+  projectId: string;
   task: ProjectTask;
   parentPhaseId: string | null;
   selected: boolean;
@@ -29,6 +32,7 @@ type Props = {
 };
 
 export default function MillerTaskRow({
+  projectId,
   task,
   parentPhaseId,
   selected,
@@ -37,9 +41,15 @@ export default function MillerTaskRow({
   onToggleComplete,
   highlightClassName,
 }: Props) {
+  const m = useProjectMutations(projectId);
   const completed = task.completedAt !== null;
   const isBlocked = !completed && task.isBlocked === true;
   const blockerLabel = task.blockerTitle ?? "blocker";
+  const showSuggestion =
+    !completed &&
+    task.bucketOverride === "later" &&
+    task.scheduledDate === null &&
+    task.suggestedScheduledDate != null;
 
   const {
     attributes,
@@ -103,6 +113,14 @@ export default function MillerTaskRow({
         <span className="line-clamp-4 break-words">{task.title}</span>
         {(task.tags?.length ?? 0) > 0 ? (
           <TaskTagChips tags={task.tags ?? []} className="mt-1" maxVisible={2} />
+        ) : null}
+        {showSuggestion ? (
+          <SuggestedDateChip
+            taskId={task.id}
+            suggestedScheduledDate={task.suggestedScheduledDate!}
+            onAccepted={() => m.invalidateAll()}
+            className="mt-1 flex flex-wrap items-center gap-1.5"
+          />
         ) : null}
       </button>
       <TaskPriorityIndicator priority={task.priority} />

@@ -25,6 +25,7 @@ export type PhaseMetrics = {
 };
 
 type Props = {
+  projectId: string;
   level: number;
   parentPhaseId: string | null;
   category: ProjectCategory;
@@ -51,6 +52,7 @@ function isItemComplete(item: ColumnItem): boolean {
 }
 
 export default function MillerColumn({
+  projectId,
   level,
   parentPhaseId,
   category,
@@ -109,6 +111,7 @@ export default function MillerColumn({
     return (
       <Fragment key={`t:${item.task.id}`}>
         <MillerTaskRow
+          projectId={projectId}
           task={item.task}
           parentPhaseId={parentPhaseId}
           selected={expanded}

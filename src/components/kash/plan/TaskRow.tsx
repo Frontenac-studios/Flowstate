@@ -27,7 +27,6 @@ import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
-import { parseISODateString } from "@/lib/dates/local-day";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
@@ -35,6 +34,8 @@ import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
 import { useTRPC, type RouterOutputs } from "@/trpc/client";
+
+import SuggestedDateChip from "./SuggestedDateChip";
 
 import { useReveal } from "./LensProvider";
 import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
@@ -124,19 +125,6 @@ type Props = {
 const ACTION_WIDTH_PX = 72;
 const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
 const MAX_ARRIVE_STAGGER = 12;
-
-const SHORT_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
-/** "Thu 10" — weekday + day-of-month, unambiguous for out-of-week suggestions. */
-function suggestionLabel(iso: string): string {
-  const date = parseISODateString(iso);
-  return `${SHORT_WEEKDAYS[date.getDay()]} ${date.getDate()}`;
-}
-
-/** "Thu" — short weekday for the compact Accept button. */
-function suggestionWeekday(iso: string): string {
-  return SHORT_WEEKDAYS[parseISODateString(iso).getDay()];
-}
 
 export function TaskRow({
   task,
@@ -392,20 +380,6 @@ export function TaskRow({
       },
       onError: () =>
         toast({ message: "Couldn't delete this task. Please try again.", variant: "error" }),
-    })
-  );
-
-  const acceptSuggestedDateMutation = useMutation(
-    trpc.tasks.acceptSuggestedDate.mutationOptions({
-      onSuccess: () => {
-        hide();
-        invalidatePlan();
-      },
-      onError: () =>
-        toast({
-          message: "Couldn't schedule that task. Please try again.",
-          variant: "error",
-        }),
     })
   );
 
@@ -735,29 +709,20 @@ export function TaskRow({
           ) : null}
 
           {suggestion ? (
-            <div
-              className="mt-0.5 flex shrink-0 items-center gap-1.5 self-start"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span
-                className="rounded-pill border border-border px-2 py-0.5 text-xs text-ink-muted"
-                title={`Suggested for ${suggestion}`}
-              >
-                {suggestionLabel(suggestion)}
-              </span>
-              <button
-                type="button"
-                className="kash-focus-visible rounded-pill border border-accent px-2 py-0.5 text-xs font-medium text-accent transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
-                disabled={acceptSuggestedDateMutation.isPending}
-                aria-label={`Accept suggested date, schedule for ${suggestion}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  acceptSuggestedDateMutation.mutate({ id: task.id });
-                }}
-              >
-                Accept → {suggestionWeekday(suggestion)}
-              </button>
-            </div>
+            <SuggestedDateChip
+              taskId={task.id}
+              suggestedScheduledDate={suggestion}
+              onAccepted={() => {
+                hide();
+                invalidatePlan();
+              }}
+              onError={() =>
+                toast({
+                  message: "Couldn't schedule that task. Please try again.",
+                  variant: "error",
+                })
+              }
+            />
           ) : null}
 
           {relativeDue ? (
