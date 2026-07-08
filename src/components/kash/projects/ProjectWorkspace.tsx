@@ -59,16 +59,18 @@ export default function ProjectWorkspace({
   const [viewMode, setViewMode] = useState<ProjectViewMode>("columns");
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [setupMode, setSetupMode] = useState<"edit" | "new-blank">("edit");
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Auto-launch the setup wizard right after project creation (?setup=new), then
+  // Auto-launch the setup wizard right after blank project creation (?setup=new), then
   // strip the param so a refresh doesn't reopen it.
   useEffect(() => {
     if (searchParams.get("setup") === "new") {
       setWizardOpen(true);
+      setSetupMode("new-blank");
       router.replace(pathname);
     }
   }, [searchParams, router, pathname]);
@@ -102,7 +104,10 @@ export default function ProjectWorkspace({
           showBackToProjects={showBackToProjects}
           timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
           estimateSampleCount={estimateSampleCount}
-          onOpenSetup={() => setWizardOpen(true)}
+          onOpenSetup={() => {
+            setSetupMode("edit");
+            setWizardOpen(true);
+          }}
         />
       </ProjectTemplateSuggestSlot>
 
@@ -111,7 +116,10 @@ export default function ProjectWorkspace({
       {(milestonesQuery.data?.length ?? 0) > 0 ? (
         <ProjectMilestoneStrip
           milestones={milestonesQuery.data ?? []}
-          onEdit={() => setWizardOpen(true)}
+          onEdit={() => {
+            setSetupMode("edit");
+            setWizardOpen(true);
+          }}
         />
       ) : null}
 
@@ -136,7 +144,10 @@ export default function ProjectWorkspace({
           selectedPath={selectedPath}
           onSelectPath={setSelectedPath}
           estimateSampleCount={estimateSampleCount}
-          onOpenSetup={() => setWizardOpen(true)}
+          onOpenSetup={() => {
+            setSetupMode("edit");
+            setWizardOpen(true);
+          }}
         />
       ) : (
         <CalendarBoardView
@@ -152,7 +163,11 @@ export default function ProjectWorkspace({
         project={project}
         phases={phasesQuery.data ?? []}
         milestones={milestonesQuery.data ?? []}
-        onClose={() => setWizardOpen(false)}
+        setupMode={setupMode}
+        onClose={() => {
+          setWizardOpen(false);
+          setSetupMode("edit");
+        }}
       />
     </div>
   );

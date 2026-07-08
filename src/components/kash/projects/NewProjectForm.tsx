@@ -19,7 +19,7 @@ import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categor
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
-  onCreated: (projectId: string) => void;
+  onCreated: (result: { id: string; fromTemplate: boolean }) => void;
   onCancel: () => void;
 };
 
@@ -60,15 +60,15 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
     enabled: mode === "template",
   });
 
-  const handleCreated = (project: { id: string; name: string }) => {
+  const handleCreated = (project: { id: string; name: string }, fromTemplate: boolean) => {
     void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
     void backfillEmbedding(project.id, project.name, true);
-    onCreated(project.id);
+    onCreated({ id: project.id, fromTemplate });
   };
 
   const createMutation = useMutation(
     trpc.projects.create.mutationOptions({
-      onSuccess: handleCreated,
+      onSuccess: (project) => handleCreated(project, false),
       onError: (err) => {
         console.error("[NewProjectForm] projects.create failed", err);
         setError(
@@ -82,7 +82,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
 
   const createFromTemplateMutation = useMutation(
     trpc.projects.createFromTemplate.mutationOptions({
-      onSuccess: handleCreated,
+      onSuccess: (project) => handleCreated(project, true),
       onError: (err) => {
         console.error("[NewProjectForm] projects.createFromTemplate failed", err);
         setError(

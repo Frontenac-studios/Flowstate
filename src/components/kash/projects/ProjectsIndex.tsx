@@ -107,9 +107,9 @@ export default function ProjectsIndex() {
 
       {formOpen ? (
         <NewProjectForm
-          onCreated={(id) => {
+          onCreated={({ id, fromTemplate }) => {
             setFormOpen(false);
-            router.push(`/projects/${id}?setup=new`);
+            router.push(fromTemplate ? `/projects/${id}` : `/projects/${id}?setup=new`);
           }}
           onCancel={() => setFormOpen(false)}
         />
