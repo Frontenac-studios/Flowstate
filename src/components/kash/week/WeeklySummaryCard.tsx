@@ -91,7 +91,7 @@ export default function WeeklySummaryCard() {
 
   if (!data) return null;
 
-  const { byCategory, byProject, totalSeconds, weekStart, weekEnd, projectProgress } = data;
+  const { byCategory, byProject, totalSeconds, weekStart, weekEnd } = data;
   const maxCategory = Math.max(...byCategory.map((c) => c.seconds), 1);
 
   return (
@@ -209,45 +209,6 @@ export default function WeeklySummaryCard() {
           </ul>
         </>
       )}
-
-      {projectProgress.length > 0 ? (
-        <>
-          <p className="mt-5 text-xs font-medium uppercase tracking-wide text-ink-muted">
-            Progress
-          </p>
-          <ul className="mt-2 space-y-4" aria-label="Weighted completion by project">
-            {projectProgress.map((project) => (
-              <li key={project.projectId} className="space-y-2">
-                <div className="space-y-1">
-                  <div className="flex justify-between gap-2 text-sm">
-                    <span className="font-medium text-ink">{project.projectName}</span>
-                    <span className="shrink-0 text-ink-muted">{project.percent}%</span>
-                  </div>
-                  <div className="h-[var(--space-2)] overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      className="h-full rounded-full bg-accent transition-[width] duration-300 motion-reduce:transition-none"
-                      style={{ width: `${project.percent}%` }}
-                    />
-                  </div>
-                </div>
-                {project.phases.length > 0 ? (
-                  <ul className="space-y-1.5 pl-3" aria-label={`${project.projectName} phases`}>
-                    {project.phases.map((phase) => (
-                      <li
-                        key={phase.phaseId}
-                        className="flex items-center justify-between gap-2 text-xs"
-                      >
-                        <span className="truncate text-ink-muted">{phase.phaseName}</span>
-                        <span className="shrink-0 text-ink-faint">{phase.percent}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
     </section>
   );
 }
