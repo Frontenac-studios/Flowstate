@@ -47,6 +47,21 @@ describe("formatPlanTaskLines", () => {
     );
   });
 
+  it("row 1 context: an inbox task with an adulting category and suggested Thursday", () => {
+    const out = formatPlanTaskLines("Later", [
+      taskLine({
+        id: "water",
+        title: "Pay water bill",
+        category: "adulting",
+        scheduledDate: null,
+        suggestedScheduledDate: "2026-07-09",
+      }),
+    ]);
+    expect(out).toContain("adulting");
+    expect(out).toContain("inbox");
+    expect(out).toContain("suggested 2026-07-09");
+  });
+
   it("marks unresolved category and a due date for scheduled tasks", () => {
     const out = formatPlanTaskLines("This week", [
       taskLine({

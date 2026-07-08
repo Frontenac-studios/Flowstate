@@ -61,4 +61,15 @@ describe("resolveInboxCreateFields", () => {
       suggestedScheduledDate: "2026-07-10",
     });
   });
+
+  it("row 5: manual createInInbox with '; tomorrow' matches the chat inbox contract", () => {
+    // Same landing as a chat-created task: unscheduled, later bucket, suggestion
+    // set (which lights up the Accept chip in the Week inbox).
+    const fields = resolveInboxCreateFields(
+      parseQuickInput("pay water bill; tomorrow", { ...ctx, today: ref })
+    );
+    expect(fields.scheduledDate).toBeNull();
+    expect(fields.bucketOverride).toBe("later");
+    expect(fields.suggestedScheduledDate).toBe("2026-07-09");
+  });
 });
