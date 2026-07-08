@@ -1,3 +1,4 @@
+import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { parseFocusTaskId } from "@/lib/chat/threads";
 
@@ -151,18 +152,27 @@ ${modifier}
 ${VALUES_ALIGNMENT}`;
 }
 
+export function buildCaptureContextModifier(ctx: CaptureContext): string {
+  return `Capture mode: The user opened + to add tasks from ${ctx.surface}. Prefer create_task proposals that match the capture defaults in context unless the user specifies otherwise. New tasks still land in inbox unscheduled unless the user asks to schedule.`;
+}
+
 /** Chat rail / focus chat — register follows thread; planning tools narrow by surface. */
 export function buildChatSystemPrompt(
   threadId: string,
-  surface?: PlanningChatSurface | null
+  surface?: PlanningChatSurface | null,
+  captureContext?: CaptureContext | null
 ): string {
   const register = registerForThread(threadId);
   const surfaceBlock =
     register === "planning" && surface ? `\n\n${SURFACE_MODIFIERS[surface]}` : "";
+  const captureBlock =
+    register === "planning" && captureContext
+      ? `\n\n${buildCaptureContextModifier(captureContext)}`
+      : "";
 
   return `${KASH_BASE}
 
 ${REGISTER_MODIFIERS[register]}
 
-${VALUES_ALIGNMENT}${surfaceBlock}`;
+${VALUES_ALIGNMENT}${surfaceBlock}${captureBlock}`;
 }

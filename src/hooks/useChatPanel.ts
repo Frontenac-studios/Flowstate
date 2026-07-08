@@ -32,7 +32,8 @@ export function useChatPanel(threadId: string) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { pushConfirmUndo } = useSessionUndo();
-  const { railOpen, activeThreadId, planningSurface, notifyUnread, markRead } = useChat();
+  const { railOpen, activeThreadId, planningSurface, captureContext, notifyUnread, markRead } =
+    useChat();
 
   const [streamingText, setStreamingText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -129,6 +130,7 @@ export function useChatPanel(threadId: string) {
             userMessageId,
             text,
             planningSurface: threadId === GLOBAL_THREAD_ID ? planningSurface : null,
+            captureContext: threadId === GLOBAL_THREAD_ID ? captureContext : null,
           }),
           signal: controller.signal,
         });
@@ -194,6 +196,7 @@ export function useChatPanel(threadId: string) {
     },
     [
       activeThreadId,
+      captureContext,
       planningSurface,
       invalidateTaskQueries,
       markRead,

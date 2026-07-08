@@ -728,6 +728,11 @@ export const tasksRouter = createTRPCRouter({
           .string()
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
+        suggestedScheduledDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
         tags: taskTagsSchema.optional(),
       })
     )
@@ -744,6 +749,17 @@ export const tasksRouter = createTRPCRouter({
           : (input.scheduledDate ?? todayIso);
       const title = input.title.trim();
 
+      if (
+        input.suggestedScheduledDate != null &&
+        (input.bucketOverride !== "later" || scheduledDate !== null)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Suggested dates require inbox landing (scheduledDate null, bucketOverride later).",
+        });
+      }
+
       // Phase 1 (1.4a): run the shared resolver ladder for every create.
       const resolved = await resolveTaskCategoryForUser({
         userId: ctx.userId,
@@ -759,6 +775,7 @@ export const tasksRouter = createTRPCRouter({
           title,
           scheduledDate,
           bucketOverride: input.bucketOverride ?? null,
+          suggestedScheduledDate: input.suggestedScheduledDate ?? null,
           projectId: input.projectId ?? null,
           phaseId: input.phaseId ?? null,
           milestoneId: input.milestoneId ?? null,

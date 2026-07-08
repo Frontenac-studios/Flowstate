@@ -12,18 +12,25 @@ import {
 } from "react";
 
 import { readChatRailOpen, writeChatRailOpen } from "@/lib/chat/chat-rail-storage";
+import type { CaptureContext } from "@/lib/chat/capture-context";
 import { GLOBAL_THREAD_ID, focusThreadId } from "@/lib/chat/threads";
 import { planningSurfaceFromPathname, type PlanningChatSurface } from "@/lib/chat/planning-surface";
+
+export type OpenRailOptions = {
+  threadId?: string;
+  captureContext?: CaptureContext;
+};
 
 type ChatContextValue = {
   railOpen: boolean;
   activeThreadId: string;
   planningSurface: PlanningChatSurface | null;
+  captureContext: CaptureContext | null;
   unreadThreads: Set<string>;
   isFocusRoute: boolean;
   focusTaskId: string | null;
   toggleRail: () => void;
-  openRail: (threadId?: string) => void;
+  openRail: (options?: OpenRailOptions) => void;
   closeRail: () => void;
   setActiveThreadId: (threadId: string) => void;
   markRead: (threadId: string) => void;
@@ -46,6 +53,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // server/client mismatch, then persisted per session.
   const [railOpen, setRailOpen] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string>(GLOBAL_THREAD_ID);
+  const [captureContext, setCaptureContext] = useState<CaptureContext | null>(null);
   const [unreadThreads, setUnreadThreads] = useState<Set<string>>(() => new Set());
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
 
@@ -88,19 +96,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   );
 
   const openRail = useCallback(
-    (threadId?: string) => {
-      if (threadId) setActiveThreadId(threadId);
+    (options?: OpenRailOptions) => {
+      if (options?.threadId) setActiveThreadId(options.threadId);
+      setCaptureContext(options?.captureContext ?? null);
       setRailOpen(true);
-      markRead(threadId ?? activeThreadId);
+      markRead(options?.threadId ?? activeThreadId);
     },
     [activeThreadId, markRead]
   );
 
-  const closeRail = useCallback(() => setRailOpen(false), []);
+  const closeRail = useCallback(() => {
+    setCaptureContext(null);
+    setRailOpen(false);
+  }, []);
 
   const toggleRail = useCallback(() => {
     setRailOpen((open) => {
-      if (open) return false;
+      if (open) {
+        setCaptureContext(null);
+        return false;
+      }
+      setCaptureContext(null);
       markRead(activeThreadId);
       return true;
     });
@@ -124,6 +140,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       railOpen,
       activeThreadId,
       planningSurface,
+      captureContext,
       unreadThreads,
       isFocusRoute,
       focusTaskId,
@@ -138,6 +155,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       railOpen,
       activeThreadId,
       planningSurface,
+      captureContext,
       unreadThreads,
       isFocusRoute,
       focusTaskId,

@@ -9,12 +9,13 @@ import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { CHAT_SEND_EVENT } from "@/components/kash/chrome-events";
 
 import { useChat } from "./ChatProvider";
+import { captureContextPlaceholder } from "@/lib/chat/capture-context";
 import { ChatComposer } from "./ChatComposer";
 import { ChatSuggestedActions } from "./ChatSuggestedActions";
 import { MessageList } from "./MessageList";
 
 export function ChatRail() {
-  const { railOpen, activeThreadId, closeRail, markRead } = useChat();
+  const { railOpen, activeThreadId, captureContext, closeRail, markRead } = useChat();
   const threadId = activeThreadId || GLOBAL_THREAD_ID;
   const showSuggestions = threadId === GLOBAL_THREAD_ID;
 
@@ -80,6 +81,9 @@ export function ChatRail() {
   if (!railOpen) return null;
 
   const title = threadId === GLOBAL_THREAD_ID ? "Claude" : "Focus chat";
+  const composerPlaceholder = captureContext
+    ? captureContextPlaceholder(captureContext)
+    : "Message Claude…";
 
   return (
     <>
@@ -145,6 +149,7 @@ export function ChatRail() {
         <ChatComposer
           disabled={!configured}
           isStreaming={isStreaming}
+          placeholder={composerPlaceholder}
           onSend={(text) => void sendMessage(text)}
           onStop={stopGeneration}
           suggestions={

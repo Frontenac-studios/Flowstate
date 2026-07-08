@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { planningSurfaceFromPathname } from "@/lib/chat/planning-surface";
+import { createCaptureContext } from "@/lib/chat/capture-context";
 import { GLOBAL_THREAD_ID, focusThreadId } from "@/lib/chat/threads";
 
 import {
@@ -57,6 +58,27 @@ describe("system-prompts", () => {
   it("omits surface modifier for focus threads", () => {
     const focusId = focusThreadId("00000000-0000-4000-8000-000000000099");
     expect(buildChatSystemPrompt(focusId, "today")).not.toContain("Surface: Today");
+  });
+
+  it("adds capture modifier when capture context is present", () => {
+    const ctx = createCaptureContext({
+      surface: "projects",
+      projectSlug: "kitchen-reno",
+      phaseName: "Demolition",
+    });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "projects", ctx);
+    expect(prompt).toContain("Capture mode:");
+    expect(prompt).toContain("opened + to add tasks from projects");
+  });
+
+  it("omits capture modifier when capture context is absent", () => {
+    expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "week")).not.toContain("Capture mode:");
+  });
+
+  it("omits capture modifier for focus threads even with capture context", () => {
+    const focusId = focusThreadId("00000000-0000-4000-8000-000000000099");
+    const ctx = createCaptureContext({ surface: "today" });
+    expect(buildChatSystemPrompt(focusId, "today", ctx)).not.toContain("Capture mode:");
   });
 });
 

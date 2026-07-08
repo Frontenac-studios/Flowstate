@@ -32,6 +32,8 @@ export type ParseResult = {
   title: string;
   scheduledDate: string | null;
   bucketOverride: "later" | null;
+  /** True when the user supplied a date token or `;` date segment (not the parser default). */
+  scheduleIsExplicit: boolean;
   projectSlug: string | null;
   priority: 0 | 1 | 2 | 3;
   /** Explicit category from a `;` segment (1.4b layer 1). null = let the resolver decide. */
@@ -164,6 +166,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
   let scheduledDate: string | null = todayIso;
   let bucketOverride: "later" | null = null;
+  let scheduleIsExplicit = false;
   let projectSlug: string | null = null;
   let priority: 0 | 1 | 2 | 3 = 0;
   let category: ProjectCategory | null = null;
@@ -178,6 +181,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     if (dateResult) {
       scheduledDate = dateResult.scheduledDate;
       bucketOverride = dateResult.bucketOverride;
+      scheduleIsExplicit = true;
       continue;
     }
 
@@ -245,6 +249,7 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     title,
     scheduledDate,
     bucketOverride,
+    scheduleIsExplicit,
     projectSlug,
     priority,
     category,
@@ -266,6 +271,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
 
   let scheduledDate: string | null = todayIso;
   let bucketOverride: "later" | null = null;
+  let scheduleIsExplicit = false;
   const titleParts: string[] = [];
 
   const tokens = raw.split(/\s+/).filter(Boolean);
@@ -275,6 +281,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     if (dateResult) {
       scheduledDate = dateResult.scheduledDate;
       bucketOverride = dateResult.bucketOverride;
+      scheduleIsExplicit = true;
       continue;
     }
 
@@ -290,6 +297,7 @@ export function parseQuickInput(raw: string, ctx: ParseContext): ParseResult {
     title,
     scheduledDate,
     bucketOverride,
+    scheduleIsExplicit,
     projectSlug: null,
     priority: 0,
     category: null,

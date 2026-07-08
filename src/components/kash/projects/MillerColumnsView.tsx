@@ -37,6 +37,7 @@ import type { ParsedProjectLine } from "@/lib/parser/parse-project-task-input";
 import { useTRPC } from "@/trpc/client";
 
 import { useChat } from "../chat/ChatProvider";
+import { createCaptureContext } from "@/lib/chat/capture-context";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "../plan/AddTaskPopover";
 import NewItemRow from "./NewItemRow";
 import PhaseDetail from "./PhaseDetail";
@@ -56,6 +57,7 @@ type Confirm = { kind: "phase-delete"; id: string } | { kind: "task-delete"; id:
 type Props = {
   tree: Tree;
   projectId: string;
+  projectSlug: string;
   category: ProjectCategory;
   phases: ProjectPhase[];
   tasks: ProjectTask[];
@@ -80,6 +82,7 @@ function orderItems(phases: Node[], tasks: ProjectTask[]): ColumnItem[] {
 export default function MillerColumnsView({
   tree,
   projectId,
+  projectSlug,
   category,
   phases,
   tasks,
@@ -417,6 +420,9 @@ export default function MillerColumnsView({
   const isBlank = columns.length === 1 && columns[0].items.length === 0;
   const composerParentPhaseId =
     selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
+  const composerPhaseName = composerParentPhaseId
+    ? nodeById.get(composerParentPhaseId)?.phase.name
+    : undefined;
 
   const renderDetail = useCallback(
     (item: ColumnItem) => {
@@ -512,7 +518,18 @@ export default function MillerColumnsView({
             ) : (
               <AddTaskPopover
                 ref={addTaskRef}
-                onAskChat={() => openRail()}
+                onAskChat={() =>
+                  openRail({
+                    captureContext: createCaptureContext({
+                      surface: "projects",
+                      projectId,
+                      projectSlug,
+                      phaseId: composerParentPhaseId,
+                      phaseName: composerPhaseName,
+                      category,
+                    }),
+                  })
+                }
                 onTypeManually={() => setComposerOpen(true)}
               />
             )}

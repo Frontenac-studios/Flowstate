@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { isAnthropicConfigured } from "@/lib/env";
 import { threadIdSchema } from "@/lib/chat/threads";
+import { captureContextSchema } from "@/lib/chat/capture-context";
 import { planningSurfaceSchema } from "@/lib/chat/planning-surface";
 import { appendAssistantMessage } from "@/server/claude/persist-message";
 import { streamCompanionReply } from "@/server/claude/generate";
@@ -16,6 +17,7 @@ const bodySchema = z.object({
   userMessageId: z.string().uuid(),
   text: z.string().min(1).max(8000),
   planningSurface: planningSurfaceSchema.nullish(),
+  captureContext: captureContextSchema.nullish(),
 });
 
 export async function POST(req: Request) {
@@ -44,6 +46,7 @@ export async function POST(req: Request) {
         threadId,
         userText: text,
         planningSurface: parsed.data.planningSurface ?? null,
+        captureContext: parsed.data.captureContext ?? null,
         signal: req.signal,
       }
     );

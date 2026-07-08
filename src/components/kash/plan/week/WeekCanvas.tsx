@@ -31,6 +31,7 @@ import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
 import { useChat } from "../../chat/ChatProvider";
+import { createCaptureContext } from "@/lib/chat/capture-context";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "../AddTaskPopover";
 import { usePlanMode } from "../PlanProvider";
 import { QuickInput, type QuickInputHandle } from "../QuickInput";
@@ -628,7 +629,14 @@ export function WeekCanvas({
       ) : (
         <AddTaskPopover
           ref={addTaskRef}
-          onAskChat={() => openRail()}
+          onAskChat={() =>
+            openRail({
+              captureContext: createCaptureContext({
+                surface: "week",
+                defaultBucket: "inbox",
+              }),
+            })
+          }
           onTypeManually={() => {
             setComposerOpen(true);
             requestAnimationFrame(() => quickInputRef.current?.focus());

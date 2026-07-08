@@ -8,14 +8,19 @@ import { priorityMeta } from "@/lib/tasks/priority";
 
 type Props = {
   parse: ParseResult;
+  /** When true, date chips show as suggestions (inbox landing) rather than committed schedule. */
+  inboxMode?: boolean;
 };
 
-export function getParseChips(parse: ParseResult): string[] {
+export function getParseChips(parse: ParseResult, inboxMode = false): string[] {
   const chips: string[] = [];
   const dateLabel = formatScheduledDateLabel(parse.scheduledDate, {
     bucketOverride: parse.bucketOverride,
   });
-  if (dateLabel) chips.push(dateLabel);
+  if (dateLabel) {
+    const isSuggestion = inboxMode && parse.scheduleIsExplicit && parse.bucketOverride !== "later";
+    chips.push(isSuggestion ? `${dateLabel} (suggested)` : dateLabel);
+  }
   if (parse.priority > 0) chips.push(priorityMeta(parse.priority).label);
   if (parse.recurrenceLabel) chips.push(`↻ ${parse.recurrenceLabel}`);
   if (parse.projectSlug) chips.push(parse.projectSlug);
@@ -50,8 +55,8 @@ function ChipRow({ chips, category }: { chips: string[]; category: ProjectCatego
   );
 }
 
-export function ParsePreviewChips({ parse }: Props) {
-  const chips = getParseChips(parse);
+export function ParsePreviewChips({ parse, inboxMode = false }: Props) {
+  const chips = getParseChips(parse, inboxMode);
   if (chips.length === 0) return null;
 
   return (
@@ -63,15 +68,16 @@ export function ParsePreviewChips({ parse }: Props) {
 
 type MultiLineProps = {
   lines: ParsedLine[];
+  inboxMode?: boolean;
 };
 
-export function MultiLineParsePreview({ lines }: MultiLineProps) {
+export function MultiLineParsePreview({ lines, inboxMode = false }: MultiLineProps) {
   if (lines.length === 0) return null;
 
   return (
     <ul className="mt-2 space-y-1.5" aria-live="polite">
       {lines.map((line) => {
-        const chips = getParseChips(line.parse);
+        const chips = getParseChips(line.parse, inboxMode);
         return (
           <li
             key={line.lineIndex}
