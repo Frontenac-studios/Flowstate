@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { createSqliteDb } from "@kash/db-local";
-import { appSettings, tasks } from "@kash/db-local/schema";
+import { appSettings, chatMessages, tasks } from "@kash/db-local/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,6 +37,20 @@ describe("desktop sqlite inserts", () => {
     expect(row.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     expect(row.title).toBe("Call mom");
     expect(row.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("writes and reads back object chat content (jsonb mirror)", () => {
+    const content = { type: "text", text: "hello", meta: { source: "nudge" } };
+    const inserted = db
+      .insert(chatMessages)
+      .values({ userId, threadId: "global", role: "user", content })
+      .returning()
+      .get();
+
+    expect(inserted.content).toEqual(content);
+
+    const read = db.select().from(chatMessages).where(eq(chatMessages.id, inserted.id)).get();
+    expect(read?.content).toEqual(content);
   });
 
   it("upserts lastUsedCategory via onConflictDoUpdate", () => {
