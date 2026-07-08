@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/lib/animate/motion-tokens";
 
 import Textarea from "@/components/kash/ui/Textarea";
-import type { ProposedAction } from "@/lib/chat/proposed-actions";
+import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import { parseFocusTaskId } from "@/lib/chat/threads";
 import { renderChatMessage } from "@/lib/markdown/render-chat-message";
 
@@ -32,7 +32,11 @@ type Props = {
   isStreaming?: boolean;
   canEdit?: boolean;
   onEditUserMessage?: (messageId: string, text: string) => void;
-  onApplyProposal?: (messageId: string, enabledItemIds: string[]) => void;
+  onApplyProposal?: (
+    messageId: string,
+    enabledItemIds: string[],
+    editedItems?: CreateTaskItemEdit[]
+  ) => void;
   onDismissProposal?: (messageId: string) => void;
   hasMoreOlder?: boolean;
   loadingOlder?: boolean;
@@ -195,7 +199,9 @@ export function MessageList({
               <ConfirmActionCard
                 proposal={proposal}
                 busy={proposalBusy}
-                onConfirm={(enabledItemIds) => onApplyProposal(m.id, enabledItemIds)}
+                onConfirm={(enabledItemIds, editedItems) =>
+                  onApplyProposal(m.id, enabledItemIds, editedItems)
+                }
                 onDismiss={() => onDismissProposal(m.id)}
               />
             ) : null}
