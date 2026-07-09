@@ -4,6 +4,7 @@ import { baseProcedure, createTRPCRouter } from "../init";
 import { aboutMeRouter } from "./about-me";
 import { abyssRouter } from "./abyss";
 import { careRouter } from "./care";
+import { calendarRouter } from "./calendar";
 import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
 import { dailyWinsRouter } from "./daily-wins";
@@ -37,6 +38,7 @@ export const appRouter = createTRPCRouter({
   aboutMe: aboutMeRouter,
   abyss: abyssRouter,
   care: careRouter,
+  calendar: calendarRouter,
   categorySettings: categorySettingsRouter,
   chat: chatRouter,
   dailyWins: dailyWinsRouter,
