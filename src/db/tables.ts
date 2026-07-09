@@ -5,6 +5,8 @@ import { abyssItems as pgAbyssItems } from "./schema/abyss-items";
 import { userConstraints as pgUserConstraints } from "./schema/user-constraints";
 import { userValues as pgUserValues } from "./schema/user-values";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
+import { calendarConnections as pgCalendarConnections } from "./schema/calendar-connections";
+import { externalCalendarEvents as pgExternalCalendarEvents } from "./schema/external-calendar-events";
 import { bingoCards as pgBingoCards } from "./schema/bingo-cards";
 import { careActivities as pgCareActivities } from "./schema/care-activities";
 import { careEvents as pgCareEvents } from "./schema/care-events";
@@ -153,3 +155,7 @@ export const careReflections = (
 export const weekDayPriorities = (
   isSqliteMode() ? sqliteSchema.weekDayPriorities : pgWeekDayPriorities
 ) as typeof pgWeekDayPriorities;
+/** Postgres-only — desktop calendar sync deferred. */
+export const calendarConnections = pgCalendarConnections;
+/** Postgres-only — desktop calendar sync deferred. */
+export const externalCalendarEvents = pgExternalCalendarEvents;

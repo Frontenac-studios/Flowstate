@@ -42,3 +42,7 @@ export const DEFAULT_BALANCE_NUDGE: BalanceNudge = "on";
 export const evidenceCadenceSchema = z.enum(["monthly", "quarterly", "off"]);
 export type EvidenceCadence = z.infer<typeof evidenceCadenceSchema>;
 export const DEFAULT_EVIDENCE_CADENCE: EvidenceCadence = "quarterly";
+
+export const calendarAiEnabledSchema = z.boolean();
+export type CalendarAiEnabled = z.infer<typeof calendarAiEnabledSchema>;
+export const DEFAULT_CALENDAR_AI_ENABLED = true;

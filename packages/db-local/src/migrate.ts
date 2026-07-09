@@ -648,6 +648,11 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
     column: "evidence_cadence",
     definition: "TEXT NOT NULL DEFAULT 'quarterly'",
   },
+  {
+    table: "app_settings",
+    column: "calendar_ai_enabled",
+    definition: "INTEGER NOT NULL DEFAULT 1",
+  },
   { table: "protected_blocks", column: "source", definition: "TEXT" },
   { table: "projects", column: "embedding", definition: "TEXT" },
   { table: "projects", column: "archived_at", definition: "INTEGER" },
