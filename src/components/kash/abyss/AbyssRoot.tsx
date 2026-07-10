@@ -122,7 +122,7 @@ export default function AbyssRoot() {
   return (
     <div
       className={`abyss-root flex min-h-full flex-1 flex-col gap-3 text-abyss-ink ${
-        surface === "light" ? "bg-canvas" : "rounded-card bg-abyss-bg p-3"
+        surface === "light" ? "bg-bg" : "rounded-card bg-abyss-bg p-3"
       }`}
       data-abyss-theme={surface}
     >
