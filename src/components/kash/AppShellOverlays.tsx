@@ -42,8 +42,8 @@ type PendingOverlay = {
  * `railOpen` so mounting the shell does not fetch chat data while collapsed.
  */
 export function AppShellChatRail() {
-  const { railOpen } = useChat();
-  if (!railOpen) return null;
+  const { railOpen, ritualOpen } = useChat();
+  if (!railOpen || ritualOpen) return null;
   return <ChatRail />;
 }
 

@@ -142,6 +142,7 @@ export function OnboardingModal({
         onDeclineHold={onDeclineHold}
         onSkip={onFinish}
         onBegin={onFinish}
+        onTasksChanged={onTaskCreated}
       />
     );
   }

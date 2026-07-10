@@ -145,6 +145,14 @@ describe("captureContextPlaceholder", () => {
       )
     ).toBe("Describe a task to plan…");
   });
+
+  it("prompts to add tasks for today during morning handoff", () => {
+    expect(
+      captureContextPlaceholder(
+        createCaptureContext({ surface: "morning-handoff", defaultBucket: "today" })
+      )
+    ).toBe("Add tasks for today…");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -200,5 +208,12 @@ describe("capture context creation per surface", () => {
     const ctx = createCaptureContext({ surface: "backlog", defaultBucket: "inbox" });
     expect(ctx.surface).toBe("backlog");
     expect(ctx.defaultBucket).toBe("inbox");
+  });
+
+  it("morning handoff: today default bucket for embedded capture", () => {
+    const ctx = createCaptureContext({ surface: "morning-handoff", defaultBucket: "today" });
+    expect(ctx.surface).toBe("morning-handoff");
+    expect(ctx.defaultBucket).toBe("today");
+    expect(captureContextSchema.safeParse(ctx).success).toBe(true);
   });
 });

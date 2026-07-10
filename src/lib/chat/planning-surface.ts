@@ -8,6 +8,7 @@ export const planningChatSurfaces = [
   "backlog",
   "reviews",
   "care",
+  "morning-handoff",
 ] as const;
 export type PlanningChatSurface = (typeof planningChatSurfaces)[number];
 export const planningSurfaceSchema = z.enum(planningChatSurfaces);

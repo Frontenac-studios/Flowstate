@@ -74,6 +74,8 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   reviews:
     "Surface: Reviews — EoD/EoW/monthly reflection, wins, Backlog themes, About-me. Warm and celebratory.",
   care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",
+  "morning-handoff":
+    "Surface: Morning handoff — triage and capture tasks for today before the day begins. Prefer create_task for new items.",
 };
 
 const SURFACE_REGISTER: Record<PromptSurface, KashRegister> = {
@@ -165,6 +167,10 @@ export function buildCaptureContextModifier(ctx: CaptureContext): string {
   } else if (ctx.surface === "backlog") {
     lines.push(
       "Prefer park_in_abyss when the user wants to shelve, save for someday, or backburner an idea. Use create_task only when the user clearly wants an actionable planning task — those land in the inbox unscheduled."
+    );
+  } else if (ctx.surface === "morning-handoff") {
+    lines.push(
+      "Propose create_task items that land on today's list. Unscheduled tasks still appear on Today — do not send them to the inbox unless the user asks."
     );
   } else if (ctx.surface === "projects") {
     if (ctx.projectSlug) {

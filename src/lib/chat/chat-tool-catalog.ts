@@ -393,6 +393,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "propose_about_me_edit",
   ],
   care: ["query_tasks", "query_state", "draft_eod", "complete_task", "propose_about_me_edit"],
+  "morning-handoff": ["query_tasks", "query_state", "create_task"],
 };
 
 export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [

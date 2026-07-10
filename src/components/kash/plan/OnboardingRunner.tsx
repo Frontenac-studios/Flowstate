@@ -21,6 +21,8 @@ import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/con
 import { useTRPC } from "@/trpc/client";
 
 import { usePlanMode } from "./PlanProvider";
+import { useRitualOverlay } from "@/hooks/useRitualOverlay";
+
 import { OnboardingModal, type OnboardingStep } from "./OnboardingModal";
 
 function clientTzOffsetMinutes(): number {
@@ -212,6 +214,8 @@ export function OnboardingRunner() {
     if (next) setStep(next);
     else finish();
   }, [finish, step]);
+
+  useRitualOverlay(shouldShow);
 
   if (!shouldShow) return null;
 

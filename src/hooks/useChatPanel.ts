@@ -9,12 +9,20 @@ import {
   type ChatCreatedTask,
 } from "@/lib/chat/chat-task-created-events";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
+import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { useTRPC } from "@/trpc/client";
 
 export type SendMessageSource = "composer" | "chip";
+
+export type UseChatPanelOptions = {
+  /** Run chat queries even when the rail is collapsed (embedded capture). */
+  forceEnabled?: boolean;
+  /** Override ChatProvider capture context (embedded capture in rituals). */
+  captureContextOverride?: CaptureContext | null;
+};
 
 type ChatMessage = {
   id: string;
@@ -32,12 +40,16 @@ type ChatMessage = {
   createdAt: Date;
 };
 
-export function useChatPanel(threadId: string) {
+export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { pushConfirmUndo } = useSessionUndo();
   const { railOpen, activeThreadId, planningSurface, captureContext, notifyUnread, markRead } =
     useChat();
+
+  const forceEnabled = options?.forceEnabled ?? false;
+  const effectiveCaptureContext = options?.captureContextOverride ?? captureContext;
+  const queriesEnabled = forceEnabled || railOpen;
 
   const [streamingText, setStreamingText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -59,11 +71,11 @@ export function useChatPanel(threadId: string) {
 
   const { data: configuredData } = useQuery({
     ...trpc.chat.isConfigured.queryOptions(),
-    enabled: railOpen,
+    enabled: queriesEnabled,
   });
   const { data: listData, isLoading } = useQuery({
     ...trpc.chat.list.queryOptions({ threadId }),
-    enabled: railOpen,
+    enabled: queriesEnabled,
   });
 
   useEffect(() => {
@@ -140,7 +152,7 @@ export function useChatPanel(threadId: string) {
             userMessageId,
             text,
             planningSurface: threadId === GLOBAL_THREAD_ID ? planningSurface : null,
-            captureContext: threadId === GLOBAL_THREAD_ID ? captureContext : null,
+            captureContext: threadId === GLOBAL_THREAD_ID ? effectiveCaptureContext : null,
           }),
           signal: controller.signal,
         });
@@ -206,7 +218,7 @@ export function useChatPanel(threadId: string) {
     },
     [
       activeThreadId,
-      captureContext,
+      effectiveCaptureContext,
       planningSurface,
       invalidateTaskQueries,
       markRead,
@@ -322,7 +334,7 @@ export function useChatPanel(threadId: string) {
           messageId,
           enabledItemIds,
           editedItems,
-          captureContext,
+          captureContext: effectiveCaptureContext,
         });
         if (result.undoFrames?.length) {
           pushConfirmUndo(result.undoFrames as ConfirmUndoFrame[]);
@@ -330,7 +342,7 @@ export function useChatPanel(threadId: string) {
         if (result.createdTasks?.length) {
           dispatchChatTasksCreated({
             tasks: result.createdTasks as ChatCreatedTask[],
-            surface: captureContext?.surface ?? planningSurface,
+            surface: effectiveCaptureContext?.surface ?? planningSurface,
           });
         }
         if (result.placementSummary) {
@@ -349,7 +361,7 @@ export function useChatPanel(threadId: string) {
     },
     [
       applyProposalMutation,
-      captureContext,
+      effectiveCaptureContext,
       invalidateTaskQueries,
       planningSurface,
       pushConfirmUndo,

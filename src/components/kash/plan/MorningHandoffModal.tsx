@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { BalanceBar } from "@/components/kash/plan/BalanceBar";
-import { QuickInput } from "@/components/kash/plan/QuickInput";
+import { HandoffCaptureChat } from "@/components/kash/plan/HandoffCaptureChat";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { RitualSheet } from "@/components/kash/ui/RitualSheet";
 import Button from "@/components/kash/ui/Button";
@@ -64,6 +64,7 @@ type Props = {
   onDeclineHold: () => void;
   onSkip: () => void;
   onBegin: () => void;
+  onTasksChanged?: () => void;
 };
 
 function Section({
@@ -138,11 +139,23 @@ export function MorningHandoffModal({
   onDeclineHold,
   onSkip,
   onBegin,
+  onTasksChanged,
 }: Props) {
   const [projectQuery, setProjectQuery] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectPullOpen, setProjectPullOpen] = useState(true);
   const [dismissedRecurring, setDismissedRecurring] = useState<Set<string>>(() => new Set());
   const [dismissedProjectTasks, setDismissedProjectTasks] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => {
+      if (mq.matches) setProjectPullOpen(true);
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const openerText = opener?.message ?? "Take a breath — assemble today gently before you rank it.";
 
@@ -330,67 +343,79 @@ export function MorningHandoffModal({
         ) : null}
 
         <Section title="Add more">
-          <QuickInput draftStorageKey="morning-handoff" />
+          <HandoffCaptureChat onTasksChanged={onTasksChanged} />
           {projects.length > 0 ? (
-            <div className="space-y-[var(--space-2)] rounded-row border border-subtle bg-surface-2 p-[var(--space-3)]">
-              <label className="block text-caption text-ink-muted" htmlFor="handoff-project-search">
+            <details
+              open={projectPullOpen}
+              onToggle={(e) => setProjectPullOpen(e.currentTarget.open)}
+              className="space-y-[var(--space-2)] rounded-row border border-subtle bg-surface-2 p-[var(--space-3)]"
+            >
+              <summary className="cursor-pointer text-caption text-ink-muted lg:hidden">
                 Pull from a project
-              </label>
-              <input
-                id="handoff-project-search"
-                type="search"
-                value={projectQuery}
-                onChange={(e) => {
-                  setProjectQuery(e.target.value);
-                  setSelectedProjectId(null);
-                }}
-                placeholder="Search projects…"
-                className="w-full rounded-control border border-border bg-surface px-2 py-1.5 text-body text-ink"
-              />
-              {selectedProjectId == null ? (
-                <ul className="space-y-1">
-                  {filteredProjects.map((project) => (
-                    <li key={project.id}>
-                      <button
-                        type="button"
-                        className="w-full rounded-row px-2 py-1 text-left text-body text-ink hover:bg-[var(--accent-soft)]"
-                        onClick={() => setSelectedProjectId(project.id)}
-                      >
-                        {project.name}
-                        <span className="ml-2 text-caption text-ink-muted">#{project.slug}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    className="text-caption text-ink-muted hover:text-ink"
-                    onClick={() => setSelectedProjectId(null)}
-                  >
-                    ← Back to projects
-                  </button>
-                  {projectOpenTasks.length === 0 ? (
-                    <p className="text-caption text-ink-muted">No open tasks to pull.</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {projectOpenTasks.map((task) => (
-                        <li key={task.id}>
-                          <button
-                            type="button"
-                            className="w-full rounded-row px-2 py-1 text-left text-body text-ink hover:bg-[var(--accent-soft)]"
-                            onClick={() => onPullProjectTask(task.id)}
-                          >
-                            {task.title}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-            </div>
+              </summary>
+              <div className="space-y-[var(--space-2)]">
+                <label
+                  className="block text-caption text-ink-muted max-lg:sr-only"
+                  htmlFor="handoff-project-search"
+                >
+                  Pull from a project
+                </label>
+                <input
+                  id="handoff-project-search"
+                  type="search"
+                  value={projectQuery}
+                  onChange={(e) => {
+                    setProjectQuery(e.target.value);
+                    setSelectedProjectId(null);
+                  }}
+                  placeholder="Search projects…"
+                  className="w-full rounded-control border border-border bg-surface px-2 py-1.5 text-body text-ink"
+                />
+                {selectedProjectId == null ? (
+                  <ul className="space-y-1">
+                    {filteredProjects.map((project) => (
+                      <li key={project.id}>
+                        <button
+                          type="button"
+                          className="w-full rounded-row px-2 py-1 text-left text-body text-ink hover:bg-[var(--accent-soft)]"
+                          onClick={() => setSelectedProjectId(project.id)}
+                        >
+                          {project.name}
+                          <span className="ml-2 text-caption text-ink-muted">#{project.slug}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      className="text-caption text-ink-muted hover:text-ink"
+                      onClick={() => setSelectedProjectId(null)}
+                    >
+                      ← Back to projects
+                    </button>
+                    {projectOpenTasks.length === 0 ? (
+                      <p className="text-caption text-ink-muted">No open tasks to pull.</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {projectOpenTasks.map((task) => (
+                          <li key={task.id}>
+                            <button
+                              type="button"
+                              className="w-full rounded-row px-2 py-1 text-left text-body text-ink hover:bg-[var(--accent-soft)]"
+                              onClick={() => onPullProjectTask(task.id)}
+                            >
+                              {task.title}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </details>
           ) : null}
         </Section>
 

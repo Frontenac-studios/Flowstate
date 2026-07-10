@@ -20,8 +20,8 @@ type Props = {
 };
 
 /**
- * D36/D37 — right-side full-height ritual sheet. Today stays visible behind a
- * `--backdrop` scrim; the panel scrolls internally with D13 fade cues.
+ * Centered ritual modal — full-screen dim + blur; the panel scrolls internally with
+ * D13 fade cues. Used for morning hand-off, EOD, Monday entry, and onboarding.
  */
 export function RitualSheet({
   open,
@@ -91,7 +91,10 @@ export function RitualSheet({
   if (!open) return null;
 
   return (
-    <div className="ritual-sheet-overlay fixed inset-0 z-modal" role="presentation">
+    <div
+      className="ritual-sheet-overlay fixed inset-0 z-modal flex items-center justify-center p-4 backdrop-blur-sm"
+      role="presentation"
+    >
       {dismissOnBackdrop ? (
         <button
           type="button"
@@ -109,7 +112,7 @@ export function RitualSheet({
         aria-labelledby={titleId}
         aria-describedby={describedBy}
         tabIndex={-1}
-        className="ritual-sheet-panel absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-surface shadow-overlay"
+        className="ritual-sheet-panel relative flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-card border border-border bg-surface shadow-overlay focus:outline-none"
       >
         <header className="shrink-0 border-b border-subtle px-[var(--space-5)] py-[var(--space-4)]">
           <h2 id={titleId} className="text-title font-semibold text-ink">
