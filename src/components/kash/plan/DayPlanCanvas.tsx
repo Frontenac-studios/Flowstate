@@ -168,6 +168,7 @@ export function DayPlanCanvas() {
   const { constraints } = useUserConstraints();
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+  const { data: calendarSync } = useQuery(trpc.calendar.connections.getSyncStatus.queryOptions());
   const bucketMode: BucketMode = settings?.bucketMode ?? "relative";
   const dayStartHour = settings?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
   const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
@@ -851,6 +852,7 @@ export function DayPlanCanvas() {
               planItemCount={todayTasks.length}
               density={view === "list" ? "rail" : "full"}
               className={view === "list" ? undefined : "min-w-0 flex-1 lg:basis-0"}
+              syncStatus={calendarSync?.status ?? "off"}
               top3HoldOffer={
                 top3Assurance.showHoldGhost && top3Assurance.holdGhost
                   ? {

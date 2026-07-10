@@ -19,11 +19,17 @@ import {
 } from "@/lib/timeline/adaptive-window";
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
 import { largestOpenGap, nextOpenSlotMin } from "@/lib/timeline/living-record";
+import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { useTRPC } from "@/trpc/client";
+import type { EventForDay } from "@/trpc/routers/calendar";
 
 import ProtectedBlockChip, {
   type ProtectedBlockRow,
 } from "@/components/kash/plan/week/ProtectedBlockChip";
+import {
+  ExternalEventAllDayChip,
+  ExternalEventBlock,
+} from "@/components/kash/plan/ExternalEventBlock";
 import {
   dispatchSelfCareBreatheStart,
   dispatchSelfCareWalkStart,
@@ -36,6 +42,10 @@ const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
 /** Height of the visible scroll window — the six-hour default viewport. */
 const VIEWPORT_HEIGHT = (TIMELINE_VIEWPORT_MINUTES / 60) * HOUR_HEIGHT;
+
+function clientTzOffsetMinutes(): number {
+  return -new Date().getTimezoneOffset();
+}
 
 type Block = {
   id: string;
@@ -468,6 +478,7 @@ export function TimelinePane({
   const router = useRouter();
   const queryClient = useQueryClient();
   const date = useLocalCalendarDate();
+  const tzOffsetMinutes = clientTzOffsetMinutes();
   const [now, setNow] = useState<Date | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);
   const gapDismissKey = `selfCareGapDismiss:${date}`;
@@ -496,6 +507,13 @@ export function TimelinePane({
   const { data: protectedBlocks = [] } = useQuery(
     trpc.protectedBlocks.listForDate.queryOptions({ date })
   );
+  const { data: connection } = useQuery(trpc.calendar.connections.get.queryOptions());
+  const calendarQueryEnabled =
+    connection?.connected === true && (connection.selectedCalendarIds?.length ?? 0) > 0;
+  const { data: externalEvents = [] } = useQuery({
+    ...trpc.calendar.events.listForDate.queryOptions({ date, tzOffsetMinutes }),
+    enabled: calendarQueryEnabled,
+  });
   const { data: recentlyCompleted = [] } = useQuery(
     trpc.tasks.listRecentlyCompleted.queryOptions()
   );
@@ -507,6 +525,8 @@ export function TimelinePane({
   const timedProtected = protectedBlocks
     .map(toTimedProtected)
     .filter((b): b is TimedProtectedBlock => b != null);
+  const timedExternal = externalEvents.filter((event) => !event.isAllDay);
+  const allDayExternal = externalEvents.filter((event) => event.isAllDay);
 
   const range = computeTimelineRange({
     dayStartMin: dayStartHour * 60,
@@ -514,6 +534,7 @@ export function TimelinePane({
     blocks: [
       ...(blocks as Block[]),
       ...timedProtected.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
+      ...timedExternal.map((event) => ({ startMin: event.startMin, endMin: event.endMin })),
     ],
     nowMin: nowMinutes,
   });
@@ -593,11 +614,15 @@ export function TimelinePane({
     trpc.protectedBlocks.remove.mutationOptions({ onSuccess: invalidate })
   );
 
-  type TimedGridItem = ({ kind: "focus" } & Block) | ({ kind: "protected" } & TimedProtectedBlock);
+  type TimedGridItem =
+    | ({ kind: "focus" } & Block)
+    | ({ kind: "protected" } & TimedProtectedBlock)
+    | ({ kind: "external" } & EventForDay);
 
   const gridItems: TimedGridItem[] = [
     ...(blocks as Block[]).map((b) => ({ kind: "focus" as const, ...b })),
     ...timedProtected.map((b) => ({ kind: "protected" as const, ...b })),
+    ...timedExternal.map((event) => ({ kind: "external" as const, ...event })),
   ];
 
   const laidOutGrid = layoutBlocks(gridItems).filter(
@@ -618,10 +643,11 @@ export function TimelinePane({
 
   // The open "Decide" slot and a single self-care suggestion fill the day's
   // remaining room without overlapping each other (design-prompt-today).
-  const busy = [
-    ...blocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
-    ...timedProtected.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
-  ];
+  const busy = mergeDayBusySources({
+    focusBlocks: blocks,
+    protectedBlocks: timedProtected,
+    externalEvents: timedExternal,
+  });
   const NEXT_BLOCK_MIN = 45;
   const decideSlotMin =
     nowMinutes != null ? nextOpenSlotMin(busy, nowMinutes, rangeEnd, NEXT_BLOCK_MIN) : null;
@@ -637,7 +663,9 @@ export function TimelinePane({
     planItemCount > 0 ||
     blocks.length > 0 ||
     timedProtected.length > 0 ||
-    allDayProtected.length > 0;
+    allDayProtected.length > 0 ||
+    timedExternal.length > 0 ||
+    allDayExternal.length > 0;
   const showSyncBadge = syncStatus === "on" || syncStatus === "error";
   const showAsRail = density === "rail" && !railExpanded;
   // A day with nothing scheduled, blocked, protected, or completed — the grid
@@ -677,9 +705,11 @@ export function TimelinePane({
               const top = ((item.startMin - rangeStart) / span) * railHeight;
               const height = Math.max(3, ((item.endMin - item.startMin) / span) * railHeight);
               const color =
-                item.kind === "protected"
+                item.kind === "external"
                   ? "var(--ink-faint)"
-                  : stripeColor(item.category, item.categoryUnresolved);
+                  : item.kind === "protected"
+                    ? "var(--ink-faint)"
+                    : stripeColor(item.category, item.categoryUnresolved);
               return (
                 <span
                   key={`${item.kind}-${item.id}`}
@@ -688,7 +718,6 @@ export function TimelinePane({
                 />
               );
             })}
-            {/* Neutral tick reserved for future synced calendar events (D11). */}
             {nowFrac != null ? (
               <span
                 className="absolute inset-x-[-2px] h-0.5 rounded-full bg-accent"
@@ -739,14 +768,17 @@ export function TimelinePane({
         ) : null}
       </header>
 
-      {allDayProtected.length > 0 ? (
-        <ul className="mb-3 space-y-1.5" aria-label="Protected time today">
+      {allDayProtected.length > 0 || allDayExternal.length > 0 ? (
+        <ul className="mb-3 space-y-1.5" aria-label="All-day events today">
           {allDayProtected.map((block) => (
             <ProtectedBlockChip
               key={block.id}
               block={block}
               onRemove={(id) => removeProtectedMutation.mutate({ id })}
             />
+          ))}
+          {allDayExternal.map((event) => (
+            <ExternalEventAllDayChip key={event.id} event={event} />
           ))}
         </ul>
       ) : null}
@@ -777,7 +809,14 @@ export function TimelinePane({
             ))}
 
             {laidOutGrid.map((item) =>
-              item.kind === "protected" ? (
+              item.kind === "external" ? (
+                <ExternalEventBlock
+                  key={`external-${item.id}`}
+                  event={item}
+                  layout={{ col: item.col, cols: item.cols }}
+                  rangeStart={rangeStart}
+                />
+              ) : item.kind === "protected" ? (
                 <ProtectedTimelineBlock
                   key={`protected-${item.id}`}
                   block={item}
