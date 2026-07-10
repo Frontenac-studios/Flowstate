@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWindDownHour } from "@/hooks/useWindDownHour";
 import { evaluateTop3Stall, type Top3TaskInput } from "@/lib/nudges/evaluate-top3-stall";
 import type { ProjectCategory } from "@/lib/projects/categories";
+import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
 import {
   TOP3_HOLD_DECLINED_KEY_PREFIX,
@@ -119,6 +120,18 @@ export function useTop3Assurance(input: Input): Top3AssuranceState {
     trpc.focusBlocks.listForDate.queryOptions({ date: input.localDate })
   );
 
+  const { data: calendarConnection } = useQuery(trpc.calendar.connections.get.queryOptions());
+  const calendarQueryEnabled =
+    calendarConnection?.connected === true &&
+    (calendarConnection.selectedCalendarIds?.length ?? 0) > 0;
+  const { data: externalEvents = [] } = useQuery({
+    ...trpc.calendar.events.listForDate.queryOptions({
+      date: input.localDate,
+      tzOffsetMinutes: input.tzOffsetMinutes,
+    }),
+    enabled: calendarQueryEnabled,
+  });
+
   const { data: allTimeEntries = [] } = useQuery(trpc.timeEntries.listAllStarted.queryOptions());
 
   const timeEntriesToday = useMemo(
@@ -146,13 +159,13 @@ export function useTop3Assurance(input: Input): Top3AssuranceState {
   }, [incompletePinned]);
 
   const busyIntervals = useMemo(
-    () => [
-      ...focusBlocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
-      ...protectedBlocks
-        .filter((b) => b.startMin != null && b.endMin != null)
-        .map((b) => ({ startMin: b.startMin!, endMin: b.endMin! })),
-    ],
-    [focusBlocks, protectedBlocks]
+    () =>
+      mergeDayBusySources({
+        focusBlocks,
+        protectedBlocks,
+        externalEvents,
+      }),
+    [focusBlocks, protectedBlocks, externalEvents]
   );
 
   const nowMinutes = now.getHours() * 60 + now.getMinutes();

@@ -38,6 +38,7 @@ type HoldPreview = {
 type Props = {
   localDate: string;
   opener: EssentialNudgeChipPayload | null;
+  calendarSummaryLine?: string | null;
   tasks: HandoffPlanTask[];
   projects: ProjectRef[];
   pinnedBySlot: Map<number, HandoffPlanTask & { top3Order: number }>;
@@ -112,6 +113,7 @@ function firstFreeTop3Slot(pinnedBySlot: Map<number, HandoffPlanTask>): 1 | 2 | 
 export function MorningHandoffModal({
   localDate,
   opener,
+  calendarSummaryLine = null,
   tasks,
   projects,
   pinnedBySlot,
@@ -228,6 +230,10 @@ export function MorningHandoffModal({
         <p className="rounded-row border border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
           {openerText}
         </p>
+
+        {calendarSummaryLine ? (
+          <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
+        ) : null}
 
         {carryovers.length > 0 ? (
           <Section title="Yesterday">

@@ -12,6 +12,8 @@ import {
 } from "@/lib/nudges/morning-handoff-storage";
 import { shouldShowMorningHandoff } from "@/lib/nudges/should-show-morning-handoff";
 import type { ProjectCategory } from "@/lib/projects/categories";
+import { formatCalendarMeetingSummary } from "@/lib/calendar/calendar-load-weight";
+import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
 import { TOP3_HOLD_SOURCE } from "@/lib/top3/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
@@ -83,6 +85,26 @@ export function MorningHandoffRunner() {
   const { data: focusBlocks = [] } = useQuery({
     ...trpc.focusBlocks.listForDate.queryOptions({ date: localDate }),
     enabled,
+  });
+
+  const { data: calendarConnection } = useQuery({
+    ...trpc.calendar.connections.get.queryOptions(),
+    enabled,
+  });
+  const calendarQueryEnabled =
+    enabled &&
+    calendarConnection?.connected === true &&
+    (calendarConnection.selectedCalendarIds?.length ?? 0) > 0;
+  const calendarAiEnabled = settings?.calendarAiEnabled ?? true;
+
+  const { data: externalEvents = [] } = useQuery({
+    ...trpc.calendar.events.listForDate.queryOptions({ date: localDate, tzOffsetMinutes }),
+    enabled: calendarQueryEnabled,
+  });
+
+  const { data: calendarDaySummary } = useQuery({
+    ...trpc.calendar.events.getDaySummary.queryOptions({ date: localDate, tzOffsetMinutes }),
+    enabled: calendarQueryEnabled && calendarAiEnabled,
   });
 
   const { data: goalSteeringHandoff } = useQuery({
@@ -180,14 +202,22 @@ export function MorningHandoffRunner() {
   }, [top3Rows]);
 
   const busyIntervals = useMemo(
-    () => [
-      ...focusBlocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
-      ...protectedBlocks
-        .filter((b) => b.startMin != null && b.endMin != null)
-        .map((b) => ({ startMin: b.startMin!, endMin: b.endMin! })),
-    ],
-    [focusBlocks, protectedBlocks]
+    () =>
+      mergeDayBusySources({
+        focusBlocks,
+        protectedBlocks,
+        externalEvents,
+      }),
+    [focusBlocks, protectedBlocks, externalEvents]
   );
+
+  const calendarSummaryLine = useMemo(() => {
+    if (!calendarDaySummary) return null;
+    return formatCalendarMeetingSummary(
+      calendarDaySummary.timedEventCount,
+      calendarDaySummary.busyMinutes
+    );
+  }, [calendarDaySummary]);
 
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
   const hasTop3Hold = protectedBlocks.some((b) => b.source === TOP3_HOLD_SOURCE);
@@ -244,6 +274,7 @@ export function MorningHandoffRunner() {
     <MorningHandoffModal
       localDate={localDate}
       opener={opener}
+      calendarSummaryLine={calendarSummaryLine}
       tasks={tasks as HandoffPlanTask[]}
       projects={projects.map((p) => ({ id: p.id, slug: p.slug, name: p.name }))}
       pinnedBySlot={pinnedBySlot}

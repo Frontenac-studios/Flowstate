@@ -12,6 +12,7 @@ import {
 } from "@/lib/onboarding/onboarding-storage";
 import { shouldShowOnboarding } from "@/lib/onboarding/should-show-onboarding";
 import type { HandoffPlanTask } from "@/lib/morning-handoff/handoff-task-filters";
+import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { markMorningHandoffDismissedForDate } from "@/lib/nudges/morning-handoff-storage";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
@@ -93,6 +94,20 @@ export function OnboardingRunner() {
     enabled: shouldShow,
   });
 
+  const { data: calendarConnection } = useQuery({
+    ...trpc.calendar.connections.get.queryOptions(),
+    enabled: shouldShow,
+  });
+  const calendarQueryEnabled =
+    shouldShow &&
+    calendarConnection?.connected === true &&
+    (calendarConnection.selectedCalendarIds?.length ?? 0) > 0;
+
+  const { data: externalEvents = [] } = useQuery({
+    ...trpc.calendar.events.listForDate.queryOptions({ date: localDate, tzOffsetMinutes }),
+    enabled: calendarQueryEnabled,
+  });
+
   useEffect(() => {
     if (completed || eligible !== null) return;
     if (!tasksFetched || !top3Fetched) return;
@@ -147,13 +162,13 @@ export function OnboardingRunner() {
   }, [top3Rows]);
 
   const busyIntervals = useMemo(
-    () => [
-      ...focusBlocks.map((b) => ({ startMin: b.startMin, endMin: b.endMin })),
-      ...protectedBlocks
-        .filter((b) => b.startMin != null && b.endMin != null)
-        .map((b) => ({ startMin: b.startMin!, endMin: b.endMin! })),
-    ],
-    [focusBlocks, protectedBlocks]
+    () =>
+      mergeDayBusySources({
+        focusBlocks,
+        protectedBlocks,
+        externalEvents,
+      }),
+    [focusBlocks, protectedBlocks, externalEvents]
   );
 
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
