@@ -18,6 +18,7 @@ export const appSettings = sqliteTable("app_settings", {
   evidenceCadence: text("evidence_cadence").notNull().default("quarterly"),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
+  calendarAiEnabled: integer("calendar_ai_enabled", { mode: "boolean" }).notNull().default(true),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => sqliteNow()),

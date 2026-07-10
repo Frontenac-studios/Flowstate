@@ -15,6 +15,7 @@ export const appSettings = pgTable("app_settings", {
   evidenceCadence: text("evidence_cadence").notNull().default("quarterly"),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
+  calendarAiEnabled: boolean("calendar_ai_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

@@ -17,6 +17,8 @@ type Props = {
   overCommitted?: boolean;
   overCommitMode?: OverCommitThresholdMode;
   categoryStrip?: ReactNode;
+  meetingSummary?: string | null;
+  hasCalendarData?: boolean;
 };
 
 function useCanHover(): boolean {
@@ -46,6 +48,8 @@ export default function ColumnTallyPopover({
   overCommitted = false,
   overCommitMode = "cold-start",
   categoryStrip,
+  meetingSummary = null,
+  hasCalendarData = false,
 }: Props) {
   const tallyId = useId();
   const canHover = useCanHover();
@@ -55,18 +59,19 @@ export default function ColumnTallyPopover({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const hasTasks = tasks.length > 0;
+  const showDetail = hasTasks || hasCalendarData;
   const showTally = open && hasTasks;
 
   const openTally = useCallback(() => {
-    if (hasTasks) setOpen(true);
-  }, [hasTasks]);
+    if (showDetail) setOpen(true);
+  }, [showDetail]);
 
   const closeTally = useCallback(() => setOpen(false), []);
 
   const toggleTally = useCallback(() => {
-    if (!hasTasks) return;
+    if (!showDetail) return;
     setOpen((prev) => !prev);
-  }, [hasTasks]);
+  }, [showDetail]);
 
   useEffect(() => {
     if (!open || canHover) return;
@@ -115,10 +120,10 @@ export default function ColumnTallyPopover({
         ref={headerRef}
         type="button"
         className={`w-full rounded-t-card px-2 py-2 text-center focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
-          hasTasks && !canHover ? "cursor-pointer" : "cursor-default"
+          showDetail && !canHover ? "cursor-pointer" : "cursor-default"
         }`}
-        aria-expanded={hasTasks ? open : undefined}
-        aria-controls={hasTasks ? tallyId : undefined}
+        aria-expanded={showDetail ? open : undefined}
+        aria-controls={showDetail ? tallyId : undefined}
         onClick={canHover ? undefined : toggleTally}
       >
         {categoryStrip ? <div className="mb-2">{categoryStrip}</div> : null}
@@ -138,6 +143,9 @@ export default function ColumnTallyPopover({
         ) : (
           <p className="text-meta text-ink-muted">{headerDate}</p>
         )}
+        {meetingSummary ? (
+          <p className="mt-1 text-caption text-ink-faint">{meetingSummary}</p>
+        ) : null}
         {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
       </button>
     </div>

@@ -14,8 +14,10 @@ import { ColumnCategoryStrip } from "./ColumnCategoryStrip";
 import ColumnTallyPopover from "./ColumnTallyPopover";
 import DayPrioritiesSlots, { type DayPrioritySlotTask } from "./DayPrioritiesSlots";
 import ProtectedBlockChip, { type ProtectedBlockRow } from "./ProtectedBlockChip";
+import { ExternalEventWeekChip } from "../ExternalEventBlock";
 
 import type { OverCommitThresholdMode } from "@/lib/week/over-commit-threshold";
+import type { EventForDay } from "@/trpc/routers/calendar";
 
 type Props = {
   isoDate: string;
@@ -24,6 +26,9 @@ type Props = {
   tasks: PlanTaskRow[];
   pinnedBySlot: Map<number, DayPrioritySlotTask>;
   protectedBlocks: ProtectedBlockRow[];
+  externalEvents?: EventForDay[];
+  meetingSummary?: string | null;
+  hasCalendarData?: boolean;
   overCommitted?: boolean;
   overCommitMode?: OverCommitThresholdMode;
   showPinHint?: boolean;
@@ -56,6 +61,9 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     tasks,
     pinnedBySlot,
     protectedBlocks,
+    externalEvents = [],
+    meetingSummary = null,
+    hasCalendarData = false,
     overCommitted = false,
     overCommitMode = "cold-start",
     showPinHint = false,
@@ -98,10 +106,15 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
         overCommitted={overCommitted}
         overCommitMode={overCommitMode}
         categoryStrip={<ColumnCategoryStrip tasks={tasks} />}
+        meetingSummary={meetingSummary}
+        hasCalendarData={hasCalendarData}
       />
 
-      {protectedBlocks.length > 0 ? (
-        <ul className="mt-1 shrink-0 space-y-1 px-1" aria-label={`Protected time for ${isoDate}`}>
+      {protectedBlocks.length > 0 || externalEvents.length > 0 ? (
+        <ul
+          className="mt-1 shrink-0 space-y-1 px-1"
+          aria-label={`Calendar and protected time for ${isoDate}`}
+        >
           {protectedBlocks.map((block) => (
             <ProtectedBlockChip
               key={block.id}
@@ -110,6 +123,9 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
               animatePlace
               onRemove={onRemoveProtected}
             />
+          ))}
+          {externalEvents.map((event) => (
+            <ExternalEventWeekChip key={event.id} event={event} />
           ))}
         </ul>
       ) : null}

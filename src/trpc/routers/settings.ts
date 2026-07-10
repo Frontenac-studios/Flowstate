@@ -7,9 +7,11 @@ import {
   abyssArchiveAfterDaysSchema,
   balanceNudgeSchema,
   bucketModeSchema,
+  calendarAiEnabledSchema,
   DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
   DEFAULT_BALANCE_NUDGE,
   DEFAULT_BUCKET_MODE,
+  DEFAULT_CALENDAR_AI_ENABLED,
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
   DEFAULT_EVIDENCE_CADENCE,
@@ -78,6 +80,7 @@ export const settingsRouter = createTRPCRouter({
         : DEFAULT_EVIDENCE_CADENCE,
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
+      calendarAiEnabled: row.calendarAiEnabled ?? DEFAULT_CALENDAR_AI_ENABLED,
     };
   }),
   updateBucketMode: protectedProcedure.input(bucketModeSchema).mutation(async ({ ctx, input }) => {
@@ -193,5 +196,21 @@ export const settingsRouter = createTRPCRouter({
         });
       }
       return input;
+    }),
+  updateCalendarAiEnabled: protectedProcedure
+    .input(calendarAiEnabledSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({ calendarAiEnabled: input, updatedAt: new Date() })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update calendar AI setting.",
+        });
+      return { calendarAiEnabled: input };
     }),
 });
