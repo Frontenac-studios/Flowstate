@@ -13,6 +13,10 @@ describe("computeDayLoad", () => {
     expect(computeDayLoad([{ id: "a" }], new Set(), 2)).toBe(3);
   });
 
+  it("adds external calendar load weight", () => {
+    expect(computeDayLoad([{ id: "a" }], new Set(), 0, undefined, 4)).toBe(5);
+  });
+
   it("returns zero for an empty day", () => {
     expect(computeDayLoad([], new Set(), 0)).toBe(0);
   });

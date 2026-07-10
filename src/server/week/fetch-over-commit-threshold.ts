@@ -16,6 +16,7 @@ import {
   resolveOverCommitThreshold,
   type OverCommitThreshold,
 } from "@/lib/week/over-commit-threshold";
+import { fetchExternalCalendarLoadWeightsByDate } from "@/server/calendar/fetch-calendar-day-load";
 
 export type OverCommitThresholdSnapshot = OverCommitThreshold & {
   weeksWithPlanningHistory: number;
@@ -37,6 +38,7 @@ function buildHistoricalDailyLoads(input: {
   taskRows: { id: string; scheduledDate: string }[];
   priorityRows: { taskId: string; scheduledDate: string }[];
   protectedRows: { scheduledDate: string }[];
+  calendarLoadByDate: ReadonlyMap<string, number>;
 }): number[] {
   const tasksByDate = new Map<string, { id: string }[]>();
   const prioritiesByDate = new Map<string, Set<string>>();
@@ -62,19 +64,23 @@ function buildHistoricalDailyLoads(input: {
     ...Array.from(tasksByDate.keys()),
     ...Array.from(prioritiesByDate.keys()),
     ...Array.from(protectedByDate.keys()),
+    ...Array.from(input.calendarLoadByDate.keys()),
   ]);
 
   return Array.from(dates).map((iso) =>
     computeDayLoad(
       tasksByDate.get(iso) ?? [],
       prioritiesByDate.get(iso) ?? new Set(),
-      protectedByDate.get(iso) ?? 0
+      protectedByDate.get(iso) ?? 0,
+      undefined,
+      input.calendarLoadByDate.get(iso) ?? 0
     )
   );
 }
 
 export async function fetchOverCommitThreshold(
-  userId: string
+  userId: string,
+  tzOffsetMinutes = 0
 ): Promise<OverCommitThresholdSnapshot> {
   const todayIso = toISODateString(new Date());
   const lookbackStart = toISODateString(
@@ -118,12 +124,27 @@ export async function fetchOverCommitThreshold(
       ),
   ]);
 
+  const historicalDates = Array.from(
+    new Set<string>([
+      ...taskRows.map((row) => row.scheduledDate).filter((date): date is string => date != null),
+      ...priorityRows.map((row) => row.scheduledDate),
+      ...protectedRows.map((row) => row.scheduledDate),
+    ])
+  ).sort();
+
+  const calendarLoadByDate = await fetchExternalCalendarLoadWeightsByDate({
+    userId,
+    dates: historicalDates,
+    tzOffsetMinutes,
+  });
+
   const historicalDailyLoads = buildHistoricalDailyLoads({
     taskRows: taskRows.filter(
       (row): row is { id: string; scheduledDate: string } => row.scheduledDate != null
     ),
     priorityRows,
     protectedRows,
+    calendarLoadByDate,
   });
 
   const activityDates = new Set<string>();
@@ -132,6 +153,7 @@ export async function fetchOverCommitThreshold(
   }
   for (const row of priorityRows) activityDates.add(row.scheduledDate);
   for (const row of protectedRows) activityDates.add(row.scheduledDate);
+  for (const date of Array.from(calendarLoadByDate.keys())) activityDates.add(date);
 
   const weeksWithPlanningHistory = countWeeksWithActivity(activityDates);
   const resolved = resolveOverCommitThreshold(historicalDailyLoads, weeksWithPlanningHistory);

@@ -7,6 +7,12 @@ export const REGULAR_TASK_WEIGHT = 1;
 /** Protected blocks count fully toward day load (Week §7 Q2). */
 export const PROTECTED_BLOCK_WEIGHT = 1;
 
+/** One load unit per clock hour of timed calendar busy (rounded up). */
+export const CALENDAR_HOUR_WEIGHT = 1;
+
+/** All-day external events add fixed load per day they occupy. */
+export const ALL_DAY_EVENT_WEIGHT = 2;
+
 export type LoadWeightedTask = {
   isTop3?: boolean;
   dayPriorityOrder?: number | null;

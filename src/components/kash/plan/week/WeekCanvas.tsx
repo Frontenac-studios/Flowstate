@@ -31,6 +31,10 @@ import {
 } from "@/lib/dates/local-day";
 import { computeWeekDayLoads } from "@/lib/week/day-load";
 import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
+import {
+  calendarLoadSummaryFromDayEvents,
+  formatCalendarMeetingSummary,
+} from "@/lib/calendar/calendar-load-weight";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { useTRPC } from "@/trpc/client";
 
@@ -62,6 +66,10 @@ import type { ProtectedBlockRow } from "./ProtectedBlockChip";
 const WEEK_CANVAS_BG = "var(--canvas)";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function clientTzOffsetMinutes(): number {
+  return -new Date().getTimezoneOffset();
+}
 /** Floor a day column can shrink to before the strip scrolls horizontally (narrow screens). */
 const MIN_DAY_COLUMN = "8rem";
 const MIN_DAY_COLUMN_PX = 128;
@@ -170,6 +178,7 @@ export function WeekCanvas({
   const weekDates = useMemo(() => datesInIsoWeek(weekRef), [weekRef]);
   const dayCount = weekDates.length;
   const todayInWeek = weekDates.some((date) => toISODateString(date) === todayIso);
+  const tzOffsetMinutes = clientTzOffsetMinutes();
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
@@ -179,7 +188,16 @@ export function WeekCanvas({
   const { data: dayPriorities = [] } = useQuery(
     trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
   );
-  const { data: overCommitThreshold } = useQuery(trpc.weekOverCommit.getThreshold.queryOptions());
+  const { data: connection } = useQuery(trpc.calendar.connections.get.queryOptions());
+  const calendarQueryEnabled =
+    connection?.connected === true && (connection.selectedCalendarIds?.length ?? 0) > 0;
+  const { data: externalEventsByDate = {} } = useQuery({
+    ...trpc.calendar.events.listForWeek.queryOptions({ anchorDate, tzOffsetMinutes }),
+    enabled: calendarQueryEnabled,
+  });
+  const { data: overCommitThreshold } = useQuery(
+    trpc.weekOverCommit.getThreshold.queryOptions({ tzOffsetMinutes })
+  );
 
   const prioritiesByDate = useMemo(() => {
     const map: Record<string, Map<number, DayPrioritySlotTask>> = {};
@@ -250,6 +268,15 @@ export function WeekCanvas({
 
   const weekDateIsos = useMemo(() => weekDates.map(toISODateString), [weekDates]);
 
+  const externalEventCount = useMemo(
+    () =>
+      Object.values(externalEventsByDate).reduce(
+        (total, events) => total + (events?.length ?? 0),
+        0
+      ),
+    [externalEventsByDate]
+  );
+
   const hasWeekPlanData = useMemo(
     () =>
       weekHasPlanningData({
@@ -257,8 +284,16 @@ export function WeekCanvas({
         tasks,
         protectedBlockCount: protectedBlocks.length,
         dayPriorityCount: dayPriorities.length,
+        externalEventCount,
       }) || partitioned.inbox.length > 0,
-    [weekDateIsos, tasks, protectedBlocks.length, dayPriorities.length, partitioned.inbox.length]
+    [
+      weekDateIsos,
+      tasks,
+      protectedBlocks.length,
+      dayPriorities.length,
+      externalEventCount,
+      partitioned.inbox.length,
+    ]
   );
 
   const showChrome = showWeekChrome && hasWeekPlanData;
@@ -279,6 +314,23 @@ export function WeekCanvas({
     return map;
   }, [protectedByDate]);
 
+  const calendarLoadByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const iso of weekDateIsos) {
+      const summary = calendarLoadSummaryFromDayEvents(externalEventsByDate[iso] ?? []);
+      if (summary.loadWeight > 0) map[iso] = summary.loadWeight;
+    }
+    return map;
+  }, [externalEventsByDate, weekDateIsos]);
+
+  const calendarSummaryByDate = useMemo(() => {
+    const map: Record<string, ReturnType<typeof calendarLoadSummaryFromDayEvents>> = {};
+    for (const iso of weekDateIsos) {
+      map[iso] = calendarLoadSummaryFromDayEvents(externalEventsByDate[iso] ?? []);
+    }
+    return map;
+  }, [externalEventsByDate, weekDateIsos]);
+
   const dayLoads = useMemo(
     () =>
       computeWeekDayLoads({
@@ -291,8 +343,9 @@ export function WeekCanvas({
         ),
         priorityTaskIdsByDate,
         protectedCountByDate,
+        calendarLoadByDate,
       }),
-    [weekDates, partitioned.byDate, priorityTaskIdsByDate, protectedCountByDate]
+    [weekDates, partitioned.byDate, priorityTaskIdsByDate, protectedCountByDate, calendarLoadByDate]
   );
 
   const overCommittedByDate = useMemo(() => {
@@ -639,6 +692,12 @@ export function WeekCanvas({
           const iso = toISODateString(date);
           const isToday = iso === todayIso;
           const pinnedBySlot = prioritiesByDate[iso] ?? new Map<number, DayPrioritySlotTask>();
+          const calendarSummary = calendarSummaryByDate[iso];
+          const meetingSummary = formatCalendarMeetingSummary(
+            calendarSummary?.timedEventCount ?? 0,
+            calendarSummary?.busyMinutes ?? 0
+          );
+          const externalEvents = externalEventsByDate[iso] ?? [];
           return (
             <WeekColumn
               key={iso}
@@ -649,6 +708,9 @@ export function WeekCanvas({
               tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
               pinnedBySlot={pinnedBySlot}
               protectedBlocks={protectedByDate[iso] ?? []}
+              externalEvents={externalEvents}
+              meetingSummary={meetingSummary}
+              hasCalendarData={(calendarSummary?.eventCount ?? 0) > 0}
               overCommitted={overCommittedByDate[iso] ?? false}
               overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
               fillHeight={surface === "week"}
