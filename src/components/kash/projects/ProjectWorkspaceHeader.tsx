@@ -20,6 +20,7 @@ type Props = {
   showBackToProjects?: boolean;
   timeSpentSeconds?: number;
   estimateSampleCount?: number;
+  showTemplateFeatures?: boolean;
   onOpenSetup?: () => void;
 };
 
@@ -35,6 +36,7 @@ export default function ProjectWorkspaceHeader({
   showBackToProjects = false,
   timeSpentSeconds = 0,
   estimateSampleCount = 0,
+  showTemplateFeatures = true,
   onOpenSetup,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,6 +86,7 @@ export default function ProjectWorkspaceHeader({
           {menuOpen ? (
             <ProjectMenu
               project={project}
+              showTemplateFeatures={showTemplateFeatures}
               onClose={() => setMenuOpen(false)}
               onOpenSetup={onOpenSetup}
             />

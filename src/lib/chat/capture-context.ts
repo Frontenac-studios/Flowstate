@@ -38,6 +38,7 @@ export function captureContextPlaceholder(ctx: CaptureContext): string {
     // Loose-tasks row on the projects index: category preset, no project.
     if (ctx.category && !ctx.projectSlug) return `Add ${categoryLabel(ctx.category)} tasks…`;
   }
+  if (ctx.surface === "loose-tasks") return "Add a loose task…";
   if (ctx.surface === "week") return "Add tasks to inbox…";
   // Today capture (Option B): chat lands in the inbox, not today's list.
   if (ctx.surface === "today") return "Add tasks to your inbox…";

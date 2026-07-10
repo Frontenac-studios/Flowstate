@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { syncProjectRow, syncProjectSimilarityRow } from "@/db/record-sync-mutation";
 import { projectSimilarity, projects, tasks, taskTimeEntries } from "@/db/tables";
 import type { ProjectCategory } from "@/lib/projects/categories";
+import { isSimilarCategoryAllowed } from "@/lib/projects/template-milestone";
 import { aggregateSecondsByTask } from "@/lib/projects/aggregate-time-rollups";
 import { applyLearnedDurations } from "@/lib/projects/learn-durations";
 import {
@@ -58,8 +59,15 @@ export async function listSimilarCandidatesForUser(
   }
 ): Promise<RankedSimilarProject[]> {
   const candidates = await listCandidateProjects(userId, options?.excludeProjectId);
-  return rankSimilarProjects(options?.embedding ?? [], candidates, {
-    preferredCategory: options?.preferredCategory ?? null,
+  const preferredCategory = options?.preferredCategory ?? null;
+  const filtered =
+    preferredCategory === null
+      ? candidates
+      : candidates.filter((candidate) =>
+          isSimilarCategoryAllowed(preferredCategory, candidate.category)
+        );
+  return rankSimilarProjects(options?.embedding ?? [], filtered, {
+    preferredCategory,
     excludeIds: options?.excludeProjectId ? new Set([options.excludeProjectId]) : undefined,
   });
 }

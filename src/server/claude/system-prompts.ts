@@ -67,6 +67,8 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   week: "Surface: Week — seven-day layout, draft_week, moving tasks across days, protected time.",
   plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions. propose_about_me_edit is available here.",
   projects: "Surface: Projects — project slugs, phases, creating and scheduling project tasks.",
+  "loose-tasks":
+    "Surface: Loose tasks — inbox tasks without a project. Prefer create_task; help assign to projects or set category.",
   backlog:
     "Surface: Backlog — parked ideas and tasks to pull from later. Prefer park_in_abyss when the user wants to shelve, save for someday, or backburner something; use create_task only when they clearly want an actionable planning task (it lands in the inbox).",
   reviews:

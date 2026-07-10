@@ -8,18 +8,15 @@ import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitat
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import Button from "@/components/kash/ui/Button";
 import { isProjectComplete } from "@/lib/projects/is-project-complete";
-import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { hasTemplateFeatures } from "@/lib/projects/template-milestone";
 import { useTRPC } from "@/trpc/client";
 
-import { createCaptureContext } from "@/lib/chat/capture-context";
-
-import { useChat } from "../chat/ChatProvider";
 import { InPageSwitcher } from "../InPageSwitcher";
 import CompletedProjectsSection from "./CompletedProjectsSection";
+import LooseTasksCard from "./LooseTasksCard";
 import MultiProjectCalendarView from "./MultiProjectCalendarView";
-import NewProjectForm from "./NewProjectForm";
-import ProjectCard, { LooseTasksRow, type ProjectListItem } from "./ProjectCard";
+import NewProjectDialog from "./NewProjectDialog";
+import ProjectCard from "./ProjectCard";
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import { useProjectFoldTransitions } from "./useProjectFoldTransitions";
 
@@ -30,7 +27,6 @@ type IndexViewMode = "gallery" | "calendar";
 export default function ProjectsIndex() {
   const trpc = useTRPC();
   const router = useRouter();
-  const { openRail } = useChat();
   const {
     data: projects,
     isLoading,
@@ -44,42 +40,33 @@ export default function ProjectsIndex() {
     trpc.projects.estimateSampleCount.queryOptions()
   );
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [indexView, setIndexView] = useState<IndexViewMode>("gallery");
 
-  const hasProjects = (projects?.length ?? 0) > 0;
-  const looseCountByCategory = useMemo(
-    () => new Map(looseByCategory.map((row) => [row.category, row.count])),
+  const projectCount = projects?.length ?? 0;
+  const showTemplateFeatures = hasTemplateFeatures(projectCount);
+  const totalLooseCount = useMemo(
+    () => looseByCategory.reduce((sum, row) => sum + row.count, 0),
     [looseByCategory]
   );
-
-  const projectsByCategory = useMemo(() => {
-    const map = new Map<ProjectCategory, ProjectListItem[]>();
-    for (const category of PROJECT_CATEGORIES) {
-      map.set(category, []);
-    }
-    for (const project of projects ?? []) {
-      const list = map.get(project.category) ?? [];
-      list.push(project);
-      map.set(project.category, list);
-    }
-    return map;
-  }, [projects]);
+  const hasProjects = projectCount > 0;
+  const hasGalleryContent = hasProjects || totalLooseCount > 0;
 
   const allVisible = useMemo(() => projects ?? [], [projects]);
   const { activeProjects, completedProjects, foldingId } = useProjectFoldTransitions(allVisible);
 
-  const activeByCategory = useMemo(() => {
-    const activeIds = new Set(activeProjects.map((p) => p.id));
-    const map = new Map<ProjectCategory, ProjectListItem[]>();
-    for (const category of PROJECT_CATEGORIES) {
-      map.set(
-        category,
-        (projectsByCategory.get(category) ?? []).filter((p) => activeIds.has(p.id))
-      );
-    }
-    return map;
-  }, [activeProjects, projectsByCategory]);
+  const sortedActiveProjects = useMemo(
+    () =>
+      [...activeProjects].sort(
+        (a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()
+      ),
+    [activeProjects]
+  );
+
+  const handleCreated = ({ id, fromTemplate }: { id: string; fromTemplate: boolean }) => {
+    setDialogOpen(false);
+    router.push(fromTemplate ? `/projects/${id}` : `/projects/${id}?setup=new`);
+  };
 
   return (
     <section className="flex flex-col gap-6">
@@ -98,22 +85,17 @@ export default function ProjectsIndex() {
             />
           ) : null}
         </div>
-        {!formOpen ? (
-          <Button type="button" onClick={() => setFormOpen(true)}>
-            New project
-          </Button>
-        ) : null}
+        <Button type="button" onClick={() => setDialogOpen(true)}>
+          New project
+        </Button>
       </div>
 
-      {formOpen ? (
-        <NewProjectForm
-          onCreated={({ id, fromTemplate }) => {
-            setFormOpen(false);
-            router.push(fromTemplate ? `/projects/${id}` : `/projects/${id}?setup=new`);
-          }}
-          onCancel={() => setFormOpen(false)}
-        />
-      ) : null}
+      <NewProjectDialog
+        open={dialogOpen}
+        showTemplateFeatures={showTemplateFeatures}
+        onClose={() => setDialogOpen(false)}
+        onCreated={handleCreated}
+      />
 
       {indexView === "calendar" ? (
         <MultiProjectCalendarView />
@@ -135,98 +117,42 @@ export default function ProjectsIndex() {
             />
           ))}
         </div>
-      ) : !hasProjects && looseByCategory.length === 0 ? (
+      ) : !hasGalleryContent ? (
         <ColoredEmptyInvitation
           title="Start your first project"
           hint="Phases and tasks live here — capture structure as you go."
           action={
-            !formOpen ? (
-              <Button type="button" onClick={() => setFormOpen(true)}>
-                New project
-              </Button>
-            ) : null
+            <Button type="button" onClick={() => setDialogOpen(true)}>
+              New project
+            </Button>
           }
         />
       ) : (
         <>
-          <div className="flex flex-col gap-8">
-            {PROJECT_CATEGORIES.map((category) => {
-              const categoryProjects = activeByCategory.get(category) ?? [];
-              const looseCount = looseCountByCategory.get(category) ?? 0;
-              const isEmpty = categoryProjects.length === 0 && looseCount === 0;
-
-              if (isEmpty) {
-                return (
-                  <section key={category} aria-label={categoryLabel(category)}>
-                    <header className="mb-3 flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: categorySolidVar(category) }}
-                        aria-hidden
-                      />
-                      <h2 className="text-sm font-medium text-ink">{categoryLabel(category)}</h2>
-                    </header>
-                    <ColoredEmptyInvitation
-                      title={`No ${categoryLabel(category).toLowerCase()} projects yet`}
-                      hint="Create a project in this life area when you're ready."
-                      className="py-8"
-                    />
-                  </section>
-                );
-              }
-
-              return (
-                <section key={category} aria-label={categoryLabel(category)}>
-                  <header className="mb-3 flex items-center gap-2">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: categorySolidVar(category) }}
-                      aria-hidden
-                    />
-                    <h2 className="text-sm font-medium text-ink">{categoryLabel(category)}</h2>
-                  </header>
-                  <div className="flex flex-col gap-2">
-                    {looseCount > 0 ? (
-                      <LooseTasksRow
-                        category={category}
-                        count={looseCount}
-                        onAskChat={() =>
-                          openRail({
-                            captureContext: createCaptureContext({
-                              surface: "projects",
-                              category,
-                              defaultBucket: "inbox",
-                            }),
-                          })
-                        }
-                      />
-                    ) : null}
-                    {categoryProjects.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {categoryProjects.map((project) => (
-                          <ProjectTemplateSuggestSlot
-                            key={project.id}
-                            projectId={project.id}
-                            projectName={project.name}
-                            category={project.category}
-                            isComplete={isProjectComplete(project)}
-                          >
-                            <ProjectCard
-                              project={project}
-                              folding={foldingId === project.id}
-                              estimateSampleCount={estimateSampleCount}
-                            />
-                          </ProjectTemplateSuggestSlot>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </section>
-              );
-            })}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {totalLooseCount > 0 ? <LooseTasksCard count={totalLooseCount} /> : null}
+            {sortedActiveProjects.map((project) => (
+              <ProjectTemplateSuggestSlot
+                key={project.id}
+                projectId={project.id}
+                projectName={project.name}
+                category={project.category}
+                isComplete={isProjectComplete(project)}
+                showTemplateFeatures={showTemplateFeatures}
+              >
+                <ProjectCard
+                  project={project}
+                  folding={foldingId === project.id}
+                  estimateSampleCount={estimateSampleCount}
+                />
+              </ProjectTemplateSuggestSlot>
+            ))}
           </div>
 
-          <CompletedProjectsSection projects={completedProjects} />
+          <CompletedProjectsSection
+            projects={completedProjects}
+            showTemplateFeatures={showTemplateFeatures}
+          />
         </>
       )}
     </section>

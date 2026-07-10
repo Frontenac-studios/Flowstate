@@ -10,6 +10,7 @@ import {
   categoryTextVar,
 } from "@/lib/projects/category-tokens";
 import type { ProjectCategory } from "@/lib/projects/categories";
+import { isSimilarCategoryAllowed } from "@/lib/projects/template-milestone";
 import { embedText } from "@/lib/tasks/embed-text";
 import { useTRPC } from "@/trpc/client";
 
@@ -72,13 +73,27 @@ export function ProjectSimilarityPicker({
   });
 
   const suggested = useMemo(
-    () => candidates.filter((row) => row.suggested).slice(0, 3),
-    [candidates]
+    () =>
+      candidates
+        .filter((row) =>
+          preferredCategory === null
+            ? true
+            : isSimilarCategoryAllowed(preferredCategory, row.category)
+        )
+        .filter((row) => row.suggested)
+        .slice(0, 3),
+    [candidates, preferredCategory]
   );
   const rest = useMemo(() => {
     const suggestedIds = new Set(suggested.map((row) => row.id));
-    return candidates.filter((row) => !suggestedIds.has(row.id));
-  }, [candidates, suggested]);
+    return candidates
+      .filter((row) =>
+        preferredCategory === null
+          ? true
+          : isSimilarCategoryAllowed(preferredCategory, row.category)
+      )
+      .filter((row) => !suggestedIds.has(row.id));
+  }, [candidates, suggested, preferredCategory]);
 
   if (!isLoading && candidates.length === 0) return null;
 

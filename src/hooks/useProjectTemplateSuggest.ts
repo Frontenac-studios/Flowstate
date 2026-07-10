@@ -13,7 +13,7 @@ import {
  * Shows the template-suggest chip when a project completes (§5 P3).
  * Pending state persists in localStorage until dismiss or save-as-template.
  */
-export function useProjectTemplateSuggest(projectId: string, isComplete: boolean) {
+export function useProjectTemplateSuggest(projectId: string, isComplete: boolean, enabled = true) {
   const [showChip, setShowChip] = useState(false);
   const wasCompleteRef = useRef(isComplete);
 
@@ -27,11 +27,12 @@ export function useProjectTemplateSuggest(projectId: string, isComplete: boolean
   }, [syncPending]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (isComplete && !wasCompleteRef.current) {
       queueTemplateSuggest(projectId);
     }
     wasCompleteRef.current = isComplete;
-  }, [isComplete, projectId]);
+  }, [enabled, isComplete, projectId]);
 
   const dismiss = useCallback(() => {
     resolveTemplateSuggest(projectId);

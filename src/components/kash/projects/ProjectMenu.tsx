@@ -12,6 +12,7 @@ import ConfirmDialog from "./ConfirmDialog";
 
 type Props = {
   project: { id: string; name: string };
+  showTemplateFeatures?: boolean;
   onClose: () => void;
   onOpenSetup?: () => void;
 };
@@ -19,7 +20,12 @@ type Props = {
 const MENU_BTN_FOCUS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
 
-export default function ProjectMenu({ project, onClose, onOpenSetup }: Props) {
+export default function ProjectMenu({
+  project,
+  showTemplateFeatures = true,
+  onClose,
+  onOpenSetup,
+}: Props) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -96,18 +102,20 @@ export default function ProjectMenu({ project, onClose, onOpenSetup }: Props) {
         >
           Import history
         </Link>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            setTemplateName(project.name);
-            setSaveDialogOpen(true);
-          }}
-          disabled={saveTemplate.isPending}
-          className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-        >
-          Save as template
-        </button>
+        {showTemplateFeatures ? (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setTemplateName(project.name);
+              setSaveDialogOpen(true);
+            }}
+            disabled={saveTemplate.isPending}
+            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+          >
+            Save as template
+          </button>
+        ) : null}
         <button
           type="button"
           role="menuitem"

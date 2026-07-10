@@ -22,6 +22,7 @@ import { buildMultiProjectCalendarRows } from "@/lib/projects/multi-project-cale
 import { rankTemplatesBySimilarProjects } from "@/lib/projects/project-similarity";
 import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
 import { slugifyProjectName } from "@/lib/projects/slugify";
+import { hasTemplateFeatures } from "@/lib/projects/template-milestone";
 import {
   buildTemplateStructureFromProject,
   countTemplateItems,
@@ -32,6 +33,7 @@ import {
   proposedActionSchema,
   replanProjectDatesProposalSchema,
 } from "@/lib/chat/proposed-actions";
+import { countActiveProjects } from "@/server/projects/count-active";
 import { applyProjectTemplate, syncAppliedTemplateRows } from "@/server/projects/apply-template";
 import { commitProjectSetup } from "@/server/projects/commit-setup";
 import {
@@ -98,16 +100,17 @@ export const projectsRouter = createTRPCRouter({
           name: projects.name,
           slug: projects.slug,
           category: projects.category,
+          updatedAt: projects.updatedAt,
         })
         .from(projects)
-        .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt)))
-        .orderBy(projects.name),
+        .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt))),
       db
         .select({
           id: tasks.id,
           projectId: tasks.projectId,
           completedAt: tasks.completedAt,
           isTop3: tasks.isTop3,
+          updatedAt: tasks.updatedAt,
         })
         .from(tasks)
         .where(and(eq(tasks.userId, ctx.userId), isNotNull(tasks.projectId))),
@@ -149,10 +152,29 @@ export const projectsRouter = createTRPCRouter({
         .map((task) => [task.id, task.projectId])
     );
     const secondsByProject = new Map<string, number>();
+    const lastActivityByProject = new Map<string, Date>();
+    for (const project of projectRows) {
+      lastActivityByProject.set(project.id, project.updatedAt);
+    }
+    for (const task of taskRows) {
+      if (task.projectId === null) continue;
+      const current = lastActivityByProject.get(task.projectId);
+      if (!current || task.updatedAt > current) {
+        lastActivityByProject.set(task.projectId, task.updatedAt);
+      }
+    }
     for (const [taskId, seconds] of Array.from(secondsByTask.entries())) {
       const projectId = taskProjectId.get(taskId);
       if (!projectId || seconds <= 0) continue;
       secondsByProject.set(projectId, (secondsByProject.get(projectId) ?? 0) + seconds);
+    }
+    for (const row of timeEntryRows) {
+      if (!row.projectId) continue;
+      const endedAt = row.endedAt ?? row.startedAt;
+      const current = lastActivityByProject.get(row.projectId);
+      if (!current || endedAt > current) {
+        lastActivityByProject.set(row.projectId, endedAt);
+      }
     }
 
     return projectRows.map((project) => {
@@ -174,9 +196,44 @@ export const projectsRouter = createTRPCRouter({
         completedWeight: progress.completedWeight,
         totalWeight: progress.totalWeight,
         timeSpentSeconds: secondsByProject.get(project.id) ?? 0,
+        lastActivityAt: (lastActivityByProject.get(project.id) ?? project.updatedAt).toISOString(),
       };
     });
   }),
+
+  listLooseTasks: protectedProcedure
+    .input(
+      z
+        .object({
+          category: categorySchema.optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const conditions = [eq(tasks.userId, ctx.userId), isNull(tasks.projectId)];
+      if (input?.category) {
+        conditions.push(eq(tasks.category, input.category));
+      }
+
+      const rows = await db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          category: tasks.category,
+          categoryUnresolved: tasks.categoryUnresolved,
+          priority: tasks.priority,
+          scheduledDate: tasks.scheduledDate,
+          updatedAt: tasks.updatedAt,
+        })
+        .from(tasks)
+        .where(and(...conditions))
+        .orderBy(tasks.updatedAt);
+
+      return rows.map((row) => ({
+        ...row,
+        updatedAt: row.updatedAt.toISOString(),
+      }));
+    }),
 
   listLooseTaskCountsByCategory: protectedProcedure.query(async ({ ctx }) => {
     const rows = await db
@@ -286,6 +343,11 @@ export const projectsRouter = createTRPCRouter({
         .optional()
     )
     .query(async ({ ctx, input }) => {
+      const projectCount = await countActiveProjects(ctx.userId);
+      if (!hasTemplateFeatures(projectCount)) {
+        return [];
+      }
+
       const rows = await db
         .select({
           id: projectTemplates.id,
@@ -515,6 +577,14 @@ export const projectsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const projectCount = await countActiveProjects(ctx.userId);
+      if (!hasTemplateFeatures(projectCount)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Template features unlock after creating 10 projects.",
+        });
+      }
+
       const project = await getOwnedProject(ctx.userId, input.projectId);
 
       const [phaseRows, taskRows] = await Promise.all([

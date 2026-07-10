@@ -4,6 +4,7 @@ export const planningChatSurfaces = [
   "week",
   "plan",
   "projects",
+  "loose-tasks",
   "backlog",
   "reviews",
   "care",

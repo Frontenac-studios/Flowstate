@@ -1,7 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
-import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
+import { categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
 import { type ProjectCategory } from "@/lib/projects/categories";
 import { formatDuration } from "@/lib/time/duration";
 
@@ -16,6 +18,7 @@ export type ProjectListItem = {
   completedWeight: number;
   totalWeight: number;
   timeSpentSeconds: number;
+  lastActivityAt: string;
 };
 
 const FINISHING_PERCENT = 80;
@@ -37,25 +40,19 @@ export default function ProjectCard({
   return (
     <Link
       href={`/projects/${project.id}`}
-      className={`kash-focus-visible block rounded-card border p-4 shadow-surface outline-none transition hover:bg-surface-2 ${
-        finishing ? "border-subtle" : "border-subtle bg-surface"
+      className={`kash-focus-visible block rounded-card border-2 p-4 shadow-surface outline-none transition hover:bg-surface-2 ${
+        finishing ? "bg-surface" : "bg-surface"
       }${folding ? "project-fold-to-filed" : ""}`}
-      style={
-        finishing
+      style={{
+        borderColor: stripe,
+        ...(finishing
           ? {
               backgroundColor: `color-mix(in srgb, ${stripe} 6%, var(--surface))`,
             }
-          : undefined
-      }
+          : {}),
+      }}
     >
-      <div className="flex items-center gap-2">
-        <span
-          className="h-3.5 shrink-0 rounded-full"
-          style={{ width: "var(--stripe-width)", backgroundColor: stripe }}
-          aria-hidden
-        />
-        <h3 className="min-w-0 flex-1 truncate font-medium text-ink">{project.name}</h3>
-      </div>
+      <h3 className="min-w-0 truncate font-medium text-ink">{project.name}</h3>
 
       <div
         className="mt-3 h-1 overflow-hidden rounded-full"
@@ -88,54 +85,5 @@ export default function ProjectCard({
         ) : null}
       </p>
     </Link>
-  );
-}
-
-/**
- * D26 — dashed row for a category's loose tasks (no project). "Ask chat" captures
- * a new loose task in this category via the rail; "view →" browses existing ones.
- */
-export function LooseTasksRow({
-  category,
-  count,
-  onAskChat,
-}: {
-  category: ProjectCategory;
-  count: number;
-  onAskChat: () => void;
-}) {
-  const stripe = categorySolidVar(category);
-  const fill = categoryFillVar(category);
-  const text = categoryTextVar(category);
-
-  return (
-    <div
-      className="flex items-center justify-between gap-3 rounded-card border border-dashed px-3.5 py-2.5 text-sm shadow-surface"
-      style={{
-        borderColor: `color-mix(in srgb, ${stripe} 50%, transparent)`,
-        backgroundColor: fill,
-        color: text,
-      }}
-    >
-      <span className="min-w-0 truncate">
-        {count} {count === 1 ? "task" : "tasks"}, no project
-      </span>
-      <div className="flex shrink-0 items-center gap-3">
-        <button
-          type="button"
-          onClick={onAskChat}
-          aria-label={`Add a ${category} task via chat`}
-          className="kash-focus-visible rounded-control font-medium underline-offset-2 outline-none transition hover:underline"
-        >
-          + Ask chat
-        </button>
-        <Link
-          href={`/backlog?category=${category}`}
-          className="kash-focus-visible rounded-control font-medium underline-offset-2 outline-none transition hover:underline"
-        >
-          view →
-        </Link>
-      </div>
-    </div>
   );
 }

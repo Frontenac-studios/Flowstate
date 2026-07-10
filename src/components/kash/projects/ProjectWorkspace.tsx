@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { buildPhaseTree } from "@/lib/projects/phase-tree";
 import { isProjectComplete } from "@/lib/projects/is-project-complete";
+import { hasTemplateFeatures } from "@/lib/projects/template-milestone";
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { useTRPC } from "@/trpc/client";
 
@@ -55,6 +56,8 @@ export default function ProjectWorkspace({
       similarProjectIds.length > 0 ? { similarProjectIds } : undefined
     )
   );
+  const { data: allProjects = [] } = useQuery(trpc.projects.list.queryOptions());
+  const showTemplateFeatures = hasTemplateFeatures(allProjects.length);
 
   const [viewMode, setViewMode] = useState<ProjectViewMode>("columns");
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
@@ -96,6 +99,7 @@ export default function ProjectWorkspace({
         projectName={project.name}
         category={project.category}
         isComplete={projectComplete}
+        showTemplateFeatures={showTemplateFeatures}
       >
         <ProjectWorkspaceHeader
           project={project}
@@ -104,6 +108,7 @@ export default function ProjectWorkspace({
           showBackToProjects={showBackToProjects}
           timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
           estimateSampleCount={estimateSampleCount}
+          showTemplateFeatures={showTemplateFeatures}
           onOpenSetup={() => {
             setSetupMode("edit");
             setWizardOpen(true);
