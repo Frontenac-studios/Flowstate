@@ -4,21 +4,21 @@
 }
 
 .ritual-sheet-panel {
-  animation: ritual-sheet-slide-in var(--motion-medium) var(--ease-move) both;
+  animation: ritual-sheet-panel-in var(--motion-medium) var(--ease-move) both;
 }
 
-@keyframes ritual-sheet-slide-in {
+@keyframes ritual-sheet-panel-in {
   from {
     opacity: 0;
-    transform: translateX(1.5rem);
+    transform: translateY(0.75rem) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes ritual-sheet-slide-in-reduce {
+@keyframes ritual-sheet-panel-in-reduce {
   from {
     opacity: 0;
   }
@@ -60,7 +60,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ritual-sheet-panel {
-    animation: ritual-sheet-slide-in-reduce var(--motion-short) var(--ease-enter) both;
+    animation: ritual-sheet-panel-in-reduce var(--motion-short) var(--ease-enter) both;
   }
 
   .eod-reflecting-pulse {

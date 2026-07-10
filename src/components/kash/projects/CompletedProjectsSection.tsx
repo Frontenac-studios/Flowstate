@@ -18,8 +18,10 @@ export type CompletedProjectRow = {
 
 export default function CompletedProjectsSection({
   projects,
+  showTemplateFeatures = true,
 }: {
   projects: CompletedProjectRow[];
+  showTemplateFeatures?: boolean;
 }) {
   const headingId = useId();
   const panelId = useId();
@@ -60,6 +62,7 @@ export default function CompletedProjectsSection({
               projectName={project.name}
               category={project.category}
               isComplete
+              showTemplateFeatures={showTemplateFeatures}
             >
               <Link
                 href={`/projects/${project.id}`}

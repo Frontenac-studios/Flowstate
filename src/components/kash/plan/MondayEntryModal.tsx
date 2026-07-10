@@ -4,12 +4,15 @@ import { useRouter } from "next/navigation";
 
 import Button from "@/components/kash/ui/Button";
 import { RitualSheet } from "@/components/kash/ui/RitualSheet";
+import { useRitualOverlay } from "@/hooks/useRitualOverlay";
 
 import { usePlanMode } from "./PlanProvider";
 
 export function MondayEntryModal() {
   const router = useRouter();
   const { mondayBlocked, resolveMondayChoice } = usePlanMode();
+
+  useRitualOverlay(mondayBlocked);
 
   if (!mondayBlocked) return null;
 

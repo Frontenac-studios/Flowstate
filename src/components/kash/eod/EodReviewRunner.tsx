@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useEodReviewTrigger } from "@/hooks/useEodReviewTrigger";
+import { useRitualOverlay } from "@/hooks/useRitualOverlay";
 import { useTRPC } from "@/trpc/client";
 
 import { EodReviewBanner } from "./EodReviewBanner";
@@ -24,6 +25,8 @@ export function EodReviewRunner() {
     skipToday,
     refreshStorage,
   } = useEodReviewTrigger();
+
+  useRitualOverlay(modalOpen);
 
   const bannerVariant = savedReviewExists ? "saved" : "due";
 

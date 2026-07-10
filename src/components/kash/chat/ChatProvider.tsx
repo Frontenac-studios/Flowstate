@@ -23,6 +23,7 @@ export type OpenRailOptions = {
 
 type ChatContextValue = {
   railOpen: boolean;
+  ritualOpen: boolean;
   activeThreadId: string;
   planningSurface: PlanningChatSurface | null;
   captureContext: CaptureContext | null;
@@ -32,6 +33,7 @@ type ChatContextValue = {
   toggleRail: () => void;
   openRail: (options?: OpenRailOptions) => void;
   closeRail: () => void;
+  registerRitualOverlay: () => () => void;
   setActiveThreadId: (threadId: string) => void;
   markRead: (threadId: string) => void;
   notifyUnread: (threadId: string) => void;
@@ -52,6 +54,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Collapsed by default; hydrated from sessionStorage after mount to avoid a
   // server/client mismatch, then persisted per session.
   const [railOpen, setRailOpen] = useState(false);
+  const [ritualOverlayCount, setRitualOverlayCount] = useState(0);
+  const ritualOpen = ritualOverlayCount > 0;
   const [activeThreadId, setActiveThreadId] = useState<string>(GLOBAL_THREAD_ID);
   const [captureContext, setCaptureContext] = useState<CaptureContext | null>(null);
   const [unreadThreads, setUnreadThreads] = useState<Set<string>>(() => new Set());
@@ -95,22 +99,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [activeThreadId, railOpen]
   );
 
-  const openRail = useCallback(
-    (options?: OpenRailOptions) => {
-      if (options?.threadId) setActiveThreadId(options.threadId);
-      setCaptureContext(options?.captureContext ?? null);
-      setRailOpen(true);
-      markRead(options?.threadId ?? activeThreadId);
-    },
-    [activeThreadId, markRead]
-  );
-
   const closeRail = useCallback(() => {
     setCaptureContext(null);
     setRailOpen(false);
   }, []);
 
+  const registerRitualOverlay = useCallback(() => {
+    setRitualOverlayCount((count) => count + 1);
+    setCaptureContext(null);
+    setRailOpen(false);
+    return () => setRitualOverlayCount((count) => Math.max(0, count - 1));
+  }, []);
+
+  const openRail = useCallback(
+    (options?: OpenRailOptions) => {
+      if (ritualOpen) return;
+      if (options?.threadId) setActiveThreadId(options.threadId);
+      setCaptureContext(options?.captureContext ?? null);
+      setRailOpen(true);
+      markRead(options?.threadId ?? activeThreadId);
+    },
+    [activeThreadId, markRead, ritualOpen]
+  );
+
   const toggleRail = useCallback(() => {
+    if (ritualOpen) return;
     setRailOpen((open) => {
       if (open) {
         setCaptureContext(null);
@@ -120,24 +133,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       markRead(activeThreadId);
       return true;
     });
-  }, [activeThreadId, markRead]);
+  }, [activeThreadId, markRead, ritualOpen]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       // Chat toggle is ⌘/ (⌘/Ctrl+Slash), grouping it with the ⌘-family actions
       // (⌘K palette, ⌘D decide) while avoiding Chrome's ⌘J Downloads collision.
       if (!(e.metaKey || e.ctrlKey) || e.key !== "/") return;
+      if (ritualOpen) return;
       if (isEditableTarget(e.target)) return;
       e.preventDefault();
       toggleRail();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [toggleRail]);
+  }, [ritualOpen, toggleRail]);
 
   const value = useMemo(
     () => ({
       railOpen,
+      ritualOpen,
       activeThreadId,
       planningSurface,
       captureContext,
@@ -147,12 +162,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       toggleRail,
       openRail,
       closeRail,
+      registerRitualOverlay,
       setActiveThreadId,
       markRead,
       notifyUnread,
     }),
     [
       railOpen,
+      ritualOpen,
       activeThreadId,
       planningSurface,
       captureContext,
@@ -162,6 +179,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       toggleRail,
       openRail,
       closeRail,
+      registerRitualOverlay,
       markRead,
       notifyUnread,
     ]

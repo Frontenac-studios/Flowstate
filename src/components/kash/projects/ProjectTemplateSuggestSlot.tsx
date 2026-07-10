@@ -13,6 +13,7 @@ type Props = {
   projectName: string;
   category: ProjectCategory;
   isComplete: boolean;
+  showTemplateFeatures?: boolean;
   children: ReactNode;
 };
 
@@ -22,26 +23,33 @@ export function ProjectTemplateSuggestSlot({
   projectName,
   category,
   isComplete,
+  showTemplateFeatures = true,
   children,
 }: Props) {
-  const { showChip, dismiss } = useProjectTemplateSuggest(projectId, isComplete);
+  const { showChip, dismiss } = useProjectTemplateSuggest(
+    projectId,
+    isComplete,
+    showTemplateFeatures
+  );
 
   return (
     <div className="flex flex-col gap-2">
       {children}
-      {showChip ? (
+      {showTemplateFeatures && showChip ? (
         <ProjectTemplateSuggestChip
           projectId={projectId}
           projectName={projectName}
           onDismiss={dismiss}
         />
       ) : null}
-      <ProjectSimilarityCompleteChip
-        projectId={projectId}
-        projectName={projectName}
-        category={category}
-        isComplete={isComplete}
-      />
+      {showTemplateFeatures ? (
+        <ProjectSimilarityCompleteChip
+          projectId={projectId}
+          projectName={projectName}
+          category={category}
+          isComplete={isComplete}
+        />
+      ) : null}
     </div>
   );
 }

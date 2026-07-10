@@ -230,6 +230,7 @@ export async function applyProposedActionPayload(
 
         const suggestedDate = item.suggestedDate ?? item.scheduledDate ?? null;
         const commitSchedule = edit?.commitSuggestedDate === true && suggestedDate;
+        const landOnToday = captureContext?.defaultBucket === "today" && !commitSchedule;
 
         const [row] = await db
           .insert(tasks)
@@ -237,7 +238,7 @@ export async function applyProposedActionPayload(
             userId,
             title,
             scheduledDate: commitSchedule ? suggestedDate : null,
-            bucketOverride: commitSchedule ? null : "later",
+            bucketOverride: commitSchedule ? null : landOnToday ? null : "later",
             suggestedScheduledDate: commitSchedule ? null : suggestedDate,
             projectId,
             phaseId,
@@ -267,7 +268,7 @@ export async function applyProposedActionPayload(
               categoryUnresolved: resolved.unresolved,
               projectName: row.projectId ? (projectNameById.get(row.projectId) ?? null) : null,
               phaseName: resolvedPhaseName,
-              landing: commitSchedule ? "today" : "inbox",
+              landing: commitSchedule || landOnToday ? "today" : "inbox",
             })
           );
           applied += 1;

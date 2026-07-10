@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
+import { useRitualOverlay } from "@/hooks/useRitualOverlay";
 import { useEssentialNudges } from "@/hooks/useEssentialNudges";
 import { isOnboardingCompleted } from "@/lib/onboarding/onboarding-storage";
 import {
@@ -185,6 +186,8 @@ export function MorningHandoffRunner() {
     [enabled, dismissedLocally, seenData?.seen, mondayBlocked]
   );
 
+  useRitualOverlay(shouldShow);
+
   const finish = useCallback(() => {
     markMorningHandoffDismissedForDate(localDate);
     setDismissedLocally(true);
@@ -327,6 +330,7 @@ export function MorningHandoffRunner() {
       onDeclineHold={() => setHoldDeclined(true)}
       onSkip={finish}
       onBegin={handleBegin}
+      onTasksChanged={invalidateTasks}
     />
   );
 }

@@ -115,6 +115,12 @@ describe("system-prompts", () => {
     expect(prompt).toContain("Default new tasks to loose adulting tasks (a category, no project)");
   });
 
+  it("tells morning handoff capture to land on today's list", () => {
+    const ctx = createCaptureContext({ surface: "morning-handoff", defaultBucket: "today" });
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "today", ctx);
+    expect(prompt).toContain("land on today's list");
+  });
+
   it("omits capture modifier when capture context is absent", () => {
     expect(buildChatSystemPrompt(GLOBAL_THREAD_ID, "week")).not.toContain("Capture mode:");
   });

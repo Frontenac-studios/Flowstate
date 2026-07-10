@@ -19,6 +19,7 @@ import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categor
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
+  showTemplateFeatures: boolean;
   onCreated: (result: { id: string; fromTemplate: boolean }) => void;
   onCancel: () => void;
 };
@@ -30,7 +31,7 @@ const CREATION_MODES: { value: CreationMode; label: string }[] = [
   { value: "template", label: "From template" },
 ];
 
-export default function NewProjectForm({ onCreated, onCancel }: Props) {
+export default function NewProjectForm({ showTemplateFeatures, onCreated, onCancel }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const backfillEmbedding = useProjectEmbedding();
@@ -51,13 +52,13 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
     ...trpc.projects.listTemplates.queryOptions(
       similarProjectIds ? { similarProjectIds } : undefined
     ),
-    enabled: mode === "template",
+    enabled: showTemplateFeatures && mode === "template",
   });
   const { data: estimateSampleCount = 0 } = useQuery({
     ...trpc.projects.estimateSampleCount.queryOptions(
       similarProjectIds ? { similarProjectIds } : undefined
     ),
-    enabled: mode === "template",
+    enabled: showTemplateFeatures && mode === "template",
   });
 
   const handleCreated = (project: { id: string; name: string }, fromTemplate: boolean) => {
@@ -134,16 +135,15 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4 rounded-card border border-subtle bg-surface p-4 shadow-surface"
-    >
-      <InPageSwitcher
-        options={CREATION_MODES}
-        value={mode}
-        onChange={setMode}
-        ariaLabel="New project mode"
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {showTemplateFeatures ? (
+        <InPageSwitcher
+          options={CREATION_MODES}
+          value={mode}
+          onChange={setMode}
+          ariaLabel="New project mode"
+        />
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="new-project-name" className="text-sm font-medium text-ink">
@@ -159,14 +159,16 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
         />
       </div>
 
-      <ProjectSimilarityPicker
-        liveName={name}
-        preferredCategory={category}
-        selectedId={similarProjectId}
-        onSelect={setSimilarProjectId}
-      />
+      {showTemplateFeatures ? (
+        <ProjectSimilarityPicker
+          liveName={name}
+          preferredCategory={category}
+          selectedId={similarProjectId}
+          onSelect={setSimilarProjectId}
+        />
+      ) : null}
 
-      {mode === "template" ? (
+      {showTemplateFeatures && mode === "template" ? (
         <fieldset className="flex flex-col gap-1.5">
           <legend className="mb-1 text-sm font-medium text-ink">Template</legend>
           {templatesLoading ? (
