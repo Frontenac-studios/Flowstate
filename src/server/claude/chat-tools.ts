@@ -24,6 +24,10 @@ import {
 import { applyProposedActionPayload, resolveOwnedTaskTitles } from "./apply-proposed-action";
 import type { CaptureContext } from "@/lib/chat/capture-context";
 import {
+  buildCreateTaskProposal,
+  type CreateTaskToolInput,
+} from "@/lib/chat/build-create-task-proposal";
+import {
   buildApplyBalanceSuggestionsProposal,
   buildCreateProjectProposal,
   buildDeleteTaskProposal,
@@ -52,21 +56,6 @@ type QueryTasksInput = {
 
 type RescheduleTasksInput = {
   assignments: { taskId: string; scheduledDate: string }[];
-  summary?: string;
-};
-
-type CreateTaskInput = {
-  tasks: {
-    title: string;
-    scheduledDate?: string;
-    projectSlug?: string;
-    phaseId?: string | null;
-    phaseName?: string;
-    category?: string;
-    tags?: string[];
-    timeEstimateMinutes?: number;
-    priority?: number;
-  }[];
   summary?: string;
 };
 
@@ -274,41 +263,6 @@ async function buildRescheduleProposal(
   };
 }
 
-function isCategory(value: string | undefined): value is ProjectCategory {
-  return value != null && (PROJECT_CATEGORIES as readonly string[]).includes(value);
-}
-
-async function buildCreateTaskProposal(
-  input: CreateTaskInput,
-  captureContext?: CaptureContext | null
-): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
-  const rows = input.tasks?.filter((t) => t.title?.trim()) ?? [];
-  if (rows.length === 0) return { ok: false, error: "tasks array is required" };
-
-  return {
-    ok: true,
-    proposal: proposedActionSchema.parse({
-      kind: "create_task",
-      status: "pending",
-      summary: input.summary,
-      items: rows.map((t) => ({
-        itemId: newProposalItemId(),
-        enabled: true,
-        title: t.title.trim(),
-        suggestedDate: t.scheduledDate && ISO_DATE.test(t.scheduledDate) ? t.scheduledDate : null,
-        scheduledDate: null,
-        projectSlug: t.projectSlug ?? captureContext?.projectSlug ?? null,
-        phaseId: t.phaseId !== undefined ? t.phaseId : captureContext?.phaseId,
-        phaseName: t.phaseName ?? captureContext?.phaseName ?? null,
-        category: t.category && isCategory(t.category) ? t.category : captureContext?.category,
-        tags: t.tags,
-        timeEstimateMinutes: t.timeEstimateMinutes,
-        priority: t.priority,
-      })),
-    }),
-  };
-}
-
 async function buildCompleteTaskProposal(
   userId: string,
   input: CompleteTaskInput
@@ -403,10 +357,7 @@ export async function executeChatTool(
     }
 
     if (name === "create_task") {
-      const built = await buildCreateTaskProposal(
-        input as CreateTaskInput,
-        options?.captureContext
-      );
+      const built = buildCreateTaskProposal(input as CreateTaskToolInput, options?.captureContext);
       if (!built.ok)
         return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
       return {

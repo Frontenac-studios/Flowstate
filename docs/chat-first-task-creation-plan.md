@@ -77,17 +77,17 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Add `CaptureContext` type in `src/lib/chat/capture-context.ts` (Zod schema for API)
-- [ ] Extend `ChatProvider`: `openRail({ captureContext? })`, store in React state (session-scoped)
-- [ ] Update all `AddTaskPopover` callers to pass context:
+- [x] Add `CaptureContext` type in `src/lib/chat/capture-context.ts` (Zod schema for API)
+- [x] Extend `ChatProvider`: `openRail({ captureContext? })`, store in React state (session-scoped)
+- [x] Update all `AddTaskPopover` callers to pass context:
   - `WeekCanvas` — surface `week`, defaultBucket `inbox`
   - `DayPlanCanvas` — surface `today`, defaultBucket TBD
   - `MillerColumnsView` — surface `projects`, projectId/slug, phaseId/phaseName from selected column
-- [ ] Pass `captureContext` on `/api/claude/stream` body (alongside `planningSurface`)
-- [ ] Inject capture block in `assembleChatContext` or stream route context assembly
-- [ ] Add prompt modifier in `system-prompts.ts` when capture context present
-- [ ] Optional: chat composer placeholder when opened from + (e.g. "Add tasks for Demolition…")
-- [ ] Tests: Zod schema, context serialization, prompt includes capture block
+- [x] Pass `captureContext` on `/api/claude/stream` body (alongside `planningSurface`)
+- [x] Inject capture block in `assembleChatContext` or stream route context assembly
+- [x] Add prompt modifier in `system-prompts.ts` when capture context present
+- [x] Optional: chat composer placeholder when opened from + (e.g. "Add tasks for Demolition…")
+- [x] Tests: Zod schema, context serialization, prompt includes capture block
 
 **Acceptance criteria:**
 
@@ -106,10 +106,10 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Lock Today policy (inbox vs today bucket)
-- [ ] `QuickInput` + `createInInbox`: always `bucketOverride: "later"` when inbox mode
-- [ ] Add `suggestedScheduledDate` to `tasks.create` tRPC when parser extracts a date in inbox mode
-- [ ] `DayPlanCanvas`: align with chosen Today policy
+- [x] Lock Today policy (inbox vs today bucket)
+- [x] `QuickInput` + `createInInbox`: always `bucketOverride: "later"` when inbox mode
+- [x] Add `suggestedScheduledDate` to `tasks.create` tRPC when parser extracts a date in inbox mode
+- [x] `DayPlanCanvas`: align with chosen Today policy
 
 **Acceptance criteria:**
 
@@ -123,12 +123,12 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Extend `createTaskProposalItemSchema` (category, phaseId, phaseName, tags, timeEstimateMinutes)
-- [ ] Document fields in `chat-tool-catalog.ts` CREATE_TASK_TOOL input_schema
-- [ ] Apply logic: merge capture context → resolve phase by name → set projectId from phase
-- [ ] Category: explicit > project > capture context > existing resolver
-- [ ] Update `buildCreateTaskProposal` in `chat-tools.ts`
-- [ ] Unit tests for apply precedence and phase name resolution
+- [x] Extend `createTaskProposalItemSchema` (category, phaseId, phaseName, tags, timeEstimateMinutes)
+- [x] Document fields in `chat-tool-catalog.ts` CREATE_TASK_TOOL input_schema
+- [x] Apply logic: merge capture context → resolve phase by name → set projectId from phase
+- [x] Category: explicit > project > capture context > existing resolver
+- [x] Update `buildCreateTaskProposal` (extracted to `src/lib/chat/build-create-task-proposal.ts`, used by `chat-tools.ts`)
+- [x] Unit tests for apply precedence and phase name resolution
 
 ---
 
@@ -138,11 +138,11 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Category dropdown + `ComposerCategoryAccent` preview in `CreateTaskDraftEditor`
-- [ ] Phase dropdown when project set (project loose + flattened phase list)
-- [ ] Placement summary line (e.g. "Adulting · no project · inbox")
-- [ ] Extend `CreateTaskItemEdit` + `mergeCreateTaskEdits`
-- [ ] Optional: "Apply & schedule" (commits suggested date in one step)
+- [x] Category dropdown + `ComposerCategoryAccent` preview in `CreateTaskDraftEditor`
+- [x] Phase dropdown when project set (project loose + flattened phase list)
+- [x] Placement summary line (e.g. "Adulting · no project · inbox")
+- [x] Extend `CreateTaskItemEdit` + `mergeCreateTaskEdits`
+- [x] Optional: "Apply & schedule" (commits suggested date in one step)
 
 ---
 
@@ -152,10 +152,10 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Category on task lines in `fetch-plan-context.ts`
-- [ ] Loose task counts by category in context block
-- [ ] Project structure block when on `/projects/[slug]` (phases + counts + selected phase)
-- [ ] Optional: `query_project_structure`, `query_loose_tasks` read tools
+- [x] Category on task lines in `fetch-plan-context.ts`
+- [x] Loose task counts by category in context block
+- [x] Project structure block when on `/projects/[slug]` (phases + counts + selected phase)
+- [ ] Optional: `query_project_structure`, `query_loose_tasks` read tools (deferred — context block covers current needs)
 
 ---
 
@@ -165,9 +165,9 @@ type CaptureContext = {
 
 **Tasks:**
 
-- [ ] Scroll/highlight new tasks in Week inbox or Miller column
-- [ ] Chat ack message with placement summary
-- [ ] Auto-expand Week inbox when collapsed and new tasks arrive
+- [x] Scroll/highlight new tasks in Week inbox or Miller column
+- [x] Chat ack message with placement summary
+- [x] Auto-expand Week inbox when collapsed and new tasks arrive
 
 ---
 
@@ -193,6 +193,13 @@ Plan surface: `/plan` already exposes chat-first capture on its Week horizon via
 | Category lens + capture                | explicit category, no project               |
 | Confirm card category edit             | stored, `categoryUnresolved: false`         |
 | Manual `createInInbox` + `; tomorrow`  | suggested date, same as chat                |
+
+**Status:** ✅ Complete.
+
+- [x] Automated regression coverage for every matrix row (Vitest) — see `docs/chat-first-task-creation-qa.md` → "Automated coverage".
+- [x] Manual QA checklist authored: `docs/chat-first-task-creation-qa.md` (step-by-step per row + dismiss/undo/desktop-sync regressions).
+- [x] Fixed a real bug found during QA: `tasks.scheduleToDate` now calls `syncTaskRow` so drag-to-weekday / drag-to-inbox propagate to the desktop mirror (parity with `acceptSuggestedDate`).
+- [x] Fixed phase-name resolution: `mergeCreateTaskPlacementSources` preserves an unspecified `phaseId` as `undefined` (instead of coercing to `null`), so a `phaseName`-only create resolves within the project rather than silently landing project-loose.
 
 ## Dependency graph
 

@@ -146,3 +146,59 @@ describe("captureContextPlaceholder", () => {
     ).toBe("Describe a task to plan…");
   });
 });
+
+// ---------------------------------------------------------------------------
+// QA matrix (Phase 8): the shape of the capture context created from each +
+// entry point. These are the values the client hands to the stream/apply path.
+// ---------------------------------------------------------------------------
+describe("capture context creation per surface", () => {
+  it("Week +: inbox default, no project or category", () => {
+    const ctx = createCaptureContext({ surface: "week", defaultBucket: "inbox" });
+    expect(ctx.surface).toBe("week");
+    expect(ctx.defaultBucket).toBe("inbox");
+    expect(ctx.projectSlug).toBeUndefined();
+    expect(ctx.category).toBeUndefined();
+    expect(captureContextSchema.safeParse(ctx).success).toBe(true);
+  });
+
+  it("Today +: today default bucket but still a projectless capture (Option B)", () => {
+    const ctx = createCaptureContext({ surface: "today", defaultBucket: "today" });
+    expect(ctx.surface).toBe("today");
+    expect(ctx.defaultBucket).toBe("today");
+    expect(ctx.projectSlug).toBeUndefined();
+  });
+
+  it("row 2 — Projects/Demolition +: carries project id/slug and phase", () => {
+    const ctx = createCaptureContext({
+      surface: "projects",
+      projectId: PROJECT_ID,
+      projectSlug: "demolition",
+      phaseId: PHASE_ID,
+      phaseName: "Demolition",
+      category: "personal_projects",
+    });
+    expect(ctx.projectSlug).toBe("demolition");
+    expect(ctx.phaseId).toBe(PHASE_ID);
+    expect(ctx.phaseName).toBe("Demolition");
+    expect(captureContextSchema.safeParse(ctx).success).toBe(true);
+  });
+
+  it("row 3 — category lens/loose row +: category only, no project or phase", () => {
+    const ctx = createCaptureContext({
+      surface: "projects",
+      category: "adulting",
+      defaultBucket: "inbox",
+    });
+    expect(ctx.category).toBe("adulting");
+    expect(ctx.projectId).toBeUndefined();
+    expect(ctx.projectSlug).toBeUndefined();
+    expect(ctx.phaseId).toBeUndefined();
+    expect(captureContextSchema.safeParse(ctx).success).toBe(true);
+  });
+
+  it("row 7 — Backlog +: inbox default for the plan-a-task entry point", () => {
+    const ctx = createCaptureContext({ surface: "backlog", defaultBucket: "inbox" });
+    expect(ctx.surface).toBe("backlog");
+    expect(ctx.defaultBucket).toBe("inbox");
+  });
+});

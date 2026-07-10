@@ -546,6 +546,7 @@ export const tasksRouter = createTRPCRouter({
         });
       }
 
+      await syncTaskRow(row.id, "update", row);
       await clearWeekDayPrioritiesForTask(ctx.userId, input.id, {
         exceptDate: input.scheduledDate ?? undefined,
       });
