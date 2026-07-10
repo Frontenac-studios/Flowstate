@@ -1,13 +1,15 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, lt } from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, isNotNull, isNull, lte, lt, ne } from "drizzle-orm";
 import { db } from "@/db";
 import {
   appSettings,
   careActivities,
   careEvents,
   careReflections,
+  externalCalendarEvents,
   focusBlocks,
   nudgeEvents,
+  protectedBlocks,
   taskTimeEntries,
   tasks,
 } from "@/db/tables";
@@ -32,6 +34,11 @@ import { templateStallChipMessage } from "@/lib/nudges/template-nudge";
 import { evaluateGoalSteering } from "@/lib/nudges/evaluate-goal-steering";
 import { PROBLEM_NUDGE_PRIORITY, REASSURANCE_NUDGE_PRIORITY } from "@/lib/nudges/nudge-arbiter";
 import { deriveLiftsMe } from "@/lib/care/lifts-me";
+import {
+  externalStoredEventsToBusyIntervals,
+  mergeDayBusySources,
+} from "@/lib/calendar/merge-day-busy-sources";
+import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
 import { goalSteeringNudgeTaskIds } from "@/lib/planning/goal-steering-rotation";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { fetchBalanceNudgeContext } from "@/server/nudges/fetch-balance-nudge-context";
@@ -167,9 +174,15 @@ export async function runNudgeEvaluation(params: {
         );
         const liftsWindowStart = new Date(now);
         liftsWindowStart.setDate(liftsWindowStart.getDate() - 30);
+        const { start: dayStartUtc, end: dayEndUtc } = localDayUtcBounds(
+          localDate,
+          tzOffsetMinutes
+        );
 
         const [
           blockRows,
+          protectedRows,
+          externalRows,
           incompleteTodayRows,
           overdueRows,
           reflectionRows,
@@ -180,6 +193,28 @@ export async function runNudgeEvaluation(params: {
             .select({ startMin: focusBlocks.startMin, endMin: focusBlocks.endMin })
             .from(focusBlocks)
             .where(and(eq(focusBlocks.userId, userId), eq(focusBlocks.date, localDate))),
+          db
+            .select({ startMin: protectedBlocks.startMin, endMin: protectedBlocks.endMin })
+            .from(protectedBlocks)
+            .where(
+              and(eq(protectedBlocks.userId, userId), eq(protectedBlocks.scheduledDate, localDate))
+            ),
+          db
+            .select({
+              startAt: externalCalendarEvents.startAt,
+              endAt: externalCalendarEvents.endAt,
+              isAllDay: externalCalendarEvents.isAllDay,
+              status: externalCalendarEvents.status,
+            })
+            .from(externalCalendarEvents)
+            .where(
+              and(
+                eq(externalCalendarEvents.userId, userId),
+                ne(externalCalendarEvents.status, "cancelled"),
+                lt(externalCalendarEvents.startAt, dayEndUtc),
+                gt(externalCalendarEvents.endAt, dayStartUtc)
+              )
+            ),
           db
             .select({ id: tasks.id })
             .from(tasks)
@@ -227,10 +262,13 @@ export async function runNudgeEvaluation(params: {
             ),
         ]);
 
-        const busyIntervals = blockRows.map((b) => ({
-          startMin: b.startMin,
-          endMin: b.endMin,
-        }));
+        const busyIntervals = [
+          ...mergeDayBusySources({
+            focusBlocks: blockRows,
+            protectedBlocks: protectedRows,
+          }),
+          ...externalStoredEventsToBusyIntervals(externalRows, localDate, tzOffsetMinutes),
+        ];
         const walkReminders = evaluateSelfCareWalkReminders({
           now,
           tzOffsetMinutes,

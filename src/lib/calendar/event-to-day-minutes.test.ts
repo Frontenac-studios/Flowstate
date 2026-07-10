@@ -86,4 +86,18 @@ describe("eventToDayMinutes", () => {
     expect(eventToDayMinutes(event, "2026-05-27", pst)).toEqual({ startMin: 0, endMin: 1440 });
     expect(eventToDayMinutes(event, "2026-05-28", pst)).toBeNull();
   });
+
+  it("clips timed events that start before local midnight", () => {
+    const geometry = eventToDayMinutes(
+      {
+        startAt: new Date("2026-05-26T07:00:00.000Z"),
+        endAt: new Date("2026-05-26T09:00:00.000Z"),
+        isAllDay: false,
+      },
+      "2026-05-26",
+      pst
+    );
+
+    expect(geometry).toEqual({ startMin: 0, endMin: 60 });
+  });
 });
