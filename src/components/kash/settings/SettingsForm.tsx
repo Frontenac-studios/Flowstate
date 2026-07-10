@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Select from "@/components/kash/ui/Select";
@@ -11,6 +12,7 @@ import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/con
 import { useTRPC } from "@/trpc/client";
 
 import AboutMeSection from "./about-me/AboutMeSection";
+import { CalendarSyncSection } from "./CalendarSyncSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
 import { NotificationsAndAssistanceSection } from "./AssistanceSettingsSection";
@@ -52,8 +54,15 @@ const TABS: { id: TabId; label: string }[] = [
 export function SettingsForm() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
 
   const [tab, setTab] = useState<TabId>("preferences");
+
+  useEffect(() => {
+    if (searchParams.get("calendar")) {
+      setTab("preferences");
+    }
+  }, [searchParams]);
 
   const { data, isLoading } = useQuery(trpc.settings.get.queryOptions());
   const bucketMode = data?.bucketMode ?? "relative";
@@ -245,6 +254,8 @@ export function SettingsForm() {
                 </p>
               ) : null}
             </section>
+
+            <CalendarSyncSection />
 
             <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
               <h2 className="text-sm font-semibold text-ink">Accessibility</h2>
