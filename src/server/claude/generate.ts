@@ -10,7 +10,7 @@ import { requireAnthropicClient } from "./client";
 import { formatCaptureContextBlock, type CaptureContext } from "@/lib/chat/capture-context";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { executeChatTool, toolsForSurface } from "./chat-tools";
-import { buildChatSystemPrompt, buildSystemPrompt, registerForThread } from "./system-prompts";
+import { buildChatSystemPrompt, buildSystemPrompt, resolveChatRegister } from "./system-prompts";
 
 const MAX_TOOL_ROUNDS = 5;
 
@@ -102,12 +102,13 @@ export async function streamCompanionReply(params: {
 }> {
   const anthropic = requireAnthropicClient();
   const config = getAnthropicConfig();
-  const register = registerForThread(params.threadId);
+  const register = resolveChatRegister(params.threadId, params.planningSurface);
   const tools = toolsForSurface(register, params.planningSurface);
   const { contextBlock, history } = await assembleChatContext(
     params.userId,
     params.threadId,
-    params.captureContext
+    params.captureContext,
+    params.planningSurface
   );
   const captureBlock = params.captureContext
     ? formatCaptureContextBlock(params.captureContext)

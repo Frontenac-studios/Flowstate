@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/cn";
 import { trapTab } from "@/lib/dom/focus-trap";
@@ -17,6 +18,8 @@ type Props = {
   onDismiss?: () => void;
   /** When false, backdrop click does not dismiss (morning hand-off keeps Skip explicit). */
   dismissOnBackdrop?: boolean;
+  /** "strong" deepens the scrim so the rail recedes further (morning hand-off). */
+  dim?: "default" | "strong";
 };
 
 /**
@@ -32,6 +35,7 @@ export function RitualSheet({
   footer,
   onDismiss,
   dismissOnBackdrop = true,
+  dim = "default",
 }: Props) {
   const generatedTitleId = useId();
   const titleId = titleIdProp ?? generatedTitleId;
@@ -39,6 +43,10 @@ export function RitualSheet({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [fadeTop, setFadeTop] = useState(false);
   const [fadeBottom, setFadeBottom] = useState(false);
+  // Portal only after mount so SSR markup matches (document is client-only).
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const updateFade = () => {
     const el = scrollRef.current;
@@ -88,22 +96,22 @@ export function RitualSheet({
     return () => observer.disconnect();
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  const backdropClass = cn(
+    "ritual-sheet-backdrop absolute inset-0",
+    dim === "strong" && "ritual-sheet-backdrop--strong"
+  );
+
+  return createPortal(
     <div
       className="ritual-sheet-overlay fixed inset-0 z-modal flex items-center justify-center p-4 backdrop-blur-sm"
       role="presentation"
     >
       {dismissOnBackdrop ? (
-        <button
-          type="button"
-          className="ritual-sheet-backdrop absolute inset-0"
-          aria-label="Dismiss"
-          onClick={onDismiss}
-        />
+        <button type="button" className={backdropClass} aria-label="Dismiss" onClick={onDismiss} />
       ) : (
-        <div className="ritual-sheet-backdrop absolute inset-0" aria-hidden />
+        <div className={backdropClass} aria-hidden />
       )}
       <div
         ref={panelRef}
@@ -150,6 +158,7 @@ export function RitualSheet({
           </footer>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

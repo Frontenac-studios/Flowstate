@@ -8,7 +8,6 @@ import { readMotionDurationMs, MOTION_TOKEN } from "@/lib/animate/motion-tokens"
 import GhostedAccept from "@/components/kash/plan/GhostedAccept";
 import { Star, kashIconProps } from "@/components/kash/ui/icon";
 import { useToast } from "@/components/kash/ui/ToastProvider";
-import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
 import {
   buildGrid,
   cardProgress,
@@ -30,6 +29,7 @@ import { type ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
 import BingoBalanceLegend from "./BingoBalanceLegend";
+import BingoCoachDock from "./BingoCoachDock";
 import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
 import BingoListView, { type BingoListGroupBy } from "./BingoListView";
@@ -95,6 +95,9 @@ export default function BingoCard({ year }: Props) {
     ...trpc.planning.listGoals.queryOptions({ bingoCardId }),
     enabled: !!bingoCardId,
   });
+
+  const chatConfigQuery = useQuery(trpc.chat.isConfigured.queryOptions());
+  const coachAvailable = chatConfigQuery.data?.bingoCoachEnabled ?? false;
 
   const [viewMode, setViewMode] = useState<ViewMode>("card");
   const [listGroupBy, setListGroupBy] = useState<BingoListGroupBy>("category");
@@ -245,30 +248,6 @@ export default function BingoCard({ year }: Props) {
     void handleRewards();
   }, [handleRewards]);
 
-  const occupiedCells = useMemo(
-    () => new Set(goals.map((g) => g.cellIndex).filter((i): i is number => i != null)),
-    [goals]
-  );
-
-  const addGoalsFromLines = useCallback(
-    async (lines: { title: string; category: ProjectCategory }[]) => {
-      if (!bingoCardId) return;
-      const occupied = new Set(occupiedCells);
-      for (const line of lines) {
-        const cell = nextEmptyCellIndex(occupied);
-        if (cell == null) break;
-        await createGoalMutation.mutateAsync({
-          bingoCardId,
-          cellIndex: cell,
-          title: line.title,
-          category: line.category,
-        });
-        occupied.add(cell);
-      }
-    },
-    [bingoCardId, createGoalMutation, occupiedCells]
-  );
-
   const handleToggleDone = (goal: BingoGoal) => {
     setPendingGoalId(goal.id);
     updateGoalMutation.mutate({ id: goal.id, state: goal.state === "done" ? "active" : "done" });
@@ -332,10 +311,9 @@ export default function BingoCard({ year }: Props) {
     return (
       <BingoOnboarding
         year={year}
-        busy={createGoalMutation.isPending}
-        onBrainDump={(lines) => void addGoalsFromLines(lines)}
+        coachAvailable={coachAvailable}
+        onStartCoach={() => setShowOnboarding(false)}
         onBlank={() => setShowOnboarding(false)}
-        onGuidedComplete={() => setShowOnboarding(false)}
       />
     );
   }
@@ -503,6 +481,8 @@ export default function BingoCard({ year }: Props) {
             onClose={() => setSelectedGoalId(null)}
           />
         </div>
+      ) : coachAvailable && !locked ? (
+        <BingoCoachDock year={year} />
       ) : null}
     </div>
   );

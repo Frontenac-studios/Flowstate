@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
+
 export const bucketModeSchema = z.enum(["relative", "named_days"]);
 export type BucketMode = z.infer<typeof bucketModeSchema>;
 export const DEFAULT_BUCKET_MODE: BucketMode = "relative";
@@ -38,6 +40,25 @@ export const DEFAULT_GOAL_STEERING: GoalSteering = "on";
 export const balanceNudgeSchema = z.enum(["on", "off"]);
 export type BalanceNudge = z.infer<typeof balanceNudgeSchema>;
 export const DEFAULT_BALANCE_NUDGE: BalanceNudge = "on";
+
+export const goalCoachAmbitionSchema = z.enum(["gentle", "balanced", "stretch"]);
+export type GoalCoachAmbition = z.infer<typeof goalCoachAmbitionSchema>;
+export const DEFAULT_GOAL_COACH_AMBITION: GoalCoachAmbition = "balanced";
+
+export const GOAL_COACH_NOTE_MAX = 500;
+export const goalCoachNoteSchema = z.string().max(GOAL_COACH_NOTE_MAX);
+export const DEFAULT_GOAL_COACH_NOTE = "";
+
+/**
+ * J3 learned adaptations: categories the user explicitly consented (in coach chat) to
+ * have the coach ease off. Only ever written after a surface-and-ask exchange — never
+ * silent. `eased` holds the consented categories; the user can lift them any time.
+ */
+export const goalCoachAdaptationsSchema = z.object({
+  eased: z.array(z.enum(PROJECT_CATEGORIES)).default([]),
+});
+export type GoalCoachAdaptations = z.infer<typeof goalCoachAdaptationsSchema>;
+export const DEFAULT_GOAL_COACH_ADAPTATIONS: GoalCoachAdaptations = { eased: [] };
 
 export const evidenceCadenceSchema = z.enum(["monthly", "quarterly", "off"]);
 export type EvidenceCadence = z.infer<typeof evidenceCadenceSchema>;

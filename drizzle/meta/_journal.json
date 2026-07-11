@@ -274,6 +274,20 @@
       "when": 1783633400023,
       "tag": "0038_omniscient_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1783804134893,
+      "tag": "0039_yellow_kid_colt",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1783804934037,
+      "tag": "0040_silky_overlord",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { and, desc, eq, gte, ilike, isNull, lte, ne } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/db";
 import { syncAbyssItemRow } from "@/db/record-sync-mutation";
@@ -34,14 +35,22 @@ import {
   buildEditPhaseProposal,
   buildEditTaskProposal,
   buildMoveTaskToPhaseProposal,
+  buildProposeBingoGoalsProposal,
   buildReplanProjectDatesProposal,
   buildSetDayPrioritiesProposal,
   buildSetProtectedBlockProposal,
   buildSetTop3Proposal,
 } from "./build-tool-proposals";
 import { assembleChatContext } from "./assemble-chat-context";
+import { applyGoalCoachingAdjustment } from "./goal-coach-adaptations";
+import { queryCoachCurrentGoals, queryCoachPastGoals } from "./fetch-goals-context";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+const goalCoachingAdjustmentInputSchema = z.object({
+  easeOff: z.array(z.enum(PROJECT_CATEGORIES)).default([]),
+  resume: z.array(z.enum(PROJECT_CATEGORIES)).default([]),
+});
 
 export const CHAT_TOOLS = PLANNING_CHAT_TOOLS;
 export { toolsForRegister, toolsForSurface };
@@ -325,6 +334,49 @@ export async function executeChatTool(
     if (name === "query_abyss") {
       const result = await queryAbyss(userId, (input ?? {}) as QueryAbyssInput);
       return { content: JSON.stringify(result), mutatedTasks: false };
+    }
+
+    if (name === "query_goals") {
+      const result = await queryCoachCurrentGoals(userId);
+      return { content: JSON.stringify(result), mutatedTasks: false };
+    }
+
+    if (name === "query_past_goals") {
+      const { limit } = (input ?? {}) as { limit?: number };
+      const result = await queryCoachPastGoals(userId, limit ?? undefined);
+      return { content: JSON.stringify(result), mutatedTasks: false };
+    }
+
+    if (name === "propose_bingo_goals") {
+      const built = buildProposeBingoGoalsProposal(
+        input as Parameters<typeof buildProposeBingoGoalsProposal>[0]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "set_goal_coaching_adjustment") {
+      const parsed = goalCoachingAdjustmentInputSchema.safeParse(input ?? {});
+      if (!parsed.success) {
+        return {
+          content: JSON.stringify({ ok: false, error: "Invalid categories." }),
+          mutatedTasks: false,
+        };
+      }
+      const { easeOff, resume } = parsed.data;
+      if (easeOff.length === 0 && resume.length === 0) {
+        return {
+          content: JSON.stringify({ ok: false, error: "Nothing to adjust." }),
+          mutatedTasks: false,
+        };
+      }
+      const result = await applyGoalCoachingAdjustment(userId, { easeOff, resume });
+      return { content: JSON.stringify({ ok: true, eased: result.eased }), mutatedTasks: false };
     }
 
     if (name === "draft_week" || name === "draft_eod" || name === "draft_balance_pass") {

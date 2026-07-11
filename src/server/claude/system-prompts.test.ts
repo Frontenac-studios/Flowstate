@@ -9,6 +9,7 @@ import {
   buildSystemPrompt,
   registerForSurface,
   registerForThread,
+  resolveChatRegister,
 } from "./system-prompts";
 
 describe("system-prompts", () => {
@@ -58,6 +59,21 @@ describe("system-prompts", () => {
   it("omits surface modifier for focus threads", () => {
     const focusId = focusThreadId("00000000-0000-4000-8000-000000000099");
     expect(buildChatSystemPrompt(focusId, "today")).not.toContain("Surface: Today");
+  });
+
+  it("selects the goals register for the goals surface, regardless of thread", () => {
+    expect(resolveChatRegister(GLOBAL_THREAD_ID, "goals")).toBe("goals");
+    expect(resolveChatRegister(GLOBAL_THREAD_ID, "today")).toBe("planning");
+    const focusId = focusThreadId("00000000-0000-4000-8000-000000000099");
+    expect(resolveChatRegister(focusId, "goals")).toBe("goals");
+  });
+
+  it("uses the Socratic goals-coach prompt and no planning surface modifier", () => {
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "goals");
+    expect(prompt).toContain("Register: Goals coach");
+    expect(prompt).toContain("Every goal must be binary");
+    expect(prompt).not.toContain("Surface: Today");
+    expect(prompt).not.toContain("Surface: Goals");
   });
 
   it("adds capture modifier when capture context is present", () => {

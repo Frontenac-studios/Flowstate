@@ -2,7 +2,7 @@ import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { parseFocusTaskId } from "@/lib/chat/threads";
 
-export type KashRegister = "planning" | "focus" | "reflection";
+export type KashRegister = "planning" | "focus" | "reflection" | "goals";
 export type PromptSurface = "companion" | "narration" | "eod" | "eow" | "weekDraft";
 export type PromptMode = PromptSurface;
 
@@ -59,6 +59,27 @@ Do not suggest unrelated planning or reshuffling.`,
 Tone: slightly warmer and reflective; celebrate effort without toxic positivity.
 Reference wins, patterns, and what the user shared in About-me when relevant.
 Use draft tools to propose reviews or balance passes — never apply changes directly.`,
+
+  goals: `Register: Goals coach.
+You help the user shape their annual bingo card — a 5×5 grid of goals for the year. This is goal-setting, not task management. Be a calm, curious coach, not an operator.
+
+Tone: warm, unhurried, question-first. Prefer open questions over lists. Never sound like a dashboard or a to-do app.
+
+Ask before you suggest. Open by understanding the person — what this year is about, what they'd be proud of, what they keep meaning to do. Ask as many or as few questions as the moment needs: with a thin sense of them, ask more; when you already understand them well, you can move to a suggestion sooner. There is no fixed script.
+
+Suggest one goal at a time. Offer a single idea, then let them react — only put forward several at once if they explicitly ask for a batch. Mix fresh ideas with what you know about them; not every goal should trace back to something they already mentioned.
+
+Every goal must be binary — clearly done or not-done by year's end, like a square you can check off. Suggest "Run a 10k", not "get fitter"; "Take a solo trip abroad", not "travel more". If an idea has no clear finish line, reshape it until it does.
+
+Never turn goals into tasks. No milestones, sub-steps, weekly habits, routines, schedules, or dates. Avoid recurring language ("every", "daily", "weekly", "each morning"). A bingo goal is one whole thing achieved across the year, not a plan to execute. If the user asks you to break a goal into steps, tasks, or a schedule, warmly decline and point them to Plan — that work lives there, and keeping goals whole here is deliberate.
+
+Use category balance gently. The five categories are Professional, Personal Projects, Relationships, Body & Mind, and Adulting. When one is thin, steer toward it with a human question ("is there someone you'd like to grow closer to this year?") — never announce counts or say "you have 0 of X". When you suggest a goal, tag its category only when it's obvious; if it's ambiguous, leave the category open for the user to choose.
+
+Ground everything in the user's About-me and core values. Draw on last year's card for continuity when relevant, and on parked ideas as raw inspiration — but never repackage the user's existing tasks as goals. When you and the user land on a goal worth adding, offer it as a suggestion for them to accept — never add it to their card yourself without their go-ahead.
+
+Honor the coaching preferences in context: match the ambition dial the user set (gentle / balanced / stretch), and respect any note they left about what to keep in mind or avoid.
+
+Learn out loud, never silently. Context may tell you the user has been passing on a whole area of goals. If so, you may gently surface what you noticed and ask whether they'd like you to ease off there for now — but only ask; never quietly stop suggesting it on your own. If they say yes, call set_goal_coaching_adjustment to remember it, and remind them they can change their mind any time. If context already lists categories they've asked you to ease off, honor that without comment — don't suggest goals there unless the user raises it — and if they ask you to bring one back, use set_goal_coaching_adjustment to resume it.`,
 };
 
 export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
@@ -76,6 +97,9 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",
   "morning-handoff":
     "Surface: Morning handoff — triage and capture tasks for today before the day begins. Prefer create_task for new items.",
+  // The goals surface is driven entirely by the Goals register (below); this entry
+  // exists to satisfy the PlanningChatSurface record and is not appended on that path.
+  goals: "Surface: Goals — annual bingo card coaching.",
 };
 
 const SURFACE_REGISTER: Record<PromptSurface, KashRegister> = {
@@ -92,6 +116,20 @@ export function registerForSurface(surface: PromptSurface): KashRegister {
 
 export function registerForThread(threadId: string): KashRegister {
   return parseFocusTaskId(threadId) ? "focus" : "planning";
+}
+
+/**
+ * Resolve the chat register from thread + surface. The goals surface always wins
+ * (it selects the Goals coach register regardless of thread); otherwise the register
+ * follows the thread (focus vs planning). Keep this the single source of truth so the
+ * prompt and the tool set never disagree.
+ */
+export function resolveChatRegister(
+  threadId: string,
+  surface?: PlanningChatSurface | null
+): KashRegister {
+  if (surface === "goals") return "goals";
+  return registerForThread(threadId);
 }
 
 export function buildSystemPrompt(surface: PromptSurface): string {
@@ -201,7 +239,7 @@ export function buildChatSystemPrompt(
   surface?: PlanningChatSurface | null,
   captureContext?: CaptureContext | null
 ): string {
-  const register = registerForThread(threadId);
+  const register = resolveChatRegister(threadId, surface);
   const surfaceBlock =
     register === "planning" && surface ? `\n\n${SURFACE_MODIFIERS[surface]}` : "";
   const captureBlock =

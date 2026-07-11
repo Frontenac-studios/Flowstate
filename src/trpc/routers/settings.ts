@@ -15,10 +15,16 @@ import {
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
   DEFAULT_EVIDENCE_CADENCE,
+  DEFAULT_GOAL_COACH_ADAPTATIONS,
+  DEFAULT_GOAL_COACH_AMBITION,
+  DEFAULT_GOAL_COACH_NOTE,
   DEFAULT_GOAL_STEERING,
   DEFAULT_MORNING_HANDOFF,
   DEFAULT_TOP3_MIDDAY_CHECKIN,
   evidenceCadenceSchema,
+  goalCoachAdaptationsSchema,
+  goalCoachAmbitionSchema,
+  goalCoachNoteSchema,
   goalSteeringSchema,
   morningHandoffSchema,
   notificationPrefsSchema,
@@ -81,6 +87,13 @@ export const settingsRouter = createTRPCRouter({
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
       calendarAiEnabled: row.calendarAiEnabled ?? DEFAULT_CALENDAR_AI_ENABLED,
+      goalCoachAmbition: goalCoachAmbitionSchema.safeParse(row.goalCoachAmbition).success
+        ? row.goalCoachAmbition
+        : DEFAULT_GOAL_COACH_AMBITION,
+      goalCoachNote: row.goalCoachNote ?? DEFAULT_GOAL_COACH_NOTE,
+      goalCoachEased: goalCoachAdaptationsSchema.safeParse(row.goalCoachAdaptations).success
+        ? goalCoachAdaptationsSchema.parse(row.goalCoachAdaptations).eased
+        : DEFAULT_GOAL_COACH_ADAPTATIONS.eased,
     };
   }),
   updateBucketMode: protectedProcedure.input(bucketModeSchema).mutation(async ({ ctx, input }) => {
@@ -196,6 +209,48 @@ export const settingsRouter = createTRPCRouter({
         });
       }
       return input;
+    }),
+  updateGoalCoachPrefs: protectedProcedure
+    .input(z.object({ ambition: goalCoachAmbitionSchema, note: goalCoachNoteSchema }))
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const trimmedNote = input.note.trim();
+      const [row] = await db
+        .update(appSettings)
+        .set({
+          goalCoachAmbition: input.ambition,
+          goalCoachNote: trimmedNote.length > 0 ? trimmedNote : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update goals coach preferences.",
+        });
+      }
+      return { ambition: input.ambition, note: trimmedNote };
+    }),
+  // J3 transparency: let the user see and prune what the coach has learned. The coach
+  // adds eased categories via a consent-gated chat tool; this mutation is the "lift it"
+  // control surfaced in Settings, so learning is never a black box.
+  setGoalCoachAdaptations: protectedProcedure
+    .input(goalCoachAdaptationsSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({ goalCoachAdaptations: { eased: input.eased }, updatedAt: new Date() })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update goals coach adaptations.",
+        });
+      }
+      return { eased: input.eased };
     }),
   updateCalendarAiEnabled: protectedProcedure
     .input(calendarAiEnabledSchema)

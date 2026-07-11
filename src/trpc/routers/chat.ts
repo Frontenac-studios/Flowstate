@@ -6,15 +6,17 @@ import { db } from "@/db";
 import { chatMessages } from "@/db/tables";
 import { messageContentSchema, textContent } from "@/lib/chat/message-content";
 import {
+  bingoGoalItemEditSchema,
   createTaskItemEditSchema,
   filterPayloadByItemIds,
+  mergeBingoGoalEdits,
   mergeCreateTaskEdits,
   proposedActionSchema,
 } from "@/lib/chat/proposed-actions";
 import { captureContextSchema } from "@/lib/chat/capture-context";
 import { confirmUndoFrameSchema } from "@/lib/chat/confirm-undo";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
-import { isAnthropicConfigured } from "@/lib/env";
+import { isAnthropicConfigured, isBingoCoachEnabled } from "@/lib/env";
 import { buildWorkOnSuggestion } from "@/server/chat/build-work-on-suggestion";
 import { applyProposedActionPayload } from "@/server/claude/apply-proposed-action";
 import {
@@ -243,7 +245,12 @@ export const chatRouter = createTRPCRouter({
     }),
 
   isConfigured: protectedProcedure.query(() => {
-    return { configured: isAnthropicConfigured() };
+    // bingoCoachEnabled implies configured — the coach needs the API. Callers gate the
+    // goals dock on both flags.
+    return {
+      configured: isAnthropicConfigured(),
+      bingoCoachEnabled: isAnthropicConfigured() && isBingoCoachEnabled(),
+    };
   }),
 
   listCustomSuggestions: protectedProcedure.query(async ({ ctx }) => {
@@ -271,6 +278,8 @@ export const chatRouter = createTRPCRouter({
         // Inline edits from the draft card (create_task only). When present these
         // both select the enabled rows and carry edited field values.
         editedItems: z.array(createTaskItemEditSchema).optional(),
+        // Inline category edits from the goals confirm card (propose_bingo_goals only).
+        goalEdits: z.array(bingoGoalItemEditSchema).optional(),
         captureContext: captureContextSchema.nullish(),
       })
     )
@@ -294,7 +303,10 @@ export const chatRouter = createTRPCRouter({
 
       const parsedProposal = proposedActionSchema.parse(proposal);
       let filtered: ReturnType<typeof filterPayloadByItemIds>;
-      if (input.editedItems?.length) {
+      if (parsedProposal.kind === "propose_bingo_goals" && input.goalEdits?.length) {
+        // Overlays chosen categories onto the selected goal rows (throws on bad input).
+        filtered = mergeBingoGoalEdits(parsedProposal, input.goalEdits);
+      } else if (input.editedItems?.length) {
         // Re-validates the edited items against the schema (throws on bad input).
         filtered = mergeCreateTaskEdits(parsedProposal, input.editedItems);
       } else if (input.enabledItemIds?.length) {

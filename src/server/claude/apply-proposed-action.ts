@@ -1,16 +1,26 @@
 import "server-only";
 
-import { and, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
   syncPhaseRow,
+  syncPlanningRow,
   syncProjectRow,
   syncProtectedBlockRow,
   syncTaskRow,
   syncWeekDayPriorityRow,
 } from "@/db/record-sync-mutation";
-import { phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
+import {
+  bingoCards,
+  goals,
+  phases,
+  projects,
+  protectedBlocks,
+  tasks,
+  weekDayPriorities,
+} from "@/db/tables";
+import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
 import { buildCreateTaskPlacementSummary } from "@/lib/chat/build-create-task-placement-summary";
 import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { ChatCreatedTask } from "@/lib/chat/chat-task-created-events";
@@ -88,6 +98,21 @@ async function resolveProjectId(
     .where(eq(projects.userId, userId));
   const match = findProjectBySlug(projectSlug.trim(), projectRows);
   return projectRows.find((p) => p.slug === match?.slug)?.id ?? null;
+}
+
+/**
+ * The bingo card a goal proposal commits into: the user's most recent DRAFT card.
+ * Returns null when there is no draft card (finalized-only or none) — the coach is
+ * hidden in those states, so this is a defensive no-op.
+ */
+async function resolveDraftBingoCardId(userId: string): Promise<string | null> {
+  const [card] = await db
+    .select({ id: bingoCards.id })
+    .from(bingoCards)
+    .where(and(eq(bingoCards.userId, userId), eq(bingoCards.status, "draft")))
+    .orderBy(desc(bingoCards.cardYear))
+    .limit(1);
+  return card?.id ?? null;
 }
 
 export type ApplyProposedActionOptions = {
@@ -827,6 +852,56 @@ export async function applyProposedActionPayload(
       }
 
       if (phasesUndo.phases.length > 0) undoFrames.push(phasesUndo);
+      return { applied, titles, undoFrames, createdTasks: [] };
+    }
+
+    case "propose_bingo_goals": {
+      const cardId = await resolveDraftBingoCardId(userId);
+      if (!cardId) return { applied: 0, titles: [], undoFrames, createdTasks: [] };
+
+      const existingGoals = await db
+        .select({ cellIndex: goals.cellIndex })
+        .from(goals)
+        .where(and(eq(goals.userId, userId), eq(goals.bingoCardId, cardId)));
+
+      const occupied = new Set<number>();
+      for (const g of existingGoals) {
+        if (g.cellIndex != null) occupied.add(g.cellIndex);
+      }
+
+      const titles: string[] = [];
+      const goalIds: string[] = [];
+      let applied = 0;
+
+      for (const item of action.items) {
+        // Category is required to create a goal; the confirm card blocks untagged rows,
+        // so skip defensively if one slips through.
+        if (!item.category) continue;
+        const cellIndex = nextEmptyCellIndex(occupied);
+        if (cellIndex == null) break; // card is full
+
+        const [row] = await db
+          .insert(goals)
+          .values({
+            userId,
+            bingoCardId: cardId,
+            title: item.title,
+            category: item.category,
+            cellIndex,
+            valueId: item.valueId ?? null,
+          })
+          .returning();
+
+        if (row) {
+          await syncPlanningRow("goals", row.id, "insert", row);
+          occupied.add(cellIndex);
+          titles.push(row.title);
+          goalIds.push(row.id);
+          applied += 1;
+        }
+      }
+
+      if (goalIds.length > 0) undoFrames.push({ type: "create_goals", goalIds });
       return { applied, titles, undoFrames, createdTasks: [] };
     }
 

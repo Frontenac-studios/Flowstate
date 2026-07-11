@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterPayloadByEnabledItems,
   filterPayloadByItemIds,
+  mergeBingoGoalEdits,
   mergeCreateTaskEdits,
   proposalHeadline,
   proposedActionSchema,
@@ -188,5 +189,60 @@ describe("proposed-actions", () => {
       ],
     });
     expect(proposalHeadline(action)).toContain("Delete 1 task");
+  });
+
+  const bingoGoals = proposedActionSchema.parse({
+    kind: "propose_bingo_goals",
+    status: "pending",
+    items: [
+      {
+        itemId: "a",
+        enabled: true,
+        title: "Run a 10k",
+        category: "body_mind",
+        rationale: "you love running",
+      },
+      { itemId: "b", enabled: true, title: "Take a solo trip abroad" },
+    ],
+  });
+
+  it("parses propose_bingo_goals with a tagged and an untagged row", () => {
+    expect(bingoGoals.kind).toBe("propose_bingo_goals");
+    if (bingoGoals.kind === "propose_bingo_goals") {
+      expect(bingoGoals.items[0]?.category).toBe("body_mind");
+      expect(bingoGoals.items[1]?.category).toBeUndefined();
+    }
+  });
+
+  it("builds a goal headline", () => {
+    expect(proposalHeadline(bingoGoals)).toBe("Add 2 goals to your card");
+  });
+
+  it("mergeBingoGoalEdits overlays chosen categories and keeps only listed rows", () => {
+    const merged = mergeBingoGoalEdits(bingoGoals, [
+      { itemId: "b", category: "personal_projects" },
+    ]);
+    expect(merged?.kind).toBe("propose_bingo_goals");
+    if (merged?.kind === "propose_bingo_goals") {
+      expect(merged.items).toHaveLength(1);
+      expect(merged.items[0]?.itemId).toBe("b");
+      expect(merged.items[0]?.category).toBe("personal_projects");
+    }
+  });
+
+  it("mergeBingoGoalEdits preserves a pre-tagged category when none is supplied", () => {
+    const merged = mergeBingoGoalEdits(bingoGoals, [{ itemId: "a" }]);
+    if (merged?.kind === "propose_bingo_goals") {
+      expect(merged.items[0]?.category).toBe("body_mind");
+    }
+  });
+
+  it("rejects a goal title over 80 chars", () => {
+    const result = proposedActionSchema.safeParse({
+      kind: "propose_bingo_goals",
+      status: "pending",
+      items: [{ itemId: "a", enabled: true, title: "x".repeat(81) }],
+    });
+    expect(result.success).toBe(false);
   });
 });

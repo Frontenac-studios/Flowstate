@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/lib/animate/motion-tokens";
 
 import Textarea from "@/components/kash/ui/Textarea";
-import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
+import type {
+  BingoGoalItemEdit,
+  CreateTaskItemEdit,
+  ProposedAction,
+} from "@/lib/chat/proposed-actions";
 import { parseFocusTaskId } from "@/lib/chat/threads";
 import { renderChatMessage } from "@/lib/markdown/render-chat-message";
 
@@ -35,7 +39,8 @@ type Props = {
   onApplyProposal?: (
     messageId: string,
     enabledItemIds: string[],
-    editedItems?: CreateTaskItemEdit[]
+    editedItems?: CreateTaskItemEdit[],
+    goalEdits?: BingoGoalItemEdit[]
   ) => void;
   onDismissProposal?: (messageId: string) => void;
   hasMoreOlder?: boolean;
@@ -206,8 +211,8 @@ export function MessageList({
               <ConfirmActionCard
                 proposal={proposal}
                 busy={proposalBusy}
-                onConfirm={(enabledItemIds, editedItems) =>
-                  onApplyProposal(m.id, enabledItemIds, editedItems)
+                onConfirm={(enabledItemIds, editedItems, goalEdits) =>
+                  onApplyProposal(m.id, enabledItemIds, editedItems, goalEdits)
                 }
                 onDismiss={() => onDismissProposal(m.id)}
               />

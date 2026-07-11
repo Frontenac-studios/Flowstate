@@ -88,16 +88,39 @@ function TaskRow({
   title,
   meta,
   actions,
+  category,
 }: {
   title: string;
   meta?: string;
   actions: React.ReactNode;
+  /** When set, the row is tinted by its project category (left accent + soft fill). */
+  category?: ProjectCategory | null;
 }) {
+  const tintStyle =
+    category != null
+      ? {
+          borderLeft: `3px solid ${categorySolidVar(category)}`,
+          backgroundColor: categoryFillVar(category),
+        }
+      : undefined;
   return (
-    <div className="flex items-start gap-[var(--space-3)] rounded-row border border-subtle bg-surface px-[var(--space-3)] py-[var(--space-2)]">
+    <div
+      className={cn(
+        "flex items-start gap-[var(--space-3)] border border-subtle bg-surface px-[var(--space-3)] py-[var(--space-2)]",
+        category != null ? "rounded-r-row" : "rounded-row"
+      )}
+      style={tintStyle}
+    >
       <div className="min-w-0 flex-1">
         <p className="break-words text-body text-ink">{title}</p>
-        {meta ? <p className="mt-0.5 text-caption text-ink-muted">{meta}</p> : null}
+        {meta ? (
+          <p
+            className="mt-0.5 text-caption text-ink-muted"
+            style={category != null ? { color: categoryTextVar(category) } : undefined}
+          >
+            {meta}
+          </p>
+        ) : null}
       </div>
       <div className="flex shrink-0 flex-wrap gap-1">{actions}</div>
     </div>
@@ -216,6 +239,7 @@ export function MorningHandoffModal({
       open
       title="Good morning"
       dismissOnBackdrop={false}
+      dim="strong"
       onDismiss={onSkip}
       footer={
         <div className="flex flex-col gap-[var(--space-2)] sm:flex-row sm:justify-end">
@@ -255,6 +279,7 @@ export function MorningHandoffModal({
                 key={task.id}
                 title={task.title}
                 meta="Unfinished from a prior day"
+                category={task.category}
                 actions={
                   <>
                     <button
@@ -288,6 +313,7 @@ export function MorningHandoffModal({
                   key={task.id}
                   title={task.title}
                   meta="Recurring occurrence"
+                  category={task.category}
                   actions={
                     <>
                       <button
@@ -325,6 +351,7 @@ export function MorningHandoffModal({
                 key={task.id}
                 title={task.title}
                 meta={task.projectSlug ? `#${task.projectSlug}` : undefined}
+                category={task.category}
                 actions={
                   <button
                     type="button"
@@ -475,7 +502,18 @@ export function MorningHandoffModal({
               return (
                 <li
                   key={task.id}
-                  className="flex items-center gap-2 rounded-row border border-subtle px-[var(--space-3)] py-[var(--space-2)]"
+                  className={cn(
+                    "flex items-center gap-2 border border-subtle px-[var(--space-3)] py-[var(--space-2)]",
+                    task.category != null ? "rounded-r-row" : "rounded-row"
+                  )}
+                  style={
+                    task.category != null
+                      ? {
+                          borderLeft: `3px solid ${categorySolidVar(task.category)}`,
+                          backgroundColor: categoryFillVar(task.category),
+                        }
+                      : undefined
+                  }
                 >
                   <button
                     type="button"
