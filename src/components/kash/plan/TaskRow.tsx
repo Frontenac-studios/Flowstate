@@ -630,7 +630,6 @@ export function TaskRow({
           ) : null}
 
           <Checkbox
-            className="mt-0.5"
             accentColor={completing || resolvedCategory ? stripeColor : "var(--ink)"}
             aria-label={`Complete ${task.title}`}
             checked={completing}

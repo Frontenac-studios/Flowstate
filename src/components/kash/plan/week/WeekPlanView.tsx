@@ -1,13 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-
-import { useBalancePassTrigger } from "@/components/kash/plan/balance/BalancePassProvider";
+import { useMemo } from "react";
 
 import { LensControlBar } from "@/components/kash/plan/LensControlBar";
 import { LensProvider } from "@/components/kash/plan/LensProvider";
-import { PlanModeToggle } from "@/components/kash/plan/PlanModeToggle";
 import { PlanProvider } from "@/components/kash/plan/PlanProvider";
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import type { PlanningBreadcrumb } from "@/lib/planning/horizon-storage";
@@ -25,31 +22,14 @@ type Props = {
 };
 
 /**
- * `/plan` Week tab — embeds the same WeekCanvas as `/this-week` with an optional
- * planning rail (inbox + AI draft ghosts) toggled via PlanModeToggle.
+ * `/plan` Week tab — embeds the same WeekCanvas as `/this-week` with the
+ * planning rail (inbox + AI draft ghosts) always visible.
  */
 export default function WeekPlanView({ breadcrumb }: Props) {
   const trpc = useTRPC();
-  const [planRailOpen, setPlanRailOpen] = useState(true);
-  const triggerBalancePass = useBalancePassTrigger();
-  const prevPlanRailRef = useRef(planRailOpen);
 
   const anchorDate = useMemo(() => resolveWeekAnchorDate(breadcrumb), [breadcrumb]);
   const weekRef = useMemo(() => parseISODateString(anchorDate), [anchorDate]);
-
-  useEffect(() => {
-    if (prevPlanRailRef.current && !planRailOpen) {
-      triggerBalancePass?.({
-        horizon: "week",
-        year: breadcrumb.year,
-        month: breadcrumb.month,
-        quarter: breadcrumb.quarter,
-        weekStart: anchorDate,
-        tzOffsetMinutes: new Date().getTimezoneOffset(),
-      });
-    }
-    prevPlanRailRef.current = planRailOpen;
-  }, [planRailOpen, triggerBalancePass, breadcrumb, anchorDate]);
 
   const tasksQuery = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const tasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data]);
@@ -76,10 +56,6 @@ export default function WeekPlanView({ breadcrumb }: Props) {
   return (
     <PlanProvider>
       <div className="flex flex-col gap-stack">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <PlanModeToggle variant="weekPlanning" value={planRailOpen} onChange={setPlanRailOpen} />
-        </div>
-
         <LensProvider scope="this-week">
           {isError ? (
             <QueryErrorNotice
@@ -98,15 +74,9 @@ export default function WeekPlanView({ breadcrumb }: Props) {
             </div>
           ) : null}
 
-          {planRailOpen ? (
-            <WeekDraftGhosts anchorDate={anchorDate} hasInboxTasks={hasInboxTasks} />
-          ) : null}
+          <WeekDraftGhosts anchorDate={anchorDate} hasInboxTasks={hasInboxTasks} />
 
-          <WeekCanvas
-            anchorDate={anchorDate}
-            showPlanningRail={planRailOpen}
-            showWeekChrome={hasWeekPlanData}
-          />
+          <WeekCanvas anchorDate={anchorDate} showWeekChrome={hasWeekPlanData} />
         </LensProvider>
       </div>
     </PlanProvider>

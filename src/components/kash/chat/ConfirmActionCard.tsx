@@ -460,7 +460,6 @@ export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss
                 checked={checked}
                 disabled={busy}
                 onChange={() => toggleItem(item.itemId)}
-                className="mt-0.5"
               />
               <label
                 htmlFor={`proposal-${item.itemId}`}

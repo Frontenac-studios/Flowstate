@@ -16,7 +16,7 @@ const Checkbox = forwardRef<HTMLInputElement, Props>(function Checkbox(
       ref={ref}
       type="checkbox"
       className={cn(
-        "kash-focus-visible h-icon-md w-icon-md shrink-0 cursor-pointer rounded-control outline-none",
+        "kash-focus-visible h-icon-md w-icon-md shrink-0 cursor-pointer self-center rounded-control outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
