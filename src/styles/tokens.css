@@ -155,6 +155,8 @@
   --shadow-overlay: 0 8px 24px rgba(20, 28, 40, 0.12);
   /* overlay scrim — Today stays readable behind ritual sheets (D38) */
   --backdrop: rgba(0, 0, 0, 0.2);
+  /* deeper scrim — morning hand-off pushes the blurred rail further back */
+  --backdrop-strong: rgba(0, 0, 0, 0.4);
 
   /* ---- density (DT-5a — compact) ---- */
   --row-min-height: 30px;

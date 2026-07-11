@@ -3,6 +3,10 @@
   animation: modal-backdrop-in var(--motion-short) var(--ease-enter) both;
 }
 
+.ritual-sheet-backdrop--strong {
+  background: var(--backdrop-strong);
+}
+
 .ritual-sheet-panel {
   animation: ritual-sheet-panel-in var(--motion-medium) var(--ease-move) both;
 }
