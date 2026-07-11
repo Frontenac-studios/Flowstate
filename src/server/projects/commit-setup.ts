@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
+import { runAppTransaction, type AppDbTransaction } from "@/db/run-transaction";
 import {
   syncPhaseRow,
   syncProjectMilestoneRow,
@@ -65,7 +66,7 @@ export const commitSetupInputSchema = z.object({
 
 export type CommitSetupInput = z.infer<typeof commitSetupInputSchema>;
 
-type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type DbTransaction = AppDbTransaction;
 
 function assertPhaseDates(
   startDate: string | null | undefined,
@@ -350,7 +351,7 @@ export async function commitProjectSetup(userId: string, input: CommitSetupInput
   const parsed = commitSetupInputSchema.parse(input);
   const project = await getOwnedProject(userId, parsed.projectId);
 
-  const result = await db.transaction(async (tx) => {
+  const result = await runAppTransaction(async (tx) => {
     let updatedProject: typeof projects.$inferSelect | null = null;
 
     if (parsed.project) {
