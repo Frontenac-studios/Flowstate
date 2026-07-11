@@ -97,6 +97,28 @@ const PROPOSE_BINGO_GOALS_TOOL: Anthropic.Tool = {
   },
 };
 
+const SET_GOAL_COACHING_ADJUSTMENT_TOOL: Anthropic.Tool = {
+  name: "set_goal_coaching_adjustment",
+  description:
+    "Remember a coaching preference the user JUST agreed to out loud. Only call this after you asked and they said yes — never on your own inference. Use `easeOff` for categories they agreed you should stop suggesting for now, and `resume` for categories they want you to bring back. This adjusts your future suggestions; it does not change their card.",
+  input_schema: {
+    type: "object",
+    properties: {
+      easeOff: {
+        type: "array",
+        items: { type: "string", enum: [...PROJECT_CATEGORIES] },
+        description: "Categories the user agreed you should ease off suggesting.",
+      },
+      resume: {
+        type: "array",
+        items: { type: "string", enum: [...PROJECT_CATEGORIES] },
+        description: "Categories the user wants you to start suggesting again.",
+      },
+    },
+    additionalProperties: false,
+  },
+};
+
 const DRAFT_WEEK_TOOL: Anthropic.Tool = {
   name: "draft_week",
   description: "Draft weekly plan.",
@@ -361,6 +383,7 @@ const TOOL_BY_NAME: Record<string, Anthropic.Tool> = {
   query_goals: QUERY_GOALS_TOOL,
   query_past_goals: QUERY_PAST_GOALS_TOOL,
   propose_bingo_goals: PROPOSE_BINGO_GOALS_TOOL,
+  set_goal_coaching_adjustment: SET_GOAL_COACHING_ADJUSTMENT_TOOL,
   draft_week: DRAFT_WEEK_TOOL,
   draft_eod: DRAFT_EOD_TOOL,
   draft_balance_pass: DRAFT_BALANCE_PASS_TOOL,
@@ -448,9 +471,10 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
   ],
   care: ["query_tasks", "query_state", "draft_eod", "complete_task", "propose_about_me_edit"],
   "morning-handoff": ["query_tasks", "query_state", "create_task"],
-  // Goals coach: goal reads + the single goal-proposing write. Deliberately NO
-  // task/schedule/milestone tools — the coach must not manage tasks.
-  goals: ["query_goals", "query_past_goals", "propose_bingo_goals"],
+  // Goals coach: goal reads + the goal-proposing write + the consent-gated learning
+  // adjustment. Deliberately NO task/schedule/milestone tools — the coach must not
+  // manage tasks.
+  goals: ["query_goals", "query_past_goals", "propose_bingo_goals", "set_goal_coaching_adjustment"],
 };
 
 export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [
@@ -488,6 +512,7 @@ export const GOALS_CHAT_TOOLS: Anthropic.Tool[] = [
   QUERY_GOALS_TOOL,
   QUERY_PAST_GOALS_TOOL,
   PROPOSE_BINGO_GOALS_TOOL,
+  SET_GOAL_COACHING_ADJUSTMENT_TOOL,
 ];
 
 export const REFLECTION_CHAT_TOOLS: Anthropic.Tool[] = [

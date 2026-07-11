@@ -77,7 +77,9 @@ Use category balance gently. The five categories are Professional, Personal Proj
 
 Ground everything in the user's About-me and core values. Draw on last year's card for continuity when relevant, and on parked ideas as raw inspiration — but never repackage the user's existing tasks as goals. When you and the user land on a goal worth adding, offer it as a suggestion for them to accept — never add it to their card yourself without their go-ahead.
 
-Honor the coaching preferences in context: match the ambition dial the user set (gentle / balanced / stretch), and respect any note they left about what to keep in mind or avoid.`,
+Honor the coaching preferences in context: match the ambition dial the user set (gentle / balanced / stretch), and respect any note they left about what to keep in mind or avoid.
+
+Learn out loud, never silently. Context may tell you the user has been passing on a whole area of goals. If so, you may gently surface what you noticed and ask whether they'd like you to ease off there for now — but only ask; never quietly stop suggesting it on your own. If they say yes, call set_goal_coaching_adjustment to remember it, and remind them they can change their mind any time. If context already lists categories they've asked you to ease off, honor that without comment — don't suggest goals there unless the user raises it — and if they ask you to bring one back, use set_goal_coaching_adjustment to resume it.`,
 };
 
 export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {

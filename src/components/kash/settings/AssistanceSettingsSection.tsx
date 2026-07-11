@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useTRPC } from "@/trpc/client";
 import Select from "@/components/kash/ui/Select";
+import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { GOAL_COACH_NOTE_MAX } from "@/lib/settings/constants";
 
 import { NotificationSettingsSection } from "./NotificationSettingsSection";
@@ -185,9 +186,17 @@ export function GoalCoachSettingsSection() {
       },
     })
   );
+  const adaptationsMutation = useMutation(
+    trpc.settings.setGoalCoachAdaptations.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: trpc.settings.get.queryKey() });
+      },
+    })
+  );
 
   const ambition = (data?.goalCoachAmbition ?? "balanced") as "gentle" | "balanced" | "stretch";
   const serverNote = data?.goalCoachNote ?? "";
+  const easedCategories = (data?.goalCoachEased ?? []) as ProjectCategory[];
   const [note, setNote] = useState(serverNote);
   useEffect(() => {
     setNote(serverNote);
@@ -198,6 +207,9 @@ export function GoalCoachSettingsSection() {
   const busy = mutation.isPending;
   const commit = (nextAmbition: typeof ambition, nextNote: string) => {
     mutation.mutate({ ambition: nextAmbition, note: nextNote });
+  };
+  const liftEased = (category: ProjectCategory) => {
+    adaptationsMutation.mutate({ eased: easedCategories.filter((c) => c !== category) });
   };
 
   return (
@@ -244,7 +256,35 @@ export function GoalCoachSettingsSection() {
         </label>
       </fieldset>
 
-      {mutation.isError ? (
+      {easedCategories.length > 0 ? (
+        <div className="mt-4 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
+          <span className="text-sm font-medium text-ink">Eased off, at your request</span>
+          <span className="mt-0.5 block text-sm text-ink-muted">
+            You told the coach to hold back on these areas. Remove one to have it suggest goals
+            there again.
+          </span>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {easedCategories.map((category) => (
+              <li key={category}>
+                <button
+                  type="button"
+                  disabled={adaptationsMutation.isPending}
+                  onClick={() => liftEased(category)}
+                  className="inline-flex items-center gap-1.5 rounded-[var(--radius-chip)] border border-subtle bg-surface px-2.5 py-1 text-sm text-ink hover:bg-surface-2 disabled:opacity-50"
+                >
+                  {categoryLabel(category)}
+                  <span aria-hidden className="text-ink-muted">
+                    ×
+                  </span>
+                  <span className="sr-only">Resume {categoryLabel(category)} suggestions</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {mutation.isError || adaptationsMutation.isError ? (
         <p className="mt-2 text-sm text-critical" role="alert">
           Could not save goals coach preferences. Try again.
         </p>

@@ -44,9 +44,14 @@ describe("toolsForSurface", () => {
       );
   });
 
-  it("goals coach exposes only goal reads + the goal-proposing write, no task tools", () => {
+  it("goals coach exposes only goal reads + the goal-proposing write + the learning adjustment, no task tools", () => {
     const names = toolsForSurface("goals", "goals").map((t) => t.name);
-    expect(names).toEqual(["query_goals", "query_past_goals", "propose_bingo_goals"]);
+    expect(names).toEqual([
+      "query_goals",
+      "query_past_goals",
+      "propose_bingo_goals",
+      "set_goal_coaching_adjustment",
+    ]);
     for (const banned of [
       "create_task",
       "edit_task",

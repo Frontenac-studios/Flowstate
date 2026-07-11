@@ -7,6 +7,7 @@ import { abyssItems, appSettings, bingoCards, goals } from "@/db/tables";
 import { BINGO_CELL_COUNT, BINGO_FREE_CELL_INDEX } from "@/db/schema/planning-enums";
 import type { BingoGoal } from "@/lib/planning/bingo-grid";
 import { categoryBalance } from "@/lib/planning/bingo-grid";
+import { deriveCategorySignal, detectEaseOffCandidates } from "@/lib/planning/goal-coach-signal";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import {
   DEFAULT_GOAL_COACH_AMBITION,
@@ -14,6 +15,7 @@ import {
   type GoalCoachAmbition,
 } from "@/lib/settings/constants";
 
+import { loadEasedCategories, loadGoalProposalOutcomes } from "./goal-coach-adaptations";
 import { listThreadMessages } from "./persist-message";
 import type { PlanContextSnapshot } from "./fetch-plan-context";
 
@@ -173,6 +175,32 @@ function formatCoachPrefsBlock(ambition: GoalCoachAmbition, note: string): strin
   return lines.join("\n");
 }
 
+/**
+ * J3 learned-signal block. Surfaces (a) categories the user consented to ease off — honor
+ * silently — and (b) a fresh skip pattern the coach may *raise and ask about*, never adapt
+ * to on its own. Returns null when there's nothing to say.
+ */
+function formatLearnedSignalBlock(
+  easeOffCandidates: readonly ProjectCategory[],
+  easedCategories: readonly ProjectCategory[]
+): string | null {
+  const lines: string[] = [];
+  if (easedCategories.length > 0) {
+    const labels = easedCategories.map(categoryLabel).join(", ");
+    lines.push(
+      `The user has asked you to ease off these categories: ${labels}. Don't suggest goals there unless the user brings them up; they can lift this any time.`
+    );
+  }
+  if (easeOffCandidates.length > 0) {
+    const labels = easeOffCandidates.map(categoryLabel).join(", ");
+    lines.push(
+      `You've noticed the user keeps passing on suggestions in: ${labels}. If it feels natural, you MAY gently check whether they'd like you to ease off there for now — but ask first and only adapt (via set_goal_coaching_adjustment) if they say yes. Never announce counts, and never silently stop suggesting.`
+    );
+  }
+  if (lines.length === 0) return null;
+  return ["What you've learned about their preferences:", ...lines].join("\n");
+}
+
 function formatBalanceLine(balance: Record<ProjectCategory, number>): string {
   const parts = PROJECT_CATEGORIES.map((c) => `${categoryLabel(c)} ${balance[c]}`);
   return `Category balance (placed goals): ${parts.join(", ")}`;
@@ -198,25 +226,33 @@ export async function fetchGoalsContextSnapshot(
   userId: string,
   threadId: string
 ): Promise<PlanContextSnapshot> {
-  const [{ currentCard, currentGoals, pastCardsByYear }, abyssRows, threadRows, settingsRows] =
-    await Promise.all([
-      loadCoachGoalData(userId),
-      db
-        .select({ title: abyssItems.title, category: abyssItems.category })
-        .from(abyssItems)
-        .where(and(eq(abyssItems.userId, userId), ne(abyssItems.status, "archived")))
-        .orderBy(desc(abyssItems.lastTouchedAt))
-        .limit(MAX_ABYSS_ITEMS),
-      listThreadMessages(userId, threadId, MAX_HISTORY_MESSAGES),
-      db
-        .select({
-          goalCoachAmbition: appSettings.goalCoachAmbition,
-          goalCoachNote: appSettings.goalCoachNote,
-        })
-        .from(appSettings)
-        .where(eq(appSettings.userId, userId))
-        .limit(1),
-    ]);
+  const [
+    { currentCard, currentGoals, pastCardsByYear },
+    abyssRows,
+    threadRows,
+    settingsRows,
+    easedCategories,
+    proposalOutcomes,
+  ] = await Promise.all([
+    loadCoachGoalData(userId),
+    db
+      .select({ title: abyssItems.title, category: abyssItems.category })
+      .from(abyssItems)
+      .where(and(eq(abyssItems.userId, userId), ne(abyssItems.status, "archived")))
+      .orderBy(desc(abyssItems.lastTouchedAt))
+      .limit(MAX_ABYSS_ITEMS),
+    listThreadMessages(userId, threadId, MAX_HISTORY_MESSAGES),
+    db
+      .select({
+        goalCoachAmbition: appSettings.goalCoachAmbition,
+        goalCoachNote: appSettings.goalCoachNote,
+      })
+      .from(appSettings)
+      .where(eq(appSettings.userId, userId))
+      .limit(1),
+    loadEasedCategories(userId),
+    loadGoalProposalOutcomes(userId, threadId),
+  ]);
 
   const settings = settingsRows[0];
   const ambition = goalCoachAmbitionSchema.safeParse(settings?.goalCoachAmbition).success
@@ -224,6 +260,13 @@ export async function fetchGoalsContextSnapshot(
     : DEFAULT_GOAL_COACH_AMBITION;
 
   const sections: string[] = [formatCoachPrefsBlock(ambition, settings?.goalCoachNote ?? "")];
+
+  const easeOffCandidates = detectEaseOffCandidates(
+    deriveCategorySignal(proposalOutcomes),
+    easedCategories
+  );
+  const learnedSignal = formatLearnedSignalBlock(easeOffCandidates, easedCategories);
+  if (learnedSignal) sections.push(learnedSignal);
 
   if (currentCard) {
     const placed = currentGoals.filter((g) => isPlacedGoal(g.cellIndex));
