@@ -34,7 +34,6 @@ import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
 import BingoListView, { type BingoListGroupBy } from "./BingoListView";
 import BingoOnboarding from "./BingoOnboarding";
-import BingoQuickAdd from "./BingoQuickAdd";
 
 const AWARDED_LINES_KEY = "kash-bingo-awarded-lines";
 
@@ -447,7 +446,11 @@ export default function BingoCard({ year }: Props) {
         ) : null}
 
         {viewMode === "card" ? (
-          <div className={blackoutAnimating ? "bingo-blackout-bounce" : undefined}>
+          <div
+            className={
+              blackoutAnimating ? "bingo-blackout-bounce overflow-visible" : "overflow-visible"
+            }
+          >
             {blackoutComplete && locked && blackoutFinaleShown ? (
               <p className="plan-zoom-enter mb-2 text-center text-sm font-medium text-ink">
                 Blackout — every square complete. What a year.
@@ -458,12 +461,20 @@ export default function BingoCard({ year }: Props) {
               locked={locked}
               locking={locking}
               pendingGoalId={pendingGoalId}
+              editingCell={addingCell}
+              addBusy={createGoalMutation.isPending}
+              addError={addError}
               onToggleDone={handleToggleDone}
               onBackburner={handleBackburner}
               onRemove={handleRemove}
               onAdd={(cellIndex) => {
                 setAddError(null);
                 setAddingCell(cellIndex);
+              }}
+              onAddSubmit={handleAddSubmit}
+              onAddCancel={() => {
+                setAddingCell(null);
+                setAddError(null);
               }}
               onOpenGoal={(goal) => setSelectedGoalId(goal.id)}
             />
@@ -477,19 +488,6 @@ export default function BingoCard({ year }: Props) {
             locked={locked}
           />
         )}
-
-        {addingCell !== null ? (
-          <BingoQuickAdd
-            squareLabel={addingCell + 1}
-            busy={createGoalMutation.isPending}
-            error={addError}
-            onSubmit={handleAddSubmit}
-            onCancel={() => {
-              setAddingCell(null);
-              setAddError(null);
-            }}
-          />
-        ) : null}
 
         <BingoBalanceLegend balance={balance} />
       </div>
