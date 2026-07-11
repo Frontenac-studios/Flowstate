@@ -129,7 +129,6 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
               }`}
             >
               <Checkbox
-                className="mt-0.5"
                 accentColor={checkColor}
                 aria-label={`Uncomplete ${task.title}`}
                 title={label}
