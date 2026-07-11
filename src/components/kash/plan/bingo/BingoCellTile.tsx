@@ -3,6 +3,9 @@
 import { Check, Plus, Star, kashIconProps } from "@/components/kash/ui/icon";
 import { categorySeedLabel, categorySolidVar } from "@/lib/projects/category-tokens";
 import type { BingoCell, BingoGoal } from "@/lib/planning/bingo-grid";
+import type { ProjectCategory } from "@/lib/projects/categories";
+
+import BingoCellAddEditor from "./BingoCellAddEditor";
 
 type Props = {
   cell: BingoCell;
@@ -10,10 +13,15 @@ type Props = {
   locking?: boolean;
   inWinningLine: boolean;
   busy: boolean;
+  editingCell: number | null;
+  addBusy: boolean;
+  addError: string | null;
   onToggleDone: (goal: BingoGoal) => void;
   onBackburner: (goal: BingoGoal) => void;
   onRemove: (goal: BingoGoal) => void;
   onAdd: (cellIndex: number) => void;
+  onAddSubmit: (title: string, category: ProjectCategory, valueId: string | null) => void;
+  onAddCancel: () => void;
   onOpenGoal?: (goal: BingoGoal) => void;
 };
 
@@ -23,10 +31,15 @@ export default function BingoCellTile({
   locking = false,
   inWinningLine,
   busy,
+  editingCell,
+  addBusy,
+  addError,
   onToggleDone,
   onBackburner,
   onRemove,
   onAdd,
+  onAddSubmit,
+  onAddCancel,
   onOpenGoal,
 }: Props) {
   const ring = inWinningLine ? "shadow-[0_0_0_2px_var(--ink)]" : "";
@@ -49,6 +62,18 @@ export default function BingoCellTile({
         <div
           className={`aspect-square rounded-card border border-dashed border-subtle bg-surface shadow-surface ${ring} ${lockable}`}
           aria-hidden
+        />
+      );
+    }
+    if (editingCell === cell.cellIndex) {
+      return (
+        <BingoCellAddEditor
+          busy={addBusy}
+          error={addError}
+          inWinningLine={inWinningLine}
+          locking={locking}
+          onSubmit={onAddSubmit}
+          onCancel={onAddCancel}
         />
       );
     }
