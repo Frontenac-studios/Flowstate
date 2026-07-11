@@ -140,7 +140,7 @@ function NavSections({
           <Fragment key={group.label}>
             <div className="px-1 pb-1 pt-2">
               {expanded ? (
-                <span className="px-1 text-caption font-semibold uppercase tracking-wide text-ink-muted">
+                <span className="whitespace-nowrap px-1 text-caption font-semibold uppercase tracking-wide text-ink-muted">
                   {group.label}
                 </span>
               ) : index > 0 ? (
