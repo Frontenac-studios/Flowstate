@@ -10,7 +10,12 @@ import {
 } from "@/lib/chat/chat-task-created-events";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
 import type { CaptureContext } from "@/lib/chat/capture-context";
-import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
+import type {
+  BingoGoalItemEdit,
+  CreateTaskItemEdit,
+  ProposedAction,
+} from "@/lib/chat/proposed-actions";
+import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { useTRPC } from "@/trpc/client";
@@ -22,6 +27,12 @@ export type UseChatPanelOptions = {
   forceEnabled?: boolean;
   /** Override ChatProvider capture context (embedded capture in rituals). */
   captureContextOverride?: CaptureContext | null;
+  /**
+   * Force a specific chat surface for an embedded panel (e.g. the goals coach dock),
+   * independent of the global rail's pathname-derived surface. When set, the surface is
+   * sent to the stream for any thread, and the panel does not touch the rail's unread state.
+   */
+  surfaceOverride?: PlanningChatSurface | null;
 };
 
 type ChatMessage = {
@@ -48,6 +59,7 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
     useChat();
 
   const forceEnabled = options?.forceEnabled ?? false;
+  const surfaceOverride = options?.surfaceOverride ?? null;
   const effectiveCaptureContext = options?.captureContextOverride ?? captureContext;
   const queriesEnabled = forceEnabled || railOpen;
 
@@ -98,6 +110,17 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
   const recordPhraseSendMutation = useMutation(trpc.chat.recordPhraseSend.mutationOptions());
   const applyProposalMutation = useMutation(trpc.chat.applyProposedAction.mutationOptions());
   const dismissProposalMutation = useMutation(trpc.chat.dismissProposedAction.mutationOptions());
+
+  const invalidateGoalQueries = useCallback(() => {
+    void queryClient.invalidateQueries(trpc.planning.listGoals.pathFilter());
+    void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
+    void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
+  }, [
+    queryClient,
+    trpc.planning.listGoals,
+    trpc.planning.getYearActivity,
+    trpc.planning.getQuarterActivity,
+  ]);
 
   const invalidateTaskQueries = useCallback(() => {
     void queryClient.invalidateQueries({
@@ -151,8 +174,12 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
             threadId,
             userMessageId,
             text,
-            planningSurface: threadId === GLOBAL_THREAD_ID ? planningSurface : null,
-            captureContext: threadId === GLOBAL_THREAD_ID ? effectiveCaptureContext : null,
+            planningSurface:
+              surfaceOverride ?? (threadId === GLOBAL_THREAD_ID ? planningSurface : null),
+            captureContext:
+              surfaceOverride == null && threadId === GLOBAL_THREAD_ID
+                ? effectiveCaptureContext
+                : null,
           }),
           signal: controller.signal,
         });
@@ -198,11 +225,16 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
           }
         }
 
-        const shouldNotify = assistantText.length > 0 && (!railOpen || activeThreadId !== threadId);
-        if (shouldNotify) {
-          notifyUnread(threadId);
-        } else if (railOpen && activeThreadId === threadId) {
-          markRead(threadId);
+        // An embedded panel (surfaceOverride) manages its own visibility — never drive
+        // the global rail's unread badge from it.
+        if (!surfaceOverride) {
+          const shouldNotify =
+            assistantText.length > 0 && (!railOpen || activeThreadId !== threadId);
+          if (shouldNotify) {
+            notifyUnread(threadId);
+          } else if (railOpen && activeThreadId === threadId) {
+            markRead(threadId);
+          }
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
@@ -225,6 +257,7 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
       notifyUnread,
       railOpen,
       refreshMessages,
+      surfaceOverride,
       threadId,
     ]
   );
@@ -328,12 +361,18 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
   }, [sendMessage]);
 
   const applyProposal = useCallback(
-    async (messageId: string, enabledItemIds: string[], editedItems?: CreateTaskItemEdit[]) => {
+    async (
+      messageId: string,
+      enabledItemIds: string[],
+      editedItems?: CreateTaskItemEdit[],
+      goalEdits?: BingoGoalItemEdit[]
+    ) => {
       try {
         const result = await applyProposalMutation.mutateAsync({
           messageId,
           enabledItemIds,
           editedItems,
+          goalEdits,
           captureContext: effectiveCaptureContext,
         });
         if (result.undoFrames?.length) {
@@ -352,6 +391,7 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
           }));
         }
         invalidateTaskQueries();
+        invalidateGoalQueries();
         await refreshMessages();
       } catch (err) {
         setStreamError(
@@ -362,6 +402,7 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
     [
       applyProposalMutation,
       effectiveCaptureContext,
+      invalidateGoalQueries,
       invalidateTaskQueries,
       planningSurface,
       pushConfirmUndo,

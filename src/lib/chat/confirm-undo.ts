@@ -87,6 +87,10 @@ export const confirmUndoFrameSchema = z.discriminatedUnion("type", [
     projectIds: z.array(z.string().uuid()).min(1),
   }),
   z.object({
+    type: z.literal("create_goals"),
+    goalIds: z.array(z.string().uuid()).min(1),
+  }),
+  z.object({
     type: z.literal("edit_phase"),
     phaseId: z.string().uuid(),
     previous: z.object({

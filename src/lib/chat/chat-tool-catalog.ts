@@ -46,6 +46,57 @@ const QUERY_ABYSS_TOOL: Anthropic.Tool = {
   },
 };
 
+const QUERY_GOALS_TOOL: Anthropic.Tool = {
+  name: "query_goals",
+  description:
+    "Read the user's current annual bingo card: goals already placed (title, category, state, cell), plus how many empty squares remain and the category balance. Use to avoid duplicating existing goals and to see which categories are thin.",
+  input_schema: { type: "object", properties: {}, additionalProperties: false },
+};
+
+const QUERY_PAST_GOALS_TOOL: Anthropic.Tool = {
+  name: "query_past_goals",
+  description:
+    "Read goals from the user's previous years' bingo cards (title, category, year, whether completed). Use for continuity — recurring themes, goals dropped or carried over.",
+  input_schema: {
+    type: "object",
+    properties: { limit: { type: "number" } },
+    additionalProperties: false,
+  },
+};
+
+const PROPOSE_BINGO_GOALS_TOOL: Anthropic.Tool = {
+  name: "propose_bingo_goals",
+  description:
+    "Propose one or more annual bingo goals for the user to confirm. Each goal must be binary (clearly done or not-done by year's end) — never a task, habit, milestone, or schedule. Set category only when you're confident which of the 5 it belongs to; leave it off when ambiguous and the user will pick. Add a short rationale ('why this fits you') when helpful. This does NOT add anything to the card — it proposes a confirm card the user accepts.",
+  input_schema: {
+    type: "object",
+    properties: {
+      goals: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              description: "The goal, phrased with a clear done-state. 1–80 chars.",
+            },
+            category: { type: "string", enum: [...PROJECT_CATEGORIES] },
+            rationale: {
+              type: "string",
+              description: "Optional one-line 'why this fits you', shown on the card.",
+            },
+          },
+          required: ["title"],
+          additionalProperties: false,
+        },
+      },
+      summary: { type: "string" },
+    },
+    required: ["goals"],
+    additionalProperties: false,
+  },
+};
+
 const DRAFT_WEEK_TOOL: Anthropic.Tool = {
   name: "draft_week",
   description: "Draft weekly plan.",
@@ -307,6 +358,9 @@ const TOOL_BY_NAME: Record<string, Anthropic.Tool> = {
   query_state: QUERY_STATE_TOOL,
   query_projects: QUERY_PROJECTS_TOOL,
   query_abyss: QUERY_ABYSS_TOOL,
+  query_goals: QUERY_GOALS_TOOL,
+  query_past_goals: QUERY_PAST_GOALS_TOOL,
+  propose_bingo_goals: PROPOSE_BINGO_GOALS_TOOL,
   draft_week: DRAFT_WEEK_TOOL,
   draft_eod: DRAFT_EOD_TOOL,
   draft_balance_pass: DRAFT_BALANCE_PASS_TOOL,
@@ -394,6 +448,9 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
   ],
   care: ["query_tasks", "query_state", "draft_eod", "complete_task", "propose_about_me_edit"],
   "morning-handoff": ["query_tasks", "query_state", "create_task"],
+  // Goals coach: goal reads + the single goal-proposing write. Deliberately NO
+  // task/schedule/milestone tools — the coach must not manage tasks.
+  goals: ["query_goals", "query_past_goals", "propose_bingo_goals"],
 };
 
 export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [
@@ -427,6 +484,12 @@ export const FOCUS_CHAT_TOOLS: Anthropic.Tool[] = [
   PARK_IN_ABYSS_TOOL,
 ];
 
+export const GOALS_CHAT_TOOLS: Anthropic.Tool[] = [
+  QUERY_GOALS_TOOL,
+  QUERY_PAST_GOALS_TOOL,
+  PROPOSE_BINGO_GOALS_TOOL,
+];
+
 export const REFLECTION_CHAT_TOOLS: Anthropic.Tool[] = [
   QUERY_TASKS_TOOL,
   QUERY_STATE_TOOL,
@@ -451,6 +514,8 @@ export function toolsForRegister(register: KashRegister): Anthropic.Tool[] {
       return FOCUS_CHAT_TOOLS;
     case "reflection":
       return REFLECTION_CHAT_TOOLS;
+    case "goals":
+      return GOALS_CHAT_TOOLS;
     default:
       return PLANNING_CHAT_TOOLS;
   }
@@ -462,6 +527,7 @@ export function toolsForSurface(
 ): Anthropic.Tool[] {
   if (register === "focus") return FOCUS_CHAT_TOOLS;
   if (register === "reflection") return REFLECTION_CHAT_TOOLS;
+  if (register === "goals") return GOALS_CHAT_TOOLS;
   if (!surface) return PLANNING_CHAT_TOOLS;
   return pickTools(SURFACE_TOOL_NAMES[surface]);
 }

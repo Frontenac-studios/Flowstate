@@ -1,8 +1,10 @@
 import "server-only";
 
 import type { CaptureContext } from "@/lib/chat/capture-context";
+import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 
 import { fetchAboutMeContextBlock } from "./fetch-about-me-context";
+import { fetchGoalsContextSnapshot } from "./fetch-goals-context";
 import { fetchPlanContextSnapshot, type PlanContextSnapshot } from "./fetch-plan-context";
 
 export type AssembledChatContext = PlanContextSnapshot & {
@@ -13,19 +15,24 @@ export type AssembledChatContext = PlanContextSnapshot & {
 export async function assembleChatContext(
   userId: string,
   threadId: string,
-  captureContext?: CaptureContext | null
+  captureContext?: CaptureContext | null,
+  surface?: PlanningChatSurface | null
 ): Promise<AssembledChatContext> {
-  const [aboutMeBlock, planSnapshot] = await Promise.all([
+  // The goals coach reads a goal-shaped context (card, balance, past goals, inspiration)
+  // and deliberately omits the task inbox. Everything else uses the planner state.
+  const isGoals = surface === "goals";
+  const [aboutMeBlock, snapshot] = await Promise.all([
     fetchAboutMeContextBlock(userId),
-    fetchPlanContextSnapshot(userId, threadId, captureContext),
+    isGoals
+      ? fetchGoalsContextSnapshot(userId, threadId)
+      : fetchPlanContextSnapshot(userId, threadId, captureContext),
   ]);
 
-  const contextBlock = [aboutMeBlock, "", "Live planner state:", planSnapshot.contextBlock].join(
-    "\n"
-  );
+  const heading = isGoals ? "Goals coaching context:" : "Live planner state:";
+  const contextBlock = [aboutMeBlock, "", heading, snapshot.contextBlock].join("\n");
 
   return {
-    ...planSnapshot,
+    ...snapshot,
     aboutMeBlock,
     contextBlock,
   };

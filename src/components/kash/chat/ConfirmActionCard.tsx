@@ -5,7 +5,11 @@ import { useCallback, useMemo, useState } from "react";
 
 import Checkbox from "@/components/kash/ui/Checkbox";
 import { ComposerCategoryAccent } from "@/components/kash/plan/ComposerCategoryAccent";
-import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
+import type {
+  BingoGoalItemEdit,
+  CreateTaskItemEdit,
+  ProposedAction,
+} from "@/lib/chat/proposed-actions";
 import { proposalHeadline } from "@/lib/chat/proposed-actions";
 import { formatCreateTaskPlacementSummary } from "@/lib/chat/resolve-create-task-placement";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
@@ -16,11 +20,16 @@ import { useTRPC } from "@/trpc/client";
 type Props = {
   proposal: ProposedAction;
   busy?: boolean;
-  onConfirm: (enabledItemIds: string[], editedItems?: CreateTaskItemEdit[]) => void;
+  onConfirm: (
+    enabledItemIds: string[],
+    editedItems?: CreateTaskItemEdit[],
+    goalEdits?: BingoGoalItemEdit[]
+  ) => void;
   onDismiss: () => void;
 };
 
 type CreateTaskItem = Extract<ProposedAction, { kind: "create_task" }>["items"][number];
+type BingoGoalItem = Extract<ProposedAction, { kind: "propose_bingo_goals" }>["items"][number];
 
 /** Per-row editable state for a create_task draft. */
 type DraftRow = {
@@ -414,6 +423,133 @@ function CreateTaskDraftEditor({
   );
 }
 
+/** Per-row state for a bingo-goal proposal: kept or dropped, and its category. */
+type GoalRow = { enabled: boolean; category: ProjectCategory | "" };
+
+/**
+ * Confirm editor for propose_bingo_goals. Titles are read-only (the coach's wording);
+ * the user toggles rows and assigns a category to any the coach left untagged. Confirm
+ * is blocked until every enabled row has a category (createGoal requires one).
+ */
+function BingoGoalDraftEditor({
+  items,
+  busy,
+  onConfirm,
+  onDismiss,
+}: {
+  items: BingoGoalItem[];
+  busy: boolean;
+  onConfirm: Props["onConfirm"];
+  onDismiss: () => void;
+}) {
+  const [rows, setRows] = useState<Record<string, GoalRow>>(() =>
+    Object.fromEntries(
+      items.map((item) => [
+        item.itemId,
+        { enabled: item.enabled, category: item.category ?? "" } satisfies GoalRow,
+      ])
+    )
+  );
+
+  const update = useCallback((itemId: string, patch: Partial<GoalRow>) => {
+    setRows((prev) => ({ ...prev, [itemId]: { ...prev[itemId]!, ...patch } }));
+  }, []);
+
+  const enabledItems = useMemo(() => items.filter((i) => rows[i.itemId]?.enabled), [items, rows]);
+  const missingCategory = useMemo(
+    () => enabledItems.some((i) => !rows[i.itemId]?.category),
+    [enabledItems, rows]
+  );
+  const canConfirm = enabledItems.length > 0 && !missingCategory;
+
+  const confirm = useCallback(() => {
+    const goalEdits: BingoGoalItemEdit[] = enabledItems
+      .filter((i) => rows[i.itemId]?.category)
+      .map((i) => ({ itemId: i.itemId, category: rows[i.itemId]!.category as ProjectCategory }));
+    onConfirm(
+      goalEdits.map((e) => e.itemId),
+      undefined,
+      goalEdits
+    );
+  }, [enabledItems, onConfirm, rows]);
+
+  return (
+    <div className="mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm">
+      <p className="mb-2 font-medium text-ink">
+        Add {items.length} goal{items.length === 1 ? "" : "s"} to your card
+      </p>
+      <ul className="mb-3 flex flex-col gap-2.5" aria-label="Proposed goals">
+        {items.map((item) => {
+          const row = rows[item.itemId]!;
+          return (
+            <li key={item.itemId} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={`goal-${item.itemId}`}
+                  checked={row.enabled}
+                  disabled={busy}
+                  onChange={() => update(item.itemId, { enabled: !row.enabled })}
+                />
+                <label
+                  htmlFor={`goal-${item.itemId}`}
+                  className={`flex-1 ${row.enabled ? "text-ink" : "text-ink-muted line-through"}`}
+                >
+                  {item.title}
+                </label>
+                <select
+                  aria-label={`Category for ${item.title}`}
+                  className={`${inputClass} ${row.enabled ? "" : "opacity-50"}`}
+                  value={row.category}
+                  disabled={busy || !row.enabled}
+                  onChange={(e) =>
+                    update(item.itemId, {
+                      category: (e.target.value || "") as ProjectCategory | "",
+                    })
+                  }
+                >
+                  <option value="">Pick a category…</option>
+                  {PROJECT_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {categoryLabel(cat)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {item.rationale && row.enabled ? (
+                <p className="pl-6 text-xs text-ink-muted">{item.rationale}</p>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      {missingCategory && enabledItems.length > 0 ? (
+        <p className="mb-2 text-xs text-ink-muted">Pick a category for each goal to add it.</p>
+      ) : null}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={busy || !canConfirm}
+          onClick={confirm}
+          className="rounded-control border-emphasis border-ink px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
+        >
+          Add to card
+          {enabledItems.length > 0 && enabledItems.length < items.length
+            ? ` ${enabledItems.length}`
+            : ""}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onDismiss}
+          className="rounded-control border border-border px-3 py-1 text-xs text-ink-muted transition hover:text-ink disabled:opacity-50"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss }: Props) {
   const [enabledIds, setEnabledIds] = useState<Set<string>>(
     () => new Set(proposal.items.map((item) => item.itemId))
@@ -439,6 +575,18 @@ export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss
   if (proposal.kind === "create_task") {
     return (
       <CreateTaskDraftEditor
+        items={proposal.items}
+        busy={busy}
+        onConfirm={onConfirm}
+        onDismiss={onDismiss}
+      />
+    );
+  }
+
+  // Bingo-goal proposals: toggle rows and assign a category to any untagged ones.
+  if (proposal.kind === "propose_bingo_goals") {
+    return (
+      <BingoGoalDraftEditor
         items={proposal.items}
         busy={busy}
         onConfirm={onConfirm}

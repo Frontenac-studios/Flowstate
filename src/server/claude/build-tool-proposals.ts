@@ -10,6 +10,7 @@ import {
   type ProposedAction,
 } from "@/lib/chat/proposed-actions";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
+import { evaluateGoalSuggestion } from "@/lib/planning/goal-guardrails";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 
 import { resolveOwnedTaskTitles } from "./apply-proposed-action";
@@ -93,6 +94,11 @@ type ReplanProjectDatesInput = {
     startDate?: string | null;
     endDate?: string | null;
   }[];
+  summary?: string;
+};
+
+type ProposeBingoGoalsInput = {
+  goals?: { title?: string; category?: string; rationale?: string }[];
   summary?: string;
 };
 
@@ -456,6 +462,49 @@ export async function buildMoveTaskToPhaseProposal(
     ok: true,
     proposal: proposedActionSchema.parse({
       kind: "move_task_to_phase",
+      status: "pending",
+      summary: input.summary,
+      items,
+    }),
+  };
+}
+
+/**
+ * Build a propose_bingo_goals proposal. Each suggested title is run through the goal
+ * guardrails (binary / non-recurring / length); rejected titles are dropped. Category is
+ * kept only when the model gave a valid one — untagged rows are assigned on the card.
+ */
+export function buildProposeBingoGoalsProposal(
+  input: ProposeBingoGoalsInput
+): { ok: true; proposal: ProposedAction } | { ok: false; error: string } {
+  const rows = input.goals ?? [];
+  if (rows.length === 0) return { ok: false, error: "goals array is required" };
+
+  const items = rows
+    .map((row) => {
+      const evaluated = evaluateGoalSuggestion(row.title ?? "");
+      if (!evaluated.ok) return null;
+      return {
+        itemId: newProposalItemId(),
+        enabled: true,
+        title: evaluated.title,
+        ...(isCategory(row.category) ? { category: row.category } : {}),
+        ...(row.rationale?.trim() ? { rationale: row.rationale.trim().slice(0, 280) } : {}),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item != null);
+
+  if (items.length === 0) {
+    return {
+      ok: false,
+      error: "No goals passed the guardrails (must be binary, non-recurring, ≤80 chars).",
+    };
+  }
+
+  return {
+    ok: true,
+    proposal: proposedActionSchema.parse({
+      kind: "propose_bingo_goals",
       status: "pending",
       summary: input.summary,
       items,

@@ -43,4 +43,20 @@ describe("toolsForSurface", () => {
         SURFACE_TOOL_NAMES[surface]
       );
   });
+
+  it("goals coach exposes only goal reads + the goal-proposing write, no task tools", () => {
+    const names = toolsForSurface("goals", "goals").map((t) => t.name);
+    expect(names).toEqual(["query_goals", "query_past_goals", "propose_bingo_goals"]);
+    for (const banned of [
+      "create_task",
+      "edit_task",
+      "delete_task",
+      "query_tasks",
+      "reschedule_tasks",
+      "set_top3",
+      "draft_week",
+    ]) {
+      expect(names).not.toContain(banned);
+    }
+  });
 });

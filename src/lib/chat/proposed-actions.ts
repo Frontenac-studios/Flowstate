@@ -139,6 +139,15 @@ export const replanProjectDatesProposalItemSchema = proposalItemBaseSchema.exten
   previousEndDate: isoDateSchema.nullable().optional(),
 });
 
+export const bingoGoalProposalItemSchema = proposalItemBaseSchema.extend({
+  title: z.string().min(1).max(80),
+  // Category is optional at proposal time: the coach pre-tags only when confident.
+  // Untagged rows must be assigned a category on the confirm card before commit.
+  category: categorySchema.optional(),
+  rationale: z.string().max(280).optional(),
+  valueId: z.string().uuid().nullable().optional(),
+});
+
 export const rescheduleTasksProposalSchema = z.object({
   kind: z.literal("reschedule_tasks"),
   status: proposalStatusSchema.default("pending"),
@@ -230,6 +239,13 @@ export const replanProjectDatesProposalSchema = z.object({
   items: z.array(replanProjectDatesProposalItemSchema).min(1),
 });
 
+export const proposeBingoGoalsProposalSchema = z.object({
+  kind: z.literal("propose_bingo_goals"),
+  status: proposalStatusSchema.default("pending"),
+  summary: z.string().optional(),
+  items: z.array(bingoGoalProposalItemSchema).min(1),
+});
+
 export const proposedActionSchema = z.discriminatedUnion("kind", [
   rescheduleTasksProposalSchema,
   createTaskProposalSchema,
@@ -244,6 +260,7 @@ export const proposedActionSchema = z.discriminatedUnion("kind", [
   editPhaseProposalSchema,
   moveTaskToPhaseProposalSchema,
   replanProjectDatesProposalSchema,
+  proposeBingoGoalsProposalSchema,
 ]);
 
 export type ProposedAction = z.infer<typeof proposedActionSchema>;
@@ -337,6 +354,49 @@ export function mergeCreateTaskEdits(
   return proposedActionSchema.parse({ ...action, items });
 }
 
+/**
+ * A user's inline edit to a proposed bingo-goal row before confirming: its presence
+ * marks the row as enabled (omitted rows are dropped), and `category` assigns/overrides
+ * the goal's category — required for rows the coach left untagged.
+ */
+export const bingoGoalItemEditSchema = z.object({
+  itemId: z.string().min(1),
+  category: categorySchema.optional(),
+});
+
+export type BingoGoalItemEdit = z.infer<typeof bingoGoalItemEditSchema>;
+
+/**
+ * Merge inline category edits into a propose_bingo_goals proposal: keep only the rows
+ * the user left enabled (present in `edits`), overlay their chosen category, and
+ * re-validate through the schema. For any other action kind this falls back to a plain
+ * enabled-item filter.
+ */
+export function mergeBingoGoalEdits(
+  action: ProposedAction,
+  edits: readonly BingoGoalItemEdit[]
+): ProposedAction | null {
+  if (action.kind !== "propose_bingo_goals") {
+    return filterPayloadByItemIds(
+      action,
+      edits.map((e) => e.itemId)
+    );
+  }
+  const byId = new Map(edits.map((e) => [e.itemId, e]));
+  const items = action.items
+    .filter((item) => byId.has(item.itemId))
+    .map((item) => {
+      const edit = byId.get(item.itemId)!;
+      return {
+        ...item,
+        enabled: true,
+        category: edit.category !== undefined ? edit.category : item.category,
+      };
+    });
+  if (items.length === 0) return null;
+  return proposedActionSchema.parse({ ...action, items });
+}
+
 export function proposalHeadline(action: ProposedAction): string {
   if (action.summary?.trim()) return action.summary.trim();
   const count = action.items.length;
@@ -371,6 +431,8 @@ export function proposalHeadline(action: ProposedAction): string {
       return `Move ${count} task${plural} to phase`;
     case "replan_project_dates":
       return `Replan dates for ${count} phase${plural}`;
+    case "propose_bingo_goals":
+      return `Add ${count} goal${plural} to your card`;
     default:
       return "Confirm changes";
   }
