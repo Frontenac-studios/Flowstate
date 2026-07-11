@@ -23,7 +23,10 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
   const queryClient = useQueryClient();
   const localDate = useLocalCalendarDate();
 
-  const detailQuery = useQuery(trpc.planning.getGoalDetail.queryOptions({ id: goalId }));
+  const detailQuery = useQuery({
+    ...trpc.planning.getGoalDetail.queryOptions({ id: goalId }),
+    enabled: Boolean(goalId),
+  });
   const valuesQuery = useQuery(trpc.aboutMe.values.list.queryOptions());
   const suggestionsQuery = useQuery(
     trpc.planning.listSuggestions.queryOptions({
@@ -131,9 +134,6 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
     enabled: !!expandedMilestoneId,
   });
 
-  // Task picker for "link an existing task" — searches incomplete tasks by title,
-  // excluding ones already linked to the expanded milestone. Replaces the raw-UUID
-  // field so a link can't silently no-op on a mistyped id.
   const incompleteTasksQuery = useQuery({
     ...trpc.tasks.listIncomplete.queryOptions(),
     enabled: !!expandedMilestoneId,
@@ -150,10 +150,52 @@ export default function BingoGoalPanel({ goalId, locked, onClose }: Props) {
       .slice(0, 8);
   }, [linkQuery, incompleteTasksQuery.data, linkedTaskIds]);
 
-  if (detailQuery.isLoading || !goal || !category) {
+  if (detailQuery.isPending) {
     return (
       <div className="rounded-card border border-subtle bg-surface p-4 text-ink-muted shadow-surface">
         Loading goal…
+      </div>
+    );
+  }
+
+  if (detailQuery.isError) {
+    return (
+      <div className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
+        <p className="text-caption text-critical">Couldn&apos;t load this goal.</p>
+        <p className="mt-1 text-caption text-ink-muted">
+          {detailQuery.error.message || "Something went wrong. Try again or close this panel."}
+        </p>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => void detailQuery.refetch()}
+            className="rounded-control border border-subtle px-3 py-1 text-caption text-ink transition hover:bg-surface-2"
+          >
+            Retry
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-control px-3 py-1 text-caption text-ink-muted transition hover:text-ink"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!goal || !category) {
+    return (
+      <div className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
+        <p className="text-caption text-ink-muted">Goal not found.</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-2 text-caption text-ink-muted transition hover:text-ink"
+        >
+          Close
+        </button>
       </div>
     );
   }
