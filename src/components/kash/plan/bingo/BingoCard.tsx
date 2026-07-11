@@ -158,6 +158,9 @@ export default function BingoCard({ year }: Props) {
 
   const removeGoalMutation = useMutation(
     trpc.planning.removeGoal.mutationOptions({
+      onSuccess: (_data, variables) => {
+        setSelectedGoalId((current) => (current === variables.id ? null : current));
+      },
       onSettled: () => {
         setPendingGoalId(null);
         void invalidateGoals();
@@ -432,7 +435,7 @@ export default function BingoCard({ year }: Props) {
                   disabled={total === 0}
                   className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
                 >
-                  Finalize card
+                  Lock it in
                 </button>
               )
             ) : null}
