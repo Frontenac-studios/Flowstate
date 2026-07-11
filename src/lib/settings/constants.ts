@@ -39,6 +39,14 @@ export const balanceNudgeSchema = z.enum(["on", "off"]);
 export type BalanceNudge = z.infer<typeof balanceNudgeSchema>;
 export const DEFAULT_BALANCE_NUDGE: BalanceNudge = "on";
 
+export const goalCoachAmbitionSchema = z.enum(["gentle", "balanced", "stretch"]);
+export type GoalCoachAmbition = z.infer<typeof goalCoachAmbitionSchema>;
+export const DEFAULT_GOAL_COACH_AMBITION: GoalCoachAmbition = "balanced";
+
+export const GOAL_COACH_NOTE_MAX = 500;
+export const goalCoachNoteSchema = z.string().max(GOAL_COACH_NOTE_MAX);
+export const DEFAULT_GOAL_COACH_NOTE = "";
+
 export const evidenceCadenceSchema = z.enum(["monthly", "quarterly", "off"]);
 export type EvidenceCadence = z.infer<typeof evidenceCadenceSchema>;
 export const DEFAULT_EVIDENCE_CADENCE: EvidenceCadence = "quarterly";

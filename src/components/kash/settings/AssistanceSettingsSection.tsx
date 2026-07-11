@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useTRPC } from "@/trpc/client";
 import Select from "@/components/kash/ui/Select";
+import { GOAL_COACH_NOTE_MAX } from "@/lib/settings/constants";
 
 import { NotificationSettingsSection } from "./NotificationSettingsSection";
 
@@ -170,11 +171,94 @@ export function AssistanceSettingsSection() {
   );
 }
 
+/** Explicit steer for the goals coach (J2) — shown only when the coach is enabled. */
+export function GoalCoachSettingsSection() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { data } = useQuery(trpc.settings.get.queryOptions());
+  const { data: chatConfig } = useQuery(trpc.chat.isConfigured.queryOptions());
+
+  const mutation = useMutation(
+    trpc.settings.updateGoalCoachPrefs.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: trpc.settings.get.queryKey() });
+      },
+    })
+  );
+
+  const ambition = (data?.goalCoachAmbition ?? "balanced") as "gentle" | "balanced" | "stretch";
+  const serverNote = data?.goalCoachNote ?? "";
+  const [note, setNote] = useState(serverNote);
+  useEffect(() => {
+    setNote(serverNote);
+  }, [serverNote]);
+
+  if (!chatConfig?.bingoCoachEnabled) return null;
+
+  const busy = mutation.isPending;
+  const commit = (nextAmbition: typeof ambition, nextNote: string) => {
+    mutation.mutate({ ambition: nextAmbition, note: nextNote });
+  };
+
+  return (
+    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+      <h2 className="text-sm font-semibold text-ink">Goals coach</h2>
+      <p className="mt-1 text-sm text-ink-muted">
+        How the coach suggests annual bingo goals when you talk it through.
+      </p>
+
+      <fieldset className="mt-4 space-y-2" disabled={busy}>
+        <legend className="sr-only">Goals coach preferences</legend>
+        <label className="flex items-center justify-between gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
+          <span>
+            <span className="text-sm font-medium text-ink">Ambition</span>
+            <span className="mt-0.5 block text-sm text-ink-muted">
+              How bold its suggestions run.
+            </span>
+          </span>
+          <Select
+            value={ambition}
+            onChange={(e) => commit(e.target.value as typeof ambition, note)}
+          >
+            <option value="gentle">Gentle</option>
+            <option value="balanced">Balanced</option>
+            <option value="stretch">Stretch</option>
+          </Select>
+        </label>
+        <label className="block rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
+          <span className="text-sm font-medium text-ink">Anything to keep in mind</span>
+          <span className="mt-0.5 block text-sm text-ink-muted">
+            Free text the coach will respect — e.g. &ldquo;keep it gentle&rdquo; or &ldquo;go easy
+            on Adulting goals&rdquo;.
+          </span>
+          <textarea
+            className="mt-2 min-h-[64px] w-full rounded-control border border-subtle bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+            value={note}
+            maxLength={GOAL_COACH_NOTE_MAX}
+            placeholder="Optional"
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => {
+              if (note.trim() !== serverNote.trim()) commit(ambition, note);
+            }}
+          />
+        </label>
+      </fieldset>
+
+      {mutation.isError ? (
+        <p className="mt-2 text-sm text-critical" role="alert">
+          Could not save goals coach preferences. Try again.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export function NotificationsAndAssistanceSection() {
   return (
     <>
       <NotificationSettingsSection />
       <AssistanceSettingsSection />
+      <GoalCoachSettingsSection />
     </>
   );
 }

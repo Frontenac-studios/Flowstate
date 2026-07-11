@@ -15,6 +15,8 @@ export const appSettings = sqliteTable("app_settings", {
   morningHandoff: text("morning_handoff").notNull().default("on"),
   goalSteering: text("goal_steering").notNull().default("on"),
   balanceNudge: text("balance_nudge").notNull().default("on"),
+  goalCoachAmbition: text("goal_coach_ambition").notNull().default("balanced"),
+  goalCoachNote: text("goal_coach_note"),
   evidenceCadence: text("evidence_cadence").notNull().default("quarterly"),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),

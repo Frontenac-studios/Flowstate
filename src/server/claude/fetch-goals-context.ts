@@ -3,11 +3,16 @@ import "server-only";
 import { and, desc, eq, ne } from "drizzle-orm";
 
 import { db } from "@/db";
-import { abyssItems, bingoCards, goals } from "@/db/tables";
+import { abyssItems, appSettings, bingoCards, goals } from "@/db/tables";
 import { BINGO_CELL_COUNT, BINGO_FREE_CELL_INDEX } from "@/db/schema/planning-enums";
 import type { BingoGoal } from "@/lib/planning/bingo-grid";
 import { categoryBalance } from "@/lib/planning/bingo-grid";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import {
+  DEFAULT_GOAL_COACH_AMBITION,
+  goalCoachAmbitionSchema,
+  type GoalCoachAmbition,
+} from "@/lib/settings/constants";
 
 import { listThreadMessages } from "./persist-message";
 import type { PlanContextSnapshot } from "./fetch-plan-context";
@@ -155,6 +160,19 @@ export async function queryCoachPastGoals(userId: string, limit = MAX_PAST_GOALS
   };
 }
 
+const AMBITION_LINE: Record<GoalCoachAmbition, string> = {
+  gentle: "Ambition: gentle — keep suggestions modest, achievable, and low-pressure.",
+  balanced: "Ambition: balanced — mix comfortably achievable goals with a few gentle stretches.",
+  stretch: "Ambition: stretch — lean toward bold goals that would make the year stand out.",
+};
+
+/** Coaching-preferences block (J2): the ambition dial + the user's free-text steer. */
+function formatCoachPrefsBlock(ambition: GoalCoachAmbition, note: string): string {
+  const lines = ["Coaching preferences (honor these):", AMBITION_LINE[ambition]];
+  if (note.trim()) lines.push(`The user asked you to keep in mind: ${note.trim()}`);
+  return lines.join("\n");
+}
+
 function formatBalanceLine(balance: Record<ProjectCategory, number>): string {
   const parts = PROJECT_CATEGORIES.map((c) => `${categoryLabel(c)} ${balance[c]}`);
   return `Category balance (placed goals): ${parts.join(", ")}`;
@@ -180,8 +198,8 @@ export async function fetchGoalsContextSnapshot(
   userId: string,
   threadId: string
 ): Promise<PlanContextSnapshot> {
-  const [{ currentCard, currentGoals, pastCardsByYear }, abyssRows, threadRows] = await Promise.all(
-    [
+  const [{ currentCard, currentGoals, pastCardsByYear }, abyssRows, threadRows, settingsRows] =
+    await Promise.all([
       loadCoachGoalData(userId),
       db
         .select({ title: abyssItems.title, category: abyssItems.category })
@@ -190,10 +208,22 @@ export async function fetchGoalsContextSnapshot(
         .orderBy(desc(abyssItems.lastTouchedAt))
         .limit(MAX_ABYSS_ITEMS),
       listThreadMessages(userId, threadId, MAX_HISTORY_MESSAGES),
-    ]
-  );
+      db
+        .select({
+          goalCoachAmbition: appSettings.goalCoachAmbition,
+          goalCoachNote: appSettings.goalCoachNote,
+        })
+        .from(appSettings)
+        .where(eq(appSettings.userId, userId))
+        .limit(1),
+    ]);
 
-  const sections: string[] = [];
+  const settings = settingsRows[0];
+  const ambition = goalCoachAmbitionSchema.safeParse(settings?.goalCoachAmbition).success
+    ? (settings!.goalCoachAmbition as GoalCoachAmbition)
+    : DEFAULT_GOAL_COACH_AMBITION;
+
+  const sections: string[] = [formatCoachPrefsBlock(ambition, settings?.goalCoachNote ?? "")];
 
   if (currentCard) {
     const placed = currentGoals.filter((g) => isPlacedGoal(g.cellIndex));

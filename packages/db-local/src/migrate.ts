@@ -645,6 +645,16 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   {
     table: "app_settings",
+    column: "goal_coach_ambition",
+    definition: "TEXT NOT NULL DEFAULT 'balanced'",
+  },
+  {
+    table: "app_settings",
+    column: "goal_coach_note",
+    definition: "TEXT",
+  },
+  {
+    table: "app_settings",
     column: "evidence_cadence",
     definition: "TEXT NOT NULL DEFAULT 'quarterly'",
   },

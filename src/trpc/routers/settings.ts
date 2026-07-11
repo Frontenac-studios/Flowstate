@@ -15,10 +15,14 @@ import {
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
   DEFAULT_EVIDENCE_CADENCE,
+  DEFAULT_GOAL_COACH_AMBITION,
+  DEFAULT_GOAL_COACH_NOTE,
   DEFAULT_GOAL_STEERING,
   DEFAULT_MORNING_HANDOFF,
   DEFAULT_TOP3_MIDDAY_CHECKIN,
   evidenceCadenceSchema,
+  goalCoachAmbitionSchema,
+  goalCoachNoteSchema,
   goalSteeringSchema,
   morningHandoffSchema,
   notificationPrefsSchema,
@@ -81,6 +85,10 @@ export const settingsRouter = createTRPCRouter({
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
       calendarAiEnabled: row.calendarAiEnabled ?? DEFAULT_CALENDAR_AI_ENABLED,
+      goalCoachAmbition: goalCoachAmbitionSchema.safeParse(row.goalCoachAmbition).success
+        ? row.goalCoachAmbition
+        : DEFAULT_GOAL_COACH_AMBITION,
+      goalCoachNote: row.goalCoachNote ?? DEFAULT_GOAL_COACH_NOTE,
     };
   }),
   updateBucketMode: protectedProcedure.input(bucketModeSchema).mutation(async ({ ctx, input }) => {
@@ -196,6 +204,28 @@ export const settingsRouter = createTRPCRouter({
         });
       }
       return input;
+    }),
+  updateGoalCoachPrefs: protectedProcedure
+    .input(z.object({ ambition: goalCoachAmbitionSchema, note: goalCoachNoteSchema }))
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const trimmedNote = input.note.trim();
+      const [row] = await db
+        .update(appSettings)
+        .set({
+          goalCoachAmbition: input.ambition,
+          goalCoachNote: trimmedNote.length > 0 ? trimmedNote : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update goals coach preferences.",
+        });
+      }
+      return { ambition: input.ambition, note: trimmedNote };
     }),
   updateCalendarAiEnabled: protectedProcedure
     .input(calendarAiEnabledSchema)
