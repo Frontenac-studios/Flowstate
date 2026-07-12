@@ -19,6 +19,12 @@ import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
 import { TOP3_HOLD_SOURCE } from "@/lib/top3/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import type { HandoffPlanTask } from "@/lib/morning-handoff/handoff-task-filters";
+import type { CreateTaskItemEdit } from "@/lib/chat/proposed-actions";
+import {
+  collectStagedDependencyEdges,
+  stagedCapturesFromEdits,
+  type StagedCapture,
+} from "@/lib/morning-handoff/staged-capture";
 import { useTRPC } from "@/trpc/client";
 
 import { MorningHandoffModal } from "./MorningHandoffModal";
@@ -26,6 +32,15 @@ import { usePlanMode } from "./PlanProvider";
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
+}
+
+/** Drop every Top 3 slot that currently points at `stagedId`. */
+function withoutStagedPin(pins: Map<number, string>, stagedId: string): Map<number, string> {
+  const next = new Map(pins);
+  for (const [slot, id] of Array.from(next)) {
+    if (id === stagedId) next.delete(slot);
+  }
+  return next;
 }
 
 export function MorningHandoffRunner() {
@@ -122,12 +137,24 @@ export function MorningHandoffRunner() {
   const [holdDeclined, setHoldDeclined] = useState(false);
   const [goalOfferDismissed, setGoalOfferDismissed] = useState(false);
   const [actionPending, setActionPending] = useState(false);
+  const [openerAcknowledged, setOpenerAcknowledged] = useState(false);
+  const [stagedCaptures, setStagedCaptures] = useState<StagedCapture[]>([]);
+  const [stagedPinnedBySlot, setStagedPinnedBySlot] = useState<Map<number, string>>(
+    () => new Map()
+  );
+
+  const clearStaged = useCallback(() => {
+    setStagedCaptures([]);
+    setStagedPinnedBySlot(new Map());
+  }, []);
 
   useEffect(() => {
     setDismissedLocally(isMorningHandoffDismissedForDate(localDate));
     setHoldDeclined(false);
     setGoalOfferDismissed(false);
-  }, [localDate]);
+    setOpenerAcknowledged(false);
+    clearStaged();
+  }, [localDate, clearStaged]);
 
   const invalidateTasks = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -174,6 +201,10 @@ export function MorningHandoffRunner() {
   const dismissGoalOfferMutation = useMutation(
     trpc.planning.dismissGoalSteeringOffer.mutationOptions()
   );
+  const createTaskMutation = useMutation(
+    trpc.tasks.create.mutationOptions({ onSuccess: invalidateTasks })
+  );
+  const createDependencyMutation = useMutation(trpc.dependencies.create.mutationOptions());
 
   const shouldShow = useMemo(
     () =>
@@ -254,19 +285,105 @@ export function MorningHandoffRunner() {
     overCommit?.overCommitted,
   ]);
 
-  const handleBegin = useCallback(() => {
-    setActionPending(true);
-    if (holdPreview && !holdDeclined && !hasTop3Hold) {
-      confirmHoldMutation.mutate({
-        scheduledDate: localDate,
-        category: holdPreview.category,
-        startMin: holdPreview.startMin,
-        endMin: holdPreview.endMin,
-      });
-    }
+  const onAcknowledgeOpener = useCallback(() => setOpenerAcknowledged(true), []);
+
+  const onStageTasks = useCallback((edits: CreateTaskItemEdit[]) => {
+    setStagedCaptures((prev) => [...prev, ...stagedCapturesFromEdits(edits)]);
+  }, []);
+
+  const onRemoveStaged = useCallback((stagedId: string) => {
+    setStagedCaptures((prev) => prev.filter((capture) => capture.id !== stagedId));
+    setStagedPinnedBySlot((prev) => withoutStagedPin(prev, stagedId));
+  }, []);
+
+  const onPinStagedTop3 = useCallback((stagedId: string, slot: 1 | 2 | 3) => {
+    setStagedPinnedBySlot((prev) => {
+      const next = withoutStagedPin(prev, stagedId);
+      next.set(slot, stagedId);
+      return next;
+    });
+  }, []);
+
+  const onUnpinStagedTop3 = useCallback((stagedId: string) => {
+    setStagedPinnedBySlot((prev) => withoutStagedPin(prev, stagedId));
+  }, []);
+
+  const handleSkip = useCallback(() => {
+    clearStaged();
     finish();
-    setActionPending(false);
-  }, [confirmHoldMutation, finish, hasTop3Hold, holdDeclined, holdPreview, localDate]);
+  }, [clearStaged, finish]);
+
+  const handleBegin = useCallback(async () => {
+    setActionPending(true);
+    try {
+      // Commit staged captures first so Dep-B edges and Top 3 pins can remap
+      // from proposal/staged ids onto real task ids.
+      const idByStagedId = new Map<string, string>();
+      const idBySourceItemId = new Map<string, string>();
+
+      for (const capture of stagedCaptures) {
+        const projectId = capture.projectSlug
+          ? (projects.find((p) => p.slug === capture.projectSlug)?.id ?? null)
+          : null;
+        const created = await createTaskMutation.mutateAsync({
+          title: capture.title,
+          scheduledDate: localDate,
+          projectId,
+          phaseId: capture.phaseId,
+          priority: capture.priority,
+          category: capture.category ?? undefined,
+        });
+        idByStagedId.set(capture.id, created.id);
+        idBySourceItemId.set(capture.sourceItemId, created.id);
+      }
+
+      for (const edge of collectStagedDependencyEdges(stagedCaptures)) {
+        const blockerTaskId = idBySourceItemId.get(edge.blockerItemId);
+        const blockedTaskId = idBySourceItemId.get(edge.blockedItemId);
+        if (!blockerTaskId || !blockedTaskId) continue;
+        await createDependencyMutation.mutateAsync({
+          blockerTaskId,
+          blockedTaskId,
+          tzOffsetMinutes,
+        });
+      }
+
+      for (const [slot, stagedId] of Array.from(stagedPinnedBySlot)) {
+        const taskId = idByStagedId.get(stagedId);
+        if (!taskId) continue;
+        await pinMutation.mutateAsync({ id: taskId, slot: slot as 1 | 2 | 3 });
+      }
+
+      if (holdPreview && !holdDeclined && !hasTop3Hold) {
+        await confirmHoldMutation.mutateAsync({
+          scheduledDate: localDate,
+          category: holdPreview.category,
+          startMin: holdPreview.startMin,
+          endMin: holdPreview.endMin,
+        });
+      }
+
+      clearStaged();
+      finish();
+    } finally {
+      setActionPending(false);
+    }
+  }, [
+    clearStaged,
+    confirmHoldMutation,
+    createDependencyMutation,
+    createTaskMutation,
+    finish,
+    hasTop3Hold,
+    holdDeclined,
+    holdPreview,
+    localDate,
+    pinMutation,
+    projects,
+    stagedCaptures,
+    stagedPinnedBySlot,
+    tzOffsetMinutes,
+  ]);
 
   if (!shouldShow) return null;
 
@@ -281,6 +398,8 @@ export function MorningHandoffRunner() {
       tasks={tasks as HandoffPlanTask[]}
       projects={projects.map((p) => ({ id: p.id, slug: p.slug, name: p.name }))}
       pinnedBySlot={pinnedBySlot}
+      stagedPinnedBySlot={stagedPinnedBySlot}
+      stagedCaptures={stagedCaptures}
       holdPreview={holdPreview}
       holdDeclined={holdDeclined}
       isOverCommitted={overCommit?.overCommitted ?? false}
@@ -289,8 +408,12 @@ export function MorningHandoffRunner() {
         actionPending ||
         markSeen.isPending ||
         pullGoalStepMutation.isPending ||
-        dismissGoalOfferMutation.isPending
+        dismissGoalOfferMutation.isPending ||
+        createTaskMutation.isPending ||
+        createDependencyMutation.isPending
       }
+      openerAcknowledged={openerAcknowledged}
+      onAcknowledgeOpener={onAcknowledgeOpener}
       onKeepCarryover={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onDropCarryover={(id) => dropMutation.mutate({ id })}
       onConfirmRecurring={() => {
@@ -318,6 +441,10 @@ export function MorningHandoffRunner() {
       }}
       onPinTop3={(id, slot) => pinMutation.mutate({ id, slot })}
       onUnpinTop3={(id) => unpinMutation.mutate({ id })}
+      onPinStagedTop3={onPinStagedTop3}
+      onUnpinStagedTop3={onUnpinStagedTop3}
+      onRemoveStaged={onRemoveStaged}
+      onStageTasks={onStageTasks}
       onConfirmHold={() => {
         if (!holdPreview) return;
         confirmHoldMutation.mutate({
@@ -328,9 +455,8 @@ export function MorningHandoffRunner() {
         });
       }}
       onDeclineHold={() => setHoldDeclined(true)}
-      onSkip={finish}
+      onSkip={handleSkip}
       onBegin={handleBegin}
-      onTasksChanged={invalidateTasks}
     />
   );
 }

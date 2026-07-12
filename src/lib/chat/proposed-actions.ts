@@ -41,6 +41,11 @@ export const createTaskProposalItemSchema = proposalItemBaseSchema.extend({
     .max(24 * 60)
     .optional(),
   priority: z.number().int().min(0).max(3).optional(),
+  /**
+   * Dep-B: other itemIds in this same proposal that this task blocks
+   * (blocker must finish first). Applied when morning Begin day commits.
+   */
+  blocksItemIds: z.array(z.string().min(1)).max(20).optional(),
 });
 
 export const completeTaskProposalItemSchema = proposalItemBaseSchema.extend({
@@ -309,6 +314,8 @@ export const createTaskItemEditSchema = z.object({
   priority: z.number().int().min(0).max(3).optional(),
   /** When true, commit suggestedDate as scheduledDate in one step (Apply & schedule). */
   commitSuggestedDate: z.boolean().optional(),
+  /** Dep-B: preserve blocks edges when staging from a morning confirm card. */
+  blocksItemIds: z.array(z.string().min(1)).max(20).optional(),
 });
 
 export type CreateTaskItemEdit = z.infer<typeof createTaskItemEditSchema>;
@@ -348,6 +355,7 @@ export function mergeCreateTaskEdits(
             ? edit.timeEstimateMinutes
             : item.timeEstimateMinutes,
         priority: edit.priority !== undefined ? edit.priority : item.priority,
+        blocksItemIds: edit.blocksItemIds !== undefined ? edit.blocksItemIds : item.blocksItemIds,
       };
     });
   if (items.length === 0) return null;

@@ -147,8 +147,21 @@ describe("buildCreateTaskProposal", () => {
     if (!action.ok) throw new Error("expected ok");
     expect(action.proposal.items).toHaveLength(2);
     expect(action.proposal.summary).toBe("Two errands");
-    // Each row gets a distinct id.
     const [a, b] = action.proposal.items;
     expect(a!.itemId).not.toBe(b!.itemId);
+  });
+
+  it("wires blocker.blocksTempIds to blocked itemIds (Dep-B)", () => {
+    const action = buildCreateTaskProposal({
+      tasks: [
+        { title: "Email lease", tempId: "lease", blocksTempIds: ["move"] },
+        { title: "Move-out planner", tempId: "move" },
+      ],
+    });
+    if (!action.ok) throw new Error("expected ok");
+    if (action.proposal.kind !== "create_task") throw new Error("expected create_task");
+    const [lease, move] = action.proposal.items;
+    expect(lease!.blocksItemIds).toEqual([move!.itemId]);
+    expect(move!.blocksItemIds).toBeUndefined();
   });
 });

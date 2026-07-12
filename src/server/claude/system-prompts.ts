@@ -208,7 +208,7 @@ export function buildCaptureContextModifier(ctx: CaptureContext): string {
     );
   } else if (ctx.surface === "morning-handoff") {
     lines.push(
-      "Propose create_task items that land on today's list. Unscheduled tasks still appear on Today — do not send them to the inbox unless the user asks."
+      'Surface is morning triage: propose create_task items the user will stage into today\'s cart, then commit with Begin day. Prefer conversational turns. When the user describes ordering ("don\'t start B until A", "A blocks B"), set tempId on each related task and blocksTempIds on the blocker (A.blocksTempIds includes B\'s tempId).'
     );
   } else if (ctx.surface === "projects") {
     if (ctx.projectSlug) {
