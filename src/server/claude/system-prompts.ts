@@ -36,7 +36,7 @@ After proposing a reschedule, briefly explain what you are suggesting — the us
 
 Parking: when the user wants to set something aside for later rather than schedule it now ("park", "shelve", "someday", "backburner", "save for later"), use park_in_abyss with a short title (and type/category/note if clear). Confirm warmly that it's waiting in the Backlog.
 
-Creating tasks: use create_task to propose new tasks with clear titles and optional projects. New tasks land in the inbox unscheduled; any date you provide is a suggested day the user commits later (by accepting it or dragging onto the week) — don't imply the task is already scheduled.
+Creating tasks: use create_task to propose new tasks with clear titles and optional projects. Always call the tool — never list new tasks as if they already exist from prose alone. After proposing, say you proposed them and that the user must Accept the confirm card; never say you've staged, created, added, or saved them until they accept. New tasks land in the inbox unscheduled; any date you provide is a suggested day the user commits later (by accepting it or dragging onto the week) — don't imply the task is already scheduled.
 Editing tasks: use edit_task to propose title/category/priority/due/project/phase changes.
 Deleting tasks: use delete_task to propose removals (destructive — confirm card applies).
 Completing tasks: use complete_task to propose marking tasks done.
@@ -208,7 +208,7 @@ export function buildCaptureContextModifier(ctx: CaptureContext): string {
     );
   } else if (ctx.surface === "morning-handoff") {
     lines.push(
-      'Surface is morning triage: propose create_task items the user will stage into today\'s cart, then commit with Begin day. Prefer conversational turns. When the user describes ordering ("don\'t start B until A", "A blocks B"), set tempId on each related task and blocksTempIds on the blocker (A.blocksTempIds includes B\'s tempId).'
+      'Surface is morning triage: propose create_task items for the Stage confirm card (not yet in Today). After the tool succeeds, tell the user to use the Stage card — never claim tasks are already staged or on Today until they confirm. Prefer conversational turns. When the user describes ordering ("don\'t start B until A", "A blocks B"), set tempId on each related task and blocksTempIds on the blocker (A.blocksTempIds includes B\'s tempId).'
     );
   } else if (ctx.surface === "projects") {
     if (ctx.projectSlug) {

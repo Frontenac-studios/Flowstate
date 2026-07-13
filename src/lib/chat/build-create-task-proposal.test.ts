@@ -118,6 +118,16 @@ describe("buildCreateTaskProposal", () => {
     expect(item.phaseId).toBeNull();
   });
 
+  it("drops a non-UUID phaseId instead of failing the whole proposal", () => {
+    const item = createItem(
+      buildCreateTaskProposal({
+        tasks: [{ title: "set up Procore", phaseId: "not-a-uuid", projectSlug: "suncoast" }],
+      })
+    );
+    expect(item.phaseId).toBeNull();
+    expect(item.projectSlug).toBe("suncoast");
+  });
+
   it("drops an invalid category and falls back to capture context", () => {
     const item = createItem(
       buildCreateTaskProposal(

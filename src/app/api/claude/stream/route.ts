@@ -56,11 +56,21 @@ export async function POST(req: Request) {
     let saved = false;
 
     const saveAssistant = async (partial: string) => {
-      const trimmed = partial.trim();
-      if (!trimmed || saved) return;
-      saved = true;
+      if (saved) return;
       const proposal = getPendingProposal();
-      await appendAssistantMessage(userId, threadId, trimmed, undefined, proposal ?? undefined);
+      const trimmed = partial.trim();
+      // Persist even when the model returned only a tool proposal (empty prose) so
+      // the confirm card is not dropped. Summarize from the proposal when needed.
+      const fallback =
+        proposal?.kind === "create_task"
+          ? `Proposed ${proposal.items.length} task${proposal.items.length === 1 ? "" : "s"} — Accept the card to add them.`
+          : proposal
+            ? "Proposed an update — Accept the card to apply it."
+            : null;
+      const text = trimmed || fallback;
+      if (!text) return;
+      saved = true;
+      await appendAssistantMessage(userId, threadId, text, undefined, proposal ?? undefined);
     };
 
     const readable = new ReadableStream({
@@ -102,7 +112,7 @@ export async function POST(req: Request) {
           }
 
           const full = assistantText || getFullText();
-          if (full.trim()) await saveAssistant(full);
+          await saveAssistant(full);
 
           controller.enqueue(
             encoder.encode(

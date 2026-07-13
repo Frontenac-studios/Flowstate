@@ -131,11 +131,19 @@ describe("system-prompts", () => {
     expect(prompt).toContain("Default new tasks to loose adulting tasks (a category, no project)");
   });
 
-  it("tells morning handoff capture to stage into today's cart", () => {
+  it("tells morning handoff capture to use the Stage confirm card", () => {
     const ctx = createCaptureContext({ surface: "morning-handoff", defaultBucket: "today" });
     const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "today", ctx);
-    expect(prompt).toContain("stage into today's cart");
+    expect(prompt).toContain("Stage confirm card");
+    expect(prompt).toContain("never claim tasks are already staged");
     expect(prompt).toContain("blocksTempIds");
+  });
+
+  it("tells planning create_task replies to wait for Accept", () => {
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "today");
+    expect(prompt).toContain(
+      "never say you've staged, created, added, or saved them until they accept"
+    );
   });
 
   it("omits capture modifier when capture context is absent", () => {

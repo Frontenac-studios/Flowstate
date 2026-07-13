@@ -139,8 +139,8 @@ export function ChatRail() {
             onLoadOlder={() => void loadOlderMessages()}
             canEdit={!isStreaming && !isSuggestionRunning}
             onEditUserMessage={(id, text) => void editAndResend(id, text)}
-            onApplyProposal={(messageId, enabledItemIds) =>
-              void applyProposal(messageId, enabledItemIds)
+            onApplyProposal={(messageId, enabledItemIds, editedItems, goalEdits) =>
+              void applyProposal(messageId, enabledItemIds, editedItems, goalEdits)
             }
             onDismissProposal={(messageId) => void dismissProposal(messageId)}
             proposalBusy={proposalBusy}
