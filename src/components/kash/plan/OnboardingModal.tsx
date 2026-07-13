@@ -7,6 +7,7 @@ import {
   formatHoldSlotLabel,
   type HandoffPlanTask,
 } from "@/lib/morning-handoff/handoff-task-filters";
+import type { StagedCapture } from "@/lib/morning-handoff/staged-capture";
 import { MAX_CATEGORY_LABEL_LENGTH } from "@/lib/projects/category-settings";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
@@ -52,6 +53,11 @@ type Props = {
 };
 
 const MIN_CAPTURE_TASKS = 2;
+
+// Onboarding's handoff preview never has staged captures of its own — stable
+// empty refs so the memoized cart in MorningHandoffModal doesn't churn.
+const EMPTY_STAGED_CAPTURES: StagedCapture[] = [];
+const EMPTY_STAGED_PINNED_BY_SLOT = new Map<number, string>();
 
 function StepDots({ step }: { step: OnboardingStep }) {
   const order: OnboardingStep[] = ["capture", "pin", "hold", "categories", "handoff"];
@@ -121,6 +127,8 @@ export function OnboardingModal({
         tasks={tasks}
         projects={[]}
         pinnedBySlot={pinnedBySlot}
+        stagedPinnedBySlot={EMPTY_STAGED_PINNED_BY_SLOT}
+        stagedCaptures={EMPTY_STAGED_CAPTURES}
         holdPreview={holdDeclined ? null : holdPreview}
         holdDeclined={holdDeclined}
         isOverCommitted={false}
@@ -128,21 +136,30 @@ export function OnboardingModal({
         isPending={isPending}
         previewBanner="Tomorrow morning opens on this ritual — you're already familiar."
         beginLabel="Start today"
+        openerAcknowledged
+        captureCommitMode="apply"
+        onAcknowledgeOpener={() => undefined}
         onKeepCarryover={() => undefined}
         onDropCarryover={() => undefined}
         onConfirmRecurring={() => undefined}
         onSkipRecurring={() => undefined}
         onConfirmProjectTask={() => undefined}
+        onDeferProjectTask={() => undefined}
         onPullProjectTask={() => undefined}
         onAcceptGoalOffer={() => undefined}
         onDismissGoalOffer={() => undefined}
         onPinTop3={() => undefined}
         onUnpinTop3={() => undefined}
+        onPinStagedTop3={() => undefined}
+        onUnpinStagedTop3={() => undefined}
+        onRemoveStaged={() => undefined}
+        onRemoveFromToday={() => undefined}
+        onStageTasks={() => undefined}
+        onTasksChanged={onTaskCreated}
         onConfirmHold={onConfirmHold}
         onDeclineHold={onDeclineHold}
         onSkip={onFinish}
         onBegin={onFinish}
-        onTasksChanged={onTaskCreated}
       />
     );
   }

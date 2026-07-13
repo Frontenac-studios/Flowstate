@@ -26,6 +26,11 @@ type Props = {
     goalEdits?: BingoGoalItemEdit[]
   ) => void;
   onDismiss: () => void;
+  /** Override create_task confirm chrome (morning triage stages until Begin day). */
+  createTaskChrome?: {
+    headline: string;
+    confirmLabel: string;
+  };
 };
 
 type CreateTaskItem = Extract<ProposedAction, { kind: "create_task" }>["items"][number];
@@ -290,11 +295,13 @@ function CreateTaskDraftEditor({
   busy,
   onConfirm,
   onDismiss,
+  chrome,
 }: {
   items: CreateTaskItem[];
   busy: boolean;
   onConfirm: Props["onConfirm"];
   onDismiss: () => void;
+  chrome?: Props["createTaskChrome"];
 }) {
   const trpc = useTRPC();
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
@@ -344,6 +351,7 @@ function CreateTaskDraftEditor({
             projectSlug: r.projectSlug ? r.projectSlug : null,
             priority: r.priority,
             commitSuggestedDate: commitSuggestedDate || undefined,
+            blocksItemIds: i.blocksItemIds,
           };
           if (r.category) edit.category = r.category;
           if (r.projectSlug && r.phaseId !== PHASE_UNSET) {
@@ -373,7 +381,8 @@ function CreateTaskDraftEditor({
   return (
     <div className="mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm">
       <p className="mb-2 font-medium text-ink">
-        Create {items.length} task{items.length === 1 ? "" : "s"} in your inbox
+        {chrome?.headline ??
+          `Create ${items.length} task${items.length === 1 ? "" : "s"} in your inbox`}
       </p>
       <ul className="mb-3 flex flex-col gap-3" aria-label="Draft tasks">
         {items.map((item) => (
@@ -397,7 +406,7 @@ function CreateTaskDraftEditor({
           onClick={() => confirm(false)}
           className="rounded-control border-emphasis border-ink px-3 py-1 text-xs text-ink transition hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50"
         >
-          Add to inbox
+          {chrome?.confirmLabel ?? "Add to inbox"}
           {enabledCount > 0 && enabledCount < items.length ? ` ${enabledCount}` : ""}
         </button>
         {anySuggestedDate ? (
@@ -550,7 +559,13 @@ function BingoGoalDraftEditor({
   );
 }
 
-export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss }: Props) {
+export function ConfirmActionCard({
+  proposal,
+  busy = false,
+  onConfirm,
+  onDismiss,
+  createTaskChrome,
+}: Props) {
   const [enabledIds, setEnabledIds] = useState<Set<string>>(
     () => new Set(proposal.items.map((item) => item.itemId))
   );
@@ -579,6 +594,7 @@ export function ConfirmActionCard({ proposal, busy = false, onConfirm, onDismiss
         busy={busy}
         onConfirm={onConfirm}
         onDismiss={onDismiss}
+        chrome={createTaskChrome}
       />
     );
   }

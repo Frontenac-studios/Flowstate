@@ -173,6 +173,17 @@ const CREATE_TASK_ITEM_SCHEMA = {
     tags: { type: "array", items: { type: "string" } },
     timeEstimateMinutes: { type: "number", description: "Optional time estimate in minutes." },
     priority: { type: "number", description: "0–3 priority slot." },
+    tempId: {
+      type: "string",
+      description:
+        'Optional local id for this row within the proposal (e.g. "lease"). Use with blocksTempIds to express dependencies.',
+    },
+    blocksTempIds: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        'tempIds of other tasks in this same proposal that THIS task blocks (blocker finishes first). Example: email blocks packing → email.blocksTempIds=["packing"] is wrong; packing waits on email → email.blocksTempIds=["packing"].',
+    },
   },
   required: ["title"],
   additionalProperties: false,
@@ -181,7 +192,7 @@ const CREATE_TASK_ITEM_SCHEMA = {
 const CREATE_TASK_TOOL: Anthropic.Tool = {
   name: "create_task",
   description:
-    "Propose create task. Tasks land in the inbox (unscheduled) with optional suggested day.",
+    "Propose create task(s). Optional tempId + blocksTempIds link dependencies within the same proposal (A.blocksTempIds includes B's tempId means A blocks B).",
   input_schema: {
     type: "object",
     properties: {
