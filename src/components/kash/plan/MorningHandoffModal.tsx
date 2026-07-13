@@ -82,6 +82,8 @@ type Props = {
   onConfirmRecurring: (recurrenceId: string, occurrenceDate: string) => void;
   onSkipRecurring: (recurrenceId: string, occurrenceDate: string) => void;
   onConfirmProjectTask: (taskId: string) => void;
+  /** Defer a project-today suggestion off today (back to later). */
+  onDeferProjectTask: (taskId: string) => void;
   onPullProjectTask: (taskId: string) => void;
   onAcceptGoalOffer: () => void;
   onDismissGoalOffer: () => void;
@@ -90,6 +92,8 @@ type Props = {
   onPinStagedTop3: (stagedId: string, slot: Top3Slot) => void;
   onUnpinStagedTop3: (stagedId: string) => void;
   onRemoveStaged: (stagedId: string) => void;
+  /** Remove a live (already persisted) Today cart row — moves it off today. */
+  onRemoveFromToday: (taskId: string) => void;
   onStageTasks: (edits: CreateTaskItemEdit[]) => void;
   /** Morning stages until Begin; onboarding preview applies immediately. */
   captureCommitMode?: "stage" | "apply";
@@ -245,10 +249,10 @@ function CartRowItem({
         </span>
       ) : null}
       {pinnedSlot ? <KeyCap className="shrink-0">{SLOT_LABELS[pinnedSlot - 1]}</KeyCap> : null}
-      {row.isStaged && onRemove ? (
+      {onRemove ? (
         <button
           type="button"
-          aria-label={`Remove ${row.title}`}
+          aria-label={`Remove ${row.title} from today`}
           className="shrink-0 text-caption text-ink-muted transition hover:text-ink"
           onClick={onRemove}
         >
@@ -282,6 +286,7 @@ export function MorningHandoffModal({
   onConfirmRecurring,
   onSkipRecurring,
   onConfirmProjectTask,
+  onDeferProjectTask,
   onPullProjectTask,
   onAcceptGoalOffer,
   onDismissGoalOffer,
@@ -290,6 +295,7 @@ export function MorningHandoffModal({
   onPinStagedTop3,
   onUnpinStagedTop3,
   onRemoveStaged,
+  onRemoveFromToday,
   onStageTasks,
   captureCommitMode = "stage",
   onTasksChanged,
@@ -320,12 +326,21 @@ export function MorningHandoffModal({
     );
   }, [tasks, localDate, dismissedProjectTasks]);
 
+  const pendingProjectTaskIds = useMemo(
+    () => new Set(projectTasksToday.map((task) => task.id)),
+    [projectTasksToday]
+  );
+
   const liveAssembled = useMemo(
     () =>
-      filterAssembledTodayList(tasks, localDate).filter(
-        (task) => !isTriageCandidate(task, localDate)
-      ),
-    [tasks, localDate]
+      filterAssembledTodayList(tasks, localDate).filter((task) => {
+        if (isTriageCandidate(task, localDate)) return false;
+        // While the opener is reviewing project-today rows, keep unconfirmed
+        // ones off the cart so "Add to today" is a real left → right move.
+        if (!openerAcknowledged && pendingProjectTaskIds.has(task.id)) return false;
+        return true;
+      }),
+    [tasks, localDate, openerAcknowledged, pendingProjectTaskIds]
   );
 
   const cartRows = useMemo((): CartRow[] => {
@@ -516,16 +531,28 @@ export function MorningHandoffModal({
                         meta={task.projectSlug ? `#${task.projectSlug}` : undefined}
                         category={task.category}
                         actions={
-                          <button
-                            type="button"
-                            className={ROW_ACTION}
-                            onClick={() => {
-                              onConfirmProjectTask(task.id);
-                              setDismissedProjectTasks((prev) => new Set(prev).add(task.id));
-                            }}
-                          >
-                            Add to today
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className={ROW_ACTION}
+                              onClick={() => {
+                                onConfirmProjectTask(task.id);
+                                setDismissedProjectTasks((prev) => new Set(prev).add(task.id));
+                              }}
+                            >
+                              Add to today
+                            </button>
+                            <button
+                              type="button"
+                              className={ROW_ACTION_MUTED}
+                              onClick={() => {
+                                onDeferProjectTask(task.id);
+                                setDismissedProjectTasks((prev) => new Set(prev).add(task.id));
+                              }}
+                            >
+                              Not today
+                            </button>
+                          </>
                         }
                       />
                     ))}
@@ -834,7 +861,11 @@ export function MorningHandoffModal({
                           if (row.isStaged) onUnpinStagedTop3(row.id);
                           else onUnpinTop3(row.id);
                         }}
-                        onRemove={row.isStaged ? () => onRemoveStaged(row.id) : undefined}
+                        onRemove={
+                          row.isStaged
+                            ? () => onRemoveStaged(row.id)
+                            : () => onRemoveFromToday(row.id)
+                        }
                       />
                     );
                   })}

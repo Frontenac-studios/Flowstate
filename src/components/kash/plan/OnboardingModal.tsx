@@ -144,6 +144,7 @@ export function OnboardingModal({
         onConfirmRecurring={() => undefined}
         onSkipRecurring={() => undefined}
         onConfirmProjectTask={() => undefined}
+        onDeferProjectTask={() => undefined}
         onPullProjectTask={() => undefined}
         onAcceptGoalOffer={() => undefined}
         onDismissGoalOffer={() => undefined}
@@ -152,6 +153,7 @@ export function OnboardingModal({
         onPinStagedTop3={() => undefined}
         onUnpinStagedTop3={() => undefined}
         onRemoveStaged={() => undefined}
+        onRemoveFromToday={() => undefined}
         onStageTasks={() => undefined}
         onTasksChanged={onTaskCreated}
         onConfirmHold={onConfirmHold}

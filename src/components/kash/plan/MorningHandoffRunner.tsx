@@ -424,6 +424,11 @@ export function MorningHandoffRunner() {
         skipRecurringMutation.mutate({ recurrenceId, occurrenceDate })
       }
       onConfirmProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
+      onDeferProjectTask={(id) => {
+        const pinned = Array.from(pinnedBySlot.values()).some((task) => task.id === id);
+        if (pinned) unpinMutation.mutate({ id });
+        moveMutation.mutate({ id, bucket: "later" });
+      }}
       onPullProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onAcceptGoalOffer={() => {
         if (!goalOffer) return;
@@ -444,6 +449,11 @@ export function MorningHandoffRunner() {
       onPinStagedTop3={onPinStagedTop3}
       onUnpinStagedTop3={onUnpinStagedTop3}
       onRemoveStaged={onRemoveStaged}
+      onRemoveFromToday={(id) => {
+        const pinned = Array.from(pinnedBySlot.values()).some((task) => task.id === id);
+        if (pinned) unpinMutation.mutate({ id });
+        moveMutation.mutate({ id, bucket: "later" });
+      }}
       onStageTasks={onStageTasks}
       onConfirmHold={() => {
         if (!holdPreview) return;
