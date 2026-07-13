@@ -3,6 +3,7 @@ import "server-only";
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/db";
+import { taskTagsColumn } from "@/db/task-tags-for-db";
 import {
   syncPhaseRow,
   syncPlanningRow,
@@ -270,7 +271,7 @@ export async function applyProposedActionPayload(
             priority: item.priority ?? 0,
             category: resolved.category,
             categoryUnresolved: resolved.unresolved,
-            tags: item.tags ?? [],
+            tags: taskTagsColumn(item.tags ?? []),
             timeEstimateMinutes: item.timeEstimateMinutes ?? null,
           })
           .returning();

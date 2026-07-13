@@ -2,6 +2,7 @@ import { inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
+import { isSqliteMode } from "@/db/mode";
 import { calendarConnections } from "@/db/tables";
 import { syncGoogleConnection } from "@/server/calendar/sync-google-connection";
 
@@ -18,6 +19,18 @@ function verifyCronSecret(request: Request): boolean {
 export async function GET(request: Request) {
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Calendar sync tables are Postgres-only; desktop has no local mirror yet.
+  if (isSqliteMode()) {
+    return NextResponse.json({
+      connectionsEligible: 0,
+      connectionsSynced: 0,
+      connectionsFailed: 0,
+      eventsUpserted: 0,
+      eventsDeleted: 0,
+      errors: [],
+    });
   }
 
   const connections = await db

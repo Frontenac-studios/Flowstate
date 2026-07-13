@@ -3,6 +3,7 @@ import { and, asc, eq, gt, lt, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
+import { isSqliteMode } from "@/db/mode";
 import { calendarConnections, externalCalendarEvents } from "@/db/tables";
 import { sumBusyMinutes } from "@/lib/calendar/build-day-busy-intervals";
 import { eventToDayMinutes } from "@/lib/calendar/event-to-day-minutes";
@@ -88,6 +89,9 @@ async function fetchOverlappingEvents(
   rangeStart: Date,
   rangeEnd: Date
 ): Promise<ExternalEventRow[]> {
+  // Calendar sync tables are Postgres-only; desktop has no local mirror yet.
+  if (isSqliteMode()) return [];
+
   return db
     .select({
       id: externalCalendarEvents.id,

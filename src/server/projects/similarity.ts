@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
 
 import { db } from "@/db";
+import { embeddingColumn, embeddingFromDb } from "@/db/embedding-for-db";
 import { syncProjectRow, syncProjectSimilarityRow } from "@/db/record-sync-mutation";
 import { projectSimilarity, projects, tasks, taskTimeEntries } from "@/db/tables";
 import type { ProjectCategory } from "@/lib/projects/categories";
@@ -46,7 +47,7 @@ async function listCandidateProjects(
     id: row.id,
     name: row.name,
     category: row.category,
-    embedding: row.embedding ?? null,
+    embedding: embeddingFromDb(row.embedding),
   }));
 }
 
@@ -188,7 +189,7 @@ export async function backfillProjectEmbedding(
   const now = new Date();
   const [updated] = await db
     .update(projects)
-    .set({ embedding, updatedAt: now })
+    .set({ embedding: embeddingColumn(embedding), updatedAt: now })
     .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
     .returning();
 
