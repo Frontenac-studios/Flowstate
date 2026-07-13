@@ -21,10 +21,10 @@ type Props = {
   /** "strong" deepens the scrim so the rail recedes further (morning hand-off). */
   dim?: "default" | "strong";
   /**
-   * Panel width. Default `wide` (~max-w-5xl) for all rituals; `md` keeps the
-   * older narrow card if a surface needs it.
+   * Panel size. Default `wide` (~max-w-5xl, 85vh); `md` is narrower;
+   * `xl` is used by morning hand-off (~max-w-7xl, 92vh).
    */
-  size?: "md" | "wide";
+  size?: "md" | "wide" | "xl";
   /**
    * `scroll` (default) — single body scroller.
    * `fill` — children own height/scroll (morning two-column layout).
@@ -166,8 +166,12 @@ export function RitualSheet({
         aria-describedby={describedBy}
         tabIndex={-1}
         className={cn(
-          "ritual-sheet-panel relative z-10 flex max-h-[85vh] w-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-overlay focus:outline-none",
-          size === "wide" ? "max-w-5xl" : "max-w-xl"
+          "ritual-sheet-panel relative z-10 flex w-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-overlay focus:outline-none",
+          size === "xl"
+            ? "max-h-[92vh] max-w-7xl"
+            : size === "wide"
+              ? "max-h-[85vh] max-w-5xl"
+              : "max-h-[85vh] max-w-xl"
         )}
       >
         <header className="shrink-0 border-b border-subtle px-[var(--space-5)] py-[var(--space-4)]">

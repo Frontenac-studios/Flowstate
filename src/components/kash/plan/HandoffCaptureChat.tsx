@@ -14,6 +14,7 @@ type CaptureMessage = {
   id: string;
   role: string;
   content: {
+    text?: string;
     meta?: {
       proposal?: ProposedAction;
     };
@@ -60,7 +61,7 @@ function findLatestProposal(
   return null;
 }
 
-/** Capture-focused chat for morning triage — composer, stream, and confirm card only. */
+/** Capture-focused chat for morning triage — fixed chat pane above, suggestions below. */
 export function HandoffCaptureChat({
   dumpEnabled,
   dumpLockedHint,
@@ -69,6 +70,7 @@ export function HandoffCaptureChat({
   onTasksChanged,
 }: Props) {
   const sessionFloorRef = useRef<number | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
     messages,
@@ -97,6 +99,11 @@ export function HandoffCaptureChat({
 
   const sessionFloor = sessionFloorRef.current ?? messages.length;
 
+  const sessionMessages = useMemo(
+    () => messages.slice(sessionFloor) as CaptureMessage[],
+    [messages, sessionFloor]
+  );
+
   const pendingProposal = useMemo(
     () => findLatestProposal(messages, sessionFloor, (proposal) => proposal.status === "pending"),
     [messages, sessionFloor]
@@ -112,90 +119,144 @@ export function HandoffCaptureChat({
     return applied ? (placementSummaryByMessageId[applied.messageId] ?? null) : null;
   }, [commitMode, messages, sessionFloor, placementSummaryByMessageId]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [sessionMessages.length, streamingText, isStreaming, appliedAck]);
+
   const placeholder = dumpEnabled
     ? captureContextPlaceholder(HANDOFF_CAPTURE_CONTEXT)
     : (dumpLockedHint ?? "Acknowledge carryovers above before dumping new tasks…");
 
   const stageChrome = commitMode === "stage" ? STAGE_CHROME : undefined;
+  const chatEmpty = sessionMessages.length === 0 && !streamingText && !isStreaming && !appliedAck;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col space-y-[var(--space-2)] rounded-row border border-subtle bg-surface-2 p-[var(--space-3)]">
-      {!configured ? (
-        <p className="rounded-control bg-accent-soft px-3 py-2 text-caption text-ink-muted">
-          Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code> to
-          your environment.
-        </p>
-      ) : null}
-
-      {streamError ? (
-        <p className="flex items-center gap-2 text-caption text-critical" role="alert">
-          <span>{streamError}</span>
-          {!isStreaming ? (
-            <button
-              type="button"
-              onClick={retry}
-              className="shrink-0 font-medium underline underline-offset-2"
-            >
-              Retry
-            </button>
-          ) : null}
-        </p>
-      ) : null}
-
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
-        {streamingText ? (
-          <div className="rounded-row border border-border bg-surface px-3 py-2 text-body text-ink">
-            <p className="whitespace-pre-wrap">{renderChatMessage(streamingText)}</p>
-          </div>
-        ) : isStreaming ? (
-          <div
-            className="rounded-row border border-border bg-surface px-3 py-2 text-body text-ink-muted"
-            role="status"
-            aria-label="Claude is thinking"
-          >
-            <span className="inline-flex gap-1" aria-hidden>
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint [animation-delay:150ms]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint [animation-delay:300ms]" />
-            </span>
-          </div>
-        ) : null}
-
-        {pendingProposal ? (
-          <ConfirmActionCard
-            proposal={pendingProposal.proposal}
-            busy={proposalBusy}
-            createTaskChrome={stageChrome}
-            onConfirm={(enabledItemIds, editedItems) => {
-              if (commitMode === "stage") {
-                if (editedItems?.length) onStageTasks(editedItems);
-                void dismissProposal(pendingProposal.messageId);
-                return;
-              }
-              void applyProposal(pendingProposal.messageId, enabledItemIds, editedItems).then(
-                () => {
-                  onTasksChanged?.();
-                }
-              );
-            }}
-            onDismiss={() => void dismissProposal(pendingProposal.messageId)}
-          />
-        ) : null}
-
-        {appliedAck ? (
-          <p className="text-caption text-ink-muted" role="status">
-            {renderChatMessage(appliedAck)}
+    <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-2)]">
+      {/* Fixed-height chat pane: session messages + stream + composer */}
+      <div className="flex min-h-[16rem] flex-1 flex-col rounded-row border border-subtle bg-surface-2 p-[var(--space-3)]">
+        {!configured ? (
+          <p className="mb-2 shrink-0 rounded-control bg-accent-soft px-3 py-2 text-caption text-ink-muted">
+            Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code>{" "}
+            to your environment.
           </p>
         ) : null}
+
+        {streamError ? (
+          <p
+            className="mb-2 flex shrink-0 items-center gap-2 text-caption text-critical"
+            role="alert"
+          >
+            <span>{streamError}</span>
+            {!isStreaming ? (
+              <button
+                type="button"
+                onClick={retry}
+                className="shrink-0 font-medium underline underline-offset-2"
+              >
+                Retry
+              </button>
+            ) : null}
+          </p>
+        ) : null}
+
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+          {chatEmpty ? (
+            <p className="px-1 py-2 text-caption text-ink-muted">
+              Dump tasks for today — suggestions show up below.
+            </p>
+          ) : null}
+
+          {sessionMessages.map((message) => {
+            const text = message.content.text?.trim();
+            if (!text) return null;
+
+            if (message.role === "user") {
+              return (
+                <div
+                  key={message.id}
+                  className="ml-auto max-w-[95%] rounded-row bg-accent-soft px-3 py-2 text-body text-ink"
+                >
+                  <p className="whitespace-pre-wrap">{renderChatMessage(text)}</p>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={message.id}
+                className="mr-auto max-w-[95%] rounded-row border border-border bg-surface px-3 py-2 text-body text-ink"
+              >
+                <p className="whitespace-pre-wrap">{renderChatMessage(text)}</p>
+              </div>
+            );
+          })}
+
+          {streamingText ? (
+            <div className="mr-auto max-w-[95%] rounded-row border border-border bg-surface px-3 py-2 text-body text-ink">
+              <p className="whitespace-pre-wrap">{renderChatMessage(streamingText)}</p>
+            </div>
+          ) : isStreaming ? (
+            <div
+              className="mr-auto max-w-[95%] rounded-row border border-border bg-surface px-3 py-2 text-body text-ink-muted"
+              role="status"
+              aria-label="Claude is thinking"
+            >
+              <span className="inline-flex gap-1" aria-hidden>
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint" />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-faint [animation-delay:300ms]" />
+              </span>
+            </div>
+          ) : null}
+
+          {appliedAck ? (
+            <p className="text-caption text-ink-muted" role="status">
+              {renderChatMessage(appliedAck)}
+            </p>
+          ) : null}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        <ChatComposer
+          disabled={!configured || !dumpEnabled}
+          isStreaming={isStreaming}
+          placeholder={placeholder}
+          rows={4}
+          onSend={(text) => void sendMessage(text)}
+          onStop={stopGeneration}
+        />
       </div>
 
-      <ChatComposer
-        disabled={!configured || !dumpEnabled}
-        isStreaming={isStreaming}
-        placeholder={placeholder}
-        onSend={(text) => void sendMessage(text)}
-        onStop={stopGeneration}
-      />
+      {/* Suggestions box — Stage cards only, separate from chat */}
+      {pendingProposal ? (
+        <div className="flex max-h-[40%] min-h-0 shrink-0 flex-col overflow-hidden rounded-row border border-subtle bg-surface-2">
+          <h3 className="shrink-0 px-[var(--space-3)] pt-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
+            Suggested
+          </h3>
+          <div className="min-h-0 flex-1 overflow-y-auto px-[var(--space-3)] pb-[var(--space-2)]">
+            <ConfirmActionCard
+              proposal={pendingProposal.proposal}
+              busy={proposalBusy}
+              createTaskChrome={stageChrome}
+              density="compact"
+              onConfirm={(enabledItemIds, editedItems) => {
+                if (commitMode === "stage") {
+                  if (editedItems?.length) onStageTasks(editedItems);
+                  void dismissProposal(pendingProposal.messageId);
+                  return;
+                }
+                void applyProposal(pendingProposal.messageId, enabledItemIds, editedItems).then(
+                  () => {
+                    onTasksChanged?.();
+                  }
+                );
+              }}
+              onDismiss={() => void dismissProposal(pendingProposal.messageId)}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
