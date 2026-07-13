@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Inbox, kashIconProps } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
@@ -20,9 +20,9 @@ import { InboxPanel } from "./InboxPanel";
  * (Today / Week / Plan), so the ⌃I binding is scoped to those routes.
  */
 export function ContextualInbox() {
+  const trpc = useTRPC();
   const [open, setOpen] = useInboxOpen();
 
-  const trpc = useTRPC();
   const { data: countData } = useQuery({
     ...trpc.tasks.countTriageCandidates.queryOptions(),
     enabled: !open,
@@ -33,9 +33,11 @@ export function ContextualInbox() {
   });
   const inboxCount = open ? (triage?.length ?? countData?.count ?? 0) : (countData?.count ?? 0);
 
+  useAutoOpenOnTriageGrowth({ open, setOpen, count: countData?.count });
+
   return (
     <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
-      <div className="mb-stack overflow-hidden rounded-card border border-border bg-surface shadow-surface">
+      <div className="mb-stack shrink-0 overflow-hidden rounded-card border border-border bg-surface shadow-surface">
         {!open ? (
           <div className="flex items-center gap-2 px-4 py-2">
             <button
@@ -88,6 +90,50 @@ export function ContextualInbox() {
       </div>
     </LensProvider>
   );
+}
+
+/**
+ * Decides whether a triage-count update should open the inbox.
+ * `previousCount === null` seeds the baseline without opening (existing items
+ * on mount/navigation must not force-open).
+ */
+export function shouldAutoOpenOnTriageGrowth(
+  previousCount: number | null,
+  nextCount: number,
+  currentlyOpen: boolean
+): { shouldOpen: boolean; nextPrevious: number } {
+  if (previousCount === null) {
+    return { shouldOpen: false, nextPrevious: nextCount };
+  }
+  return {
+    shouldOpen: nextCount > previousCount && !currentlyOpen,
+    nextPrevious: nextCount,
+  };
+}
+
+/** Opens the inbox when triage count rises after the initial baseline is seeded. */
+function useAutoOpenOnTriageGrowth({
+  open,
+  setOpen,
+  count,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  count: number | undefined;
+}) {
+  const previousCountRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (count === undefined) return;
+
+    const { shouldOpen, nextPrevious } = shouldAutoOpenOnTriageGrowth(
+      previousCountRef.current,
+      count,
+      open
+    );
+    previousCountRef.current = nextPrevious;
+    if (shouldOpen) setOpen(true);
+  }, [count, open, setOpen]);
 }
 
 /** Local inbox-open state plus a ⌃I toggle. */

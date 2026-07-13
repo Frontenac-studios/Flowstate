@@ -192,7 +192,7 @@ const CREATE_TASK_ITEM_SCHEMA = {
 const CREATE_TASK_TOOL: Anthropic.Tool = {
   name: "create_task",
   description:
-    "Propose create task(s). Optional tempId + blocksTempIds link dependencies within the same proposal (A.blocksTempIds includes B's tempId means A blocks B).",
+    "Propose create task(s) for a confirm card the user must Accept before anything is created. Never claim tasks were staged, created, or added until they accept. Optional tempId + blocksTempIds link dependencies within the same proposal (A.blocksTempIds includes B's tempId means A blocks B).",
   input_schema: {
     type: "object",
     properties: {
