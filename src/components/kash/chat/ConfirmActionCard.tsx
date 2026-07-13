@@ -31,6 +31,8 @@ type Props = {
     headline: string;
     confirmLabel: string;
   };
+  /** Morning triage uses compact two-line draft rows; chat rail stays default. */
+  density?: "default" | "compact";
 };
 
 type CreateTaskItem = Extract<ProposedAction, { kind: "create_task" }>["items"][number];
@@ -148,6 +150,7 @@ function CreateTaskDraftRow({
   projects,
   categoryProjects,
   lastUsedCategory,
+  density = "default",
   onUpdate,
 }: {
   item: CreateTaskItem;
@@ -156,11 +159,13 @@ function CreateTaskDraftRow({
   projects: { id: string; slug: string; name: string; category: ProjectCategory }[];
   categoryProjects: { slug: string; category: ProjectCategory }[];
   lastUsedCategory: ProjectCategory | null;
+  density?: "default" | "compact";
   onUpdate: (patch: Partial<DraftRow>) => void;
 }) {
   const trpc = useTRPC();
   const project = row.projectSlug ? projects.find((p) => p.slug === row.projectSlug) : undefined;
   const projectId = project?.id ?? null;
+  const compact = density === "compact";
 
   const { data: projectPhases = [] } = useQuery({
     ...trpc.phases.listByProject.queryOptions({ projectId: projectId ?? "" }),
@@ -194,7 +199,7 @@ function CreateTaskDraftRow({
 
   return (
     <ComposerCategoryAccent preview={row.enabled ? categoryPreview : null}>
-      <div className="flex items-center gap-2">
+      <div className={`flex items-center gap-2 ${compact ? "gap-1.5" : ""}`}>
         <Checkbox
           id={`draft-${item.itemId}`}
           checked={row.enabled}
@@ -284,7 +289,9 @@ function CreateTaskDraftRow({
           <option value={3}>P3</option>
         </select>
       </div>
-      {row.enabled ? <p className="text-xs text-ink-muted">{placementSummary}</p> : null}
+      {row.enabled && !compact ? (
+        <p className="text-xs text-ink-muted">{placementSummary}</p>
+      ) : null}
     </ComposerCategoryAccent>
   );
 }
@@ -296,16 +303,19 @@ function CreateTaskDraftEditor({
   onConfirm,
   onDismiss,
   chrome,
+  density = "default",
 }: {
   items: CreateTaskItem[];
   busy: boolean;
   onConfirm: Props["onConfirm"];
   onDismiss: () => void;
   chrome?: Props["createTaskChrome"];
+  density?: "default" | "compact";
 }) {
   const trpc = useTRPC();
   const { data: projects = [] } = useQuery(trpc.projects.list.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+  const compact = density === "compact";
 
   const [rows, setRows] = useState<Record<string, DraftRow>>(() =>
     Object.fromEntries(
@@ -379,12 +389,21 @@ function CreateTaskDraftEditor({
   );
 
   return (
-    <div className="mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm">
-      <p className="mb-2 font-medium text-ink">
+    <div
+      className={
+        compact
+          ? "rounded-[var(--radius-row)] border border-dashed border-border bg-surface px-2 py-1.5 text-xs"
+          : "mt-2 rounded-[var(--radius-row)] border border-dashed border-border bg-surface-2 px-3 py-2 text-sm"
+      }
+    >
+      <p className={`font-medium text-ink ${compact ? "mb-1.5 text-caption" : "mb-2"}`}>
         {chrome?.headline ??
           `Create ${items.length} task${items.length === 1 ? "" : "s"} in your inbox`}
       </p>
-      <ul className="mb-3 flex flex-col gap-3" aria-label="Draft tasks">
+      <ul
+        className={`mb-2 flex flex-col ${compact ? "gap-1.5" : "mb-3 gap-3"}`}
+        aria-label="Draft tasks"
+      >
         {items.map((item) => (
           <li key={item.itemId} className="flex flex-col gap-1">
             <CreateTaskDraftRow
@@ -394,6 +413,7 @@ function CreateTaskDraftEditor({
               projects={projects}
               categoryProjects={categoryProjects}
               lastUsedCategory={settings?.lastUsedCategory ?? null}
+              density={density}
               onUpdate={(patch) => update(item.itemId, patch)}
             />
           </li>
@@ -409,7 +429,7 @@ function CreateTaskDraftEditor({
           {chrome?.confirmLabel ?? "Add to inbox"}
           {enabledCount > 0 && enabledCount < items.length ? ` ${enabledCount}` : ""}
         </button>
-        {anySuggestedDate ? (
+        {anySuggestedDate && !compact ? (
           <button
             type="button"
             disabled={busy || enabledCount === 0}
@@ -565,6 +585,7 @@ export function ConfirmActionCard({
   onConfirm,
   onDismiss,
   createTaskChrome,
+  density = "default",
 }: Props) {
   const [enabledIds, setEnabledIds] = useState<Set<string>>(
     () => new Set(proposal.items.map((item) => item.itemId))
@@ -595,6 +616,7 @@ export function ConfirmActionCard({
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         chrome={createTaskChrome}
+        density={density}
       />
     );
   }

@@ -12,6 +12,8 @@ type Props = {
   onSend: (text: string) => void;
   onStop?: () => void;
   suggestions?: ReactNode;
+  /** Textarea row count. Default 2; morning hand-off uses a taller composer. */
+  rows?: number;
 };
 
 export function ChatComposer({
@@ -21,6 +23,7 @@ export function ChatComposer({
   onSend,
   onStop,
   suggestions,
+  rows = 2,
 }: Props) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -45,7 +48,7 @@ export function ChatComposer({
             submit();
           }
         }}
-        rows={2}
+        rows={rows}
         disabled={disabled || isStreaming}
         placeholder={placeholder}
         className="w-full resize-none text-sm text-ink"

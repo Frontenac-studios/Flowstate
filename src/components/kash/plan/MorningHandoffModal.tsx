@@ -310,7 +310,7 @@ export function MorningHandoffModal({
   const [dismissedRecurring, setDismissedRecurring] = useState<Set<string>>(() => new Set());
   const [dismissedProjectTasks, setDismissedProjectTasks] = useState<Set<string>>(() => new Set());
 
-  const openerText = opener?.message ?? "Take a breath — assemble today gently before you rank it.";
+  const openerText = opener?.message;
 
   const carryovers = useMemo(() => filterTriageCarryovers(tasks, localDate), [tasks, localDate]);
 
@@ -436,7 +436,7 @@ export function MorningHandoffModal({
       title="Good morning"
       dismissOnBackdrop={false}
       dim="strong"
-      size="wide"
+      size="xl"
       bodyLayout="fill"
       onDismiss={onSkip}
       footer={
@@ -463,9 +463,11 @@ export function MorningHandoffModal({
               {previewBanner}
             </p>
           ) : null}
-          <p className="rounded-row border border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
-            {openerText}
-          </p>
+          {openerText ? (
+            <p className="rounded-row border border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
+              {openerText}
+            </p>
+          ) : null}
           {calendarSummaryLine ? (
             <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
           ) : null}
@@ -621,9 +623,6 @@ export function MorningHandoffModal({
             ) : null}
 
             <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-2)]">
-              <h3 className="shrink-0 text-caption font-medium uppercase tracking-wide text-ink-muted">
-                Add more
-              </h3>
               <div className="flex min-h-0 flex-1 flex-col">
                 <HandoffCaptureChat
                   dumpEnabled={dumpEnabled}
