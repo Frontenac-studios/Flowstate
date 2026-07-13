@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, gt, gte, inArray, isNotNull, isNull, lte, lt, ne } from "drizzle-orm";
 import { db } from "@/db";
+import { isSqliteMode } from "@/db/mode";
 import {
   appSettings,
   careActivities,
@@ -199,22 +200,31 @@ export async function runNudgeEvaluation(params: {
             .where(
               and(eq(protectedBlocks.userId, userId), eq(protectedBlocks.scheduledDate, localDate))
             ),
-          db
-            .select({
-              startAt: externalCalendarEvents.startAt,
-              endAt: externalCalendarEvents.endAt,
-              isAllDay: externalCalendarEvents.isAllDay,
-              status: externalCalendarEvents.status,
-            })
-            .from(externalCalendarEvents)
-            .where(
-              and(
-                eq(externalCalendarEvents.userId, userId),
-                ne(externalCalendarEvents.status, "cancelled"),
-                lt(externalCalendarEvents.startAt, dayEndUtc),
-                gt(externalCalendarEvents.endAt, dayStartUtc)
+          isSqliteMode()
+            ? Promise.resolve(
+                [] as Array<{
+                  startAt: Date;
+                  endAt: Date;
+                  isAllDay: boolean;
+                  status: "confirmed" | "tentative" | "cancelled";
+                }>
               )
-            ),
+            : db
+                .select({
+                  startAt: externalCalendarEvents.startAt,
+                  endAt: externalCalendarEvents.endAt,
+                  isAllDay: externalCalendarEvents.isAllDay,
+                  status: externalCalendarEvents.status,
+                })
+                .from(externalCalendarEvents)
+                .where(
+                  and(
+                    eq(externalCalendarEvents.userId, userId),
+                    ne(externalCalendarEvents.status, "cancelled"),
+                    lt(externalCalendarEvents.startAt, dayEndUtc),
+                    gt(externalCalendarEvents.endAt, dayStartUtc)
+                  )
+                ),
           db
             .select({ id: tasks.id })
             .from(tasks)

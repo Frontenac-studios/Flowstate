@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
+import { isSqliteMode } from "@/db/mode";
 import { calendarConnections } from "@/db/tables";
 
 import { decryptToken, encryptToken } from "./encrypt-tokens";
@@ -12,6 +13,9 @@ import { refreshGoogleAccessToken } from "./google-client";
 export type CalendarConnectionRow = typeof calendarConnections.$inferSelect;
 
 export async function getGoogleConnection(userId: string): Promise<CalendarConnectionRow | null> {
+  // Calendar sync tables are Postgres-only; desktop has no local mirror yet.
+  if (isSqliteMode()) return null;
+
   const [row] = await db
     .select()
     .from(calendarConnections)

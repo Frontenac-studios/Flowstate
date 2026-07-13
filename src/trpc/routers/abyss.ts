@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
+import { embeddingColumn, embeddingFromDb } from "@/db/embedding-for-db";
 import {
   syncAbyssItemRow,
   syncPlanningRow,
@@ -298,7 +299,7 @@ export const abyssRouter = createTRPCRouter({
       const now = new Date();
       const [updated] = await db
         .update(abyssItems)
-        .set({ embedding: input.embedding, updatedAt: now })
+        .set({ embedding: embeddingColumn(input.embedding), updatedAt: now })
         .where(
           and(
             eq(abyssItems.id, input.id),
@@ -325,7 +326,10 @@ export const abyssRouter = createTRPCRouter({
           )
         );
 
-      const duplicatesBumped = selectNearDuplicates(input.embedding, others);
+      const duplicatesBumped = selectNearDuplicates(
+        input.embedding,
+        others.map((row) => ({ id: row.id, embedding: embeddingFromDb(row.embedding) }))
+      );
       for (const dupId of duplicatesBumped) {
         const [bumped] = await db
           .update(abyssItems)
@@ -378,9 +382,16 @@ export const abyssRouter = createTRPCRouter({
         .from(abyssItems)
         .where(and(eq(abyssItems.userId, ctx.userId), eq(abyssItems.status, "active")));
 
-      return suggestTagsFromNeighbours(input.embedding, neighbours, {
-        exclude: input.exclude ? normalizeTags(input.exclude) : undefined,
-      });
+      return suggestTagsFromNeighbours(
+        input.embedding,
+        neighbours.map((row) => ({
+          embedding: embeddingFromDb(row.embedding),
+          tags: row.tags,
+        })),
+        {
+          exclude: input.exclude ? normalizeTags(input.exclude) : undefined,
+        }
+      );
     }),
 
   /**
