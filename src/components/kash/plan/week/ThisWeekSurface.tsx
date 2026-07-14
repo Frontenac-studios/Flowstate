@@ -1,28 +1,32 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import { LensControlBar } from "@/components/kash/plan/LensControlBar";
 import { LensProvider } from "@/components/kash/plan/LensProvider";
 import { PlanSurface } from "@/components/kash/plan/PlanSurface";
 import { WeekCanvas } from "@/components/kash/plan/week/WeekCanvas";
-import { GhostCategoryStrip } from "@/components/kash/ui/GhostCategoryStrip";
-import WeeklySummaryCard from "@/components/kash/week/WeeklySummaryCard";
+import { WeekHeader } from "@/components/kash/plan/week/WeekHeader";
+import { WeekReflectionPanel } from "@/components/kash/plan/week/WeekReflectionPanel";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
 import { weekHasPlanningData } from "@/lib/week/week-has-data";
 import { useTRPC } from "@/trpc/client";
 
+const DAY_MONTH: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+
 export function ThisWeekSurface() {
   const trpc = useTRPC();
   const localDate = useLocalCalendarDate();
   const weekRef = useMemo(() => parseISODateString(localDate), [localDate]);
-  const weekDates = useMemo(() => datesInIsoWeek(weekRef).map(toISODateString), [weekRef]);
+  const weekDays = useMemo(() => datesInIsoWeek(weekRef), [weekRef]);
+  const weekDates = useMemo(() => weekDays.map(toISODateString), [weekDays]);
   const anchorDate = weekDates[0] ?? localDate;
   const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
+
+  const [reflectionOpen, setReflectionOpen] = useState(false);
 
   const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: protectedBlocks = [] } = useQuery(
@@ -31,6 +35,7 @@ export function ThisWeekSurface() {
   const { data: dayPriorities = [] } = useQuery(
     trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
   );
+  const { data: triageCount } = useQuery(trpc.tasks.countTriageCandidates.queryOptions());
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
 
@@ -45,32 +50,38 @@ export function ThisWeekSurface() {
     [weekDates, tasks, protectedBlocks.length, dayPriorities.length, partitioned.inbox.length]
   );
 
+  const weekRange = useMemo(() => {
+    const start = weekDays[0];
+    const end = weekDays[weekDays.length - 1];
+    if (!start || !end) return "";
+    return `${start.toLocaleDateString(undefined, DAY_MONTH)} – ${end.toLocaleDateString(
+      undefined,
+      DAY_MONTH
+    )}`;
+  }, [weekDays]);
+
   return (
     <PlanSurface>
-      <div className="flex min-h-0 flex-1 flex-col">
-        <ContextualInbox />
+      <div className="flex min-h-0 flex-1 flex-col gap-5">
+        <WeekHeader
+          weekRange={weekRange}
+          overdueCount={triageCount?.count ?? 0}
+          reflectionOpen={reflectionOpen}
+          onToggleReflection={() => setReflectionOpen((value) => !value)}
+        />
+
+        {reflectionOpen ? <WeekReflectionPanel /> : null}
+
         <LensProvider scope="this-week">
           <div className="flex min-h-0 flex-1 flex-col">
             {hasWeekPlanData ? (
-              <div className="mb-4 flex shrink-0 flex-wrap items-center gap-3">
+              <div className="mb-3 flex shrink-0 justify-end">
                 <LensControlBar />
               </div>
             ) : null}
             <WeekCanvas surface="week" showWeekChrome={hasWeekPlanData} />
           </div>
         </LensProvider>
-        {hasWeekPlanData ? (
-          <div className="mt-4 shrink-0">
-            <WeeklySummaryCard />
-          </div>
-        ) : (
-          <div className="mt-4 shrink-0 rounded-card border border-subtle bg-surface px-4 py-3 shadow-surface">
-            <GhostCategoryStrip className="mx-auto w-40" />
-            <p className="mt-2 text-center text-sm text-ink-muted">
-              Schedule tasks on the week grid — summary fills in as your plan takes shape.
-            </p>
-          </div>
-        )}
       </div>
     </PlanSurface>
   );

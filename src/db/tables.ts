@@ -41,6 +41,7 @@ import { taskOccurrenceOverrides as pgTaskOccurrenceOverrides } from "./schema/t
 import { taskRecurrence as pgTaskRecurrence } from "./schema/task-recurrence";
 import { tasks as pgTasks } from "./schema/tasks";
 import { weekDayPriorities as pgWeekDayPriorities } from "./schema/week-day-priorities";
+import { weekReviews as pgWeekReviews } from "./schema/week-reviews";
 import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
 
 import { isSqliteMode } from "./mode";
@@ -155,6 +156,9 @@ export const careReflections = (
 export const weekDayPriorities = (
   isSqliteMode() ? sqliteSchema.weekDayPriorities : pgWeekDayPriorities
 ) as typeof pgWeekDayPriorities;
+export const weekReviews = (
+  isSqliteMode() ? sqliteSchema.weekReviews : pgWeekReviews
+) as typeof pgWeekReviews;
 /** Postgres-only — desktop calendar sync deferred. */
 export const calendarConnections = pgCalendarConnections;
 /** Postgres-only — desktop calendar sync deferred. */

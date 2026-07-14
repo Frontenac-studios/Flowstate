@@ -679,7 +679,7 @@ export function WeekCanvas({
       ref={dayScrollRef}
       className={`week-day-scroll mt-stack rounded-card p-2 ${
         surface === "week"
-          ? "min-h-0 flex-1 overflow-x-auto overflow-y-hidden"
+          ? "min-h-0 flex-[2] overflow-x-auto overflow-y-hidden"
           : "shrink-0 overflow-x-auto"
       }`}
       style={{ backgroundColor: WEEK_CANVAS_BG }}
@@ -737,6 +737,7 @@ export function WeekCanvas({
     <WeekInbox
       tasks={partitioned.inbox.map(toRow)}
       heightPx={inboxHeightPx}
+      fill={surface === "week"}
       collapseWhenEmpty={surface === "week"}
       highlightTaskIds={inboxHighlightIds ?? undefined}
       forceExpanded={(inboxHighlightIds?.size ?? 0) > 0}
@@ -821,9 +822,11 @@ export function WeekCanvas({
         isLoading ? (
           loadingNote
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
+          // 2:1 execution layout — the day grid takes ~2/3 (dayGrid: flex-[2])
+          // and Plan Tasks ~1/3 (inboxRail: fill → flex-[1]). The composer moved
+          // to the page header (WeekHeader), so no below-grid composer slot here.
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
             {dayGrid}
-            <div className="shrink-0">{composerBlock}</div>
             {inboxRail}
             {chromeBar}
           </div>

@@ -12,6 +12,12 @@ import { TaskRow } from "../TaskRow";
 type Props = {
   tasks: PlanTaskRow[];
   heightPx: number;
+  /**
+   * Fill the available height as a flex child (execution surface's 2:1 layout)
+   * instead of using the fixed `heightPx`. Collapses to intrinsic height when
+   * empty so an empty rail doesn't reserve a third of the screen.
+   */
+  fill?: boolean;
   /** Start collapsed while empty and auto-expand once tasks arrive (execution surface). */
   collapseWhenEmpty?: boolean;
   /** Chat-created task ids to pulse + scroll into view (post-create feedback, P6). */
@@ -28,6 +34,7 @@ type Props = {
 export function WeekInbox({
   tasks,
   heightPx,
+  fill = false,
   collapseWhenEmpty = false,
   highlightTaskIds,
   forceExpanded = false,
@@ -70,10 +77,10 @@ export function WeekInbox({
   return (
     <section
       ref={setNodeRef}
-      className={`mt-4 flex flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface ${
-        isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""
-      }`}
-      style={{ height: showTasks ? heightPx : undefined }}
+      className={`flex flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface ${
+        fill ? (showTasks ? "min-h-0 flex-[1]" : "shrink-0") : "mt-4"
+      } ${isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""}`}
+      style={fill ? undefined : { height: showTasks ? heightPx : undefined }}
       aria-label="Plan tasks"
     >
       <div
