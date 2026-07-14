@@ -5,8 +5,8 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import type { ProjectCategory } from "@/lib/projects/categories";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
+import { projectCycleSolidVar } from "@/lib/projects/project-cycle-color";
 import { formatDuration } from "@/lib/time/duration";
 
 import type { ProjectPhase, ProjectTask } from "./types";
@@ -28,7 +28,6 @@ type Props = {
 export default function MillerPhaseRow({
   node,
   parentPhaseId,
-  category,
   isOpen,
   selected,
   focused,
@@ -37,7 +36,7 @@ export default function MillerPhaseRow({
   onOpen,
 }: Props) {
   const itemCount = node.children.length + node.tasks.length;
-  const stripe = categorySolidVar(category);
+  const stripe = projectCycleSolidVar(node.phase.sortOrder);
   const showProgress = itemCount > 0 && progressPercent !== undefined;
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
 
@@ -84,9 +83,9 @@ export default function MillerPhaseRow({
         aria-expanded={selected}
         className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
       >
-        <span className="flex min-w-0 flex-1 items-start gap-1.5">
+        <span className="flex min-w-0 flex-1 items-center gap-1.5">
           <span
-            className="mt-1 h-2 w-2 shrink-0 rounded-full"
+            className="min-h-[1rem] w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
             style={{
               backgroundColor: stripe,
               boxShadow: "0 0 0 1px var(--mark-ring)",
