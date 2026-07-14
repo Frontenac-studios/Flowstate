@@ -25,7 +25,6 @@ type Props = {
     category?: ProjectCategory;
     tags?: string[];
   }) => void;
-  onToggleComplete: () => void;
   onRequestDelete: () => void;
   pending: boolean;
   /** Set when the parent's save mutation failed, so the editor can surface it. */
@@ -35,13 +34,11 @@ type Props = {
 export default function TaskDetail({
   task,
   onUpdate,
-  onToggleComplete,
   onRequestDelete,
   pending,
   saveError = null,
 }: Props) {
   const trpc = useTRPC();
-  const completed = task.completedAt !== null;
   const [title, setTitle] = useState(task.title);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -107,15 +104,10 @@ export default function TaskDetail({
         ) : null}
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-ink">
-        <input type="checkbox" checked={completed} onChange={onToggleComplete} />
-        {completed ? "Completed" : "Mark complete"}
-      </label>
-
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-ink">Priority</span>
         <div
-          className="flex w-fit rounded-pill border border-border bg-surface text-sm"
+          className="flex w-full min-w-0 rounded-pill border border-border bg-surface text-xs"
           role="group"
           aria-label="Priority"
         >
@@ -128,16 +120,10 @@ export default function TaskDetail({
                 type="button"
                 onClick={() => onUpdate({ priority: p })}
                 aria-pressed={selected}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1 transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                className={`flex min-w-0 flex-1 items-center justify-center rounded-full px-2 py-1 transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
                   selected ? "text-on-accent bg-accent" : "text-ink-muted hover:text-ink"
                 }`}
               >
-                {Array.from({ length: meta.dots }, (_, i) => (
-                  <span
-                    key={i}
-                    className={`h-1.5 w-1.5 rounded-full ${selected ? "bg-[var(--on-accent)]" : meta.dotClass}`}
-                  />
-                ))}
                 {meta.label}
               </button>
             );

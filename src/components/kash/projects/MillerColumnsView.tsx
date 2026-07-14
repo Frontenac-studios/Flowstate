@@ -500,20 +500,11 @@ export default function MillerColumnsView({
           pending={m.deleteTask.isPending}
           saveError={m.updateTask.isError ? "Couldn't save your change — please try again." : null}
           onUpdate={(patch) => m.updateTask.mutate({ id: item.task.id, ...patch })}
-          onToggleComplete={() => toggleTask(item.task)}
           onRequestDelete={() => setConfirm({ kind: "task-delete", id: item.task.id })}
         />
       );
     },
-    [
-      detail,
-      m,
-      toggleTask,
-      category,
-      dayPriorityTaskIds,
-      timeRollups?.byPhaseId,
-      estimateSampleCount,
-    ]
+    [detail, m, category, dayPriorityTaskIds, timeRollups?.byPhaseId, estimateSampleCount]
   );
 
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
