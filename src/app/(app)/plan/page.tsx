@@ -1,4 +1,3 @@
-import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import { PlanHorizonView } from "@/components/kash/plan/PlanHorizonView";
 import { TRPCHydrate } from "@/trpc/hydrate";
 import { getQueryClient, prefetchPlanPageQueries, resolvePlanPageYear } from "@/trpc/server";
@@ -16,7 +15,6 @@ export default async function PlanningPage({ searchParams }: Props) {
 
   return (
     <TRPCHydrate queryClient={queryClient}>
-      <ContextualInbox />
       <PlanHorizonView />
     </TRPCHydrate>
   );

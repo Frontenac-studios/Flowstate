@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import BalancePassProvider, {
   useBalancePassTrigger,
 } from "@/components/kash/plan/balance/BalancePassProvider";
@@ -231,6 +232,7 @@ function PlanHorizonViewInner() {
 
   return (
     <CheckInProvider breadcrumb={breadcrumb}>
+      {hydrated && horizon !== "goals" ? <ContextualInbox /> : null}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
