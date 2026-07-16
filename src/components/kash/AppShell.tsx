@@ -1,6 +1,7 @@
 import { AppShellContent } from "./AppShellContent";
 import { AppShellChatRail, AppShellFixedOverlays } from "./AppShellOverlays";
 import { LeftNavRail } from "./LeftNavRail";
+import MobileBottomNav from "./MobileBottomNav";
 import { ChatProvider } from "./chat/ChatProvider";
 import { EphemeralCelebrationHost } from "./mechanics/EphemeralCelebration";
 import ToastProvider from "./ui/ToastProvider";
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <AppShellChatRail />
           </div>
           <AppShellFixedOverlays />
+          <MobileBottomNav />
         </div>
       </ToastProvider>
     </ChatProvider>

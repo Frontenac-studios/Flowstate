@@ -16,7 +16,7 @@ type Props = {
 export default function BalancePassChip({ scopeKey, count, expanded, onToggle, onDismiss }: Props) {
   return (
     <div
-      className="border-ink/15 fixed bottom-6 right-6 z-toast max-w-md rounded-xl border bg-surface shadow-overlay"
+      className="border-ink/15 fixed bottom-[calc(1.5rem+var(--mobile-nav-height)+env(safe-area-inset-bottom))] right-6 z-toast max-w-md rounded-xl border bg-surface shadow-overlay lg:bottom-6"
       role="complementary"
       aria-label="Balance pass suggestions"
     >

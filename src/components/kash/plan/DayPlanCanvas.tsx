@@ -861,7 +861,10 @@ export function DayPlanCanvas() {
           </div>
         )}
 
-        <div className="sticky bottom-0 z-sticky border-t border-border bg-surface pb-1 pt-3">
+        {/* Below lg the viewport is the scroller, so bottom-0 would pin this
+            behind the fixed mobile tab bar — raise the stick point so the
+            composer docks flush on top of the bar instead. */}
+        <div className="sticky bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom))] z-sticky border-t border-border bg-surface pb-1 pt-3 lg:bottom-0">
           {composerOpen ? (
             <div
               onKeyDown={(e) => {
