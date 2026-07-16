@@ -188,8 +188,6 @@ export function DayPlanCanvas() {
 
   /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
   const now = useMemo(() => new Date(), []);
-  const weekdayLabel = now.toLocaleDateString(undefined, { weekday: "long" });
-  const monthDayLabel = now.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   const localDate = useLocalCalendarDate();
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const top3QueryInput = useMemo(
@@ -771,25 +769,20 @@ export function DayPlanCanvas() {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div className="flex flex-col gap-stack">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-xl font-semibold text-ink">Today</h1>
+          <InPageSwitcher
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={changeView}
+            ariaLabel="Today view"
+          />
+        </div>
+
         <section
           className="flex flex-col gap-stack rounded-card border border-subtle bg-surface px-card-x py-card-y shadow-surface"
           aria-label="Today summary"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-h1 font-medium text-ink">
-              Today
-              <span className="ml-2 text-subtitle font-normal text-ink-faint">
-                {weekdayLabel}, {monthDayLabel}
-              </span>
-            </h1>
-            <InPageSwitcher
-              options={VIEW_OPTIONS}
-              value={view}
-              onChange={changeView}
-              ariaLabel="Today view"
-            />
-          </div>
-
           <Top3Slots
             ref={top3SectionRef}
             pinnedBySlot={pinnedBySlot}

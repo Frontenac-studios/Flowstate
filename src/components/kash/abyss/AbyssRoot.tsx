@@ -126,22 +126,26 @@ export default function AbyssRoot() {
       }`}
       data-abyss-theme={surface}
     >
-      <AbyssFloatingBar
-        view={view}
-        onViewChange={setView}
-        query={query}
-        onQueryChange={setQuery}
-        groupMode={groupMode}
-        onGroupModeChange={setGroupMode}
-        typeFilter={typeFilter}
-        onTypeFilterChange={setTypeFilter}
-        ageFilter={ageFilter}
-        onAgeFilterChange={setAgeFilter}
-        showArchive={showArchive}
-        onArchiveToggle={() => setShowArchive((v) => !v)}
-        hasItems={hasItems}
-        archivedCount={archivedCount}
-      />
+      {/* Sticky title row carries the bar treatment so the h1 and toolbar stick together. */}
+      <div className="sticky top-0 z-sticky flex flex-wrap items-center justify-between gap-3 rounded-card border border-abyss-border bg-abyss-bar px-3 py-2 backdrop-blur-md">
+        <h1 className="text-xl font-semibold text-abyss-ink">Backlog</h1>
+        <AbyssFloatingBar
+          view={view}
+          onViewChange={setView}
+          query={query}
+          onQueryChange={setQuery}
+          groupMode={groupMode}
+          onGroupModeChange={setGroupMode}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          ageFilter={ageFilter}
+          onAgeFilterChange={setAgeFilter}
+          showArchive={showArchive}
+          onArchiveToggle={() => setShowArchive((v) => !v)}
+          hasItems={hasItems}
+          archivedCount={archivedCount}
+        />
+      </div>
       {showMonthlyReview ? (
         <AbyssMonthlyReview
           items={reviewItems}

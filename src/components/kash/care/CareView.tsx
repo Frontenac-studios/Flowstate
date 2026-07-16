@@ -23,7 +23,7 @@ export function CareView() {
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h1 className="text-h1 font-medium text-ink">Care</h1>
+        <h1 className="text-xl font-semibold text-ink">Care</h1>
         <p className="text-meta text-ink-faint">{CARE_SUBTITLES[tab]}</p>
       </div>
 
