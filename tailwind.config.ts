@@ -156,7 +156,6 @@ const config: Config = {
       },
       margin: {
         section: "var(--section-gap)",
-        header: "var(--header-gap)",
         stack: "var(--stack-gap)",
       },
       gap: {

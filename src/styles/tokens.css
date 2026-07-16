@@ -188,7 +188,6 @@
   --shell-sticky-top: 1.5rem;
   --stack-gap: 1rem;
   --section-gap: 1.5rem;
-  --header-gap: 1.5rem;
   --card-pad-x: 1.25rem;
   --card-pad-y: 1rem;
   --chat-rail-width: 22rem;
@@ -209,7 +208,6 @@ html.is-desktop {
   --shell-sticky-top: var(--shell-pad-y);
   --stack-gap: calc(var(--nav-rail-width) * 0.375);
   --section-gap: calc(var(--nav-rail-width) * 0.375);
-  --header-gap: var(--section-gap);
   --card-pad-x: calc(var(--nav-rail-width) * 0.417);
   --card-pad-y: calc(var(--nav-rail-width) * 0.417);
   --chat-rail-width: calc(var(--nav-rail-width) * 7);

@@ -12,12 +12,16 @@ import {
   GalleryVerticalEnd,
   kashIconProps,
   Pin,
+  Search,
   SlidersHorizontal,
   Sprout,
   Sun,
 } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
+import { ChatToggleButton } from "@/components/kash/chat/ChatToggleButton";
+import { OPEN_PALETTE_EVENT } from "@/components/kash/chrome-events";
 import { SyncFooterIndicator } from "@/components/kash/nav/SyncFooterIndicator";
+import { formatHeaderDate } from "@/lib/dates/local-day";
 import { useDesktopFullscreen } from "@/hooks/useDesktopFullscreen";
 import { readNavRailPinned, writeNavRailPinned } from "@/lib/nav/nav-rail-storage";
 
@@ -176,6 +180,37 @@ function NavSections({
   );
 }
 
+/**
+ * Palette launcher styled as a search control. The command palette IS the
+ * search UI, so this is semantically a button, not an input. When the rail is
+ * expanded it rests as a square icon and grows into a field-like pill on
+ * hover/focus; collapsed it centers like the other rail icons.
+ */
+function RailSearchButton({ expanded }: { expanded: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new CustomEvent(OPEN_PALETTE_EVENT))}
+      aria-label="Search"
+      title="Search & commands"
+      className={`group flex items-center text-ink-muted transition ${NAV_LINK_FOCUS} ${
+        expanded
+          ? "h-9 self-start rounded-full border border-transparent hover:border-border hover:bg-surface hover:text-ink"
+          : "h-9 w-full justify-center rounded-control hover:bg-[var(--surface-2)] hover:text-ink"
+      }`}
+    >
+      <span className={`flex shrink-0 items-center justify-center ${expanded ? "h-9 w-9" : ""}`}>
+        <Search {...kashIconProps({ tokenSize: "md" })} aria-hidden />
+      </span>
+      {expanded ? (
+        <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm opacity-0 transition-all duration-200 group-hover:max-w-[8rem] group-hover:pr-3 group-hover:opacity-100 group-focus-visible:max-w-[8rem] group-focus-visible:pr-3 group-focus-visible:opacity-100">
+          Search
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
 export function LeftNavRail() {
   const pathname = usePathname();
   const isFullscreen = useDesktopFullscreen();
@@ -260,15 +295,48 @@ export function LeftNavRail() {
               : "rounded-card border border-subtle bg-surface shadow-surface"
           }`}
         >
+          {/* Identity strip doubles as the Tauri drag surface now that the top
+              header is gone. Non-interactive children carry the attribute too
+              because Tauri only starts a drag when mousedown lands directly on
+              an element with data-tauri-drag-region; the pin button stays
+              clickable because it never gets the attribute. */}
           <div
-            className={`mb-1 flex h-8 items-center ${expanded ? "justify-between px-1" : "justify-center"}`}
+            data-tauri-drag-region
+            className={`-mx-2 -mt-3 mb-1 flex h-11 items-center pt-3 ${expanded ? "justify-between px-3" : "justify-center"}`}
           >
-            <span
-              className="select-none text-base font-semibold tracking-tight text-ink"
-              aria-hidden
-            >
-              K
-            </span>
+            {expanded ? (
+              <span
+                data-tauri-drag-region
+                className="select-none whitespace-nowrap text-base font-semibold tracking-tight text-ink"
+              >
+                Kash{" "}
+                <span data-tauri-drag-region className="font-normal text-ink-muted" aria-hidden>
+                  ·
+                </span>{" "}
+                {/*
+                 * The date derives from `new Date()`, so server (request time)
+                 * and client (hydration time) values can differ — a legitimate
+                 * time-varying value. suppressHydrationWarning stops the
+                 * mismatch (React #418) that otherwise fires on every route.
+                 */}
+                <time
+                  data-tauri-drag-region
+                  className="font-normal text-ink-muted"
+                  dateTime={new Date().toISOString().slice(0, 10)}
+                  suppressHydrationWarning
+                >
+                  {formatHeaderDate()}
+                </time>
+              </span>
+            ) : (
+              <span
+                data-tauri-drag-region
+                className="select-none text-base font-semibold tracking-tight text-ink"
+                aria-hidden
+              >
+                K
+              </span>
+            )}
             {expanded && !isFullscreen ? (
               <button
                 type="button"
@@ -276,7 +344,7 @@ export function LeftNavRail() {
                 aria-pressed={pinned}
                 aria-label={pinned ? "Unpin navigation" : "Pin navigation"}
                 title={pinned ? "Unpin navigation" : "Pin navigation"}
-                className={`flex h-8 w-8 items-center justify-center rounded-control transition ${NAV_LINK_FOCUS} ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition ${NAV_LINK_FOCUS} ${
                   pinned
                     ? "bg-[var(--surface-selected)] text-ink"
                     : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
@@ -285,6 +353,16 @@ export function LeftNavRail() {
                 <Pin {...kashIconProps({ tokenSize: "md" })} />
               </button>
             ) : null}
+          </div>
+
+          {/* Header chrome absorbed from the retired AppHeader. */}
+          <div className="mb-1 flex flex-col gap-1">
+            <RailSearchButton expanded={expanded} />
+            {expanded ? (
+              <ChatToggleButton className="w-full justify-center" />
+            ) : (
+              <ChatToggleButton variant="icon" className="mx-auto" />
+            )}
           </div>
 
           <NavSections
