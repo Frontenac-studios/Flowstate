@@ -288,6 +288,13 @@
       "when": 1783804934037,
       "tag": "0040_silky_overlord",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1783995594317,
+      "tag": "0041_slim_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }
