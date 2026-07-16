@@ -137,7 +137,6 @@ export function MorningHandoffRunner() {
   const [holdDeclined, setHoldDeclined] = useState(false);
   const [goalOfferDismissed, setGoalOfferDismissed] = useState(false);
   const [actionPending, setActionPending] = useState(false);
-  const [openerAcknowledged, setOpenerAcknowledged] = useState(false);
   const [stagedCaptures, setStagedCaptures] = useState<StagedCapture[]>([]);
   const [stagedPinnedBySlot, setStagedPinnedBySlot] = useState<Map<number, string>>(
     () => new Map()
@@ -152,7 +151,6 @@ export function MorningHandoffRunner() {
     setDismissedLocally(isMorningHandoffDismissedForDate(localDate));
     setHoldDeclined(false);
     setGoalOfferDismissed(false);
-    setOpenerAcknowledged(false);
     clearStaged();
   }, [localDate, clearStaged]);
 
@@ -182,9 +180,6 @@ export function MorningHandoffRunner() {
   );
   const dropMutation = useMutation(
     trpc.abyss.dropFromTask.mutationOptions({ onSuccess: invalidateTasks })
-  );
-  const skipRecurringMutation = useMutation(
-    trpc.recurrence.skipOccurrence.mutationOptions({ onSuccess: invalidateTasks })
   );
   const pinMutation = useMutation(
     trpc.tasks.pinTop3.mutationOptions({ onSuccess: invalidateTasks })
@@ -284,8 +279,6 @@ export function MorningHandoffRunner() {
     nowMinutes,
     overCommit?.overCommitted,
   ]);
-
-  const onAcknowledgeOpener = useCallback(() => setOpenerAcknowledged(true), []);
 
   const onStageTasks = useCallback((edits: CreateTaskItemEdit[]) => {
     setStagedCaptures((prev) => [...prev, ...stagedCapturesFromEdits(edits)]);
@@ -412,24 +405,14 @@ export function MorningHandoffRunner() {
         createTaskMutation.isPending ||
         createDependencyMutation.isPending
       }
-      openerAcknowledged={openerAcknowledged}
-      onAcknowledgeOpener={onAcknowledgeOpener}
       onKeepCarryover={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onDropCarryover={(id) => dropMutation.mutate({ id })}
-      onConfirmRecurring={() => {
-        /* occurrence already renders on today when due */
-        invalidateTasks();
-      }}
-      onSkipRecurring={(recurrenceId, occurrenceDate) =>
-        skipRecurringMutation.mutate({ recurrenceId, occurrenceDate })
-      }
       onConfirmProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onDeferProjectTask={(id) => {
         const pinned = Array.from(pinnedBySlot.values()).some((task) => task.id === id);
         if (pinned) unpinMutation.mutate({ id });
         moveMutation.mutate({ id, bucket: "later" });
       }}
-      onPullProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onAcceptGoalOffer={() => {
         if (!goalOffer) return;
         pullGoalStepMutation.mutate(

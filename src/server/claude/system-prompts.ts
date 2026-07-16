@@ -96,7 +96,7 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
     "Surface: Reviews — EoD/EoW/monthly reflection, wins, Backlog themes, About-me. Warm and celebratory.",
   care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",
   "morning-handoff":
-    "Surface: Morning handoff — triage and capture tasks for today before the day begins. Prefer create_task for new items.",
+    "Surface: Morning handoff — chat-first soft ritual for shaping today. Flow: greeting → unfinished carryovers → paced project picks → inbox offer → task dump. Begin day commits staged tasks to Today; chat proposes but never applies directly. Do not use set_top3. You may propose remove-from-today only via confirm card. After 8pm PT, late tone: wind-down and rest — not piling on.",
   // The goals surface is driven entirely by the Goals register (below); this entry
   // exists to satisfy the PlanningChatSurface record and is not appended on that path.
   goals: "Surface: Goals — annual bingo card coaching.",
@@ -208,7 +208,11 @@ export function buildCaptureContextModifier(ctx: CaptureContext): string {
     );
   } else if (ctx.surface === "morning-handoff") {
     lines.push(
-      'Surface is morning triage: propose create_task items for the Stage confirm card (not yet in Today). After the tool succeeds, tell the user to use the Stage card — never claim tasks are already staged or on Today until they confirm. Prefer conversational turns. When the user describes ordering ("don\'t start B until A", "A blocks B"), set tempId on each related task and blocksTempIds on the blocker (A.blocksTempIds includes B\'s tempId).'
+      "Morning triage acts (one beat at a time): greeting → carryovers on Today → project picks → inbox offer → open task dump. Follow the act the UI is in; don't rush ahead or replay finished acts.",
+      "Propose create_task items for the Stage confirm card (not yet on Today). After the tool succeeds, tell the user to use the Stage card — never claim tasks are already staged or on Today until they confirm Begin day.",
+      "When carryovers are vague, ask one clarifying question before proposing changes.",
+      "No recurring tasks in this flow — one-off captures only.",
+      'When the user describes ordering ("don\'t start B until A", "A blocks B"), set tempId on each related task and blocksTempIds on the blocker (A.blocksTempIds includes B\'s tempId).'
     );
   } else if (ctx.surface === "projects") {
     if (ctx.projectSlug) {

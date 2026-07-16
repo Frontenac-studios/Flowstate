@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BalanceBar } from "@/components/kash/plan/BalanceBar";
-import { HandoffCaptureChat } from "@/components/kash/plan/HandoffCaptureChat";
+import { MorningTriageChat } from "@/components/kash/plan/MorningTriageChat";
+import { CarryoverTriageCard } from "@/components/kash/plan/morning-triage/CarryoverTriageCard";
+import { InboxPickCard } from "@/components/kash/plan/morning-triage/InboxPickCard";
+import { ProjectPickCard } from "@/components/kash/plan/morning-triage/ProjectPickCard";
+import type { TriagePickTask } from "@/components/kash/plan/morning-triage/TriageTaskPickList";
+import { TRIAGE_CHIP_MUTED } from "@/components/kash/plan/morning-triage/triage-pick-styles";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { RitualSheet } from "@/components/kash/ui/RitualSheet";
 import Button from "@/components/kash/ui/Button";
@@ -13,24 +18,35 @@ import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import type { CreateTaskItemEdit } from "@/lib/chat/proposed-actions";
 import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
 import type { GoalSteeringOffer } from "@/lib/planning/goal-journey";
+import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import {
+  formatGreetingOpener,
+  formatGreetingTitle,
+  resolveGreetingPeriod,
+} from "@/lib/morning-handoff/greeting";
+import {
+  advanceAfterSkip,
+  dumpUnlocked,
+  nextPhaseAfterComplete,
+  resolveInitialPhase,
+  shouldCircleBackToProjects,
+  type MorningTriagePhase,
+} from "@/lib/morning-handoff/morning-triage-phase";
+import {
+  collectProjectMorningSuggestions,
   filterAssembledTodayList,
-  filterProjectTasksDueToday,
-  filterRecurringDueToday,
-  filterTriageCarryovers,
+  filterInboxUnscheduled,
+  filterLookbackCarryovers,
   formatHoldSlotLabel,
-  resolveOccurrenceKeys,
+  paceSuggestions,
   type HandoffPlanTask,
 } from "@/lib/morning-handoff/handoff-task-filters";
 import type { StagedCapture } from "@/lib/morning-handoff/staged-capture";
-import { matchesTodayList } from "@/lib/tasks/matches-today-list";
 import { isTriageCandidate } from "@/lib/tasks/triage-candidates";
 import { cn } from "@/lib/cn";
 
 const SLOT_LABELS = ["①", "②", "③"] as const;
 const TOP3_SLOTS = [1, 2, 3] as const;
-/** Gives the opener panel time to be read before nudging toward the dump. */
-const OPENER_NUDGE_DELAY_MS = 12_000;
 
 const ROW_ACTION =
   "rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-[var(--accent-soft)]";
@@ -74,17 +90,13 @@ type Props = {
   /** V8: onboarding ends on a hand-off preview so day 2 opens familiar. */
   previewBanner?: string | null;
   beginLabel?: string;
-  /** True once the user has either resolved or explicitly deferred the carryover-first opener. */
-  openerAcknowledged: boolean;
-  onAcknowledgeOpener: () => void;
+  /** Override triage phase (onboarding preview lands on dump). */
+  initialPhase?: MorningTriagePhase;
   onKeepCarryover: (taskId: string) => void;
   onDropCarryover: (taskId: string) => void;
-  onConfirmRecurring: (recurrenceId: string, occurrenceDate: string) => void;
-  onSkipRecurring: (recurrenceId: string, occurrenceDate: string) => void;
   onConfirmProjectTask: (taskId: string) => void;
   /** Defer a project-today suggestion off today (back to later). */
   onDeferProjectTask: (taskId: string) => void;
-  onPullProjectTask: (taskId: string) => void;
   onAcceptGoalOffer: () => void;
   onDismissGoalOffer: () => void;
   onPinTop3: (taskId: string, slot: Top3Slot) => void;
@@ -103,6 +115,15 @@ type Props = {
   onSkip: () => void;
   onBegin: () => void;
 };
+
+function toPickTask(task: HandoffPlanTask): TriagePickTask {
+  return {
+    id: task.id,
+    title: task.title,
+    meta: task.projectSlug ? `#${task.projectSlug}` : undefined,
+    category: task.category,
+  };
+}
 
 function categoryRowTint(
   category: ProjectCategory | null | undefined
@@ -135,42 +156,6 @@ function Section({
       <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">{title}</h3>
       {children}
     </section>
-  );
-}
-
-function TaskRow({
-  title,
-  meta,
-  actions,
-  category,
-}: {
-  title: string;
-  meta?: string;
-  actions: React.ReactNode;
-  /** When set, the row is tinted by its project category (left accent + soft fill). */
-  category?: ProjectCategory | null;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-[var(--space-3)] border border-subtle bg-surface px-[var(--space-3)] py-[var(--space-2)]",
-        category != null ? "rounded-r-row" : "rounded-row"
-      )}
-      style={categoryRowTint(category)}
-    >
-      <div className="min-w-0 flex-1">
-        <p className="break-words text-body text-ink">{title}</p>
-        {meta ? (
-          <p
-            className="mt-0.5 text-caption text-ink-muted"
-            style={category != null ? { color: categoryTextVar(category) } : undefined}
-          >
-            {meta}
-          </p>
-        ) : null}
-      </div>
-      <div className="flex shrink-0 flex-wrap gap-1">{actions}</div>
-    </div>
   );
 }
 
@@ -268,7 +253,6 @@ export function MorningHandoffModal({
   opener,
   calendarSummaryLine = null,
   tasks,
-  projects,
   pinnedBySlot,
   stagedPinnedBySlot,
   stagedCaptures,
@@ -279,15 +263,11 @@ export function MorningHandoffModal({
   isPending,
   previewBanner = null,
   beginLabel = "Begin day",
-  openerAcknowledged,
-  onAcknowledgeOpener,
+  initialPhase,
   onKeepCarryover,
   onDropCarryover,
-  onConfirmRecurring,
-  onSkipRecurring,
   onConfirmProjectTask,
   onDeferProjectTask,
-  onPullProjectTask,
   onAcceptGoalOffer,
   onDismissGoalOffer,
   onPinTop3,
@@ -304,43 +284,386 @@ export function MorningHandoffModal({
   onSkip,
   onBegin,
 }: Props) {
-  const [projectQuery, setProjectQuery] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [projectPullOpen, setProjectPullOpen] = useState(false);
-  const [dismissedRecurring, setDismissedRecurring] = useState<Set<string>>(() => new Set());
-  const [dismissedProjectTasks, setDismissedProjectTasks] = useState<Set<string>>(() => new Set());
+  const period = resolveGreetingPeriod();
+  const greetingTitle = formatGreetingTitle(period);
 
-  const openerText = opener?.message;
-
-  const carryovers = useMemo(() => filterTriageCarryovers(tasks, localDate), [tasks, localDate]);
-
-  const recurringToday = useMemo(() => {
-    return filterRecurringDueToday(tasks, localDate).filter(
-      (task) => !dismissedRecurring.has(task.id)
-    );
-  }, [tasks, localDate, dismissedRecurring]);
-
-  const projectTasksToday = useMemo(() => {
-    return filterProjectTasksDueToday(tasks, localDate).filter(
-      (task) => !dismissedProjectTasks.has(task.id)
-    );
-  }, [tasks, localDate, dismissedProjectTasks]);
-
-  const pendingProjectTaskIds = useMemo(
-    () => new Set(projectTasksToday.map((task) => task.id)),
-    [projectTasksToday]
+  const counts = useMemo(
+    () => ({
+      carryoverCount: filterLookbackCarryovers(tasks, localDate).length,
+      inboxCount: filterInboxUnscheduled(tasks).length,
+    }),
+    [tasks, localDate]
   );
+
+  const [phase, setPhase] = useState<MorningTriagePhase>(
+    () => initialPhase ?? resolveInitialPhase(counts)
+  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [dismissedProjectIds, setDismissedProjectIds] = useState<Set<string>>(() => new Set());
+  const [projectsSkipped, setProjectsSkipped] = useState(false);
+  const [projectsResolved, setProjectsResolved] = useState(false);
+  const [skippedToDump, setSkippedToDump] = useState(false);
+  const [projectSuggestionOffset, setProjectSuggestionOffset] = useState(0);
+  const [circleBackReviewing, setCircleBackReviewing] = useState(false);
+
+  // Read latest tasks when the day changes without resetting mid-session on Keep/Drop.
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+
+  useEffect(() => {
+    const dayTasks = tasksRef.current;
+    const dayCounts = {
+      carryoverCount: filterLookbackCarryovers(dayTasks, localDate).length,
+      inboxCount: filterInboxUnscheduled(dayTasks).length,
+    };
+    setPhase(initialPhase ?? resolveInitialPhase(dayCounts));
+    setSelectedIds(new Set());
+    setDismissedProjectIds(new Set());
+    setProjectsSkipped(false);
+    setProjectsResolved(false);
+    setSkippedToDump(false);
+    setProjectSuggestionOffset(0);
+    setCircleBackReviewing(false);
+  }, [localDate, initialPhase]);
+
+  const carryovers = useMemo(() => filterLookbackCarryovers(tasks, localDate), [tasks, localDate]);
+
+  const yesterdayIso = toISODateString(addDays(parseISODateString(localDate), -1));
+
+  const lookbackLabel =
+    carryovers.length > 0 && carryovers.every((task) => task.scheduledDate === yesterdayIso)
+      ? "yesterday"
+      : "the last few days";
+
+  const allProjectSuggestions = useMemo(
+    () => collectProjectMorningSuggestions(tasks, localDate),
+    [tasks, localDate]
+  );
+
+  const remainingProjectSuggestions = useMemo(
+    () => allProjectSuggestions.filter((s) => !dismissedProjectIds.has(s.task.id)),
+    [allProjectSuggestions, dismissedProjectIds]
+  );
+
+  const inboxTasks = useMemo(
+    () => filterInboxUnscheduled(tasks).filter((task) => !dismissedProjectIds.has(task.id)),
+    [tasks, dismissedProjectIds]
+  );
+
+  const pacedProjects = useMemo(
+    () =>
+      paceSuggestions(remainingProjectSuggestions, {
+        offset: projectSuggestionOffset,
+        batch: 5,
+      }),
+    [remainingProjectSuggestions, projectSuggestionOffset]
+  );
+
+  const carryoverIdsKey = useMemo(() => carryovers.map((t) => t.id).join(","), [carryovers]);
+  const projectBatchIdsKey = useMemo(
+    () => pacedProjects.batch.map((s) => s.task.id).join(","),
+    [pacedProjects.batch]
+  );
+  const inboxIdsKey = useMemo(() => inboxTasks.map((t) => t.id).join(","), [inboxTasks]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [phase, carryoverIdsKey, projectBatchIdsKey, inboxIdsKey]);
+
+  const advancePhase = useCallback(
+    (from: MorningTriagePhase) => {
+      setPhase(nextPhaseAfterComplete(from, counts));
+    },
+    [counts]
+  );
+
+  useEffect(() => {
+    if (phase !== "carryovers" || carryovers.length > 0) return;
+    advancePhase("carryovers");
+  }, [phase, carryovers.length, advancePhase]);
+
+  useEffect(() => {
+    if (phase !== "inbox" || inboxTasks.length > 0) return;
+    advancePhase("inbox");
+  }, [phase, inboxTasks.length, advancePhase]);
+
+  useEffect(() => {
+    if (phase !== "projects" || remainingProjectSuggestions.length > 0) return;
+    if (dismissedProjectIds.size === 0 && !projectsSkipped) return;
+    setProjectsResolved(true);
+    advancePhase("projects");
+  }, [
+    phase,
+    remainingProjectSuggestions.length,
+    dismissedProjectIds.size,
+    projectsSkipped,
+    advancePhase,
+  ]);
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const dismissProjectIds = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setDismissedProjectIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+    setSelectedIds(new Set());
+  }, []);
+
+  const handleKeepCarryoverIds = useCallback(
+    (ids: string[]) => {
+      for (const id of ids) onKeepCarryover(id);
+      setSelectedIds(new Set());
+    },
+    [onKeepCarryover]
+  );
+
+  const handleDropCarryoverIds = useCallback(
+    (ids: string[]) => {
+      for (const id of ids) onDropCarryover(id);
+      setSelectedIds(new Set());
+    },
+    [onDropCarryover]
+  );
+
+  const handleAddProjectIds = useCallback(
+    (ids: string[]) => {
+      for (const id of ids) onConfirmProjectTask(id);
+      dismissProjectIds(ids);
+    },
+    [onConfirmProjectTask, dismissProjectIds]
+  );
+
+  const handleDeferProjectIds = useCallback(
+    (ids: string[]) => {
+      for (const id of ids) onDeferProjectTask(id);
+      dismissProjectIds(ids);
+    },
+    [onDeferProjectTask, dismissProjectIds]
+  );
+
+  const handleSkipProjects = useCallback(() => {
+    setProjectsSkipped(true);
+    setSelectedIds(new Set());
+    advancePhase("projects");
+  }, [advancePhase]);
+
+  const handleProjectsEmptyContinue = useCallback(() => {
+    setProjectsResolved(true);
+    advancePhase("projects");
+  }, [advancePhase]);
+
+  const handleSkipInbox = useCallback(() => {
+    setSelectedIds(new Set());
+    advancePhase("inbox");
+  }, [advancePhase]);
+
+  const handleSkipToDump = useCallback(() => {
+    setSkippedToDump(true);
+    setPhase(advanceAfterSkip(phase));
+  }, [phase]);
+
+  const showCircleBack = shouldCircleBackToProjects({
+    projectsSkipped,
+    projectsResolved,
+    hasRemainingSuggestions: remainingProjectSuggestions.length > 0,
+    phase,
+  });
+
+  const scriptedMessages = useMemo(() => {
+    const messages = [
+      {
+        id: "greeting-opener",
+        role: "assistant" as const,
+        text: formatGreetingOpener(period),
+      },
+    ];
+    if (period !== "late" && opener?.message) {
+      messages.push({
+        id: "essential-nudge",
+        role: "assistant" as const,
+        text: opener.message,
+      });
+    }
+    return messages;
+  }, [period, opener?.message]);
+
+  const actSlot = useMemo(() => {
+    if (showCircleBack) {
+      if (circleBackReviewing) {
+        const pickTasks = pacedProjects.batch.map((s) => toPickTask(s.task));
+        return (
+          <div className="space-y-2">
+            <ProjectPickCard
+              intro="Here are a few project tasks that look relevant — add any to Today?"
+              tasks={pickTasks}
+              selectedIds={selectedIds}
+              onToggle={toggleSelected}
+              onAddIds={handleAddProjectIds}
+              onDeferIds={handleDeferProjectIds}
+              onShowMore={
+                pacedProjects.hasMore
+                  ? () => setProjectSuggestionOffset(pacedProjects.nextOffset)
+                  : undefined
+              }
+              showMoreDisabled={isPending}
+              disabled={isPending}
+            />
+            <button
+              type="button"
+              className={TRIAGE_CHIP_MUTED}
+              disabled={isPending}
+              onClick={() => {
+                setCircleBackReviewing(false);
+                setProjectsResolved(true);
+              }}
+            >
+              Not now
+            </button>
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
+          <p className="text-body text-ink">Still want to pull any project tasks?</p>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              className={TRIAGE_CHIP_MUTED}
+              disabled={isPending}
+              onClick={() => setCircleBackReviewing(true)}
+            >
+              Review
+            </button>
+            <button
+              type="button"
+              className={TRIAGE_CHIP_MUTED}
+              disabled={isPending}
+              onClick={() => setProjectsResolved(true)}
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    switch (phase) {
+      case "carryovers":
+        if (carryovers.length === 0) return null;
+        return (
+          <CarryoverTriageCard
+            tasks={carryovers.map(toPickTask)}
+            selectedIds={selectedIds}
+            onToggle={toggleSelected}
+            onKeepIds={handleKeepCarryoverIds}
+            onDropIds={handleDropCarryoverIds}
+            lookbackLabel={lookbackLabel}
+            disabled={isPending}
+          />
+        );
+
+      case "projects":
+        if (remainingProjectSuggestions.length > 0) {
+          return (
+            <div className="space-y-2">
+              <ProjectPickCard
+                intro="Here are a few project tasks that look relevant — add any to Today?"
+                tasks={pacedProjects.batch.map((s) => toPickTask(s.task))}
+                selectedIds={selectedIds}
+                onToggle={toggleSelected}
+                onAddIds={handleAddProjectIds}
+                onDeferIds={handleDeferProjectIds}
+                onShowMore={
+                  pacedProjects.hasMore
+                    ? () => setProjectSuggestionOffset(pacedProjects.nextOffset)
+                    : undefined
+                }
+                showMoreDisabled={isPending}
+                disabled={isPending}
+              />
+              <button
+                type="button"
+                className={TRIAGE_CHIP_MUTED}
+                disabled={isPending}
+                onClick={handleSkipProjects}
+              >
+                Skip projects
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
+            <p className="text-body text-ink">Anything from projects you want on Today?</p>
+            <button
+              type="button"
+              className={TRIAGE_CHIP_MUTED}
+              disabled={isPending}
+              onClick={handleProjectsEmptyContinue}
+            >
+              Not right now
+            </button>
+          </div>
+        );
+
+      case "inbox":
+        if (inboxTasks.length === 0) return null;
+        return (
+          <InboxPickCard
+            intro="A few inbox captures have no day yet — schedule any for today?"
+            tasks={inboxTasks.map(toPickTask)}
+            selectedIds={selectedIds}
+            onToggle={toggleSelected}
+            onAddIds={handleAddProjectIds}
+            onSkip={handleSkipInbox}
+            disabled={isPending}
+          />
+        );
+
+      default:
+        return null;
+    }
+  }, [
+    showCircleBack,
+    circleBackReviewing,
+    phase,
+    carryovers,
+    lookbackLabel,
+    selectedIds,
+    toggleSelected,
+    handleKeepCarryoverIds,
+    handleDropCarryoverIds,
+    remainingProjectSuggestions.length,
+    pacedProjects,
+    handleAddProjectIds,
+    handleDeferProjectIds,
+    handleSkipProjects,
+    handleProjectsEmptyContinue,
+    inboxTasks,
+    handleSkipInbox,
+    isPending,
+  ]);
+
+  const dumpEnabled = dumpUnlocked(phase, skippedToDump);
 
   const liveAssembled = useMemo(
     () =>
-      filterAssembledTodayList(tasks, localDate).filter((task) => {
-        if (isTriageCandidate(task, localDate)) return false;
-        // While the opener is reviewing project-today rows, keep unconfirmed
-        // ones off the cart so "Add to today" is a real left → right move.
-        if (!openerAcknowledged && pendingProjectTaskIds.has(task.id)) return false;
-        return true;
-      }),
-    [tasks, localDate, openerAcknowledged, pendingProjectTaskIds]
+      filterAssembledTodayList(tasks, localDate).filter(
+        (task) => !isTriageCandidate(task, localDate)
+      ),
+    [tasks, localDate]
   );
 
   const cartRows = useMemo((): CartRow[] => {
@@ -390,23 +713,6 @@ export function MorningHandoffModal({
     [pinnedBySlot, stagedPinnedBySlot, stagedCaptures]
   );
 
-  const filteredProjects = useMemo(() => {
-    const q = projectQuery.trim().toLowerCase();
-    if (!q) return projects.slice(0, 6);
-    return projects.filter((p) => `${p.name} ${p.slug}`.toLowerCase().includes(q)).slice(0, 8);
-  }, [projectQuery, projects]);
-
-  const projectOpenTasks = useMemo(() => {
-    if (!selectedProjectId) return [];
-    return tasks.filter(
-      (task) =>
-        task.projectId === selectedProjectId &&
-        task.completedAt == null &&
-        !task.isRecurringOccurrence &&
-        !matchesTodayList(task, localDate)
-    );
-  }, [selectedProjectId, tasks, localDate]);
-
   const pinnedSlots = TOP3_SLOTS.map((slot) => {
     const task = pinnedBySlot.get(slot);
     return task ? { slot, task } : null;
@@ -418,22 +724,10 @@ export function MorningHandoffModal({
   const showHoldSection =
     pinnedSlots.length > 0 && holdPreview != null && !holdDeclined && !isOverCommitted;
 
-  const openerPendingCount = carryovers.length + projectTasksToday.length;
-  const dumpEnabled = openerAcknowledged || openerPendingCount === 0;
-  const showOpenerPanel = !openerAcknowledged && openerPendingCount > 0;
-
-  const [showOpenerNudge, setShowOpenerNudge] = useState(false);
-  useEffect(() => {
-    setShowOpenerNudge(false);
-    if (!showOpenerPanel) return;
-    const timer = setTimeout(() => setShowOpenerNudge(true), OPENER_NUDGE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [showOpenerPanel, localDate]);
-
   return (
     <RitualSheet
       open
-      title="Good morning"
+      title={greetingTitle}
       dismissOnBackdrop={false}
       dim="strong"
       size="xl"
@@ -463,260 +757,25 @@ export function MorningHandoffModal({
               {previewBanner}
             </p>
           ) : null}
-          {openerText ? (
-            <p className="rounded-row border border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
-              {openerText}
-            </p>
-          ) : null}
           {calendarSummaryLine ? (
             <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
           ) : null}
         </div>
 
         <div className="grid min-h-0 flex-1 gap-[var(--space-5)] overflow-y-auto lg:grid-cols-2 lg:overflow-visible">
-          {/* Left: intake — carryover-first opener, recurring, and the dump chat. */}
-          <div className="flex min-h-0 flex-col gap-[var(--space-4)] lg:h-full lg:overflow-y-auto lg:pr-[var(--space-2)]">
-            {showOpenerPanel ? (
-              <div className="shrink-0 space-y-[var(--space-3)] rounded-card border-emphasis border-accent bg-[var(--accent-soft)] p-[var(--space-4)]">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-body font-semibold text-ink">
-                    Before you dump today&apos;s list
-                  </h3>
-                  <span className="shrink-0 rounded-pill border border-accent bg-surface px-2 py-0.5 text-caption font-medium text-ink">
-                    {openerPendingCount} to review
-                  </span>
-                </div>
-
-                {carryovers.length > 0 ? (
-                  <div className="space-y-1.5">
-                    <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">
-                      Yesterday
-                    </p>
-                    {carryovers.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        title={task.title}
-                        meta="Unfinished from a prior day"
-                        category={task.category}
-                        actions={
-                          <>
-                            <button
-                              type="button"
-                              className={ROW_ACTION}
-                              onClick={() => onKeepCarryover(task.id)}
-                            >
-                              Keep
-                            </button>
-                            <button
-                              type="button"
-                              className={ROW_ACTION_MUTED}
-                              onClick={() => onDropCarryover(task.id)}
-                            >
-                              Drop
-                            </button>
-                          </>
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : null}
-
-                {projectTasksToday.length > 0 ? (
-                  <div className="space-y-1.5">
-                    <p className="text-caption font-medium uppercase tracking-wide text-ink-muted">
-                      Project tasks today
-                    </p>
-                    {projectTasksToday.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        title={task.title}
-                        meta={task.projectSlug ? `#${task.projectSlug}` : undefined}
-                        category={task.category}
-                        actions={
-                          <>
-                            <button
-                              type="button"
-                              className={ROW_ACTION}
-                              onClick={() => {
-                                onConfirmProjectTask(task.id);
-                                setDismissedProjectTasks((prev) => new Set(prev).add(task.id));
-                              }}
-                            >
-                              Add to today
-                            </button>
-                            <button
-                              type="button"
-                              className={ROW_ACTION_MUTED}
-                              onClick={() => {
-                                onDeferProjectTask(task.id);
-                                setDismissedProjectTasks((prev) => new Set(prev).add(task.id));
-                              }}
-                            >
-                              Not today
-                            </button>
-                          </>
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="flex flex-col gap-1.5 pt-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="self-start text-caption"
-                    onClick={onAcknowledgeOpener}
-                    disabled={isPending}
-                  >
-                    I&apos;ll handle these later — start dump
-                  </Button>
-                  {showOpenerNudge ? (
-                    <p className="text-caption text-ink-muted">
-                      Still deciding? It&apos;s fine to start dumping new tasks now — you can come
-                      back to these anytime before you begin.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            {recurringToday.length > 0 ? (
-              <Section title="Recurring today" className="shrink-0">
-                {recurringToday.map((task) => {
-                  const keys = resolveOccurrenceKeys(task);
-                  if (!keys) return null;
-                  return (
-                    <TaskRow
-                      key={task.id}
-                      title={task.title}
-                      meta="Recurring occurrence"
-                      category={task.category}
-                      actions={
-                        <>
-                          <button
-                            type="button"
-                            className={ROW_ACTION}
-                            onClick={() => {
-                              onConfirmRecurring(keys.recurrenceId, keys.occurrenceDate);
-                              setDismissedRecurring((prev) => new Set(prev).add(task.id));
-                            }}
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            type="button"
-                            className={ROW_ACTION_MUTED}
-                            onClick={() => {
-                              onSkipRecurring(keys.recurrenceId, keys.occurrenceDate);
-                              setDismissedRecurring((prev) => new Set(prev).add(task.id));
-                            }}
-                          >
-                            Skip
-                          </button>
-                        </>
-                      }
-                    />
-                  );
-                })}
-              </Section>
-            ) : null}
-
-            <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-2)]">
-              <div className="flex min-h-0 flex-1 flex-col">
-                <HandoffCaptureChat
-                  dumpEnabled={dumpEnabled}
-                  dumpLockedHint="Review carryovers above first — or skip to dump."
-                  commitMode={captureCommitMode}
-                  onStageTasks={onStageTasks}
-                  onTasksChanged={onTasksChanged}
-                />
-              </div>
-
-              {projects.length > 0 ? (
-                <div className="shrink-0 space-y-[var(--space-2)]">
-                  <button
-                    type="button"
-                    aria-expanded={projectPullOpen}
-                    className={cn(
-                      "rounded-pill border px-3 py-1 text-caption transition",
-                      projectPullOpen
-                        ? "border-ink bg-[var(--accent-soft)] text-ink"
-                        : "border-border text-ink-muted hover:text-ink"
-                    )}
-                    onClick={() => setProjectPullOpen((v) => !v)}
-                  >
-                    Pull from a project
-                  </button>
-                  {projectPullOpen ? (
-                    <div className="max-h-48 space-y-[var(--space-2)] overflow-y-auto rounded-row border border-subtle bg-surface-2 p-[var(--space-3)]">
-                      <label
-                        className="block text-caption text-ink-muted"
-                        htmlFor="handoff-project-search"
-                      >
-                        Search projects
-                      </label>
-                      <input
-                        id="handoff-project-search"
-                        type="search"
-                        value={projectQuery}
-                        onChange={(e) => {
-                          setProjectQuery(e.target.value);
-                          setSelectedProjectId(null);
-                        }}
-                        placeholder="Search projects…"
-                        className="w-full rounded-control border border-border bg-surface px-2 py-1.5 text-body text-ink"
-                      />
-                      {selectedProjectId == null ? (
-                        <ul className="space-y-1">
-                          {filteredProjects.map((project) => (
-                            <li key={project.id}>
-                              <button
-                                type="button"
-                                className="w-full rounded-row px-2 py-1 text-left text-body text-ink hover:bg-[var(--accent-soft)]"
-                                onClick={() => setSelectedProjectId(project.id)}
-                              >
-                                {project.name}
-                                <span className="ml-2 text-caption text-ink-muted">
-                                  #{project.slug}
-                                </span>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="space-y-2">
-                          <button
-                            type="button"
-                            className="text-caption text-ink-muted hover:text-ink"
-                            onClick={() => setSelectedProjectId(null)}
-                          >
-                            ← Back to projects
-                          </button>
-                          {projectOpenTasks.length === 0 ? (
-                            <p className="text-caption text-ink-muted">No open tasks to pull.</p>
-                          ) : (
-                            <ul className="space-y-1">
-                              {projectOpenTasks.map((task) => (
-                                <li key={task.id}>
-                                  <button
-                                    type="button"
-                                    className="w-full rounded-row px-2 py-1 text-left text-body text-ink hover:bg-[var(--accent-soft)]"
-                                    onClick={() => onPullProjectTask(task.id)}
-                                  >
-                                    {task.title}
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+          {/* Left: chat-first morning triage with in-thread act cards. */}
+          <div className="flex min-h-0 flex-col lg:h-full lg:overflow-y-auto lg:pr-[var(--space-2)]">
+            <MorningTriageChat
+              dumpEnabled={dumpEnabled}
+              dumpLockedHint="Finish the steps above first — or skip to dump."
+              commitMode={captureCommitMode}
+              onStageTasks={onStageTasks}
+              onTasksChanged={onTasksChanged}
+              scriptedMessages={scriptedMessages}
+              actSlot={actSlot}
+              skipToDumpLabel="I'll handle these later — start dump"
+              onSkipToDump={handleSkipToDump}
+            />
           </div>
 
           {/* Right: cart — Top 3, Today, and the balance preview. */}
@@ -838,7 +897,7 @@ export function MorningHandoffModal({
             <Section title={`Today (${cartRows.length})`}>
               {cartRows.length === 0 ? (
                 <p className="text-caption text-ink-muted">
-                  Nothing yet — dump a few tasks on the left, or confirm a carryover.
+                  Nothing yet — chat with Kash on the left, or keep a carryover.
                 </p>
               ) : (
                 <ul className="space-y-1.5">

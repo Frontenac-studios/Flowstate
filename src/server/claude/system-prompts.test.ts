@@ -136,7 +136,16 @@ describe("system-prompts", () => {
     const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "today", ctx);
     expect(prompt).toContain("Stage confirm card");
     expect(prompt).toContain("never claim tasks are already staged");
+    expect(prompt).toContain("Morning triage acts");
+    expect(prompt).toContain("No recurring tasks in this flow");
     expect(prompt).toContain("blocksTempIds");
+  });
+
+  it("adds morning handoff surface modifier with soft ritual flow", () => {
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "morning-handoff");
+    expect(prompt).toContain("chat-first soft ritual");
+    expect(prompt).toContain("Do not use set_top3");
+    expect(prompt).toContain("After 8pm PT");
   });
 
   it("tells planning create_task replies to wait for Accept", () => {
