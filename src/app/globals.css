@@ -48,9 +48,7 @@ a:not([class]) {
    above applies. */
 @media (max-width: 1023.98px) {
   .kash-shell-inner {
-    padding-bottom: calc(
-      var(--shell-pad-y) + var(--mobile-nav-height) + env(safe-area-inset-bottom)
-    );
+    padding-bottom: calc(var(--shell-pad-y) + var(--mobile-nav-clearance));
   }
 }
 

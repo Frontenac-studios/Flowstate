@@ -122,6 +122,13 @@ export default function MobileBottomNav() {
   // Portal only after mount so SSR markup matches (document is client-only).
   const [mounted, setMounted] = useState(false);
   const sheetTitleId = useId();
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closeSheet = () => {
+    setMoreOpen(false);
+    // Return focus to the trigger so keyboard users aren't dropped at <body>.
+    moreButtonRef.current?.focus();
+  };
 
   useEffect(() => setMounted(true), []);
 
@@ -165,6 +172,7 @@ export default function MobileBottomNav() {
             );
           })}
           <button
+            ref={moreButtonRef}
             type="button"
             onClick={() => setMoreOpen((open) => !open)}
             aria-expanded={moreOpen}
@@ -186,11 +194,7 @@ export default function MobileBottomNav() {
       </nav>
 
       {mounted && moreOpen ? (
-        <MoreSheet
-          titleId={sheetTitleId}
-          pathname={pathname}
-          onDismiss={() => setMoreOpen(false)}
-        />
+        <MoreSheet titleId={sheetTitleId} pathname={pathname} onDismiss={closeSheet} />
       ) : null}
     </>
   );

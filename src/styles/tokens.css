@@ -180,9 +180,13 @@
   --nav-rail-width: 4rem;
   --nav-rail-width-expanded: 12.5rem;
   --nav-item-height: 3rem;
-  /* Mobile bottom tab bar (below lg) — fixed elements add this + safe-area to
-     their bottom offsets so they clear the bar. */
+  /* Mobile bottom tab bar (below lg). The bar is a --mobile-nav-height row plus
+     max(--space-1, safe-area) bottom padding; fixed elements add
+     --mobile-nav-clearance to their bottom offsets so they clear the full bar. */
   --mobile-nav-height: 3.5rem;
+  --mobile-nav-clearance: calc(
+    var(--mobile-nav-height) + max(var(--space-1), env(safe-area-inset-bottom))
+  );
   --shell-gap: 1.5rem;
   --shell-pad-x: 1rem;
   --shell-pad-x-sm: 1.5rem;
