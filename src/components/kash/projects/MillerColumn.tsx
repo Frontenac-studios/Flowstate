@@ -40,8 +40,10 @@ type Props = {
   highlightTaskIds?: Set<string>;
   blankInvitation?: ReactNode;
   renderDetail: (item: ColumnItem) => ReactNode;
-  onOpenPhase: (node: Node) => void;
-  onOpenTaskDetail: (task: ProjectTask) => void;
+  onDrillPhase: (node: Node) => void;
+  onEditPhase: (node: Node) => void;
+  onSelectTask: (task: ProjectTask, index: number) => void;
+  onToggleTaskDetail: (task: ProjectTask) => void;
   onToggleTask: (task: ProjectTask) => void;
 };
 
@@ -66,8 +68,10 @@ export default function MillerColumn({
   highlightTaskIds,
   blankInvitation,
   renderDetail,
-  onOpenPhase,
-  onOpenTaskDetail,
+  onDrillPhase,
+  onEditPhase,
+  onSelectTask,
+  onToggleTaskDetail,
   onToggleTask,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
@@ -93,7 +97,8 @@ export default function MillerColumn({
             focused={focused}
             progressPercent={metrics?.percent}
             timeSpentSeconds={metrics?.timeSpentSeconds}
-            onOpen={() => onOpenPhase(item.node)}
+            onOpen={() => onDrillPhase(item.node)}
+            onEdit={() => onEditPhase(item.node)}
           />
           {expanded ? (
             <li
@@ -116,7 +121,8 @@ export default function MillerColumn({
           parentPhaseId={parentPhaseId}
           selected={expanded}
           focused={focused}
-          onOpenDetail={() => onOpenTaskDetail(item.task)}
+          onSelect={() => onSelectTask(item.task, index)}
+          onToggleDetail={() => onToggleTaskDetail(item.task)}
           onToggleComplete={() => onToggleTask(item.task)}
           highlightClassName={highlighted ? "kash-section-pulse" : undefined}
         />

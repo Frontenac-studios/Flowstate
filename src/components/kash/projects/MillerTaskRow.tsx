@@ -23,7 +23,10 @@ type Props = {
   parentPhaseId: string | null;
   selected: boolean;
   focused: boolean;
-  onOpenDetail: () => void;
+  /** Focus / select the row without opening detail. */
+  onSelect: () => void;
+  /** Toggle inline detail (swipe Edit / keyboard). */
+  onToggleDetail: () => void;
   onToggleComplete: () => void;
   /**
    * P6 post-create feedback: pulse class applied to the row's own `<li>` (rather
@@ -38,7 +41,8 @@ export default function MillerTaskRow({
   parentPhaseId,
   selected,
   focused,
-  onOpenDetail,
+  onSelect,
+  onToggleDetail,
   onToggleComplete,
   highlightClassName,
 }: Props) {
@@ -99,7 +103,7 @@ export default function MillerTaskRow({
           onClick={(e) => {
             e.stopPropagation();
             hide();
-            onOpenDetail();
+            onToggleDetail();
           }}
         >
           Edit
@@ -127,7 +131,7 @@ export default function MillerTaskRow({
       >
         <button
           type="button"
-          onClick={onOpenDetail}
+          onClick={onSelect}
           aria-expanded={selected}
           className={`min-w-0 flex-1 text-left text-sm focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
             completed ? "text-ink-muted line-through" : "text-ink"

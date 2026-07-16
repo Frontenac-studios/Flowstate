@@ -18,17 +18,11 @@ function resolveNodeAtPath<P extends PhaseWithCompletion, T extends TaskShape>(
   return node;
 }
 
-function firstIncompleteChild<P extends PhaseWithCompletion, T extends TaskShape>(
-  node: PhaseTreeNode<P, T>
-): PhaseTreeNode<P, T> | null {
-  for (const child of node.children) {
-    if (child.phase.completedAt === null) return child;
-  }
-  return null;
-}
-
-/** Prune invalid ids from the tail, then append first incomplete child per level. */
-export function expandMillerPath<P extends PhaseWithCompletion, T extends TaskShape>(
+/**
+ * Drop invalid ids from the path and cap length to the column budget.
+ * Does not auto-append children — depth is click-driven; empty slots use ghosts.
+ */
+export function pruneMillerPath<P extends PhaseWithCompletion, T extends TaskShape>(
   tree: ProjectTree<P, T>,
   path: string[],
   maxColumns: number
@@ -38,6 +32,7 @@ export function expandMillerPath<P extends PhaseWithCompletion, T extends TaskSh
 
   const result: string[] = [];
   for (const id of path) {
+    if (result.length >= maxPathLength) break;
     const parent = result.length === 0 ? null : resolveNodeAtPath(tree, result);
     const siblings = parent === null ? tree.rootPhases : parent.children;
     const next = siblings.find((n) => n.phase.id === id);
@@ -45,18 +40,21 @@ export function expandMillerPath<P extends PhaseWithCompletion, T extends TaskSh
     result.push(id);
   }
 
-  while (result.length < maxPathLength) {
-    const node = resolveNodeAtPath(tree, result);
-    if (!node) break;
-    const child = firstIncompleteChild(node);
-    if (!child) break;
-    result.push(child.phase.id);
-  }
-
   return result;
 }
 
-/** First incomplete root with content, expanded to the column budget. */
+/**
+ * @deprecated Use {@link pruneMillerPath}. Kept as an alias — no longer auto-pads children.
+ */
+export function expandMillerPath<P extends PhaseWithCompletion, T extends TaskShape>(
+  tree: ProjectTree<P, T>,
+  path: string[],
+  maxColumns: number
+): string[] {
+  return pruneMillerPath(tree, path, maxColumns);
+}
+
+/** First incomplete root with content — path is that root only (no child padding). */
 export function defaultMillerPath<P extends PhaseWithCompletion, T extends TaskShape>(
   tree: ProjectTree<P, T>,
   maxColumns: number
@@ -65,5 +63,5 @@ export function defaultMillerPath<P extends PhaseWithCompletion, T extends TaskS
     (n) => n.phase.completedAt === null && (n.children.length > 0 || n.tasks.length > 0)
   );
   if (!firstRoot) return [];
-  return expandMillerPath(tree, [firstRoot.phase.id], maxColumns);
+  return pruneMillerPath(tree, [firstRoot.phase.id], maxColumns);
 }
