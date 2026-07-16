@@ -63,7 +63,7 @@ export default function AbyssFloatingBar(props: Props) {
   const showFilters = props.hasItems && props.view === "list";
 
   return (
-    <div className="sticky top-0 z-sticky flex flex-wrap items-center gap-2 rounded-card border border-abyss-border bg-abyss-bar px-3 py-2 backdrop-blur-md">
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
       <div className="flex min-w-[10rem] flex-1 items-center gap-2 text-abyss-ink-muted">
         <SearchIcon size={14} />
         <input

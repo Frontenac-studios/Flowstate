@@ -42,6 +42,16 @@ a:not([class]) {
   padding-top: var(--shell-pad-y);
 }
 
+/* Below lg the fixed mobile bottom tab bar overlays the viewport bottom — the
+   shell adds clearance so page content (and its natural end) never hides
+   behind the bar. At lg+ the bar is display:none and the default padding
+   above applies. */
+@media (max-width: 1023.98px) {
+  .kash-shell-inner {
+    padding-bottom: calc(var(--shell-pad-y) + var(--mobile-nav-clearance));
+  }
+}
+
 @media (min-width: 640px) {
   .kash-shell-inner {
     padding-left: var(--shell-pad-x-sm);

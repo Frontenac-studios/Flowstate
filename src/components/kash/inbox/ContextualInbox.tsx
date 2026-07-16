@@ -17,7 +17,8 @@ import { InboxPanel } from "./InboxPanel";
  * Contextual triage inbox: an in-flow, collapsible strip at the top of the
  * content column (toggled by ⌃I). Replaces the retired global BottomDock and is
  * mounted only on the surfaces where re-scheduling overdue tasks is meaningful
- * (Today / Week / Plan), so the ⌃I binding is scoped to those routes.
+ * (Today / Week / Plan, minus the Goals/bingo horizon), so the ⌃I binding is
+ * scoped to those routes.
  */
 export function ContextualInbox() {
   const trpc = useTRPC();

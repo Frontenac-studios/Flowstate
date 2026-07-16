@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 import localFont from "next/font/local";
 
@@ -27,6 +27,14 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+
+// viewport-fit=cover is required for env(safe-area-inset-bottom) to be non-zero
+// on notched devices (used by the mobile bottom nav clearance).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export function generateMetadata(): Metadata {
   return {

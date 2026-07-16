@@ -146,12 +146,12 @@ describe("captureContextPlaceholder", () => {
     ).toBe("Describe a task to plan…");
   });
 
-  it("prompts to add tasks for today during morning handoff", () => {
+  it("prompts to reply or dump tasks during morning handoff", () => {
     expect(
       captureContextPlaceholder(
         createCaptureContext({ surface: "morning-handoff", defaultBucket: "today" })
       )
-    ).toBe("Add tasks for today…");
+    ).toBe("Reply or dump tasks for today…");
   });
 });
 

@@ -1,7 +1,7 @@
-import { AppHeader } from "./AppHeader";
 import { AppShellContent } from "./AppShellContent";
 import { AppShellChatRail, AppShellFixedOverlays } from "./AppShellOverlays";
 import { LeftNavRail } from "./LeftNavRail";
+import MobileBottomNav from "./MobileBottomNav";
 import { ChatProvider } from "./chat/ChatProvider";
 import { EphemeralCelebrationHost } from "./mechanics/EphemeralCelebration";
 import ToastProvider from "./ui/ToastProvider";
@@ -16,12 +16,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="kash-shell-inner relative z-sticky mx-auto flex min-h-screen w-full max-w-[110rem] lg:h-screen lg:overflow-hidden">
             <LeftNavRail />
             <div className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-y-auto">
-              <AppHeader />
               <AppShellContent>{children}</AppShellContent>
             </div>
             <AppShellChatRail />
           </div>
           <AppShellFixedOverlays />
+          <MobileBottomNav />
         </div>
       </ToastProvider>
     </ChatProvider>

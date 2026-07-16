@@ -1,7 +1,8 @@
+import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import type { ProjectCategory } from "@/lib/projects/categories";
-import { isTriageCandidate } from "@/lib/tasks/triage-candidates";
-import { matchesTodayList } from "@/lib/tasks/matches-today-list";
 import { parseOccurrenceId } from "@/lib/recurrence/occurrence-id";
+import { matchesTodayList } from "@/lib/tasks/matches-today-list";
+import { isTriageCandidate } from "@/lib/tasks/triage-candidates";
 
 export type HandoffPlanTask = {
   id: string;
@@ -20,11 +21,108 @@ export type HandoffPlanTask = {
   projectSlug?: string | null;
 };
 
+/** Prior days included when the user was offline (morning triage lookback). */
+export const CARRYOVER_LOOKBACK_DAYS = 4;
+
 export function filterTriageCarryovers<T extends HandoffPlanTask>(
   tasks: T[],
   todayIso: string
 ): T[] {
   return tasks.filter((task) => isTriageCandidate(task, todayIso));
+}
+
+/** Carryovers limited to the last few local days (offline window). */
+export function filterLookbackCarryovers<T extends HandoffPlanTask>(
+  tasks: T[],
+  todayIso: string,
+  lookbackDays: number = CARRYOVER_LOOKBACK_DAYS
+): T[] {
+  const earliestIso = toISODateString(addDays(parseISODateString(todayIso), -lookbackDays));
+
+  return tasks.filter((task) => {
+    if (task.completedAt !== null) return false;
+    if (task.scheduledDate === null) return false;
+    if (task.bucketOverride === "later") return false;
+    return task.scheduledDate >= earliestIso && task.scheduledDate < todayIso;
+  });
+}
+
+/** Inbox captures with no scheduled day — offered in morning triage act 3. */
+export function filterInboxUnscheduled<T extends HandoffPlanTask>(tasks: T[]): T[] {
+  return tasks.filter(
+    (task) =>
+      task.completedAt == null &&
+      task.scheduledDate === null &&
+      task.bucketOverride !== "later" &&
+      !task.isRecurringOccurrence
+  );
+}
+
+export type ProjectMorningSuggestionTier = "dueToday" | "overdue" | "light";
+
+export type ProjectMorningSuggestion<T extends HandoffPlanTask = HandoffPlanTask> = {
+  task: T;
+  tier: ProjectMorningSuggestionTier;
+};
+
+function isEligibleProjectSuggestion(task: HandoffPlanTask): boolean {
+  return (
+    task.completedAt == null &&
+    task.projectId != null &&
+    !task.isRecurringOccurrence &&
+    task.bucketOverride !== "later"
+  );
+}
+
+/** Ranked project pulls: due today, then overdue, then lighter unscheduled picks. */
+export function collectProjectMorningSuggestions<T extends HandoffPlanTask>(
+  tasks: T[],
+  todayIso: string
+): ProjectMorningSuggestion<T>[] {
+  const seen = new Set<string>();
+  const suggestions: ProjectMorningSuggestion<T>[] = [];
+
+  const push = (task: T, tier: ProjectMorningSuggestionTier) => {
+    if (seen.has(task.id)) return;
+    seen.add(task.id);
+    suggestions.push({ task, tier });
+  };
+
+  for (const task of filterProjectTasksDueToday(tasks, todayIso)) {
+    push(task, "dueToday");
+  }
+
+  for (const task of tasks) {
+    if (!isEligibleProjectSuggestion(task)) continue;
+    if (task.scheduledDate != null && task.scheduledDate < todayIso) {
+      push(task, "overdue");
+    }
+  }
+
+  for (const task of tasks) {
+    if (!isEligibleProjectSuggestion(task)) continue;
+    if (task.scheduledDate === null) {
+      push(task, "light");
+    }
+  }
+
+  return suggestions;
+}
+
+export function paceSuggestions<T>(
+  items: readonly T[],
+  options?: { offset?: number; batch?: number }
+): { batch: T[]; hasMore: boolean; nextOffset: number } {
+  const offset = options?.offset ?? 0;
+  const batchSize = options?.batch ?? 5;
+  const batch = items.slice(offset, offset + batchSize);
+  const nextOffset = offset + batch.length;
+
+  return {
+    batch,
+    hasMore: nextOffset < items.length,
+    nextOffset,
+  };
 }
 
 /** Recurring virtual rows whose display date is today. */

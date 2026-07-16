@@ -136,16 +136,12 @@ export function OnboardingModal({
         isPending={isPending}
         previewBanner="Tomorrow morning opens on this ritual — you're already familiar."
         beginLabel="Start today"
-        openerAcknowledged
+        initialPhase="dump"
         captureCommitMode="apply"
-        onAcknowledgeOpener={() => undefined}
         onKeepCarryover={() => undefined}
         onDropCarryover={() => undefined}
-        onConfirmRecurring={() => undefined}
-        onSkipRecurring={() => undefined}
         onConfirmProjectTask={() => undefined}
         onDeferProjectTask={() => undefined}
-        onPullProjectTask={() => undefined}
         onAcceptGoalOffer={() => undefined}
         onDismissGoalOffer={() => undefined}
         onPinTop3={() => undefined}

@@ -98,7 +98,7 @@ export default function ToastProvider({ children }: ProviderProps) {
       {mounted
         ? createPortal(
             <div
-              className="pointer-events-none fixed inset-x-0 bottom-[var(--space-5)] z-toast flex flex-col items-center gap-[var(--space-2)] px-[var(--space-4)]"
+              className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--space-5)+var(--mobile-nav-clearance))] z-toast flex flex-col items-center gap-[var(--space-2)] px-[var(--space-4)] lg:bottom-[var(--space-5)]"
               aria-live="polite"
             >
               {toasts.map((t) => (

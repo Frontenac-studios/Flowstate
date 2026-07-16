@@ -180,6 +180,13 @@
   --nav-rail-width: 4rem;
   --nav-rail-width-expanded: 12.5rem;
   --nav-item-height: 3rem;
+  /* Mobile bottom tab bar (below lg). The bar is a --mobile-nav-height row plus
+     max(--space-1, safe-area) bottom padding; fixed elements add
+     --mobile-nav-clearance to their bottom offsets so they clear the full bar. */
+  --mobile-nav-height: 3.5rem;
+  --mobile-nav-clearance: calc(
+    var(--mobile-nav-height) + max(var(--space-1), env(safe-area-inset-bottom))
+  );
   --shell-gap: 1.5rem;
   --shell-pad-x: 1rem;
   --shell-pad-x-sm: 1.5rem;
@@ -188,7 +195,6 @@
   --shell-sticky-top: 1.5rem;
   --stack-gap: 1rem;
   --section-gap: 1.5rem;
-  --header-gap: 1.5rem;
   --card-pad-x: 1.25rem;
   --card-pad-y: 1rem;
   --chat-rail-width: 22rem;
@@ -209,7 +215,6 @@ html.is-desktop {
   --shell-sticky-top: var(--shell-pad-y);
   --stack-gap: calc(var(--nav-rail-width) * 0.375);
   --section-gap: calc(var(--nav-rail-width) * 0.375);
-  --header-gap: var(--section-gap);
   --card-pad-x: calc(var(--nav-rail-width) * 0.417);
   --card-pad-y: calc(var(--nav-rail-width) * 0.417);
   --chat-rail-width: calc(var(--nav-rail-width) * 7);
@@ -289,9 +294,8 @@ html.is-desktop[data-spacing-variant="b"] {
 /* Left nav rail — label cascade on expand (reuses the gentle-calm motion tokens).
    Labels start hidden and slide + fade in, staggered top-to-bottom, whenever an
    ancestor nav is marked [data-expanded="true"]. Driven by the attribute (not a
-   per-instance style) so the reveal is identical everywhere the rail renders:
-   the desktop rail and the mobile drawer. Stagger is keyed off --nav-i, set per
-   label in render order. */
+   per-instance style) so the reveal is identical wherever the rail renders.
+   Stagger is keyed off --nav-i, set per label in render order. */
 .nav-cascade-item {
   opacity: 0;
   transform: translateX(-0.625rem);
@@ -486,6 +490,20 @@ html.is-desktop[data-spacing-variant="b"] {
   animation: modal-panel-in var(--motion-medium) var(--ease-move) both;
   transform-origin: top center;
 }
+/* Mobile bottom sheet (More nav) — slides up from the bar edge. */
+@keyframes mobile-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mobile-sheet-panel {
+  animation: mobile-sheet-in var(--motion-medium) var(--ease-move) both;
+}
 @keyframes sync-dot-pulse {
   0%,
   100% {
@@ -583,6 +601,9 @@ html.is-desktop[data-spacing-variant="b"] {
     animation: page-cross-fade-in var(--motion-short) var(--ease-enter) both;
   }
   .modal-panel {
+    animation: modal-panel-in-reduce var(--motion-short) var(--ease-enter) both;
+  }
+  .mobile-sheet-panel {
     animation: modal-panel-in-reduce var(--motion-short) var(--ease-enter) both;
   }
   .sync-dot-pulse {

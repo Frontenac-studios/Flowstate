@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import BalancePassProvider, {
   useBalancePassTrigger,
 } from "@/components/kash/plan/balance/BalancePassProvider";
@@ -209,14 +210,6 @@ function PlanHorizonViewInner() {
     [breadcrumb.year, breadcrumb.quarter]
   );
 
-  const title = useMemo(() => {
-    if (horizon === "goals") return "Goals";
-    if (horizon === "year") return "Year";
-    if (horizon === "quarter") return "Quarter";
-    if (horizon === "month") return "Month";
-    return "Week";
-  }, [horizon]);
-
   const showQuarterDrill = horizon === "quarter" && breadcrumb.quarter != null;
   const showMonthDrill = horizon === "month" && breadcrumb.month != null;
   const showWeekPlan = horizon === "week" && isWeekBreadcrumbScoped(breadcrumb);
@@ -239,16 +232,11 @@ function PlanHorizonViewInner() {
 
   return (
     <CheckInProvider breadcrumb={breadcrumb}>
+      {hydrated && horizon !== "goals" ? <ContextualInbox /> : null}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-lg font-semibold text-ink">{title}</h1>
-            {horizon !== "goals" ? (
-              <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
-            ) : null}
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <CheckInEntry />
+            <h1 className="text-xl font-semibold text-ink">Plan</h1>
             <InPageSwitcher
               options={HORIZON_OPTIONS}
               value={horizon}
@@ -256,7 +244,11 @@ function PlanHorizonViewInner() {
               ariaLabel="Planning horizon"
             />
           </div>
+          <CheckInEntry />
         </div>
+        {horizon !== "goals" ? (
+          <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
+        ) : null}
         {showYearRolloverNudges ? (
           <BingoYearRolloverNudges
             onStartNextYear={handleStartNextYearBingo}
