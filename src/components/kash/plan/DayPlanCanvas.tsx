@@ -776,8 +776,45 @@ export function DayPlanCanvas() {
             value={view}
             onChange={changeView}
             ariaLabel="Today view"
+            trailing={
+              <AddTaskPopover
+                ref={addTaskRef}
+                embedded
+                menuAlign="right"
+                onAskChat={() =>
+                  openRail({
+                    captureContext: createCaptureContext({
+                      surface: "today",
+                      defaultBucket: "today",
+                    }),
+                  })
+                }
+                onTypeManually={() => {
+                  setComposerOpen(true);
+                  requestAnimationFrame(() => quickInputRef.current?.focus());
+                }}
+              />
+            }
           />
         </div>
+
+        {composerOpen ? (
+          <div
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.stopPropagation();
+                setComposerOpen(false);
+                requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+              }
+            }}
+          >
+            <QuickInput
+              ref={quickInputRef}
+              draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
+              onTaskCreated={handleTaskCreated}
+            />
+          </div>
+        ) : null}
 
         <section
           className="flex flex-col gap-stack rounded-card border border-subtle bg-surface px-card-x py-card-y shadow-surface"
@@ -860,45 +897,6 @@ export function DayPlanCanvas() {
             />
           </div>
         )}
-
-        {/* Below lg the viewport is the scroller, so bottom-0 would pin this
-            behind the fixed mobile tab bar — raise the stick point so the
-            composer docks flush on top of the bar instead. */}
-        <div className="sticky bottom-[var(--mobile-nav-clearance)] z-sticky border-t border-border bg-surface pb-1 pt-3 lg:bottom-0">
-          {composerOpen ? (
-            <div
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.stopPropagation();
-                  setComposerOpen(false);
-                  requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
-                }
-              }}
-            >
-              <QuickInput
-                ref={quickInputRef}
-                draftStorageKey={COMPOSER_DRAFT_KEYS.planDay}
-                onTaskCreated={handleTaskCreated}
-              />
-            </div>
-          ) : (
-            <AddTaskPopover
-              ref={addTaskRef}
-              onAskChat={() =>
-                openRail({
-                  captureContext: createCaptureContext({
-                    surface: "today",
-                    defaultBucket: "today",
-                  }),
-                })
-              }
-              onTypeManually={() => {
-                setComposerOpen(true);
-                requestAnimationFrame(() => quickInputRef.current?.focus());
-              }}
-            />
-          )}
-        </div>
       </div>
       <WalkTimerOverlay open={walkOverlayOpen} onClose={() => setWalkOverlayOpen(false)} />
       <BreathingOverlay open={breatheOverlayOpen} onClose={() => setBreatheOverlayOpen(false)} />

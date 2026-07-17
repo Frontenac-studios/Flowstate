@@ -6,10 +6,10 @@ import { PlanSurface } from "@/components/kash/plan/PlanSurface";
 export default function TodayPage() {
   return (
     <PlanSurface>
-      <ContextualInbox />
       <LensProvider scope="today">
         <PlanCanvas />
       </LensProvider>
+      <ContextualInbox placement="bottom" />
     </PlanSurface>
   );
 }

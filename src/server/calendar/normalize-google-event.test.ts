@@ -84,4 +84,16 @@ describe("normalizeGoogleEvent", () => {
       normalizeGoogleEvent({ id: "evt-2", status: "confirmed", start: {}, end: {} }, CALENDAR_ID)
     ).toEqual({ action: "skip" });
   });
+
+  it("stores calendar color from the calendar list", () => {
+    const result = normalizeGoogleEvent(baseTimedEvent(), CALENDAR_ID, "Work", "#039be5");
+
+    expect(result).toMatchObject({
+      action: "upsert",
+      row: {
+        calendarName: "Work",
+        calendarColor: "#039be5",
+      },
+    });
+  });
 });

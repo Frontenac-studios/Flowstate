@@ -1,11 +1,21 @@
 "use client";
 
 import type { EventForDay } from "@/trpc/routers/calendar";
+import { calendarEventColors } from "@/lib/calendar/event-color";
+import { timelineBlockStyle } from "@/lib/timeline/block-geometry";
 
 export type ExternalEventBlockProps = {
   event: Pick<
     EventForDay,
-    "id" | "title" | "startMin" | "endMin" | "status" | "visibility" | "htmlLink" | "calendarName"
+    | "id"
+    | "title"
+    | "startMin"
+    | "endMin"
+    | "status"
+    | "visibility"
+    | "htmlLink"
+    | "calendarName"
+    | "calendarColor"
   >;
   layout: { col: number; cols: number };
   rangeStart: number;
@@ -22,27 +32,24 @@ function displayTitle(event: { title: string | null }): string {
   return event.title?.trim() || "Busy";
 }
 
-/** Read-only inbound calendar event on the Today timeline (D11 neutral styling). */
+/** Read-only inbound calendar event on the Today timeline (A1 soft Google fill). */
 export function ExternalEventBlock({ event, layout, rangeStart }: ExternalEventBlockProps) {
   const title = displayTitle(event);
   const top = ((event.startMin - rangeStart) / 60) * 56;
   const height = Math.max(18, ((event.endMin - event.startMin) / 60) * 56);
-  const gapPct = 1.5;
-  const widthPct = 100 / layout.cols;
-  const leftPct = layout.col * widthPct;
+  const geometry = timelineBlockStyle(layout, top, height);
+  const colors = calendarEventColors(event.calendarColor);
   const tentative = event.status === "tentative";
 
   return (
     <div
-      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-pill border border-[var(--border-subtle)] border-l-[var(--stripe-width)] bg-[var(--surface-2)] ${
+      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-pill border border-[var(--border-subtle)] border-l-[var(--stripe-width)] ${
         tentative ? "opacity-75" : ""
       }`}
       style={{
-        top,
-        height,
-        left: `calc(2.75rem + ${leftPct}%)`,
-        width: `calc(${widthPct}% - ${gapPct}rem)`,
-        borderLeftColor: "var(--ink-faint)",
+        ...geometry,
+        backgroundColor: colors.fill,
+        borderLeftColor: colors.stripe,
       }}
       title={
         event.calendarName
@@ -51,7 +58,7 @@ export function ExternalEventBlock({ event, layout, rangeStart }: ExternalEventB
       }
     >
       <div className="flex items-center gap-1 px-2 py-1">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink-muted">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">
           {title}
           <span className="text-ink-faint"> cal</span>
         </span>
@@ -64,26 +71,32 @@ export function ExternalEventBlock({ event, layout, rangeStart }: ExternalEventB
 }
 
 type AllDayChipProps = {
-  event: Pick<EventForDay, "id" | "title" | "visibility" | "calendarName" | "status">;
+  event: Pick<
+    EventForDay,
+    "id" | "title" | "visibility" | "calendarName" | "status" | "calendarColor"
+  >;
 };
 
 /** All-day external event chip above the timeline grid. */
 export function ExternalEventAllDayChip({ event }: AllDayChipProps) {
   const title = displayTitle(event);
   const tentative = event.status === "tentative";
+  const colors = calendarEventColors(event.calendarColor);
 
   return (
     <li
-      className={`flex items-start gap-2 rounded-row border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 py-1.5 text-xs ${
+      className={`flex items-start gap-2 rounded-row border border-[var(--border-subtle)] px-2 py-1.5 text-xs ${
         tentative ? "opacity-75" : ""
       }`}
+      style={{ backgroundColor: colors.fill }}
     >
       <span
-        className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full bg-[var(--ink-faint)]"
+        className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
+        style={{ backgroundColor: colors.stripe }}
         aria-hidden
       />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-ink-muted">
+        <p className="font-medium text-ink">
           {title}
           <span className="text-ink-faint"> cal</span>
         </p>
@@ -110,7 +123,15 @@ function formatTimeRange(startMin: number, endMin: number): string {
 type WeekChipProps = {
   event: Pick<
     EventForDay,
-    "id" | "title" | "startMin" | "endMin" | "isAllDay" | "status" | "visibility" | "calendarName"
+    | "id"
+    | "title"
+    | "startMin"
+    | "endMin"
+    | "isAllDay"
+    | "status"
+    | "visibility"
+    | "calendarName"
+    | "calendarColor"
   >;
 };
 
@@ -118,19 +139,22 @@ type WeekChipProps = {
 export function ExternalEventWeekChip({ event }: WeekChipProps) {
   const title = displayTitle(event);
   const tentative = event.status === "tentative";
+  const colors = calendarEventColors(event.calendarColor);
 
   return (
     <li
-      className={`flex items-start gap-2 rounded-row border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 py-1 text-xs ${
+      className={`flex items-start gap-2 rounded-row border border-[var(--border-subtle)] px-2 py-1 text-xs ${
         tentative ? "opacity-75" : ""
       }`}
+      style={{ backgroundColor: colors.fill }}
     >
       <span
-        className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full bg-[var(--ink-faint)]"
+        className="mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
+        style={{ backgroundColor: colors.stripe }}
         aria-hidden
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-ink-muted">
+        <p className="truncate font-medium text-ink">
           {title}
           <span className="text-ink-faint"> cal</span>
         </p>

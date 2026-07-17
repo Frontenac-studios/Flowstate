@@ -58,6 +58,7 @@ async function syncCalendarEvents(
   accessToken: string,
   calendarId: string,
   calendarName: string | null,
+  calendarColor: string | null,
   syncToken: string | undefined,
   now: Date
 ): Promise<{
@@ -94,7 +95,7 @@ async function syncCalendarEvents(
   let eventsDeleted = 0;
 
   for (const googleEvent of page.events) {
-    const normalized = normalizeGoogleEvent(googleEvent, calendarId, calendarName);
+    const normalized = normalizeGoogleEvent(googleEvent, calendarId, calendarName, calendarColor);
 
     if (normalized.action === "skip") continue;
 
@@ -129,6 +130,7 @@ async function syncCalendarEvents(
         ],
         set: {
           calendarName: normalized.row.calendarName,
+          calendarColor: normalized.row.calendarColor,
           title: normalized.row.title,
           location: normalized.row.location,
           startAt: normalized.row.startAt,
@@ -186,11 +188,13 @@ export async function syncGoogleConnection(
   const now = new Date();
 
   let calendarNames: Map<string, string> = new Map();
+  let calendarColors: Map<string, string | null> = new Map();
   try {
     const calendars = await listGoogleCalendars(accessToken);
     calendarNames = new Map(calendars.map((cal) => [cal.id, cal.name]));
+    calendarColors = new Map(calendars.map((cal) => [cal.id, cal.backgroundColor]));
   } catch {
-    // Name lookup is best-effort; sync can proceed without labels.
+    // Name/color lookup is best-effort; sync can proceed without labels.
   }
 
   for (const calendarId of selectedCalendarIds) {
@@ -200,6 +204,7 @@ export async function syncGoogleConnection(
         accessToken,
         calendarId,
         calendarNames.get(calendarId) ?? null,
+        calendarColors.get(calendarId) ?? null,
         cursorMap[calendarId],
         now
       );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -20,6 +20,8 @@ type Props<T extends string> = {
   onChange: (value: T) => void;
   /** Required label for the control's `role="group"` (e.g. "Plan mode"). */
   ariaLabel: string;
+  /** Optional control clustered after the segments (e.g. Today add-task +). */
+  trailing?: ReactNode;
 };
 
 /**
@@ -35,6 +37,7 @@ export function InPageSwitcher<T extends string>({
   value,
   onChange,
   ariaLabel,
+  trailing,
 }: Props<T>) {
   const buttonsRef = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -57,7 +60,7 @@ export function InPageSwitcher<T extends string>({
 
   return (
     <div
-      className="inline-flex gap-[var(--space-0)] rounded-pill bg-active-surface p-[var(--space-0)] text-sm"
+      className="inline-flex items-center gap-[var(--space-0)] rounded-pill bg-active-surface p-[var(--space-0)] text-sm"
       role="group"
       aria-label={ariaLabel}
     >
@@ -84,6 +87,7 @@ export function InPageSwitcher<T extends string>({
           </button>
         );
       })}
+      {trailing ? <div className="flex items-center pl-0.5">{trailing}</div> : null}
     </div>
   );
 }

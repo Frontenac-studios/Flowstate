@@ -43,6 +43,7 @@ type ExternalEventRow = {
   id: string;
   calendarId: string;
   calendarName: string | null;
+  calendarColor: string | null;
   title: string | null;
   location: string | null;
   startAt: Date;
@@ -57,6 +58,7 @@ export type EventForDay = {
   id: string;
   calendarId: string;
   calendarName: string | null;
+  calendarColor: string | null;
   title: string | null;
   location: string | null;
   startMin: number;
@@ -91,6 +93,7 @@ async function fetchOverlappingEvents(
       id: externalCalendarEvents.id,
       calendarId: externalCalendarEvents.calendarId,
       calendarName: externalCalendarEvents.calendarName,
+      calendarColor: externalCalendarEvents.calendarColor,
       title: externalCalendarEvents.title,
       location: externalCalendarEvents.location,
       startAt: externalCalendarEvents.startAt,
@@ -124,6 +127,7 @@ function toEventForDay(
     id: row.id,
     calendarId: row.calendarId,
     calendarName: row.calendarName,
+    calendarColor: row.calendarColor,
     ...redactEventFields(row),
     startMin: geometry.startMin,
     endMin: geometry.endMin,

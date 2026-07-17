@@ -18,6 +18,8 @@ export const externalCalendarEvents = sqliteTable(
     providerEventId: text("provider_event_id").notNull(),
     calendarId: text("calendar_id").notNull(),
     calendarName: text("calendar_name"),
+    /** Google calendarList backgroundColor (e.g. #039be5); null when unknown. */
+    calendarColor: text("calendar_color"),
     title: text("title"),
     location: text("location"),
     startAt: integer("start_at", { mode: "timestamp_ms" }).notNull(),

@@ -19,6 +19,8 @@ import {
   TIMELINE_VIEWPORT_MINUTES,
 } from "@/lib/timeline/adaptive-window";
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
+import { timelineBlockStyle } from "@/lib/timeline/block-geometry";
+import { calendarEventColors } from "@/lib/calendar/event-color";
 import { largestOpenGap, nextOpenSlotMin } from "@/lib/timeline/living-record";
 import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { useTRPC } from "@/trpc/client";
@@ -36,6 +38,8 @@ import {
   dispatchSelfCareWalkStart,
 } from "@/lib/nudges/self-care-session-events";
 import { TOP3_HOLD_LABEL } from "@/lib/top3/constants";
+import { ChevronLeft, ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
+import IconButton from "@/components/kash/ui/IconButton";
 
 import { SelfCareGapRow } from "./SelfCareGapRow";
 
@@ -171,9 +175,7 @@ function ProtectedTimelineBlock({
   const title = block.label?.trim() || categoryLabel(block.category);
   const top = ((block.startMin - rangeStart) / 60) * HOUR_HEIGHT;
   const height = Math.max(18, ((block.endMin - block.startMin) / 60) * HOUR_HEIGHT);
-  const gapPct = 1.5;
-  const widthPct = 100 / layout.cols;
-  const leftPct = layout.col * widthPct;
+  const geometry = timelineBlockStyle(layout, top, height);
   const proposed = block.status === "proposed";
 
   return (
@@ -184,10 +186,7 @@ function ProtectedTimelineBlock({
           : "border-[var(--border-subtle)] bg-[var(--surface-2)]"
       } ${interactive ? "z-sticky shadow-surface" : "pointer-events-none"}`}
       style={{
-        top,
-        height,
-        left: `calc(2.75rem + ${leftPct}%)`,
-        width: `calc(${widthPct}% - ${gapPct}rem)`,
+        ...geometry,
         borderLeftColor: stripeColor(block.category, false),
       }}
       title={`Protected: ${title}`}
@@ -295,10 +294,7 @@ function TimelineBlock({
   const endMin = preview?.endMin ?? block.endMin;
   const top = ((startMin - rangeStart) / 60) * HOUR_HEIGHT;
   const height = Math.max(18, ((endMin - startMin) / 60) * HOUR_HEIGHT);
-
-  const gapPct = 1.5;
-  const widthPct = 100 / block.cols;
-  const leftPct = block.col * widthPct;
+  const geometry = timelineBlockStyle({ col: block.col, cols: block.cols }, top, height);
 
   const beginResize = (edge: "top" | "bottom") => (e: React.PointerEvent) => {
     if (done) return;
@@ -334,10 +330,7 @@ function TimelineBlock({
         done ? "opacity-60" : ""
       } ${active ? "ring-1 ring-accent" : ""} ${isDragging ? "z-sticky opacity-80" : ""}`}
       style={{
-        top,
-        height,
-        left: `calc(2.75rem + ${leftPct}%)`,
-        width: `calc(${widthPct}% - ${gapPct}rem)`,
+        ...geometry,
         borderLeftColor: stripeColor(block.category, block.categoryUnresolved),
         transform: CSS.Translate.toString(transform),
       }}
@@ -697,7 +690,9 @@ export function TimelinePane({
           aria-label="Expand timeline"
           title="Expand timeline"
         >
-          <span className="text-caption uppercase tracking-wide text-ink-muted">‹</span>
+          <span className="text-ink-muted" aria-hidden>
+            <ChevronRight {...kashIconProps({ tokenSize: "sm" })} />
+          </span>
           <div
             className="relative w-3 rounded-full bg-surface-2"
             style={{ height: railHeight }}
@@ -708,7 +703,7 @@ export function TimelinePane({
               const height = Math.max(3, ((item.endMin - item.startMin) / span) * railHeight);
               const color =
                 item.kind === "external"
-                  ? "var(--ink-faint)"
+                  ? calendarEventColors(item.calendarColor).stripe
                   : item.kind === "protected"
                     ? "var(--ink-faint)"
                     : stripeColor(item.category, item.categoryUnresolved);
@@ -742,15 +737,15 @@ export function TimelinePane({
     >
       <header className="mb-3 flex items-center gap-2">
         {density === "rail" ? (
-          <button
+          <IconButton
             type="button"
             onClick={() => setRailExpanded(false)}
-            className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
-            aria-label="Collapse timeline to mini-map"
+            aria-label="Collapse timeline"
             title="Collapse timeline"
+            className="shrink-0"
           >
-            › rail
-          </button>
+            <ChevronLeft {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
+          </IconButton>
         ) : null}
         <h2 className="text-sm font-medium uppercase tracking-wide text-ink-muted">Timeline</h2>
         <span className="text-xs text-ink-muted">
