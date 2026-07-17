@@ -20,6 +20,8 @@ describe("toolsForRegister", () => {
     expect(names).toContain("delete_task");
     expect(names).toContain("set_top3");
     expect(names).toContain("replan_project_dates");
+    expect(names).toContain("create_phase");
+    expect(names).toContain("delete_phase");
   });
 });
 describe("toolsForSurface", () => {
@@ -27,6 +29,25 @@ describe("toolsForSurface", () => {
     const names = toolsForSurface("planning", "backlog").map((t) => t.name);
     expect(names).toContain("park_in_abyss");
     expect(names).toContain("create_task");
+  });
+
+  it("exposes phase CRUD on every planning surface", () => {
+    for (const surface of [
+      "today",
+      "week",
+      "plan",
+      "projects",
+      "loose-tasks",
+      "backlog",
+      "reviews",
+      "care",
+      "morning-handoff",
+    ] as const) {
+      const names = toolsForSurface("planning", surface).map((t) => t.name);
+      expect(names).toContain("create_phase");
+      expect(names).toContain("edit_phase");
+      expect(names).toContain("delete_phase");
+    }
   });
 
   it("covers all planning surfaces", () => {
@@ -60,6 +81,8 @@ describe("toolsForSurface", () => {
       "reschedule_tasks",
       "set_top3",
       "draft_week",
+      "create_phase",
+      "delete_phase",
     ]) {
       expect(names).not.toContain(banned);
     }

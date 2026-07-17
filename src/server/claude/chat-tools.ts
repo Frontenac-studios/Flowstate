@@ -30,7 +30,9 @@ import {
 } from "@/lib/chat/build-create-task-proposal";
 import {
   buildApplyBalanceSuggestionsProposal,
+  buildCreatePhaseProposal,
   buildCreateProjectProposal,
+  buildDeletePhaseProposal,
   buildDeleteTaskProposal,
   buildEditPhaseProposal,
   buildEditTaskProposal,
@@ -532,10 +534,38 @@ export async function executeChatTool(
       };
     }
 
+    if (name === "create_phase") {
+      const built = await buildCreatePhaseProposal(
+        userId,
+        input as Parameters<typeof buildCreatePhaseProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
     if (name === "edit_phase") {
       const built = await buildEditPhaseProposal(
         userId,
         input as Parameters<typeof buildEditPhaseProposal>[1]
+      );
+      if (!built.ok)
+        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+      return {
+        content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
+        mutatedTasks: false,
+        proposal: built.proposal,
+      };
+    }
+
+    if (name === "delete_phase") {
+      const built = await buildDeletePhaseProposal(
+        userId,
+        input as Parameters<typeof buildDeletePhaseProposal>[1]
       );
       if (!built.ok)
         return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };

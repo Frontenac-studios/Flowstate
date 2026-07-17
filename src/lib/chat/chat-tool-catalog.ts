@@ -316,9 +316,39 @@ const CREATE_PROJECT_TOOL: Anthropic.Tool = {
   },
 };
 
+const CREATE_PHASE_TOOL: Anthropic.Tool = {
+  name: "create_phase",
+  description:
+    "Propose create phase or nested subphase (unlimited depth). Pass projectSlug, name, and optional parentPhaseId or parentPhaseName.",
+  input_schema: {
+    type: "object",
+    properties: {
+      phases: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["phases"],
+    additionalProperties: false,
+  },
+};
+
 const EDIT_PHASE_TOOL: Anthropic.Tool = {
   name: "edit_phase",
   description: "Propose edit phase metadata or dates.",
+  input_schema: {
+    type: "object",
+    properties: {
+      phases: { type: "array", items: { type: "object" } },
+      summary: { type: "string" },
+    },
+    required: ["phases"],
+    additionalProperties: false,
+  },
+};
+
+const DELETE_PHASE_TOOL: Anthropic.Tool = {
+  name: "delete_phase",
+  description:
+    "Propose delete phase(s). Cascades to nested child phases; tasks in those phases become unphased. Destructive — confirm card applies.",
   input_schema: {
     type: "object",
     properties: {
@@ -408,12 +438,17 @@ const TOOL_BY_NAME: Record<string, Anthropic.Tool> = {
   set_day_priorities: SET_DAY_PRIORITIES_TOOL,
   apply_balance_suggestions: APPLY_BALANCE_SUGGESTIONS_TOOL,
   create_project: CREATE_PROJECT_TOOL,
+  create_phase: CREATE_PHASE_TOOL,
   edit_phase: EDIT_PHASE_TOOL,
+  delete_phase: DELETE_PHASE_TOOL,
   move_task_to_phase: MOVE_TASK_TO_PHASE_TOOL,
   replan_project_dates: REPLAN_PROJECT_DATES_TOOL,
   propose_about_me_edit: PROPOSE_ABOUT_ME_EDIT_TOOL,
   park_in_abyss: PARK_IN_ABYSS_TOOL,
 };
+
+/** Phase structure tools — available on every planning surface. */
+const PHASE_STRUCTURE_TOOLS = ["create_phase", "edit_phase", "delete_phase"] as const;
 
 /** Per-surface tool subsets (§6B). Writes still flow through confirm cards. */
 export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> = {
@@ -427,6 +462,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "complete_task",
     "set_top3",
     "park_in_abyss",
+    ...PHASE_STRUCTURE_TOOLS,
   ],
   week: [
     "query_tasks",
@@ -441,6 +477,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "set_protected_block",
     "set_day_priorities",
     "park_in_abyss",
+    ...PHASE_STRUCTURE_TOOLS,
   ],
   plan: [
     "query_tasks",
@@ -454,6 +491,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "delete_task",
     "apply_balance_suggestions",
     "propose_about_me_edit",
+    ...PHASE_STRUCTURE_TOOLS,
   ],
   projects: [
     "query_tasks",
@@ -464,12 +502,19 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "delete_task",
     "reschedule_tasks",
     "complete_task",
-    "edit_phase",
+    ...PHASE_STRUCTURE_TOOLS,
     "move_task_to_phase",
     "replan_project_dates",
   ],
-  "loose-tasks": ["query_tasks", "create_task", "edit_task", "delete_task", "complete_task"],
-  backlog: ["query_abyss", "park_in_abyss", "query_tasks", "create_task"],
+  "loose-tasks": [
+    "query_tasks",
+    "create_task",
+    "edit_task",
+    "delete_task",
+    "complete_task",
+    ...PHASE_STRUCTURE_TOOLS,
+  ],
+  backlog: ["query_abyss", "park_in_abyss", "query_tasks", "create_task", ...PHASE_STRUCTURE_TOOLS],
   reviews: [
     "query_tasks",
     "query_state",
@@ -479,9 +524,17 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "complete_task",
     "apply_balance_suggestions",
     "propose_about_me_edit",
+    ...PHASE_STRUCTURE_TOOLS,
   ],
-  care: ["query_tasks", "query_state", "draft_eod", "complete_task", "propose_about_me_edit"],
-  "morning-handoff": ["query_tasks", "query_state", "create_task"],
+  care: [
+    "query_tasks",
+    "query_state",
+    "draft_eod",
+    "complete_task",
+    "propose_about_me_edit",
+    ...PHASE_STRUCTURE_TOOLS,
+  ],
+  "morning-handoff": ["query_tasks", "query_state", "create_task", ...PHASE_STRUCTURE_TOOLS],
   // Goals coach: goal reads + the goal-proposing write + the consent-gated learning
   // adjustment. Deliberately NO task/schedule/milestone tools — the coach must not
   // manage tasks.
@@ -506,7 +559,9 @@ export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [
   SET_DAY_PRIORITIES_TOOL,
   APPLY_BALANCE_SUGGESTIONS_TOOL,
   CREATE_PROJECT_TOOL,
+  CREATE_PHASE_TOOL,
   EDIT_PHASE_TOOL,
+  DELETE_PHASE_TOOL,
   MOVE_TASK_TO_PHASE_TOOL,
   REPLAN_PROJECT_DATES_TOOL,
   PROPOSE_ABOUT_ME_EDIT_TOOL,

@@ -72,8 +72,22 @@ describe("system-prompts", () => {
     const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "goals");
     expect(prompt).toContain("Register: Goals coach");
     expect(prompt).toContain("Every goal must be binary");
+    expect(prompt).toContain("create or restructure project phases");
     expect(prompt).not.toContain("Surface: Today");
     expect(prompt).not.toContain("Surface: Goals");
+  });
+
+  it("tells focus that phase structure lives in planning chats", () => {
+    const focusId = focusThreadId("00000000-0000-4000-8000-000000000099");
+    expect(buildChatSystemPrompt(focusId)).toContain("not in Focus");
+    expect(buildChatSystemPrompt(focusId)).toContain("Projects or Plan");
+  });
+
+  it("documents phase CRUD and unlimited nesting in planning", () => {
+    const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "projects");
+    expect(prompt).toContain("create_phase");
+    expect(prompt).toContain("delete_phase");
+    expect(prompt).toContain("nest arbitrarily deep");
   });
 
   it("adds capture modifier when capture context is present", () => {

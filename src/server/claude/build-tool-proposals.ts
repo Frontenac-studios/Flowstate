@@ -12,6 +12,8 @@ import {
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
 import { evaluateGoalSuggestion } from "@/lib/planning/goal-guardrails";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { findPhaseByName } from "@/lib/projects/find-phase-by-name";
+import { assertPhaseNestAllowed } from "@/lib/projects/nesting-cap";
 
 import { resolveOwnedTaskTitles } from "./apply-proposed-action";
 
@@ -67,6 +69,24 @@ type ApplyBalanceSuggestionsInput = {
 
 type CreateProjectInput = {
   projects?: { name?: string; slug?: string; category?: string }[];
+  summary?: string;
+};
+
+type CreatePhaseInput = {
+  phases?: {
+    projectSlug?: string;
+    name?: string;
+    parentPhaseId?: string | null;
+    parentPhaseName?: string | null;
+    description?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+  }[];
+  summary?: string;
+};
+
+type DeletePhaseInput = {
+  phases?: { phaseId?: string; phaseName?: string; projectSlug?: string }[];
   summary?: string;
 };
 
@@ -354,6 +374,168 @@ export function buildCreateProjectProposal(
     ok: true,
     proposal: proposedActionSchema.parse({
       kind: "create_project",
+      status: "pending",
+      summary: input.summary,
+      items,
+    }),
+  };
+}
+
+export async function buildCreatePhaseProposal(
+  userId: string,
+  input: CreatePhaseInput
+): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
+  const rows = input.phases?.filter((p) => p.name?.trim() && p.projectSlug?.trim()) ?? [];
+  if (rows.length === 0) {
+    return { ok: false, error: "phases array with name and projectSlug is required" };
+  }
+
+  const projectRows = await db
+    .select({ id: projects.id, slug: projects.slug, name: projects.name })
+    .from(projects)
+    .where(eq(projects.userId, userId));
+
+  const items: {
+    itemId: string;
+    enabled: true;
+    projectId: string;
+    projectSlug: string;
+    name: string;
+    parentPhaseId: string | null;
+    parentPhaseName: string | null;
+    description?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+  }[] = [];
+
+  for (const row of rows) {
+    const slugKey = row.projectSlug!.trim().toLowerCase();
+    const project = projectRows.find((p) => p.slug.toLowerCase() === slugKey) ?? null;
+    if (!project) {
+      return { ok: false, error: `Project not found for slug "${row.projectSlug}".` };
+    }
+
+    const phaseRows = await db
+      .select({
+        id: phases.id,
+        name: phases.name,
+        parentPhaseId: phases.parentPhaseId,
+      })
+      .from(phases)
+      .where(and(eq(phases.userId, userId), eq(phases.projectId, project.id)));
+
+    let parentPhaseId: string | null = null;
+    let parentPhaseName: string | null = null;
+
+    if (row.parentPhaseId) {
+      const parent = phaseRows.find((p) => p.id === row.parentPhaseId);
+      if (!parent) {
+        return { ok: false, error: `Parent phase ${row.parentPhaseId} not found in project.` };
+      }
+      parentPhaseId = parent.id;
+      parentPhaseName = parent.name;
+    } else if (row.parentPhaseName?.trim()) {
+      const match = findPhaseByName(phaseRows, row.parentPhaseName.trim());
+      if (match.kind === "ambiguous") {
+        return {
+          ok: false,
+          error: `Multiple phases named "${row.parentPhaseName}" — pass parentPhaseId.`,
+        };
+      }
+      if (match.kind === "not_found") {
+        return { ok: false, error: `Parent phase "${row.parentPhaseName}" not found.` };
+      }
+      parentPhaseId = match.phaseId;
+      parentPhaseName = row.parentPhaseName.trim();
+    }
+
+    try {
+      assertPhaseNestAllowed(parentPhaseId, phaseRows);
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Invalid parent phase.",
+      };
+    }
+
+    if (row.startDate != null && !ISO_DATE.test(row.startDate)) {
+      return { ok: false, error: `Invalid startDate for "${row.name}".` };
+    }
+    if (row.endDate != null && !ISO_DATE.test(row.endDate)) {
+      return { ok: false, error: `Invalid endDate for "${row.name}".` };
+    }
+
+    items.push({
+      itemId: newProposalItemId(),
+      enabled: true,
+      projectId: project.id,
+      projectSlug: project.slug,
+      name: row.name!.trim(),
+      parentPhaseId,
+      parentPhaseName,
+      description: row.description,
+      startDate: row.startDate,
+      endDate: row.endDate,
+    });
+  }
+
+  return {
+    ok: true,
+    proposal: proposedActionSchema.parse({
+      kind: "create_phase",
+      status: "pending",
+      summary: input.summary,
+      items,
+    }),
+  };
+}
+
+export async function buildDeletePhaseProposal(
+  userId: string,
+  input: DeletePhaseInput
+): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
+  const rows = input.phases?.filter((p) => p.phaseId) ?? [];
+  if (rows.length === 0) return { ok: false, error: "phases array with phaseId is required" };
+
+  const phaseRows = await db
+    .select({
+      id: phases.id,
+      name: phases.name,
+      slug: projects.slug,
+    })
+    .from(phases)
+    .innerJoin(projects, eq(phases.projectId, projects.id))
+    .where(
+      and(
+        eq(phases.userId, userId),
+        inArray(
+          phases.id,
+          rows.map((r) => r.phaseId!)
+        )
+      )
+    );
+
+  const phaseById = new Map(phaseRows.map((row) => [row.id, row]));
+
+  const items = rows
+    .filter((row) => phaseById.has(row.phaseId!))
+    .map((row) => {
+      const phase = phaseById.get(row.phaseId!)!;
+      return {
+        itemId: newProposalItemId(),
+        enabled: true,
+        phaseId: row.phaseId!,
+        phaseName: phase.name,
+        projectSlug: row.projectSlug?.trim() || phase.slug,
+      };
+    });
+
+  if (items.length === 0) return { ok: false, error: "No owned phases matched the delete IDs." };
+
+  return {
+    ok: true,
+    proposal: proposedActionSchema.parse({
+      kind: "delete_phase",
       status: "pending",
       summary: input.summary,
       items,

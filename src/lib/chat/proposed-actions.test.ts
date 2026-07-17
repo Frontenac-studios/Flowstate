@@ -191,6 +191,38 @@ describe("proposed-actions", () => {
     expect(proposalHeadline(action)).toContain("Delete 1 task");
   });
 
+  it("parses create_phase and delete_phase proposals", () => {
+    const create = proposedActionSchema.parse({
+      kind: "create_phase",
+      items: [
+        {
+          itemId: "a",
+          enabled: true,
+          projectId: "00000000-0000-4000-8000-000000000010",
+          projectSlug: "kitchen",
+          name: "Morning triage",
+          parentPhaseId: "00000000-0000-4000-8000-000000000011",
+          parentPhaseName: "Today",
+        },
+      ],
+    });
+    expect(proposalHeadline(create)).toBe("Create 1 phase");
+
+    const del = proposedActionSchema.parse({
+      kind: "delete_phase",
+      items: [
+        {
+          itemId: "b",
+          enabled: true,
+          phaseId: "00000000-0000-4000-8000-000000000012",
+          phaseName: "Morning triage",
+          projectSlug: "kitchen",
+        },
+      ],
+    });
+    expect(proposalHeadline(del)).toBe("Delete 1 phase");
+  });
+
   const bingoGoals = proposedActionSchema.parse({
     kind: "propose_bingo_goals",
     status: "pending",

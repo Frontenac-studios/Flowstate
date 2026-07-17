@@ -126,6 +126,23 @@ export const editPhaseProposalItemSchema = proposalItemBaseSchema.extend({
   endDate: isoDateSchema.nullable().optional(),
 });
 
+export const createPhaseProposalItemSchema = proposalItemBaseSchema.extend({
+  projectId: z.string().uuid(),
+  projectSlug: z.string().min(1),
+  name: z.string().min(1).max(200),
+  parentPhaseId: z.string().uuid().nullable(),
+  parentPhaseName: z.string().nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+  startDate: isoDateSchema.nullable().optional(),
+  endDate: isoDateSchema.nullable().optional(),
+});
+
+export const deletePhaseProposalItemSchema = proposalItemBaseSchema.extend({
+  phaseId: z.string().uuid(),
+  phaseName: z.string().min(1),
+  projectSlug: z.string().min(1),
+});
+
 export const moveTaskToPhaseProposalItemSchema = proposalItemBaseSchema.extend({
   taskId: z.string().uuid(),
   title: z.string().min(1),
@@ -230,6 +247,20 @@ export const editPhaseProposalSchema = z.object({
   items: z.array(editPhaseProposalItemSchema).min(1),
 });
 
+export const createPhaseProposalSchema = z.object({
+  kind: z.literal("create_phase"),
+  status: proposalStatusSchema.default("pending"),
+  summary: z.string().optional(),
+  items: z.array(createPhaseProposalItemSchema).min(1),
+});
+
+export const deletePhaseProposalSchema = z.object({
+  kind: z.literal("delete_phase"),
+  status: proposalStatusSchema.default("pending"),
+  summary: z.string().optional(),
+  items: z.array(deletePhaseProposalItemSchema).min(1),
+});
+
 export const moveTaskToPhaseProposalSchema = z.object({
   kind: z.literal("move_task_to_phase"),
   status: proposalStatusSchema.default("pending"),
@@ -263,6 +294,8 @@ export const proposedActionSchema = z.discriminatedUnion("kind", [
   applyBalanceSuggestionsProposalSchema,
   createProjectProposalSchema,
   editPhaseProposalSchema,
+  createPhaseProposalSchema,
+  deletePhaseProposalSchema,
   moveTaskToPhaseProposalSchema,
   replanProjectDatesProposalSchema,
   proposeBingoGoalsProposalSchema,
@@ -435,6 +468,10 @@ export function proposalHeadline(action: ProposedAction): string {
       return `Create ${count} project${plural}`;
     case "edit_phase":
       return `Edit ${count} phase${plural}`;
+    case "create_phase":
+      return `Create ${count} phase${plural}`;
+    case "delete_phase":
+      return `Delete ${count} phase${plural}`;
     case "move_task_to_phase":
       return `Move ${count} task${plural} to phase`;
     case "replan_project_dates":

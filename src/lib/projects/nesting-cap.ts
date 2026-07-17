@@ -1,20 +1,21 @@
 /**
- * P5 — UI + template nesting cap (schema allows deeper self-reference).
+ * Phase nesting — Miller columns treat phases as directories of arbitrary depth.
  *
- * Supported shape: project → phase → subphase → task.
- * Root phases (`parentPhaseId === null`) may have one child tier only; deeper
- * phase directories are rejected in the API and should not appear in templates.
+ * Schema: self-referential `parentPhaseId`. UI + API allow unlimited depth;
+ * `assertPhaseNestAllowed` only verifies the parent exists in the project.
  */
-export const MAX_UI_PHASE_DEPTH = 2;
 
 export type PhaseParentRef = { id: string; parentPhaseId: string | null };
 
-/** 1 = root phase, 2 = subphase; null when parent id is unknown. */
+/** 1 = root phase; null when parent id is unknown / broken chain. */
 export function phaseDepth(phaseId: string, phases: readonly PhaseParentRef[]): number | null {
   const byId = new Map(phases.map((p) => [p.id, p]));
   let depth = 0;
   let current: string | null = phaseId;
+  const seen = new Set<string>();
   while (current) {
+    if (seen.has(current)) return null;
+    seen.add(current);
     depth += 1;
     const row = byId.get(current);
     if (!row) return null;
@@ -23,7 +24,7 @@ export function phaseDepth(phaseId: string, phases: readonly PhaseParentRef[]): 
   return depth;
 }
 
-/** Throws when nesting a new phase under `parentPhaseId` would exceed the cap. */
+/** Throws when `parentPhaseId` is set but not found in `phases`. */
 export function assertPhaseNestAllowed(
   parentPhaseId: string | null | undefined,
   phases: readonly PhaseParentRef[]
@@ -32,10 +33,5 @@ export function assertPhaseNestAllowed(
   const parentDepth = phaseDepth(parentPhaseId, phases);
   if (parentDepth === null) {
     throw new Error("Parent phase not found.");
-  }
-  if (parentDepth >= MAX_UI_PHASE_DEPTH) {
-    throw new Error(
-      "Phases nest at most two levels (phase → subphase). Add tasks instead of another directory."
-    );
   }
 }

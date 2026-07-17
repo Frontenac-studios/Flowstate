@@ -28,6 +28,7 @@ describe("applyLearnedDurations", () => {
             {
               name: "Polish",
               tasks: [{ title: "Unknown task" }],
+              subphases: [],
             },
           ],
         },
