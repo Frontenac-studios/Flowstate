@@ -13,7 +13,6 @@ import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
 import { evaluateGoalSuggestion } from "@/lib/planning/goal-guardrails";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { findPhaseByName } from "@/lib/projects/find-phase-by-name";
-import { assertPhaseNestAllowed } from "@/lib/projects/nesting-cap";
 
 import { resolveOwnedTaskTitles } from "./apply-proposed-action";
 
@@ -381,6 +380,48 @@ export function buildCreateProjectProposal(
   };
 }
 
+type PhaseParentRow = { id: string; name: string; parentPhaseId: string | null };
+
+function resolveCreatePhaseParent(
+  row: {
+    parentPhaseId?: string | null;
+    parentPhaseName?: string | null;
+  },
+  phaseRows: PhaseParentRow[]
+):
+  | { ok: true; parentPhaseId: string | null; parentPhaseName: string | null }
+  | { ok: false; error: string } {
+  if (row.parentPhaseId) {
+    const parent = phaseRows.find((p) => p.id === row.parentPhaseId);
+    if (!parent) {
+      return { ok: false, error: `Parent phase ${row.parentPhaseId} not found in project.` };
+    }
+    return { ok: true, parentPhaseId: parent.id, parentPhaseName: parent.name };
+  }
+
+  const parentName = row.parentPhaseName?.trim();
+  if (!parentName) {
+    return { ok: true, parentPhaseId: null, parentPhaseName: null };
+  }
+
+  const match = findPhaseByName(phaseRows, parentName);
+  if (match.kind === "ambiguous") {
+    return {
+      ok: false,
+      error: `Multiple phases named "${row.parentPhaseName}" — pass parentPhaseId.`,
+    };
+  }
+  if (match.kind === "not_found") {
+    return { ok: false, error: `Parent phase "${row.parentPhaseName}" not found.` };
+  }
+
+  const parent = phaseRows.find((p) => p.id === match.phaseId);
+  if (!parent) {
+    return { ok: false, error: `Parent phase "${row.parentPhaseName}" not found.` };
+  }
+  return { ok: true, parentPhaseId: parent.id, parentPhaseName: parent.name };
+}
+
 export async function buildCreatePhaseProposal(
   userId: string,
   input: CreatePhaseInput
@@ -394,27 +435,12 @@ export async function buildCreatePhaseProposal(
     .select({ id: projects.id, slug: projects.slug, name: projects.name })
     .from(projects)
     .where(eq(projects.userId, userId));
+  const projectBySlug = new Map(projectRows.map((p) => [p.slug.toLowerCase(), p]));
+  const phasesByProjectId = new Map<string, PhaseParentRow[]>();
 
-  const items: {
-    itemId: string;
-    enabled: true;
-    projectId: string;
-    projectSlug: string;
-    name: string;
-    parentPhaseId: string | null;
-    parentPhaseName: string | null;
-    description?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-  }[] = [];
-
-  for (const row of rows) {
-    const slugKey = row.projectSlug!.trim().toLowerCase();
-    const project = projectRows.find((p) => p.slug.toLowerCase() === slugKey) ?? null;
-    if (!project) {
-      return { ok: false, error: `Project not found for slug "${row.projectSlug}".` };
-    }
-
+  async function loadProjectPhases(projectId: string): Promise<PhaseParentRow[]> {
+    const cached = phasesByProjectId.get(projectId);
+    if (cached) return cached;
     const phaseRows = await db
       .select({
         id: phases.id,
@@ -422,41 +448,21 @@ export async function buildCreatePhaseProposal(
         parentPhaseId: phases.parentPhaseId,
       })
       .from(phases)
-      .where(and(eq(phases.userId, userId), eq(phases.projectId, project.id)));
+      .where(and(eq(phases.userId, userId), eq(phases.projectId, projectId)));
+    phasesByProjectId.set(projectId, phaseRows);
+    return phaseRows;
+  }
 
-    let parentPhaseId: string | null = null;
-    let parentPhaseName: string | null = null;
+  const items = [];
 
-    if (row.parentPhaseId) {
-      const parent = phaseRows.find((p) => p.id === row.parentPhaseId);
-      if (!parent) {
-        return { ok: false, error: `Parent phase ${row.parentPhaseId} not found in project.` };
-      }
-      parentPhaseId = parent.id;
-      parentPhaseName = parent.name;
-    } else if (row.parentPhaseName?.trim()) {
-      const match = findPhaseByName(phaseRows, row.parentPhaseName.trim());
-      if (match.kind === "ambiguous") {
-        return {
-          ok: false,
-          error: `Multiple phases named "${row.parentPhaseName}" — pass parentPhaseId.`,
-        };
-      }
-      if (match.kind === "not_found") {
-        return { ok: false, error: `Parent phase "${row.parentPhaseName}" not found.` };
-      }
-      parentPhaseId = match.phaseId;
-      parentPhaseName = row.parentPhaseName.trim();
+  for (const row of rows) {
+    const project = projectBySlug.get(row.projectSlug!.trim().toLowerCase());
+    if (!project) {
+      return { ok: false, error: `Project not found for slug "${row.projectSlug}".` };
     }
 
-    try {
-      assertPhaseNestAllowed(parentPhaseId, phaseRows);
-    } catch (error) {
-      return {
-        ok: false,
-        error: error instanceof Error ? error.message : "Invalid parent phase.",
-      };
-    }
+    const parent = resolveCreatePhaseParent(row, await loadProjectPhases(project.id));
+    if (!parent.ok) return parent;
 
     if (row.startDate != null && !ISO_DATE.test(row.startDate)) {
       return { ok: false, error: `Invalid startDate for "${row.name}".` };
@@ -467,12 +473,12 @@ export async function buildCreatePhaseProposal(
 
     items.push({
       itemId: newProposalItemId(),
-      enabled: true,
+      enabled: true as const,
       projectId: project.id,
       projectSlug: project.slug,
       name: row.name!.trim(),
-      parentPhaseId,
-      parentPhaseName,
+      parentPhaseId: parent.parentPhaseId,
+      parentPhaseName: parent.parentPhaseName,
       description: row.description,
       startDate: row.startDate,
       endDate: row.endDate,
@@ -494,7 +500,10 @@ export async function buildDeletePhaseProposal(
   userId: string,
   input: DeletePhaseInput
 ): Promise<{ ok: true; proposal: ProposedAction } | { ok: false; error: string }> {
-  const rows = input.phases?.filter((p) => p.phaseId) ?? [];
+  const rows =
+    input.phases?.filter((p): p is { phaseId: string; phaseName?: string; projectSlug?: string } =>
+      Boolean(p.phaseId)
+    ) ?? [];
   if (rows.length === 0) return { ok: false, error: "phases array with phaseId is required" };
 
   const phaseRows = await db
@@ -510,25 +519,26 @@ export async function buildDeletePhaseProposal(
         eq(phases.userId, userId),
         inArray(
           phases.id,
-          rows.map((r) => r.phaseId!)
+          rows.map((r) => r.phaseId)
         )
       )
     );
 
   const phaseById = new Map(phaseRows.map((row) => [row.id, row]));
 
-  const items = rows
-    .filter((row) => phaseById.has(row.phaseId!))
-    .map((row) => {
-      const phase = phaseById.get(row.phaseId!)!;
-      return {
+  const items = rows.flatMap((row) => {
+    const phase = phaseById.get(row.phaseId);
+    if (!phase) return [];
+    return [
+      {
         itemId: newProposalItemId(),
-        enabled: true,
-        phaseId: row.phaseId!,
+        enabled: true as const,
+        phaseId: row.phaseId,
         phaseName: phase.name,
         projectSlug: row.projectSlug?.trim() || phase.slug,
-      };
-    });
+      },
+    ];
+  });
 
   if (items.length === 0) return { ok: false, error: "No owned phases matched the delete IDs." };
 
