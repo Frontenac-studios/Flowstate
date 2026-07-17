@@ -11,6 +11,13 @@ npm run desktop:dev  # Tauri window + Next dev server (SQLite offline mode)
 ```
 
 `desktop:dev` automatically sets `DATABASE_MODE=sqlite`, `KASH_DESKTOP=1`, and `KASH_DATA_DIR` (default `~/Library/Application Support/com.frontenac.kash`) so local saves and sync match the release build. Supabase env vars in `.env.local` are still required for auth and sync when online.
+
+**Google Calendar on desktop:** Connections and events are stored in local SQLite. Set `GOOGLE_CALENDAR_*` and `CALENDAR_TOKEN_ENCRYPTION_KEY` in `.env.local`, and in Google Cloud Console add Authorized redirect URIs:
+
+- `http://127.0.0.1:3000/api/calendar/google/callback` (desktop:dev)
+- `http://127.0.0.1:4310/api/calendar/google/callback` (release sidecar)
+
+Then connect from **Settings → Integrations** inside the desktop window.
 **Stale `.next` cache:** If the web or desktop dev server shows odd HMR or build errors after switching branches or config, delete the Next cache and restart: `npm run dev:clean` (from repo root; same as `npm run dev` but removes `.next` first).
 
 If you previously used the old `~/Library/Application Support/Kash` path, move `kash.db` into the new directory once.

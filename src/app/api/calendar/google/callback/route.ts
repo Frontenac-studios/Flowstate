@@ -1,59 +1,70 @@
 import { NextResponse } from "next/server";
 
-import { CALENDAR_SETTINGS_PATH } from "@/lib/calendar/constants";
+import { resolveCalendarOAuthRedirectUri } from "@/lib/calendar/oauth-redirect";
+import { requestOriginFromHeaders } from "@/lib/calendar/request-origin";
+import { calendarSettingsUrl } from "@/lib/calendar/settings-redirect";
 import { getRouteUserId } from "@/server/claude/route-auth";
 import { upsertGoogleConnection } from "@/server/calendar/connection-store";
-import { isGoogleCalendarConfigured } from "@/server/calendar/env";
+import { getGoogleCalendarEnv, isGoogleCalendarConfigured } from "@/server/calendar/env";
 import { exchangeGoogleAuthCode } from "@/server/calendar/google-client";
 import { verifyOAuthState } from "@/server/calendar/oauth-state";
 
 export const dynamic = "force-dynamic";
 
-function settingsUrl(query: Record<string, string>): URL {
-  const url = new URL(CALENDAR_SETTINGS_PATH, getAppOrigin());
-  for (const [key, value] of Object.entries(query)) {
-    url.searchParams.set(key, value);
+function getAppOrigin(req: Request): string {
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL;
+  if (fromEnv) {
+    try {
+      return new URL(fromEnv).origin;
+    } catch {
+      // fall through
+    }
   }
-  return url;
+  return requestOriginFromHeaders(req);
 }
 
-function getAppOrigin(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+function settingsRedirect(req: Request, query: Record<string, string>): NextResponse {
+  return NextResponse.redirect(calendarSettingsUrl(getAppOrigin(req), query));
 }
 
 export async function GET(req: Request) {
   const sessionUserId = await getRouteUserId();
   if (!sessionUserId) {
-    return NextResponse.redirect(settingsUrl({ calendar: "error", reason: "unauthorized" }));
+    return settingsRedirect(req, { calendar: "error", reason: "unauthorized" });
   }
 
   if (!isGoogleCalendarConfigured()) {
-    return NextResponse.redirect(settingsUrl({ calendar: "error", reason: "not_configured" }));
+    return settingsRedirect(req, { calendar: "error", reason: "not_configured" });
   }
 
   const url = new URL(req.url);
   const error = url.searchParams.get("error");
   if (error) {
-    return NextResponse.redirect(settingsUrl({ calendar: "error", reason: error }));
+    return settingsRedirect(req, { calendar: "error", reason: error });
   }
 
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   if (!code || !state) {
-    return NextResponse.redirect(settingsUrl({ calendar: "error", reason: "missing_code" }));
+    return settingsRedirect(req, { calendar: "error", reason: "missing_code" });
   }
 
   const userIdFromState = verifyOAuthState(state);
   if (!userIdFromState || userIdFromState !== sessionUserId) {
-    return NextResponse.redirect(settingsUrl({ calendar: "error", reason: "invalid_state" }));
+    return settingsRedirect(req, { calendar: "error", reason: "invalid_state" });
   }
 
   try {
-    const { tokens, accountEmail } = await exchangeGoogleAuthCode(code);
+    const env = getGoogleCalendarEnv();
+    const redirectUri = resolveCalendarOAuthRedirectUri(
+      requestOriginFromHeaders(req),
+      env.GOOGLE_CALENDAR_REDIRECT_URI
+    );
+    const { tokens, accountEmail } = await exchangeGoogleAuthCode(code, redirectUri);
     await upsertGoogleConnection(sessionUserId, accountEmail, tokens);
-    return NextResponse.redirect(settingsUrl({ calendar: "connected" }));
+    return settingsRedirect(req, { calendar: "connected" });
   } catch (err) {
     const reason = err instanceof Error ? err.message : "exchange_failed";
-    return NextResponse.redirect(settingsUrl({ calendar: "error", reason }));
+    return settingsRedirect(req, { calendar: "error", reason });
   }
 }

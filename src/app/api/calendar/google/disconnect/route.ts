@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { CALENDAR_SETTINGS_PATH } from "@/lib/calendar/constants";
+import { calendarSettingsUrl } from "@/lib/calendar/settings-redirect";
 import { getRouteUserId } from "@/server/claude/route-auth";
 import {
   deleteGoogleConnection,
@@ -29,5 +29,5 @@ export async function POST() {
     }
   }
 
-  return NextResponse.redirect(new URL(CALENDAR_SETTINGS_PATH, getAppOrigin()));
+  return NextResponse.redirect(calendarSettingsUrl(getAppOrigin()));
 }

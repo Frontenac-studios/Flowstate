@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
+import { useStaleCalendarSync } from "@/hooks/useStaleCalendarSync";
 import { toISODateString } from "@/lib/dates/local-day";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { categoryLabel } from "@/lib/projects/categories";
@@ -478,6 +479,7 @@ export function TimelinePane({
   const router = useRouter();
   const queryClient = useQueryClient();
   const date = useLocalCalendarDate();
+  useStaleCalendarSync();
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const [now, setNow] = useState<Date | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);

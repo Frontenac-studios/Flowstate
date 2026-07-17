@@ -1,30 +1,48 @@
 import { NextResponse } from "next/server";
 
-import { CALENDAR_SETTINGS_PATH } from "@/lib/calendar/constants";
+import { resolveCalendarOAuthRedirectUri } from "@/lib/calendar/oauth-redirect";
+import { requestOriginFromHeaders } from "@/lib/calendar/request-origin";
+import { calendarSettingsUrl } from "@/lib/calendar/settings-redirect";
 import { getRouteUserId } from "@/server/claude/route-auth";
-import { isGoogleCalendarConfigured } from "@/server/calendar/env";
+import { getGoogleCalendarEnv, isGoogleCalendarConfigured } from "@/server/calendar/env";
 import { getGoogleAuthUrl } from "@/server/calendar/google-client";
 import { signOAuthState } from "@/server/calendar/oauth-state";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+function getAppOrigin(req: Request): string {
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL;
+  if (fromEnv) {
+    try {
+      return new URL(fromEnv).origin;
+    } catch {
+      // fall through
+    }
+  }
+  return requestOriginFromHeaders(req);
+}
+
+export async function GET(req: Request) {
   const userId = await getRouteUserId();
   if (!userId) {
-    return NextResponse.redirect(new URL("/login", getAppOrigin()));
+    return NextResponse.redirect(new URL("/login", getAppOrigin(req)));
   }
 
   if (!isGoogleCalendarConfigured()) {
     return NextResponse.redirect(
-      new URL(`${CALENDAR_SETTINGS_PATH}?calendar=error&reason=not_configured`, getAppOrigin())
+      calendarSettingsUrl(getAppOrigin(req), {
+        calendar: "error",
+        reason: "not_configured",
+      })
     );
   }
 
+  const env = getGoogleCalendarEnv();
+  const redirectUri = resolveCalendarOAuthRedirectUri(
+    requestOriginFromHeaders(req),
+    env.GOOGLE_CALENDAR_REDIRECT_URI
+  );
   const state = signOAuthState(userId);
-  const authUrl = getGoogleAuthUrl(state);
+  const authUrl = getGoogleAuthUrl(state, redirectUri);
   return NextResponse.redirect(authUrl);
-}
-
-function getAppOrigin(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }

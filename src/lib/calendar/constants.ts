@@ -6,4 +6,5 @@ export const GOOGLE_CALENDAR_SCOPES = [GOOGLE_CALENDAR_READONLY_SCOPE] as const;
 /** OAuth state param TTL — bind connect redirect to the initiating user. */
 export const CALENDAR_OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
-export const CALENDAR_SETTINGS_PATH = "/settings";
+/** Settings Integrations tab — OAuth connect/callback/disconnect return here. */
+export const CALENDAR_SETTINGS_PATH = "/settings?tab=integrations";

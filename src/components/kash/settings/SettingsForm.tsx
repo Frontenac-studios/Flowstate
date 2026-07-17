@@ -39,7 +39,15 @@ const BUCKET_OPTIONS: { value: BucketMode; title: string; description: string }[
   },
 ];
 
-type TabId = "account" | "categories" | "about" | "notifications" | "preferences" | "ai" | "data";
+type TabId =
+  | "account"
+  | "categories"
+  | "about"
+  | "notifications"
+  | "preferences"
+  | "integrations"
+  | "ai"
+  | "data";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "account", label: "Account" },
@@ -47,9 +55,17 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "about", label: "About me" },
   { id: "notifications", label: "Notifications" },
   { id: "preferences", label: "Preferences" },
+  { id: "integrations", label: "Integrations" },
   { id: "ai", label: "AI / Kash" },
   { id: "data", label: "Data & sync" },
 ];
+
+const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
+
+function resolveSettingsTab(raw: string | null): TabId | null {
+  if (!raw || !TAB_IDS.has(raw)) return null;
+  return raw as TabId;
+}
 
 export function SettingsForm() {
   const trpc = useTRPC();
@@ -60,8 +76,11 @@ export function SettingsForm() {
 
   useEffect(() => {
     if (searchParams.get("calendar")) {
-      setTab("preferences");
+      setTab("integrations");
+      return;
     }
+    const fromQuery = resolveSettingsTab(searchParams.get("tab"));
+    if (fromQuery) setTab(fromQuery);
   }, [searchParams]);
 
   const { data, isLoading } = useQuery(trpc.settings.get.queryOptions());
@@ -255,8 +274,6 @@ export function SettingsForm() {
               ) : null}
             </section>
 
-            <CalendarSyncSection />
-
             <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
               <h2 className="text-sm font-semibold text-ink">Accessibility</h2>
               <p className="mt-2 text-sm text-ink-muted">
@@ -270,6 +287,19 @@ export function SettingsForm() {
               </p>
             </section>
           </>
+        ) : null}
+
+        {tab === "integrations" ? (
+          <section className="space-y-6">
+            <div>
+              <h2 className="text-sm font-semibold text-ink">Integrations</h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                Connect external services that feed into Today and This Week. Connections are
+                optional and can be disconnected any time.
+              </p>
+            </div>
+            <CalendarSyncSection />
+          </section>
         ) : null}
 
         {tab === "ai" ? (

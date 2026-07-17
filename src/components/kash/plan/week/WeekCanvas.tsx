@@ -21,6 +21,7 @@ import { useToast } from "@/components/kash/ui/ToastProvider";
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { weekHasPlanningData } from "@/lib/week/week-has-data";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
+import { useStaleCalendarSync } from "@/hooks/useStaleCalendarSync";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import {
   addDays,
@@ -142,6 +143,7 @@ export function WeekCanvas({
 }: WeekCanvasProps = {}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  useStaleCalendarSync();
   const { toast } = useToast();
   const notifyMutationError = useCallback(
     () => toast({ message: "That change didn't save. Please try again.", variant: "error" }),
