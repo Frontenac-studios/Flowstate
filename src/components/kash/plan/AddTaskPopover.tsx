@@ -23,6 +23,10 @@ type Props = {
   /** Noun used in labels; defaults to "task". */
   noun?: string;
   className?: string;
+  /** Embed inside an active-surface track (Today header cluster). */
+  embedded?: boolean;
+  /** Popover menu alignment; default left. */
+  menuAlign?: "left" | "right";
 };
 
 const MENU_BTN_FOCUS =
@@ -36,7 +40,7 @@ const MENU_BTN_FOCUS =
  * focus; the parent moves focus into the composer when "Type" is chosen.
  */
 export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function AddTaskPopover(
-  { onAskChat, onTypeManually, noun = "task", className },
+  { onAskChat, onTypeManually, noun = "task", className, embedded = false, menuAlign = "left" },
   ref
 ) {
   const [open, setOpen] = useState(false);
@@ -95,7 +99,11 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
         aria-controls={open ? menuId : undefined}
         aria-label={`Add ${noun}`}
         onClick={() => setOpen((value) => !value)}
-        className={`flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink ${MENU_BTN_FOCUS}`}
+        className={
+          embedded
+            ? `flex h-8 w-8 items-center justify-center rounded-pill border border-transparent bg-transparent text-lg leading-none text-ink-muted transition hover:bg-active-raised hover:text-ink ${MENU_BTN_FOCUS}`
+            : `flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink ${MENU_BTN_FOCUS}`
+        }
       >
         <span aria-hidden>+</span>
       </button>
@@ -105,7 +113,9 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
           id={menuId}
           role="menu"
           aria-label={`Add ${noun}`}
-          className="absolute left-0 top-11 z-overlay w-64 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
+          className={`absolute top-11 z-overlay w-64 rounded-card border border-border bg-surface p-1.5 shadow-overlay ${
+            menuAlign === "right" ? "right-0" : "left-0"
+          }`}
         >
           <button
             ref={firstItemRef}

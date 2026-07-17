@@ -14,13 +14,14 @@ import { LensProvider } from "../plan/LensProvider";
 import { InboxPanel } from "./InboxPanel";
 
 /**
- * Contextual triage inbox: an in-flow, collapsible strip at the top of the
- * content column (toggled by ⌃I). Replaces the retired global BottomDock and is
- * mounted only on the surfaces where re-scheduling overdue tasks is meaningful
- * (Today / Week / Plan, minus the Goals/bingo horizon), so the ⌃I binding is
- * scoped to those routes.
+ * Contextual triage inbox: an in-flow, collapsible strip (toggled by ⌃I).
+ * Today mounts it at the bottom of the page; Plan keeps it above the horizon
+ * chrome. Replaces the retired global BottomDock and is mounted only on the
+ * surfaces where re-scheduling overdue tasks is meaningful (Today / Week /
+ * Plan, minus the Goals/bingo horizon), so the ⌃I binding is scoped to those
+ * routes.
  */
-export function ContextualInbox() {
+export function ContextualInbox({ placement = "top" }: { placement?: "top" | "bottom" }) {
   const trpc = useTRPC();
   const [open, setOpen] = useInboxOpen();
 
@@ -38,7 +39,11 @@ export function ContextualInbox() {
 
   return (
     <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
-      <div className="mb-stack shrink-0 overflow-hidden rounded-card border border-border bg-surface shadow-surface">
+      <div
+        className={`shrink-0 overflow-hidden rounded-card border border-border bg-surface shadow-surface ${
+          placement === "bottom" ? "mt-stack" : "mb-stack"
+        }`}
+      >
         {!open ? (
           <div className="flex items-center gap-2 px-4 py-2">
             <button

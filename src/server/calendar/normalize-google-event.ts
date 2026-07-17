@@ -14,6 +14,7 @@ export type NormalizedGoogleEventRow = {
   providerEventId: string;
   calendarId: string;
   calendarName: string | null;
+  calendarColor: string | null;
   title: string | null;
   location: string | null;
   startAt: Date;
@@ -73,7 +74,8 @@ function parseEventTimes(
 export function normalizeGoogleEvent(
   event: calendar_v3.Schema$Event,
   calendarId: string,
-  calendarName?: string | null
+  calendarName?: string | null,
+  calendarColor?: string | null
 ): NormalizeGoogleEventResult {
   if (!event.id) return { action: "skip" };
 
@@ -95,6 +97,7 @@ export function normalizeGoogleEvent(
       providerEventId: event.id,
       calendarId,
       calendarName: calendarName ?? null,
+      calendarColor: calendarColor ?? null,
       title: event.summary ?? null,
       location: event.location ?? null,
       startAt: times.startAt,

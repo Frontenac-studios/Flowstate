@@ -626,6 +626,7 @@ CREATE TABLE IF NOT EXISTS external_calendar_events (
   provider_event_id TEXT NOT NULL,
   calendar_id TEXT NOT NULL,
   calendar_name TEXT,
+  calendar_color TEXT,
   title TEXT,
   location TEXT,
   start_at INTEGER NOT NULL,
@@ -720,6 +721,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "protected_blocks", column: "source", definition: "TEXT" },
   { table: "projects", column: "embedding", definition: "TEXT" },
   { table: "projects", column: "archived_at", definition: "INTEGER" },
+  { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {

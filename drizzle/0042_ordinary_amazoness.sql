@@ -1,0 +1,1 @@
+ALTER TABLE "external_calendar_events" ADD COLUMN "calendar_color" text;
