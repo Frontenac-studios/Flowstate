@@ -30,8 +30,7 @@ export function assertPhaseNestAllowed(
   phases: readonly PhaseParentRef[]
 ): void {
   if (!parentPhaseId) return;
-  const parentDepth = phaseDepth(parentPhaseId, phases);
-  if (parentDepth === null) {
+  if (!phases.some((p) => p.id === parentPhaseId)) {
     throw new Error("Parent phase not found.");
   }
 }

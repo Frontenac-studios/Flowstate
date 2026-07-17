@@ -64,9 +64,11 @@ export async function POST(req: Request) {
       const fallback =
         proposal?.kind === "create_task"
           ? `Proposed ${proposal.items.length} task${proposal.items.length === 1 ? "" : "s"} — Accept the card to add them.`
-          : proposal
-            ? "Proposed an update — Accept the card to apply it."
-            : null;
+          : proposal?.kind === "create_phase"
+            ? `Proposed ${proposal.items.length} phase${proposal.items.length === 1 ? "" : "s"} — Accept the card to add them.`
+            : proposal
+              ? "Proposed an update — Accept the card to apply it."
+              : null;
       const text = trimmed || fallback;
       if (!text) return;
       saved = true;

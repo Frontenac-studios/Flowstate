@@ -22,9 +22,6 @@ export const templatePhaseSchema: z.ZodType<TemplatePhase> = z.lazy(() =>
   })
 );
 
-/** @deprecated Alias — prefer TemplatePhase (nodes are recursive). */
-export type TemplateSubphase = TemplatePhase;
-
 export const projectTemplateStructureSchema = z.object({
   rootTasks: z.array(templateTaskSchema).default([]),
   phases: z.array(templatePhaseSchema).default([]),
@@ -96,30 +93,21 @@ export function buildTemplateStructureFromProject(
   };
 }
 
-function countPhaseTree(phases: readonly TemplatePhase[]): {
+export function countTemplateItems(structure: ProjectTemplateStructure): {
   phaseCount: number;
   taskCount: number;
 } {
   let phaseCount = 0;
-  let taskCount = 0;
-  const walk = (nodes: readonly TemplatePhase[]) => {
+  let taskCount = structure.rootTasks.length;
+
+  function walk(nodes: readonly TemplatePhase[]) {
     for (const phase of nodes) {
       phaseCount += 1;
       taskCount += phase.tasks.length;
       walk(phase.subphases);
     }
-  };
-  walk(phases);
-  return { phaseCount, taskCount };
-}
+  }
+  walk(structure.phases);
 
-export function countTemplateItems(structure: ProjectTemplateStructure): {
-  phaseCount: number;
-  taskCount: number;
-} {
-  const nested = countPhaseTree(structure.phases);
-  return {
-    phaseCount: nested.phaseCount,
-    taskCount: structure.rootTasks.length + nested.taskCount,
-  };
+  return { phaseCount, taskCount };
 }

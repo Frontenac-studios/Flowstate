@@ -132,7 +132,8 @@ export function formatProjectStructureBlock(input: {
     const indent = "  ".repeat(depth);
     const count = taskCountByPhaseId[phase.id] ?? 0;
     const selected = selectedPhaseId === phase.id ? " [selected]" : "";
-    lines.push(`${indent}- ${phase.name} (${count} open)${selected}`);
+    // Include id so create_phase can pass parentPhaseId without guessing.
+    lines.push(`${indent}- id=${phase.id} | ${phase.name} (${count} open)${selected}`);
     for (const child of childrenByParent.get(phase.id) ?? []) {
       walk(child, depth + 1);
     }

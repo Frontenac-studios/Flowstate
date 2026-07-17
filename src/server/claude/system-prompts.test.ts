@@ -88,6 +88,9 @@ describe("system-prompts", () => {
     expect(prompt).toContain("create_phase");
     expect(prompt).toContain("delete_phase");
     expect(prompt).toContain("nest arbitrarily deep");
+    expect(prompt).toContain("Always call create_phase");
+    expect(prompt).toContain("Accept the confirm card");
+    expect(prompt).toContain("never say you've created or nested them until they accept");
   });
 
   it("adds capture modifier when capture context is present", () => {

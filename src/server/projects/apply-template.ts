@@ -106,10 +106,11 @@ async function materializePhaseTree(
   projectId: string,
   category: ProjectCategory,
   nodes: readonly TemplatePhase[],
-  parentPhaseId: string | null,
-  createdPhases: (typeof phases.$inferSelect)[],
-  createdTasks: (typeof tasks.$inferSelect)[]
-): Promise<void> {
+  parentPhaseId: string | null
+): Promise<ApplyTemplateResult> {
+  const createdPhases: (typeof phases.$inferSelect)[] = [];
+  const createdTasks: (typeof tasks.$inferSelect)[] = [];
+
   for (let index = 0; index < nodes.length; index += 1) {
     const node = nodes[index]!;
     const phase = await insertPhase(tx, userId, projectId, node.name, parentPhaseId, index);
@@ -117,17 +118,19 @@ async function materializePhaseTree(
     createdTasks.push(
       ...(await insertTasks(tx, userId, projectId, category, phase.id, node.tasks))
     );
-    await materializePhaseTree(
+    const nested = await materializePhaseTree(
       tx,
       userId,
       projectId,
       category,
       node.subphases,
-      phase.id,
-      createdPhases,
-      createdTasks
+      phase.id
     );
+    createdPhases.push(...nested.phases);
+    createdTasks.push(...nested.tasks);
   }
+
+  return { phases: createdPhases, tasks: createdTasks };
 }
 
 /** Materialize phases and tasks from a saved template into a new project. */
@@ -138,25 +141,20 @@ export async function applyProjectTemplate({
   category,
   structure,
 }: ApplyTemplateParams): Promise<ApplyTemplateResult> {
-  const createdPhases: (typeof phases.$inferSelect)[] = [];
-  const createdTasks: (typeof tasks.$inferSelect)[] = [];
-
-  createdTasks.push(
-    ...(await insertTasks(tx, userId, projectId, category, null, structure.rootTasks))
-  );
-
-  await materializePhaseTree(
+  const rootTasks = await insertTasks(tx, userId, projectId, category, null, structure.rootTasks);
+  const nested = await materializePhaseTree(
     tx,
     userId,
     projectId,
     category,
     structure.phases,
-    null,
-    createdPhases,
-    createdTasks
+    null
   );
 
-  return { phases: createdPhases, tasks: createdTasks };
+  return {
+    phases: nested.phases,
+    tasks: [...rootTasks, ...nested.tasks],
+  };
 }
 
 export async function syncAppliedTemplateRows(result: ApplyTemplateResult): Promise<void> {

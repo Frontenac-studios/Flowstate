@@ -5,8 +5,6 @@ import { z } from "zod";
 import { db } from "@/db";
 import { syncPhaseRow, syncTaskRow } from "@/db/record-sync-mutation";
 import { phases, projects, tasks } from "@/db/tables";
-import { assertPhaseNestAllowed } from "@/lib/projects/nesting-cap";
-
 import { createTRPCRouter, protectedProcedure } from "../init";
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD).");
@@ -104,20 +102,6 @@ export const phasesRouter = createTRPCRouter({
             message: "Parent phase belongs to a different project.",
           });
         }
-      }
-
-      const projectPhases = await db
-        .select({ id: phases.id, parentPhaseId: phases.parentPhaseId })
-        .from(phases)
-        .where(and(eq(phases.userId, ctx.userId), eq(phases.projectId, input.projectId)));
-
-      try {
-        assertPhaseNestAllowed(input.parentPhaseId, projectPhases);
-      } catch (error) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: error instanceof Error ? error.message : "Invalid parent phase.",
-        });
       }
 
       const siblings = await db
