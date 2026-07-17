@@ -319,7 +319,7 @@ const CREATE_PROJECT_TOOL: Anthropic.Tool = {
 const CREATE_PHASE_TOOL: Anthropic.Tool = {
   name: "create_phase",
   description:
-    "Propose create phase or nested subphase (unlimited depth). Pass projectSlug, name, and optional parentPhaseId or parentPhaseName.",
+    "Propose create phase or nested subphase (unlimited depth) for a confirm card the user must Accept before anything is created. Pass projectSlug without #, name, and optional parentPhaseId (UUID from context) or parentPhaseName. Never claim phases were created until they accept.",
   input_schema: {
     type: "object",
     properties: {

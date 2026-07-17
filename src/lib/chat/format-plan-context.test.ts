@@ -135,9 +135,9 @@ describe("formatProjectStructureBlock", () => {
     expect(out).toBe(
       [
         "Project structure — Kitchen Remodel:",
-        "- Plan (2 open)",
-        "  - Research (1 open) [selected]",
-        "- Build (3 open)",
+        "- id=root-a | Plan (2 open)",
+        "  - id=sub-a1 | Research (1 open) [selected]",
+        "- id=root-b | Build (3 open)",
       ].join("\n")
     );
   });

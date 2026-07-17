@@ -1,5 +1,10 @@
 export type ProjectRef = { slug: string; name: string };
 
+/** Strip leading `#` / whitespace so chat tool inputs match stored slugs. */
+export function normalizeProjectSlugInput(slug: string): string {
+  return slug.trim().replace(/^#+/, "").toLowerCase();
+}
+
 function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
@@ -19,7 +24,7 @@ function levenshtein(a: string, b: string): number {
 }
 
 function scoreMatch(query: string, project: ProjectRef): number {
-  const q = query.toLowerCase();
+  const q = normalizeProjectSlugInput(query);
   const slug = project.slug.toLowerCase();
   const name = project.name.toLowerCase();
 
@@ -51,6 +56,7 @@ export function fuzzyProjectSuggestions(
 }
 
 export function findProjectBySlug(slug: string, projects: ProjectRef[]): ProjectRef | null {
-  const key = slug.toLowerCase();
+  const key = normalizeProjectSlugInput(slug);
+  if (!key) return null;
   return projects.find((p) => p.slug.toLowerCase() === key) ?? null;
 }

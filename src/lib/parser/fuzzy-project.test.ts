@@ -1,6 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { fuzzyProjectSuggestions } from "./fuzzy-project";
+import {
+  findProjectBySlug,
+  fuzzyProjectSuggestions,
+  normalizeProjectSlugInput,
+} from "./fuzzy-project";
+
+describe("normalizeProjectSlugInput", () => {
+  it("strips leading hashes and lowercases", () => {
+    expect(normalizeProjectSlugInput("#Flowstate-x-Kash")).toBe("flowstate-x-kash");
+  });
+});
+
+describe("findProjectBySlug", () => {
+  const projects = [
+    { slug: "rdm", name: "RDM" },
+    { slug: "flowstate-x-kash", name: "Flowstate x Kash" },
+  ];
+
+  it("matches a slug even when the model includes a leading #", () => {
+    expect(findProjectBySlug("#flowstate-x-kash", projects)?.slug).toBe("flowstate-x-kash");
+  });
+});
 
 describe("fuzzyProjectSuggestions", () => {
   const projects = [

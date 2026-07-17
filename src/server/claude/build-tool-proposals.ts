@@ -9,10 +9,10 @@ import {
   proposedActionSchema,
   type ProposedAction,
 } from "@/lib/chat/proposed-actions";
-import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
+import { findProjectBySlug, normalizeProjectSlugInput } from "@/lib/parser/fuzzy-project";
 import { evaluateGoalSuggestion } from "@/lib/planning/goal-guardrails";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
-import { findPhaseByName } from "@/lib/projects/find-phase-by-name";
+import { resolveCreatePhaseParent } from "@/lib/projects/resolve-create-phase-parent";
 
 import { resolveOwnedTaskTitles } from "./apply-proposed-action";
 
@@ -382,46 +382,6 @@ export function buildCreateProjectProposal(
 
 type PhaseParentRow = { id: string; name: string; parentPhaseId: string | null };
 
-function resolveCreatePhaseParent(
-  row: {
-    parentPhaseId?: string | null;
-    parentPhaseName?: string | null;
-  },
-  phaseRows: PhaseParentRow[]
-):
-  | { ok: true; parentPhaseId: string | null; parentPhaseName: string | null }
-  | { ok: false; error: string } {
-  if (row.parentPhaseId) {
-    const parent = phaseRows.find((p) => p.id === row.parentPhaseId);
-    if (!parent) {
-      return { ok: false, error: `Parent phase ${row.parentPhaseId} not found in project.` };
-    }
-    return { ok: true, parentPhaseId: parent.id, parentPhaseName: parent.name };
-  }
-
-  const parentName = row.parentPhaseName?.trim();
-  if (!parentName) {
-    return { ok: true, parentPhaseId: null, parentPhaseName: null };
-  }
-
-  const match = findPhaseByName(phaseRows, parentName);
-  if (match.kind === "ambiguous") {
-    return {
-      ok: false,
-      error: `Multiple phases named "${row.parentPhaseName}" — pass parentPhaseId.`,
-    };
-  }
-  if (match.kind === "not_found") {
-    return { ok: false, error: `Parent phase "${row.parentPhaseName}" not found.` };
-  }
-
-  const parent = phaseRows.find((p) => p.id === match.phaseId);
-  if (!parent) {
-    return { ok: false, error: `Parent phase "${row.parentPhaseName}" not found.` };
-  }
-  return { ok: true, parentPhaseId: parent.id, parentPhaseName: parent.name };
-}
-
 export async function buildCreatePhaseProposal(
   userId: string,
   input: CreatePhaseInput
@@ -435,7 +395,6 @@ export async function buildCreatePhaseProposal(
     .select({ id: projects.id, slug: projects.slug, name: projects.name })
     .from(projects)
     .where(eq(projects.userId, userId));
-  const projectBySlug = new Map(projectRows.map((p) => [p.slug.toLowerCase(), p]));
   const phasesByProjectId = new Map<string, PhaseParentRow[]>();
 
   async function loadProjectPhases(projectId: string): Promise<PhaseParentRow[]> {
@@ -456,7 +415,10 @@ export async function buildCreatePhaseProposal(
   const items = [];
 
   for (const row of rows) {
-    const project = projectBySlug.get(row.projectSlug!.trim().toLowerCase());
+    const slugKey = normalizeProjectSlugInput(row.projectSlug ?? "");
+    const project = slugKey
+      ? (projectRows.find((p) => p.slug.toLowerCase() === slugKey) ?? null)
+      : null;
     if (!project) {
       return { ok: false, error: `Project not found for slug "${row.projectSlug}".` };
     }
@@ -485,15 +447,19 @@ export async function buildCreatePhaseProposal(
     });
   }
 
-  return {
-    ok: true,
-    proposal: proposedActionSchema.parse({
-      kind: "create_phase",
-      status: "pending",
-      summary: input.summary,
-      items,
-    }),
-  };
+  const parsed = proposedActionSchema.safeParse({
+    kind: "create_phase",
+    status: "pending",
+    summary: input.summary,
+    items,
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid create_phase proposal.",
+    };
+  }
+  return { ok: true, proposal: parsed.data };
 }
 
 export async function buildDeletePhaseProposal(
