@@ -3,7 +3,6 @@ import "server-only";
 import { and, eq, gt, lt, ne } from "drizzle-orm";
 
 import { db } from "@/db";
-import { isSqliteMode } from "@/db/mode";
 import { externalCalendarEvents } from "@/db/tables";
 import { calendarLoadSummaryFromStoredEvents } from "@/lib/calendar/calendar-load-weight";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
@@ -13,9 +12,6 @@ export async function fetchExternalCalendarLoadWeight(
   localDate: string,
   tzOffsetMinutes: number
 ): Promise<number> {
-  // Calendar sync tables are Postgres-only; desktop has no local mirror yet.
-  if (isSqliteMode()) return 0;
-
   const { start, end } = localDayUtcBounds(localDate, tzOffsetMinutes);
   const rows = await db
     .select({
@@ -43,7 +39,6 @@ export async function fetchExternalCalendarLoadWeightsByDate(input: {
 }): Promise<Map<string, number>> {
   const weights = new Map<string, number>();
   if (input.dates.length === 0) return weights;
-  if (isSqliteMode()) return weights;
 
   const sortedDates = [...input.dates].sort();
   const { start } = localDayUtcBounds(sortedDates[0]!, input.tzOffsetMinutes);

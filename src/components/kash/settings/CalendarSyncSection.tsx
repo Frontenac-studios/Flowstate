@@ -86,7 +86,7 @@ function CalendarAiToggle({
   );
 }
 
-/** Google Calendar OAuth connection, calendar picker, and sync controls (Preferences). */
+/** Google Calendar OAuth connection, calendar picker, and sync controls (Integrations). */
 export function CalendarSyncSection() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -147,7 +147,7 @@ export function CalendarSyncSection() {
       });
     }
 
-    router.replace("/settings");
+    router.replace("/settings?tab=integrations");
   }, [searchParams, router, queryClient, trpc]);
 
   const selectionMutation = useMutation(
@@ -256,13 +256,18 @@ export function CalendarSyncSection() {
           <code className="text-ink">GOOGLE_CALENDAR_REDIRECT_URI</code> to{" "}
           <code className="text-ink">.env.local</code> (see{" "}
           <code className="text-ink">.env.example</code>
-          ).
+          ). For desktop, also register{" "}
+          <code className="text-ink">
+            http://127.0.0.1:3000/api/calendar/google/callback
+          </code> (and <code className="text-ink">:4310</code> for release) as Authorized redirect
+          URIs in Google Cloud Console.
         </p>
       ) : !connected ? (
         <div className="mt-4">
           <Button
             type="button"
             className="text-sm"
+            data-testid="calendar-connect-button"
             onClick={() => {
               window.location.href = "/api/calendar/google/connect";
             }}

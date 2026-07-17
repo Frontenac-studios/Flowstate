@@ -27,6 +27,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
     "db:e2e-setup": "node scripts/apply-drizzle-migrations.cjs && node scripts/apply-supabase-migrations.cjs",
     "db:check": "node scripts/check-database.cjs",
     "db:generate": "drizzle-kit generate",

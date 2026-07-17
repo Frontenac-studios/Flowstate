@@ -27,17 +27,17 @@ export type GoogleEventsPage = {
   fullSyncRequired: boolean;
 };
 
-function createOAuth2Client() {
+function createOAuth2Client(redirectUri?: string) {
   const env = getGoogleCalendarEnv();
   return new google.auth.OAuth2(
     env.GOOGLE_CALENDAR_CLIENT_ID,
     env.GOOGLE_CALENDAR_CLIENT_SECRET,
-    env.GOOGLE_CALENDAR_REDIRECT_URI
+    redirectUri ?? env.GOOGLE_CALENDAR_REDIRECT_URI
   );
 }
 
-export function getGoogleAuthUrl(state: string): string {
-  const client = createOAuth2Client();
+export function getGoogleAuthUrl(state: string, redirectUri?: string): string {
+  const client = createOAuth2Client(redirectUri);
   return client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
@@ -46,11 +46,14 @@ export function getGoogleAuthUrl(state: string): string {
   });
 }
 
-export async function exchangeGoogleAuthCode(code: string): Promise<{
+export async function exchangeGoogleAuthCode(
+  code: string,
+  redirectUri?: string
+): Promise<{
   tokens: GoogleOAuthTokens;
   accountEmail: string;
 }> {
-  const client = createOAuth2Client();
+  const client = createOAuth2Client(redirectUri);
   const { tokens } = await client.getToken(code);
   if (!tokens.access_token || !tokens.refresh_token) {
     throw new Error("Google OAuth did not return access and refresh tokens.");

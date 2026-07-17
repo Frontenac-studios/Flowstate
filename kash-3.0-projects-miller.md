@@ -23,14 +23,17 @@
 
 ## 3. Detail behavior (ID)
 
-- **Task (leaf) — inline expansion (ID-1):** selecting a task **expands the row in place** to reveal its
-  detail; **inline-editable** (ID-2) — title, category, due, priority, time-estimate, path, blocked-by,
-  notes. `⎋` collapses. (No separate preview column; the docked panel was retired Jun 26.)
-- **Phase (directory) — phase-detail (ID-3, resolved Jul 7 2026 — inline, not a column header):**
-  clicking a phase **expands an inline phase-detail panel in place** (progress / rename / dates) —
-  the same inline treatment as a task (ID-1) — **and** opens the phase's contents in the next column;
-  the drill continues from those contents. _(Supersedes the earlier "headed by a phase-detail panel"
-  proposal.)_
+- **Task (leaf) — inline expansion (ID-1, updated Jul 16 2026):** single click **selects/focuses** the
+  row only. **Swipe right → Edit** (or **Shift+Enter** / **E**) expands the row in place for
+  inline-editable detail (ID-2) — title, category, due, priority, time-estimate, path, blocked-by,
+  notes. Edit again toggles closed; **⎋** collapses. (No separate preview column; the docked panel
+  was retired Jun 26.)
+- **Phase (directory) — phase-detail (ID-3, updated Jul 16 2026):** single click / **Enter** / **→**
+  **drills** into the phase (opens contents in the next column) — does **not** open detail.
+  **Swipe right → Edit** (or **Shift+Enter** / **E**) expands an inline phase-detail panel in place
+  (progress / rename / dates). Edit again toggles closed; **⎋** collapses; drilling into a
+  **different** phase clears open detail. Depth is click-driven — empty viewport slots show solid
+  outline ghost columns (no auto-pad of nested phases).
 
 ## 4. Settled elsewhere
 
@@ -65,7 +68,6 @@
   per-column **"Completed · n"** group (collapsible). (See `kash-3.0-animation-sweep.md`.)
 - **PROJ-B · Views & lenses:** Miller / Gantt / Calendar = a **segmented switch** (content cross-fades);
   **priority + category are clean-by-default filter lenses** (VF-style), off until toggled.
-- **PROJ-C · Phase detail (ID-3, resolved Jul 7 2026 — inline):** clicking a phase **expands an inline
-  phase-detail panel in place** (progress / rename / dates) — same inline treatment as a task (ID-1) —
-  **and** opens its contents in the next column; the drill continues from those contents. _(Supersedes
-  the earlier "column headed by the phase-detail" wording.)_
+- **PROJ-C · Phase detail (ID-3, updated Jul 16 2026):** click / Enter / → **drills** only. Swipe →
+  **Edit** (or Shift+Enter / E) expands inline phase-detail; Edit toggles closed; Escape collapses;
+  drilling another phase clears detail. _(Supersedes Jul 7 "click opens detail + drill" wording.)_

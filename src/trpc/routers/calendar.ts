@@ -3,10 +3,10 @@ import { and, asc, eq, gt, lt, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { isSqliteMode } from "@/db/mode";
 import { calendarConnections, externalCalendarEvents } from "@/db/tables";
 import { sumBusyMinutes } from "@/lib/calendar/build-day-busy-intervals";
 import { eventToDayMinutes } from "@/lib/calendar/event-to-day-minutes";
+import { CALENDAR_SYNC_FRESH_MS } from "@/lib/calendar/oauth-redirect";
 import { redactEventFields } from "@/lib/calendar/redact-event";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
@@ -36,9 +36,6 @@ const calendarWeekInputSchema = z.object({
   anchorDate: isoDateSchema,
   tzOffsetMinutes: tzOffsetSchema,
 });
-
-/** 2× the 10-minute production cron interval. */
-const SYNC_FRESH_MS = 15 * 60_000;
 
 export type TimelineSyncStatus = "off" | "on" | "error";
 
@@ -89,9 +86,6 @@ async function fetchOverlappingEvents(
   rangeStart: Date,
   rangeEnd: Date
 ): Promise<ExternalEventRow[]> {
-  // Calendar sync tables are Postgres-only; desktop has no local mirror yet.
-  if (isSqliteMode()) return [];
-
   return db
     .select({
       id: externalCalendarEvents.id,
@@ -153,7 +147,7 @@ function resolveSyncStatus(connection: {
   if (
     connection.status === "active" &&
     connection.lastSyncedAt != null &&
-    Date.now() - connection.lastSyncedAt.getTime() < SYNC_FRESH_MS
+    Date.now() - connection.lastSyncedAt.getTime() < CALENDAR_SYNC_FRESH_MS
   ) {
     return "on";
   }

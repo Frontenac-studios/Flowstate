@@ -159,7 +159,9 @@ export const weekDayPriorities = (
 export const weekReviews = (
   isSqliteMode() ? sqliteSchema.weekReviews : pgWeekReviews
 ) as typeof pgWeekReviews;
-/** Postgres-only — desktop calendar sync deferred. */
-export const calendarConnections = pgCalendarConnections;
-/** Postgres-only — desktop calendar sync deferred. */
-export const externalCalendarEvents = pgExternalCalendarEvents;
+export const calendarConnections = (
+  isSqliteMode() ? sqliteSchema.calendarConnections : pgCalendarConnections
+) as typeof pgCalendarConnections;
+export const externalCalendarEvents = (
+  isSqliteMode() ? sqliteSchema.externalCalendarEvents : pgExternalCalendarEvents
+) as typeof pgExternalCalendarEvents;

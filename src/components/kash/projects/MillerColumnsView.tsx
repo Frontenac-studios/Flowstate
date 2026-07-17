@@ -15,7 +15,7 @@ import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitat
 import Button from "@/components/kash/ui/Button";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import type { ProjectCategory } from "@/lib/projects/categories";
-import { defaultMillerPath, expandMillerPath } from "@/lib/projects/miller-path";
+import { defaultMillerPath, pruneMillerPath } from "@/lib/projects/miller-path";
 import {
   filterTasksByPriority,
   readPriorityFilter,
@@ -205,9 +205,9 @@ export default function MillerColumnsView({
   useEffect(() => {
     const basePath =
       selectedPath.length > 0 ? selectedPath : defaultMillerPath(tree, targetVisibleColumns);
-    const expanded = expandMillerPath(tree, basePath, targetVisibleColumns);
-    if (expanded.join() !== selectedPath.join()) {
-      onSelectPath(expanded);
+    const pruned = pruneMillerPath(tree, basePath, targetVisibleColumns);
+    if (pruned.join() !== selectedPath.join()) {
+      onSelectPath(pruned);
     }
   }, [tree, selectedPath, targetVisibleColumns, onSelectPath]);
 
@@ -246,7 +246,7 @@ export default function MillerColumnsView({
       if (withPhase?.phaseId) {
         const chain = phasePathTo(withPhase.phaseId);
         if (chain.length > 0) {
-          onSelectPath(expandMillerPath(tree, chain, targetVisibleColumns));
+          onSelectPath(pruneMillerPath(tree, chain, targetVisibleColumns));
         }
       }
 
@@ -268,21 +268,38 @@ export default function MillerColumnsView({
     });
   }, [columns]);
 
-  const openPhase = useCallback(
+  const drillPhase = useCallback(
     (level: number, node: Node) => {
       const userPath = selectedPath.slice(0, level).concat(node.phase.id);
-      const expanded = expandMillerPath(tree, userPath, targetVisibleColumns);
-      onSelectPath(expanded);
-      setDetail({ type: "phase", id: node.phase.id });
-      setFocus({ col: expanded.length, index: 0 });
+      const pruned = pruneMillerPath(tree, userPath, targetVisibleColumns);
+      onSelectPath(pruned);
+      setDetail((current) => {
+        if (!current) return null;
+        if (current.type === "phase" && current.id === node.phase.id) return current;
+        return null;
+      });
+      setFocus({ col: pruned.length, index: 0 });
     },
     [onSelectPath, selectedPath, tree, targetVisibleColumns]
   );
 
-  const openTaskDetail = useCallback(
+  const togglePhaseDetail = useCallback((phaseId: string) => {
+    setDetail((current) =>
+      current?.type === "phase" && current.id === phaseId ? null : { type: "phase", id: phaseId }
+    );
+  }, []);
+
+  const selectTask = useCallback((level: number, index: number) => {
+    setFocus({ col: level, index });
+  }, []);
+
+  const toggleTaskDetail = useCallback(
     (level: number, task: ProjectTask) => {
+      setDetail((current) => {
+        if (current?.type === "task" && current.id === task.id) return null;
+        return { type: "task", id: task.id };
+      });
       onSelectPath(selectedPath.slice(0, level));
-      setDetail({ type: "task", id: task.id });
     },
     [onSelectPath, selectedPath]
   );
@@ -409,6 +426,8 @@ export default function MillerColumnsView({
         return;
       }
 
+      const wantsDetail = (e.key === "Enter" && e.shiftKey) || e.key === "e" || e.key === "E";
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setFocus((f) => ({
@@ -420,18 +439,21 @@ export default function MillerColumnsView({
         setFocus((f) => ({ col: f.col, index: Math.max(f.index - 1, 0) }));
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        if (item?.kind === "phase") openPhase(focus.col, item.node);
+        if (item?.kind === "phase") drillPhase(focus.col, item.node);
         else if (focus.col + 1 < columns.length) setFocus({ col: focus.col + 1, index: 0 });
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         if (focus.col > 0) setFocus({ col: focus.col - 1, index: 0 });
+      } else if (wantsDetail) {
+        e.preventDefault();
+        if (item?.kind === "phase") togglePhaseDetail(item.node.phase.id);
+        else if (item?.kind === "task") toggleTaskDetail(focus.col, item.task);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (item?.kind === "phase") openPhase(focus.col, item.node);
-        else if (item?.kind === "task") openTaskDetail(focus.col, item.task);
+        if (item?.kind === "phase") drillPhase(focus.col, item.node);
       }
     },
-    [columns, focus, openPhase, openTaskDetail, detail]
+    [columns, focus, drillPhase, togglePhaseDetail, toggleTaskDetail, detail]
   );
 
   const confirmConfig = useMemo(() => {
@@ -623,20 +645,20 @@ export default function MillerColumnsView({
                   ) : null
                 }
                 renderDetail={renderDetail}
-                onOpenPhase={(node) => openPhase(col.level, node)}
-                onOpenTaskDetail={(task) => openTaskDetail(col.level, task)}
+                onDrillPhase={(node) => drillPhase(col.level, node)}
+                onEditPhase={(node) => togglePhaseDetail(node.phase.id)}
+                onSelectTask={(_task, index) => selectTask(col.level, index)}
+                onToggleTaskDetail={(task) => toggleTaskDetail(col.level, task)}
                 onToggleTask={toggleTask}
               />
             ))}
-            {isBlank
-              ? Array.from({ length: ghostColumnCount }).map((_, i) => (
-                  <div
-                    key={`ghost:${i}`}
-                    aria-hidden
-                    className={`${millerColumnShellClass(widthClassName)} rounded-card border border-dashed border-subtle bg-surface-2 p-2 opacity-50`}
-                  />
-                ))
-              : null}
+            {Array.from({ length: ghostColumnCount }).map((_, i) => (
+              <div
+                key={`ghost:${i}`}
+                aria-hidden
+                className={`${millerColumnShellClass(widthClassName)} rounded-card border border-subtle bg-surface p-2`}
+              />
+            ))}
           </div>
         </div>
       </DndContext>

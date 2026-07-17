@@ -595,6 +595,55 @@ CREATE TABLE IF NOT EXISTS sync_watermarks (
   table_name TEXT PRIMARY KEY NOT NULL,
   pulled_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS calendar_connections (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  account_email TEXT NOT NULL,
+  refresh_token_enc TEXT NOT NULL,
+  access_token_enc TEXT,
+  token_expires_at INTEGER,
+  selected_calendar_ids TEXT NOT NULL DEFAULT '[]',
+  sync_cursor TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  last_synced_at INTEGER,
+  last_error TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS calendar_connections_user_id_idx
+  ON calendar_connections (user_id);
+CREATE INDEX IF NOT EXISTS calendar_connections_user_id_updated_at_idx
+  ON calendar_connections (user_id, updated_at);
+CREATE UNIQUE INDEX IF NOT EXISTS calendar_connections_user_id_provider_idx
+  ON calendar_connections (user_id, provider);
+
+CREATE TABLE IF NOT EXISTS external_calendar_events (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  connection_id TEXT NOT NULL REFERENCES calendar_connections(id) ON DELETE CASCADE,
+  provider_event_id TEXT NOT NULL,
+  calendar_id TEXT NOT NULL,
+  calendar_name TEXT,
+  title TEXT,
+  location TEXT,
+  start_at INTEGER NOT NULL,
+  end_at INTEGER NOT NULL,
+  is_all_day INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'confirmed',
+  visibility TEXT NOT NULL DEFAULT 'default',
+  recurrence_master_id TEXT,
+  provider_updated_at INTEGER,
+  etag TEXT,
+  html_link TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS external_calendar_events_connection_calendar_event_idx
+  ON external_calendar_events (connection_id, calendar_id, provider_event_id);
+CREATE INDEX IF NOT EXISTS external_calendar_events_user_id_start_at_idx
+  ON external_calendar_events (user_id, start_at);
 `;
 
 // SQLite has no "ADD COLUMN IF NOT EXISTS", so add each new column only when the
