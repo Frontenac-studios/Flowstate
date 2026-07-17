@@ -23,6 +23,7 @@ describe("calendarEventColors", () => {
     expect(calendarEventColors("#039be5")).toEqual({
       stripe: "#039be5",
       fill: "color-mix(in srgb, #039be5 12%, var(--surface))",
+      text: "color-mix(in srgb, #039be5 60%, var(--ink))",
     });
   });
 
@@ -30,6 +31,7 @@ describe("calendarEventColors", () => {
     expect(calendarEventColors(null)).toEqual({
       stripe: "var(--ink-faint)",
       fill: "var(--surface-2)",
+      text: "var(--ink)",
     });
   });
 });

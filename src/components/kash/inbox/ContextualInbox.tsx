@@ -37,6 +37,11 @@ export function ContextualInbox({ placement = "top" }: { placement?: "top" | "bo
 
   useAutoOpenOnTriageGrowth({ open, setOpen, count: countData?.count });
 
+  // Nothing to triage and collapsed → render nothing (no dead inbox bar). The
+  // count query and ⌃I/auto-open hooks above stay mounted, so the strip
+  // reappears the moment a task lands in the inbox.
+  if (!open && inboxCount === 0) return null;
+
   return (
     <LensProvider scope="inbox" bindKeys={false} properties={["category", "project"]}>
       <div
