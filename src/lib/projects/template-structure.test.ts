@@ -7,16 +7,18 @@ import {
 } from "@/lib/projects/template-structure";
 
 describe("buildTemplateStructureFromProject", () => {
-  it("captures root tasks, phases, subphases, and duration hints", () => {
+  it("captures root tasks, phases, nested subphases, and duration hints", () => {
     const structure = buildTemplateStructureFromProject(
       [
         { id: "phase-a", parentPhaseId: null, name: "Discovery", sortOrder: 0 },
         { id: "phase-b", parentPhaseId: "phase-a", name: "Interviews", sortOrder: 0 },
+        { id: "phase-c", parentPhaseId: "phase-b", name: "Synthesis", sortOrder: 0 },
       ],
       [
         { phaseId: null, title: "Kickoff", timeEstimateMinutes: null, sortOrder: 0 },
         { phaseId: "phase-a", title: "Research plan", timeEstimateMinutes: 90, sortOrder: 0 },
         { phaseId: "phase-b", title: "Schedule calls", timeEstimateMinutes: 45, sortOrder: 0 },
+        { phaseId: "phase-c", title: "Write themes", timeEstimateMinutes: 60, sortOrder: 0 },
       ]
     );
 
@@ -30,6 +32,13 @@ describe("buildTemplateStructureFromProject", () => {
             {
               name: "Interviews",
               tasks: [{ title: "Schedule calls", timeEstimateMinutes: 45 }],
+              subphases: [
+                {
+                  name: "Synthesis",
+                  tasks: [{ title: "Write themes", timeEstimateMinutes: 60 }],
+                  subphases: [],
+                },
+              ],
             },
           ],
         },
@@ -37,6 +46,6 @@ describe("buildTemplateStructureFromProject", () => {
     });
 
     expect(projectTemplateStructureSchema.parse(structure)).toEqual(structure);
-    expect(countTemplateItems(structure)).toEqual({ phaseCount: 2, taskCount: 3 });
+    expect(countTemplateItems(structure)).toEqual({ phaseCount: 3, taskCount: 4 });
   });
 });

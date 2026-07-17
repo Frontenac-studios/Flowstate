@@ -5,25 +5,31 @@ export const templateTaskSchema = z.object({
   timeEstimateMinutes: z.number().int().positive().nullable().optional(),
 });
 
-export const templateSubphaseSchema = z.object({
-  name: z.string().min(1).max(200),
-  tasks: z.array(templateTaskSchema).default([]),
-});
+export type TemplateTask = z.infer<typeof templateTaskSchema>;
 
-export const templatePhaseSchema = z.object({
-  name: z.string().min(1).max(200),
-  tasks: z.array(templateTaskSchema).default([]),
-  subphases: z.array(templateSubphaseSchema).default([]),
-});
+/** Recursive phase node — unlimited nesting via `subphases`. */
+export type TemplatePhase = {
+  name: string;
+  tasks: TemplateTask[];
+  subphases: TemplatePhase[];
+};
+
+export const templatePhaseSchema: z.ZodType<TemplatePhase> = z.lazy(() =>
+  z.object({
+    name: z.string().min(1).max(200),
+    tasks: z.array(templateTaskSchema).default([]),
+    subphases: z.array(templatePhaseSchema).default([]),
+  })
+);
+
+/** @deprecated Alias — prefer TemplatePhase (nodes are recursive). */
+export type TemplateSubphase = TemplatePhase;
 
 export const projectTemplateStructureSchema = z.object({
   rootTasks: z.array(templateTaskSchema).default([]),
   phases: z.array(templatePhaseSchema).default([]),
 });
 
-export type TemplateTask = z.infer<typeof templateTaskSchema>;
-export type TemplateSubphase = z.infer<typeof templateSubphaseSchema>;
-export type TemplatePhase = z.infer<typeof templatePhaseSchema>;
 export type ProjectTemplateStructure = z.infer<typeof projectTemplateStructureSchema>;
 
 type PhaseRow = {
@@ -63,45 +69,57 @@ export function buildTemplateStructureFromProject(
   const sortedPhases = [...phaseRows].sort(sortPhases);
   const sortedTasks = [...taskRows].sort(sortTasks);
 
-  const rootPhases = sortedPhases.filter((phase) => !phase.parentPhaseId);
-  const subphasesByParent = new Map<string, PhaseRow[]>();
+  const childrenByParent = new Map<string, PhaseRow[]>();
+  const roots: PhaseRow[] = [];
   for (const phase of sortedPhases) {
-    if (!phase.parentPhaseId) continue;
-    const list = subphasesByParent.get(phase.parentPhaseId) ?? [];
+    if (!phase.parentPhaseId) {
+      roots.push(phase);
+      continue;
+    }
+    const list = childrenByParent.get(phase.parentPhaseId) ?? [];
     list.push(phase);
-    subphasesByParent.set(phase.parentPhaseId, list);
+    childrenByParent.set(phase.parentPhaseId, list);
   }
 
   const tasksForPhase = (phaseId: string | null): TemplateTask[] =>
     sortedTasks.filter((task) => task.phaseId === phaseId).map(mapTaskRow);
 
+  const buildNode = (phase: PhaseRow): TemplatePhase => ({
+    name: phase.name,
+    tasks: tasksForPhase(phase.id),
+    subphases: (childrenByParent.get(phase.id) ?? []).map(buildNode),
+  });
+
   return {
     rootTasks: tasksForPhase(null),
-    phases: rootPhases.map((phase) => ({
-      name: phase.name,
-      tasks: tasksForPhase(phase.id),
-      subphases: (subphasesByParent.get(phase.id) ?? []).map((subphase) => ({
-        name: subphase.name,
-        tasks: tasksForPhase(subphase.id),
-      })),
-    })),
+    phases: roots.map(buildNode),
   };
+}
+
+function countPhaseTree(phases: readonly TemplatePhase[]): {
+  phaseCount: number;
+  taskCount: number;
+} {
+  let phaseCount = 0;
+  let taskCount = 0;
+  const walk = (nodes: readonly TemplatePhase[]) => {
+    for (const phase of nodes) {
+      phaseCount += 1;
+      taskCount += phase.tasks.length;
+      walk(phase.subphases);
+    }
+  };
+  walk(phases);
+  return { phaseCount, taskCount };
 }
 
 export function countTemplateItems(structure: ProjectTemplateStructure): {
   phaseCount: number;
   taskCount: number;
 } {
-  let phaseCount = structure.phases.length;
-  let taskCount = structure.rootTasks.length;
-
-  for (const phase of structure.phases) {
-    taskCount += phase.tasks.length;
-    phaseCount += phase.subphases.length;
-    for (const subphase of phase.subphases) {
-      taskCount += subphase.tasks.length;
-    }
-  }
-
-  return { phaseCount, taskCount };
+  const nested = countPhaseTree(structure.phases);
+  return {
+    phaseCount: nested.phaseCount,
+    taskCount: structure.rootTasks.length + nested.taskCount,
+  };
 }

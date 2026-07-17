@@ -1,4 +1,4 @@
-import type { ProjectTemplateStructure, TemplateTask } from "./template-structure";
+import type { ProjectTemplateStructure, TemplatePhase, TemplateTask } from "./template-structure";
 
 type DurationSample = {
   title: string;
@@ -38,6 +38,17 @@ function applyTaskDurations(tasks: TemplateTask[], averages: Map<string, number>
   });
 }
 
+function applyPhaseDurations(
+  phases: TemplatePhase[],
+  averages: Map<string, number>
+): TemplatePhase[] {
+  return phases.map((phase) => ({
+    ...phase,
+    tasks: applyTaskDurations(phase.tasks, averages),
+    subphases: applyPhaseDurations(phase.subphases, averages),
+  }));
+}
+
 /**
  * Overlay learned durations from similar projects onto a template structure.
  * Tasks without a title match keep their template estimate (or null).
@@ -51,13 +62,6 @@ export function applyLearnedDurations(
 
   return {
     rootTasks: applyTaskDurations(structure.rootTasks, averages),
-    phases: structure.phases.map((phase) => ({
-      ...phase,
-      tasks: applyTaskDurations(phase.tasks, averages),
-      subphases: phase.subphases.map((subphase) => ({
-        ...subphase,
-        tasks: applyTaskDurations(subphase.tasks, averages),
-      })),
-    })),
+    phases: applyPhaseDurations(structure.phases, averages),
   };
 }

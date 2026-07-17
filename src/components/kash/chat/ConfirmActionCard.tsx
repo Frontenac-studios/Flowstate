@@ -112,9 +112,18 @@ function itemLabel(action: ProposedAction, item: ProposedAction["items"][number]
       const row = item as Extract<ProposedAction, { kind: "create_project" }>["items"][number];
       return `${row.name} · ${row.category}`;
     }
+    case "create_phase": {
+      const row = item as Extract<ProposedAction, { kind: "create_phase" }>["items"][number];
+      const parent = row.parentPhaseName ? ` under ${row.parentPhaseName}` : " (root)";
+      return `${row.projectSlug} / ${row.name}${parent}`;
+    }
     case "edit_phase": {
       const row = item as Extract<ProposedAction, { kind: "edit_phase" }>["items"][number];
       return `${row.projectSlug} / ${row.phaseName}`;
+    }
+    case "delete_phase": {
+      const row = item as Extract<ProposedAction, { kind: "delete_phase" }>["items"][number];
+      return `Delete ${row.projectSlug} / ${row.phaseName}`;
     }
     case "move_task_to_phase": {
       const row = item as Extract<ProposedAction, { kind: "move_task_to_phase" }>["items"][number];

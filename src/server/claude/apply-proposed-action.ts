@@ -736,6 +736,73 @@ export async function applyProposedActionPayload(
       return { applied, titles, undoFrames, createdTasks: [] };
     }
 
+    case "create_phase": {
+      const titles: string[] = [];
+      const phaseIds: string[] = [];
+      let applied = 0;
+
+      for (const item of action.items) {
+        const siblings = await db
+          .select({ sortOrder: phases.sortOrder })
+          .from(phases)
+          .where(
+            and(
+              eq(phases.userId, userId),
+              eq(phases.projectId, item.projectId),
+              item.parentPhaseId
+                ? eq(phases.parentPhaseId, item.parentPhaseId)
+                : isNull(phases.parentPhaseId)
+            )
+          );
+        const nextSortOrder = siblings.reduce((max, s) => Math.max(max, s.sortOrder + 1), 0);
+
+        const [row] = await db
+          .insert(phases)
+          .values({
+            userId,
+            projectId: item.projectId,
+            parentPhaseId: item.parentPhaseId,
+            name: item.name.trim(),
+            description: item.description ?? null,
+            startDate: item.startDate ?? null,
+            endDate: item.endDate ?? null,
+            sortOrder: nextSortOrder,
+          })
+          .returning();
+
+        if (row) {
+          await syncPhaseRow(row.id, "insert", row);
+          titles.push(row.name);
+          phaseIds.push(row.id);
+          applied += 1;
+        }
+      }
+
+      if (phaseIds.length > 0) {
+        undoFrames.push({ type: "create_phases", phaseIds });
+      }
+
+      return { applied, titles, undoFrames, createdTasks: [] };
+    }
+
+    case "delete_phase": {
+      const titles: string[] = [];
+      let applied = 0;
+
+      for (const item of action.items) {
+        const existing = await getOwnedPhaseRow(userId, item.phaseId);
+        if (!existing) continue;
+
+        await db.delete(phases).where(and(eq(phases.id, item.phaseId), eq(phases.userId, userId)));
+        await syncPhaseRow(item.phaseId, "delete", { id: item.phaseId, userId });
+        titles.push(existing.name);
+        applied += 1;
+      }
+
+      // Cascade delete is not undoable via session undo (subtree + task unlink).
+      return { applied, titles, undoFrames, createdTasks: [] };
+    }
+
     case "edit_phase": {
       const titles: string[] = [];
       let applied = 0;

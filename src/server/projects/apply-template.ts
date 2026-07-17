@@ -2,7 +2,11 @@ import { syncPhaseRow, syncTaskRow } from "@/db/record-sync-mutation";
 import { phases, tasks } from "@/db/tables";
 import { db } from "@/db";
 import type { ProjectCategory } from "@/lib/projects/categories";
-import type { ProjectTemplateStructure, TemplateTask } from "@/lib/projects/template-structure";
+import type {
+  ProjectTemplateStructure,
+  TemplatePhase,
+  TemplateTask,
+} from "@/lib/projects/template-structure";
 
 type DbClient = typeof db;
 type DbTransaction = Parameters<Parameters<DbClient["transaction"]>[0]>[0];
@@ -96,6 +100,36 @@ async function insertPhase(
   return row;
 }
 
+async function materializePhaseTree(
+  tx: DbTransaction,
+  userId: string,
+  projectId: string,
+  category: ProjectCategory,
+  nodes: readonly TemplatePhase[],
+  parentPhaseId: string | null,
+  createdPhases: (typeof phases.$inferSelect)[],
+  createdTasks: (typeof tasks.$inferSelect)[]
+): Promise<void> {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index]!;
+    const phase = await insertPhase(tx, userId, projectId, node.name, parentPhaseId, index);
+    createdPhases.push(phase);
+    createdTasks.push(
+      ...(await insertTasks(tx, userId, projectId, category, phase.id, node.tasks))
+    );
+    await materializePhaseTree(
+      tx,
+      userId,
+      projectId,
+      category,
+      node.subphases,
+      phase.id,
+      createdPhases,
+      createdTasks
+    );
+  }
+}
+
 /** Materialize phases and tasks from a saved template into a new project. */
 export async function applyProjectTemplate({
   tx,
@@ -111,30 +145,16 @@ export async function applyProjectTemplate({
     ...(await insertTasks(tx, userId, projectId, category, null, structure.rootTasks))
   );
 
-  for (let phaseIndex = 0; phaseIndex < structure.phases.length; phaseIndex += 1) {
-    const phaseTemplate = structure.phases[phaseIndex]!;
-    const phase = await insertPhase(tx, userId, projectId, phaseTemplate.name, null, phaseIndex);
-    createdPhases.push(phase);
-    createdTasks.push(
-      ...(await insertTasks(tx, userId, projectId, category, phase.id, phaseTemplate.tasks))
-    );
-
-    for (let subIndex = 0; subIndex < phaseTemplate.subphases.length; subIndex += 1) {
-      const subphaseTemplate = phaseTemplate.subphases[subIndex]!;
-      const subphase = await insertPhase(
-        tx,
-        userId,
-        projectId,
-        subphaseTemplate.name,
-        phase.id,
-        subIndex
-      );
-      createdPhases.push(subphase);
-      createdTasks.push(
-        ...(await insertTasks(tx, userId, projectId, category, subphase.id, subphaseTemplate.tasks))
-      );
-    }
-  }
+  await materializePhaseTree(
+    tx,
+    userId,
+    projectId,
+    category,
+    structure.phases,
+    null,
+    createdPhases,
+    createdTasks
+  );
 
   return { phases: createdPhases, tasks: createdTasks };
 }

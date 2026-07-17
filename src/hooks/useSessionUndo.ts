@@ -105,6 +105,9 @@ export function useSessionUndo() {
   const updatePhaseMutation = useMutation(
     trpc.phases.update.mutationOptions({ onSuccess: invalidatePlan })
   );
+  const deletePhaseMutation = useMutation(
+    trpc.phases.delete.mutationOptions({ onSuccess: invalidatePlan })
+  );
   const moveToPhaseMutation = useMutation(
     trpc.tasks.moveToPhase.mutationOptions({ onSuccess: invalidatePlan })
   );
@@ -208,6 +211,11 @@ export function useSessionUndo() {
             await deleteProjectMutation.mutateAsync({ id: projectId });
           }
           return;
+        case "create_phases":
+          for (const phaseId of frame.phaseIds) {
+            await deletePhaseMutation.mutateAsync({ id: phaseId });
+          }
+          return;
         case "create_goals":
           for (const goalId of frame.goalIds) {
             await removeGoalMutation.mutateAsync({ id: goalId });
@@ -244,6 +252,7 @@ export function useSessionUndo() {
       }
     },
     [
+      deletePhaseMutation,
       deleteProjectMutation,
       deleteTaskMutation,
       moveToPhaseMutation,

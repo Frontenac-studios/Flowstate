@@ -116,7 +116,7 @@ export const phasesRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: error instanceof Error ? error.message : "Nesting limit reached.",
+          message: error instanceof Error ? error.message : "Invalid parent phase.",
         });
       }
 
