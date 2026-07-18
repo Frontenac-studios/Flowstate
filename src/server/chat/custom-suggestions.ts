@@ -8,10 +8,11 @@ import { customSuggestionToDef } from "@/lib/chat/chat-suggestion-defs";
 import type { ChatSuggestionDef } from "@/lib/chat/chat-suggestion-defs";
 import {
   isEligibleForPhraseTracking,
+  isGeneralizedCommand,
   matchesBuiltInPhrase,
   MAX_CUSTOM_SUGGESTIONS,
   normalizeChatPhrase,
-  shouldPromote,
+  qualifiesForPromotion,
   truncateSuggestionLabel,
 } from "@/lib/chat/chat-phrase-promotion";
 
@@ -81,8 +82,10 @@ export async function recordPhraseSend({
     .limit(1);
 
   const sendCount = (existing?.sendCount ?? 0) + 1;
-  const promoteNow = shouldPromote(sendCount) && !existing?.promotedAt;
-  const promotedAt = existing?.promotedAt ?? (promoteNow ? now : null);
+  const qualifies = qualifiesForPromotion(trimmed, sendCount);
+  const promoteNow = qualifies && !existing?.promotedAt;
+  // Rows promoted under the old rules may no longer qualify — demote on the way past.
+  const promotedAt = qualifies ? (existing?.promotedAt ?? now) : null;
 
   let row;
   if (existing) {
@@ -143,7 +146,44 @@ export async function listPromotedSuggestions(userId: string): Promise<ChatSugge
     )
     .orderBy(desc(chatCustomSuggestions.usageCount), desc(chatCustomSuggestions.promotedAt));
 
-  return rows.map((row) => customSuggestionToDef(row));
+  // Rows promoted before the generalized-command gate existed are filtered out here
+  // rather than deleted, so a stale chip stops rendering immediately. The row is
+  // demoted for real on its next recordPhraseSend — queries must not write.
+  return rows
+    .filter((row) => isGeneralizedCommand(row.userText))
+    .map((row) => customSuggestionToDef(row));
+}
+
+/**
+ * Remove the row outright rather than just demoting, so the phrase starts from zero
+ * and can re-earn a chip if it turns out to be a genuine habit.
+ */
+export async function deleteCustomSuggestion({
+  userId,
+  id,
+}: {
+  userId: string;
+  id: string;
+}): Promise<void> {
+  await db
+    .delete(chatCustomSuggestions)
+    .where(and(eq(chatCustomSuggestions.id, id), eq(chatCustomSuggestions.userId, userId)));
+}
+
+/** Rename the chip label only — `userText` stays as sent so the command still works. */
+export async function renameCustomSuggestion({
+  userId,
+  id,
+  label,
+}: {
+  userId: string;
+  id: string;
+  label: string;
+}): Promise<void> {
+  await db
+    .update(chatCustomSuggestions)
+    .set({ label: truncateSuggestionLabel(label), updatedAt: new Date() })
+    .where(and(eq(chatCustomSuggestions.id, id), eq(chatCustomSuggestions.userId, userId)));
 }
 
 export async function recordCustomSuggestionUsage({

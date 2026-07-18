@@ -40,16 +40,15 @@ export async function POST(req: Request) {
   });
 
   try {
-    const { stream, getFullText, getMutatedTasks, getPendingProposal } = await streamCompanionReply(
-      {
+    const { stream, getFullText, getMutatedTasks, getPendingProposal, getToolErrors } =
+      await streamCompanionReply({
         userId,
         threadId,
         userText: text,
         planningSurface: parsed.data.planningSurface ?? null,
         captureContext: parsed.data.captureContext ?? null,
         signal: req.signal,
-      }
-    );
+      });
 
     const encoder = new TextEncoder();
     let assistantText = "";
@@ -69,7 +68,16 @@ export async function POST(req: Request) {
             : proposal
               ? "Proposed an update — Accept the card to apply it."
               : null;
-      const text = trimmed || fallback;
+      // A tool refused to build a card but the model may still have narrated one
+      // ("Accept the card…"). Append the real reason so the prose can't stand alone.
+      const toolErrors = getToolErrors();
+      const failureNote =
+        !proposal && toolErrors.length > 0
+          ? `⚠️ Nothing was proposed — ${toolErrors.join(" ")}`
+          : null;
+
+      const body = trimmed || fallback;
+      const text = [body, failureNote].filter(Boolean).join("\n\n");
       if (!text) return;
       saved = true;
       await appendAssistantMessage(userId, threadId, text, undefined, proposal ?? undefined);

@@ -66,6 +66,40 @@ export function useChatSuggestions(
 
   const suggestMutation = useMutation(trpc.chat.suggestWorkOn.mutationOptions());
   const recordUsageMutation = useMutation(trpc.chat.recordCustomSuggestionUsage.mutationOptions());
+  const deleteSuggestionMutation = useMutation(trpc.chat.deleteCustomSuggestion.mutationOptions());
+  const renameSuggestionMutation = useMutation(trpc.chat.renameCustomSuggestion.mutationOptions());
+
+  const invalidateCustomSuggestions = useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: trpc.chat.listCustomSuggestions.queryKey(),
+      }),
+    [queryClient, trpc.chat.listCustomSuggestions]
+  );
+
+  const deleteSuggestion = useCallback(
+    async (id: string) => {
+      try {
+        await deleteSuggestionMutation.mutateAsync({ id });
+        await invalidateCustomSuggestions();
+      } catch (err) {
+        onError?.(err instanceof Error ? err.message : "Couldn't remove that suggestion.");
+      }
+    },
+    [deleteSuggestionMutation, invalidateCustomSuggestions, onError]
+  );
+
+  const renameSuggestion = useCallback(
+    async (id: string, label: string) => {
+      try {
+        await renameSuggestionMutation.mutateAsync({ id, label });
+        await invalidateCustomSuggestions();
+      } catch (err) {
+        onError?.(err instanceof Error ? err.message : "Couldn't rename that suggestion.");
+      }
+    },
+    [invalidateCustomSuggestions, onError, renameSuggestionMutation]
+  );
 
   const runSuggestion = useCallback(
     async (id: string) => {
@@ -126,6 +160,8 @@ export function useChatSuggestions(
   return {
     suggestions,
     runSuggestion,
+    deleteSuggestion,
+    renameSuggestion,
     isSuggestionRunning: isRunning || suggestMutation.isPending || recordUsageMutation.isPending,
   };
 }

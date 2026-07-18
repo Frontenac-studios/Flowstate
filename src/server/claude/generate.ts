@@ -3,6 +3,7 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 
 import { getAnthropicConfig } from "@/lib/env";
+import { mergeProposals } from "@/lib/chat/merge-proposals";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
 
 import { assembleChatContext } from "./assemble-chat-context";
@@ -99,6 +100,7 @@ export async function streamCompanionReply(params: {
   getFullText: () => string;
   getMutatedTasks: () => boolean;
   getPendingProposal: () => ProposedAction | null;
+  getToolErrors: () => string[];
 }> {
   const anthropic = requireAnthropicClient();
   const config = getAnthropicConfig();
@@ -120,6 +122,7 @@ export async function streamCompanionReply(params: {
     fullText: "",
     mutatedTasks: false,
     pendingProposal: null as ProposedAction | null,
+    toolErrors: [] as string[],
   };
 
   async function* run(): AsyncGenerator<CompanionStreamDelta> {
@@ -164,9 +167,12 @@ export async function streamCompanionReply(params: {
           captureContext: params.captureContext,
         });
         if (result.mutatedTasks) state.mutatedTasks = true;
+        if (result.error) state.toolErrors.push(result.error);
         if (result.proposal) {
-          state.pendingProposal = result.proposal;
-          yield { type: "proposal", proposal: result.proposal };
+          // Merge rather than overwrite: a model that splits work across two calls of
+          // the same kind used to lose everything but the last proposal.
+          state.pendingProposal = mergeProposals(state.pendingProposal, result.proposal);
+          yield { type: "proposal", proposal: state.pendingProposal };
         }
         toolResults.push({
           type: "tool_result",
@@ -184,5 +190,6 @@ export async function streamCompanionReply(params: {
     getFullText: () => state.fullText,
     getMutatedTasks: () => state.mutatedTasks,
     getPendingProposal: () => state.pendingProposal,
+    getToolErrors: () => state.toolErrors,
   };
 }

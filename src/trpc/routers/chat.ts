@@ -24,10 +24,13 @@ import {
   updateMessageProposalStatus,
 } from "@/server/claude/persist-message";
 import {
+  deleteCustomSuggestion,
   listPromotedSuggestions,
   recordCustomSuggestionUsage,
   recordPhraseSend,
+  renameCustomSuggestion,
 } from "@/server/chat/custom-suggestions";
+import { SUGGESTION_LABEL_MAX_LENGTH } from "@/lib/chat/chat-phrase-promotion";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -267,6 +270,25 @@ export const chatRouter = createTRPCRouter({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       await recordCustomSuggestionUsage({ userId: ctx.userId, id: input.id });
+      return { ok: true as const };
+    }),
+
+  deleteCustomSuggestion: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteCustomSuggestion({ userId: ctx.userId, id: input.id });
+      return { ok: true as const };
+    }),
+
+  renameCustomSuggestion: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        label: z.string().trim().min(1).max(SUGGESTION_LABEL_MAX_LENGTH),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await renameCustomSuggestion({ userId: ctx.userId, id: input.id, label: input.label });
       return { ok: true as const };
     }),
 
