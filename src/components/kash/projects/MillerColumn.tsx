@@ -9,6 +9,7 @@ import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
 
+import { MILLER_COLUMN_WIDTH_CLASS, millerColumnShellClass } from "./miller-columns";
 import MillerPhaseRow from "./MillerPhaseRow";
 import MillerTaskRow from "./MillerTaskRow";
 import type { ProjectPhase, ProjectTask } from "./types";
@@ -63,7 +64,7 @@ export default function MillerColumn({
   detail,
   focusIndex,
   isActive,
-  shellClassName = "w-64 shrink-0 min-h-60 flex h-full min-h-0 flex-col self-stretch",
+  shellClassName = millerColumnShellClass(MILLER_COLUMN_WIDTH_CLASS),
   phaseMetrics,
   highlightTaskIds,
   blankInvitation,

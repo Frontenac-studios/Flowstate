@@ -14,7 +14,8 @@ import { useProjectMutations } from "./useProjectMutations";
 import type { ProjectTask } from "./types";
 
 const LockIcon = withKashIcon(Lock);
-const ACTION_WIDTH_PX = 72;
+/** Keep in sync with the `w-20` swipe-action buttons below. */
+const ACTION_WIDTH_PX = 80;
 const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
 
 type Props = {
@@ -88,7 +89,7 @@ export default function MillerTaskRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`relative flex items-start gap-2 overflow-hidden rounded-card px-2 py-0.5 transition ${
+      className={`relative flex shrink-0 items-start gap-2 overflow-hidden rounded-card transition ${
         isBlocked ? "border border-dashed border-ink-faint" : ""
       } ${selected ? "bg-[var(--surface-selected)]" : "hover:bg-surface"} ${
         focused ? "ring-2 ring-inset ring-[var(--accent-soft)]" : ""
@@ -99,7 +100,7 @@ export default function MillerTaskRow({
       <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
         <button
           type="button"
-          className="flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
+          className="flex w-20 items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
           onClick={(e) => {
             e.stopPropagation();
             hide();
@@ -111,7 +112,7 @@ export default function MillerTaskRow({
         <button
           type="button"
           disabled={isBlocked}
-          className={`flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink-muted ${
+          className={`flex w-20 items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink-muted ${
             isBlocked ? "opacity-50" : ""
           }`}
           onClick={(e) => {
@@ -124,9 +125,14 @@ export default function MillerTaskRow({
         </button>
       </div>
 
+      {/*
+        All padding lives on this masking layer, not on the <li>: the swipe-action
+        layer above is positioned `inset-y-0 right-0` against the <li>, so padding
+        there would leave the action buttons peeking out around this opaque mask.
+      */}
       <div
         ref={containerRef}
-        className="relative flex min-w-0 flex-1 items-start gap-2 bg-surface"
+        className="relative flex min-w-0 flex-1 items-start gap-2 bg-surface px-2 py-0.5"
         style={{ transform: `translateX(${offset}px)` }}
       >
         <button
