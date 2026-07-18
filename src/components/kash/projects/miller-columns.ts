@@ -56,5 +56,8 @@ export const MILLER_COLUMN_WIDTH_CLASS = "w-64 shrink-0";
 export const MILLER_COLUMN_MIN_HEIGHT_CLASS = "min-h-60";
 
 export function millerColumnShellClass(widthClassName: string): string {
-  return `${widthClassName} ${MILLER_COLUMN_MIN_HEIGHT_CLASS} flex h-full min-h-0 flex-col self-stretch`;
+  // No `min-h-0` here: it collides with MILLER_COLUMN_MIN_HEIGHT_CLASS and which one
+  // wins depends on stylesheet order rather than intent. The inner task list carries
+  // its own `min-h-0` so its `overflow-y-auto` still resolves.
+  return `${widthClassName} ${MILLER_COLUMN_MIN_HEIGHT_CLASS} flex h-full flex-col self-stretch`;
 }

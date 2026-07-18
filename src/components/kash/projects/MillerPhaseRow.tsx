@@ -14,7 +14,8 @@ import type { ProjectPhase, ProjectTask } from "./types";
 
 type Node = ProjectTree<ProjectPhase, ProjectTask>["rootPhases"][number];
 
-const ACTION_WIDTH_PX = 72;
+/** Keep in sync with the `w-20` swipe-action button below. */
+const ACTION_WIDTH_PX = 80;
 
 type Props = {
   node: Node;
@@ -78,7 +79,7 @@ export default function MillerPhaseRow({
       ref={setRefs}
       data-miller-item
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={`relative flex cursor-grab flex-col overflow-hidden rounded-card transition active:cursor-grabbing ${
+      className={`relative flex shrink-0 cursor-grab flex-col overflow-hidden rounded-card transition active:cursor-grabbing ${
         isOpen || selected ? "bg-[var(--surface-selected)]" : "hover:bg-surface"
       } ${focused ? "ring-2 ring-inset ring-[var(--accent-soft)]" : ""} ${
         isDragging ? "opacity-50" : ""
@@ -89,7 +90,7 @@ export default function MillerPhaseRow({
       <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
         <button
           type="button"
-          className="flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
+          className="flex w-20 items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
           onClick={(e) => {
             e.stopPropagation();
             hide();
