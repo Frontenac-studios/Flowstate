@@ -4,6 +4,7 @@ const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const FALLBACK_STRIPE = "var(--ink-faint)";
 const FALLBACK_FILL = "var(--surface-2)";
+const FALLBACK_TEXT = "var(--ink)";
 
 /** Normalize provider hex; returns null when missing or invalid. */
 export function normalizeCalendarHex(color: string | null | undefined): string | null {
@@ -22,16 +23,23 @@ export function normalizeCalendarHex(color: string | null | undefined): string |
 export type CalendarEventColors = {
   stripe: string;
   fill: string;
+  text: string;
 };
 
-/** Soft fill (~12% solid into surface) + solid stripe; neutral fallback when no color. */
+/**
+ * Soft fill (~12% solid into surface) + solid stripe + a darkened text tint;
+ * neutral fallback when no color. `text` mixes the calendar hue toward ink so
+ * the title/time read the calendar's own colour while staying legible on the
+ * pale fill.
+ */
 export function calendarEventColors(color: string | null | undefined): CalendarEventColors {
   const hex = normalizeCalendarHex(color);
   if (!hex) {
-    return { stripe: FALLBACK_STRIPE, fill: FALLBACK_FILL };
+    return { stripe: FALLBACK_STRIPE, fill: FALLBACK_FILL, text: FALLBACK_TEXT };
   }
   return {
     stripe: hex,
     fill: `color-mix(in srgb, ${hex} 12%, var(--surface))`,
+    text: `color-mix(in srgb, ${hex} 60%, var(--ink))`,
   };
 }

@@ -21,13 +21,6 @@ export type ExternalEventBlockProps = {
   rangeStart: number;
 };
 
-function formatClock(min: number): string {
-  const h24 = Math.floor(min / 60);
-  const m = min % 60;
-  const h = h24 % 12 === 0 ? 12 : h24 % 12;
-  return `${h}:${String(m).padStart(2, "0")}`;
-}
-
 function displayTitle(event: { title: string | null }): string {
   return event.title?.trim() || "Busy";
 }
@@ -43,13 +36,14 @@ export function ExternalEventBlock({ event, layout, rangeStart }: ExternalEventB
 
   return (
     <div
-      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-pill border border-[var(--border-subtle)] border-l-[var(--stripe-width)] ${
+      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-row border border-[var(--border-subtle)] border-l-[var(--stripe-width)] ${
         tentative ? "opacity-75" : ""
       }`}
       style={{
         ...geometry,
         backgroundColor: colors.fill,
         borderLeftColor: colors.stripe,
+        color: colors.text,
       }}
       title={
         event.calendarName
@@ -58,12 +52,9 @@ export function ExternalEventBlock({ event, layout, rangeStart }: ExternalEventB
       }
     >
       <div className="flex items-center gap-1 px-2 py-1">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">
-          {title}
-          <span className="text-ink-faint"> cal</span>
-        </span>
-        <span className="shrink-0 text-caption tabular-nums text-ink-faint">
-          {formatClock(event.startMin)}
+        <span className="min-w-0 flex-1 truncate text-xs font-medium">{title}</span>
+        <span className="shrink-0 text-caption tabular-nums opacity-80">
+          {formatTimeRange(event.startMin, event.endMin)}
         </span>
       </div>
     </div>
