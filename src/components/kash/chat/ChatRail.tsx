@@ -39,12 +39,8 @@ export function ChatRail() {
     placementSummaryByMessageId,
     setStreamError,
   } = useChatPanel(threadId);
-  const { suggestions, runSuggestion, isSuggestionRunning } = useChatSuggestions(
-    threadId,
-    railOpen && showSuggestions,
-    sendMessage,
-    setStreamError
-  );
+  const { suggestions, runSuggestion, deleteSuggestion, renameSuggestion, isSuggestionRunning } =
+    useChatSuggestions(threadId, railOpen && showSuggestions, sendMessage, setStreamError);
 
   useEffect(() => {
     if (railOpen) markRead(threadId);
@@ -160,6 +156,8 @@ export function ChatRail() {
                 suggestions={suggestions}
                 disabled={isStreaming || isSuggestionRunning}
                 onSelect={(id) => void runSuggestion(id)}
+                onDelete={(id) => void deleteSuggestion(id)}
+                onRename={(id, label) => void renameSuggestion(id, label)}
               />
             ) : null
           }

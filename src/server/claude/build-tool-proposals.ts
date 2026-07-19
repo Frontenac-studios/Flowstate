@@ -413,6 +413,9 @@ export async function buildCreatePhaseProposal(
   }
 
   const items = [];
+  // Per-row failures are collected rather than thrown, so one unresolvable parent
+  // doesn't silently take the whole batch (and the card) down with it.
+  const skipped: string[] = [];
 
   for (const row of rows) {
     const slugKey = normalizeProjectSlugInput(row.projectSlug ?? "");
@@ -420,17 +423,23 @@ export async function buildCreatePhaseProposal(
       ? (projectRows.find((p) => p.slug.toLowerCase() === slugKey) ?? null)
       : null;
     if (!project) {
-      return { ok: false, error: `Project not found for slug "${row.projectSlug}".` };
+      skipped.push(`"${row.name}": project not found for slug "${row.projectSlug}"`);
+      continue;
     }
 
     const parent = resolveCreatePhaseParent(row, await loadProjectPhases(project.id));
-    if (!parent.ok) return parent;
+    if (!parent.ok) {
+      skipped.push(`"${row.name}": ${parent.error}`);
+      continue;
+    }
 
     if (row.startDate != null && !ISO_DATE.test(row.startDate)) {
-      return { ok: false, error: `Invalid startDate for "${row.name}".` };
+      skipped.push(`"${row.name}": invalid startDate.`);
+      continue;
     }
     if (row.endDate != null && !ISO_DATE.test(row.endDate)) {
-      return { ok: false, error: `Invalid endDate for "${row.name}".` };
+      skipped.push(`"${row.name}": invalid endDate.`);
+      continue;
     }
 
     items.push({
@@ -447,10 +456,17 @@ export async function buildCreatePhaseProposal(
     });
   }
 
+  if (items.length === 0) {
+    return { ok: false, error: `Couldn't propose any phases — ${skipped.join("; ")}` };
+  }
+
   const parsed = proposedActionSchema.safeParse({
     kind: "create_phase",
     status: "pending",
-    summary: input.summary,
+    summary:
+      skipped.length > 0
+        ? `${input.summary ?? ""} (skipped ${skipped.join("; ")})`.trim()
+        : input.summary,
     items,
   });
   if (!parsed.success) {

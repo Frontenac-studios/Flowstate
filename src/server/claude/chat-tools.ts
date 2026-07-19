@@ -87,6 +87,11 @@ export type ChatToolResult = {
   content: string;
   mutatedTasks: boolean;
   proposal?: ProposedAction;
+  /**
+   * Set when the tool refused to build a proposal. Surfaced to the user if the turn
+   * ends with no card, so the model can't narrate an Accept card that never existed.
+   */
+  error?: string;
 };
 
 async function parkInAbyss(userId: string, input: ParkInAbyssInput) {
@@ -354,7 +359,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildProposeBingoGoalsProposal>[0]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -395,7 +404,11 @@ export async function executeChatTool(
     if (name === "reschedule_tasks") {
       const built = await buildRescheduleProposal(userId, input as RescheduleTasksInput);
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       if (isSilentWriteTool(register, name)) {
         const applied = await applyProposedActionPayload(userId, built.proposal);
         return {
@@ -413,7 +426,11 @@ export async function executeChatTool(
     if (name === "create_task") {
       const built = buildCreateTaskProposal(input as CreateTaskToolInput, options?.captureContext);
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -427,7 +444,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildEditTaskProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -441,7 +462,11 @@ export async function executeChatTool(
         input as { taskIds?: string[]; summary?: string }
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -452,7 +477,11 @@ export async function executeChatTool(
     if (name === "complete_task") {
       const built = await buildCompleteTaskProposal(userId, input as CompleteTaskInput);
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       if (isSilentWriteTool(register, name)) {
         const applied = await applyProposedActionPayload(userId, built.proposal);
         return {
@@ -473,7 +502,11 @@ export async function executeChatTool(
         input as { slots?: { taskId?: string; slot?: number }[]; summary?: string }
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -486,7 +519,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildSetProtectedBlockProposal>[0]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -500,7 +537,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildSetDayPrioritiesProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -513,7 +554,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildApplyBalanceSuggestionsProposal>[0]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -526,7 +571,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildCreateProjectProposal>[0]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -540,7 +589,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildCreatePhaseProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -554,7 +607,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildEditPhaseProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -568,7 +625,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildDeletePhaseProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -582,7 +643,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildMoveTaskToPhaseProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
@@ -596,7 +661,11 @@ export async function executeChatTool(
         input as Parameters<typeof buildReplanProjectDatesProposal>[1]
       );
       if (!built.ok)
-        return { content: JSON.stringify({ ok: false, error: built.error }), mutatedTasks: false };
+        return {
+          content: JSON.stringify({ ok: false, error: built.error }),
+          mutatedTasks: false,
+          error: built.error,
+        };
       return {
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
