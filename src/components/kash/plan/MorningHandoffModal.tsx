@@ -12,6 +12,11 @@ import { TRIAGE_CHIP_MUTED } from "@/components/kash/plan/morning-triage/triage-
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { RitualSheet } from "@/components/kash/ui/RitualSheet";
 import Button from "@/components/kash/ui/Button";
+import Tooltip from "@/components/kash/ui/Tooltip";
+import {
+  formatMeetingTooltipLines,
+  type MeetingTooltipEvent,
+} from "@/lib/calendar/meeting-tooltip";
 import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
@@ -70,13 +75,15 @@ type CartRow = {
   category: ProjectCategory | null;
   categoryUnresolved: boolean;
   isStaged: boolean;
-  meta: string | null;
+  projectName: string | null;
 };
 
 type Props = {
   localDate: string;
   opener: EssentialNudgeChipPayload | null;
   calendarSummaryLine?: string | null;
+  /** Timed events behind the summary line — shown in its hover tooltip. */
+  calendarMeetings?: readonly MeetingTooltipEvent[] | null;
   tasks: HandoffPlanTask[];
   projects: ProjectRef[];
   pinnedBySlot: Map<number, HandoffPlanTask & { top3Order: number }>;
@@ -94,6 +101,8 @@ type Props = {
   initialPhase?: MorningTriagePhase;
   onKeepCarryover: (taskId: string) => void;
   onDropCarryover: (taskId: string) => void;
+  /** Hover-✓ on a triage row: complete the task in place. */
+  onCompleteTask?: (taskId: string) => void;
   onConfirmProjectTask: (taskId: string) => void;
   /** Defer a project-today suggestion off today (back to later). */
   onDeferProjectTask: (taskId: string) => void;
@@ -120,7 +129,7 @@ function toPickTask(task: HandoffPlanTask): TriagePickTask {
   return {
     id: task.id,
     title: task.title,
-    meta: task.projectSlug ? `#${task.projectSlug}` : undefined,
+    projectName: task.projectName ?? null,
     category: task.category,
   };
 }
@@ -225,8 +234,18 @@ function CartRowItem({
         </span>
       </button>
       <div className="min-w-0 flex-1">
-        <span className="block break-words text-body text-ink">{row.title}</span>
-        {row.meta ? <span className="block text-caption text-ink-muted">{row.meta}</span> : null}
+        <span className="block break-words text-body text-ink">
+          {row.title}
+          {row.projectName ? (
+            <span
+              className="text-caption text-ink-muted"
+              style={row.category != null ? { color: categoryTextVar(row.category) } : undefined}
+            >
+              {" "}
+              · {row.projectName}
+            </span>
+          ) : null}
+        </span>
       </div>
       {row.isStaged ? (
         <span className="shrink-0 rounded-pill border border-dashed border-border px-1.5 py-0.5 text-caption text-ink-muted">
@@ -252,7 +271,9 @@ export function MorningHandoffModal({
   localDate,
   opener,
   calendarSummaryLine = null,
+  calendarMeetings = null,
   tasks,
+  projects,
   pinnedBySlot,
   stagedPinnedBySlot,
   stagedCaptures,
@@ -266,6 +287,7 @@ export function MorningHandoffModal({
   initialPhase,
   onKeepCarryover,
   onDropCarryover,
+  onCompleteTask,
   onConfirmProjectTask,
   onDeferProjectTask,
   onAcceptGoalOffer,
@@ -298,7 +320,6 @@ export function MorningHandoffModal({
   const [phase, setPhase] = useState<MorningTriagePhase>(
     () => initialPhase ?? resolveInitialPhase(counts)
   );
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [dismissedProjectIds, setDismissedProjectIds] = useState<Set<string>>(() => new Set());
   const [projectsSkipped, setProjectsSkipped] = useState(false);
   const [projectsResolved, setProjectsResolved] = useState(false);
@@ -317,7 +338,6 @@ export function MorningHandoffModal({
       inboxCount: filterInboxUnscheduled(dayTasks).length,
     };
     setPhase(initialPhase ?? resolveInitialPhase(dayCounts));
-    setSelectedIds(new Set());
     setDismissedProjectIds(new Set());
     setProjectsSkipped(false);
     setProjectsResolved(false);
@@ -359,17 +379,6 @@ export function MorningHandoffModal({
     [remainingProjectSuggestions, projectSuggestionOffset]
   );
 
-  const carryoverIdsKey = useMemo(() => carryovers.map((t) => t.id).join(","), [carryovers]);
-  const projectBatchIdsKey = useMemo(
-    () => pacedProjects.batch.map((s) => s.task.id).join(","),
-    [pacedProjects.batch]
-  );
-  const inboxIdsKey = useMemo(() => inboxTasks.map((t) => t.id).join(","), [inboxTasks]);
-
-  useEffect(() => {
-    setSelectedIds(new Set());
-  }, [phase, carryoverIdsKey, projectBatchIdsKey, inboxIdsKey]);
-
   const advancePhase = useCallback(
     (from: MorningTriagePhase) => {
       setPhase(nextPhaseAfterComplete(from, counts));
@@ -400,15 +409,6 @@ export function MorningHandoffModal({
     advancePhase,
   ]);
 
-  const toggleSelected = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
   const dismissProjectIds = useCallback((ids: string[]) => {
     if (ids.length === 0) return;
     setDismissedProjectIds((prev) => {
@@ -416,13 +416,11 @@ export function MorningHandoffModal({
       for (const id of ids) next.add(id);
       return next;
     });
-    setSelectedIds(new Set());
   }, []);
 
   const handleKeepCarryoverIds = useCallback(
     (ids: string[]) => {
       for (const id of ids) onKeepCarryover(id);
-      setSelectedIds(new Set());
     },
     [onKeepCarryover]
   );
@@ -430,7 +428,6 @@ export function MorningHandoffModal({
   const handleDropCarryoverIds = useCallback(
     (ids: string[]) => {
       for (const id of ids) onDropCarryover(id);
-      setSelectedIds(new Set());
     },
     [onDropCarryover]
   );
@@ -453,7 +450,6 @@ export function MorningHandoffModal({
 
   const handleSkipProjects = useCallback(() => {
     setProjectsSkipped(true);
-    setSelectedIds(new Set());
     advancePhase("projects");
   }, [advancePhase]);
 
@@ -463,7 +459,6 @@ export function MorningHandoffModal({
   }, [advancePhase]);
 
   const handleSkipInbox = useCallback(() => {
-    setSelectedIds(new Set());
     advancePhase("inbox");
   }, [advancePhase]);
 
@@ -506,8 +501,6 @@ export function MorningHandoffModal({
             <ProjectPickCard
               intro="Here are a few project tasks that look relevant — add any to Today?"
               tasks={pickTasks}
-              selectedIds={selectedIds}
-              onToggle={toggleSelected}
               onAddIds={handleAddProjectIds}
               onDeferIds={handleDeferProjectIds}
               onShowMore={
@@ -516,6 +509,7 @@ export function MorningHandoffModal({
                   : undefined
               }
               showMoreDisabled={isPending}
+              onCompleteTask={onCompleteTask}
               disabled={isPending}
             />
             <button
@@ -564,10 +558,9 @@ export function MorningHandoffModal({
         return (
           <CarryoverTriageCard
             tasks={carryovers.map(toPickTask)}
-            selectedIds={selectedIds}
-            onToggle={toggleSelected}
             onKeepIds={handleKeepCarryoverIds}
             onDropIds={handleDropCarryoverIds}
+            onCompleteTask={onCompleteTask}
             lookbackLabel={lookbackLabel}
             disabled={isPending}
           />
@@ -580,8 +573,6 @@ export function MorningHandoffModal({
               <ProjectPickCard
                 intro="Here are a few project tasks that look relevant — add any to Today?"
                 tasks={pacedProjects.batch.map((s) => toPickTask(s.task))}
-                selectedIds={selectedIds}
-                onToggle={toggleSelected}
                 onAddIds={handleAddProjectIds}
                 onDeferIds={handleDeferProjectIds}
                 onShowMore={
@@ -590,6 +581,7 @@ export function MorningHandoffModal({
                     : undefined
                 }
                 showMoreDisabled={isPending}
+                onCompleteTask={onCompleteTask}
                 disabled={isPending}
               />
               <button
@@ -624,10 +616,9 @@ export function MorningHandoffModal({
           <InboxPickCard
             intro="A few inbox captures have no day yet — schedule any for today?"
             tasks={inboxTasks.map(toPickTask)}
-            selectedIds={selectedIds}
-            onToggle={toggleSelected}
             onAddIds={handleAddProjectIds}
             onSkip={handleSkipInbox}
+            onCompleteTask={onCompleteTask}
             disabled={isPending}
           />
         );
@@ -641,8 +632,7 @@ export function MorningHandoffModal({
     phase,
     carryovers,
     lookbackLabel,
-    selectedIds,
-    toggleSelected,
+    onCompleteTask,
     handleKeepCarryoverIds,
     handleDropCarryoverIds,
     remainingProjectSuggestions.length,
@@ -673,7 +663,7 @@ export function MorningHandoffModal({
       category: task.category ?? null,
       categoryUnresolved: task.categoryUnresolved ?? false,
       isStaged: false,
-      meta: task.projectSlug ? `#${task.projectSlug}` : null,
+      projectName: task.projectName ?? null,
     }));
     const stagedRows: CartRow[] = stagedCaptures.map((capture) => ({
       id: capture.id,
@@ -681,10 +671,12 @@ export function MorningHandoffModal({
       category: capture.category,
       categoryUnresolved: false,
       isStaged: true,
-      meta: capture.projectSlug ? `#${capture.projectSlug}` : null,
+      projectName: capture.projectSlug
+        ? (projects.find((project) => project.slug === capture.projectSlug)?.name ?? null)
+        : null,
     }));
     return [...liveRows, ...stagedRows];
-  }, [liveAssembled, stagedCaptures]);
+  }, [liveAssembled, stagedCaptures, projects]);
 
   const balanceTasks = useMemo(
     () =>
@@ -724,6 +716,11 @@ export function MorningHandoffModal({
   const showHoldSection =
     pinnedSlots.length > 0 && holdPreview != null && !holdDeclined && !isOverCommitted;
 
+  const meetingLines = useMemo(
+    () => formatMeetingTooltipLines(calendarMeetings ?? []),
+    [calendarMeetings]
+  );
+
   return (
     <RitualSheet
       open
@@ -733,22 +730,6 @@ export function MorningHandoffModal({
       size="xl"
       bodyLayout="fill"
       onDismiss={onSkip}
-      footer={
-        <div className="flex flex-col gap-[var(--space-2)] sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-body"
-            onClick={onSkip}
-            disabled={isPending}
-          >
-            Skip
-          </Button>
-          <Button type="button" className="text-body" onClick={onBegin} disabled={isPending}>
-            {beginLabel}
-          </Button>
-        </div>
-      }
     >
       <div className="flex h-full min-h-0 flex-col gap-[var(--space-4)]">
         <div className="shrink-0 space-y-[var(--space-2)]">
@@ -758,7 +739,33 @@ export function MorningHandoffModal({
             </p>
           ) : null}
           {calendarSummaryLine ? (
-            <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
+            meetingLines.length > 0 ? (
+              <p className="text-body text-ink-muted">
+                <Tooltip
+                  variant="light"
+                  focusable
+                  content={
+                    <ul className="space-y-0.5">
+                      {meetingLines.map((line) => (
+                        <li key={line.key} className="whitespace-nowrap">
+                          <span className="text-ink-muted">{line.timeLabel}</span>{" "}
+                          <span className="text-ink">{line.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                >
+                  <span
+                    className="cursor-default"
+                    style={{ borderBottom: "1px dotted var(--ink-muted)" }}
+                  >
+                    {calendarSummaryLine}
+                  </span>
+                </Tooltip>
+              </p>
+            ) : (
+              <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
+            )
           ) : null}
         </div>
 
@@ -778,164 +785,187 @@ export function MorningHandoffModal({
             />
           </div>
 
-          {/* Right: cart — Top 3, Today, and the balance preview. */}
-          <div className="flex min-h-0 flex-col gap-[var(--space-4)] lg:h-full lg:overflow-y-auto lg:pr-[var(--space-1)]">
-            {goalOffer ? (
-              <Section title="Goal step offer">
-                <div className="flex items-start justify-between gap-3 rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)]">
-                  <div className="min-w-0 flex-1">
-                    <span className="mr-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
-                      ✦ suggested
-                    </span>
-                    <p className="text-body text-ink">
-                      Work toward {goalOffer.goalTitle}: {goalOffer.stepTitle}
-                    </p>
-                    <p className="mt-1 text-caption text-ink-muted">{goalOffer.milestoneTitle}</p>
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    <button
-                      type="button"
-                      aria-label={`Add ${goalOffer.stepTitle} to today`}
-                      className={ROW_ACTION}
-                      disabled={isPending}
-                      onClick={onAcceptGoalOffer}
-                    >
-                      Add to today
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Dismiss goal step offer"
-                      className={ROW_ACTION_MUTED}
-                      disabled={isPending}
-                      onClick={onDismissGoalOffer}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              </Section>
-            ) : isOverCommitted ? (
-              <Section title="Goal step offer">
-                <p className="text-caption text-ink-muted">
-                  Today is already full — goal steering will wait for a lighter morning.
-                </p>
-              </Section>
-            ) : null}
-
-            <Section title="Top 3">
-              <ul className="grid grid-cols-3 gap-2">
-                {top3SlotEntries.map(({ slot, title, category }) => (
-                  <li
-                    key={slot}
-                    className="flex min-h-[var(--row-min-height)] flex-col justify-center gap-1 rounded-row border border-dashed border-subtle px-2 py-1.5"
-                    style={category != null ? categorySurfaceTint(category) : undefined}
-                  >
-                    <KeyCap className="self-start">{SLOT_LABELS[slot - 1]}</KeyCap>
-                    <span
-                      className={cn("truncate text-caption", title ? "text-ink" : "text-ink-faint")}
-                    >
-                      {title ?? "Star a task below"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-
-            {showHoldSection ? (
-              <Section title="Focus hold preview">
-                <div
-                  className="rounded-row border border-dashed px-[var(--space-3)] py-[var(--space-3)]"
-                  style={categorySurfaceTint(holdPreview.category)}
-                >
-                  <p
-                    className="text-body font-medium"
-                    style={{ color: categoryTextVar(holdPreview.category) }}
-                  >
-                    45-minute hold for priority #1
-                  </p>
-                  <p
-                    className="mt-1 text-caption"
-                    style={{ color: categoryTextVar(holdPreview.category) }}
-                  >
-                    {formatHoldSlotLabel(holdPreview.startMin, holdPreview.endMin)}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button type="button" className="text-caption" onClick={onConfirmHold}>
-                      Place hold
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="text-caption"
-                      onClick={onDeclineHold}
-                    >
-                      Not today
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {([2, 3] as const).map((slot) => {
-                    const category = PROJECT_CATEGORIES[(slot - 1) % PROJECT_CATEGORIES.length]!;
-                    const pinned = pinnedBySlot.get(slot);
-                    if (pinned) return null;
-                    return (
-                      <div
-                        key={slot}
-                        className="flex min-h-[var(--row-min-height)] items-center gap-2 rounded-pill border border-dashed px-3 py-[var(--row-py)]"
-                        style={categorySurfaceTint(category)}
+          {/* Right: cart — Top 3, Today, the balance preview, and the sheet actions. */}
+          <div className="flex min-h-0 flex-col lg:h-full">
+            <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-4)] lg:overflow-y-auto lg:pr-[var(--space-1)]">
+              {goalOffer ? (
+                <Section title="Goal step offer">
+                  <div className="flex items-start justify-between gap-3 rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)]">
+                    <div className="min-w-0 flex-1">
+                      <span className="mr-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
+                        ✦ suggested
+                      </span>
+                      <p className="text-body text-ink">
+                        Work toward {goalOffer.goalTitle}: {goalOffer.stepTitle}
+                      </p>
+                      <p className="mt-1 text-caption text-ink-muted">{goalOffer.milestoneTitle}</p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Add ${goalOffer.stepTitle} to today`}
+                        className={ROW_ACTION}
+                        disabled={isPending}
+                        onClick={onAcceptGoalOffer}
                       >
-                        <span className="text-caption" style={{ color: categoryTextVar(category) }}>
-                          {SLOT_LABELS[slot - 1]} ghost hold
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Section>
-            ) : null}
+                        Add to today
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Dismiss goal step offer"
+                        className={ROW_ACTION_MUTED}
+                        disabled={isPending}
+                        onClick={onDismissGoalOffer}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </Section>
+              ) : isOverCommitted ? (
+                <Section title="Goal step offer">
+                  <p className="text-caption text-ink-muted">
+                    Today is already full — goal steering will wait for a lighter morning.
+                  </p>
+                </Section>
+              ) : null}
 
-            <Section title={`Today (${cartRows.length})`}>
-              {cartRows.length === 0 ? (
-                <p className="text-caption text-ink-muted">
-                  Nothing yet — chat with Kash on the left, or keep a carryover.
-                </p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {cartRows.map((row) => {
-                    const pinnedSlot = pinnedSlotForRow(row, pinnedBySlot, stagedPinnedBySlot);
-                    const freeSlot = firstFreeTop3Slot(pinnedBySlot, stagedPinnedBySlot);
-                    return (
-                      <CartRowItem
-                        key={row.id}
-                        row={row}
-                        pinnedSlot={pinnedSlot}
-                        freeSlot={freeSlot}
-                        onPin={() => {
-                          if (!freeSlot) return;
-                          if (row.isStaged) onPinStagedTop3(row.id, freeSlot);
-                          else onPinTop3(row.id, freeSlot);
-                        }}
-                        onUnpin={() => {
-                          if (row.isStaged) onUnpinStagedTop3(row.id);
-                          else onUnpinTop3(row.id);
-                        }}
-                        onRemove={
-                          row.isStaged
-                            ? () => onRemoveStaged(row.id)
-                            : () => onRemoveFromToday(row.id)
-                        }
-                      />
-                    );
-                  })}
+              <Section title="Top 3">
+                <ul className="grid grid-cols-3 gap-2">
+                  {top3SlotEntries.map(({ slot, title, category }) => (
+                    <li
+                      key={slot}
+                      className="flex min-h-[var(--row-min-height)] flex-col justify-center gap-1 rounded-row border border-dashed border-subtle px-2 py-1.5"
+                      style={category != null ? categorySurfaceTint(category) : undefined}
+                    >
+                      <KeyCap className="self-start">{SLOT_LABELS[slot - 1]}</KeyCap>
+                      <span
+                        className={cn(
+                          "truncate text-caption",
+                          title ? "text-ink" : "text-ink-faint"
+                        )}
+                      >
+                        {title ?? "Star a task below"}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
-              )}
-            </Section>
-
-            {cartRows.length > 0 ? (
-              <Section title="Balance preview">
-                <BalanceBar tasks={balanceTasks} showGhostWhenSparse />
               </Section>
-            ) : null}
+
+              {showHoldSection ? (
+                <Section title="Focus hold preview">
+                  <div
+                    className="rounded-row border border-dashed px-[var(--space-3)] py-[var(--space-3)]"
+                    style={categorySurfaceTint(holdPreview.category)}
+                  >
+                    <p
+                      className="text-body font-medium"
+                      style={{ color: categoryTextVar(holdPreview.category) }}
+                    >
+                      45-minute hold for priority #1
+                    </p>
+                    <p
+                      className="mt-1 text-caption"
+                      style={{ color: categoryTextVar(holdPreview.category) }}
+                    >
+                      {formatHoldSlotLabel(holdPreview.startMin, holdPreview.endMin)}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button type="button" className="text-caption" onClick={onConfirmHold}>
+                        Place hold
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-caption"
+                        onClick={onDeclineHold}
+                      >
+                        Not today
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {([2, 3] as const).map((slot) => {
+                      const category = PROJECT_CATEGORIES[(slot - 1) % PROJECT_CATEGORIES.length]!;
+                      const pinned = pinnedBySlot.get(slot);
+                      if (pinned) return null;
+                      return (
+                        <div
+                          key={slot}
+                          className="flex min-h-[var(--row-min-height)] items-center gap-2 rounded-pill border border-dashed px-3 py-[var(--row-py)]"
+                          style={categorySurfaceTint(category)}
+                        >
+                          <span
+                            className="text-caption"
+                            style={{ color: categoryTextVar(category) }}
+                          >
+                            {SLOT_LABELS[slot - 1]} ghost hold
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Section>
+              ) : null}
+
+              <Section title={`Today (${cartRows.length})`}>
+                {cartRows.length === 0 ? (
+                  <p className="text-caption text-ink-muted">
+                    Nothing yet — chat with Kash on the left, or keep a carryover.
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {cartRows.map((row) => {
+                      const pinnedSlot = pinnedSlotForRow(row, pinnedBySlot, stagedPinnedBySlot);
+                      const freeSlot = firstFreeTop3Slot(pinnedBySlot, stagedPinnedBySlot);
+                      return (
+                        <CartRowItem
+                          key={row.id}
+                          row={row}
+                          pinnedSlot={pinnedSlot}
+                          freeSlot={freeSlot}
+                          onPin={() => {
+                            if (!freeSlot) return;
+                            if (row.isStaged) onPinStagedTop3(row.id, freeSlot);
+                            else onPinTop3(row.id, freeSlot);
+                          }}
+                          onUnpin={() => {
+                            if (row.isStaged) onUnpinStagedTop3(row.id);
+                            else onUnpinTop3(row.id);
+                          }}
+                          onRemove={
+                            row.isStaged
+                              ? () => onRemoveStaged(row.id)
+                              : () => onRemoveFromToday(row.id)
+                          }
+                        />
+                      );
+                    })}
+                  </ul>
+                )}
+              </Section>
+
+              {cartRows.length > 0 ? (
+                <Section title="Balance preview">
+                  <BalanceBar tasks={balanceTasks} showGhostWhenSparse />
+                </Section>
+              ) : null}
+            </div>
+
+            <div className="flex shrink-0 flex-col gap-[var(--space-2)] pt-[var(--space-4)] sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-body"
+                onClick={onSkip}
+                disabled={isPending}
+              >
+                Skip
+              </Button>
+              <Button type="button" className="text-body" onClick={onBegin} disabled={isPending}>
+                {beginLabel}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

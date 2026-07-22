@@ -12,48 +12,39 @@ import {
 type Props = {
   intro: string;
   tasks: TriagePickTask[];
-  selectedIds: Set<string>;
-  onToggle: (id: string) => void;
   onAddIds: (ids: string[]) => void;
   onSkip: () => void;
+  /** Hover-✓ on a row: the task is already done — complete it in place. */
+  onCompleteTask?: (id: string) => void;
   disabled?: boolean;
 };
 
 export function InboxPickCard({
   intro,
   tasks,
-  selectedIds,
-  onToggle,
   onAddIds,
   onSkip,
+  onCompleteTask,
   disabled = false,
 }: Props) {
   if (tasks.length === 0) return null;
 
-  const selectedList = tasks.map((task) => task.id).filter((id) => selectedIds.has(id));
+  const taskIds = tasks.map((task) => task.id);
 
   return (
     <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
       <p className="text-body text-ink">{intro}</p>
 
-      <TriageTaskPickList
-        tasks={tasks}
-        selectedIds={selectedIds}
-        onToggle={onToggle}
-        disabled={disabled}
-      />
+      <TriageTaskPickList tasks={tasks} onComplete={onCompleteTask} disabled={disabled} />
 
       <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
-          disabled={disabled || selectedList.length === 0}
-          onClick={() => onAddIds(selectedList)}
+          disabled={disabled}
+          onClick={() => onAddIds(taskIds)}
           className={TRIAGE_CHIP_PRIMARY}
         >
-          Add selected to Today
-          {selectedList.length > 0 && selectedList.length < tasks.length
-            ? ` ${selectedList.length}`
-            : ""}
+          Add all to Today
         </button>
         <button type="button" disabled={disabled} onClick={onSkip} className={TRIAGE_CHIP_MUTED}>
           Skip for now

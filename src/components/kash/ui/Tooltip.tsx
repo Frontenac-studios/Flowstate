@@ -11,9 +11,19 @@ type Props = {
   content: ReactNode;
   children: ReactNode;
   className?: string;
+  /** "light" renders a white popover card instead of the default ink bubble. */
+  variant?: "dark" | "light";
+  /** Make the trigger keyboard-reachable (it already opens on focus). */
+  focusable?: boolean;
 };
 
-export default function Tooltip({ content, children, className }: Props) {
+export default function Tooltip({
+  content,
+  children,
+  className,
+  variant = "dark",
+  focusable = false,
+}: Props) {
   const tooltipId = useId();
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -53,6 +63,7 @@ export default function Tooltip({ content, children, className }: Props) {
       <span
         ref={triggerRef}
         className="inline-flex"
+        tabIndex={focusable ? 0 : undefined}
         onMouseEnter={scheduleShow}
         onMouseLeave={hide}
         onFocusCapture={scheduleShow}
@@ -68,7 +79,10 @@ export default function Tooltip({ content, children, className }: Props) {
               role="tooltip"
               style={{ top: position.top, left: position.left }}
               className={cn(
-                "fixed z-overlay max-w-xs -translate-x-1/2 rounded-control bg-[var(--tooltip-bg)] px-[var(--space-3)] py-[var(--space-2)] text-caption text-[var(--tooltip-ink)] transition-opacity duration-micro motion-reduce:transition-none",
+                "fixed z-toast max-w-xs -translate-x-1/2 px-[var(--space-3)] py-[var(--space-2)] text-caption transition-opacity duration-micro motion-reduce:transition-none",
+                variant === "light"
+                  ? "rounded-row border border-border bg-surface text-ink shadow-overlay"
+                  : "rounded-control bg-[var(--tooltip-bg)] text-[var(--tooltip-ink)]",
                 className
               )}
             >

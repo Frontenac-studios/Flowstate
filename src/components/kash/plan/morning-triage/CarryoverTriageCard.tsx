@@ -7,15 +7,14 @@ import {
 import {
   TRIAGE_CHIP_MUTED,
   TRIAGE_CHIP_PRIMARY,
-  TRIAGE_CHIP_SECONDARY,
 } from "@/components/kash/plan/morning-triage/triage-pick-styles";
 
 type Props = {
   tasks: TriagePickTask[];
-  selectedIds: Set<string>;
-  onToggle: (id: string) => void;
   onKeepIds: (ids: string[]) => void;
   onDropIds: (ids: string[]) => void;
+  /** Hover-✓ on a row: the task is already done — complete it in place. */
+  onCompleteTask?: (id: string) => void;
   /** e.g. "yesterday" or "the last few days" */
   lookbackLabel: string;
   disabled?: boolean;
@@ -23,17 +22,15 @@ type Props = {
 
 export function CarryoverTriageCard({
   tasks,
-  selectedIds,
-  onToggle,
   onKeepIds,
   onDropIds,
+  onCompleteTask,
   lookbackLabel,
   disabled = false,
 }: Props) {
   if (tasks.length === 0) return null;
 
   const taskIds = tasks.map((task) => task.id);
-  const selectedList = taskIds.filter((id) => selectedIds.has(id));
   const count = tasks.length;
   const noun = count === 1 ? "task" : "tasks";
 
@@ -43,12 +40,7 @@ export function CarryoverTriageCard({
         You have {count} unfinished {noun} from {lookbackLabel}.
       </p>
 
-      <TriageTaskPickList
-        tasks={tasks}
-        selectedIds={selectedIds}
-        onToggle={onToggle}
-        disabled={disabled}
-      />
+      <TriageTaskPickList tasks={tasks} onComplete={onCompleteTask} disabled={disabled} />
 
       <div className="flex flex-wrap gap-1.5">
         <button
@@ -66,24 +58,6 @@ export function CarryoverTriageCard({
           className={TRIAGE_CHIP_MUTED}
         >
           Drop all
-        </button>
-        <button
-          type="button"
-          disabled={disabled || selectedList.length === 0}
-          onClick={() => onKeepIds(selectedList)}
-          className={TRIAGE_CHIP_SECONDARY}
-        >
-          Keep selected
-          {selectedList.length > 0 && selectedList.length < count ? ` ${selectedList.length}` : ""}
-        </button>
-        <button
-          type="button"
-          disabled={disabled || selectedList.length === 0}
-          onClick={() => onDropIds(selectedList)}
-          className={TRIAGE_CHIP_MUTED}
-        >
-          Drop selected
-          {selectedList.length > 0 && selectedList.length < count ? ` ${selectedList.length}` : ""}
         </button>
       </div>
     </div>

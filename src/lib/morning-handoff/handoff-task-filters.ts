@@ -19,6 +19,7 @@ export type HandoffPlanTask = {
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
   projectSlug?: string | null;
+  projectName?: string | null;
 };
 
 /** Prior days included when the user was offline (morning triage lookback). */
