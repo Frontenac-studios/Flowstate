@@ -497,6 +497,16 @@ export function MorningHandoffRunner() {
         else dropMutation.mutate({ id });
       }}
       onCompleteTask={handleCompleteTask}
+      onDeferToLater={(id) => {
+        const keys = occurrenceKeysFor(id);
+        if (keys) {
+          skipOccurrenceMutation.mutate(keys);
+          return;
+        }
+        const pinned = Array.from(pinnedBySlot.values()).some((task) => task.id === id);
+        if (pinned) unpinMutation.mutate({ id });
+        moveMutation.mutate({ id, bucket: "later" });
+      }}
       onConfirmProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onDeferProjectTask={(id) => {
         const pinned = Array.from(pinnedBySlot.values()).some((task) => task.id === id);
