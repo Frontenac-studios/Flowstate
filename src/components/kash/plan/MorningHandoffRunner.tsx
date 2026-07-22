@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useRitualOverlay } from "@/hooks/useRitualOverlay";
@@ -18,7 +18,12 @@ import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
 import { TOP3_HOLD_SOURCE } from "@/lib/top3/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
-import type { HandoffPlanTask } from "@/lib/morning-handoff/handoff-task-filters";
+import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
+import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
+import {
+  resolveOccurrenceKeys,
+  type HandoffPlanTask,
+} from "@/lib/morning-handoff/handoff-task-filters";
 import type { CreateTaskItemEdit } from "@/lib/chat/proposed-actions";
 import {
   collectStagedDependencyEdges,
@@ -181,6 +186,60 @@ export function MorningHandoffRunner() {
   const dropMutation = useMutation(
     trpc.abyss.dropFromTask.mutationOptions({ onSuccess: invalidateTasks })
   );
+
+  const toastCtx = useOptionalToast();
+
+  // Let the triage row's slide-out finish before the refetch unmounts it
+  // (mirrors TaskRow's invalidatePlanAfterSlide pacing).
+  const completeInvalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const invalidateAfterCompleteSlide = useCallback(() => {
+    if (completeInvalidateTimerRef.current) clearTimeout(completeInvalidateTimerRef.current);
+    completeInvalidateTimerRef.current = setTimeout(() => {
+      invalidateTasks();
+      void queryClient.invalidateQueries({
+        queryKey: trpc.tasks.listRecentlyCompleted.queryKey(),
+      });
+    }, readMotionDurationMs(MOTION_TOKEN.medium));
+  }, [invalidateTasks, queryClient, trpc]);
+
+  useEffect(
+    () => () => {
+      if (completeInvalidateTimerRef.current) clearTimeout(completeInvalidateTimerRef.current);
+    },
+    []
+  );
+
+  const uncompleteMutation = useMutation(
+    trpc.tasks.uncomplete.mutationOptions({ onSuccess: invalidateTasks })
+  );
+  const completeMutation = useMutation(
+    trpc.tasks.complete.mutationOptions({
+      onSuccess: (data) => {
+        invalidateAfterCompleteSlide();
+        toastCtx?.toast({
+          message: "Completed",
+          action: {
+            label: "Undo",
+            onClick: () => uncompleteMutation.mutate({ id: data.task.id }),
+          },
+        });
+      },
+    })
+  );
+  const completeOccurrenceMutation = useMutation(
+    trpc.recurrence.completeOccurrence.mutationOptions({
+      onSuccess: () => {
+        invalidateAfterCompleteSlide();
+        toastCtx?.toast({ message: "Completed" });
+      },
+    })
+  );
+  const skipOccurrenceMutation = useMutation(
+    trpc.recurrence.skipOccurrence.mutationOptions({ onSuccess: invalidateTasks })
+  );
+  const rescheduleOccurrenceMutation = useMutation(
+    trpc.recurrence.rescheduleOccurrence.mutationOptions({ onSuccess: invalidateTasks })
+  );
   const pinMutation = useMutation(
     trpc.tasks.pinTop3.mutationOptions({ onSuccess: invalidateTasks })
   );
@@ -279,6 +338,25 @@ export function MorningHandoffRunner() {
     nowMinutes,
     overCommit?.overCommitted,
   ]);
+
+  /** Occurrence keys for recurring virtual rows (`rec:<uuid>:<date>` ids) — null for plain tasks. */
+  const occurrenceKeysFor = useCallback(
+    (taskId: string) => {
+      const task = (tasks as HandoffPlanTask[]).find((t) => t.id === taskId);
+      if (!task?.isRecurringOccurrence) return null;
+      return resolveOccurrenceKeys(task);
+    },
+    [tasks]
+  );
+
+  const handleCompleteTask = useCallback(
+    (taskId: string) => {
+      const keys = occurrenceKeysFor(taskId);
+      if (keys) completeOccurrenceMutation.mutate(keys);
+      else completeMutation.mutate({ id: taskId });
+    },
+    [occurrenceKeysFor, completeOccurrenceMutation, completeMutation]
+  );
 
   const onStageTasks = useCallback((edits: CreateTaskItemEdit[]) => {
     setStagedCaptures((prev) => [...prev, ...stagedCapturesFromEdits(edits)]);
@@ -388,6 +466,7 @@ export function MorningHandoffRunner() {
       localDate={localDate}
       opener={opener}
       calendarSummaryLine={calendarSummaryLine}
+      calendarMeetings={externalEvents}
       tasks={tasks as HandoffPlanTask[]}
       projects={projects.map((p) => ({ id: p.id, slug: p.slug, name: p.name }))}
       pinnedBySlot={pinnedBySlot}
@@ -405,8 +484,19 @@ export function MorningHandoffRunner() {
         createTaskMutation.isPending ||
         createDependencyMutation.isPending
       }
-      onKeepCarryover={(id) => moveMutation.mutate({ id, bucket: "today" })}
-      onDropCarryover={(id) => dropMutation.mutate({ id })}
+      onKeepCarryover={(id) => {
+        // Recurring occurrences have `rec:` ids that uuid-validated mutations
+        // reject — route them through occurrence overrides instead.
+        const keys = occurrenceKeysFor(id);
+        if (keys) rescheduleOccurrenceMutation.mutate({ ...keys, movedToDate: localDate });
+        else moveMutation.mutate({ id, bucket: "today" });
+      }}
+      onDropCarryover={(id) => {
+        const keys = occurrenceKeysFor(id);
+        if (keys) skipOccurrenceMutation.mutate(keys);
+        else dropMutation.mutate({ id });
+      }}
+      onCompleteTask={handleCompleteTask}
       onConfirmProjectTask={(id) => moveMutation.mutate({ id, bucket: "today" })}
       onDeferProjectTask={(id) => {
         const pinned = Array.from(pinnedBySlot.values()).some((task) => task.id === id);

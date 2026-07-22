@@ -1,6 +1,8 @@
 "use client";
 
-import Checkbox from "@/components/kash/ui/Checkbox";
+import { useState } from "react";
+
+import Tooltip from "@/components/kash/ui/Tooltip";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { categoryTextVar } from "@/lib/projects/category-tokens";
 import { cn } from "@/lib/cn";
@@ -10,61 +12,76 @@ import { triageCategoryRowTint } from "./triage-pick-styles";
 export type TriagePickTask = {
   id: string;
   title: string;
-  meta?: string;
+  projectName?: string | null;
   category?: ProjectCategory | null;
 };
 
 type Props = {
   tasks: TriagePickTask[];
-  selectedIds: Set<string>;
-  onToggle: (id: string) => void;
+  /** Marks the task completed immediately (bare-check hover affordance). */
+  onComplete?: (id: string) => void;
   disabled?: boolean;
 };
 
-export function TriageTaskPickList({ tasks, selectedIds, onToggle, disabled = false }: Props) {
+export function TriageTaskPickList({ tasks, onComplete, disabled = false }: Props) {
+  const [completingIds, setCompletingIds] = useState<Set<string>>(() => new Set());
+
   if (tasks.length === 0) return null;
+
+  const handleComplete = (id: string) => {
+    if (!onComplete || completingIds.has(id)) return;
+    setCompletingIds((prev) => new Set(prev).add(id));
+    onComplete(id);
+  };
 
   return (
     <div className="space-y-2">
       <ul className="space-y-1" aria-label="Tasks to review">
         {tasks.map((task) => {
-          const checked = selectedIds.has(task.id);
-          const inputId = `triage-pick-${task.id}`;
+          const completing = completingIds.has(task.id);
 
           return (
             <li key={task.id}>
-              <label
-                htmlFor={inputId}
+              <div
                 className={cn(
-                  "flex cursor-pointer items-start gap-2 border border-subtle bg-surface px-2 py-1.5 transition",
+                  "group flex items-start gap-2 border border-subtle bg-surface px-2 py-1.5",
                   task.category != null ? "rounded-r-row" : "rounded-row",
-                  disabled && "cursor-not-allowed opacity-60"
+                  disabled && "opacity-60",
+                  completing &&
+                    "translate-x-6 opacity-0 transition-[transform,opacity] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
                 )}
                 style={triageCategoryRowTint(task.category)}
               >
-                <Checkbox
-                  id={inputId}
-                  checked={checked}
-                  disabled={disabled}
-                  onChange={() => onToggle(task.id)}
-                  className="mt-0.5"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block break-words text-body text-ink">{task.title}</span>
-                  {task.meta ? (
+                <span className="min-w-0 flex-1 break-words text-body text-ink">
+                  {task.title}
+                  {task.projectName ? (
                     <span
-                      className="mt-0.5 block text-caption text-ink-muted"
+                      className="text-caption text-ink-muted"
                       style={
                         task.category != null
                           ? { color: categoryTextVar(task.category) }
                           : undefined
                       }
                     >
-                      {task.meta}
+                      {" "}
+                      · {task.projectName}
                     </span>
                   ) : null}
                 </span>
-              </label>
+                {onComplete ? (
+                  <Tooltip content="Mark completed">
+                    <button
+                      type="button"
+                      aria-label={`Mark ${task.title} completed`}
+                      disabled={disabled || completing}
+                      onClick={() => handleComplete(task.id)}
+                      className="shrink-0 px-0.5 text-body leading-none text-ink-muted opacity-0 transition hover:text-ink focus-visible:opacity-100 disabled:cursor-not-allowed group-hover:opacity-100"
+                    >
+                      ✓
+                    </button>
+                  </Tooltip>
+                ) : null}
+              </div>
             </li>
           );
         })}
