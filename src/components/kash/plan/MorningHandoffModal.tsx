@@ -1,12 +1,28 @@
 "use client";
 
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCenter,
+  pointerWithin,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { BalanceBar } from "@/components/kash/plan/BalanceBar";
 import { MorningTriageChat } from "@/components/kash/plan/MorningTriageChat";
 import { CarryoverTriageCard } from "@/components/kash/plan/morning-triage/CarryoverTriageCard";
 import { InboxPickCard } from "@/components/kash/plan/morning-triage/InboxPickCard";
 import { ProjectPickCard } from "@/components/kash/plan/morning-triage/ProjectPickCard";
+import { TriageDragBins } from "@/components/kash/plan/morning-triage/TriageDragBins";
+import { TriageDragOverlayCard } from "@/components/kash/plan/morning-triage/TriageDragOverlayCard";
 import type { TriagePickTask } from "@/components/kash/plan/morning-triage/TriageTaskPickList";
 import { TRIAGE_CHIP_MUTED } from "@/components/kash/plan/morning-triage/triage-pick-styles";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
@@ -47,11 +63,60 @@ import {
   type HandoffPlanTask,
 } from "@/lib/morning-handoff/handoff-task-filters";
 import type { StagedCapture } from "@/lib/morning-handoff/staged-capture";
+import { TRIAGE_TODAY_DROP_ID, resolveTriageDrop } from "@/lib/morning-handoff/triage-drag";
 import { isTriageCandidate } from "@/lib/tasks/triage-candidates";
 import { cn } from "@/lib/cn";
 
 const SLOT_LABELS = ["①", "②", "③"] as const;
 const TOP3_SLOTS = [1, 2, 3] as const;
+
+const triageCollisionDetection: CollisionDetection = (args) => {
+  const pointerHits = pointerWithin(args);
+  if (pointerHits.length > 0) return pointerHits;
+  return closestCenter(args);
+};
+
+/** Which triage card a dragged task came from — decides the drop dispatch. */
+type TriageDragSource = "carryover" | "project" | "inbox";
+
+function TodayDropZone({
+  dragActive,
+  children,
+}: {
+  dragActive: boolean;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: TRIAGE_TODAY_DROP_ID });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "rounded-row transition",
+        dragActive && "border-2 border-dashed p-[var(--space-2)]"
+      )}
+      style={
+        dragActive
+          ? {
+              borderColor: "var(--cat-professional-solid)",
+              backgroundColor: isOver
+                ? "var(--cat-professional-fill)"
+                : "color-mix(in srgb, var(--cat-professional-fill) 55%, var(--surface))",
+            }
+          : undefined
+      }
+    >
+      {children}
+      {dragActive ? (
+        <p
+          className="mt-[var(--space-2)] text-center text-caption"
+          style={{ color: "var(--cat-professional-text)" }}
+        >
+          Drop to add to Today
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 const ROW_ACTION =
   "rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-[var(--accent-soft)]";
@@ -103,6 +168,8 @@ type Props = {
   onDropCarryover: (taskId: string) => void;
   /** Hover-✓ on a triage row: complete the task in place. */
   onCompleteTask?: (taskId: string) => void;
+  /** Drag to the Later bin: move a carryover off today without dropping it. */
+  onDeferToLater?: (taskId: string) => void;
   onConfirmProjectTask: (taskId: string) => void;
   /** Defer a project-today suggestion off today (back to later). */
   onDeferProjectTask: (taskId: string) => void;
@@ -288,6 +355,7 @@ export function MorningHandoffModal({
   onKeepCarryover,
   onDropCarryover,
   onCompleteTask,
+  onDeferToLater,
   onConfirmProjectTask,
   onDeferProjectTask,
   onAcceptGoalOffer,
@@ -721,6 +789,81 @@ export function MorningHandoffModal({
     [calendarMeetings]
   );
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const [activeDragTask, setActiveDragTask] = useState<TriagePickTask | null>(null);
+
+  /** Every task currently draggable from a triage card, tagged with its source. */
+  const dragSourceById = useMemo(() => {
+    const map = new Map<string, { task: TriagePickTask; source: TriageDragSource }>();
+    for (const task of carryovers) {
+      map.set(task.id, { task: toPickTask(task), source: "carryover" });
+    }
+    for (const suggestion of pacedProjects.batch) {
+      if (!map.has(suggestion.task.id)) {
+        map.set(suggestion.task.id, { task: toPickTask(suggestion.task), source: "project" });
+      }
+    }
+    for (const task of inboxTasks) {
+      if (!map.has(task.id)) {
+        map.set(task.id, { task: toPickTask(task), source: "inbox" });
+      }
+    }
+    return map;
+  }, [carryovers, pacedProjects.batch, inboxTasks]);
+
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const entry = dragSourceById.get(String(event.active.id).replace(/^triage-task:/, ""));
+      setActiveDragTask(entry?.task ?? null);
+    },
+    [dragSourceById]
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveDragTask(null);
+      if (isPending) return;
+      const drop = resolveTriageDrop(
+        String(event.active.id),
+        event.over ? String(event.over.id) : null
+      );
+      if (!drop) return;
+      const entry = dragSourceById.get(drop.taskId);
+      if (!entry) return;
+      const fromSuggestion = entry.source === "project" || entry.source === "inbox";
+
+      switch (drop.action) {
+        case "today":
+          if (entry.source === "carryover") handleKeepCarryoverIds([drop.taskId]);
+          else handleAddProjectIds([drop.taskId]);
+          return;
+        case "later":
+          if (entry.source === "carryover") onDeferToLater?.(drop.taskId);
+          else handleDeferProjectIds([drop.taskId]);
+          return;
+        case "done":
+          onCompleteTask?.(drop.taskId);
+          if (fromSuggestion) dismissProjectIds([drop.taskId]);
+          return;
+        case "drop":
+          onDropCarryover(drop.taskId);
+          if (fromSuggestion) dismissProjectIds([drop.taskId]);
+          return;
+      }
+    },
+    [
+      isPending,
+      dragSourceById,
+      handleKeepCarryoverIds,
+      handleAddProjectIds,
+      onDeferToLater,
+      handleDeferProjectIds,
+      onCompleteTask,
+      onDropCarryover,
+      dismissProjectIds,
+    ]
+  );
+
   return (
     <RitualSheet
       open
@@ -731,244 +874,272 @@ export function MorningHandoffModal({
       bodyLayout="fill"
       onDismiss={onSkip}
     >
-      <div className="flex h-full min-h-0 flex-col gap-[var(--space-4)]">
-        <div className="shrink-0 space-y-[var(--space-2)]">
-          {previewBanner ? (
-            <p className="rounded-row border border-accent bg-[var(--accent-soft)] px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
-              {previewBanner}
-            </p>
-          ) : null}
-          {calendarSummaryLine ? (
-            meetingLines.length > 0 ? (
-              <p className="text-body text-ink-muted">
-                <Tooltip
-                  variant="light"
-                  focusable
-                  content={
-                    <ul className="space-y-0.5">
-                      {meetingLines.map((line) => (
-                        <li key={line.key} className="whitespace-nowrap">
-                          <span className="text-ink-muted">{line.timeLabel}</span>{" "}
-                          <span className="text-ink">{line.title}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  }
-                >
-                  <span
-                    className="cursor-default"
-                    style={{ borderBottom: "1px dotted var(--ink-muted)" }}
-                  >
-                    {calendarSummaryLine}
-                  </span>
-                </Tooltip>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={triageCollisionDetection}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveDragTask(null)}
+      >
+        <div className="flex h-full min-h-0 flex-col gap-[var(--space-4)]">
+          <div className="shrink-0 space-y-[var(--space-2)]">
+            {previewBanner ? (
+              <p className="rounded-row border border-accent bg-[var(--accent-soft)] px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
+                {previewBanner}
               </p>
-            ) : (
-              <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
-            )
-          ) : null}
-        </div>
-
-        <div className="grid min-h-0 flex-1 gap-[var(--space-5)] overflow-y-auto lg:grid-cols-2 lg:overflow-visible">
-          {/* Left: chat-first morning triage with in-thread act cards. */}
-          <div className="flex min-h-0 flex-col lg:h-full lg:overflow-y-auto lg:pr-[var(--space-2)]">
-            <MorningTriageChat
-              dumpEnabled={dumpEnabled}
-              dumpLockedHint="Finish the steps above first — or skip to dump."
-              commitMode={captureCommitMode}
-              onStageTasks={onStageTasks}
-              onTasksChanged={onTasksChanged}
-              scriptedMessages={scriptedMessages}
-              actSlot={actSlot}
-              skipToDumpLabel="I'll handle these later — start dump"
-              onSkipToDump={handleSkipToDump}
-            />
-          </div>
-
-          {/* Right: cart — Top 3, Today, the balance preview, and the sheet actions. */}
-          <div className="flex min-h-0 flex-col lg:h-full">
-            <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-4)] lg:overflow-y-auto lg:pr-[var(--space-1)]">
-              {goalOffer ? (
-                <Section title="Goal step offer">
-                  <div className="flex items-start justify-between gap-3 rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)]">
-                    <div className="min-w-0 flex-1">
-                      <span className="mr-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
-                        ✦ suggested
-                      </span>
-                      <p className="text-body text-ink">
-                        Work toward {goalOffer.goalTitle}: {goalOffer.stepTitle}
-                      </p>
-                      <p className="mt-1 text-caption text-ink-muted">{goalOffer.milestoneTitle}</p>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        type="button"
-                        aria-label={`Add ${goalOffer.stepTitle} to today`}
-                        className={ROW_ACTION}
-                        disabled={isPending}
-                        onClick={onAcceptGoalOffer}
-                      >
-                        Add to today
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Dismiss goal step offer"
-                        className={ROW_ACTION_MUTED}
-                        disabled={isPending}
-                        onClick={onDismissGoalOffer}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                </Section>
-              ) : isOverCommitted ? (
-                <Section title="Goal step offer">
-                  <p className="text-caption text-ink-muted">
-                    Today is already full — goal steering will wait for a lighter morning.
-                  </p>
-                </Section>
-              ) : null}
-
-              <Section title="Top 3">
-                <ul className="grid grid-cols-3 gap-2">
-                  {top3SlotEntries.map(({ slot, title, category }) => (
-                    <li
-                      key={slot}
-                      className="flex min-h-[var(--row-min-height)] flex-col justify-center gap-1 rounded-row border border-dashed border-subtle px-2 py-1.5"
-                      style={category != null ? categorySurfaceTint(category) : undefined}
-                    >
-                      <KeyCap className="self-start">{SLOT_LABELS[slot - 1]}</KeyCap>
-                      <span
-                        className={cn(
-                          "truncate text-caption",
-                          title ? "text-ink" : "text-ink-faint"
-                        )}
-                      >
-                        {title ?? "Star a task below"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </Section>
-
-              {showHoldSection ? (
-                <Section title="Focus hold preview">
-                  <div
-                    className="rounded-row border border-dashed px-[var(--space-3)] py-[var(--space-3)]"
-                    style={categorySurfaceTint(holdPreview.category)}
+            ) : null}
+            {calendarSummaryLine ? (
+              meetingLines.length > 0 ? (
+                <p className="text-body text-ink-muted">
+                  <Tooltip
+                    variant="light"
+                    focusable
+                    content={
+                      <ul className="space-y-0.5">
+                        {meetingLines.map((line) => (
+                          <li key={line.key} className="whitespace-nowrap">
+                            <span className="text-ink-muted">{line.timeLabel}</span>{" "}
+                            <span className="text-ink">{line.title}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    }
                   >
-                    <p
-                      className="text-body font-medium"
-                      style={{ color: categoryTextVar(holdPreview.category) }}
+                    <span
+                      className="cursor-default"
+                      style={{ borderBottom: "1px dotted var(--ink-muted)" }}
                     >
-                      45-minute hold for priority #1
-                    </p>
-                    <p
-                      className="mt-1 text-caption"
-                      style={{ color: categoryTextVar(holdPreview.category) }}
-                    >
-                      {formatHoldSlotLabel(holdPreview.startMin, holdPreview.endMin)}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button type="button" className="text-caption" onClick={onConfirmHold}>
-                        Place hold
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="text-caption"
-                        onClick={onDeclineHold}
-                      >
-                        Not today
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {([2, 3] as const).map((slot) => {
-                      const category = PROJECT_CATEGORIES[(slot - 1) % PROJECT_CATEGORIES.length]!;
-                      const pinned = pinnedBySlot.get(slot);
-                      if (pinned) return null;
-                      return (
-                        <div
-                          key={slot}
-                          className="flex min-h-[var(--row-min-height)] items-center gap-2 rounded-pill border border-dashed px-3 py-[var(--row-py)]"
-                          style={categorySurfaceTint(category)}
-                        >
-                          <span
-                            className="text-caption"
-                            style={{ color: categoryTextVar(category) }}
-                          >
-                            {SLOT_LABELS[slot - 1]} ghost hold
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Section>
-              ) : null}
+                      {calendarSummaryLine}
+                    </span>
+                  </Tooltip>
+                </p>
+              ) : (
+                <p className="text-body text-ink-muted">{calendarSummaryLine}</p>
+              )
+            ) : null}
+          </div>
 
-              <Section title={`Today (${cartRows.length})`}>
-                {cartRows.length === 0 ? (
-                  <p className="text-caption text-ink-muted">
-                    Nothing yet — chat with Kash on the left, or keep a carryover.
-                  </p>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {cartRows.map((row) => {
-                      const pinnedSlot = pinnedSlotForRow(row, pinnedBySlot, stagedPinnedBySlot);
-                      const freeSlot = firstFreeTop3Slot(pinnedBySlot, stagedPinnedBySlot);
-                      return (
-                        <CartRowItem
-                          key={row.id}
-                          row={row}
-                          pinnedSlot={pinnedSlot}
-                          freeSlot={freeSlot}
-                          onPin={() => {
-                            if (!freeSlot) return;
-                            if (row.isStaged) onPinStagedTop3(row.id, freeSlot);
-                            else onPinTop3(row.id, freeSlot);
-                          }}
-                          onUnpin={() => {
-                            if (row.isStaged) onUnpinStagedTop3(row.id);
-                            else onUnpinTop3(row.id);
-                          }}
-                          onRemove={
-                            row.isStaged
-                              ? () => onRemoveStaged(row.id)
-                              : () => onRemoveFromToday(row.id)
-                          }
-                        />
-                      );
-                    })}
-                  </ul>
-                )}
-              </Section>
-
-              {cartRows.length > 0 ? (
-                <Section title="Balance preview">
-                  <BalanceBar tasks={balanceTasks} showGhostWhenSparse />
-                </Section>
-              ) : null}
+          <div className="grid min-h-0 flex-1 gap-[var(--space-5)] overflow-y-auto lg:grid-cols-2 lg:overflow-visible">
+            {/* Left: chat-first morning triage with in-thread act cards. */}
+            <div className="relative flex min-h-0 flex-col lg:h-full lg:overflow-y-auto lg:pr-[var(--space-2)]">
+              {activeDragTask ? <TriageDragBins /> : null}
+              <MorningTriageChat
+                dumpEnabled={dumpEnabled}
+                dumpLockedHint="Finish the steps above first — or skip to dump."
+                commitMode={captureCommitMode}
+                onStageTasks={onStageTasks}
+                onTasksChanged={onTasksChanged}
+                scriptedMessages={scriptedMessages}
+                actSlot={actSlot}
+                skipToDumpLabel="I'll handle these later — start dump"
+                onSkipToDump={handleSkipToDump}
+              />
             </div>
 
-            <div className="flex shrink-0 flex-col gap-[var(--space-2)] pt-[var(--space-4)] sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-body"
-                onClick={onSkip}
-                disabled={isPending}
-              >
-                Skip
-              </Button>
-              <Button type="button" className="text-body" onClick={onBegin} disabled={isPending}>
-                {beginLabel}
-              </Button>
+            {/* Right: cart — Top 3, Today, the balance preview, and the sheet actions. */}
+            <div className="flex min-h-0 flex-col lg:h-full">
+              <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-4)] lg:overflow-y-auto lg:pr-[var(--space-1)]">
+                {goalOffer ? (
+                  <Section title="Goal step offer">
+                    <div className="flex items-start justify-between gap-3 rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)]">
+                      <div className="min-w-0 flex-1">
+                        <span className="mr-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
+                          ✦ suggested
+                        </span>
+                        <p className="text-body text-ink">
+                          Work toward {goalOffer.goalTitle}: {goalOffer.stepTitle}
+                        </p>
+                        <p className="mt-1 text-caption text-ink-muted">
+                          {goalOffer.milestoneTitle}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <button
+                          type="button"
+                          aria-label={`Add ${goalOffer.stepTitle} to today`}
+                          className={ROW_ACTION}
+                          disabled={isPending}
+                          onClick={onAcceptGoalOffer}
+                        >
+                          Add to today
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Dismiss goal step offer"
+                          className={ROW_ACTION_MUTED}
+                          disabled={isPending}
+                          onClick={onDismissGoalOffer}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  </Section>
+                ) : isOverCommitted ? (
+                  <Section title="Goal step offer">
+                    <p className="text-caption text-ink-muted">
+                      Today is already full — goal steering will wait for a lighter morning.
+                    </p>
+                  </Section>
+                ) : null}
+
+                <Section title="Top 3">
+                  <ul className="grid grid-cols-3 gap-2">
+                    {top3SlotEntries.map(({ slot, title, category }) => (
+                      <li
+                        key={slot}
+                        className="flex min-h-[var(--row-min-height)] flex-col justify-center gap-1 rounded-row border border-dashed border-subtle px-2 py-1.5"
+                        style={category != null ? categorySurfaceTint(category) : undefined}
+                      >
+                        <KeyCap className="self-start">{SLOT_LABELS[slot - 1]}</KeyCap>
+                        <span
+                          className={cn(
+                            "truncate text-caption",
+                            title ? "text-ink" : "text-ink-faint"
+                          )}
+                        >
+                          {title ?? "Star a task below"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Section>
+
+                {showHoldSection ? (
+                  <Section title="Focus hold preview">
+                    <div
+                      className="rounded-row border border-dashed px-[var(--space-3)] py-[var(--space-3)]"
+                      style={categorySurfaceTint(holdPreview.category)}
+                    >
+                      <p
+                        className="text-body font-medium"
+                        style={{ color: categoryTextVar(holdPreview.category) }}
+                      >
+                        45-minute hold for priority #1
+                      </p>
+                      <p
+                        className="mt-1 text-caption"
+                        style={{ color: categoryTextVar(holdPreview.category) }}
+                      >
+                        {formatHoldSlotLabel(holdPreview.startMin, holdPreview.endMin)}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button type="button" className="text-caption" onClick={onConfirmHold}>
+                          Place hold
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="text-caption"
+                          onClick={onDeclineHold}
+                        >
+                          Not today
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {([2, 3] as const).map((slot) => {
+                        const category =
+                          PROJECT_CATEGORIES[(slot - 1) % PROJECT_CATEGORIES.length]!;
+                        const pinned = pinnedBySlot.get(slot);
+                        if (pinned) return null;
+                        return (
+                          <div
+                            key={slot}
+                            className="flex min-h-[var(--row-min-height)] items-center gap-2 rounded-pill border border-dashed px-3 py-[var(--row-py)]"
+                            style={categorySurfaceTint(category)}
+                          >
+                            <span
+                              className="text-caption"
+                              style={{ color: categoryTextVar(category) }}
+                            >
+                              {SLOT_LABELS[slot - 1]} ghost hold
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Section>
+                ) : null}
+
+                <TodayDropZone dragActive={activeDragTask != null}>
+                  <Section title={`Today (${cartRows.length})`}>
+                    {cartRows.length === 0 ? (
+                      <p className="text-caption text-ink-muted">
+                        Nothing yet — chat with Kash on the left, or keep a carryover.
+                      </p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {cartRows.map((row) => {
+                          const pinnedSlot = pinnedSlotForRow(
+                            row,
+                            pinnedBySlot,
+                            stagedPinnedBySlot
+                          );
+                          const freeSlot = firstFreeTop3Slot(pinnedBySlot, stagedPinnedBySlot);
+                          return (
+                            <CartRowItem
+                              key={row.id}
+                              row={row}
+                              pinnedSlot={pinnedSlot}
+                              freeSlot={freeSlot}
+                              onPin={() => {
+                                if (!freeSlot) return;
+                                if (row.isStaged) onPinStagedTop3(row.id, freeSlot);
+                                else onPinTop3(row.id, freeSlot);
+                              }}
+                              onUnpin={() => {
+                                if (row.isStaged) onUnpinStagedTop3(row.id);
+                                else onUnpinTop3(row.id);
+                              }}
+                              onRemove={
+                                row.isStaged
+                                  ? () => onRemoveStaged(row.id)
+                                  : () => onRemoveFromToday(row.id)
+                              }
+                            />
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </Section>
+                </TodayDropZone>
+
+                {cartRows.length > 0 ? (
+                  <Section title="Balance preview">
+                    <BalanceBar tasks={balanceTasks} showGhostWhenSparse />
+                  </Section>
+                ) : null}
+              </div>
+
+              <div className="flex shrink-0 flex-col gap-[var(--space-2)] pt-[var(--space-4)] sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-body"
+                  onClick={onSkip}
+                  disabled={isPending}
+                >
+                  Skip
+                </Button>
+                <Button type="button" className="text-body" onClick={onBegin} disabled={isPending}>
+                  {beginLabel}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        {/* Portaled: the sheet panel retains a transform + overflow-hidden, which
+          would clip and misposition a fixed-position overlay rendered inside it. */}
+        {typeof document !== "undefined"
+          ? createPortal(
+              <DragOverlay>
+                <TriageDragOverlayCard task={activeDragTask} />
+              </DragOverlay>,
+              document.body
+            )
+          : null}
+      </DndContext>
     </RitualSheet>
   );
 }

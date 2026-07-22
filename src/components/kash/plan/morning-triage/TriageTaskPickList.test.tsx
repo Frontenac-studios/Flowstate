@@ -1,4 +1,6 @@
+import { DndContext } from "@dnd-kit/core";
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TriageTaskPickList, type TriagePickTask } from "./TriageTaskPickList";
@@ -13,9 +15,13 @@ function makeTask(overrides: Partial<TriagePickTask> = {}): TriagePickTask {
   };
 }
 
+function renderList(ui: ReactNode) {
+  return render(<DndContext>{ui}</DndContext>);
+}
+
 describe("TriageTaskPickList", () => {
   it("renders the project name inline with the title, colored by category", () => {
-    render(<TriageTaskPickList tasks={[makeTask()]} />);
+    renderList(<TriageTaskPickList tasks={[makeTask()]} />);
 
     const row = screen.getByText("Scope Trainer Tool Build");
     expect(row).toHaveTextContent("· Hume Builds");
@@ -24,18 +30,23 @@ describe("TriageTaskPickList", () => {
   });
 
   it("does not render a #slug meta line", () => {
-    render(<TriageTaskPickList tasks={[makeTask()]} />);
+    renderList(<TriageTaskPickList tasks={[makeTask()]} />);
     expect(screen.queryByText(/#/)).toBeNull();
   });
 
   it("omits the project name span when the task has none", () => {
-    render(<TriageTaskPickList tasks={[makeTask({ projectName: null })]} />);
+    renderList(<TriageTaskPickList tasks={[makeTask({ projectName: null })]} />);
     expect(screen.queryByText(/·/)).toBeNull();
+  });
+
+  it("renders an always-visible drag grip per row", () => {
+    renderList(<TriageTaskPickList tasks={[makeTask()]} />);
+    expect(screen.getByRole("button", { name: "Drag task" })).toBeInTheDocument();
   });
 
   it("fires onComplete once per task from the hover ✓", () => {
     const onComplete = vi.fn();
-    render(<TriageTaskPickList tasks={[makeTask()]} onComplete={onComplete} />);
+    renderList(<TriageTaskPickList tasks={[makeTask()]} onComplete={onComplete} />);
 
     const button = screen.getByRole("button", {
       name: "Mark Scope Trainer Tool Build completed",
@@ -48,12 +59,12 @@ describe("TriageTaskPickList", () => {
   });
 
   it("renders no complete button without an onComplete handler", () => {
-    render(<TriageTaskPickList tasks={[makeTask()]} />);
-    expect(screen.queryByRole("button")).toBeNull();
+    renderList(<TriageTaskPickList tasks={[makeTask()]} />);
+    expect(screen.queryByRole("button", { name: /completed/ })).toBeNull();
   });
 
   it("disables the complete button while the list is disabled", () => {
-    render(<TriageTaskPickList tasks={[makeTask()]} onComplete={vi.fn()} disabled />);
+    renderList(<TriageTaskPickList tasks={[makeTask()]} onComplete={vi.fn()} disabled />);
     expect(
       screen.getByRole("button", { name: "Mark Scope Trainer Tool Build completed" })
     ).toBeDisabled();
