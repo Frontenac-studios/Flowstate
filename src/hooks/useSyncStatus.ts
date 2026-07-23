@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { isDesktopRuntime } from "@/lib/runtime/is-desktop";
 import { useTRPC } from "@/trpc/client";
@@ -26,6 +26,24 @@ export type SyncStatus = {
 const SYNC_RETRY_INTERVAL_MS = 5 * 60 * 1000;
 const STATUS_POLL_MS = 30_000;
 const MUTATION_DEBOUNCE_MS = 2_000;
+
+/**
+ * Shared across every mount of this hook. The hook is instantiated in more than
+ * one place (nav footer, settings panel), and a per-instance ref would let each
+ * copy start its own sync for the same mutation.
+ */
+let syncInFlight = false;
+
+/**
+ * True when `mutationKey` is the key tRPC generates for `sync.run`.
+ *
+ * tRPC builds mutation keys as nested arrays — `sync.run` becomes
+ * `[["sync","run"]]` — so a substring test for "sync.run" never matches. Compare
+ * against the canonical key instead, so this keeps working if the key shape changes.
+ */
+export function isSameMutationKey(mutationKey: unknown, expectedKey: unknown): boolean {
+  return JSON.stringify(mutationKey) === JSON.stringify(expectedKey);
+}
 
 function formatSyncMessage(
   displayState: SyncDisplayState,
@@ -92,8 +110,9 @@ export function useSyncStatus(): SyncStatus {
   const sqliteMode = statusQuery.data?.mode === "sqlite";
 
   const runSync = useCallback(async () => {
-    if (!desktop || syncingRef.current || !navigator.onLine || !sqliteMode) return;
+    if (!desktop || syncingRef.current || syncInFlight || !navigator.onLine || !sqliteMode) return;
     syncingRef.current = true;
+    syncInFlight = true;
     setIsSyncing(true);
     setSyncError(false);
     try {
@@ -111,6 +130,7 @@ export function useSyncStatus(): SyncStatus {
       setSyncError(true);
     } finally {
       syncingRef.current = false;
+      syncInFlight = false;
       setIsSyncing(false);
     }
   }, [desktop, queryClient, sqliteMode, syncMutation, trpc.sync.status]);
@@ -138,13 +158,19 @@ export function useSyncStatus(): SyncStatus {
     return () => window.clearInterval(intervalId);
   }, [desktop, offline, pendingCount]);
 
+  // Memoized: mutationKey() returns a fresh array each call, which would
+  // resubscribe the mutation-cache listener on every render.
+  const syncRunKey = useMemo(() => trpc.sync.run.mutationKey(), [trpc.sync.run]);
+
   useEffect(() => {
     if (!desktop) return;
 
     const unsubscribe = queryClient.getMutationCache().subscribe((event) => {
       if (event.type !== "updated" || event.action.type !== "success") return;
       const mutationKey = event.mutation.options.mutationKey;
-      if (JSON.stringify(mutationKey).includes("sync.run")) return;
+      // Without this, sync.run's own success re-arms the debounce and the hook
+      // syncs forever.
+      if (isSameMutationKey(mutationKey, syncRunKey)) return;
 
       if (mutationDebounceRef.current) {
         clearTimeout(mutationDebounceRef.current);
@@ -161,7 +187,7 @@ export function useSyncStatus(): SyncStatus {
         clearTimeout(mutationDebounceRef.current);
       }
     };
-  }, [desktop, queryClient, trpc.sync.status]);
+  }, [desktop, queryClient, syncRunKey, trpc.sync.status]);
 
   if (!desktop || statusQuery.isError || statusQuery.data?.mode === "postgres") {
     return {

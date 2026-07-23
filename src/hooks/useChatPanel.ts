@@ -174,8 +174,9 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
             threadId,
             userMessageId,
             text,
-            planningSurface:
-              surfaceOverride ?? (threadId === GLOBAL_THREAD_ID ? planningSurface : null),
+            // Every chat gets the current page's surface (focus threads keep their own
+            // register and ignore it server-side); an explicit override always wins.
+            planningSurface: surfaceOverride ?? planningSurface,
             captureContext:
               surfaceOverride == null && threadId === GLOBAL_THREAD_ID
                 ? effectiveCaptureContext
