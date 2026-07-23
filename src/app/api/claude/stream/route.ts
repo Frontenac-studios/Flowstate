@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isAnthropicConfigured } from "@/lib/env";
 import { threadIdSchema } from "@/lib/chat/threads";
 import { captureContextSchema } from "@/lib/chat/capture-context";
+import { composeAssistantMessage } from "@/lib/chat/compose-assistant-message";
 import { planningSurfaceSchema } from "@/lib/chat/planning-surface";
 import { appendAssistantMessage } from "@/server/claude/persist-message";
 import { streamCompanionReply } from "@/server/claude/generate";
@@ -57,27 +58,11 @@ export async function POST(req: Request) {
     const saveAssistant = async (partial: string) => {
       if (saved) return;
       const proposal = getPendingProposal();
-      const trimmed = partial.trim();
-      // Persist even when the model returned only a tool proposal (empty prose) so
-      // the confirm card is not dropped. Summarize from the proposal when needed.
-      const fallback =
-        proposal?.kind === "create_task"
-          ? `Proposed ${proposal.items.length} task${proposal.items.length === 1 ? "" : "s"} — Accept the card to add them.`
-          : proposal?.kind === "create_phase"
-            ? `Proposed ${proposal.items.length} phase${proposal.items.length === 1 ? "" : "s"} — Accept the card to add them.`
-            : proposal
-              ? "Proposed an update — Accept the card to apply it."
-              : null;
-      // A tool refused to build a card but the model may still have narrated one
-      // ("Accept the card…"). Append the real reason so the prose can't stand alone.
-      const toolErrors = getToolErrors();
-      const failureNote =
-        !proposal && toolErrors.length > 0
-          ? `⚠️ Nothing was proposed — ${toolErrors.join(" ")}`
-          : null;
-
-      const body = trimmed || fallback;
-      const text = [body, failureNote].filter(Boolean).join("\n\n");
+      const text = composeAssistantMessage({
+        prose: partial,
+        proposal,
+        toolErrors: getToolErrors(),
+      });
       if (!text) return;
       saved = true;
       await appendAssistantMessage(userId, threadId, text, undefined, proposal ?? undefined);

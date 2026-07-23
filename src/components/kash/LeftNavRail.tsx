@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { kashIconProps, Pin, Search } from "@/components/kash/ui/icon";
 import { ChatToggleButton } from "@/components/kash/chat/ChatToggleButton";
@@ -27,14 +27,12 @@ function NavLink({
   active,
   pending,
   expanded,
-  index,
   onSelect,
 }: {
   item: NavItem;
   active: boolean;
   pending: boolean;
   expanded: boolean;
-  index: number;
   onSelect?: (href: string) => void;
 }) {
   const Icon = item.icon;
@@ -62,14 +60,9 @@ function NavLink({
       >
         <Icon {...NAV_ICON_PROPS} />
       </span>
-      {/* Label is always rendered so the cascade can transition it; when collapsed
-          the full-width icon span pushes it past the rail's overflow-hidden edge. */}
-      <span
-        className="nav-cascade-item whitespace-nowrap text-sm font-medium"
-        style={{ "--nav-i": index } as CSSProperties}
-      >
-        {item.label}
-      </span>
+      {/* Label is always rendered so it can fade in on expand; when collapsed the
+          full-width icon span pushes it past the rail's overflow-hidden edge. */}
+      <span className="nav-cascade-item whitespace-nowrap text-sm font-medium">{item.label}</span>
     </Link>
   );
 }
@@ -85,14 +78,9 @@ function NavSections({
   isPending: (item: NavItem) => boolean;
   onSelect?: (href: string) => void;
 }) {
-  const settingsIndex = NAV_GROUPS.reduce((count, group) => count + group.items.length, 0);
   return (
     <>
       {NAV_GROUPS.map((group, index) => {
-        const indexOffset = NAV_GROUPS.slice(0, index).reduce(
-          (count, prev) => count + prev.items.length,
-          0
-        );
         return (
           <Fragment key={group.label}>
             <div className="px-1 pb-1 pt-2">
@@ -104,14 +92,13 @@ function NavSections({
                 <div className="mx-2 h-px bg-[var(--border-subtle)]" />
               ) : null}
             </div>
-            {group.items.map((item, itemIndex) => (
+            {group.items.map((item) => (
               <NavLink
                 key={item.href}
                 item={item}
                 active={isActive(item)}
                 pending={isPending(item)}
                 expanded={expanded}
-                index={indexOffset + itemIndex}
                 onSelect={onSelect}
               />
             ))}
@@ -125,7 +112,6 @@ function NavSections({
           active={isActive(SETTINGS_ITEM)}
           pending={isPending(SETTINGS_ITEM)}
           expanded={expanded}
-          index={settingsIndex}
           onSelect={onSelect}
         />
       </div>

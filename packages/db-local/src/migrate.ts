@@ -364,6 +364,8 @@ CREATE TABLE IF NOT EXISTS goal_milestones (
   goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   sort_order INTEGER NOT NULL DEFAULT 0,
+  target_date TEXT,
+  completed_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
@@ -722,6 +724,8 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "embedding", definition: "TEXT" },
   { table: "projects", column: "archived_at", definition: "INTEGER" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
+  { table: "goal_milestones", column: "target_date", definition: "TEXT" },
+  { table: "goal_milestones", column: "completed_at", definition: "INTEGER" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {
