@@ -156,6 +156,8 @@ type Props = {
   stagedCaptures: StagedCapture[];
   holdPreview: HoldPreview | null;
   holdDeclined: boolean;
+  /** Daily triage disables focus-hold suggestions; onboarding leaves them on. */
+  enableFocusHold?: boolean;
   isOverCommitted: boolean;
   goalOffer: GoalSteeringOffer | null;
   isPending: boolean;
@@ -346,6 +348,7 @@ export function MorningHandoffModal({
   stagedCaptures,
   holdPreview,
   holdDeclined,
+  enableFocusHold = true,
   isOverCommitted,
   goalOffer,
   isPending,
@@ -416,6 +419,20 @@ export function MorningHandoffModal({
 
   const carryovers = useMemo(() => filterLookbackCarryovers(tasks, localDate), [tasks, localDate]);
 
+  // Tasks already sitting in the right-column Today cart — never re-suggest these.
+  const liveAssembled = useMemo(
+    () =>
+      filterAssembledTodayList(tasks, localDate).filter(
+        (task) => !isTriageCandidate(task, localDate)
+      ),
+    [tasks, localDate]
+  );
+
+  const todayCartIds = useMemo(
+    () => new Set(liveAssembled.map((task) => task.id)),
+    [liveAssembled]
+  );
+
   const yesterdayIso = toISODateString(addDays(parseISODateString(localDate), -1));
 
   const lookbackLabel =
@@ -429,13 +446,19 @@ export function MorningHandoffModal({
   );
 
   const remainingProjectSuggestions = useMemo(
-    () => allProjectSuggestions.filter((s) => !dismissedProjectIds.has(s.task.id)),
-    [allProjectSuggestions, dismissedProjectIds]
+    () =>
+      allProjectSuggestions.filter(
+        (s) => !dismissedProjectIds.has(s.task.id) && !todayCartIds.has(s.task.id)
+      ),
+    [allProjectSuggestions, dismissedProjectIds, todayCartIds]
   );
 
   const inboxTasks = useMemo(
-    () => filterInboxUnscheduled(tasks).filter((task) => !dismissedProjectIds.has(task.id)),
-    [tasks, dismissedProjectIds]
+    () =>
+      filterInboxUnscheduled(tasks).filter(
+        (task) => !dismissedProjectIds.has(task.id) && !todayCartIds.has(task.id)
+      ),
+    [tasks, dismissedProjectIds, todayCartIds]
   );
 
   const pacedProjects = useMemo(
@@ -597,7 +620,7 @@ export function MorningHandoffModal({
 
       return (
         <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
-          <p className="text-body text-ink">Still want to pull any project tasks?</p>
+          <p className="text-caption text-ink">Still want to pull any project tasks?</p>
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
@@ -666,7 +689,7 @@ export function MorningHandoffModal({
 
         return (
           <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
-            <p className="text-body text-ink">Anything from projects you want on Today?</p>
+            <p className="text-caption text-ink">Anything from projects you want on Today?</p>
             <button
               type="button"
               className={TRIAGE_CHIP_MUTED}
@@ -715,14 +738,6 @@ export function MorningHandoffModal({
   ]);
 
   const dumpEnabled = dumpUnlocked(phase, skippedToDump);
-
-  const liveAssembled = useMemo(
-    () =>
-      filterAssembledTodayList(tasks, localDate).filter(
-        (task) => !isTriageCandidate(task, localDate)
-      ),
-    [tasks, localDate]
-  );
 
   const cartRows = useMemo((): CartRow[] => {
     const liveRows: CartRow[] = liveAssembled.map((task) => ({
@@ -782,7 +797,11 @@ export function MorningHandoffModal({
   );
 
   const showHoldSection =
-    pinnedSlots.length > 0 && holdPreview != null && !holdDeclined && !isOverCommitted;
+    enableFocusHold &&
+    pinnedSlots.length > 0 &&
+    holdPreview != null &&
+    !holdDeclined &&
+    !isOverCommitted;
 
   const meetingLines = useMemo(
     () => formatMeetingTooltipLines(calendarMeetings ?? []),

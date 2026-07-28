@@ -89,8 +89,11 @@ export default function ProjectWorkspace({
     return isProjectComplete({ taskCount: tasks.length, completedCount });
   }, [tasksQuery.data]);
 
-  const isLoading = phasesQuery.isLoading || tasksQuery.isLoading;
-  const isError = phasesQuery.isError || tasksQuery.isError;
+  // milestonesQuery belongs here too: ProjectSetupWizard seeds its drafts from
+  // `milestones` once on open, so opening before this resolves seeds every draft
+  // without an id and each Save inserts a fresh duplicate set.
+  const isLoading = phasesQuery.isLoading || tasksQuery.isLoading || milestonesQuery.isLoading;
+  const isError = phasesQuery.isError || tasksQuery.isError || milestonesQuery.isError;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -136,6 +139,7 @@ export default function ProjectWorkspace({
           onRetry={() => {
             void phasesQuery.refetch();
             void tasksQuery.refetch();
+            void milestonesQuery.refetch();
           }}
         />
       ) : viewMode === "columns" ? (
@@ -163,8 +167,14 @@ export default function ProjectWorkspace({
         />
       )}
 
+      {/*
+        Only mount once the queries the wizard seeds from have resolved. It seeds
+        its drafts once on open, so mounting early would seed ids-less drafts and
+        every Save would insert duplicates. Several entry points (header, milestone
+        strip, board) can set wizardOpen, so gate here rather than per-trigger.
+      */}
       <ProjectSetupWizard
-        open={wizardOpen}
+        open={wizardOpen && !isLoading}
         project={project}
         phases={phasesQuery.data ?? []}
         milestones={milestonesQuery.data ?? []}

@@ -196,7 +196,29 @@ async function upsertMilestones(
 ) {
   const created: (typeof projectMilestones.$inferSelect)[] = [];
   const updated: (typeof projectMilestones.$inferSelect)[] = [];
+  const skipped: (typeof projectMilestones.$inferSelect)[] = [];
   let nextSort = await nextMilestoneSortOrder(tx, userId, projectId);
+
+  // Guards against re-inserting milestones the project already has. A caller can
+  // legitimately submit id-less drafts for rows that already exist — e.g. the setup
+  // wizard seeding before its milestones query resolves — and without this every
+  // Save creates another copy. Keyed on the same fields the user sees, so a genuinely
+  // new title or date still inserts.
+  const existingRows = await tx
+    .select()
+    .from(projectMilestones)
+    .where(and(eq(projectMilestones.userId, userId), eq(projectMilestones.projectId, projectId)));
+  // JSON.stringify avoids a separator character a title could itself contain.
+  const identityKey = (title: string, targetDate: string | null) =>
+    JSON.stringify([title, targetDate]);
+  // Rows this submission updates by id are excluded: they may be renamed here, and a
+  // stale identity should not block an id-less draft from reusing the old title.
+  const updatedIds = new Set(milestoneInputs.map((input) => input.id).filter(Boolean));
+  const existingByIdentity = new Map(
+    existingRows
+      .filter((row) => !updatedIds.has(row.id))
+      .map((row) => [identityKey(row.title, row.targetDate), row])
+  );
 
   for (const input of milestoneInputs) {
     const title = input.title.trim();
@@ -205,6 +227,14 @@ async function upsertMilestones(
     const targetDate = input.targetDate ?? null;
 
     if (!input.id) {
+      // Also catches duplicates within a single submission, since each insert
+      // registers itself in the map below.
+      const existing = existingByIdentity.get(identityKey(title, targetDate));
+      if (existing) {
+        skipped.push(existing);
+        continue;
+      }
+
       const [row] = await tx
         .insert(projectMilestones)
         .values({
@@ -222,6 +252,7 @@ async function upsertMilestones(
         });
       }
       created.push(row);
+      existingByIdentity.set(identityKey(title, targetDate), row);
       nextSort += 1;
     } else {
       const [row] = await tx
@@ -246,7 +277,7 @@ async function upsertMilestones(
     }
   }
 
-  return { createdMilestones: created, updatedMilestones: updated };
+  return { createdMilestones: created, updatedMilestones: updated, skippedMilestones: skipped };
 }
 
 async function insertTaskSeeds(
@@ -434,6 +465,7 @@ export async function commitProjectSetup(userId: string, input: CommitSetupInput
     phasesUpdated: result.updated.length,
     milestonesCreated: result.createdMilestones.length,
     milestonesUpdated: result.updatedMilestones.length,
+    milestonesSkipped: result.skippedMilestones.length,
     tasksCreated: result.createdTasks.length,
     importId: result.importRow?.id ?? null,
   };

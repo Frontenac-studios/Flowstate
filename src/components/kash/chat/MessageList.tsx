@@ -105,7 +105,7 @@ function UserMessageRow({
   }
 
   return (
-    <div className={`group relative ml-auto max-w-[95%] ${canEdit && onEdit ? "pl-7" : ""}`}>
+    <div className={`group relative ml-auto w-fit max-w-[85%] ${canEdit && onEdit ? "pl-7" : ""}`}>
       {canEdit && onEdit ? (
         <button
           type="button"

@@ -111,9 +111,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => setRitualOverlayCount((count) => Math.max(0, count - 1));
   }, []);
 
+  // While a ritual modal is up, AppShellChatRail hides the rail — so open/toggle
+  // record intent instead of dropping it. Silently returning here would brick
+  // chat everywhere if a ritual registration ever leaked without a visible modal.
   const openRail = useCallback(
     (options?: OpenRailOptions) => {
-      if (ritualOpen) return;
+      if (ritualOpen && process.env.NODE_ENV !== "production") {
+        console.warn("[chat] openRail during ritual overlay — rail deferred until it closes");
+      }
       if (options?.threadId) setActiveThreadId(options.threadId);
       setCaptureContext(options?.captureContext ?? null);
       setRailOpen(true);
@@ -123,7 +128,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleRail = useCallback(() => {
-    if (ritualOpen) return;
     setRailOpen((open) => {
       if (open) {
         setCaptureContext(null);
@@ -133,7 +137,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       markRead(activeThreadId);
       return true;
     });
-  }, [activeThreadId, markRead, ritualOpen]);
+  }, [activeThreadId, markRead]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

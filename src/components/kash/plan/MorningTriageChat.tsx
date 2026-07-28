@@ -94,13 +94,12 @@ function AssistantBubble({
     <div className="flex max-w-[95%] gap-2">
       <KashAvatar className="mt-0.5" />
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex items-baseline gap-2 text-caption text-ink-muted">
-          <span className="font-medium text-ink">Kash</span>
-          {timestamp ? (
+        {timestamp ? (
+          <div className="text-caption text-ink-muted">
             <time dateTime={timestamp.toISOString()}>{formatBubbleTime(timestamp)}</time>
-          ) : null}
-        </div>
-        <div className="rounded-row border border-border bg-surface px-3 py-2 text-body text-ink">
+          </div>
+        ) : null}
+        <div className="rounded-row border border-border bg-surface px-3 py-2 text-caption text-ink">
           <p className="whitespace-pre-wrap">{renderChatMessage(text)}</p>
           {children}
         </div>
@@ -111,13 +110,13 @@ function AssistantBubble({
 
 function UserBubble({ text, timestamp }: { text: string; timestamp?: Date }) {
   return (
-    <div className="ml-auto max-w-[95%] space-y-1">
+    <div className="ml-auto flex max-w-[85%] flex-col items-end gap-1">
       {timestamp ? (
-        <p className="text-right text-caption text-ink-muted">
+        <p className="text-caption text-ink-muted">
           <time dateTime={timestamp.toISOString()}>{formatBubbleTime(timestamp)}</time>
         </p>
       ) : null}
-      <div className="rounded-row bg-accent-soft px-3 py-2 text-body text-ink">
+      <div className="w-fit rounded-row bg-accent-soft px-3 py-2 text-caption text-ink">
         <p className="whitespace-pre-wrap">{renderChatMessage(text)}</p>
       </div>
     </div>
@@ -344,7 +343,7 @@ export function MorningTriageChat({
             disabled={!configured}
             isStreaming={isStreaming}
             placeholder={placeholder}
-            rows={4}
+            rows={2}
             onSend={(text) => void sendMessage(text)}
             onStop={stopGeneration}
           />

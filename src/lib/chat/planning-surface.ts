@@ -15,8 +15,13 @@ export type PlanningChatSurface = (typeof planningChatSurfaces)[number];
 export const planningSurfaceSchema = z.enum(planningChatSurfaces);
 export function planningSurfaceFromPathname(pathname: string): PlanningChatSurface | null {
   if (pathname === "/today" || pathname.startsWith("/today/")) return "today";
+  // More specific routes first so they don't fall through to the parent surface.
+  if (pathname === "/this-week/review" || pathname.startsWith("/this-week/review/"))
+    return "reviews";
   if (pathname === "/this-week" || pathname.startsWith("/this-week/")) return "week";
   if (pathname === "/plan" || pathname.startsWith("/plan/")) return "plan";
+  if (pathname === "/projects/loose" || pathname.startsWith("/projects/loose/"))
+    return "loose-tasks";
   if (pathname === "/projects" || pathname.startsWith("/projects/")) return "projects";
   if (pathname === "/backlog" || pathname.startsWith("/backlog/")) return "backlog";
   if (pathname === "/abyss" || pathname.startsWith("/abyss/")) return "backlog";

@@ -59,9 +59,12 @@ a:not([class]) {
   }
 }
 
+/* At lg+ the nav rail sits flush against the window edge outside this
+   container, so the left padding is the rail↔content gutter (the old flex
+   gap), not an edge inset. */
 @media (min-width: 1024px) {
   .kash-shell-inner {
-    padding-left: var(--shell-pad-x-lg);
+    padding-left: var(--shell-gap);
     padding-right: var(--shell-pad-x-lg);
   }
 }
@@ -74,8 +77,33 @@ html.is-desktop .kash-shell-inner {
   padding-top: max(var(--shell-pad-y), 2.25rem);
 }
 
+/* The rail is flush to the window top, so on desktop it needs its own
+   traffic-light clearance (the identity strip is a drag region, so the lights
+   overlapping the padding band is harmless). Fullscreen hides the lights —
+   restore the rail's normal padding (py-3). */
+html.is-desktop .kash-left-rail > nav {
+  padding-top: max(var(--shell-pad-y), 2.25rem);
+}
+html.is-desktop.is-fullscreen .kash-left-rail > nav {
+  padding-top: 0.75rem;
+}
+
 /* Desktop fullscreen — stretch the shell edge-to-edge instead of capping at 110rem. */
 html.is-desktop.is-fullscreen .kash-shell-inner {
   max-width: none;
   padding-top: var(--shell-pad-y);
+}
+
+/* Window drag handle — only present inside the Tauri runtime. It occupies the
+   same top clearance band reserved for the macOS traffic lights, so it never
+   overlaps real content. Hidden in fullscreen (the window can't be moved) and
+   on the web (no frameless title bar). */
+.app-drag-strip {
+  display: none;
+}
+html.is-desktop .app-drag-strip {
+  display: block;
+}
+html.is-desktop.is-fullscreen .app-drag-strip {
+  display: none;
 }

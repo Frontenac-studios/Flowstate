@@ -33,7 +33,7 @@ export function InboxPickCard({
 
   return (
     <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
-      <p className="text-body text-ink">{intro}</p>
+      <p className="text-caption text-ink">{intro}</p>
 
       <TriageTaskPickList tasks={tasks} onComplete={onCompleteTask} disabled={disabled} />
 

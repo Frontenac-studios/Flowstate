@@ -36,7 +36,7 @@ export function CarryoverTriageCard({
 
   return (
     <div className="space-y-2 rounded-row border border-dashed border-border bg-surface px-2.5 py-2">
-      <p className="text-body text-ink">
+      <p className="text-caption text-ink">
         You have {count} unfinished {noun} from {lookbackLabel}.
       </p>
 

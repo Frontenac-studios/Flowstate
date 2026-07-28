@@ -425,15 +425,6 @@ export function MorningHandoffRunner() {
         await pinMutation.mutateAsync({ id: taskId, slot: slot as 1 | 2 | 3 });
       }
 
-      if (holdPreview && !holdDeclined && !hasTop3Hold) {
-        await confirmHoldMutation.mutateAsync({
-          scheduledDate: localDate,
-          category: holdPreview.category,
-          startMin: holdPreview.startMin,
-          endMin: holdPreview.endMin,
-        });
-      }
-
       clearStaged();
       finish();
     } finally {
@@ -441,13 +432,9 @@ export function MorningHandoffRunner() {
     }
   }, [
     clearStaged,
-    confirmHoldMutation,
     createDependencyMutation,
     createTaskMutation,
     finish,
-    hasTop3Hold,
-    holdDeclined,
-    holdPreview,
     localDate,
     pinMutation,
     projects,
@@ -474,6 +461,7 @@ export function MorningHandoffRunner() {
       stagedCaptures={stagedCaptures}
       holdPreview={holdPreview}
       holdDeclined={holdDeclined}
+      enableFocusHold={false}
       isOverCommitted={overCommit?.overCommitted ?? false}
       goalOffer={goalOffer}
       isPending={
