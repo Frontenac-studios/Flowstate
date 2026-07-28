@@ -7,5 +7,7 @@ export function pickNewerRow<T extends { updatedAt?: Date | null; createdAt?: Da
   const remoteTs = (remote.updatedAt ?? remote.createdAt)?.getTime() ?? 0;
   if (remoteTs > localTs) return "remote";
   if (localTs > remoteTs) return "local";
-  return "remote";
+  // Equal timestamps: keep local so an inclusive-`.gte` boundary re-pull can't
+  // overwrite an unpushed local change that happens to share the remote's timestamp.
+  return "local";
 }

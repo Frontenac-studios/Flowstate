@@ -178,6 +178,98 @@ describe("pushPendingMutations (via runSync)", () => {
     expect(await listPendingMutations(db)).toHaveLength(0);
   });
 
+  it("never carries completed_at on an ordinary task upsert (so a stale edit can't revert a completion)", async () => {
+    // An unrelated edit (e.g. pin/top3) snapshots the full row while it is still
+    // locally incomplete — this must not push a null completed_at to the server.
+    await recordSyncMutation(db, {
+      table: "tasks",
+      rowId: "t1",
+      op: "update",
+      payload: { id: "t1", userId: "u1", title: "pinned", completedAt: null, isTop3: true },
+    });
+
+    const fake = createFakeSupabase(() => ({ data: [], error: null }));
+    const res = await runSync({ db, supabase: fake as never, userId: "u1" });
+    expect(res.errors).toEqual([]);
+
+    const upserts = fake.calls.filter((c) => c.op === "upsert" && c.table === "tasks");
+    expect(upserts).toHaveLength(1);
+    const row = (upserts[0].rows as Array<Record<string, unknown>>)[0];
+    expect(row).not.toHaveProperty("completed_at");
+    expect(row.title).toBe("pinned");
+  });
+
+  it("pushes completion on a targeted, user-scoped update carrying only completed_at + updated_at", async () => {
+    await recordSyncMutation(db, {
+      table: "tasks",
+      rowId: "t1",
+      op: "complete",
+      payload: { id: "t1", completedAt: "2026-07-01T00:00:00Z", updatedAt: "2026-07-01T00:00:00Z" },
+    });
+
+    const fake = createFakeSupabase(() => ({ data: [], error: null }));
+    const res = await runSync({ db, supabase: fake as never, userId: "u1" });
+    expect(res.errors).toEqual([]);
+
+    const updates = fake.calls.filter((c) => c.op === "update" && c.table === "tasks");
+    expect(updates).toHaveLength(1);
+    expect(updates[0].rows).toEqual({
+      completed_at: "2026-07-01T00:00:00Z",
+      updated_at: "2026-07-01T00:00:00Z",
+    });
+    expect(updates[0].eq).toEqual({ id: "t1", user_id: "u1" });
+
+    const { listPendingMutations } = await import("./mutation-log");
+    expect(await listPendingMutations(db)).toHaveLength(0);
+  });
+
+  it("propagates an uncomplete as completed_at = null on the completion lane", async () => {
+    await recordSyncMutation(db, {
+      table: "tasks",
+      rowId: "t1",
+      op: "complete",
+      payload: { id: "t1", completedAt: null, updatedAt: "2026-07-02T00:00:00Z" },
+    });
+
+    const fake = createFakeSupabase(() => ({ data: [], error: null }));
+    await runSync({ db, supabase: fake as never, userId: "u1" });
+
+    const updates = fake.calls.filter((c) => c.op === "update" && c.table === "tasks");
+    expect(updates).toHaveLength(1);
+    expect(updates[0].rows).toMatchObject({ completed_at: null });
+  });
+
+  it("a completion and an unrelated edit on the same row push independently", async () => {
+    await recordSyncMutation(db, {
+      table: "tasks",
+      rowId: "t1",
+      op: "complete",
+      payload: { id: "t1", completedAt: "2026-07-01T00:00:00Z", updatedAt: "2026-07-01T00:00:00Z" },
+    });
+    await recordSyncMutation(db, {
+      table: "tasks",
+      rowId: "t1",
+      op: "update",
+      payload: { id: "t1", userId: "u1", title: "edited", completedAt: null },
+    });
+
+    const fake = createFakeSupabase(() => ({ data: [], error: null }));
+    await runSync({ db, supabase: fake as never, userId: "u1" });
+
+    const upserts = fake.calls.filter((c) => c.op === "upsert" && c.table === "tasks");
+    const updates = fake.calls.filter((c) => c.op === "update" && c.table === "tasks");
+    expect(upserts).toHaveLength(1);
+    expect(updates).toHaveLength(1);
+    // Upsert carries the edit but not completion; the completion write carries the completion.
+    expect((upserts[0].rows as Array<Record<string, unknown>>)[0]).not.toHaveProperty(
+      "completed_at"
+    );
+    expect(updates[0].rows).toMatchObject({ completed_at: "2026-07-01T00:00:00Z" });
+
+    const { listPendingMutations } = await import("./mutation-log");
+    expect(await listPendingMutations(db)).toHaveLength(0);
+  });
+
   it("queues and pushes offline daily_wins accept mutations", async () => {
     await recordSyncMutation(db, {
       table: "daily_wins",

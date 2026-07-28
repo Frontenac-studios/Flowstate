@@ -9,6 +9,7 @@ import {
   syncPlanningRow,
   syncProjectRow,
   syncProtectedBlockRow,
+  syncTaskCompletion,
   syncTaskRow,
   syncWeekDayPriorityRow,
 } from "@/db/record-sync-mutation";
@@ -331,7 +332,7 @@ export async function applyProposedActionPayload(
           .returning();
 
         if (row) {
-          await syncTaskRow(row.id, "update", row);
+          await syncTaskCompletion(row.id, row.completedAt, row.updatedAt);
           titles.push(row.title);
           applied += 1;
           undoFrames.push({
