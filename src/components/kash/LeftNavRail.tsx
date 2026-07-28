@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import { kashIconProps, Pin, Search } from "@/components/kash/ui/icon";
 import { ChatToggleButton } from "@/components/kash/chat/ChatToggleButton";
@@ -152,10 +152,14 @@ function RailSearchButton({ expanded }: { expanded: boolean }) {
 
 export function LeftNavRail() {
   const pathname = usePathname();
+  const router = useRouter();
   const isFullscreen = useDesktopFullscreen();
   const [pinned, setPinned] = useState(false);
   const [peek, setPeek] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  // Tracks the origin route we last warmed from, so we prefetch the rail's
+  // destinations at most once per location rather than on every mouse enter.
+  const warmedFrom = useRef<string | null>(null);
 
   useEffect(() => {
     setPinned(readNavRailPinned());
@@ -168,6 +172,21 @@ export function LeftNavRail() {
 
   const onSelect = (href: string) => {
     setPendingHref(href);
+  };
+
+  // Warm every nav destination when the user reaches for the rail (peek/focus),
+  // so the route is already in flight before they click. `router.prefetch` is a
+  // no-op in `next dev`, so this only pays off in production builds. Results
+  // live in the Router Cache; the ref guard just avoids redundant loops.
+  const warmNavRoutes = () => {
+    if (warmedFrom.current === pathname) return;
+    warmedFrom.current = pathname;
+    for (const group of NAV_GROUPS) {
+      for (const item of group.items) {
+        if (item.href !== pathname) router.prefetch(item.href);
+      }
+    }
+    if (SETTINGS_ITEM.href !== pathname) router.prefetch(SETTINGS_ITEM.href);
   };
 
   const expanded = pinned || peek || isFullscreen;
@@ -187,7 +206,7 @@ export function LeftNavRail() {
 
   return (
     <div
-      className={`top-shell sticky z-sticky hidden h-full shrink-0 transition-[width] duration-200 lg:block ${
+      className={`kash-left-rail sticky top-0 z-sticky hidden h-screen shrink-0 transition-[width] duration-200 lg:block ${
         railExpanded ? "w-nav-rail-expanded" : "w-nav-rail"
       }`}
     >
@@ -195,13 +214,19 @@ export function LeftNavRail() {
         aria-label="Primary"
         data-expanded={expanded ? "true" : "false"}
         onMouseEnter={() => {
-          if (!isFullscreen) setPeek(true);
+          if (!isFullscreen) {
+            setPeek(true);
+            warmNavRoutes();
+          }
         }}
         onMouseLeave={() => {
           if (!isFullscreen) setPeek(false);
         }}
         onFocus={() => {
-          if (!isFullscreen) setPeek(true);
+          if (!isFullscreen) {
+            setPeek(true);
+            warmNavRoutes();
+          }
         }}
         onBlur={() => {
           if (!isFullscreen) setPeek(false);
@@ -210,8 +235,8 @@ export function LeftNavRail() {
           expanded ? "w-nav-rail-expanded" : "w-nav-rail"
         } ${
           expanded && !railExpanded
-            ? "rounded-card border border-subtle bg-surface shadow-overlay"
-            : "rounded-card border border-subtle bg-surface shadow-surface"
+            ? "rounded-r-card border-r border-subtle bg-surface shadow-overlay"
+            : "border-r border-subtle bg-surface"
         }`}
       >
         {/* Identity strip doubles as the Tauri drag surface now that the top
@@ -277,11 +302,7 @@ export function LeftNavRail() {
         {/* Header chrome absorbed from the retired AppHeader. */}
         <div className="mb-1 flex flex-col gap-1">
           <RailSearchButton expanded={expanded} />
-          {expanded ? (
-            <ChatToggleButton className="w-full justify-center" />
-          ) : (
-            <ChatToggleButton variant="icon" className="mx-auto" />
-          )}
+          <ChatToggleButton expanded={expanded} />
         </div>
 
         <NavSections
