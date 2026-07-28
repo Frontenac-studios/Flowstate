@@ -191,6 +191,10 @@ export function LeftNavRail() {
 
   const expanded = pinned || peek || isFullscreen;
   const railExpanded = pinned || isFullscreen;
+  // Hover-peek is the one state where the nav is wider than the space the outer
+  // element reserves, so it hangs over the content instead of displacing it.
+  // Drives both the overlay affordances and the z-index lift below.
+  const overlaying = expanded && !railExpanded;
 
   const isActive = (item: NavItem) => isNavItemActive(item, pathname);
 
@@ -205,10 +209,17 @@ export function LeftNavRail() {
   };
 
   return (
+    // The z-index lives here rather than on the <nav> below: this element is
+    // positioned *and* z-indexed, so it opens a stacking context the nav can
+    // never escape — raising the nav's own z-index has no effect. `.kash-shell-inner`
+    // is a later sibling at the same z-sticky, so at a tie it paints over the
+    // peeking rail and swallows its clicks. z-overlay clears the content while
+    // staying under z-modal/z-toast. Only lifted while overlaying, so the
+    // pinned/fullscreen/collapsed states keep their existing stacking.
     <div
-      className={`kash-left-rail sticky top-0 z-sticky hidden h-screen shrink-0 transition-[width] duration-200 lg:block ${
-        railExpanded ? "w-nav-rail-expanded" : "w-nav-rail"
-      }`}
+      className={`kash-left-rail sticky top-0 hidden h-screen shrink-0 transition-[width] duration-200 lg:block ${
+        overlaying ? "z-overlay" : "z-sticky"
+      } ${railExpanded ? "w-nav-rail-expanded" : "w-nav-rail"}`}
     >
       <nav
         aria-label="Primary"
@@ -234,7 +245,7 @@ export function LeftNavRail() {
         className={`absolute inset-y-0 left-0 z-sticky flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
           expanded ? "w-nav-rail-expanded" : "w-nav-rail"
         } ${
-          expanded && !railExpanded
+          overlaying
             ? "rounded-r-card border-r border-subtle bg-surface shadow-overlay"
             : "border-r border-subtle bg-surface"
         }`}
