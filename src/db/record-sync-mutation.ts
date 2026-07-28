@@ -19,6 +19,24 @@ export async function syncTaskRow(rowId: string, op: SyncOp, payload: unknown): 
   await recordSyncMutation({ table: "tasks", rowId, op, payload });
 }
 
+/**
+ * Record a task completion/uncompletion on its own sync lane. Carries only the
+ * completion fields, so the push applies it as a targeted `completed_at` write
+ * that neither clobbers nor is clobbered by an unrelated full-row task edit.
+ */
+export async function syncTaskCompletion(
+  rowId: string,
+  completedAt: Date | null,
+  updatedAt: Date
+): Promise<void> {
+  await recordSyncMutation({
+    table: "tasks",
+    rowId,
+    op: "complete",
+    payload: { id: rowId, completedAt, updatedAt },
+  });
+}
+
 export async function syncRecurrenceRow(
   rowId: string,
   op: SyncOp,

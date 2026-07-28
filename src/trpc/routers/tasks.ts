@@ -18,7 +18,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { taskTagsColumn } from "@/db/task-tags-for-db";
-import { syncRecurrenceRow, syncTaskRow } from "@/db/record-sync-mutation";
+import { syncRecurrenceRow, syncTaskCompletion, syncTaskRow } from "@/db/record-sync-mutation";
 import {
   phases,
   projects,
@@ -921,7 +921,7 @@ export const tasksRouter = createTRPCRouter({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to complete task." });
       }
 
-      await syncTaskRow(row.id, "update", row);
+      await syncTaskCompletion(row.id, row.completedAt, row.updatedAt);
       return {
         task: row,
         previousCompletedAt: existing.completedAt,
@@ -946,7 +946,7 @@ export const tasksRouter = createTRPCRouter({
         });
       }
 
-      await syncTaskRow(row.id, "update", row);
+      await syncTaskCompletion(row.id, row.completedAt, row.updatedAt);
       return row;
     }),
 

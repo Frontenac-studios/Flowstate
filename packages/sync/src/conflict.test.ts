@@ -15,8 +15,8 @@ describe("pickNewerRow", () => {
     expect(pickNewerRow(local, remote)).toBe("local");
   });
 
-  it("ties go to remote", () => {
+  it("ties go to local (protects an unpushed local change on a boundary re-pull)", () => {
     const t = new Date("2026-01-01");
-    expect(pickNewerRow({ updatedAt: t }, { updatedAt: t })).toBe("remote");
+    expect(pickNewerRow({ updatedAt: t }, { updatedAt: t })).toBe("local");
   });
 });

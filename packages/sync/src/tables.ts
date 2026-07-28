@@ -40,4 +40,7 @@ export const SYNC_TABLES = [
 
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
-export type SyncOp = "insert" | "update" | "delete";
+// "complete" is a task-only lane carrying just {id, completedAt, updatedAt}. It is
+// coalesced and pushed separately from ordinary row upserts so that an unrelated
+// edit's stale full-row snapshot can never revert a completion (and vice versa).
+export type SyncOp = "insert" | "update" | "delete" | "complete";

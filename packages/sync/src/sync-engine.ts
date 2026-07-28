@@ -565,14 +565,21 @@ async function pushPendingMutations(params: {
   for (const [table, units] of Array.from(byTable.entries())) {
     const upserts = units.filter((u) => u.op === "upsert");
     const deletes = units.filter((u) => u.op === "delete");
+    const completes = units.filter((u) => u.op === "complete");
 
     try {
       if (upserts.length > 0) {
         // insert and update are equivalent here — the outbox payload is the full row,
         // so a single batched upsert (keyed on the table PK) covers both.
-        const rows = upserts.map((u) =>
-          mapPayloadToRemote(table, u.payload as Record<string, unknown>)
-        );
+        const rows = upserts.map((u) => {
+          const remote = mapPayloadToRemote(table, u.payload as Record<string, unknown>);
+          // Completion is owned by the "complete" lane below; never let an ordinary
+          // task upsert carry completed_at, or a stale full-row snapshot could revert
+          // a completion done elsewhere. Omitting the column leaves the remote value
+          // untouched on update (and defaults to null on a genuinely new-row insert).
+          if (table === "tasks") delete remote.completed_at;
+          return remote;
+        });
         const { error } = await params.supabase.from(table).upsert(rows);
         if (error) throw error;
         await markMutationsSynced(
@@ -580,6 +587,25 @@ async function pushPendingMutations(params: {
           upserts.flatMap((u) => u.mutationIds)
         );
         count += upserts.length;
+      }
+
+      if (completes.length > 0) {
+        // Targeted completion writes — only completed_at + updated_at, per row, so
+        // they neither clobber nor are clobbered by unrelated full-row task edits.
+        for (const unit of completes) {
+          const payload = unit.payload as { completedAt?: unknown; updatedAt?: unknown } | null;
+          const { error } = await params.supabase
+            .from(table)
+            .update({
+              completed_at: payload?.completedAt ?? null,
+              updated_at: payload?.updatedAt ?? null,
+            })
+            .eq("id", unit.rowId)
+            .eq("user_id", params.userId);
+          if (error) throw error;
+          await markMutationsSynced(params.db, unit.mutationIds);
+          count += 1;
+        }
       }
 
       if (deletes.length > 0) {

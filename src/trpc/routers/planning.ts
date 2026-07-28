@@ -1159,6 +1159,7 @@ export const planningRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
       }
 
+      await syncTaskRow(row.id, "update", row);
       return row;
     }),
 
@@ -1234,10 +1235,14 @@ export const planningRouter = createTRPCRouter({
       }
 
       for (const [milestoneId, phaseId] of Array.from(phaseIdByMilestone.entries())) {
-        await db
+        const movedTasks = await db
           .update(tasks)
           .set({ projectId: project.id, phaseId, updatedAt: now })
-          .where(and(eq(tasks.userId, ctx.userId), eq(tasks.milestoneId, milestoneId)));
+          .where(and(eq(tasks.userId, ctx.userId), eq(tasks.milestoneId, milestoneId)))
+          .returning();
+        for (const moved of movedTasks) {
+          await syncTaskRow(moved.id, "update", moved);
+        }
       }
 
       const [updatedGoal] = await db
@@ -1782,14 +1787,16 @@ export const planningRouter = createTRPCRouter({
       if (row.surface === "week_draft") {
         const payload = row.payload as { taskId?: string; scheduledDate?: string };
         if (payload.taskId && payload.scheduledDate) {
-          await db
+          const [updated] = await db
             .update(tasks)
             .set({
               scheduledDate: payload.scheduledDate,
               bucketOverride: null,
               updatedAt: now,
             })
-            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
+            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)))
+            .returning();
+          if (updated) await syncTaskRow(updated.id, "update", updated);
         }
       }
 
@@ -1803,10 +1810,12 @@ export const planningRouter = createTRPCRouter({
         if (payload.taskId) {
           const patch: Record<string, unknown> = { updatedAt: now, bucketOverride: null };
           if (payload.weekStart) patch.scheduledDate = payload.weekStart;
-          await db
+          const [updated] = await db
             .update(tasks)
             .set(patch)
-            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
+            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)))
+            .returning();
+          if (updated) await syncTaskRow(updated.id, "update", updated);
         } else if (payload.taskTitle && payload.category) {
           const [created] = await db
             .insert(tasks)
@@ -1866,14 +1875,16 @@ export const planningRouter = createTRPCRouter({
         }
 
         if (payload.action === "task_schedule" && payload.taskId && payload.scheduledDate) {
-          await db
+          const [updated] = await db
             .update(tasks)
             .set({
               scheduledDate: payload.scheduledDate,
               bucketOverride: null,
               updatedAt: now,
             })
-            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)));
+            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)))
+            .returning();
+          if (updated) await syncTaskRow(updated.id, "update", updated);
         }
       }
     }

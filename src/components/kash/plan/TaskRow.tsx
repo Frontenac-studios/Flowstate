@@ -498,15 +498,19 @@ export function TaskRow({
   return (
     <li
       ref={setRootRef}
-      className={`relative overflow-hidden rounded-[var(--radius-card)] ${
-        arriveIndex != null ? "row-arrive" : ""
-      } ${
+      className={`relative grid overflow-hidden rounded-[var(--radius-card)] ${
+        completing ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+      } ${arriveIndex != null ? "row-arrive" : ""} ${
         weekDragLift && !isDragging && !completing
           ? "transition-[transform,box-shadow,opacity] duration-short ease-move motion-reduce:transition-opacity motion-reduce:duration-short"
           : ""
       } ${
         completing
-          ? "translate-x-6 opacity-0 transition-[transform,opacity] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
+          ? // Collapse the row's height (grid 1fr→0fr) alongside the slide-out so
+            // rows below rise smoothly and stay top-aligned, instead of snapping up
+            // when the deferred refetch finally unmounts this row. `!mt-0` drops the
+            // `space-y-2` gap this row contributes so the collapse closes fully.
+            "!mt-0 translate-x-6 opacity-0 transition-[grid-template-rows,transform,opacity,margin] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
           : weekDragWithOverlay
             ? "opacity-40"
             : isDragging
@@ -524,7 +528,7 @@ export function TaskRow({
           : undefined),
       }}
     >
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="relative min-h-0 overflow-hidden">
         {pinEnabled ? (
           <div className="absolute inset-y-0 left-0 flex" aria-hidden={!isLeftOpen}>
             <button
