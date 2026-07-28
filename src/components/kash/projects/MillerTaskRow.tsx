@@ -6,7 +6,8 @@ import { CSS } from "@dnd-kit/utilities";
 import SuggestedDateChip from "@/components/kash/plan/SuggestedDateChip";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
-import { Lock, withKashIcon } from "@/components/kash/ui/icon";
+import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeActionRail";
+import { Check, Lock, Pencil, Undo2, withKashIcon } from "@/components/kash/ui/icon";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 
@@ -14,9 +15,7 @@ import { useProjectMutations } from "./useProjectMutations";
 import type { ProjectTask } from "./types";
 
 const LockIcon = withKashIcon(Lock);
-/** Keep in sync with the `w-20` swipe-action buttons below. */
-const ACTION_WIDTH_PX = 80;
-const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
+const REVEAL_WIDTH_PX = swipeRevealWidth(2);
 
 type Props = {
   projectId: string;
@@ -57,9 +56,16 @@ export default function MillerTaskRow({
     task.scheduledDate === null &&
     task.suggestedScheduledDate != null;
 
-  const { offset, hide, isRightOpen, containerRef } = useTrackpadSwipeReveal({
+  const { rightOffset, hide, containerRef } = useTrackpadSwipeReveal({
     maxOffsetRight: REVEAL_WIDTH_PX,
   });
+
+  /**
+   * Snapped, not live. The rail squeezes the title column rather than sliding the row,
+   * so following the gesture pixel-for-pixel would reflow the text on every wheel
+   * event. Flipping once at the halfway mark matches where the hook snaps anyway.
+   */
+  const railOpen = rightOffset >= REVEAL_WIDTH_PX / 2;
 
   const {
     attributes,
@@ -97,43 +103,13 @@ export default function MillerTaskRow({
         isOver ? "border-t-2 border-ink" : "border-t-2 border-transparent"
       } ${highlightClassName ?? ""}`}
     >
-      <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
-        <button
-          type="button"
-          className="flex w-20 items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
-          onClick={(e) => {
-            e.stopPropagation();
-            hide();
-            onToggleDetail();
-          }}
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          disabled={isBlocked}
-          className={`flex w-20 items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink-muted ${
-            isBlocked ? "opacity-50" : ""
-          }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            hide();
-            onToggleComplete();
-          }}
-        >
-          {completed ? "Undo" : "Complete"}
-        </button>
-      </div>
-
       {/*
-        All padding lives on this masking layer, not on the <li>: the swipe-action
-        layer above is positioned `inset-y-0 right-0` against the <li>, so padding
-        there would leave the action buttons peeking out around this opaque mask.
+        Padding lives here rather than on the <li> so the rail's `-my-0.5 -mr-2` can
+        cancel it and bleed the caps out to the row's own rounded edge.
       */}
       <div
         ref={containerRef}
         className="relative flex min-w-0 flex-1 items-start gap-2 bg-surface px-2 py-0.5"
-        style={{ transform: `translateX(${offset}px)` }}
       >
         <button
           type="button"
@@ -164,6 +140,36 @@ export default function MillerTaskRow({
         </button>
         <TaskPriorityIndicator priority={task.priority} />
         <TaskDragHandle listeners={listeners} attributes={dragAttributes} />
+
+        <SwipeActionRail
+          open={railOpen}
+          className="-my-0.5 -mr-2"
+          actions={[
+            {
+              key: "edit",
+              label: "Edit",
+              icon: Pencil,
+              tone: "edit",
+              onClick: (e) => {
+                e.stopPropagation();
+                hide();
+                onToggleDetail();
+              },
+            },
+            {
+              key: "complete",
+              label: completed ? "Mark not done" : "Complete",
+              icon: completed ? Undo2 : Check,
+              tone: completed ? "neutral" : "complete",
+              disabled: isBlocked,
+              onClick: (e) => {
+                e.stopPropagation();
+                hide();
+                onToggleComplete();
+              },
+            },
+          ]}
+        />
       </div>
     </li>
   );

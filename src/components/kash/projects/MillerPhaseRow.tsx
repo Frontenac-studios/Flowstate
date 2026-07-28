@@ -3,7 +3,8 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
-import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
+import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeActionRail";
+import { ChevronRight, kashIconProps, Pencil } from "@/components/kash/ui/icon";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
@@ -14,8 +15,7 @@ import type { ProjectPhase, ProjectTask } from "./types";
 
 type Node = ProjectTree<ProjectPhase, ProjectTask>["rootPhases"][number];
 
-/** Keep in sync with the `w-20` swipe-action button below. */
-const ACTION_WIDTH_PX = 80;
+const REVEAL_WIDTH_PX = swipeRevealWidth(1);
 
 type Props = {
   node: Node;
@@ -46,9 +46,12 @@ export default function MillerPhaseRow({
   const showProgress = itemCount > 0 && progressPercent !== undefined;
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
 
-  const { offset, hide, isRightOpen, containerRef } = useTrackpadSwipeReveal({
-    maxOffsetRight: ACTION_WIDTH_PX,
+  const { rightOffset, hide, containerRef } = useTrackpadSwipeReveal({
+    maxOffsetRight: REVEAL_WIDTH_PX,
   });
+
+  /** Snapped rather than live — see the note in MillerTaskRow. */
+  const railOpen = rightOffset >= REVEAL_WIDTH_PX / 2;
 
   const {
     attributes,
@@ -87,66 +90,67 @@ export default function MillerPhaseRow({
       {...listeners}
       {...dragAttributes}
     >
-      <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
-        <button
-          type="button"
-          className="flex w-20 items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
-          onClick={(e) => {
-            e.stopPropagation();
-            hide();
-            onEdit();
-          }}
-        >
-          Edit
-        </button>
-      </div>
+      <div ref={containerRef} className="relative flex items-stretch bg-surface">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 px-2 py-1.5">
+          <button
+            type="button"
+            onClick={onOpen}
+            aria-expanded={selected}
+            className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          >
+            <span className="flex min-w-0 flex-1 items-center gap-1.5">
+              <span
+                className="min-h-[1rem] w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
+                style={{
+                  backgroundColor: stripe,
+                  boxShadow: "0 0 0 1px var(--mark-ring)",
+                }}
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1 break-words font-medium">{node.phase.name}</span>
+            </span>
+            <span className="mt-0.5 flex shrink-0 items-center gap-1">
+              {timeLabel ? (
+                <span className="text-xs tabular-nums text-ink-faint">{timeLabel}</span>
+              ) : null}
+              {itemCount > 0 ? (
+                <span className="text-xs tabular-nums text-ink-muted">{itemCount}</span>
+              ) : null}
+              <ChevronRight
+                {...kashIconProps({
+                  tokenSize: "sm",
+                  className: `shrink-0 transition-transform ${isOpen ? "rotate-90 text-ink" : "text-ink-faint"}`,
+                  "aria-hidden": true,
+                })}
+              />
+            </span>
+          </button>
+          {showProgress ? (
+            <div className="h-0.5 overflow-hidden rounded-full bg-border">
+              <span
+                className="block h-full rounded-full"
+                style={{ width: `${progressPercent}%`, backgroundColor: stripe }}
+              />
+            </div>
+          ) : null}
+        </div>
 
-      <div
-        ref={containerRef}
-        className="relative flex flex-col gap-1 bg-surface px-2 py-1.5"
-        style={{ transform: `translateX(${offset}px)` }}
-      >
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-expanded={selected}
-          className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
-        >
-          <span className="flex min-w-0 flex-1 items-center gap-1.5">
-            <span
-              className="min-h-[1rem] w-[var(--stripe-width)] shrink-0 self-stretch rounded-full"
-              style={{
-                backgroundColor: stripe,
-                boxShadow: "0 0 0 1px var(--mark-ring)",
-              }}
-              aria-hidden
-            />
-            <span className="min-w-0 flex-1 break-words font-medium">{node.phase.name}</span>
-          </span>
-          <span className="mt-0.5 flex shrink-0 items-center gap-1">
-            {timeLabel ? (
-              <span className="text-xs tabular-nums text-ink-faint">{timeLabel}</span>
-            ) : null}
-            {itemCount > 0 ? (
-              <span className="text-xs tabular-nums text-ink-muted">{itemCount}</span>
-            ) : null}
-            <ChevronRight
-              {...kashIconProps({
-                tokenSize: "sm",
-                className: `shrink-0 transition-transform ${isOpen ? "rotate-90 text-ink" : "text-ink-faint"}`,
-                "aria-hidden": true,
-              })}
-            />
-          </span>
-        </button>
-        {showProgress ? (
-          <div className="h-0.5 overflow-hidden rounded-full bg-border">
-            <span
-              className="block h-full rounded-full"
-              style={{ width: `${progressPercent}%`, backgroundColor: stripe }}
-            />
-          </div>
-        ) : null}
+        <SwipeActionRail
+          open={railOpen}
+          actions={[
+            {
+              key: "edit",
+              label: "Edit",
+              icon: Pencil,
+              tone: "edit",
+              onClick: (e) => {
+                e.stopPropagation();
+                hide();
+                onEdit();
+              },
+            },
+          ]}
+        />
       </div>
     </li>
   );
