@@ -18,7 +18,8 @@ import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
 import { ComposerAssistInput } from "@/components/kash/composer/ComposerAssistInput";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
-import { Lock, withKashIcon } from "@/components/kash/ui/icon";
+import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeActionRail";
+import { Lock, Pencil, SkipForward, Star, Trash2, withKashIcon } from "@/components/kash/ui/icon";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import Checkbox from "@/components/kash/ui/Checkbox";
 import { useToast } from "@/components/kash/ui/ToastProvider";
@@ -122,8 +123,8 @@ type Props = {
   highlightRef?: Ref<HTMLLIElement>;
 };
 
-const ACTION_WIDTH_PX = 72;
-const REVEAL_WIDTH_PX = ACTION_WIDTH_PX * 2;
+const PIN_REVEAL_WIDTH_PX = swipeRevealWidth(1);
+const REVEAL_WIDTH_PX = swipeRevealWidth(2);
 const MAX_ARRIVE_STAGGER = 12;
 
 export function TaskRow({
@@ -226,10 +227,14 @@ export function TaskRow({
         ? "font-medium text-[var(--due-soon)]"
         : "text-[var(--due-future)]";
   const showProjectIndicator = Boolean(activeReveal.project && showProject && task.projectName);
-  const { offset, hide, isOpen, isLeftOpen, isRightOpen, containerRef } = useTrackpadSwipeReveal({
+  const { leftOffset, rightOffset, hide, isOpen, containerRef } = useTrackpadSwipeReveal({
     maxOffsetRight: REVEAL_WIDTH_PX,
-    maxOffsetLeft: pinEnabled ? ACTION_WIDTH_PX : 0,
+    maxOffsetLeft: pinEnabled ? PIN_REVEAL_WIDTH_PX : 0,
   });
+
+  /** Snapped rather than live — see the note in MillerTaskRow. */
+  const pinRailOpen = pinEnabled && leftOffset >= PIN_REVEAL_WIDTH_PX / 2;
+  const actionRailOpen = rightOffset >= REVEAL_WIDTH_PX / 2;
 
   const invalidatePlan = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -529,58 +534,37 @@ export function TaskRow({
       }}
     >
       <div ref={containerRef} className="relative min-h-0 overflow-hidden">
-        {pinEnabled ? (
-          <div className="absolute inset-y-0 left-0 flex" aria-hidden={!isLeftOpen}>
-            <button
-              type="button"
-              className="flex w-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-card border border-subtle bg-surface text-sm text-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                hide();
-                if (rowContentRef.current) {
-                  onPin(task.id, rowContentRef.current);
-                }
-              }}
-            >
-              <span aria-hidden>★</span>
-              <span>Pin</span>
-            </button>
-          </div>
-        ) : null}
-
-        <div className="absolute inset-y-0 right-0 flex" aria-hidden={!isRightOpen}>
-          <button
-            type="button"
-            className="flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink"
-            onClick={(e) => {
-              e.stopPropagation();
-              startEdit();
-            }}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            className="flex w-[4.5rem] items-center justify-center rounded-card border border-subtle bg-surface text-sm text-ink-muted"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
-          >
-            {task.isRecurringOccurrence ? "Skip" : "Delete"}
-          </button>
-        </div>
-
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 rounded-card border bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move ${
+          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 overflow-hidden rounded-card border bg-surface px-3 py-[var(--row-py)] ${
             isBlocked ? "border-dashed border-ink-faint" : "border-subtle"
           } ${task.isTop3 ? "border-l-2 border-accent" : ""} ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
-          style={{ transform: `translateX(${offset}px)` }}
           onClick={() => onSelect?.(task.id)}
           onDoubleClick={() => onActivate?.(task.id)}
         >
+          {pinEnabled ? (
+            <SwipeActionRail
+              open={pinRailOpen}
+              className="-my-[var(--row-py)] -ml-3"
+              actions={[
+                {
+                  key: "pin",
+                  label: "Pin to Top 3",
+                  icon: Star,
+                  tone: "neutral",
+                  onClick: (e) => {
+                    e.stopPropagation();
+                    hide();
+                    if (rowContentRef.current) {
+                      onPin(task.id, rowContentRef.current);
+                    }
+                  },
+                },
+              ]}
+            />
+          ) : null}
+
           <span
             className={`mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full${
               task.categoryUnresolved ? "stripe-resolving" : ""
@@ -742,6 +726,33 @@ export function TaskRow({
             ref={setActivatorNodeRef}
             listeners={listeners}
             attributes={dragAttributes}
+          />
+
+          <SwipeActionRail
+            open={actionRailOpen}
+            className="-my-[var(--row-py)] -mr-3"
+            actions={[
+              {
+                key: "edit",
+                label: "Edit",
+                icon: Pencil,
+                tone: "edit",
+                onClick: (e) => {
+                  e.stopPropagation();
+                  startEdit();
+                },
+              },
+              {
+                key: "remove",
+                label: task.isRecurringOccurrence ? "Skip this occurrence" : "Delete",
+                icon: task.isRecurringOccurrence ? SkipForward : Trash2,
+                tone: task.isRecurringOccurrence ? "neutral" : "danger",
+                onClick: (e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                },
+              },
+            ]}
           />
         </div>
       </div>

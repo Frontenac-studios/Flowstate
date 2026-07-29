@@ -100,6 +100,16 @@
   --status-icon: var(--ink-muted);
   --status-critical: var(--crimson);
 
+  /* ---- swipe-action glyphs ----
+   * The row reveal rail is icon-only, so the glyph carries the whole meaning and
+   * earns colour where the rest of the chrome stays graphite. Deliberately aliased
+   * off the category ramps' `-text` stops (not `-solid`): the solid stops sit near
+   * 2.4:1 on --surface-2 and fail the 3:1 non-text contrast floor. Retune here, not
+   * in components — nothing else in the app should read a category token for state. */
+  --action-edit: var(--cat-adulting-text);
+  --action-complete: var(--cat-body-mind-text);
+  --action-danger: var(--status-critical);
+
   /* ---- priority + due urgency (VF-4) ---- */
   /* Priority pips: graphite ramp, crimson only at High; always count-coded (1/2/3). */
   --priority-low: #c2c6cd;
