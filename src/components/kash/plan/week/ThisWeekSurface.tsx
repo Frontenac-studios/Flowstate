@@ -9,6 +9,7 @@ import { PlanSurface } from "@/components/kash/plan/PlanSurface";
 import { WeekCanvas } from "@/components/kash/plan/week/WeekCanvas";
 import { WeekHeader } from "@/components/kash/plan/week/WeekHeader";
 import { WeekReflectionPanel } from "@/components/kash/plan/week/WeekReflectionPanel";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { partitionWeekTasks } from "@/lib/week/partition-week-tasks";
@@ -28,14 +29,14 @@ export function ThisWeekSurface() {
 
   const [reflectionOpen, setReflectionOpen] = useState(false);
 
-  const { data: tasks = [] } = useQuery(trpc.tasks.listIncomplete.queryOptions());
-  const { data: protectedBlocks = [] } = useQuery(
-    trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
-  );
-  const { data: dayPriorities = [] } = useQuery(
-    trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput)
-  );
+  const tasksQuery = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const tasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data]);
+  const blocksQuery = useQuery(trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput));
+  const protectedBlocks = blocksQuery.data ?? [];
+  const prioritiesQuery = useQuery(trpc.weekDayPriorities.listForWeek.queryOptions(weekQueryInput));
+  const dayPriorities = prioritiesQuery.data ?? [];
   const { data: triageCount } = useQuery(trpc.tasks.countTriageCandidates.queryOptions());
+  const isError = tasksQuery.isError || blocksQuery.isError || prioritiesQuery.isError;
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
 
@@ -74,6 +75,17 @@ export function ThisWeekSurface() {
 
         <LensProvider scope="this-week">
           <div className="flex min-h-0 flex-1 flex-col">
+            {isError ? (
+              <QueryErrorNotice
+                className="mb-3"
+                message="This week didn't load."
+                onRetry={() => {
+                  void tasksQuery.refetch();
+                  void blocksQuery.refetch();
+                  void prioritiesQuery.refetch();
+                }}
+              />
+            ) : null}
             {hasWeekPlanData ? (
               <div className="mb-3 flex shrink-0 justify-end">
                 <LensControlBar />

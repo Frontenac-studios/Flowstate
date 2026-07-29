@@ -4,6 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { useEffect, useRef, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 
 import { CompletedSection, type CompletedTaskRow } from "./CompletedSection";
@@ -15,6 +16,8 @@ type Props = {
   tasks: PlanTaskRow[];
   completions: CompletedTaskRow[];
   isLoading: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
   onActivateTask?: (taskId: string) => void;
@@ -65,6 +68,8 @@ export function TodayList({
   tasks,
   completions,
   isLoading,
+  isError,
+  onRetry,
   selectedTaskId,
   onSelectTask,
   onActivateTask,
@@ -98,6 +103,8 @@ export function TodayList({
         <p className="rounded-card border border-subtle bg-surface px-4 py-8 text-center text-sm text-ink-muted">
           Loading…
         </p>
+      ) : isError ? (
+        <QueryErrorNotice message="Today didn't load." onRetry={onRetry} />
       ) : tasks.length === 0 ? (
         <ColoredEmptyInvitation
           title="Start your first task"

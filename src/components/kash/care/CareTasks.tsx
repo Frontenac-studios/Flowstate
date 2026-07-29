@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { groupByTheme } from "@/lib/care/labels";
 import { useTRPC } from "@/trpc/client";
 import type { RouterOutputs } from "@/trpc/client";
@@ -53,6 +54,11 @@ export function CareTasks() {
 
         {activitiesQuery.isLoading ? (
           <p className="px-2 text-meta text-ink-faint">Loading…</p>
+        ) : activitiesQuery.isError ? (
+          <QueryErrorNotice
+            message="Your practices didn't load."
+            onRetry={() => void activitiesQuery.refetch()}
+          />
         ) : groups.length === 0 ? (
           <p className="rounded-card border border-subtle bg-surface px-4 py-6 text-center text-meta text-ink-faint shadow-surface">
             No practices yet. Adopt a suggestion below, or create your own.

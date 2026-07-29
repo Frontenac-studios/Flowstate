@@ -268,7 +268,12 @@ export function DayPlanCanvas() {
     );
   }, []);
 
-  const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  const {
+    data: tasks = [],
+    isLoading,
+    isError: isTasksError,
+    refetch: refetchTasks,
+  } = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
   const { data: top3Slots = [] } = useQuery(trpc.tasks.listTop3Slots.queryOptions(top3QueryInput));
   const { data: recentlyCompleted = [] } = useQuery(
@@ -868,6 +873,8 @@ export function DayPlanCanvas() {
                   tasks={todayTasks.map(toRow)}
                   completions={completedToday}
                   isLoading={isLoading}
+                  isError={isTasksError}
+                  onRetry={() => void refetchTasks()}
                   selectedTaskId={selectedTaskId}
                   onSelectTask={setSelectedTaskId}
                   onActivateTask={handleActivateTask}
