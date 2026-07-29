@@ -1,10 +1,8 @@
 "use client";
 
-import { Fragment, useId, useState, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import { useDroppable } from "@dnd-kit/core";
-
-import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 
 import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
@@ -43,6 +41,7 @@ type Props = {
   renderDetail: (item: ColumnItem) => ReactNode;
   onDrillPhase: (node: Node) => void;
   onEditPhase: (node: Node) => void;
+  onTogglePhaseComplete: (node: Node) => void;
   onSelectTask: (task: ProjectTask, index: number) => void;
   onToggleTaskDetail: (task: ProjectTask) => void;
   onToggleTask: (task: ProjectTask) => void;
@@ -71,6 +70,7 @@ export default function MillerColumn({
   renderDetail,
   onDrillPhase,
   onEditPhase,
+  onTogglePhaseComplete,
   onSelectTask,
   onToggleTaskDetail,
   onToggleTask,
@@ -79,8 +79,6 @@ export default function MillerColumn({
     id: `column:${level}`,
     data: { kind: "column", parentPhaseId },
   });
-  const completedPanelId = useId();
-  const [completedCollapsed, setCompletedCollapsed] = useState(true);
 
   const renderItem = (item: ColumnItem, index: number): ReactNode => {
     const focused = focusIndex === index;
@@ -100,6 +98,7 @@ export default function MillerColumn({
             timeSpentSeconds={metrics?.timeSpentSeconds}
             onOpen={() => onDrillPhase(item.node)}
             onEdit={() => onEditPhase(item.node)}
+            onToggleComplete={() => onTogglePhaseComplete(item.node)}
           />
           {expanded ? (
             <li
@@ -142,11 +141,6 @@ export default function MillerColumn({
     (isItemComplete(item) ? completedItems : activeItems).push({ item, index });
   });
 
-  // Keyboard focus lands on a completed row → force the group open so it's visible.
-  const focusInCompleted =
-    focusIndex !== null && completedItems.some((entry) => entry.index === focusIndex);
-  const completedExpanded = !completedCollapsed || focusInCompleted;
-
   return (
     <div
       ref={setNodeRef}
@@ -158,36 +152,28 @@ export default function MillerColumn({
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
         {activeItems.map(({ item, index }) => renderItem(item, index))}
         {completedItems.length > 0 ? (
-          <li className="mt-1">
-            <button
-              type="button"
-              className="kash-focus-visible flex w-full items-center gap-1.5 rounded-row px-1.5 py-1 text-left outline-none"
-              aria-expanded={completedExpanded}
-              aria-controls={completedPanelId}
-              onClick={() => setCompletedCollapsed((value) => !value)}
-            >
-              <ChevronRight
-                {...kashIconProps({
-                  tokenSize: "sm",
-                  className: `text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
-                    completedExpanded ? "rotate-90" : ""
-                  }`,
-                })}
-                aria-hidden
-              />
+          <>
+            {/*
+              Push the completed group to the column's bottom. `grow` fills the slack
+              when the column isn't full; `min-h-14` keeps a 2–3 row gap once content
+              overflows and the column scrolls, so completed never crowds the last
+              active item.
+            */}
+            <li aria-hidden className="min-h-14 shrink-0 grow" />
+            <li className="mt-1 flex items-center gap-1.5 px-1.5 py-1">
               <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">
                 Completed
               </span>
               <span className="text-caption text-ink-faint">· {completedItems.length}</span>
-            </button>
-            <ul
-              id={completedPanelId}
-              hidden={!completedExpanded}
-              className="mt-0.5 flex flex-col gap-0.5"
-            >
-              {completedItems.map(({ item, index }) => renderItem(item, index))}
-            </ul>
-          </li>
+              <span className="ml-1.5 h-px flex-1 bg-border" aria-hidden />
+            </li>
+            <li>
+              {/* Dimmed so done work reads as settled; swipe a row to mark it not done. */}
+              <ul className="flex flex-col gap-0.5 opacity-70">
+                {completedItems.map(({ item, index }) => renderItem(item, index))}
+              </ul>
+            </li>
+          </>
         ) : null}
       </ul>
     </div>

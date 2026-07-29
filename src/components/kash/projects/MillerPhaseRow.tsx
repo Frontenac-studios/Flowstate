@@ -3,8 +3,11 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
-import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeActionRail";
-import { ChevronRight, kashIconProps, Pencil } from "@/components/kash/ui/icon";
+import SwipeActionRail, {
+  swipeRevealWidth,
+  type SwipeAction,
+} from "@/components/kash/SwipeActionRail";
+import { ChevronRight, kashIconProps, Pencil, Undo2 } from "@/components/kash/ui/icon";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
@@ -14,8 +17,6 @@ import { formatDuration } from "@/lib/time/duration";
 import type { ProjectPhase, ProjectTask } from "./types";
 
 type Node = ProjectTree<ProjectPhase, ProjectTask>["rootPhases"][number];
-
-const REVEAL_WIDTH_PX = swipeRevealWidth(1);
 
 type Props = {
   node: Node;
@@ -28,6 +29,7 @@ type Props = {
   timeSpentSeconds?: number;
   onOpen: () => void;
   onEdit: () => void;
+  onToggleComplete: () => void;
 };
 
 export default function MillerPhaseRow({
@@ -40,18 +42,51 @@ export default function MillerPhaseRow({
   timeSpentSeconds = 0,
   onOpen,
   onEdit,
+  onToggleComplete,
 }: Props) {
   const itemCount = node.children.length + node.tasks.length;
   const stripe = projectCycleSolidVar(node.phase.sortOrder);
   const showProgress = itemCount > 0 && progressPercent !== undefined;
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
+  const completed = node.phase.completedAt !== null;
+
+  // Completed phases gain a second cap to swipe them back to active; active phases
+  // keep just Edit. Width follows the cap count so the tail matches the rail.
+  const revealWidthPx = swipeRevealWidth(completed ? 2 : 1);
 
   const { rightOffset, hide, containerRef } = useTrackpadSwipeReveal({
-    maxOffsetRight: REVEAL_WIDTH_PX,
+    maxOffsetRight: revealWidthPx,
   });
 
   /** Snapped rather than live — see the note in MillerTaskRow. */
-  const railOpen = rightOffset >= REVEAL_WIDTH_PX / 2;
+  const railOpen = rightOffset >= revealWidthPx / 2;
+
+  const railActions: SwipeAction[] = [
+    {
+      key: "edit",
+      label: "Edit",
+      icon: Pencil,
+      tone: "edit",
+      onClick: (e) => {
+        e.stopPropagation();
+        hide();
+        onEdit();
+      },
+    },
+  ];
+  if (completed) {
+    railActions.push({
+      key: "uncomplete",
+      label: "Mark not done",
+      icon: Undo2,
+      tone: "neutral",
+      onClick: (e) => {
+        e.stopPropagation();
+        hide();
+        onToggleComplete();
+      },
+    });
+  }
 
   const {
     attributes,
@@ -135,22 +170,7 @@ export default function MillerPhaseRow({
           ) : null}
         </div>
 
-        <SwipeActionRail
-          open={railOpen}
-          actions={[
-            {
-              key: "edit",
-              label: "Edit",
-              icon: Pencil,
-              tone: "edit",
-              onClick: (e) => {
-                e.stopPropagation();
-                hide();
-                onEdit();
-              },
-            },
-          ]}
-        />
+        <SwipeActionRail open={railOpen} actions={railActions} />
       </div>
     </li>
   );

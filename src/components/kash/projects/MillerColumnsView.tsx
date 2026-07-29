@@ -41,11 +41,12 @@ import { createCaptureContext } from "@/lib/chat/capture-context";
 import { onChatTasksCreated } from "@/lib/chat/chat-task-created-events";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "../plan/AddTaskPopover";
 import NewItemRow from "./NewItemRow";
+import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
 import PhaseDetail from "./PhaseDetail";
 import TaskDetail from "./TaskDetail";
 import ConfirmDialog from "./ConfirmDialog";
 import ProjectSyntaxChip from "./ProjectSyntaxChip";
-import type { ProjectPhase, ProjectTask } from "./types";
+import type { ProjectMilestone, ProjectPhase, ProjectTask } from "./types";
 import { useProjectMutations } from "./useProjectMutations";
 
 import "./projects-motion.css";
@@ -64,6 +65,9 @@ type Props = {
   tasks: ProjectTask[];
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
+  milestones: ProjectMilestone[];
+  /** Open the setup wizard on the Milestones step (the strip's "Edit"). */
+  onEditMilestones: () => void;
   estimateSampleCount?: number;
   onOpenSetup?: () => void;
 };
@@ -89,6 +93,8 @@ export default function MillerColumnsView({
   tasks,
   selectedPath,
   onSelectPath,
+  milestones,
+  onEditMilestones,
   estimateSampleCount = 0,
   onOpenSetup,
 }: Props) {
@@ -552,53 +558,67 @@ export default function MillerColumnsView({
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="flex min-h-0 flex-1 flex-col gap-3">
-          <div
-            className="shrink-0 rounded-card border border-subtle bg-surface p-4 shadow-surface"
-            data-miller-composer
-          >
-            {composerOpen ? (
-              <div
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    e.stopPropagation();
-                    setComposerOpen(false);
-                    requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+          {/*
+            Board toolbar: milestones on the left, the add (+) button and Edit on the
+            right. Always rendered (even with no milestones) so + has a stable home;
+            the manual composer opens directly below it.
+          */}
+          <div className="shrink-0">
+            <ProjectMilestoneStrip
+              projectId={projectId}
+              milestones={milestones}
+              onEdit={onEditMilestones}
+              alwaysRender
+              addSlot={
+                <AddTaskPopover
+                  ref={addTaskRef}
+                  embedded
+                  menuAlign="right"
+                  onAskChat={() =>
+                    openRail({
+                      captureContext: createCaptureContext({
+                        surface: "projects",
+                        projectId,
+                        projectSlug,
+                        phaseId: composerParentPhaseId,
+                        phaseName: composerPhaseName,
+                        category,
+                      }),
+                    })
                   }
-                }}
-              >
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <ProjectSyntaxChip showOnFocus focused={composerFocused} />
-                </div>
-                <NewItemRow
-                  projectId={projectId}
-                  phases={phases}
-                  tasks={tasks}
-                  defaultPhaseId={composerParentPhaseId}
-                  pending={createPending}
-                  onSubmitComposer={handleSubmitComposer}
-                  onFocusChange={setComposerFocused}
-                  autoFocus
+                  onTypeManually={() => setComposerOpen(true)}
                 />
-              </div>
-            ) : (
-              <AddTaskPopover
-                ref={addTaskRef}
-                onAskChat={() =>
-                  openRail({
-                    captureContext: createCaptureContext({
-                      surface: "projects",
-                      projectId,
-                      projectSlug,
-                      phaseId: composerParentPhaseId,
-                      phaseName: composerPhaseName,
-                      category,
-                    }),
-                  })
-                }
-                onTypeManually={() => setComposerOpen(true)}
-              />
-            )}
+              }
+            />
           </div>
+
+          {composerOpen ? (
+            <div
+              className="shrink-0 rounded-card border border-subtle bg-surface p-4 shadow-surface"
+              data-miller-composer
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setComposerOpen(false);
+                  requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+                }
+              }}
+            >
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <ProjectSyntaxChip showOnFocus focused={composerFocused} />
+              </div>
+              <NewItemRow
+                projectId={projectId}
+                phases={phases}
+                tasks={tasks}
+                defaultPhaseId={composerParentPhaseId}
+                pending={createPending}
+                onSubmitComposer={handleSubmitComposer}
+                onFocusChange={setComposerFocused}
+                autoFocus
+              />
+            </div>
+          ) : null}
 
           {!isBlank ? (
             <div className="flex shrink-0 items-center justify-end px-1">
@@ -632,7 +652,7 @@ export default function MillerColumnsView({
                   isBlank && col.level === 0 ? (
                     <ColoredEmptyInvitation
                       title="Add your first phase"
-                      hint="Use the box above — one per line. Start a line with ;;; to add a phase."
+                      hint="Tap + above to type them in — one per line. Start a line with ;;; to add a phase."
                       className="mx-1 my-2 border-none bg-transparent px-3 py-6 shadow-none"
                       action={
                         onOpenSetup ? (
@@ -647,6 +667,12 @@ export default function MillerColumnsView({
                 renderDetail={renderDetail}
                 onDrillPhase={(node) => drillPhase(col.level, node)}
                 onEditPhase={(node) => togglePhaseDetail(node.phase.id)}
+                onTogglePhaseComplete={(node) =>
+                  m.setPhaseComplete.mutate({
+                    id: node.phase.id,
+                    completed: node.phase.completedAt === null,
+                  })
+                }
                 onSelectTask={(_task, index) => selectTask(col.level, index)}
                 onToggleTaskDetail={(task) => toggleTaskDetail(col.level, task)}
                 onToggleTask={toggleTask}

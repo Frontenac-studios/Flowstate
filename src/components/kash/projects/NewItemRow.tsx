@@ -22,6 +22,7 @@ import {
   buildComposerLeafPhaseIdByPathKey,
   resolveComposerLinePhaseIdSync,
 } from "@/lib/projects/resolve-composer-line-phase-id";
+import { describeComposerSubmitError } from "@/lib/projects/describe-composer-submit-error";
 import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
 import { getTaskTitleError } from "@/lib/taskValidation";
 
@@ -60,6 +61,7 @@ export default function NewItemRow({
   const [cursor, setCursor] = useState(0);
   const [lineLimitWarning, setLineLimitWarning] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitNotice, setSubmitNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<ComposerTextareaHandle>(null);
   const inputId = useId();
@@ -177,6 +179,7 @@ export default function NewItemRow({
   const submitTasks = async () => {
     if (!value.trim() || pending || submitting) return;
     setSubmitError(null);
+    setSubmitNotice(null);
 
     if (parsedLines.length > MAX_COMPOSER_LINES) {
       setLineLimitWarning(true);
@@ -185,7 +188,18 @@ export default function NewItemRow({
     setLineLimitWarning(false);
 
     const valid = parsedLines.filter((line) => isProjectTaskLineValid(line.parse));
-    if (valid.length === 0) return;
+    // Lines dropped because they carry a blocking warning (bad due/priority, or a
+    // parent dir that doesn't resolve). Their reasons render in the list below, so
+    // point the user there rather than silently doing nothing.
+    const skipped = parsedLines.length - valid.length;
+    if (valid.length === 0) {
+      setSubmitError(
+        skipped === 1
+          ? "That line can't be added yet — fix the issue shown below."
+          : "None of these lines can be added yet — fix the issues shown below."
+      );
+      return;
+    }
 
     const titleError = valid
       .filter((line) => !line.parse.phaseOnly)
@@ -200,8 +214,14 @@ export default function NewItemRow({
     try {
       await onSubmitComposer(valid);
       setValue(removeSubmittedLines(value, valid));
-    } catch {
-      setSubmitError("Couldn't add your tasks — please try again.");
+      const added = valid.filter((line) => !line.parse.phaseOnly).length;
+      if (skipped > 0) {
+        // Partial success: the skipped lines stay in the box with their reasons.
+        setSubmitNotice(`Added ${added} — skipped ${skipped} with issues (see below).`);
+      }
+    } catch (error) {
+      console.error("Project composer submit failed", error);
+      setSubmitError(describeComposerSubmitError(error));
     } finally {
       setSubmitting(false);
     }
@@ -218,7 +238,11 @@ export default function NewItemRow({
         ref={textareaRef}
         id={inputId}
         value={value}
-        onChange={setValue}
+        onChange={(next) => {
+          if (submitError) setSubmitError(null);
+          if (submitNotice) setSubmitNotice(null);
+          setValue(next);
+        }}
         onCursorChange={setCursor}
         ghostSuffix={cursorOnPlusParentDirLine ? null : (assist?.suggestionSuffix ?? null)}
         placeholder="add phases and tasks — one per line"
@@ -252,6 +276,12 @@ export default function NewItemRow({
       {submitError ? (
         <p className="mt-2 text-sm text-critical" role="alert">
           {submitError}
+        </p>
+      ) : null}
+
+      {submitNotice ? (
+        <p className="mt-2 text-sm text-ink-muted" role="status">
+          {submitNotice}
         </p>
       ) : null}
 

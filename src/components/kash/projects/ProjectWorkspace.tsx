@@ -121,16 +121,6 @@ export default function ProjectWorkspace({
 
       <ProjectSlipReplanCard projectId={project.id} />
 
-      {(milestonesQuery.data?.length ?? 0) > 0 ? (
-        <ProjectMilestoneStrip
-          milestones={milestonesQuery.data ?? []}
-          onEdit={() => {
-            setSetupMode("edit");
-            setWizardOpen(true);
-          }}
-        />
-      ) : null}
-
       {isLoading ? (
         <p className="text-ink-muted">Loading project…</p>
       ) : isError ? (
@@ -152,6 +142,11 @@ export default function ProjectWorkspace({
           tasks={tasksQuery.data ?? []}
           selectedPath={selectedPath}
           onSelectPath={setSelectedPath}
+          milestones={milestonesQuery.data ?? []}
+          onEditMilestones={() => {
+            setSetupMode("edit");
+            setWizardOpen(true);
+          }}
           estimateSampleCount={estimateSampleCount}
           onOpenSetup={() => {
             setSetupMode("edit");
@@ -159,12 +154,24 @@ export default function ProjectWorkspace({
           }}
         />
       ) : (
-        <CalendarBoardView
-          tree={tree}
-          projectId={initialProject.id}
-          category={project.category}
-          milestones={milestonesQuery.data ?? []}
-        />
+        <>
+          {(milestonesQuery.data?.length ?? 0) > 0 ? (
+            <ProjectMilestoneStrip
+              projectId={initialProject.id}
+              milestones={milestonesQuery.data ?? []}
+              onEdit={() => {
+                setSetupMode("edit");
+                setWizardOpen(true);
+              }}
+            />
+          ) : null}
+          <CalendarBoardView
+            tree={tree}
+            projectId={initialProject.id}
+            category={project.category}
+            milestones={milestonesQuery.data ?? []}
+          />
+        </>
       )}
 
       {/*
