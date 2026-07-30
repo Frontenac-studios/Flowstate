@@ -14,6 +14,9 @@ type Props = {
   suggestions?: ReactNode;
   /** Textarea row count. Default 2; morning hand-off uses a taller composer. */
   rows?: number;
+  /** Tailwind text-size class for the textarea. Default text-sm; the goals
+      coach dock uses a smaller size so its placeholder fits on one line. */
+  textSizeClassName?: string;
 };
 
 export function ChatComposer({
@@ -24,6 +27,7 @@ export function ChatComposer({
   onStop,
   suggestions,
   rows = 2,
+  textSizeClassName = "text-sm",
 }: Props) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,7 +72,7 @@ export function ChatComposer({
           rows={rows}
           disabled={disabled || isStreaming}
           placeholder={placeholder}
-          className="flex-1 resize-none text-sm text-ink"
+          className={`flex-1 resize-none ${textSizeClassName} text-ink`}
         />
         {isStreaming && onStop ? (
           <button

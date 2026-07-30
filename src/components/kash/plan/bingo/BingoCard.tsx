@@ -30,7 +30,6 @@ import { useTRPC } from "@/trpc/client";
 
 import BingoBalanceChart from "./BingoBalanceChart";
 import BingoCoachDock from "./BingoCoachDock";
-import BingoCoachPromptCard from "./BingoCoachPromptCard";
 import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
 import BingoListView, { type BingoListGroupBy } from "./BingoListView";
@@ -66,12 +65,17 @@ type ViewMode = "card" | "list";
 
 type Props = {
   year: number;
-  /* Page header (Plan title + horizon switcher) rendered inside the left
-     column so the coach dock can run the full window height beside it. */
-  header?: ReactNode;
+  /* Page-header pieces rendered inside the left column so the coach dock can
+     run the full window height beside them. `headerStart` is the page title,
+     `headerEnd` the check-in + horizon-switcher cluster; the card merges both
+     into its single chrome row above the grid. */
+  headerStart?: ReactNode;
+  headerEnd?: ReactNode;
+  /* Occasional banners (e.g. year-rollover nudges) shown below the chrome row. */
+  notices?: ReactNode;
 };
 
-export default function BingoCard({ year, header }: Props) {
+export default function BingoCard({ year, headerStart, headerEnd, notices }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -286,10 +290,18 @@ export default function BingoCard({ year, header }: Props) {
     if (card) finalizeMutation.mutate({ id: card.id });
   };
 
+  const fallbackHeader = (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      {headerStart}
+      <div className="flex flex-wrap items-center justify-end gap-3">{headerEnd}</div>
+    </div>
+  );
+
   if (cardQuery.isLoading) {
     return (
       <div className="flex flex-col gap-4">
-        {header}
+        {fallbackHeader}
+        {notices}
         <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted shadow-surface" />
       </div>
     );
@@ -298,7 +310,8 @@ export default function BingoCard({ year, header }: Props) {
   if (!card) {
     return (
       <div className="flex flex-col gap-4">
-        {header}
+        {fallbackHeader}
+        {notices}
         <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8 shadow-surface">
           <p className="text-body text-ink">
             Your {year} bingo card is a 5×5 grid of goals. Fill the squares, then check them off as
@@ -320,7 +333,8 @@ export default function BingoCard({ year, header }: Props) {
   if (showOnboarding && goals.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        {header}
+        {fallbackHeader}
+        {notices}
         <BingoOnboarding
           year={year}
           coachAvailable={coachAvailable}
@@ -333,22 +347,25 @@ export default function BingoCard({ year, header }: Props) {
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        {header}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 lg:h-[calc(100dvh_-_var(--shell-sticky-top)_-_var(--shell-pad-y))] lg:min-h-0">
+        <div className="flex flex-wrap items-center gap-3">
+          {headerStart}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-ink-muted">
-            <span className="rounded-control border border-subtle px-2 py-0.5">
+            <span
+              className={`rounded-control border border-subtle px-2 py-0.5 ${locked ? "" : "cursor-help"}`}
+              title={
+                locked
+                  ? undefined
+                  : "Draft — no bingo rewards until you finalize. Target finalize by Jan 31."
+              }
+            >
               {locked ? "Final" : "Draft"} · {year}
             </span>
             {locked ? (
               <span>
                 {done} of {total} done
               </span>
-            ) : (
-              <span className="text-ink-faint">
-                Draft — no bingo rewards until you finalize. Target finalize by Jan 31.
-              </span>
-            )}
+            ) : null}
             {locked && lineCount > 0 ? (
               <span className="inline-flex items-center gap-1 font-medium text-ink">
                 <Star
@@ -437,14 +454,17 @@ export default function BingoCard({ year, header }: Props) {
                 </button>
               )
             ) : null}
+            {headerEnd}
           </div>
         </div>
 
+        {notices}
+
         {viewMode === "card" ? (
           <div
-            className={
-              blackoutAnimating ? "bingo-blackout-bounce overflow-visible" : "overflow-visible"
-            }
+            className={`${
+              blackoutAnimating ? "bingo-blackout-bounce" : ""
+            }overflow-visible lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}
           >
             {blackoutComplete && locked && blackoutFinaleShown ? (
               <p className="plan-zoom-enter mb-2 text-center text-sm font-medium text-ink">
@@ -475,19 +495,18 @@ export default function BingoCard({ year, header }: Props) {
             />
           </div>
         ) : (
-          <BingoListView
-            goals={goals}
-            groupBy={listGroupBy}
-            onGroupByChange={setListGroupBy}
-            onSelectGoal={(goal) => setSelectedGoalId(goal.id)}
-            locked={locked}
-          />
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            <BingoListView
+              goals={goals}
+              groupBy={listGroupBy}
+              onGroupByChange={setListGroupBy}
+              onSelectGoal={(goal) => setSelectedGoalId(goal.id)}
+              locked={locked}
+            />
+          </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <BingoBalanceChart balance={balance} />
-          <BingoCoachPromptCard />
-        </div>
+        {!coachAvailable || locked ? <BingoBalanceChart balance={balance} /> : null}
       </div>
 
       {selectedGoalId ? (
@@ -499,7 +518,7 @@ export default function BingoCard({ year, header }: Props) {
           />
         </div>
       ) : coachAvailable && !locked ? (
-        <BingoCoachDock year={year} />
+        <BingoCoachDock year={year} balance={balance} />
       ) : null}
     </div>
   );

@@ -230,18 +230,22 @@ function PlanHorizonViewInner() {
     setHorizon("goals");
   }, []);
 
+  const planTitle = <h1 className="text-xl font-semibold text-ink">Plan</h1>;
+  const headerControls = (
+    <>
+      <CheckInEntry />
+      <InPageSwitcher
+        options={HORIZON_OPTIONS}
+        value={horizon}
+        onChange={handleHorizonChange}
+        ariaLabel="Planning horizon"
+      />
+    </>
+  );
   const headerRow = (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h1 className="text-xl font-semibold text-ink">Plan</h1>
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <CheckInEntry />
-        <InPageSwitcher
-          options={HORIZON_OPTIONS}
-          value={horizon}
-          onChange={handleHorizonChange}
-          ariaLabel="Planning horizon"
-        />
-      </div>
+      {planTitle}
+      <div className="flex flex-wrap items-center justify-end gap-3">{headerControls}</div>
     </div>
   );
 
@@ -272,14 +276,9 @@ function PlanHorizonViewInner() {
           showPlaceholder={showPlaceholder}
           onZoomQuarter={handleZoomQuarter}
           onZoomMonth={handleZoomMonth}
-          goalsHeader={
-            horizon === "goals" ? (
-              <>
-                {headerRow}
-                {yearRolloverNudges}
-              </>
-            ) : undefined
-          }
+          goalsHeaderStart={horizon === "goals" ? planTitle : undefined}
+          goalsHeaderEnd={horizon === "goals" ? headerControls : undefined}
+          goalsNotices={horizon === "goals" ? yearRolloverNudges : undefined}
         />
       </div>
     </CheckInProvider>
@@ -295,7 +294,9 @@ type HorizonContentProps = {
   showPlaceholder: boolean;
   onZoomQuarter: (quarter: number) => void;
   onZoomMonth: (month: number) => void;
-  goalsHeader?: React.ReactNode;
+  goalsHeaderStart?: React.ReactNode;
+  goalsHeaderEnd?: React.ReactNode;
+  goalsNotices?: React.ReactNode;
 };
 
 function PlanHorizonContent({
@@ -307,7 +308,9 @@ function PlanHorizonContent({
   showPlaceholder,
   onZoomQuarter,
   onZoomMonth,
-  goalsHeader,
+  goalsHeaderStart,
+  goalsHeaderEnd,
+  goalsNotices,
 }: HorizonContentProps) {
   const contentKey = [
     horizon,
@@ -320,7 +323,12 @@ function PlanHorizonContent({
   return (
     <div key={contentKey} className="plan-zoom-enter">
       {horizon === "goals" ? (
-        <BingoCard year={breadcrumb.year} header={goalsHeader} />
+        <BingoCard
+          year={breadcrumb.year}
+          headerStart={goalsHeaderStart}
+          headerEnd={goalsHeaderEnd}
+          notices={goalsNotices}
+        />
       ) : horizon === "year" ? (
         <YearView year={breadcrumb.year} onZoomQuarter={onZoomQuarter} />
       ) : showQuarterDrill ? (

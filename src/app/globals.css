@@ -27,6 +27,38 @@ a:not([class]) {
   text-underline-offset: 2px;
 }
 
+/* Scrollbars — 4px hairline, visible only while its element is actively
+   scrolling. ScrollbarAutoHide (root layout) stamps data-scrolling on the
+   scrolled element and clears it shortly after scrolling stops; the thumb is
+   transparent otherwise. The attribute selector styles the thumb directly —
+   scrollbar pseudo-elements don't resolve element-level custom properties
+   (they compute against the root), so a --var indirection or transition fade
+   can't work here. WebKit/Blink only — Firefox keeps native scrollbars.
+   Don't add scrollbar-width/scrollbar-color rules: the standard properties
+   disable ::-webkit-scrollbar styling where supported. */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+[data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
