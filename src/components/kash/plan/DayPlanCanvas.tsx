@@ -18,9 +18,13 @@ import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens"
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useTop3Assurance } from "@/hooks/useTop3Assurance";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
+import { useTaskSelection } from "@/hooks/useTaskSelection";
 import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { evaluateProposedSlot } from "@/lib/about-me/constraint-eval";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
+import { dispatchCompleteTask } from "@/lib/tasks/complete-task-event";
+import { moveInList } from "@/lib/tasks/list-selection";
 import { toISODateString } from "@/lib/dates/local-day";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
@@ -139,7 +143,6 @@ export function DayPlanCanvas() {
   const top3SectionRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const [pulseTarget, setPulseTarget] = useState<string | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [replacePickerTaskId, setReplacePickerTaskId] = useState<string | null>(null);
   const [top3Highlighted, setTop3Highlighted] = useState(false);
   // Default "list" on the server + first paint (avoids a hydration mismatch),
@@ -313,6 +316,15 @@ export function DayPlanCanvas() {
 
   const todayTasks =
     bucketMode === "named_days" ? partitionedNamed.today : partitionedRelative.today;
+
+  // D5 selection: one highlighted row driven by click / arrows, cleared on Escape
+  // or when the row leaves the list, and the target of `Cmd+Shift+D`.
+  const todayTaskIds = useMemo(() => todayTasks.map((t) => t.id), [todayTasks]);
+  const {
+    selectedTaskId,
+    select: selectTask,
+    clear: clearSelection,
+  } = useTaskSelection(todayTaskIds);
 
   const taskTitleById = useMemo(
     () => Object.fromEntries(tasks.map((t) => [t.id, t.title])),
@@ -676,7 +688,9 @@ export function DayPlanCanvas() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      // `Cmd+D` = decide next task; `Cmd+Shift+D` is the completion chord (below),
+      // so bail when Shift is held to avoid firing both.
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
       if (e.key.toLowerCase() !== "d") return;
       if (isEditableTarget(e.target)) return;
 
@@ -694,6 +708,51 @@ export function DayPlanCanvas() {
       window.removeEventListener(DECIDE_EVENT, onDecide);
     };
   }, [triggerRdmPick]);
+
+  // D5 keyboard: arrows move the highlight over the Today list, Escape clears it,
+  // and `Cmd+Shift+D` completes the selected row (via the shared row-completion
+  // event). Only active in the list view, where the rows are on screen.
+  useEffect(() => {
+    if (view !== "list") return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) return;
+
+      if (isCompleteSelectionChord(e)) {
+        if (!selectedTaskId) return;
+        e.preventDefault();
+        dispatchCompleteTask(selectedTaskId);
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      // Arrows only take over once a row is selected (clicked into), so an
+      // unselected page keeps normal arrow-scroll. Escape exits the selection.
+      if (!selectedTaskId) return;
+
+      if (e.key === "Escape") {
+        clearSelection();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        selectTask(moveInList(todayTaskIds, selectedTaskId, 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        selectTask(moveInList(todayTaskIds, selectedTaskId, -1));
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [view, selectedTaskId, todayTaskIds, selectTask, clearSelection]);
+
+  // Keep the keyboard-selected row in view (no-op when it's already visible).
+  useEffect(() => {
+    if (!selectedTaskId) return;
+    document
+      .querySelector(`[data-task-row="${selectedTaskId}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectedTaskId]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -876,7 +935,7 @@ export function DayPlanCanvas() {
                   isError={isTasksError}
                   onRetry={() => void refetchTasks()}
                   selectedTaskId={selectedTaskId}
-                  onSelectTask={setSelectedTaskId}
+                  onSelectTask={selectTask}
                   onActivateTask={handleActivateTask}
                   onComplete={pushComplete}
                   onUncomplete={pushUncomplete}

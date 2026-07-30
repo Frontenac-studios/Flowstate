@@ -114,6 +114,7 @@ export default function MillerTaskRow({
         <button
           type="button"
           onClick={onSelect}
+          onDoubleClick={onToggleDetail}
           aria-expanded={selected}
           className={`min-w-0 flex-1 text-left text-sm focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
             completed ? "text-ink-muted line-through" : "text-ink"

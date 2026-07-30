@@ -34,6 +34,7 @@ import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
+import { onCompleteTaskRequest } from "@/lib/tasks/complete-task-event";
 import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens";
 import { useTRPC, type RouterOutputs } from "@/trpc/client";
 
@@ -481,6 +482,23 @@ export function TaskRow({
   };
 
   const isCompleting = completeMutation.isPending || completeOccurrenceMutation.isPending;
+
+  // D5 `Cmd+Shift+D`: the surface dispatches a completion request for the
+  // selected id; the matching row runs its own `handleComplete` so the slide-out
+  // and occurrence branching stay identical to a swipe. A ref keeps the latest
+  // guards without re-subscribing every render.
+  const requestCompleteRef = useRef<() => void>(() => {});
+  requestCompleteRef.current = () => {
+    if (isCompleting || completing || isBlocked) return;
+    handleComplete();
+  };
+  useEffect(
+    () =>
+      onCompleteTaskRequest((taskId) => {
+        if (taskId === task.id) requestCompleteRef.current();
+      }),
+    [task.id]
+  );
 
   const cancelEdit = () => {
     setEditing(false);

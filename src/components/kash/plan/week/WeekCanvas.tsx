@@ -17,12 +17,23 @@ import {
 
 import "./week-motion.css";
 
+import { useRouter } from "next/navigation";
+
 import { useToast } from "@/components/kash/ui/ToastProvider";
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 import { weekHasPlanningData } from "@/lib/week/week-has-data";
+import {
+  moveWeekSelection,
+  type WeekNavColumn,
+  type WeekNavDirection,
+} from "@/lib/week/week-grid-navigation";
+import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
+import { dispatchCompleteTask } from "@/lib/tasks/complete-task-event";
 import { useLocalCalendarClock } from "@/hooks/useLocalCalendarDate";
 import { useStaleCalendarSync } from "@/hooks/useStaleCalendarSync";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
+import { useTaskSelection } from "@/hooks/useTaskSelection";
 import {
   addDays,
   datesInIsoWeek,
@@ -237,6 +248,98 @@ export function WeekCanvas({
   }, [protectedBlocks]);
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
+
+  const router = useRouter();
+
+  // D5 selection: the navigable columns are the weekday columns (regular tasks
+  // only — pinned day-priority slots and drop zones aren't TaskRows) followed by
+  // the inbox rail, matching what's rendered. Arrows move 2D across them, Escape
+  // clears, `Cmd+Shift+D` completes the selected row.
+  const navColumns = useMemo<WeekNavColumn[]>(() => {
+    const cols: WeekNavColumn[] = weekDates.map((date) => {
+      const iso = toISODateString(date);
+      const pinned = prioritiesByDate[iso];
+      const pinnedIds = pinned ? new Set(Array.from(pinned.values()).map((t) => t.id)) : null;
+      const dayTasks = partitioned.byDate[iso] ?? [];
+      return {
+        taskIds: dayTasks.filter((t) => !(pinnedIds?.has(t.id) ?? false)).map((t) => t.id),
+      };
+    });
+    if (showPlanningRail) {
+      cols.push({ taskIds: partitioned.inbox.map((t) => t.id) });
+    }
+    return cols;
+  }, [weekDates, prioritiesByDate, partitioned, showPlanningRail]);
+
+  const allWeekTaskIds = useMemo(() => navColumns.flatMap((c) => c.taskIds), [navColumns]);
+  const {
+    selectedTaskId,
+    select: selectTask,
+    clear: clearSelection,
+  } = useTaskSelection(allWeekTaskIds);
+
+  const inboxTaskIdSet = useMemo(
+    () => new Set(partitioned.inbox.map((t) => t.id)),
+    [partitioned.inbox]
+  );
+  const selectionInInbox = selectedTaskId !== null && inboxTaskIdSet.has(selectedTaskId);
+
+  const handleActivateTask = useCallback(
+    (taskId: string) => {
+      router.push(`/today/focus?${new URLSearchParams({ taskId }).toString()}`);
+    },
+    [router]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isEditableTarget(e.target)) return;
+
+      if (isCompleteSelectionChord(e)) {
+        if (!selectedTaskId) return;
+        e.preventDefault();
+        dispatchCompleteTask(selectedTaskId);
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      // Arrows only take over once a row is selected (clicked into), so an
+      // unselected page keeps normal arrow-scroll. Escape exits the selection.
+      if (!selectedTaskId) return;
+
+      if (e.key === "Escape") {
+        clearSelection();
+        return;
+      }
+
+      const direction: WeekNavDirection | null =
+        e.key === "ArrowDown"
+          ? "down"
+          : e.key === "ArrowUp"
+            ? "up"
+            : e.key === "ArrowLeft"
+              ? "left"
+              : e.key === "ArrowRight"
+                ? "right"
+                : null;
+      if (!direction) return;
+
+      e.preventDefault();
+      selectTask(moveWeekSelection(navColumns, selectedTaskId, direction));
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedTaskId, navColumns, selectTask, clearSelection]);
+
+  // Keep the keyboard-selected row in view as it moves across the scrolling grid.
+  useEffect(() => {
+    if (!selectedTaskId) return;
+    document
+      .querySelector(`[data-task-row="${selectedTaskId}"]`)
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [selectedTaskId]);
 
   useEffect(() => {
     const unsubscribe = onChatTasksCreated((detail) => {
@@ -716,6 +819,9 @@ export function WeekCanvas({
               overCommitted={overCommittedByDate[iso] ?? false}
               overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
               fillHeight={surface === "week"}
+              selectedTaskId={selectedTaskId}
+              onSelectTask={selectTask}
+              onActivateTask={handleActivateTask}
               onComplete={pushComplete}
               onDelete={pushDelete}
               onRemoveProtected={(id) => removeProtectedMutation.mutate({ id })}
@@ -742,7 +848,10 @@ export function WeekCanvas({
       fill={surface === "week"}
       collapseWhenEmpty={surface === "week"}
       highlightTaskIds={inboxHighlightIds ?? undefined}
-      forceExpanded={(inboxHighlightIds?.size ?? 0) > 0}
+      forceExpanded={(inboxHighlightIds?.size ?? 0) > 0 || selectionInInbox}
+      selectedTaskId={selectedTaskId}
+      onSelectTask={selectTask}
+      onActivateTask={handleActivateTask}
       onComplete={pushComplete}
       onDelete={pushDelete}
       onDraftClick={() => {

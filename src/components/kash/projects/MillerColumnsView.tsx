@@ -15,6 +15,7 @@ import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitat
 import Button from "@/components/kash/ui/Button";
 import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { defaultMillerPath, pruneMillerPath } from "@/lib/projects/miller-path";
 import {
@@ -422,6 +423,14 @@ export default function MillerColumnsView({
       if (!col) return;
       const item = col.items[focus.index];
 
+      // D5 `Cmd+Shift+D`: toggle completion of the focused task (Miller owns its
+      // own completion, so it toggles directly rather than via the row event).
+      if (isCompleteSelectionChord(e)) {
+        e.preventDefault();
+        if (item?.kind === "task") toggleTask(item.task);
+        return;
+      }
+
       if (e.key === "Escape" && detail) {
         e.preventDefault();
         setDetail(null);
@@ -455,7 +464,7 @@ export default function MillerColumnsView({
         if (item?.kind === "phase") drillPhase(focus.col, item.node);
       }
     },
-    [columns, focus, drillPhase, togglePhaseDetail, toggleTaskDetail, detail]
+    [columns, focus, drillPhase, togglePhaseDetail, toggleTaskDetail, toggleTask, detail]
   );
 
   const confirmConfig = useMemo(() => {
