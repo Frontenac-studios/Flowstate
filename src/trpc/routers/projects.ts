@@ -223,6 +223,7 @@ export const projectsRouter = createTRPCRouter({
           categoryUnresolved: tasks.categoryUnresolved,
           priority: tasks.priority,
           scheduledDate: tasks.scheduledDate,
+          completedAt: tasks.completedAt,
           updatedAt: tasks.updatedAt,
         })
         .from(tasks)
@@ -231,6 +232,7 @@ export const projectsRouter = createTRPCRouter({
 
       return rows.map((row) => ({
         ...row,
+        completedAt: row.completedAt ? row.completedAt.toISOString() : null,
         updatedAt: row.updatedAt.toISOString(),
       }));
     }),

@@ -45,6 +45,7 @@ type Props = {
   onSelectTask: (task: ProjectTask, index: number) => void;
   onToggleTaskDetail: (task: ProjectTask) => void;
   onToggleTask: (task: ProjectTask) => void;
+  onRequestDeleteTask: (task: ProjectTask) => void;
 };
 
 function isItemComplete(item: ColumnItem): boolean {
@@ -74,6 +75,7 @@ export default function MillerColumn({
   onSelectTask,
   onToggleTaskDetail,
   onToggleTask,
+  onRequestDeleteTask,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column:${level}`,
@@ -124,6 +126,7 @@ export default function MillerColumn({
           onSelect={() => onSelectTask(item.task, index)}
           onToggleDetail={() => onToggleTaskDetail(item.task)}
           onToggleComplete={() => onToggleTask(item.task)}
+          onRequestDelete={() => onRequestDeleteTask(item.task)}
           highlightClassName={highlighted ? "kash-section-pulse" : undefined}
         />
         {expanded ? (
