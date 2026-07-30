@@ -195,7 +195,9 @@ describe("parseQuickInput", () => {
 
   it("warns on invalid ISO date tokens in semicolon mode", () => {
     const result = parseQuickInput("ship; 2026-02-30", ctx);
-    expect(result.warnings).toEqual([{ code: "invalid_property", property: "2026-02-30" }]);
+    expect(result.warnings).toEqual([
+      { code: "invalid_property", property: "2026-02-30", field: "due" },
+    ]);
   });
 
   it("returns empty title when semicolon segments are all empty", () => {

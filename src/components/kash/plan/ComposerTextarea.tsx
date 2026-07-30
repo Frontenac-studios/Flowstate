@@ -29,6 +29,13 @@ type Props = {
   disabled?: boolean;
   placeholder?: string;
   rows?: number;
+  /**
+   * Opt into the shared composer Enter policy (D4): plain Enter (or ⌘/Ctrl+Enter)
+   * submits, Shift+Enter inserts a newline. Pasting multi-line text is unaffected —
+   * a paste inserts newlines through onChange, never firing this Enter handler.
+   */
+  submitOnEnter?: boolean;
+  onSubmit?: () => void;
 };
 
 export const ComposerTextarea = forwardRef(function ComposerTextarea(
@@ -44,6 +51,8 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
     disabled,
     placeholder,
     rows = 2,
+    submitOnEnter = false,
+    onSubmit,
   }: Props,
   ref: Ref<ComposerTextareaHandle>
 ) {
@@ -64,6 +73,26 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
     if (!el || !mirror) return;
     mirror.scrollTop = el.scrollTop;
   }, []);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Shared Enter policy (D4). Shift+Enter always falls through to a newline.
+      // The isComposing guard keeps an IME candidate-confirming Enter from submitting.
+      if (
+        submitOnEnter &&
+        e.key === "Enter" &&
+        !e.shiftKey &&
+        !e.nativeEvent.isComposing &&
+        onSubmit
+      ) {
+        e.preventDefault();
+        onSubmit();
+        return;
+      }
+      onKeyDown?.(e);
+    },
+    [submitOnEnter, onSubmit, onKeyDown]
+  );
 
   useImperativeHandle(ref, () => ({
     focus: () => textareaRef.current?.focus(),
@@ -108,7 +137,7 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
           onFocus?.(e);
         }}
         onBlur={onBlur}
-        onKeyDown={onKeyDown}
+        onKeyDown={handleKeyDown}
         autoComplete="off"
         spellCheck={false}
         disabled={disabled}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   forwardRef,
   useCallback,
@@ -26,6 +27,7 @@ import {
   parseQuickInputLines,
   replaceComposerLineAtIndex,
   type ParsedLine,
+  type ParseWarning,
 } from "@/lib/parser/parse-quick-input";
 import { deriveBucket } from "@/lib/tasks/derive-bucket";
 import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-warnings";
@@ -36,9 +38,9 @@ import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
 
 import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
+import ComposerLineErrors, { type ComposerLineErrorGroup } from "../composer/ComposerLineErrors";
 
 import { ComposerCategoryAccent } from "./ComposerCategoryAccent";
-import { ComposerLineErrors } from "./ComposerLineErrors";
 import { ComposerPropertyBar } from "./ComposerPropertyBar";
 import { useLiveCategoryInference } from "./useLiveCategoryInference";
 import { ComposerTextarea, type ComposerTextareaHandle } from "./ComposerTextarea";
@@ -62,6 +64,56 @@ type Props = {
 
 function replaceProjectSlugInLine(raw: string, fromSlug: string, toSlug: string): string {
   return raw.replace(new RegExp(`#?${fromSlug}\\b`, "i"), toSlug);
+}
+
+function planWarningMessage(warning: ParseWarning): string {
+  if (warning.code === "project_not_found") {
+    return `No project "${warning.slug}"`;
+  }
+  return warning.field
+    ? `Invalid ${warning.field}: "${warning.property}"`
+    : `Unrecognized property "${warning.property}"`;
+}
+
+/** Adapt Plan's parsed lines into the shared line-error view model. */
+function buildPlanLineErrorGroups(
+  lines: ParsedLine[],
+  onApplySuggestion: (line: ParsedLine, suggestedSlug: string) => void
+): ComposerLineErrorGroup[] {
+  return lines
+    .filter((line) => line.parse.warnings.length > 0)
+    .map((line) => {
+      const hasMissingProject = line.parse.warnings.some((w) => w.code === "project_not_found");
+      const suggestions =
+        hasMissingProject && line.parse.suggestions.length > 0
+          ? line.parse.suggestions.map((s) => ({
+              label: s.slug,
+              onApply: () => onApplySuggestion(line, s.slug),
+            }))
+          : undefined;
+      return {
+        key: line.lineIndex,
+        label: `Line ${line.lineIndex + 1}`,
+        raw: line.raw,
+        messages: line.parse.warnings.map((warning, i) => ({
+          key: `${warning.code}-${i}`,
+          text: planWarningMessage(warning),
+        })),
+        suggestions,
+        footer: hasMissingProject ? (
+          <p className="text-ink-muted">
+            Create it in{" "}
+            <Link
+              href="/projects"
+              className="font-medium text-ink underline-offset-2 hover:underline"
+            >
+              Projects
+            </Link>{" "}
+            first — projects need a category.
+          </p>
+        ) : undefined,
+      };
+    });
 }
 
 export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInput(
@@ -365,16 +417,13 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
           onChange={setValue}
           onCursorChange={setCursor}
           ghostSuffix={assist.suggestionSuffix}
-          placeholder="add tasks — one per line · add ⌘↵"
+          placeholder="add tasks — one per line · ↵ add · ⇧↵ new line"
           disabled={createTaskMutation.isPending}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+          submitOnEnter
+          onSubmit={() => void handleBulkSubmit()}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              void handleBulkSubmit();
-              return;
-            }
             // Tab accepts the inline composer suggestion when one is available;
             // otherwise it falls through to normal focus traversal.
             if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
@@ -414,7 +463,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
 
       <ComposerDuplicateWarnings warnings={duplicateWarnings} context="plan" />
 
-      <ComposerLineErrors lines={parsedLines} onApplySuggestion={handleApplySuggestion} />
+      <ComposerLineErrors groups={buildPlanLineErrorGroups(parsedLines, handleApplySuggestion)} />
     </section>
   );
 });

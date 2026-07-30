@@ -11,6 +11,7 @@ import {
   parseProjectTaskInputLines,
   removeSubmittedLines,
   type ParsedProjectLine,
+  type ProjectParseWarning,
 } from "@/lib/parser/parse-project-task-input";
 import {
   getProjectAcceptInsertText,
@@ -27,13 +28,48 @@ import { detectDuplicateTaskWarnings } from "@/lib/tasks/detect-duplicate-task-w
 import { getTaskTitleError } from "@/lib/taskValidation";
 
 import ComposerDuplicateWarnings from "../composer/ComposerDuplicateWarnings";
+import ComposerLineErrors, { type ComposerLineErrorGroup } from "../composer/ComposerLineErrors";
 import { ComposerTextarea, type ComposerTextareaHandle } from "../plan/ComposerTextarea";
 
-import ProjectComposerLineErrors from "./ProjectComposerLineErrors";
 import ProjectMultiLineParsePreview from "./ProjectMultiLineParsePreview";
 import ProjectParsePreview from "./ProjectParsePreview";
 import ProjectPropertyBar from "./ProjectPropertyBar";
 import type { ProjectPhase, ProjectTask } from "./types";
+
+function projectWarningMessage(warning: ProjectParseWarning): string {
+  switch (warning.code) {
+    case "invalid_property":
+      return `Invalid ${warning.field}: "${warning.property}"`;
+    case "phase_not_found":
+      if (warning.underParent) {
+        return `No phase "${warning.name}" under "${warning.underParent}"`;
+      }
+      return `No phase named "${warning.name}"`;
+    case "phase_ambiguous":
+      return `Ambiguous phase "${warning.name}" (${warning.matches.join(", ")})`;
+    case "empty_phase_name":
+      return "Parent directory name is required after +";
+  }
+}
+
+function projectLineLabel(line: ParsedProjectLine): string {
+  const title = line.parse.title || line.raw;
+  return title.length > 40 ? `${title.slice(0, 40)}…` : title;
+}
+
+/** Adapt the project composer's parsed lines into the shared line-error view model. */
+function buildProjectLineErrorGroups(lines: ParsedProjectLine[]): ComposerLineErrorGroup[] {
+  return lines
+    .filter((line) => line.parse.warnings.length > 0)
+    .map((line) => ({
+      key: line.lineIndex,
+      label: projectLineLabel(line),
+      messages: line.parse.warnings.map((warning, i) => ({
+        key: `${warning.code}-${i}`,
+        text: projectWarningMessage(warning),
+      })),
+    }));
+}
 
 type Props = {
   projectId: string;
@@ -249,12 +285,9 @@ export default function NewItemRow({
         disabled={isBusy}
         onFocus={() => onFocusChange?.(true)}
         onBlur={() => onFocusChange?.(false)}
+        submitOnEnter
+        onSubmit={() => void submitTasks()}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            void submitTasks();
-            return;
-          }
           if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
             e.preventDefault();
           }
@@ -262,7 +295,7 @@ export default function NewItemRow({
       />
 
       <p className="mt-1.5 text-xs text-ink-muted">
-        Enter for new line · add tasks ⌘↵
+        ↵ to add · ⇧↵ for new line
         {!cursorOnPlusParentDirLine && assist?.suggestionSuffix ? " · ⇥ accept suggestion" : null}
         {isBusy ? " · Adding…" : null}
       </p>
@@ -299,7 +332,7 @@ export default function NewItemRow({
         context="project"
       />
 
-      <ProjectComposerLineErrors lines={parsedLines} />
+      <ComposerLineErrors groups={buildProjectLineErrorGroups(parsedLines)} />
     </div>
   );
 }
