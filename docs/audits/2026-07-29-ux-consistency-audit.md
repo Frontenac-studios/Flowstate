@@ -11,9 +11,17 @@ Severity: 🔴 high (behaviour/data bug or genuinely confusing) · 🟠 medium �
 
 Status legend: `todo` · `planning` · `in-progress` · `done` · `wontfix`.
 
+> **Initiative complete (2026-07-30).** Working set Themes 1–4 shipped across PRs #239,
+> #241, #242, #243 (4a), #244 (4b), #246 (5), and #245 (6), all squash-merged to `main`.
+> Themes 5 and 6 remain deferred as planned. One decision changed in flight: **D2's Miller
+> clause was superseded** — Miller's completed group stays always-shown/dimmed/bottom-pinned
+> (no collapse toggle), a design a parallel change (`1684a62`) shipped and the maintainer
+> confirmed; the collapsible "Completed · n" tail still landed on Week columns. See the phase
+> annotations below for per-PR detail and remaining follow-ups.
+
 ---
 
-## Theme 1 — "Complete a task" differs on every surface 🔴 · status: planning
+## Theme 1 — "Complete a task" differs on every surface 🔴 · status: done
 
 | Surface           | Affordance                     | Optimistic flip          | Where completed go     | Reopen        | Undo                     |
 | ----------------- | ------------------------------ | ------------------------ | ---------------------- | ------------- | ------------------------ |
@@ -40,7 +48,7 @@ Specifics:
   `TaskRow` branches to `recurrence.completeOccurrence` (`TaskRow.tsx:466`); Focus does
   not. Completing a focused recurring occurrence should fail validation. **Verify first.**
 
-## Theme 2 — Today / This-Week silently swallow query errors 🔴 · status: planning
+## Theme 2 — Today / This-Week silently swallow query errors 🔴 · status: done
 
 - Today (`DayPlanCanvas.tsx:271`) and This-Week (`ThisWeekSurface.tsx:31-38`) never check
   `isError` → a failed fetch renders as an empty board, indistinguishable from zero tasks.
@@ -50,7 +58,7 @@ Specifics:
 - Shared component to reuse: `src/components/kash/ui/QueryErrorNotice.tsx`.
 - Mutation-error toasts are already consistent (`useToast({variant:"error"})`).
 
-## Theme 3 — Row click + swipe-rail reachability 🟠 · status: planning
+## Theme 3 — Row click + swipe-rail reachability 🟠 · status: done
 
 - Single click does something different everywhere; no surface opens detail on one click.
   Plan/Week: nothing (`BucketSection.tsx:107`, `WeekColumn.tsx:147`). Today:
@@ -61,7 +69,7 @@ Specifics:
   Miller's — so on a non-trackpad device you can't delete a Plan task or complete a Miller
   task from the row. Care uses a kebab (`PracticeRow.tsx:96`) — a competing pattern.
 
-## Theme 4 — Four composers disagree on keyboard + validation 🟠 · status: planning
+## Theme 4 — Four composers disagree on keyboard + validation 🟠 · status: done
 
 - Inverted Enter: Plan/Projects → Enter=newline, ⌘Enter=submit; Chat → Enter=send,
   ⌘Enter=newline (`ChatComposer.tsx:55`); Abyss → Enter=submit.
@@ -134,7 +142,10 @@ Working set: Themes 1, 2, 3, 4. Themes 5 and 6 deferred (lower risk, mostly cosm
 
 ### Phased delivery (one PR per phase, per repo convention)
 
-**PR 1 — Quick correctness wins** (independent, low risk, ship first)
+> **All phases merged (2026-07-30).** PR 1 → #239, PR 2 → #241, PR 3 → #242,
+> PR 4a → #243, PR 4b → #244, PR 5 → #246, PR 6 → #245.
+
+**PR 1 — Quick correctness wins** (independent, low risk, ship first) — ✅ merged #239
 
 - Fix Focus recurring-occurrence completion: branch on `isRecurringOccurrence` →
   `recurrence.completeOccurrence`, mirroring `TaskRow.tsx:469` (`FocusCanvas.tsx:238`).
@@ -143,7 +154,7 @@ Working set: Themes 1, 2, 3, 4. Themes 5 and 6 deferred (lower risk, mostly cosm
 - Theme 2: add `isError` + `QueryErrorNotice` to Today (`DayPlanCanvas`/`TodayList`),
   `ThisWeekSurface`, `CareTasks`, `CareGardenHome`. Reuse the existing shared component.
 
-**PR 2 — Completion backbone** (no visible affordance change yet)
+**PR 2 — Completion backbone** (no visible affordance change yet) — ✅ merged #241
 
 - Extract a shared `useTaskCompletion` hook: complete/uncomplete + occurrence branching +
   optimistic flip + returns an undo handle. Every surface calls this one path.
@@ -151,37 +162,58 @@ Working set: Themes 1, 2, 3, 4. Themes 5 and 6 deferred (lower risk, mostly cosm
   (Plan/Week/Today/Miller/Focus) so undo goes visible everywhere while checkboxes still
   exist. Incremental, low blast radius.
 
-**PR 3 — Consistent selection model (D5)**
+**PR 3 — Consistent selection model (D5)** — ✅ merged #242
 
 - `selectedTaskId` across Plan/Week/Miller (Today already has it): click selects,
   double-click opens, arrows move, Escape clears; one shared selected-row highlight.
 - Global `Cmd+Shift+D` completes/uncompletes the selected task via the shared hook.
 
-**PR 4 — Directional swipe + right-click menu + remove checkboxes (D1/D6)** — largest;
-may split into 4a (gesture + menu infra) / 4b (checkbox removal + Loose/Miller adoption)
+**PR 4 — Directional swipe + right-click menu + remove checkboxes (D1/D6)** — split into
+4a (gesture + menu infra) → ✅ merged #243, and 4b (checkbox removal + Loose/Miller
+adoption) → ✅ merged #244
 
 - Extend `useTrackpadSwipeReveal` → directional: right past threshold = complete (spring
-  back if short), left = reveal Edit/Delete rail; add pointer/touch support.
+  back if short), left = reveal Edit/Delete rail; add pointer/touch support. → shipped as
+  the new `useRowSwipe` hook + `lib/gestures/row-swipe`.
 - Shared `TaskContextMenu` on right-click (`onContextMenu`) for every task row.
-- Remove `Checkbox` from `TaskRow`; drive completed styling off `completedAt`. Add
-  swipe + menu (and thus completion) to `MillerTaskRow` and `LooseTaskRow`.
-- Note: leave Care `PracticeRow` (different data model) as a follow-up decision.
+- Remove `Checkbox` from `TaskRow` (4b — the row's category color already comes from its
+  left stripe, so removal left no gap). Add swipe + menu (and thus completion) to
+  `MillerTaskRow` and `LooseTaskRow` (Loose gained completion for the first time: swipe +
+  right-click menu + inline title edit + delete + undo toast).
+- Deferred (as planned): Care `PracticeRow` (different data model); context-menu **Move**
+  (fast-follow); unwinding the now-ignored `onPin`/`canPin` props on `TaskRow`; Loose row's
+  still-missing priority indicator (Theme 6).
 
-**PR 5 — Completed-section unification (D2)**
+**PR 5 — Completed-section unification (D2)** — ✅ merged #246
 
-- Week columns: collapsible "Completed · n" group pinned to bottom (`WeekColumn`).
-- Miller column: make the pinned completed group collapsible (`MillerColumn.tsx:154`).
-- Optimistic completion in Miller via the shared hook (removes the refetch lag).
+- Week columns: collapsible "Completed · n" group pinned to bottom (`WeekColumn`) —
+  shipped by reusing `CompletedSection` + a new `groupCompletionsByLocalDay` helper that
+  scopes the flat `listRecentlyCompleted` feed to each visible day.
+- Miller column: ~~make the pinned completed group collapsible~~ — **superseded.** A
+  parallel change (`1684a62`) had already made Miller's completed group always-shown,
+  dimmed, and bottom-pinned (no toggle); the maintainer confirmed keeping that, so PR 5
+  left `MillerColumn` untouched. Caveat: `listRecentlyCompleted` stays account-wide
+  `limit 30`, so a Week completion outside the visible week or beyond the 30 most-recent
+  is not shown in the tail.
+- Optimistic completion in Miller (`useProjectMutations` `completeTask`/`uncompleteTask`
+  now `onMutate`-patch `tasks.listByProject`) — removes the refetch lag on 4b's new
+  swipe/menu/⌘⇧D gestures.
 
-**PR 6 — Composer keyboard + error merge (Theme 4)**
+**PR 6 — Composer keyboard + error merge (Theme 4)** — ✅ merged #245
 
-- Enter=submit / Shift+Enter=newline in `ComposerTextarea` (Plan/Projects); confirm
-  Chat/Abyss; update placeholders/hints; verify paste-multiline still batches.
-- Merge `ComposerLineErrors` + `ProjectComposerLineErrors` into one component on the
-  `text-critical` token; carry `field` on `invalid_property` into the Plan parser; bring
-  one-click "Did you mean…?" to both.
-- Optional follow-ups: draft persistence + duplicate warnings for Chat/Abyss; align Abyss
-  title cap to the shared 500.
+- Enter=submit / Shift+Enter=newline centralized in `ComposerTextarea` (`submitOnEnter`
+  prop, IME-guarded) and adopted by Plan/Projects; Chat already matched, Abyss is a
+  single-line form-submit — both confirmed unchanged. Paste-multiline batch guarded by a
+  new test.
+- Merged `ComposerLineErrors` + `ProjectComposerLineErrors` (+ `ProjectParseError`) into
+  one shared `composer/ComposerLineErrors.tsx` on the `text-critical` token; `field`
+  carried on `invalid_property` through the Plan parser; one-click "Did you mean…?"
+  available on both surfaces (Projects renders none yet — its parser emits no phase
+  suggestions; wiring real phase suggestions is a follow-up).
+- Not conflated with `describe-composer-submit-error.ts` (submit-time, whole-batch errors
+  from `1684a62`), which is orthogonal and left untouched.
+- Optional follow-ups (unchanged): draft persistence + duplicate warnings for Chat/Abyss;
+  align Abyss title cap to the shared 500; real phase-suggestion data for Projects errors.
 
 Deferred: Themes 5 (empty/loading styling) and 6 (shared-primitive drift — settings
 checkboxes, tag chips, date formatter, Button adoption).
