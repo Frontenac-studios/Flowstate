@@ -9,6 +9,7 @@ import { hasSeenWeekPinHint, markWeekPinHintSeen } from "@/lib/week/week-pin-hin
 
 import type { PlanTaskRow } from "../TaskRow";
 import { TaskRow } from "../TaskRow";
+import { CompletedSection, type CompletedTaskRow } from "../CompletedSection";
 import AddProtectedBlockButton from "./AddProtectedBlockButton";
 import { ColumnCategoryStrip } from "./ColumnCategoryStrip";
 import ColumnTallyPopover from "./ColumnTallyPopover";
@@ -24,6 +25,8 @@ type Props = {
   label: string;
   isToday: boolean;
   tasks: PlanTaskRow[];
+  /** D2: tasks completed on this column's local day, settled into the bottom tail. */
+  completions?: CompletedTaskRow[];
   pinnedBySlot: Map<number, DayPrioritySlotTask>;
   protectedBlocks: ProtectedBlockRow[];
   externalEvents?: EventForDay[];
@@ -63,6 +66,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     label,
     isToday,
     tasks,
+    completions = [],
     pinnedBySlot,
     protectedBlocks,
     externalEvents = [],
@@ -165,6 +169,18 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
           />
         ))}
       </ul>
+
+      {/*
+        D2: the collapsible "Completed · n" tail. The tasks list above owns the
+        column's flex slack (`flex-1`), so this shrink-0 section is pushed to the
+        column bottom — the same bottom-pin Miller uses. Collapsed by default;
+        uncomplete flows through CompletedSection's own optimistic path.
+      */}
+      {completions.length > 0 ? (
+        <div className="shrink-0 px-1 pb-1">
+          <CompletedSection completions={completions} />
+        </div>
+      ) : null}
 
       <div className="shrink-0 px-1 pb-2 [@media(hover:hover)]:invisible [@media(hover:hover)]:group-hover/column:visible">
         <AddProtectedBlockButton isoDate={isoDate} />
