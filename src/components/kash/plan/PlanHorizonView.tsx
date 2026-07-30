@@ -230,30 +230,38 @@ function PlanHorizonViewInner() {
     setHorizon("goals");
   }, []);
 
+  const headerRow = (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h1 className="text-xl font-semibold text-ink">Plan</h1>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <CheckInEntry />
+        <InPageSwitcher
+          options={HORIZON_OPTIONS}
+          value={horizon}
+          onChange={handleHorizonChange}
+          ariaLabel="Planning horizon"
+        />
+      </div>
+    </div>
+  );
+
+  const yearRolloverNudges = showYearRolloverNudges ? (
+    <BingoYearRolloverNudges
+      onStartNextYear={handleStartNextYearBingo}
+      onOpenBingo={handleOpenBingo}
+    />
+  ) : null;
+
   return (
     <CheckInProvider breadcrumb={breadcrumb}>
       {hydrated && horizon !== "goals" ? <ContextualInbox /> : null}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl font-semibold text-ink">Plan</h1>
-            <InPageSwitcher
-              options={HORIZON_OPTIONS}
-              value={horizon}
-              onChange={handleHorizonChange}
-              ariaLabel="Planning horizon"
-            />
-          </div>
-          <CheckInEntry />
-        </div>
         {horizon !== "goals" ? (
-          <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
-        ) : null}
-        {showYearRolloverNudges ? (
-          <BingoYearRolloverNudges
-            onStartNextYear={handleStartNextYearBingo}
-            onOpenBingo={handleOpenBingo}
-          />
+          <>
+            {headerRow}
+            <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
+            {yearRolloverNudges}
+          </>
         ) : null}
         <PlanHorizonContent
           horizon={horizon}
@@ -264,6 +272,14 @@ function PlanHorizonViewInner() {
           showPlaceholder={showPlaceholder}
           onZoomQuarter={handleZoomQuarter}
           onZoomMonth={handleZoomMonth}
+          goalsHeader={
+            horizon === "goals" ? (
+              <>
+                {headerRow}
+                {yearRolloverNudges}
+              </>
+            ) : undefined
+          }
         />
       </div>
     </CheckInProvider>
@@ -279,6 +295,7 @@ type HorizonContentProps = {
   showPlaceholder: boolean;
   onZoomQuarter: (quarter: number) => void;
   onZoomMonth: (month: number) => void;
+  goalsHeader?: React.ReactNode;
 };
 
 function PlanHorizonContent({
@@ -290,6 +307,7 @@ function PlanHorizonContent({
   showPlaceholder,
   onZoomQuarter,
   onZoomMonth,
+  goalsHeader,
 }: HorizonContentProps) {
   const contentKey = [
     horizon,
@@ -302,7 +320,7 @@ function PlanHorizonContent({
   return (
     <div key={contentKey} className="plan-zoom-enter">
       {horizon === "goals" ? (
-        <BingoCard year={breadcrumb.year} />
+        <BingoCard year={breadcrumb.year} header={goalsHeader} />
       ) : horizon === "year" ? (
         <YearView year={breadcrumb.year} onZoomQuarter={onZoomQuarter} />
       ) : showQuarterDrill ? (

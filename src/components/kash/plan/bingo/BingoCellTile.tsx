@@ -96,7 +96,7 @@ export default function BingoCellTile({
   if (goal.state === "done") {
     return (
       <div
-        className={`relative flex aspect-square flex-col justify-end overflow-hidden rounded-card p-2 ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
+        className={`relative flex aspect-square flex-col overflow-hidden rounded-card p-2 ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
         style={{ backgroundColor: solid }}
       >
         <button
@@ -117,10 +117,12 @@ export default function BingoCellTile({
         >
           <Check {...kashIconProps({ tokenSize: "sm", className: "text-white" })} aria-hidden />
         </button>
-        <span className="relative text-caption font-medium text-white/80">{categoryName}</span>
-        <span className="relative line-clamp-3 text-meta font-medium text-white line-through">
-          {goal.title}
-        </span>
+        <span className="relative pr-7 text-caption font-medium text-white/80">{categoryName}</span>
+        <div className="relative flex min-h-0 flex-1 items-center">
+          <span className="line-clamp-3 text-meta font-medium text-white line-through">
+            {goal.title}
+          </span>
+        </div>
       </div>
     );
   }
@@ -129,7 +131,7 @@ export default function BingoCellTile({
 
   return (
     <div
-      className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-emphasis bg-surface p-2 shadow-surface ${
+      className={`group relative flex aspect-square flex-col overflow-hidden rounded-card border-emphasis bg-surface p-2 shadow-surface ${
         backburnered ? "opacity-40" : ""
       } ${ring} ${lockable} ${inWinningLine ? "bingo-line-bounce" : ""}`}
       style={{ borderColor: solid }}
@@ -156,12 +158,14 @@ export default function BingoCellTile({
         </button>
       ) : null}
 
-      <span className="relative text-caption font-medium" style={{ color: solid }}>
+      <span className="relative pr-7 text-caption font-medium" style={{ color: solid }}>
         {backburnered ? `${categoryName} · paused` : categoryName}
       </span>
-      <span className="relative line-clamp-3 text-meta font-medium text-ink">{goal.title}</span>
+      <div className="relative flex min-h-0 flex-1 items-center">
+        <span className="line-clamp-3 text-meta font-medium text-ink">{goal.title}</span>
+      </div>
 
-      <div className="relative z-sticky flex justify-end gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+      <div className="absolute bottom-1.5 right-1.5 z-sticky flex justify-end gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
         <button
           type="button"
           onClick={(e) => {
