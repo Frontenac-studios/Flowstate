@@ -16,6 +16,8 @@ export type ParseWarning =
   | {
       code: "invalid_property";
       property: string;
+      /** Named field when the failing segment maps to a specific property. */
+      field?: "due" | "priority";
     };
 
 export type ProjectSuggestion = {
@@ -186,7 +188,9 @@ function parseSemicolonQuickInput(raw: string, ctx: ParseContext): ParseResult {
     }
 
     if (ISO_DATE_PATTERN.test(segment.trim())) {
-      warnings.push({ code: "invalid_property", property: segment });
+      // ISO-shaped but rejected by the date resolver (e.g. 2026-02-30) — this is a
+      // due-date segment, so carry `field` for a specific "Invalid due: …" message.
+      warnings.push({ code: "invalid_property", property: segment, field: "due" });
       continue;
     }
 
