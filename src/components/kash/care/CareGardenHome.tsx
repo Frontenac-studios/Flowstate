@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
+import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { formatWinLabel } from "@/lib/daily-wins/format-win-label";
 import { toLocalISODate } from "@/lib/nudges/local-time";
 import { useTRPC } from "@/trpc/client";
@@ -56,6 +57,11 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
             <h2 className="mb-2 text-caption font-medium text-ink-muted">Today&apos;s wins</h2>
             {dayQuery.isLoading && !dayQuery.data ? (
               <p className="text-meta text-ink-faint">Loading…</p>
+            ) : dayQuery.isError && !dayQuery.data ? (
+              <QueryErrorNotice
+                message="Today's wins didn't load."
+                onRetry={() => void dayQuery.refetch()}
+              />
             ) : (
               <ul className="flex flex-col gap-0.5">
                 {wins.map((win) => (
@@ -82,6 +88,11 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
             <h2 className="mb-2 text-caption font-medium text-ink-muted">What lifts me</h2>
             {liftsQuery.isLoading ? (
               <p className="text-meta text-ink-faint">Loading…</p>
+            ) : liftsQuery.isError ? (
+              <QueryErrorNotice
+                message="What lifts you didn't load."
+                onRetry={() => void liftsQuery.refetch()}
+              />
             ) : lifts.length === 0 ? (
               <p className="text-meta text-ink-faint">
                 Heart a practice in Tasks, or return to regulars over time.

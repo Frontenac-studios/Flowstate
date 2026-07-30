@@ -69,6 +69,9 @@ export function FocusCanvas() {
   const [sessionElapsedSeconds, setSessionElapsedSeconds] = useState(0);
 
   const completeMutation = useMutation(trpc.tasks.complete.mutationOptions());
+  const completeOccurrenceMutation = useMutation(
+    trpc.recurrence.completeOccurrence.mutationOptions()
+  );
   const completeBlockMutation = useMutation(trpc.focusBlocks.complete.mutationOptions());
 
   const resetSessionUi = useCallback(() => {
@@ -235,7 +238,16 @@ export function FocusCanvas() {
 
     try {
       await endWorkEntry("done");
-      await completeMutation.mutateAsync({ id: task.id });
+      // Recurring occurrences carry a synthetic (non-uuid) id, so they must be
+      // completed via completeOccurrence — same branch as TaskRow.handleComplete.
+      if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
+        await completeOccurrenceMutation.mutateAsync({
+          recurrenceId: task.recurrenceId,
+          occurrenceDate: task.occurrenceDate,
+        });
+      } else {
+        await completeMutation.mutateAsync({ id: task.id });
+      }
 
       if (blockId) {
         await completeBlockMutation.mutateAsync({ id: blockId });
@@ -256,6 +268,7 @@ export function FocusCanvas() {
     blockId,
     completeBlockMutation,
     completeMutation,
+    completeOccurrenceMutation,
     doneFlash,
     exiting,
     endWorkEntry,
