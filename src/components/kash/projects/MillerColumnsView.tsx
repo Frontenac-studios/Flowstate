@@ -687,6 +687,7 @@ export default function MillerColumnsView({
                 onSelectTask={(_task, index) => selectTask(col.level, index)}
                 onToggleTaskDetail={(task) => toggleTaskDetail(col.level, task)}
                 onToggleTask={toggleTask}
+                onRequestDeleteTask={(task) => setConfirm({ kind: "task-delete", id: task.id })}
               />
             ))}
             {Array.from({ length: ghostColumnCount }).map((_, i) => (

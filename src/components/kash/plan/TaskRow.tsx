@@ -22,7 +22,6 @@ import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeAction
 import TaskContextMenu from "@/components/kash/TaskContextMenu";
 import { Check, Lock, Pencil, SkipForward, Trash2, withKashIcon } from "@/components/kash/ui/icon";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
-import Checkbox from "@/components/kash/ui/Checkbox";
 import { useToast } from "@/components/kash/ui/ToastProvider";
 import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
@@ -648,15 +647,6 @@ export function TaskRow({
               ) : null}
             </div>
           ) : null}
-
-          <Checkbox
-            accentColor={completing || resolvedCategory ? stripeColor : "var(--ink)"}
-            aria-label={`Complete ${task.title}`}
-            checked={completing}
-            disabled={isCompleting || isBlocked}
-            onClick={(e) => e.stopPropagation()}
-            onChange={handleComplete}
-          />
 
           <div className="min-w-0 flex-1">
             {isBlocked && blockerLabel ? (
