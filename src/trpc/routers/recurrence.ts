@@ -240,6 +240,37 @@ export const recurrenceRouter = createTRPCRouter({
       return { id: row.id, completedAt };
     }),
 
+  uncompleteOccurrence: protectedProcedure
+    .input(
+      z.object({
+        recurrenceId: z.string().uuid(),
+        occurrenceDate: isoDateSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnedRecurrence(ctx.userId, input.recurrenceId);
+      const [existing] = await db
+        .select({ id: taskOccurrenceOverrides.id, status: taskOccurrenceOverrides.status })
+        .from(taskOccurrenceOverrides)
+        .where(
+          and(
+            eq(taskOccurrenceOverrides.recurrenceId, input.recurrenceId),
+            eq(taskOccurrenceOverrides.occurrenceDate, input.occurrenceDate)
+          )
+        )
+        .limit(1);
+
+      // Only clear a *completed* override; deleting it reverts the occurrence to
+      // its default (pending) virtual state. Leave skip/reschedule/edit overrides
+      // untouched so undo can't silently discard other occurrence state.
+      if (existing && existing.status === "completed") {
+        await db.delete(taskOccurrenceOverrides).where(eq(taskOccurrenceOverrides.id, existing.id));
+        await syncOccurrenceOverrideRow(existing.id, "delete", { id: existing.id });
+      }
+
+      return { recurrenceId: input.recurrenceId, occurrenceDate: input.occurrenceDate };
+    }),
+
   skipOccurrence: protectedProcedure
     .input(
       z.object({

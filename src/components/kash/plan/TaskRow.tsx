@@ -23,6 +23,7 @@ import { Lock, Pencil, SkipForward, Star, Trash2, withKashIcon } from "@/compone
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import Checkbox from "@/components/kash/ui/Checkbox";
 import { useToast } from "@/components/kash/ui/ToastProvider";
+import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
@@ -148,6 +149,7 @@ export function TaskRow({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const showCompletionToast = useCompletionToast();
   const [editing, setEditing] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -322,6 +324,7 @@ export function TaskRow({
       },
       onSuccess: (data) => {
         onComplete(data.task.id, data.previousCompletedAt);
+        showCompletionToast(task);
         invalidatePlanAfterSlide();
       },
       onError: (_err, _vars, ctx) => {
@@ -335,6 +338,7 @@ export function TaskRow({
     trpc.recurrence.completeOccurrence.mutationOptions({
       onSuccess: () => {
         onComplete(task.id, null);
+        showCompletionToast(task);
         invalidatePlanAfterSlide();
       },
       onError: () => setCompleting(false),

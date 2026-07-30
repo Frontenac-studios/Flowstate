@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import Button from "@/components/kash/ui/Button";
+import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { defaultMillerPath, pruneMillerPath } from "@/lib/projects/miller-path";
@@ -99,6 +100,7 @@ export default function MillerColumnsView({
   const { data: timeRollups } = useQuery(trpc.projects.getTimeRollups.queryOptions({ projectId }));
   const dayPriorityTaskIds = useMemo(() => new Set(pinnedTaskIds), [pinnedTaskIds]);
   const m = useProjectMutations(projectId);
+  const showCompletionToast = useCompletionToast();
 
   const [detail, setDetail] = useState<DetailSelection>(null);
   const [focus, setFocus] = useState({ col: 0, index: 0 });
@@ -307,9 +309,9 @@ export default function MillerColumnsView({
   const toggleTask = useCallback(
     (task: ProjectTask) => {
       if (task.completedAt !== null) m.uncompleteTask.mutate({ id: task.id });
-      else m.completeTask.mutate({ id: task.id });
+      else m.completeTask.mutate({ id: task.id }, { onSuccess: () => showCompletionToast(task) });
     },
-    [m.completeTask, m.uncompleteTask]
+    [m.completeTask, m.uncompleteTask, showCompletionToast]
   );
 
   const moveTaskToParent = useCallback(
