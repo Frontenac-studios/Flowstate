@@ -193,8 +193,26 @@ export function LeftNavRail() {
   const railExpanded = pinned || isFullscreen;
   // Hover-peek is the one state where the nav is wider than the space the outer
   // element reserves, so it hangs over the content instead of displacing it.
-  // Drives both the overlay affordances and the z-index lift below.
+  // Drives the overlay affordances (shadow/border) and, via `elevated`, the
+  // z-index lift below.
   const overlaying = expanded && !railExpanded;
+
+  // The rail keeps overhanging content for the *whole* collapse: when peek ends
+  // the nav is still visually wide as its 200ms width transition plays out. z-index
+  // is a discrete class swap, so keying the lift on `overlaying` alone drops it to
+  // z-sticky at t=0 of that animation, tying the later `.kash-shell-inner` sibling
+  // and flashing the still-wide rail behind content. Instead assert the lift when
+  // overlaying begins and release it only once the width transition ends (with a
+  // fallback timer for reduced-motion, where transitionend never fires).
+  const [elevated, setElevated] = useState(false);
+  useEffect(() => {
+    if (overlaying) {
+      setElevated(true);
+      return;
+    }
+    const settle = setTimeout(() => setElevated(false), 260);
+    return () => clearTimeout(settle);
+  }, [overlaying]);
 
   const isActive = (item: NavItem) => isNavItemActive(item, pathname);
 
@@ -214,11 +232,12 @@ export function LeftNavRail() {
     // never escape — raising the nav's own z-index has no effect. `.kash-shell-inner`
     // is a later sibling at the same z-sticky, so at a tie it paints over the
     // peeking rail and swallows its clicks. z-overlay clears the content while
-    // staying under z-modal/z-toast. Only lifted while overlaying, so the
-    // pinned/fullscreen/collapsed states keep their existing stacking.
+    // staying under z-modal/z-toast. `elevated` (not `overlaying`) holds the lift
+    // through the collapse animation, so the pinned/fullscreen/collapsed states
+    // still settle back to their existing stacking.
     <div
       className={`kash-left-rail sticky top-0 hidden h-screen shrink-0 transition-[width] duration-200 lg:block ${
-        overlaying ? "z-overlay" : "z-sticky"
+        elevated ? "z-overlay" : "z-sticky"
       } ${railExpanded ? "w-nav-rail-expanded" : "w-nav-rail"}`}
     >
       <nav
@@ -241,6 +260,14 @@ export function LeftNavRail() {
         }}
         onBlur={() => {
           if (!isFullscreen) setPeek(false);
+        }}
+        onTransitionEnd={(e) => {
+          // Release the z-lift exactly when the rail's own width transition ends
+          // (ignore bubbled child transitions). By now it has finished collapsing,
+          // so it no longer overhangs content and can settle back to z-sticky.
+          if (e.target === e.currentTarget && e.propertyName === "width" && !overlaying) {
+            setElevated(false);
+          }
         }}
         className={`absolute inset-y-0 left-0 z-sticky flex flex-col gap-1 overflow-hidden px-2 py-3 transition-[width] duration-200 ${
           expanded ? "w-nav-rail-expanded" : "w-nav-rail"
