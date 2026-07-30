@@ -34,6 +34,10 @@ type Props = {
   showPinHint?: boolean;
   /** Execution week surface: column fills grid height and tasks scroll internally. */
   fillHeight?: boolean;
+  /** D5 selection: the currently-highlighted task id across the whole week. */
+  selectedTaskId?: string | null;
+  onSelectTask?: (taskId: string) => void;
+  onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onRemoveProtected: (id: string) => void;
@@ -68,6 +72,9 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     overCommitMode = "cold-start",
     showPinHint = false,
     fillHeight = false,
+    selectedTaskId = null,
+    onSelectTask,
+    onActivateTask,
     onComplete,
     onDelete,
     onRemoveProtected,
@@ -149,6 +156,9 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
             task={task}
             weekDragLift
             canPin={canPinMore}
+            selected={selectedTaskId === task.id}
+            onSelect={onSelectTask}
+            onActivate={onActivateTask}
             onPin={onPinTask}
             onComplete={onComplete}
             onDelete={onDelete}

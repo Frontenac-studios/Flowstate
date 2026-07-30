@@ -24,6 +24,10 @@ type Props = {
   highlightTaskIds?: Set<string>;
   /** Force the inbox open (overrides the collapse-while-empty policy). */
   forceExpanded?: boolean;
+  /** D5 selection: the currently-highlighted task id across the whole week. */
+  selectedTaskId?: string | null;
+  onSelectTask?: (taskId: string) => void;
+  onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
   onDraftClick: () => void;
@@ -38,6 +42,9 @@ export function WeekInbox({
   collapseWhenEmpty = false,
   highlightTaskIds,
   forceExpanded = false,
+  selectedTaskId = null,
+  onSelectTask,
+  onActivateTask,
   onComplete,
   onDelete,
   onDraftClick,
@@ -137,6 +144,9 @@ export function WeekInbox({
                     showProject={false}
                     weekDragLift
                     showSuggestedDate
+                    selected={selectedTaskId === task.id}
+                    onSelect={onSelectTask}
+                    onActivate={onActivateTask}
                     onComplete={onComplete}
                     onDelete={onDelete}
                     highlightClassName={highlighted ? "kash-section-pulse" : undefined}
