@@ -75,6 +75,27 @@ describe("buildPhaseTree", () => {
     expect(tree.rootPhases).toEqual([]);
     expect(tree.looseTasks).toEqual([]);
   });
+
+  it("attaches active tasks to a phase nested two levels deep", () => {
+    // Guards the Miller-columns invariant: drilling root → child must surface the
+    // child's own tasks on its node, so the deep column renders them (not a blank
+    // column) and MillerPhaseRow's badge (children.length + tasks.length) matches
+    // what the column shows. Mirrors "Pre-move → Sell → active task".
+    const tree = buildPhaseTree(
+      [phase("premove", null, 0), phase("sell", "premove", 0)],
+      [task("t-active", "sell", 0), task("t-done", "sell", 1, null, new Date("2026-01-01"))]
+    );
+
+    const sell = tree.rootPhases[0].children[0];
+    expect(sell.phase.id).toBe("sell");
+    // The deep node carries both tasks — the column body reads exactly this array.
+    expect(sell.tasks.map((t) => t.id)).toEqual(["t-active", "t-done"]);
+    // Badge count (children + tasks) is nonzero, so a nonzero badge can never sit
+    // above an empty drilled column.
+    expect(sell.children.length + sell.tasks.length).toBe(2);
+    // At least one task is active (incomplete), so the column is not merely completed.
+    expect(sell.tasks.some((t) => t.completedAt === null)).toBe(true);
+  });
 });
 
 describe("derivePhaseRange", () => {
