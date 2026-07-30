@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { readMotionDurationMs, MOTION_TOKEN } from "@/lib/animate/motion-tokens";
 
@@ -28,8 +28,9 @@ import { recordBingoReward } from "@/lib/planning/stubs";
 import { type ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
-import BingoBalanceLegend from "./BingoBalanceLegend";
+import BingoBalanceChart from "./BingoBalanceChart";
 import BingoCoachDock from "./BingoCoachDock";
+import BingoCoachPromptCard from "./BingoCoachPromptCard";
 import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
 import BingoListView, { type BingoListGroupBy } from "./BingoListView";
@@ -65,9 +66,12 @@ type ViewMode = "card" | "list";
 
 type Props = {
   year: number;
+  /* Page header (Plan title + horizon switcher) rendered inside the left
+     column so the coach dock can run the full window height beside it. */
+  header?: ReactNode;
 };
 
-export default function BingoCard({ year }: Props) {
+export default function BingoCard({ year, header }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -284,51 +288,67 @@ export default function BingoCard({ year }: Props) {
 
   if (cardQuery.isLoading) {
     return (
-      <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted shadow-surface" />
+      <div className="flex flex-col gap-4">
+        {header}
+        <div className="rounded-card border border-subtle bg-surface p-8 text-ink-muted shadow-surface" />
+      </div>
     );
   }
 
   if (!card) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8 shadow-surface">
-        <p className="text-body text-ink">
-          Your {year} bingo card is a 5×5 grid of goals. Fill the squares, then check them off as
-          you go — line up five for a win.
-        </p>
-        <button
-          type="button"
-          onClick={() => startMutation.mutate({ cardYear: year })}
-          disabled={startMutation.isPending}
-          className="rounded-control border-emphasis border-ink px-4 py-2 text-body font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
-        >
-          {startMutation.isPending ? "Creating…" : `Start your ${year} card`}
-        </button>
+      <div className="flex flex-col gap-4">
+        {header}
+        <div className="flex flex-col items-start gap-3 rounded-card border border-subtle bg-surface p-8 shadow-surface">
+          <p className="text-body text-ink">
+            Your {year} bingo card is a 5×5 grid of goals. Fill the squares, then check them off as
+            you go — line up five for a win.
+          </p>
+          <button
+            type="button"
+            onClick={() => startMutation.mutate({ cardYear: year })}
+            disabled={startMutation.isPending}
+            className="rounded-control border-emphasis border-ink px-4 py-2 text-body font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+          >
+            {startMutation.isPending ? "Creating…" : `Start your ${year} card`}
+          </button>
+        </div>
       </div>
     );
   }
 
   if (showOnboarding && goals.length === 0) {
     return (
-      <BingoOnboarding
-        year={year}
-        coachAvailable={coachAvailable}
-        onStartCoach={() => setShowOnboarding(false)}
-        onBlank={() => setShowOnboarding(false)}
-      />
+      <div className="flex flex-col gap-4">
+        {header}
+        <BingoOnboarding
+          year={year}
+          coachAvailable={coachAvailable}
+          onStartCoach={() => setShowOnboarding(false)}
+          onBlank={() => setShowOnboarding(false)}
+        />
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
       <div className="flex min-w-0 flex-1 flex-col gap-4">
+        {header}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-ink-muted">
             <span className="rounded-control border border-subtle px-2 py-0.5">
               {locked ? "Final" : "Draft"} · {year}
             </span>
-            <span>
-              {done} of {total} done
-            </span>
+            {locked ? (
+              <span>
+                {done} of {total} done
+              </span>
+            ) : (
+              <span className="text-ink-faint">
+                Draft — no bingo rewards until you finalize. Target finalize by Jan 31.
+              </span>
+            )}
             {locked && lineCount > 0 ? (
               <span className="inline-flex items-center gap-1 font-medium text-ink">
                 <Star
@@ -340,7 +360,7 @@ export default function BingoCard({ year }: Props) {
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <div className="flex rounded-control border border-subtle p-0.5 text-caption">
               <button
                 type="button"
@@ -420,12 +440,6 @@ export default function BingoCard({ year }: Props) {
           </div>
         </div>
 
-        {!locked ? (
-          <p className="text-caption text-ink-faint">
-            Draft — no bingo rewards until you finalize. Target finalize by Jan 31.
-          </p>
-        ) : null}
-
         {viewMode === "card" ? (
           <div
             className={
@@ -470,7 +484,10 @@ export default function BingoCard({ year }: Props) {
           />
         )}
 
-        <BingoBalanceLegend balance={balance} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <BingoBalanceChart balance={balance} />
+          <BingoCoachPromptCard />
+        </div>
       </div>
 
       {selectedGoalId ? (
