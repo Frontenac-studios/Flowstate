@@ -42,6 +42,7 @@ import {
   toISODateString,
 } from "@/lib/dates/local-day";
 import { computeWeekDayLoads } from "@/lib/week/day-load";
+import { groupCompletionsByLocalDay } from "@/lib/week/group-completions-by-day";
 import { isDayOverCommitted } from "@/lib/week/over-commit-threshold";
 import {
   calendarLoadSummaryFromDayEvents,
@@ -58,6 +59,7 @@ import { usePlanMode } from "../PlanProvider";
 import { QuickInput, type QuickInputHandle } from "../QuickInput";
 import { Top3ReplacePicker } from "../Top3ReplacePicker";
 import type { Top3SlotTask } from "../Top3Slots";
+import type { CompletedTaskRow } from "../CompletedSection";
 import type { PlanTaskRow } from "../TaskRow";
 import type { DayPrioritySlotTask } from "./DayPrioritiesSlots";
 
@@ -194,6 +196,12 @@ export function WeekCanvas({
   const tzOffsetMinutes = clientTzOffsetMinutes();
 
   const { data: tasks = [], isLoading } = useQuery(trpc.tasks.listIncomplete.queryOptions());
+  // D2: the flat recently-completed feed, scoped client-side to each visible day.
+  // Uses the same no-arg query key TaskRow's completion patches write to, so a
+  // just-completed row lands in the right column's tail without a refetch.
+  const { data: recentlyCompleted = [] } = useQuery(
+    trpc.tasks.listRecentlyCompleted.queryOptions()
+  );
   const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
   const { data: protectedBlocks = [] } = useQuery(
     trpc.protectedBlocks.listForWeek.queryOptions(weekQueryInput)
@@ -248,6 +256,28 @@ export function WeekCanvas({
   }, [protectedBlocks]);
 
   const partitioned = useMemo(() => partitionWeekTasks(tasks, weekRef), [tasks, weekRef]);
+
+  // D2: completed rows grouped by their local completion day, mapped to the shape
+  // CompletedSection renders. Each weekday column reads its own day's bucket; a
+  // completion whose day falls outside the visible week (or beyond the feed's
+  // 30-row limit) simply isn't shown — the tail mirrors the live "today" feed.
+  const completionsByDay = useMemo(() => {
+    const grouped = groupCompletionsByLocalDay(recentlyCompleted, tzOffsetMinutes);
+    const map = new Map<string, CompletedTaskRow[]>();
+    grouped.forEach((rows, iso) => {
+      map.set(
+        iso,
+        rows.map((t) => ({
+          id: t.id,
+          title: t.title,
+          completedAt: t.completedAt,
+          category: t.category,
+          categoryUnresolved: t.categoryUnresolved,
+        }))
+      );
+    });
+    return map;
+  }, [recentlyCompleted, tzOffsetMinutes]);
 
   const router = useRouter();
 
@@ -811,6 +841,7 @@ export function WeekCanvas({
               label={WEEKDAY_LABELS[index]!}
               isToday={isToday}
               tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
+              completions={completionsByDay.get(iso) ?? []}
               pinnedBySlot={pinnedBySlot}
               protectedBlocks={protectedByDate[iso] ?? []}
               externalEvents={externalEvents}

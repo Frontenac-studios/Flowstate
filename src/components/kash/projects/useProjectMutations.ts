@@ -3,7 +3,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { useTRPC } from "@/trpc/client";
+import { useTRPC, type RouterOutputs } from "@/trpc/client";
+
+import { optimisticPatch, rollbackPatches } from "../plan/optimistic-cache";
+
+type ProjectTaskRow = RouterOutputs["tasks"]["listByProject"][number];
 
 /**
  * Phase/task mutations scoped to one project. Every mutation invalidates the
@@ -49,6 +53,21 @@ export function useProjectMutations(projectId: string) {
 
   const onSuccess = () => invalidateProject();
 
+  // Optimistically flip a task's completedAt in the Miller column feed so the
+  // row settles/reopens instantly; onError rolls back, onSettled reconciles.
+  // Mirrors TaskRow's completion patch, keyed to the project's task list.
+  const patchTaskCompletion = useCallback(
+    async (id: string, completedAt: Date | null) => {
+      const snapshot = await optimisticPatch<ProjectTaskRow[]>(
+        queryClient,
+        trpc.tasks.listByProject.queryKey({ projectId }),
+        (old) => old.map((task) => (task.id === id ? { ...task, completedAt } : task))
+      );
+      return { snapshots: [snapshot] };
+    },
+    [queryClient, trpc.tasks.listByProject, projectId]
+  );
+
   const createPhase = useMutation(trpc.phases.create.mutationOptions({ onSuccess }));
   const updatePhase = useMutation(trpc.phases.update.mutationOptions({ onSuccess }));
   const updatePhaseSilent = useMutation(trpc.phases.update.mutationOptions({}));
@@ -57,8 +76,20 @@ export function useProjectMutations(projectId: string) {
 
   const createTask = useMutation(trpc.tasks.create.mutationOptions({ onSuccess }));
   const updateTask = useMutation(trpc.tasks.update.mutationOptions({ onSuccess }));
-  const completeTask = useMutation(trpc.tasks.complete.mutationOptions({ onSuccess }));
-  const uncompleteTask = useMutation(trpc.tasks.uncomplete.mutationOptions({ onSuccess }));
+  const completeTask = useMutation(
+    trpc.tasks.complete.mutationOptions({
+      onMutate: ({ id }) => patchTaskCompletion(id, new Date()),
+      onError: (_err, _vars, ctx) => rollbackPatches(queryClient, ctx?.snapshots),
+      onSettled: () => invalidateProject(),
+    })
+  );
+  const uncompleteTask = useMutation(
+    trpc.tasks.uncomplete.mutationOptions({
+      onMutate: ({ id }) => patchTaskCompletion(id, null),
+      onError: (_err, _vars, ctx) => rollbackPatches(queryClient, ctx?.snapshots),
+      onSettled: () => invalidateProject(),
+    })
+  );
   const deleteTask = useMutation(trpc.tasks.delete.mutationOptions({ onSuccess }));
   const moveTask = useMutation(trpc.tasks.moveToPhase.mutationOptions({ onSuccess }));
   // Silent variant for within-column reorder: several moves are awaited, then the
