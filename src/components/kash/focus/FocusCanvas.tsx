@@ -8,7 +8,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, kashIconProps } from "@/components/kash/ui/icon";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { triggerEphemeralCelebration } from "@/components/kash/mechanics/EphemeralCelebration";
+import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { useFocusSession } from "@/hooks/useFocusSession";
+import { occurrenceRef } from "@/lib/tasks/occurrence-ref";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { setOsDoNotDisturb } from "@/lib/about-me/os-dnd";
@@ -73,6 +75,7 @@ export function FocusCanvas() {
     trpc.recurrence.completeOccurrence.mutationOptions()
   );
   const completeBlockMutation = useMutation(trpc.focusBlocks.complete.mutationOptions());
+  const showCompletionToast = useCompletionToast();
 
   const resetSessionUi = useCallback(() => {
     setDoneFlash(null);
@@ -240,14 +243,13 @@ export function FocusCanvas() {
       await endWorkEntry("done");
       // Recurring occurrences carry a synthetic (non-uuid) id, so they must be
       // completed via completeOccurrence — same branch as TaskRow.handleComplete.
-      if (task.isRecurringOccurrence && task.recurrenceId && task.occurrenceDate) {
-        await completeOccurrenceMutation.mutateAsync({
-          recurrenceId: task.recurrenceId,
-          occurrenceDate: task.occurrenceDate,
-        });
+      const occurrence = occurrenceRef(task);
+      if (occurrence) {
+        await completeOccurrenceMutation.mutateAsync(occurrence);
       } else {
         await completeMutation.mutateAsync({ id: task.id });
       }
+      showCompletionToast(task);
 
       if (blockId) {
         await completeBlockMutation.mutateAsync({ id: blockId });
@@ -269,6 +271,7 @@ export function FocusCanvas() {
     completeBlockMutation,
     completeMutation,
     completeOccurrenceMutation,
+    showCompletionToast,
     doneFlash,
     exiting,
     endWorkEntry,
