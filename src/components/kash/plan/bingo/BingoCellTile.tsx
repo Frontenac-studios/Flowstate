@@ -48,7 +48,7 @@ export default function BingoCellTile({
   if (cell.kind === "free") {
     return (
       <div
-        className={`flex aspect-square flex-col items-center justify-center rounded-card border border-subtle bg-surface-2 text-ink-faint shadow-surface ${ring} ${lockable}`}
+        className={`flex aspect-square flex-col items-center justify-center rounded-card border border-subtle bg-surface-2 text-ink-faint shadow-surface lg:aspect-auto ${ring} ${lockable}`}
       >
         <Star {...kashIconProps({ tokenSize: "lg", className: "fill-current" })} aria-hidden />
         <span className="mt-1 text-caption">Free</span>
@@ -60,7 +60,7 @@ export default function BingoCellTile({
     if (locked) {
       return (
         <div
-          className={`aspect-square rounded-card border border-dashed border-subtle bg-surface shadow-surface ${ring} ${lockable}`}
+          className={`aspect-square rounded-card border border-dashed border-subtle bg-surface shadow-surface lg:aspect-auto ${ring} ${lockable}`}
           aria-hidden
         />
       );
@@ -81,7 +81,7 @@ export default function BingoCellTile({
       <button
         type="button"
         onClick={() => onAdd(cell.cellIndex)}
-        className={`group flex aspect-square flex-col items-center justify-center rounded-card border border-dashed border-subtle bg-surface text-ink-faint shadow-surface transition hover:border-ink-muted hover:text-ink-muted focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${ring} ${lockable}`}
+        className={`group flex aspect-square flex-col items-center justify-center rounded-card border border-dashed border-subtle bg-surface text-ink-faint shadow-surface transition hover:border-ink-muted hover:text-ink-muted focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] lg:aspect-auto ${ring} ${lockable}`}
         aria-label="Add a goal to this square"
       >
         <Plus {...kashIconProps({ tokenSize: "md", className: "text-ink-muted" })} aria-hidden />
@@ -96,7 +96,7 @@ export default function BingoCellTile({
   if (goal.state === "done") {
     return (
       <div
-        className={`relative flex aspect-square flex-col justify-end overflow-hidden rounded-card p-2 ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
+        className={`relative flex aspect-square flex-col overflow-hidden rounded-card p-2 lg:aspect-auto ${ring} ${inWinningLine ? "bingo-line-bounce" : ""}`}
         style={{ backgroundColor: solid }}
       >
         <button
@@ -117,10 +117,12 @@ export default function BingoCellTile({
         >
           <Check {...kashIconProps({ tokenSize: "sm", className: "text-white" })} aria-hidden />
         </button>
-        <span className="relative text-caption font-medium text-white/80">{categoryName}</span>
-        <span className="relative line-clamp-3 text-meta font-medium text-white line-through">
-          {goal.title}
-        </span>
+        <span className="relative pr-7 text-caption font-medium text-white/80">{categoryName}</span>
+        <div className="relative flex min-h-0 flex-1 items-center">
+          <span className="line-clamp-3 text-meta font-medium text-white line-through">
+            {goal.title}
+          </span>
+        </div>
       </div>
     );
   }
@@ -129,7 +131,7 @@ export default function BingoCellTile({
 
   return (
     <div
-      className={`group relative flex aspect-square flex-col justify-end overflow-hidden rounded-card border-emphasis bg-surface p-2 shadow-surface ${
+      className={`group relative flex aspect-square flex-col overflow-hidden rounded-card border-emphasis bg-surface p-2 shadow-surface lg:aspect-auto ${
         backburnered ? "opacity-40" : ""
       } ${ring} ${lockable} ${inWinningLine ? "bingo-line-bounce" : ""}`}
       style={{ borderColor: solid }}
@@ -156,12 +158,14 @@ export default function BingoCellTile({
         </button>
       ) : null}
 
-      <span className="relative text-caption font-medium" style={{ color: solid }}>
+      <span className="relative pr-7 text-caption font-medium" style={{ color: solid }}>
         {backburnered ? `${categoryName} · paused` : categoryName}
       </span>
-      <span className="relative line-clamp-3 text-meta font-medium text-ink">{goal.title}</span>
+      <div className="relative flex min-h-0 flex-1 items-center">
+        <span className="line-clamp-3 text-meta font-medium text-ink">{goal.title}</span>
+      </div>
 
-      <div className="relative z-sticky flex justify-end gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+      <div className="absolute bottom-1.5 right-1.5 z-sticky flex justify-end gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
         <button
           type="button"
           onClick={(e) => {

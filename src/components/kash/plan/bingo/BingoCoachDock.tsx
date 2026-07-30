@@ -2,12 +2,18 @@
 
 import { useChatPanel } from "@/hooks/useChatPanel";
 import { goalsCoachThreadId } from "@/lib/chat/threads";
+import type { ProjectCategory } from "@/lib/projects/categories";
 
 import { ChatComposer } from "@/components/kash/chat/ChatComposer";
 import { MessageList } from "@/components/kash/chat/MessageList";
 
+import BingoBalanceChart from "./BingoBalanceChart";
+
 type Props = {
   year: number;
+  /* When set, the category-balance indicator renders pinned under the
+     composer as a silent footer. */
+  balance?: Record<ProjectCategory, number>;
 };
 
 /**
@@ -16,7 +22,7 @@ type Props = {
  * it runs the Goals register + goal tools and never behaves like the task rail. One
  * persistent thread per card year lets an unfinished session resume later.
  */
-export default function BingoCoachDock({ year }: Props) {
+export default function BingoCoachDock({ year, balance }: Props) {
   const threadId = goalsCoachThreadId(year);
   const {
     messages,
@@ -42,7 +48,7 @@ export default function BingoCoachDock({ year }: Props) {
 
   return (
     <section
-      className="lg:top-shell flex min-h-[22rem] w-full flex-col rounded-card border border-subtle bg-surface shadow-surface lg:sticky lg:max-h-[calc(100vh-7rem)] lg:w-80 lg:shrink-0"
+      className="lg:top-shell flex min-h-[22rem] w-full flex-col rounded-card border border-subtle bg-surface shadow-surface lg:sticky lg:h-[calc(100dvh_-_var(--shell-sticky-top)_-_var(--shell-pad-y))] lg:w-80 lg:shrink-0"
       aria-label="Goals coach"
     >
       <header className="border-b border-subtle px-4 py-3">
@@ -102,9 +108,15 @@ export default function BingoCoachDock({ year }: Props) {
           disabled={!configured}
           isStreaming={isStreaming}
           placeholder="Tell the coach about your year…"
+          textSizeClassName="!text-[13px]"
           onSend={(text) => void sendMessage(text)}
           onStop={stopGeneration}
         />
+        {balance ? (
+          <div className="pt-2">
+            <BingoBalanceChart balance={balance} />
+          </div>
+        ) : null}
       </div>
     </section>
   );

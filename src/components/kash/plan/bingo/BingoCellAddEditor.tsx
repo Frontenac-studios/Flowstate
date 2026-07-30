@@ -100,7 +100,7 @@ export default function BingoCellAddEditor({
   return (
     <div ref={containerRef} className={`relative ${lockable}`}>
       <div
-        className={`flex aspect-square flex-col justify-center rounded-card border border-dashed border-ink-muted bg-surface p-1.5 shadow-surface ${ring}`}
+        className={`flex aspect-square flex-col justify-center rounded-card border border-dashed border-ink-muted bg-surface p-1.5 shadow-surface lg:aspect-auto ${ring}`}
       >
         <input
           ref={inputRef}
