@@ -19,13 +19,14 @@ import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
 import { ComposerAssistInput } from "@/components/kash/composer/ComposerAssistInput";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
 import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeActionRail";
-import { Lock, Pencil, SkipForward, Star, Trash2, withKashIcon } from "@/components/kash/ui/icon";
+import TaskContextMenu from "@/components/kash/TaskContextMenu";
+import { Check, Lock, Pencil, SkipForward, Trash2, withKashIcon } from "@/components/kash/ui/icon";
 import { TaskTagChips } from "@/components/kash/plan/TaskTagChips";
 import Checkbox from "@/components/kash/ui/Checkbox";
 import { useToast } from "@/components/kash/ui/ToastProvider";
 import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
-import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
+import { useRowSwipe } from "@/hooks/useRowSwipe";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
@@ -96,6 +97,12 @@ type Props = {
   onActivate?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
+  /**
+   * @deprecated Pin was dropped from the row in PR 4 (D6) — pin now via drag onto
+   * Top 3 or ⌘1/2/3. These props are still accepted (callers thread them through
+   * onboarding / morning-handoff) but no longer render a row affordance; a
+   * follow-up will unwind the caller plumbing.
+   */
   onPin?: (taskId: string, sourceEl: HTMLElement) => void;
   canPin?: boolean;
   /** Surfaces that are already project-scoped pass false to never reveal project. */
@@ -125,7 +132,6 @@ type Props = {
   highlightRef?: Ref<HTMLLIElement>;
 };
 
-const PIN_REVEAL_WIDTH_PX = swipeRevealWidth(1);
 const REVEAL_WIDTH_PX = swipeRevealWidth(2);
 const MAX_ARRIVE_STAGGER = 12;
 
@@ -136,8 +142,6 @@ export function TaskRow({
   onActivate,
   onComplete,
   onDelete,
-  onPin,
-  canPin = false,
   showProject = true,
   reveal,
   suppressDue = false,
@@ -184,9 +188,15 @@ export function TaskRow({
   // server round-trip resolves.
   const [completing, setCompleting] = useState(false);
   const [occurrenceMenuOpen, setOccurrenceMenuOpen] = useState(false);
+  // Right-click context menu (D6), positioned at the cursor.
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const rowContentRef = useRef<HTMLDivElement>(null);
   const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pinEnabled = canPin && !task.isTop3 && !task.dayPriorityOrder && onPin != null;
+  // Guarded self-complete, shared by the swipe fling and the ⌘⇧D event. Assigned
+  // below once the completion handler + guards exist; a ref keeps the latest
+  // closure without re-subscribing the gesture/event listeners each render.
+  const completeSelfRef = useRef<() => void>(() => {});
+  const runSwipeComplete = useCallback(() => completeSelfRef.current(), []);
 
   // Clean by default; indicators reveal per active lens (VF-2). The surrounding
   // LensProvider renders clean on the server / first paint, then hydrates from
@@ -230,14 +240,15 @@ export function TaskRow({
         ? "font-medium text-[var(--due-soon)]"
         : "text-[var(--due-future)]";
   const showProjectIndicator = Boolean(activeReveal.project && showProject && task.projectName);
-  const { leftOffset, rightOffset, hide, isOpen, containerRef } = useTrackpadSwipeReveal({
-    maxOffsetRight: REVEAL_WIDTH_PX,
-    maxOffsetLeft: pinEnabled ? PIN_REVEAL_WIDTH_PX : 0,
-  });
+  const { revealOffset, flingOffset, isRevealOpen, hide, consumeSwipe, containerRef } = useRowSwipe(
+    {
+      revealWidth: REVEAL_WIDTH_PX,
+      onSwipeComplete: runSwipeComplete,
+    }
+  );
 
-  /** Snapped rather than live — see the note in MillerTaskRow. */
-  const pinRailOpen = pinEnabled && leftOffset >= PIN_REVEAL_WIDTH_PX / 2;
-  const actionRailOpen = rightOffset >= REVEAL_WIDTH_PX / 2;
+  /** Snapped rather than live — the rail flips open past the halfway point. */
+  const actionRailOpen = revealOffset >= REVEAL_WIDTH_PX / 2;
 
   const invalidatePlan = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
@@ -277,7 +288,7 @@ export function TaskRow({
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useDraggable({
       id: `task:${task.id}`,
-      disabled: editing || isOpen,
+      disabled: editing || isRevealOpen,
       data: { taskId: task.id },
     });
 
@@ -483,19 +494,17 @@ export function TaskRow({
 
   const isCompleting = completeMutation.isPending || completeOccurrenceMutation.isPending;
 
-  // D5 `Cmd+Shift+D`: the surface dispatches a completion request for the
-  // selected id; the matching row runs its own `handleComplete` so the slide-out
-  // and occurrence branching stay identical to a swipe. A ref keeps the latest
-  // guards without re-subscribing every render.
-  const requestCompleteRef = useRef<() => void>(() => {});
-  requestCompleteRef.current = () => {
+  // Shared by the swipe-right fling and D5's `Cmd+Shift+D` event: run the row's
+  // own `handleComplete` (so the slide-out + occurrence branching stay identical),
+  // guarded against firing while already completing or blocked.
+  completeSelfRef.current = () => {
     if (isCompleting || completing || isBlocked) return;
     handleComplete();
   };
   useEffect(
     () =>
       onCompleteTaskRequest((taskId) => {
-        if (taskId === task.id) requestCompleteRef.current();
+        if (taskId === task.id) completeSelfRef.current();
       }),
     [task.id]
   );
@@ -555,38 +564,39 @@ export function TaskRow({
           : undefined),
       }}
     >
-      <div ref={containerRef} className="relative min-h-0 overflow-hidden">
+      <div ref={containerRef} className="relative min-h-0 touch-pan-y overflow-hidden rounded-card">
+        {/* Complete-tone hint revealed under the row as it flings right (D1). */}
+        {flingOffset > 0 ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center rounded-card pl-3"
+            style={{
+              width: flingOffset,
+              backgroundColor: "color-mix(in srgb, var(--action-complete) 14%, transparent)",
+            }}
+          >
+            <Check size={18} className="text-[var(--action-complete)]" aria-hidden />
+          </div>
+        ) : null}
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 overflow-hidden rounded-card border bg-surface px-3 py-[var(--row-py)] ${
+          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 overflow-hidden rounded-card border bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move motion-reduce:transition-none ${
             isBlocked ? "border-dashed border-ink-faint" : "border-subtle"
           } ${task.isTop3 ? "border-l-2 border-accent" : ""} ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
-          onClick={() => onSelect?.(task.id)}
+          style={flingOffset > 0 ? { transform: `translateX(${flingOffset}px)` } : undefined}
+          onClick={() => {
+            // A pointer swipe ends in a click — suppress the select it would fire.
+            if (consumeSwipe()) return;
+            onSelect?.(task.id);
+          }}
           onDoubleClick={() => onActivate?.(task.id)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            hide();
+            setContextMenu({ x: e.clientX, y: e.clientY });
+          }}
         >
-          {pinEnabled ? (
-            <SwipeActionRail
-              open={pinRailOpen}
-              className="-my-[var(--row-py)] -ml-3"
-              actions={[
-                {
-                  key: "pin",
-                  label: "Pin to Top 3",
-                  icon: Star,
-                  tone: "neutral",
-                  onClick: (e) => {
-                    e.stopPropagation();
-                    hide();
-                    if (rowContentRef.current) {
-                      onPin(task.id, rowContentRef.current);
-                    }
-                  },
-                },
-              ]}
-            />
-          ) : null}
-
           <span
             className={`mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full${
               task.categoryUnresolved ? "stripe-resolving" : ""
@@ -778,6 +788,18 @@ export function TaskRow({
           />
         </div>
       </div>
+      {contextMenu ? (
+        <TaskContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          completed={false}
+          isRecurringOccurrence={task.isRecurringOccurrence ?? false}
+          onComplete={() => completeSelfRef.current()}
+          onEdit={startEdit}
+          onDelete={handleDelete}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
     </li>
   );
 }
