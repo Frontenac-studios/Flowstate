@@ -98,9 +98,9 @@ export default function BingoCellAddEditor({
       : { bottom: "calc(100% + 0.5rem)" as const };
 
   return (
-    <div ref={containerRef} className={`relative ${lockable}`}>
+    <div ref={containerRef} className={`bingo-cell-spotlight relative ${lockable}`}>
       <div
-        className={`flex aspect-square flex-col justify-center rounded-card border border-dashed border-ink-muted bg-surface p-1.5 shadow-surface lg:aspect-auto ${ring}`}
+        className={`bingo-spotlight-card flex aspect-square h-full flex-col justify-center rounded-card border border-border bg-surface p-1.5 lg:aspect-auto ${ring}`}
       >
         <input
           ref={inputRef}

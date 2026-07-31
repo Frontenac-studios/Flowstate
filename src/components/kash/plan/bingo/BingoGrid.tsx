@@ -42,7 +42,7 @@ export default function BingoGrid({
 
   return (
     <div
-      className={`grid grid-cols-5 gap-2 overflow-visible lg:min-h-0 lg:flex-1 lg:grid-rows-5 ${locking ? "bingo-lock-grid" : ""}`}
+      className={`grid grid-cols-5 gap-2 overflow-visible lg:min-h-0 lg:flex-1 lg:grid-rows-5 ${locking ? "bingo-lock-grid" : ""} ${editingCell !== null ? "bingo-spotlight-grid" : ""}`}
       role="grid"
       aria-label="Annual goals bingo card"
     >
