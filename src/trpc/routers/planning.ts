@@ -21,6 +21,7 @@ import {
   userValues,
 } from "@/db/tables";
 import { assertEditableBingoCell } from "@/lib/planning/bingo-cells";
+import normalizeGoalTitle from "@/lib/planning/goal-title";
 import {
   balancePassScopeKey,
   balanceSuggestionLabel,
@@ -407,7 +408,7 @@ export const planningRouter = createTRPCRouter({
         .insert(goals)
         .values({
           userId: ctx.userId,
-          title: input.title,
+          title: normalizeGoalTitle(input.title),
           category: input.category,
           bingoCardId: input.bingoCardId ?? null,
           cellIndex: input.cellIndex ?? null,
@@ -479,7 +480,7 @@ export const planningRouter = createTRPCRouter({
 
       const now = new Date();
       const patch: Record<string, unknown> = { updatedAt: now };
-      if (input.title !== undefined) patch.title = input.title;
+      if (input.title !== undefined) patch.title = normalizeGoalTitle(input.title);
       if (input.category !== undefined) patch.category = input.category;
       if (input.cellIndex !== undefined) patch.cellIndex = input.cellIndex;
       if (input.obligationDesire !== undefined) patch.obligationDesire = input.obligationDesire;
