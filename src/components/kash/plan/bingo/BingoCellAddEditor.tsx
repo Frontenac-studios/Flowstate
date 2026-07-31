@@ -29,12 +29,23 @@ export default function BingoCellAddEditor({
 }: Props) {
   const formId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
   const [valueId, setValueId] = useState<string | null>(null);
   const [placement, setPlacement] = useState<"below" | "above">("below");
+
+  const autoGrow = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  useEffect(() => {
+    autoGrow();
+  }, [title, autoGrow]);
 
   const trimmed = title.trim();
   const canSubmit = trimmed.length > 0 && category !== null && !busy;
@@ -102,12 +113,19 @@ export default function BingoCellAddEditor({
       <div
         className={`bingo-spotlight-card flex aspect-square h-full flex-col justify-center rounded-card border border-border bg-surface p-1.5 lg:aspect-auto ${ring}`}
       >
-        <input
+        <textarea
           ref={inputRef}
           form={formId}
-          className="w-full min-w-0 bg-transparent text-meta font-medium text-ink outline-none placeholder:text-ink-faint focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          rows={1}
+          className="max-h-full w-full min-w-0 resize-none overflow-y-auto bg-transparent text-meta font-medium text-ink outline-none placeholder:text-ink-faint"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
           placeholder="Goal…"
           maxLength={500}
           aria-label="Goal title"
