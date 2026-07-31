@@ -23,6 +23,7 @@ import {
   weekDayPriorities,
 } from "@/db/tables";
 import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
+import normalizeGoalTitle from "@/lib/planning/goal-title";
 import { buildCreateTaskPlacementSummary } from "@/lib/chat/build-create-task-placement-summary";
 import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { ChatCreatedTask } from "@/lib/chat/chat-task-created-events";
@@ -954,7 +955,7 @@ export async function applyProposedActionPayload(
           .values({
             userId,
             bingoCardId: cardId,
-            title: item.title,
+            title: normalizeGoalTitle(item.title),
             category: item.category,
             cellIndex,
             valueId: item.valueId ?? null,

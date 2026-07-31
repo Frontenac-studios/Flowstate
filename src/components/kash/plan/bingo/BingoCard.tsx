@@ -32,7 +32,7 @@ import BingoBalanceChart from "./BingoBalanceChart";
 import BingoCoachDock from "./BingoCoachDock";
 import BingoGoalPanel from "./BingoGoalPanel";
 import BingoGrid from "./BingoGrid";
-import BingoListView, { type BingoListGroupBy } from "./BingoListView";
+import BingoListView from "./BingoListView";
 import BingoOnboarding from "./BingoOnboarding";
 
 const AWARDED_LINES_KEY = "kash-bingo-awarded-lines";
@@ -108,7 +108,6 @@ export default function BingoCard({ year, headerStart, headerEnd, notices }: Pro
   const coachAvailable = chatConfigQuery.data?.bingoCoachEnabled ?? false;
 
   const [viewMode, setViewMode] = useState<ViewMode>("card");
-  const [listGroupBy, setListGroupBy] = useState<BingoListGroupBy>("category");
   const [addingCell, setAddingCell] = useState<number | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [pendingGoalId, setPendingGoalId] = useState<string | null>(null);
@@ -499,8 +498,6 @@ export default function BingoCard({ year, headerStart, headerEnd, notices }: Pro
           <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             <BingoListView
               goals={goals}
-              groupBy={listGroupBy}
-              onGroupByChange={setListGroupBy}
               onSelectGoal={(goal) => setSelectedGoalId(goal.id)}
               locked={locked}
             />
