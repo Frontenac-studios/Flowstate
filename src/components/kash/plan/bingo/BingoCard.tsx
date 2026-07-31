@@ -67,8 +67,8 @@ type Props = {
   year: number;
   /* Page-header pieces rendered inside the left column so the coach dock can
      run the full window height beside them. `headerStart` is the page title,
-     `headerEnd` the check-in + horizon-switcher cluster; the card merges both
-     into its single chrome row above the grid. */
+     `headerEnd` the check-in + horizon-switcher cluster; both share the top
+     header row, with the card's own controls on a second row above the grid. */
   headerStart?: ReactNode;
   headerEnd?: ReactNode;
   /* Occasional banners (e.g. year-rollover nudges) shown below the chrome row. */
@@ -377,85 +377,86 @@ export default function BingoCard({ year, headerStart, headerEnd, notices }: Pro
             ) : null}
           </div>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <div className="flex rounded-control border border-subtle p-0.5 text-caption">
-              <button
-                type="button"
-                aria-pressed={viewMode === "card"}
-                onClick={() => setViewMode("card")}
-                className={`rounded-control px-2.5 py-1 font-medium ${
-                  viewMode === "card" ? "bg-surface-2 text-ink" : "text-ink-muted"
-                }`}
-              >
-                Card
-              </button>
-              <button
-                type="button"
-                aria-pressed={viewMode === "list"}
-                onClick={() => setViewMode("list")}
-                className={`rounded-control px-2.5 py-1 font-medium ${
-                  viewMode === "list" ? "bg-surface-2 text-ink" : "text-ink-muted"
-                }`}
-              >
-                List
-              </button>
-            </div>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-3">{headerEnd}</div>
+        </div>
 
-            {!locked ? (
-              confirmingFinalize ? (
-                <div className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-3 shadow-surface">
-                  {spellingGhostItems.length > 0 ? (
-                    <GhostedAccept
-                      items={spellingGhostItems}
-                      stagedIds={spellingStaged}
-                      applyLabel="Apply fixes & finalize"
-                      onStage={(id) => {
-                        setSpellingStaged((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(id)) next.delete(id);
-                          else next.add(id);
-                          return next;
-                        });
-                      }}
-                      onDismiss={() => {
-                        /* skip individual fixes */
-                      }}
-                      onApply={applySpellingFixes}
-                    />
-                  ) : (
-                    <div className="flex items-center gap-2 text-caption text-ink-muted">
-                      <span>Lock {year}? Goals can&apos;t be edited after.</span>
-                      <button
-                        type="button"
-                        onClick={() => finalizeMutation.mutate({ id: card.id })}
-                        disabled={finalizeMutation.isPending}
-                        className="rounded-control border-emphasis border-ink px-3 py-1 font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
-                      >
-                        {finalizeMutation.isPending ? "Finalizing…" : "Finalize"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmingFinalize(false)}
-                        className="px-2 py-1 text-ink-muted transition hover:text-ink"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmingFinalize(true)}
-                  disabled={total === 0}
-                  className="rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
-                >
-                  Lock it in
-                </button>
-              )
-            ) : null}
-            {headerEnd}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-control border border-subtle p-0.5 text-caption">
+            <button
+              type="button"
+              aria-pressed={viewMode === "card"}
+              onClick={() => setViewMode("card")}
+              className={`rounded-control px-2.5 py-1 font-medium ${
+                viewMode === "card" ? "bg-surface-2 text-ink" : "text-ink-muted"
+              }`}
+            >
+              Card
+            </button>
+            <button
+              type="button"
+              aria-pressed={viewMode === "list"}
+              onClick={() => setViewMode("list")}
+              className={`rounded-control px-2.5 py-1 font-medium ${
+                viewMode === "list" ? "bg-surface-2 text-ink" : "text-ink-muted"
+              }`}
+            >
+              List
+            </button>
           </div>
+
+          {!locked ? (
+            confirmingFinalize ? (
+              <div className="ml-auto flex flex-col gap-3 rounded-card border border-subtle bg-surface p-3 shadow-surface">
+                {spellingGhostItems.length > 0 ? (
+                  <GhostedAccept
+                    items={spellingGhostItems}
+                    stagedIds={spellingStaged}
+                    applyLabel="Apply fixes & finalize"
+                    onStage={(id) => {
+                      setSpellingStaged((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(id)) next.delete(id);
+                        else next.add(id);
+                        return next;
+                      });
+                    }}
+                    onDismiss={() => {
+                      /* skip individual fixes */
+                    }}
+                    onApply={applySpellingFixes}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 text-caption text-ink-muted">
+                    <span>Lock {year}? Goals can&apos;t be edited after.</span>
+                    <button
+                      type="button"
+                      onClick={() => finalizeMutation.mutate({ id: card.id })}
+                      disabled={finalizeMutation.isPending}
+                      className="rounded-control border-emphasis border-ink px-3 py-1 font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+                    >
+                      {finalizeMutation.isPending ? "Finalizing…" : "Finalize"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingFinalize(false)}
+                      className="px-2 py-1 text-ink-muted transition hover:text-ink"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmingFinalize(true)}
+                disabled={total === 0}
+                className="ml-auto rounded-control border-emphasis border-ink px-3 py-1.5 text-caption font-medium text-ink transition hover:bg-surface-2 disabled:opacity-40"
+              >
+                Lock it in
+              </button>
+            )
+          ) : null}
         </div>
 
         {notices}
