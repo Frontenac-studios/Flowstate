@@ -8,17 +8,17 @@ type Props = {
 };
 
 /**
- * Category balance as a silent one-line indicator: one mini column per
- * category in a fixed order, height scaled to the largest count. Empty
- * categories render as faint stubs so gaps in the year's mix stay visible.
- * No labels — category + count live in the hover/focus tooltip.
+ * Category balance as a silent single bar: one slice per non-empty category,
+ * width proportional to its share of goals. No labels — category + count live
+ * in the hover/focus tooltip. With no goals yet the empty track shows alone.
  */
 export default function BingoBalanceChart({ balance }: Props) {
-  const max = Math.max(1, ...PROJECT_CATEGORIES.map((category) => balance[category]));
-
   return (
-    <div className="flex h-6 items-end gap-1.5" aria-label="Category balance">
-      {PROJECT_CATEGORIES.map((category) => {
+    <div
+      className="flex h-1.5 gap-px overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_8%,transparent)]"
+      aria-label="Category balance"
+    >
+      {PROJECT_CATEGORIES.filter((category) => balance[category] > 0).map((category) => {
         const count = balance[category];
         const label = `${categorySeedLabel(category)} · ${count} ${count === 1 ? "goal" : "goals"}`;
         return (
@@ -26,18 +26,8 @@ export default function BingoBalanceChart({ balance }: Props) {
             key={category}
             title={label}
             aria-label={label}
-            className="min-w-0 flex-1 rounded-t-sm"
-            style={
-              count > 0
-                ? {
-                    height: `${Math.max(18, (count / max) * 100)}%`,
-                    backgroundColor: categorySolidVar(category),
-                  }
-                : {
-                    height: "3px",
-                    backgroundColor: "color-mix(in srgb, var(--ink) 10%, transparent)",
-                  }
-            }
+            className="h-full min-w-0"
+            style={{ flexGrow: count, backgroundColor: categorySolidVar(category) }}
           />
         );
       })}
