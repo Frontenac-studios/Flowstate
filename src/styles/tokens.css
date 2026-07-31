@@ -450,6 +450,33 @@ html.is-desktop[data-spacing-variant="b"] {
   animation: bingo-lock-grid var(--motion-short) var(--ease-enter) forwards;
 }
 
+@keyframes bingo-spotlight-lift {
+  from {
+    transform: scale(1);
+    box-shadow: var(--shadow-surface);
+  }
+  to {
+    transform: scale(1.03);
+    box-shadow: var(--shadow-overlay);
+  }
+}
+
+.bingo-spotlight-grid > * {
+  transition: opacity var(--motion-short) var(--ease-move);
+}
+
+.bingo-spotlight-grid > :not(.bingo-cell-spotlight) {
+  opacity: 0.4;
+}
+
+.bingo-cell-spotlight {
+  z-index: var(--z-sticky);
+}
+
+.bingo-spotlight-card {
+  animation: bingo-spotlight-lift var(--motion-short) var(--ease-move) both;
+}
+
 @keyframes page-cross-fade-in {
   from {
     opacity: 0;
@@ -585,6 +612,11 @@ html.is-desktop[data-spacing-variant="b"] {
 
   .bingo-line-bounce,
   .bingo-blackout-bounce {
+    animation: none !important;
+  }
+
+  /* AN-0c: spotlight keeps the neighbor dim (opacity only) but skips the lift */
+  .bingo-spotlight-card {
     animation: none !important;
   }
 
