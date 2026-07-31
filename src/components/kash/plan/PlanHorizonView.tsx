@@ -3,11 +3,13 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ContextualInbox } from "@/components/kash/inbox/ContextualInbox";
 import BalancePassProvider, {
   useBalancePassTrigger,
 } from "@/components/kash/plan/balance/BalancePassProvider";
 import CheckInProvider, { CheckInEntry } from "@/components/kash/plan/check-in/CheckInProvider";
+
+import { planCoachThreadId } from "@/lib/chat/threads";
+import { useYearCategoryBalance } from "@/hooks/useYearCategoryBalance";
 
 import {
   horizonForBreadcrumb,
@@ -29,6 +31,7 @@ import {
 } from "@/lib/planning/horizon-storage";
 
 import { InPageSwitcher } from "../InPageSwitcher";
+import PlanCoachDock from "./bingo/PlanCoachDock";
 import PlanBreadcrumb from "./PlanBreadcrumb";
 import PlanHorizonPlaceholder from "./PlanHorizonPlaceholder";
 
@@ -123,6 +126,7 @@ function PlanHorizonViewInner() {
   }));
   const [hydrated, setHydrated] = useState(false);
   const triggerBalancePass = useBalancePassTrigger();
+  const yearBalance = useYearCategoryBalance(breadcrumb.year);
   const prevHorizonRef = useRef<PlanningHorizon>("year");
   const breadcrumbRef = useRef(breadcrumb);
   breadcrumbRef.current = breadcrumb;
@@ -256,29 +260,57 @@ function PlanHorizonViewInner() {
     />
   ) : null;
 
+  if (horizon === "goals") {
+    return (
+      <CheckInProvider breadcrumb={breadcrumb}>
+        <div className="flex flex-col gap-4">
+          <PlanHorizonContent
+            horizon={horizon}
+            breadcrumb={breadcrumb}
+            showQuarterDrill={showQuarterDrill}
+            showMonthDrill={showMonthDrill}
+            showWeekPlan={showWeekPlan}
+            showPlaceholder={showPlaceholder}
+            onZoomQuarter={handleZoomQuarter}
+            onZoomMonth={handleZoomMonth}
+            goalsHeaderStart={planTitle}
+            goalsHeaderEnd={headerControls}
+            goalsNotices={yearRolloverNudges}
+          />
+        </div>
+      </CheckInProvider>
+    );
+  }
+
+  // Week · Month · Quarter · Year share the Goals chrome: a full-height coach dock
+  // pinned beside a left column that carries the header row, breadcrumb, and view.
   return (
     <CheckInProvider breadcrumb={breadcrumb}>
-      {hydrated && horizon !== "goals" ? <ContextualInbox /> : null}
-      <div className="flex flex-col gap-4">
-        {horizon !== "goals" ? (
-          <>
-            {headerRow}
-            <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
-            {yearRolloverNudges}
-          </>
-        ) : null}
-        <PlanHorizonContent
-          horizon={horizon}
-          breadcrumb={breadcrumb}
-          showQuarterDrill={showQuarterDrill}
-          showMonthDrill={showMonthDrill}
-          showWeekPlan={showWeekPlan}
-          showPlaceholder={showPlaceholder}
-          onZoomQuarter={handleZoomQuarter}
-          onZoomMonth={handleZoomMonth}
-          goalsHeaderStart={horizon === "goals" ? planTitle : undefined}
-          goalsHeaderEnd={horizon === "goals" ? headerControls : undefined}
-          goalsNotices={horizon === "goals" ? yearRolloverNudges : undefined}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          {headerRow}
+          <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
+          {yearRolloverNudges}
+          <PlanHorizonContent
+            horizon={horizon}
+            breadcrumb={breadcrumb}
+            showQuarterDrill={showQuarterDrill}
+            showMonthDrill={showMonthDrill}
+            showWeekPlan={showWeekPlan}
+            showPlaceholder={showPlaceholder}
+            onZoomQuarter={handleZoomQuarter}
+            onZoomMonth={handleZoomMonth}
+          />
+        </div>
+        <PlanCoachDock
+          threadId={planCoachThreadId()}
+          surface="plan"
+          title="Plan coach"
+          subtitle="Think through the weeks and months ahead."
+          placeholder="Tell the coach about your plans…"
+          emptyTitle="Zooming out on your year?"
+          emptyBody="Tell me what you're trying to line up — a busy season, a big push, a lighter stretch — and I'll help you shape the plan."
+          balance={yearBalance ?? undefined}
         />
       </div>
     </CheckInProvider>
