@@ -465,7 +465,7 @@ export default function BingoCard({ year, headerStart, headerEnd, notices }: Pro
           <div
             className={`${
               blackoutAnimating ? "bingo-blackout-bounce" : ""
-            }overflow-visible lg:flex lg:min-h-0 lg:flex-1 lg:flex-col`}
+            } overflow-visible lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:pb-1`}
           >
             {blackoutComplete && locked && blackoutFinaleShown ? (
               <p className="plan-zoom-enter mb-2 text-center text-sm font-medium text-ink">
