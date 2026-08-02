@@ -85,7 +85,6 @@ function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
 /** Floor a day column can shrink to before the strip scrolls horizontally (narrow screens). */
-const MIN_DAY_COLUMN = "8rem";
 const MIN_DAY_COLUMN_PX = 128;
 const LATER_COLUMN_WIDTH_PX = 168;
 const VISIBLE_DAY_COLUMNS = 3;
@@ -93,9 +92,13 @@ const WEEK_GRID_HORIZONTAL_PAD_PX = 16;
 const WEEK_GRID_GAP_PX = 16;
 const DEFAULT_COMPOSER_HEIGHT_PX = 128;
 
-function computeExecutionDayColumnWidth(viewportWidth: number): number {
+function computeExecutionDayColumnWidth(
+  viewportWidth: number,
+  reserveLaterColumn: boolean
+): number {
   const gaps = VISIBLE_DAY_COLUMNS * WEEK_GRID_GAP_PX;
-  const available = viewportWidth - WEEK_GRID_HORIZONTAL_PAD_PX - LATER_COLUMN_WIDTH_PX - gaps;
+  const laterReserve = reserveLaterColumn ? LATER_COLUMN_WIDTH_PX : 0;
+  const available = viewportWidth - WEEK_GRID_HORIZONTAL_PAD_PX - laterReserve - gaps;
   return Math.max(MIN_DAY_COLUMN_PX, Math.floor(available / VISIBLE_DAY_COLUMNS));
 }
 
@@ -739,15 +742,14 @@ export function WeekCanvas({
   }, []);
 
   useEffect(() => {
-    if (surface !== "week") return;
-
     const scrollEl = dayScrollRef.current;
     if (!scrollEl || typeof ResizeObserver === "undefined") return;
 
+    const reserveLaterColumn = surface === "week";
     const measureWidth = () => {
       const width = scrollEl.clientWidth;
       if (width > 0) {
-        setDayColumnWidthPx(computeExecutionDayColumnWidth(width));
+        setDayColumnWidthPx(computeExecutionDayColumnWidth(width, reserveLaterColumn));
       }
     };
 
@@ -804,10 +806,13 @@ export function WeekCanvas({
   // the rail keeps a sane size when collapsed instead of shrinking to the "+".
   const inboxHeightPx = (composerOpen ? composerHeight : DEFAULT_COMPOSER_HEIGHT_PX) * 1.5;
 
+  // Both surfaces size day columns to a measured fixed width so the strip reads
+  // identically and scrolls horizontally; "week" appends the 8th "Later" defer
+  // column (plan keeps its own WeekLaterBacklog below the grid instead).
   const gridTemplateColumns =
     surface === "week"
       ? `repeat(${dayCount}, ${dayColumnWidthPx}px) ${LATER_COLUMN_WIDTH_PX}px`
-      : `repeat(${dayCount}, minmax(${MIN_DAY_COLUMN}, 1fr))`;
+      : `repeat(${dayCount}, ${dayColumnWidthPx}px)`;
 
   const dayGrid = (
     <div
@@ -815,12 +820,16 @@ export function WeekCanvas({
       className={`week-day-scroll mt-stack rounded-card p-2 ${
         surface === "week"
           ? "min-h-0 flex-[2] overflow-x-auto overflow-y-hidden"
-          : "shrink-0 overflow-x-auto"
+          : "shrink-0 overflow-x-auto lg:min-h-0 lg:flex-1 lg:overflow-y-hidden"
       }`}
       style={{ backgroundColor: WEEK_CANVAS_BG }}
     >
       <div
-        className={`grid gap-stack ${surface === "week" ? "h-full min-h-0 items-stretch" : ""}`}
+        className={`grid gap-stack ${
+          surface === "week"
+            ? "h-full min-h-0 items-stretch"
+            : "lg:h-full lg:min-h-0 lg:items-stretch"
+        }`}
         style={{ gridTemplateColumns }}
       >
         {weekDates.map((date, index) => {
@@ -849,7 +858,7 @@ export function WeekCanvas({
               hasCalendarData={(calendarSummary?.eventCount ?? 0) > 0}
               overCommitted={overCommittedByDate[iso] ?? false}
               overCommitMode={overCommitThreshold?.mode ?? "cold-start"}
-              fillHeight={surface === "week"}
+              fillHeight
               selectedTaskId={selectedTaskId}
               onSelectTask={selectTask}
               onActivateTask={handleActivateTask}
