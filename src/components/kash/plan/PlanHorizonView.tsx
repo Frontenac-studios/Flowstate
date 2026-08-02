@@ -284,10 +284,19 @@ function PlanHorizonViewInner() {
 
   // Week · Month · Quarter · Year share the Goals chrome: a full-height coach dock
   // pinned beside a left column that carries the header row, breadcrumb, and view.
+  // For the Week horizon the row is bound to the viewport (matching the coach
+  // dock's own height) so the day grid can fill height like the /this-week
+  // surface; other horizons stay natural-height and page-scroll.
   return (
     <CheckInProvider breadcrumb={breadcrumb}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
+      <div
+        className={`flex flex-col gap-4 lg:flex-row ${
+          showWeekPlan
+            ? "lg:h-[calc(100dvh_-_var(--shell-sticky-top)_-_var(--shell-pad-y))] lg:min-h-0 lg:items-stretch"
+            : "lg:items-start"
+        }`}
+      >
+        <div className={`flex min-w-0 flex-1 flex-col gap-4 ${showWeekPlan ? "lg:min-h-0" : ""}`}>
           {headerRow}
           <PlanBreadcrumb breadcrumb={breadcrumb} onNavigate={handleBreadcrumbNavigate} />
           {yearRolloverNudges}
@@ -298,6 +307,7 @@ function PlanHorizonViewInner() {
             showMonthDrill={showMonthDrill}
             showWeekPlan={showWeekPlan}
             showPlaceholder={showPlaceholder}
+            fillHeight={showWeekPlan}
             onZoomQuarter={handleZoomQuarter}
             onZoomMonth={handleZoomMonth}
           />
@@ -324,6 +334,8 @@ type HorizonContentProps = {
   showMonthDrill: boolean;
   showWeekPlan: boolean;
   showPlaceholder: boolean;
+  /** Week horizon only: fill the (viewport-bound) left column so the grid fills height. */
+  fillHeight?: boolean;
   onZoomQuarter: (quarter: number) => void;
   onZoomMonth: (month: number) => void;
   goalsHeaderStart?: React.ReactNode;
@@ -338,6 +350,7 @@ function PlanHorizonContent({
   showMonthDrill,
   showWeekPlan,
   showPlaceholder,
+  fillHeight = false,
   onZoomQuarter,
   onZoomMonth,
   goalsHeaderStart,
@@ -353,7 +366,10 @@ function PlanHorizonContent({
   ].join("-");
 
   return (
-    <div key={contentKey} className="plan-zoom-enter">
+    <div
+      key={contentKey}
+      className={`plan-zoom-enter ${fillHeight ? "lg:flex lg:min-h-0 lg:flex-1 lg:flex-col" : ""}`}
+    >
       {horizon === "goals" ? (
         <BingoCard
           year={breadcrumb.year}

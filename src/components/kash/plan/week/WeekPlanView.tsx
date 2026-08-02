@@ -55,7 +55,7 @@ export default function WeekPlanView({ breadcrumb }: Props) {
 
   return (
     <PlanProvider>
-      <div className="flex flex-col gap-stack">
+      <div className="flex flex-col gap-stack lg:min-h-0 lg:flex-1">
         <LensProvider scope="this-week">
           {isError ? (
             <QueryErrorNotice
