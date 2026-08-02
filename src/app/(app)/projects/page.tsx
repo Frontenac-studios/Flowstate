@@ -1,5 +1,10 @@
+import { SurfaceCoachLayout } from "@/components/kash/chat/SurfaceCoachLayout";
 import ProjectsIndex from "@/components/kash/projects/ProjectsIndex";
 
 export default function ProjectsPage() {
-  return <ProjectsIndex />;
+  return (
+    <SurfaceCoachLayout surface="projects">
+      <ProjectsIndex />
+    </SurfaceCoachLayout>
+  );
 }

@@ -230,9 +230,10 @@ html.is-desktop {
   --chat-rail-width: calc(var(--nav-rail-width) * 7);
 }
 
-/* Desktop fullscreen — nav rail stays expanded wider than the normal expanded width. */
+/* Desktop fullscreen — nav rail stays expanded, but trimmed ~20% narrower so it
+   reclaims horizontal space for the content + coach dock (was 4.75×). */
 html.is-desktop.is-fullscreen {
-  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 4.75);
+  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 3.8);
 }
 
 html.is-desktop[data-spacing-variant="b"] {

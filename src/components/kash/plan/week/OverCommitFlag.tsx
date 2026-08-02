@@ -21,7 +21,7 @@ export default function OverCommitFlag({ mode }: Props) {
   return (
     <Tooltip content={tooltip}>
       <p
-        className="mt-0.5 text-caption text-ink-muted"
+        className="mt-0.5 text-micro text-ink-muted"
         role="note"
         aria-label={`Heavy day. ${tooltip}.`}
       >

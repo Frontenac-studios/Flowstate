@@ -37,6 +37,8 @@ type Props = {
   showPinHint?: boolean;
   /** Execution week surface: column fills grid height and tasks scroll internally. */
   fillHeight?: boolean;
+  /** When false, task rows never reveal the project chip (execution week view). */
+  showProject?: boolean;
   /** D5 selection: the currently-highlighted task id across the whole week. */
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
@@ -76,6 +78,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     overCommitMode = "cold-start",
     showPinHint = false,
     fillHeight = false,
+    showProject = true,
     selectedTaskId = null,
     onSelectTask,
     onActivateTask,
@@ -159,6 +162,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
             key={task.id}
             task={task}
             weekDragLift
+            showProject={showProject}
             canPin={canPinMore}
             selected={selectedTaskId === task.id}
             onSelect={onSelectTask}

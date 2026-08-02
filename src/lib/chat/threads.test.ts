@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { focusThreadId, goalsCoachThreadId, parseGoalsCoachYear, threadIdSchema } from "./threads";
+import {
+  COACH_DOCK_SURFACES,
+  coachThreadId,
+  focusThreadId,
+  goalsCoachThreadId,
+  parseGoalsCoachYear,
+  threadIdSchema,
+} from "./threads";
 
 describe("goals coach threads", () => {
   it("round-trips a card year", () => {
@@ -22,5 +29,19 @@ describe("goals coach threads", () => {
     expect(threadIdSchema.safeParse("goals:2026").success).toBe(true);
     expect(threadIdSchema.safeParse("goals:99").success).toBe(false);
     expect(threadIdSchema.safeParse("nonsense").success).toBe(false);
+  });
+});
+
+describe("coach dock threads", () => {
+  it("threadIdSchema accepts every coach dock surface", () => {
+    for (const surface of COACH_DOCK_SURFACES) {
+      expect(threadIdSchema.safeParse(coachThreadId(surface)).success).toBe(true);
+    }
+  });
+
+  it("rejects unknown coach surfaces", () => {
+    expect(threadIdSchema.safeParse("coach:plan").success).toBe(false);
+    expect(threadIdSchema.safeParse("coach:nonsense").success).toBe(false);
+    expect(threadIdSchema.safeParse("coach:").success).toBe(false);
   });
 });

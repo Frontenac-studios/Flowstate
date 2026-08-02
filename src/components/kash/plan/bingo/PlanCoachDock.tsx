@@ -22,6 +22,21 @@ type Props = {
   emptyBody: string;
   /** When set, the category-balance indicator renders pinned under the composer. */
   balance?: Record<ProjectCategory, number>;
+  /**
+   * How the dock claims vertical space at `lg`. "sticky" (default) pins the dock to
+   * the shell's sticky top as the page scrolls beneath it — for natural-flow pages.
+   * "fill" makes the dock fill its flex row's height — for viewport-height pages
+   * (Today, Week) that own their internal scroll instead of scrolling the shell.
+   */
+  heightMode?: "sticky" | "fill";
+};
+
+const DOCK_BASE_CLASS =
+  "flex min-h-[22rem] w-full flex-col rounded-card border border-subtle bg-surface shadow-surface lg:w-80 lg:shrink-0";
+const DOCK_HEIGHT_CLASS: Record<"sticky" | "fill", string> = {
+  sticky:
+    "lg:top-shell lg:sticky lg:h-[calc(100dvh_-_var(--shell-sticky-top)_-_var(--shell-pad-y))]",
+  fill: "lg:h-full",
 };
 
 /**
@@ -39,6 +54,7 @@ export default function PlanCoachDock({
   emptyTitle,
   emptyBody,
   balance,
+  heightMode = "sticky",
 }: Props) {
   const {
     messages,
@@ -63,10 +79,7 @@ export default function PlanCoachDock({
   const isEmpty = messages.length === 0 && !streamingText && !isStreaming;
 
   return (
-    <section
-      className="lg:top-shell flex min-h-[22rem] w-full flex-col rounded-card border border-subtle bg-surface shadow-surface lg:sticky lg:h-[calc(100dvh_-_var(--shell-sticky-top)_-_var(--shell-pad-y))] lg:w-80 lg:shrink-0"
-      aria-label={title}
-    >
+    <section className={`${DOCK_BASE_CLASS} ${DOCK_HEIGHT_CLASS[heightMode]}`} aria-label={title}>
       <header className="border-b border-subtle px-4 py-3">
         <h2 className="text-body font-semibold text-ink">{title}</h2>
         <p className="text-caption text-ink-muted">{subtitle}</p>
