@@ -50,7 +50,7 @@ function NavLink({
       className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : ""} ${NAV_LINK_FOCUS} ${
         highlighted
           ? "bg-[var(--surface-selected)] text-ink"
-          : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
+          : "text-ink hover:bg-[var(--surface-2)]"
       }`}
     >
       <span
@@ -62,7 +62,13 @@ function NavLink({
       </span>
       {/* Label is always rendered so it can fade in on expand; when collapsed the
           full-width icon span pushes it past the rail's overflow-hidden edge. */}
-      <span className="nav-cascade-item whitespace-nowrap text-sm font-medium">{item.label}</span>
+      <span
+        className={`nav-cascade-item whitespace-nowrap text-sm ${
+          highlighted ? "font-semibold" : "font-medium"
+        }`}
+      >
+        {item.label}
+      </span>
     </Link>
   );
 }
