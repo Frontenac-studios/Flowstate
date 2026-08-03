@@ -270,6 +270,10 @@ export default function BingoCard({ year, headerStart, headerEnd, notices }: Pro
     setPendingGoalId(goal.id);
     removeGoalMutation.mutate({ id: goal.id });
   };
+  const handleRenameGoal = (goalId: string, title: string) => {
+    setPendingGoalId(goalId);
+    updateGoalMutation.mutate({ id: goalId, title });
+  };
   const handleAddSubmit = (title: string, category: ProjectCategory, valueId: string | null) => {
     if (addingCell === null || !bingoCardId) return;
     createGoalMutation.mutate({
@@ -499,6 +503,7 @@ export default function BingoCard({ year, headerStart, headerEnd, notices }: Pro
             <BingoListView
               goals={goals}
               onSelectGoal={(goal) => setSelectedGoalId(goal.id)}
+              onRenameGoal={handleRenameGoal}
               locked={locked}
             />
           </div>
