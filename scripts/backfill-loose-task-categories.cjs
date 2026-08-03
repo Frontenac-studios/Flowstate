@@ -25,10 +25,11 @@
  */
 const { config } = require("dotenv");
 const postgres = require("postgres");
-const Anthropic = require("@anthropic-ai/sdk");
 
 config({ path: ".env" });
 config({ path: ".env.local", override: true });
+
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Mirrors src/lib/projects/categories.ts (keys) and category-classifier.ts (gate).
 const CATEGORIES = ["professional", "personal_projects", "relationships", "body_mind", "adulting"];
@@ -42,7 +43,7 @@ const CATEGORY_GUIDE = {
 const FLOOR = 0.7;
 const MARGIN = 0.1;
 const FALLBACK_CATEGORY = "adulting";
-const MODEL = process.env.BACKFILL_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-5";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const limitArg = process.argv.indexOf("--limit");
@@ -64,22 +65,33 @@ function parseDistribution(text) {
   return scores.map(([c, v]) => [c, v / total]).sort((a, b) => b[1] - a[1]);
 }
 
-async function classify(anthropic, title) {
+async function classify(title) {
   const guide = CATEGORIES.map((c) => `- ${c}: ${CATEGORY_GUIDE[c]}`).join("\n");
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 200,
-    system:
-      "You categorize a single personal to-do into five life areas. Respond with ONLY a " +
-      "JSON object mapping each category key to a probability between 0 and 1 (they should " +
-      "sum to about 1), reflecting how well the task fits each area. No prose.\n\n" +
-      guide,
-    messages: [{ role: "user", content: `Task: "${title}"` }],
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 200,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You categorize a single personal to-do into five life areas. Respond with ONLY a " +
+            "JSON object mapping each category key to a probability between 0 and 1 (they should " +
+            "sum to about 1), reflecting how well the task fits each area. No prose.\n\n" +
+            guide,
+        },
+        { role: "user", content: `Task: "${title}"` },
+      ],
+    }),
   });
-  const text = message.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("");
+  if (!res.ok) throw new Error(`OpenRouter ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content ?? "";
   const ranked = parseDistribution(text);
   if (!ranked) return null;
 
@@ -94,13 +106,12 @@ async function main() {
     console.error("DATABASE_URL is not set");
     process.exit(1);
   }
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error("ANTHROPIC_API_KEY is not set (required for the loose-task AI pass)");
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.error("OPENROUTER_API_KEY is not set (required for the loose-task AI pass)");
     process.exit(1);
   }
 
   const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   console.log(`Backfill (${DRY_RUN ? "DRY RUN" : "APPLY"}) — model ${MODEL}\n`);
 
@@ -134,7 +145,7 @@ async function main() {
   for (const t of loose) {
     let result = null;
     try {
-      result = await classify(anthropic, t.title);
+      result = await classify(t.title);
     } catch (err) {
       console.warn(`  ! ${t.title} — classify failed (${err.message}); leaving unresolved`);
     }

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { focusThreadId } from "@/lib/chat/threads";
-import { isAnthropicConfigured } from "@/lib/env";
+import { isModelConfigured } from "@/lib/env";
 import { fallbackNarration, generateNarration } from "@/server/claude/generate";
 import { getRouteUserId } from "@/server/claude/route-auth";
 
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     pickReason: pickReason ?? "weighted-rdm",
   };
 
-  const configured = isAnthropicConfigured();
+  const configured = isModelConfigured();
   Sentry.addBreadcrumb({
     category: "kash.claude",
     message: "narrate",

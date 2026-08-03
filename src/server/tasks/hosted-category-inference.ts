@@ -1,22 +1,21 @@
 import "server-only";
 
-import type Anthropic from "@anthropic-ai/sdk";
+import { generateText } from "ai";
 
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { inferCategoryFromDistribution } from "@/lib/tasks/category-distribution";
 import { type CategoryInference } from "@/lib/tasks/resolveTaskCategory";
-import { getAnthropicClient } from "@/server/claude/client";
+import { getModel } from "@/server/claude/client";
 
-// Phase 1 (1H / 1.AId / C4): the server create path runs the SHARPER HOSTED model (Haiku)
-// behind the same {category, confidence} seam the local embeddings classifier uses live on
-// the client. Hosting server inference keeps onnxruntime-node's ~355MB native binary out of
-// the serverless function bundle (Vercel's function-size limit) while staying AI-forward
-// (Model C) — the live composer still runs the local model for the per-keystroke accent bar.
-// Provider abstains to `null` on any error or when no API key is configured; never throws.
-
-// Deliberately Haiku, not the chat/narration model (config.model): this runs once per loose
-// create where accuracy and latency both matter, mirroring the bulk backfill's model choice.
-const CATEGORY_MODEL = "claude-haiku-4-5-20251001";
+// Phase 1 (1H / 1.AId / C4): the server create path runs the hosted model behind the same
+// {category, confidence} seam the local embeddings classifier uses live on the client. Hosting
+// server inference keeps onnxruntime-node's ~355MB native binary out of the serverless function
+// bundle (Vercel's function-size limit) while staying AI-forward (Model C) — the live composer
+// still runs the local model for the per-keystroke accent bar. Provider abstains to `null` on
+// any error or when no API key is configured; never throws.
+//
+// Runs on the "fast" model tier (OPENROUTER_MODEL_FAST, falling back to OPENROUTER_MODEL). This
+// is a high-volume, cheap call — point OPENROUTER_MODEL_FAST at a cheap model to keep it cheap.
 
 // Mirrors scripts/backfill-loose-task-categories.cjs and the data-spine §7 category guide.
 const CATEGORY_GUIDE: Record<ProjectCategory, string> = {
@@ -31,14 +30,14 @@ const CATEGORY_GUIDE: Record<ProjectCategory, string> = {
 export async function inferCategory(title: string): Promise<CategoryInference | null> {
   if (!title.trim()) return null;
 
-  const anthropic = getAnthropicClient();
-  if (!anthropic) return null; // unconfigured → no opinion; resolver falls through (1.4d).
+  const model = getModel("fast");
+  if (!model) return null; // unconfigured → no opinion; resolver falls through (1.4d).
 
   try {
     const guide = PROJECT_CATEGORIES.map((c) => `- ${c}: ${CATEGORY_GUIDE[c]}`).join("\n");
-    const message = await anthropic.messages.create({
-      model: CATEGORY_MODEL,
-      max_tokens: 200,
+    const { text } = await generateText({
+      model,
+      maxOutputTokens: 200,
       system:
         "You categorize a single personal to-do into five life areas. Respond with ONLY a " +
         "JSON object mapping each category key to a probability between 0 and 1 (they should " +
@@ -46,11 +45,6 @@ export async function inferCategory(title: string): Promise<CategoryInference | 
         guide,
       messages: [{ role: "user", content: `Task: "${title}"` }],
     });
-
-    const text = message.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("");
 
     return inferCategoryFromDistribution(text);
   } catch {

@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { isAnthropicConfigured } from "@/lib/env";
+import { isModelConfigured } from "@/lib/env";
 import { threadIdSchema } from "@/lib/chat/threads";
 import { captureContextSchema } from "@/lib/chat/capture-context";
 import { composeAssistantMessage } from "@/lib/chat/compose-assistant-message";
@@ -24,7 +24,7 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const userId = await getRouteUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isAnthropicConfigured()) {
+  if (!isModelConfigured()) {
     return NextResponse.json({ error: "Claude is not configured." }, { status: 503 });
   }
 

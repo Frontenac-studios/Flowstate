@@ -1,17 +1,30 @@
 import "server-only";
 
-import type Anthropic from "@anthropic-ai/sdk";
+import {
+  generateText,
+  jsonSchema,
+  stepCountIs,
+  streamText,
+  tool,
+  type ModelMessage,
+  type ToolSet,
+} from "ai";
 
-import { getAnthropicConfig } from "@/lib/env";
 import { mergeProposals } from "@/lib/chat/merge-proposals";
 import type { ProposedAction } from "@/lib/chat/proposed-actions";
+import type { ChatToolDef } from "@/lib/chat/chat-tool-catalog";
 
 import { assembleChatContext } from "./assemble-chat-context";
-import { requireAnthropicClient } from "./client";
+import { requireModel } from "./client";
 import { formatCaptureContextBlock, type CaptureContext } from "@/lib/chat/capture-context";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { executeChatTool, toolsForSurface } from "./chat-tools";
-import { buildChatSystemPrompt, buildSystemPrompt, resolveChatRegister } from "./system-prompts";
+import {
+  buildChatSystemPrompt,
+  buildSystemPrompt,
+  type KashRegister,
+  resolveChatRegister,
+} from "./system-prompts";
 
 const MAX_TOOL_ROUNDS = 5;
 
@@ -33,8 +46,6 @@ export async function generateNarration(
   threadId: string,
   task: NarrationInput
 ): Promise<string> {
-  const anthropic = requireAnthropicClient();
-  const config = getAnthropicConfig();
   const { aboutMeBlock, contextBlock } = await assembleChatContext(userId, threadId);
 
   const userPayload = [
@@ -54,18 +65,17 @@ export async function generateNarration(
     .filter(Boolean)
     .join("\n");
 
-  const response = await anthropic.messages.create({
-    model: config.model,
-    max_tokens: 80,
+  const { text } = await generateText({
+    model: requireModel("fast"),
+    maxOutputTokens: 80,
     temperature: 0.6,
     system: buildSystemPrompt("narration"),
     messages: [{ role: "user", content: userPayload }],
   });
 
-  const block = response.content.find((b) => b.type === "text");
-  const text = block?.type === "text" ? block.text.trim() : "";
-  if (!text) return fallbackNarration(task);
-  return text;
+  const trimmed = text.trim();
+  if (!trimmed) return fallbackNarration(task);
+  return trimmed;
 }
 
 export function fallbackNarration(task: Pick<NarrationInput, "title" | "isTop3">): string {
@@ -74,18 +84,62 @@ export function fallbackNarration(task: Pick<NarrationInput, "title" | "isTop3">
     : `Going with **${task.title}** — next on your list.`;
 }
 
-export function buildAnthropicMessages(
+export function buildModelMessages(
   history: { role: "user" | "assistant"; text: string }[],
   contextBlock: string,
   latestUserText: string
-): Anthropic.MessageParam[] {
+): ModelMessage[] {
   const contextPrefix = `Current context:\n${contextBlock}\n\n---\n\n`;
-  const prior = history.slice(-18).map((m) => ({
-    role: m.role,
-    content: m.text,
-  })) as Anthropic.MessageParam[];
+  const prior: ModelMessage[] = history.slice(-18).map((m) => ({ role: m.role, content: m.text }));
 
   return [...prior, { role: "user", content: contextPrefix + latestUserText }];
+}
+
+type ToolExecContext = {
+  register: KashRegister;
+  threadId: string;
+  captureContext?: CaptureContext | null;
+};
+
+type CompanionState = {
+  fullText: string;
+  mutatedTasks: boolean;
+  pendingProposal: ProposedAction | null;
+  toolErrors: string[];
+};
+
+/**
+ * Wrap each provider-neutral tool definition as a live AI SDK tool. The `execute` callback
+ * runs the existing dispatcher (`executeChatTool`) and records its side effects — mutated
+ * tasks, tool errors, and (merged) proposals — into the shared per-turn `state`. Proposals
+ * are queued so the stream loop can emit them in order right after the tool result lands.
+ */
+function buildTools(
+  toolDefs: ChatToolDef[],
+  userId: string,
+  ctx: ToolExecContext,
+  state: CompanionState,
+  proposalQueue: ProposedAction[]
+): ToolSet {
+  const entries = toolDefs.map((def) => {
+    const t = tool({
+      description: def.description,
+      inputSchema: jsonSchema(def.input_schema),
+      execute: async (input: unknown) => {
+        const result = await executeChatTool(userId, def.name, input, ctx);
+        if (result.mutatedTasks) state.mutatedTasks = true;
+        if (result.error) state.toolErrors.push(result.error);
+        if (result.proposal) {
+          state.pendingProposal = mergeProposals(state.pendingProposal, result.proposal);
+          proposalQueue.push(state.pendingProposal);
+        }
+        return result.content;
+      },
+    });
+    return [def.name, t] as const;
+  });
+
+  return Object.fromEntries(entries);
 }
 
 export async function streamCompanionReply(params: {
@@ -102,10 +156,8 @@ export async function streamCompanionReply(params: {
   getPendingProposal: () => ProposedAction | null;
   getToolErrors: () => string[];
 }> {
-  const anthropic = requireAnthropicClient();
-  const config = getAnthropicConfig();
   const register = resolveChatRegister(params.threadId, params.planningSurface);
-  const tools = toolsForSurface(register, params.planningSurface);
+  const toolDefs = toolsForSurface(register, params.planningSurface);
   const { contextBlock, history } = await assembleChatContext(
     params.userId,
     params.threadId,
@@ -116,72 +168,56 @@ export async function streamCompanionReply(params: {
     ? formatCaptureContextBlock(params.captureContext)
     : null;
   const enrichedContext = captureBlock ? `${contextBlock}\n\n${captureBlock}` : contextBlock;
-  let messages = buildAnthropicMessages(history, enrichedContext, params.userText);
+  const messages = buildModelMessages(history, enrichedContext, params.userText);
 
-  const state = {
+  const state: CompanionState = {
     fullText: "",
     mutatedTasks: false,
-    pendingProposal: null as ProposedAction | null,
-    toolErrors: [] as string[],
+    pendingProposal: null,
+    toolErrors: [],
   };
 
+  // Proposals produced by tool `execute` callbacks land here, then the stream loop drains
+  // them as `proposal` deltas in order — preserving the original mid-stream emission.
+  const proposalQueue: ProposedAction[] = [];
+  const tools = buildTools(
+    toolDefs,
+    params.userId,
+    { register, threadId: params.threadId, captureContext: params.captureContext },
+    state,
+    proposalQueue
+  );
+
   async function* run(): AsyncGenerator<CompanionStreamDelta> {
-    for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+    const result = streamText({
+      model: requireModel("chat"),
+      system: buildChatSystemPrompt(params.threadId, params.planningSurface, params.captureContext),
+      messages,
+      tools,
+      stopWhen: stepCountIs(MAX_TOOL_ROUNDS),
+      abortSignal: params.signal,
+      maxOutputTokens: 2048,
+    });
+
+    for await (const part of result.fullStream) {
+      // Emit any proposals whose tools finished executing before this part.
+      while (proposalQueue.length) {
+        yield { type: "proposal", proposal: proposalQueue.shift() as ProposedAction };
+      }
       if (params.signal?.aborted) break;
 
-      const stream = anthropic.messages.stream({
-        model: config.model,
-        max_tokens: 2048,
-        system: buildChatSystemPrompt(
-          params.threadId,
-          params.planningSurface,
-          params.captureContext
-        ),
-        messages,
-        tools,
-      });
-
-      for await (const event of stream) {
-        if (params.signal?.aborted) break;
-        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-          state.fullText += event.delta.text;
-          yield { type: "delta", text: event.delta.text };
-        }
+      if (part.type === "text-delta") {
+        state.fullText += part.text;
+        yield { type: "delta", text: part.text };
+      } else if (part.type === "error") {
+        // Surface provider/stream errors to the route's catch so it emits an error event.
+        throw part.error;
       }
+    }
 
-      if (params.signal?.aborted) break;
-
-      const final = await stream.finalMessage();
-      const toolUses = final.content.filter((block) => block.type === "tool_use");
-      if (toolUses.length === 0 || final.stop_reason !== "tool_use") break;
-
-      messages = [...messages, { role: "assistant", content: final.content }];
-
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const toolUse of toolUses) {
-        if (params.signal?.aborted) break;
-        if (toolUse.type !== "tool_use") continue;
-        const result = await executeChatTool(params.userId, toolUse.name, toolUse.input, {
-          register,
-          threadId: params.threadId,
-          captureContext: params.captureContext,
-        });
-        if (result.mutatedTasks) state.mutatedTasks = true;
-        if (result.error) state.toolErrors.push(result.error);
-        if (result.proposal) {
-          // Merge rather than overwrite: a model that splits work across two calls of
-          // the same kind used to lose everything but the last proposal.
-          state.pendingProposal = mergeProposals(state.pendingProposal, result.proposal);
-          yield { type: "proposal", proposal: state.pendingProposal };
-        }
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: toolUse.id,
-          content: result.content,
-        });
-      }
-
-      messages = [...messages, { role: "user", content: toolResults }];
+    // Flush any proposal from the final tool round.
+    while (proposalQueue.length) {
+      yield { type: "proposal", proposal: proposalQueue.shift() as ProposedAction };
     }
   }
 

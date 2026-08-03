@@ -1,13 +1,15 @@
 import "server-only";
 
+import { generateText } from "ai";
+
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import { categoryLabel } from "@/lib/projects/categories";
 import { adjustWeekDraftForCapacity } from "@/lib/week/adjust-week-draft-capacity";
-import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
+import { getModelConfig, isModelConfigured } from "@/lib/env";
 import { templateWeekDraft, type WeekDraftProposal } from "@/lib/week/template-week-draft";
 import { weekDraftValidationContextFromSource } from "@/lib/week/week-draft-validation-context";
 
-import { requireAnthropicClient } from "./client";
+import { requireModel } from "./client";
 import { fetchAboutMeContextBlock } from "./fetch-about-me-context";
 import type { WeekDraftContext } from "./fetch-week-draft-context";
 import { buildSystemPrompt } from "./system-prompts";
@@ -151,11 +153,11 @@ export async function generateWeekDraft(
   );
   const fallback = templateFromContext(ctx);
 
-  if (!isAnthropicConfigured()) {
+  if (!isModelConfigured()) {
     return fallback;
   }
 
-  const config = getAnthropicConfig();
+  const config = getModelConfig();
   if (!config.configured) {
     return fallback;
   }
@@ -231,18 +233,12 @@ export async function generateWeekDraft(
   ].join("\n");
 
   try {
-    const anthropic = requireAnthropicClient();
-    const response = await anthropic.messages.create({
-      model: config.model,
-      max_tokens: 1024,
+    const { text } = await generateText({
+      model: requireModel("structured"),
+      maxOutputTokens: 1024,
       system: buildSystemPrompt("weekDraft"),
       messages: [{ role: "user", content: userPayload }],
     });
-
-    const text = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("");
 
     const parsed = parseWeekDraftResponse(text);
     if (!parsed) return fallback;

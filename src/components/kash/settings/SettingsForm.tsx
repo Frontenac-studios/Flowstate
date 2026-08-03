@@ -304,16 +304,16 @@ export function SettingsForm() {
 
         {tab === "ai" ? (
           <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
-            <h2 className="text-sm font-semibold text-ink">Claude (AI companion)</h2>
+            <h2 className="text-sm font-semibold text-ink">AI companion</h2>
             <p className="mt-2 text-sm text-ink-muted">
-              Kash uses Claude for chat and focus narration. In v1 the API key is set by your
+              Kash uses OpenRouter for chat and focus narration. In v1 the API key is set by your
               deployment environment, not in this UI.
             </p>
             <p className="mt-2 text-sm text-ink-muted">
-              Add <code className="text-ink">ANTHROPIC_API_KEY</code> to{" "}
+              Add <code className="text-ink">OPENROUTER_API_KEY</code> to{" "}
               <code className="text-ink">.env.local</code> (see{" "}
               <code className="text-ink">.env.example</code>). Optional:{" "}
-              <code className="text-ink">ANTHROPIC_MODEL</code> to override the default model.
+              <code className="text-ink">OPENROUTER_MODEL</code> to switch models.
             </p>
           </section>
         ) : null}

@@ -136,8 +136,8 @@ export function HandoffCaptureChat({
       <div className="flex min-h-[16rem] flex-1 flex-col rounded-row border border-subtle bg-surface-2 p-[var(--space-3)]">
         {!configured ? (
           <p className="mb-2 shrink-0 rounded-control bg-accent-soft px-3 py-2 text-caption text-ink-muted">
-            Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code>{" "}
-            to your environment.
+            AI isn&apos;t configured — add <code className="text-ink">OPENROUTER_API_KEY</code> to
+            your environment.
           </p>
         ) : null}
 

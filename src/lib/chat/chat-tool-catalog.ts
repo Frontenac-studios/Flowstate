@@ -1,10 +1,21 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import type { JSONSchema7 } from "json-schema";
 
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import type { KashRegister } from "@/server/claude/system-prompts";
 
-const QUERY_TASKS_TOOL: Anthropic.Tool = {
+/**
+ * A chat tool definition: name + description + a JSON Schema for the tool input. This is the
+ * provider-neutral shape the model layer consumes — `generate.ts` wraps each `input_schema`
+ * with the AI SDK's `jsonSchema()` when building the live tool set.
+ */
+export type ChatToolDef = {
+  name: string;
+  description: string;
+  input_schema: JSONSchema7;
+};
+
+const QUERY_TASKS_TOOL: ChatToolDef = {
   name: "query_tasks",
   description: "Find incomplete tasks.",
   input_schema: {
@@ -20,13 +31,13 @@ const QUERY_TASKS_TOOL: Anthropic.Tool = {
   },
 };
 
-const QUERY_STATE_TOOL: Anthropic.Tool = {
+const QUERY_STATE_TOOL: ChatToolDef = {
   name: "query_state",
   description: "Read planner state.",
   input_schema: { type: "object", properties: {}, additionalProperties: false },
 };
 
-const QUERY_PROJECTS_TOOL: Anthropic.Tool = {
+const QUERY_PROJECTS_TOOL: ChatToolDef = {
   name: "query_projects",
   description: "List projects.",
   input_schema: {
@@ -36,7 +47,7 @@ const QUERY_PROJECTS_TOOL: Anthropic.Tool = {
   },
 };
 
-const QUERY_ABYSS_TOOL: Anthropic.Tool = {
+const QUERY_ABYSS_TOOL: ChatToolDef = {
   name: "query_abyss",
   description: "Search Backlog items.",
   input_schema: {
@@ -46,14 +57,14 @@ const QUERY_ABYSS_TOOL: Anthropic.Tool = {
   },
 };
 
-const QUERY_GOALS_TOOL: Anthropic.Tool = {
+const QUERY_GOALS_TOOL: ChatToolDef = {
   name: "query_goals",
   description:
     "Read the user's current annual bingo card: goals already placed (title, category, state, cell), plus how many empty squares remain and the category balance. Use to avoid duplicating existing goals and to see which categories are thin.",
   input_schema: { type: "object", properties: {}, additionalProperties: false },
 };
 
-const QUERY_PAST_GOALS_TOOL: Anthropic.Tool = {
+const QUERY_PAST_GOALS_TOOL: ChatToolDef = {
   name: "query_past_goals",
   description:
     "Read goals from the user's previous years' bingo cards (title, category, year, whether completed). Use for continuity — recurring themes, goals dropped or carried over.",
@@ -64,7 +75,7 @@ const QUERY_PAST_GOALS_TOOL: Anthropic.Tool = {
   },
 };
 
-const PROPOSE_BINGO_GOALS_TOOL: Anthropic.Tool = {
+const PROPOSE_BINGO_GOALS_TOOL: ChatToolDef = {
   name: "propose_bingo_goals",
   description:
     "Propose one or more annual bingo goals for the user to confirm. Each goal must be binary (clearly done or not-done by year's end) — never a task, habit, milestone, or schedule. Set category only when you're confident which of the 5 it belongs to; leave it off when ambiguous and the user will pick. Add a short rationale ('why this fits you') when helpful. This does NOT add anything to the card — it proposes a confirm card the user accepts.",
@@ -97,7 +108,7 @@ const PROPOSE_BINGO_GOALS_TOOL: Anthropic.Tool = {
   },
 };
 
-const SET_GOAL_COACHING_ADJUSTMENT_TOOL: Anthropic.Tool = {
+const SET_GOAL_COACHING_ADJUSTMENT_TOOL: ChatToolDef = {
   name: "set_goal_coaching_adjustment",
   description:
     "Remember a coaching preference the user JUST agreed to out loud. Only call this after you asked and they said yes — never on your own inference. Use `easeOff` for categories they agreed you should stop suggesting for now, and `resume` for categories they want you to bring back. This adjusts your future suggestions; it does not change their card.",
@@ -119,25 +130,25 @@ const SET_GOAL_COACHING_ADJUSTMENT_TOOL: Anthropic.Tool = {
   },
 };
 
-const DRAFT_WEEK_TOOL: Anthropic.Tool = {
+const DRAFT_WEEK_TOOL: ChatToolDef = {
   name: "draft_week",
   description: "Draft weekly plan.",
   input_schema: { type: "object", properties: {}, additionalProperties: false },
 };
 
-const DRAFT_EOD_TOOL: Anthropic.Tool = {
+const DRAFT_EOD_TOOL: ChatToolDef = {
   name: "draft_eod",
   description: "Draft EoD review.",
   input_schema: { type: "object", properties: {}, additionalProperties: false },
 };
 
-const DRAFT_BALANCE_PASS_TOOL: Anthropic.Tool = {
+const DRAFT_BALANCE_PASS_TOOL: ChatToolDef = {
   name: "draft_balance_pass",
   description: "Draft balance pass.",
   input_schema: { type: "object", properties: {}, additionalProperties: false },
 };
 
-const RESCHEDULE_TASKS_TOOL: Anthropic.Tool = {
+const RESCHEDULE_TASKS_TOOL: ChatToolDef = {
   name: "reschedule_tasks",
   description: "Propose reschedule.",
   input_schema: {
@@ -151,7 +162,7 @@ const RESCHEDULE_TASKS_TOOL: Anthropic.Tool = {
   },
 };
 
-const CREATE_TASK_ITEM_SCHEMA = {
+const CREATE_TASK_ITEM_SCHEMA: JSONSchema7 = {
   type: "object",
   properties: {
     title: { type: "string", description: "Task title (required)." },
@@ -187,9 +198,9 @@ const CREATE_TASK_ITEM_SCHEMA = {
   },
   required: ["title"],
   additionalProperties: false,
-} as const;
+};
 
-const CREATE_TASK_TOOL: Anthropic.Tool = {
+const CREATE_TASK_TOOL: ChatToolDef = {
   name: "create_task",
   description:
     "Propose create task(s) for a confirm card the user must Accept before anything is created. Never claim tasks were staged, created, or added until they accept. Optional tempId + blocksTempIds link dependencies within the same proposal (A.blocksTempIds includes B's tempId means A blocks B).",
@@ -204,7 +215,7 @@ const CREATE_TASK_TOOL: Anthropic.Tool = {
   },
 };
 
-const EDIT_TASK_TOOL: Anthropic.Tool = {
+const EDIT_TASK_TOOL: ChatToolDef = {
   name: "edit_task",
   description: "Propose edit task fields.",
   input_schema: {
@@ -218,7 +229,7 @@ const EDIT_TASK_TOOL: Anthropic.Tool = {
   },
 };
 
-const DELETE_TASK_TOOL: Anthropic.Tool = {
+const DELETE_TASK_TOOL: ChatToolDef = {
   name: "delete_task",
   description: "Propose delete tasks.",
   input_schema: {
@@ -232,7 +243,7 @@ const DELETE_TASK_TOOL: Anthropic.Tool = {
   },
 };
 
-const COMPLETE_TASK_TOOL: Anthropic.Tool = {
+const COMPLETE_TASK_TOOL: ChatToolDef = {
   name: "complete_task",
   description: "Propose complete task.",
   input_schema: {
@@ -246,7 +257,7 @@ const COMPLETE_TASK_TOOL: Anthropic.Tool = {
   },
 };
 
-const SET_TOP3_TOOL: Anthropic.Tool = {
+const SET_TOP3_TOOL: ChatToolDef = {
   name: "set_top3",
   description: "Propose Top 3 slot assignments.",
   input_schema: {
@@ -260,7 +271,7 @@ const SET_TOP3_TOOL: Anthropic.Tool = {
   },
 };
 
-const SET_PROTECTED_BLOCK_TOOL: Anthropic.Tool = {
+const SET_PROTECTED_BLOCK_TOOL: ChatToolDef = {
   name: "set_protected_block",
   description: "Propose protected time blocks.",
   input_schema: {
@@ -274,7 +285,7 @@ const SET_PROTECTED_BLOCK_TOOL: Anthropic.Tool = {
   },
 };
 
-const SET_DAY_PRIORITIES_TOOL: Anthropic.Tool = {
+const SET_DAY_PRIORITIES_TOOL: ChatToolDef = {
   name: "set_day_priorities",
   description: "Propose day priority pins for the week.",
   input_schema: {
@@ -288,7 +299,7 @@ const SET_DAY_PRIORITIES_TOOL: Anthropic.Tool = {
   },
 };
 
-const APPLY_BALANCE_SUGGESTIONS_TOOL: Anthropic.Tool = {
+const APPLY_BALANCE_SUGGESTIONS_TOOL: ChatToolDef = {
   name: "apply_balance_suggestions",
   description: "Propose balance-pass task additions.",
   input_schema: {
@@ -302,7 +313,7 @@ const APPLY_BALANCE_SUGGESTIONS_TOOL: Anthropic.Tool = {
   },
 };
 
-const CREATE_PROJECT_TOOL: Anthropic.Tool = {
+const CREATE_PROJECT_TOOL: ChatToolDef = {
   name: "create_project",
   description: "Propose create project.",
   input_schema: {
@@ -316,7 +327,7 @@ const CREATE_PROJECT_TOOL: Anthropic.Tool = {
   },
 };
 
-const CREATE_PHASE_TOOL: Anthropic.Tool = {
+const CREATE_PHASE_TOOL: ChatToolDef = {
   name: "create_phase",
   description:
     "Propose create phase or nested subphase (unlimited depth) for a confirm card the user must Accept before anything is created. Pass projectSlug without #, name, and optional parentPhaseId (UUID from context) or parentPhaseName. Never claim phases were created until they accept.",
@@ -331,7 +342,7 @@ const CREATE_PHASE_TOOL: Anthropic.Tool = {
   },
 };
 
-const EDIT_PHASE_TOOL: Anthropic.Tool = {
+const EDIT_PHASE_TOOL: ChatToolDef = {
   name: "edit_phase",
   description: "Propose edit phase metadata or dates.",
   input_schema: {
@@ -345,7 +356,7 @@ const EDIT_PHASE_TOOL: Anthropic.Tool = {
   },
 };
 
-const DELETE_PHASE_TOOL: Anthropic.Tool = {
+const DELETE_PHASE_TOOL: ChatToolDef = {
   name: "delete_phase",
   description:
     "Propose delete phase(s). Cascades to nested child phases; tasks in those phases become unphased. Destructive — confirm card applies.",
@@ -360,7 +371,7 @@ const DELETE_PHASE_TOOL: Anthropic.Tool = {
   },
 };
 
-const MOVE_TASK_TO_PHASE_TOOL: Anthropic.Tool = {
+const MOVE_TASK_TO_PHASE_TOOL: ChatToolDef = {
   name: "move_task_to_phase",
   description: "Propose move tasks between phases.",
   input_schema: {
@@ -374,7 +385,7 @@ const MOVE_TASK_TO_PHASE_TOOL: Anthropic.Tool = {
   },
 };
 
-const REPLAN_PROJECT_DATES_TOOL: Anthropic.Tool = {
+const REPLAN_PROJECT_DATES_TOOL: ChatToolDef = {
   name: "replan_project_dates",
   description: "Propose updated phase date ranges from slip/time data.",
   input_schema: {
@@ -389,7 +400,7 @@ const REPLAN_PROJECT_DATES_TOOL: Anthropic.Tool = {
   },
 };
 
-const PROPOSE_ABOUT_ME_EDIT_TOOL: Anthropic.Tool = {
+const PROPOSE_ABOUT_ME_EDIT_TOOL: ChatToolDef = {
   name: "propose_about_me_edit",
   description: "Propose About me edits.",
   input_schema: {
@@ -400,7 +411,7 @@ const PROPOSE_ABOUT_ME_EDIT_TOOL: Anthropic.Tool = {
   },
 };
 
-const PARK_IN_ABYSS_TOOL: Anthropic.Tool = {
+const PARK_IN_ABYSS_TOOL: ChatToolDef = {
   name: "park_in_abyss",
   description: "Park in Backlog.",
   input_schema: {
@@ -416,7 +427,7 @@ const PARK_IN_ABYSS_TOOL: Anthropic.Tool = {
   },
 };
 
-const TOOL_BY_NAME: Record<string, Anthropic.Tool> = {
+const TOOL_BY_NAME: Record<string, ChatToolDef> = {
   query_tasks: QUERY_TASKS_TOOL,
   query_state: QUERY_STATE_TOOL,
   query_projects: QUERY_PROJECTS_TOOL,
@@ -541,7 +552,7 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
   goals: ["query_goals", "query_past_goals", "propose_bingo_goals", "set_goal_coaching_adjustment"],
 };
 
-export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [
+export const PLANNING_CHAT_TOOLS: ChatToolDef[] = [
   QUERY_TASKS_TOOL,
   QUERY_STATE_TOOL,
   QUERY_PROJECTS_TOOL,
@@ -568,20 +579,20 @@ export const PLANNING_CHAT_TOOLS: Anthropic.Tool[] = [
   PARK_IN_ABYSS_TOOL,
 ];
 
-export const FOCUS_CHAT_TOOLS: Anthropic.Tool[] = [
+export const FOCUS_CHAT_TOOLS: ChatToolDef[] = [
   QUERY_TASKS_TOOL,
   COMPLETE_TASK_TOOL,
   PARK_IN_ABYSS_TOOL,
 ];
 
-export const GOALS_CHAT_TOOLS: Anthropic.Tool[] = [
+export const GOALS_CHAT_TOOLS: ChatToolDef[] = [
   QUERY_GOALS_TOOL,
   QUERY_PAST_GOALS_TOOL,
   PROPOSE_BINGO_GOALS_TOOL,
   SET_GOAL_COACHING_ADJUSTMENT_TOOL,
 ];
 
-export const REFLECTION_CHAT_TOOLS: Anthropic.Tool[] = [
+export const REFLECTION_CHAT_TOOLS: ChatToolDef[] = [
   QUERY_TASKS_TOOL,
   QUERY_STATE_TOOL,
   QUERY_ABYSS_TOOL,
@@ -593,11 +604,11 @@ export const REFLECTION_CHAT_TOOLS: Anthropic.Tool[] = [
   PROPOSE_ABOUT_ME_EDIT_TOOL,
 ];
 
-function pickTools(names: readonly string[]): Anthropic.Tool[] {
-  return names.map((name) => TOOL_BY_NAME[name]).filter((t): t is Anthropic.Tool => t != null);
+function pickTools(names: readonly string[]): ChatToolDef[] {
+  return names.map((name) => TOOL_BY_NAME[name]).filter((t): t is ChatToolDef => t != null);
 }
 
-export function toolsForRegister(register: KashRegister): Anthropic.Tool[] {
+export function toolsForRegister(register: KashRegister): ChatToolDef[] {
   switch (register) {
     case "planning":
       return PLANNING_CHAT_TOOLS;
@@ -615,7 +626,7 @@ export function toolsForRegister(register: KashRegister): Anthropic.Tool[] {
 export function toolsForSurface(
   register: KashRegister,
   surface: PlanningChatSurface | null | undefined
-): Anthropic.Tool[] {
+): ChatToolDef[] {
   if (register === "focus") return FOCUS_CHAT_TOOLS;
   if (register === "reflection") return REFLECTION_CHAT_TOOLS;
   if (register === "goals") return GOALS_CHAT_TOOLS;

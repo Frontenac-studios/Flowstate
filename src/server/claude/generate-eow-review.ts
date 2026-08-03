@@ -1,12 +1,14 @@
 import "server-only";
 
+import { generateText } from "ai";
+
 import type { ProjectProgressRow } from "@/lib/projects/aggregate-project-phase-progress";
 import { categorySeedLabel } from "@/lib/projects/category-tokens";
 import { formatDuration } from "@/lib/time/duration";
-import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
+import { getModelConfig, isModelConfigured } from "@/lib/env";
 import { templateEowReview } from "@/lib/eow/template-eow-review";
 
-import { requireAnthropicClient } from "./client";
+import { requireModel } from "./client";
 import { buildSystemPrompt } from "./system-prompts";
 
 export type EowReviewGenerateInput = {
@@ -48,11 +50,11 @@ export async function generateEowReview(
 ): Promise<EowReviewGenerateResult> {
   const fallback = templateFromInput(input);
 
-  if (!isAnthropicConfigured()) {
+  if (!isModelConfigured()) {
     return fallback;
   }
 
-  const config = getAnthropicConfig();
+  const config = getModelConfig();
   if (!config.configured) {
     return fallback;
   }
@@ -112,17 +114,15 @@ export async function generateEowReview(
     .join("\n");
 
   try {
-    const anthropic = requireAnthropicClient();
-    const response = await anthropic.messages.create({
-      model: config.model,
-      max_tokens: 320,
+    const { text: raw } = await generateText({
+      model: requireModel("structured"),
+      maxOutputTokens: 320,
       temperature: 0.7,
       system: buildSystemPrompt("eow"),
       messages: [{ role: "user", content: userPayload }],
     });
 
-    const block = response.content.find((b) => b.type === "text");
-    const text = block?.type === "text" ? block.text.trim() : "";
+    const text = raw.trim();
     if (!text) return fallback;
 
     const parsed = parseEowResponse(text);
