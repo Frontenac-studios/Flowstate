@@ -98,7 +98,7 @@ export async function generateEodReview(
 
   try {
     const { text: raw } = await generateText({
-      model: requireModel(),
+      model: requireModel("structured"),
       maxOutputTokens: 320,
       temperature: 0.7,
       system: buildSystemPrompt("eod"),

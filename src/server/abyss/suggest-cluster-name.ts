@@ -5,9 +5,10 @@ import { generateText } from "ai";
 import { normalizeTag } from "@/lib/abyss/tags";
 import { getModel } from "@/server/claude/client";
 
-// §7A: on explicit request only, suggest a short tag name for an un-tagged emerging
-// cluster. One cheap call on the global OPENROUTER_MODEL; abstains to null on any error or
-// missing key (never throws) so naming stays optional and the List never blocks on it.
+// §7A: on explicit request only, suggest a short tag name for an un-tagged emerging cluster.
+// One cheap call on the "fast" model tier (OPENROUTER_MODEL_FAST → OPENROUTER_MODEL); abstains
+// to null on any error or missing key (never throws) so naming stays optional and the List
+// never blocks on it.
 
 /** Suggest a one- or two-word tag for a cluster of parked-item titles, or null. */
 export async function suggestClusterName(titles: string[]): Promise<string | null> {
@@ -17,7 +18,7 @@ export async function suggestClusterName(titles: string[]): Promise<string | nul
     .slice(0, 12);
   if (sample.length === 0) return null;
 
-  const model = getModel();
+  const model = getModel("fast");
   if (!model) return null;
 
   try {

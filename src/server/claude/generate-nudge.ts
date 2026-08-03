@@ -58,7 +58,7 @@ export async function generateNudge(
 
   try {
     const { text: raw } = await generateText({
-      model: requireModel(),
+      model: requireModel("fast"),
       maxOutputTokens: 120,
       temperature: 0.5,
       system: buildSystemPrompt("companion"),

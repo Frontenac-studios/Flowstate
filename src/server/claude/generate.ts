@@ -66,7 +66,7 @@ export async function generateNarration(
     .join("\n");
 
   const { text } = await generateText({
-    model: requireModel(),
+    model: requireModel("fast"),
     maxOutputTokens: 80,
     temperature: 0.6,
     system: buildSystemPrompt("narration"),
@@ -190,7 +190,7 @@ export async function streamCompanionReply(params: {
 
   async function* run(): AsyncGenerator<CompanionStreamDelta> {
     const result = streamText({
-      model: requireModel(),
+      model: requireModel("chat"),
       system: buildChatSystemPrompt(params.threadId, params.planningSurface, params.captureContext),
       messages,
       tools,

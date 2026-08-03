@@ -3,16 +3,16 @@ import "server-only";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 
-import { getModelConfig } from "@/lib/env";
+import { getModelConfig, resolveModel, type ModelRole } from "@/lib/env";
 
 let provider: ReturnType<typeof createOpenRouter> | null = null;
 
 /**
  * Returns the configured language model (routed through OpenRouter), or null when no
- * OPENROUTER_API_KEY is set. Every AI call in the app resolves its model here, so the
- * model is swappable via OPENROUTER_MODEL without touching call sites.
+ * OPENROUTER_API_KEY is set. Pass a `role` to select a per-task model tier; it falls back to
+ * OPENROUTER_MODEL when that tier has no override, so callers stay swappable via env alone.
  */
-export function getModel(): LanguageModel | null {
+export function getModel(role?: ModelRole): LanguageModel | null {
   const config = getModelConfig();
   if (!config.configured) return null;
 
@@ -27,11 +27,11 @@ export function getModel(): LanguageModel | null {
     });
   }
 
-  return provider(config.model);
+  return provider(resolveModel(role));
 }
 
-export function requireModel(): LanguageModel {
-  const model = getModel();
+export function requireModel(role?: ModelRole): LanguageModel {
+  const model = getModel(role);
   if (!model) {
     throw new Error("OPENROUTER_API_KEY is not configured.");
   }

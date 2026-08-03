@@ -14,9 +14,8 @@ import { getModel } from "@/server/claude/client";
 // still runs the local model for the per-keystroke accent bar. Provider abstains to `null` on
 // any error or when no API key is configured; never throws.
 //
-// Runs on the single global OPENROUTER_MODEL. This is a high-volume, cheap call that used to be
-// pinned to Haiku; if cost matters here later, route it to a cheaper model via a dedicated env
-// var rather than the global one.
+// Runs on the "fast" model tier (OPENROUTER_MODEL_FAST, falling back to OPENROUTER_MODEL). This
+// is a high-volume, cheap call — point OPENROUTER_MODEL_FAST at a cheap model to keep it cheap.
 
 // Mirrors scripts/backfill-loose-task-categories.cjs and the data-spine §7 category guide.
 const CATEGORY_GUIDE: Record<ProjectCategory, string> = {
@@ -31,7 +30,7 @@ const CATEGORY_GUIDE: Record<ProjectCategory, string> = {
 export async function inferCategory(title: string): Promise<CategoryInference | null> {
   if (!title.trim()) return null;
 
-  const model = getModel();
+  const model = getModel("fast");
   if (!model) return null; // unconfigured → no opinion; resolver falls through (1.4d).
 
   try {

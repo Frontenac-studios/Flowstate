@@ -234,7 +234,7 @@ export async function generateWeekDraft(
 
   try {
     const { text } = await generateText({
-      model: requireModel(),
+      model: requireModel("structured"),
       maxOutputTokens: 1024,
       system: buildSystemPrompt("weekDraft"),
       messages: [{ role: "user", content: userPayload }],

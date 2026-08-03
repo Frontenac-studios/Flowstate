@@ -106,7 +106,7 @@ export async function generateReflectionBeat(
 
   try {
     const { text: raw } = await generateText({
-      model: requireModel(),
+      model: requireModel("structured"),
       maxOutputTokens: 280,
       temperature: 0.6,
       system: `${buildSystemPrompt("eod")}
