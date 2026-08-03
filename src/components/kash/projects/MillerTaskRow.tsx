@@ -153,7 +153,7 @@ export default function MillerTaskRow({
             }}
             onDoubleClick={onToggleDetail}
             aria-expanded={selected}
-            className={`min-w-0 flex-1 text-left text-sm focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+            className={`min-w-0 flex-1 text-left text-xs leading-snug focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
               completed ? "text-ink-muted line-through" : "text-ink"
             }`}
           >
@@ -163,7 +163,7 @@ export default function MillerTaskRow({
                 <span>Waiting on {blockerLabel}</span>
               </p>
             ) : null}
-            <span className="line-clamp-4 break-words">{task.title}</span>
+            <span className="whitespace-normal break-words">{task.title}</span>
             {(task.tags?.length ?? 0) > 0 ? (
               <TaskTagChips tags={task.tags ?? []} className="mt-1" maxVisible={2} />
             ) : null}
@@ -177,7 +177,11 @@ export default function MillerTaskRow({
             ) : null}
           </button>
           <TaskPriorityIndicator priority={task.priority} />
-          <TaskDragHandle listeners={listeners} attributes={dragAttributes} />
+          <TaskDragHandle
+            listeners={listeners}
+            attributes={dragAttributes}
+            className="-ml-1 -mr-1"
+          />
 
           <SwipeActionRail
             open={railOpen}

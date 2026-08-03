@@ -31,7 +31,7 @@ export default function MillerPriorityFilter({ value, onToggle }: Props) {
             className={`flex items-center gap-1 rounded-full border px-2 py-0.5 transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
               active
                 ? "border-accent bg-accent text-white"
-                : "border-white/30 text-ink-muted hover:text-ink"
+                : "border-border text-ink-muted hover:border-ink-muted hover:text-ink"
             }`}
           >
             {meta.dots > 0 ? (

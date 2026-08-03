@@ -34,9 +34,18 @@ type Props = {
   focusIndex: number | null;
   isActive: boolean;
   shellClassName?: string;
+  /**
+   * Flat variant for the bounded board card: drops the column's own card chrome
+   * (border/bg/shadow) and separates columns with a left hairline instead, so the
+   * board reads as one framed table rather than N floating cards.
+   */
+  framed?: boolean;
   phaseMetrics?: Map<string, PhaseMetrics>;
   /** Chat-created task ids to pulse (post-create feedback, P6). */
   highlightTaskIds?: Set<string>;
+  /** Tasks the priority lens is suppressing here — surfaced so an empty column doesn't read as broken. */
+  hiddenTaskCount?: number;
+  onClearPriorityFilter?: () => void;
   blankInvitation?: ReactNode;
   renderDetail: (item: ColumnItem) => ReactNode;
   onDrillPhase: (node: Node) => void;
@@ -65,8 +74,11 @@ export default function MillerColumn({
   focusIndex,
   isActive,
   shellClassName = millerColumnShellClass(MILLER_COLUMN_WIDTH_CLASS),
+  framed = false,
   phaseMetrics,
   highlightTaskIds,
+  hiddenTaskCount = 0,
+  onClearPriorityFilter,
   blankInvitation,
   renderDetail,
   onDrillPhase,
@@ -147,8 +159,14 @@ export default function MillerColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-card border bg-surface p-2 shadow-surface transition ${shellClassName} ${
-        isActive ? "border-ink" : "border-subtle"
+      className={`flex flex-col p-2 transition ${shellClassName} ${
+        framed
+          ? `border-l border-subtle first:border-l-0 ${
+              isActive ? "bg-[var(--surface-selected)]" : ""
+            }`
+          : `rounded-card border bg-surface shadow-surface ${
+              isActive ? "border-ink" : "border-subtle"
+            }`
       } ${isOver ? "ring-1 ring-inset ring-ink" : ""}`}
     >
       {blankInvitation}
@@ -177,6 +195,23 @@ export default function MillerColumn({
               </ul>
             </li>
           </>
+        ) : null}
+        {hiddenTaskCount > 0 ? (
+          <li className="mt-1 flex flex-wrap items-center gap-1.5 px-1.5 py-1 text-caption text-ink-muted">
+            <span>
+              {hiddenTaskCount} {hiddenTaskCount === 1 ? "task" : "tasks"} hidden by the priority
+              filter
+            </span>
+            {onClearPriorityFilter ? (
+              <button
+                type="button"
+                onClick={onClearPriorityFilter}
+                className="font-medium text-ink underline-offset-2 hover:underline focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+              >
+                Clear
+              </button>
+            ) : null}
+          </li>
         ) : null}
       </ul>
     </div>
