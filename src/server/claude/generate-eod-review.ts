@@ -1,10 +1,12 @@
 import "server-only";
 
-import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
+import { generateText } from "ai";
+
+import { getModelConfig, isModelConfigured } from "@/lib/env";
 import type { EodFocusBar, Top3Status } from "@/lib/eod/types";
 import { formatTop3ForPrompt, templateEodReview } from "@/lib/eod/template-eod-review";
 
-import { requireAnthropicClient } from "./client";
+import { requireModel } from "./client";
 import { buildSystemPrompt } from "./system-prompts";
 
 export type EodReviewGenerateInput = {
@@ -60,11 +62,11 @@ export async function generateEodReview(
 ): Promise<EodReviewGenerateResult> {
   const fallback = templateFromInput(input);
 
-  if (!isAnthropicConfigured()) {
+  if (!isModelConfigured()) {
     return fallback;
   }
 
-  const config = getAnthropicConfig();
+  const config = getModelConfig();
   if (!config.configured) {
     return fallback;
   }
@@ -95,17 +97,15 @@ export async function generateEodReview(
     .join("\n");
 
   try {
-    const anthropic = requireAnthropicClient();
-    const response = await anthropic.messages.create({
-      model: config.model,
-      max_tokens: 320,
+    const { text: raw } = await generateText({
+      model: requireModel(),
+      maxOutputTokens: 320,
       temperature: 0.7,
       system: buildSystemPrompt("eod"),
       messages: [{ role: "user", content: userPayload }],
     });
 
-    const block = response.content.find((b) => b.type === "text");
-    const text = block?.type === "text" ? block.text.trim() : "";
+    const text = raw.trim();
     if (!text) return fallback;
 
     const parsed = parseEodResponse(text);

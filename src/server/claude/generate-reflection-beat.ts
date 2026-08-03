@@ -1,5 +1,7 @@
 import "server-only";
 
+import { generateText } from "ai";
+
 import {
   buildGentleEodWinPrompt,
   type ReflectionBeatDayContext,
@@ -7,9 +9,9 @@ import {
   templateReflectionBeat,
 } from "@/lib/daily-wins/reflection-beat";
 import type { WinProposal } from "@/lib/daily-wins/types";
-import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
+import { getModelConfig, isModelConfigured } from "@/lib/env";
 
-import { requireAnthropicClient } from "./client";
+import { requireModel } from "./client";
 import { fetchAboutMeContextBlock } from "./fetch-about-me-context";
 import { buildSystemPrompt } from "./system-prompts";
 
@@ -66,11 +68,11 @@ export async function generateReflectionBeat(
 ): Promise<ReflectionBeatResult> {
   const fallback = templateReflectionBeat(input.baseProposals, [], input.dayContext);
 
-  if (!isAnthropicConfigured()) {
+  if (!isModelConfigured()) {
     return fallback;
   }
 
-  const config = getAnthropicConfig();
+  const config = getModelConfig();
   if (!config.configured) {
     return fallback;
   }
@@ -103,10 +105,9 @@ export async function generateReflectionBeat(
   ].join("\n");
 
   try {
-    const anthropic = requireAnthropicClient();
-    const response = await anthropic.messages.create({
-      model: config.model,
-      max_tokens: 280,
+    const { text: raw } = await generateText({
+      model: requireModel(),
+      maxOutputTokens: 280,
       temperature: 0.6,
       system: `${buildSystemPrompt("eod")}
 
@@ -116,8 +117,7 @@ Do not invent tasks, care events, or refIds not in the ranked list.`,
       messages: [{ role: "user", content: userPayload }],
     });
 
-    const block = response.content.find((b) => b.type === "text");
-    const text = block?.type === "text" ? block.text.trim() : "";
+    const text = raw.trim();
     if (!text) return fallback;
 
     const parsed = parseReflectionBeatResponse(text, input.baseProposals, input.dayContext);

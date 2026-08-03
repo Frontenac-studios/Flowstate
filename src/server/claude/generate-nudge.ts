@@ -1,12 +1,14 @@
 import "server-only";
 
+import { generateText } from "ai";
+
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
-import { getAnthropicConfig, isAnthropicConfigured } from "@/lib/env";
+import { getModelConfig, isModelConfigured } from "@/lib/env";
 import type { SlippedTop3Task, StalledTop3Task } from "@/lib/nudges/evaluate-top3-stall";
 import { templateStallNudge } from "@/lib/nudges/template-nudge";
 
 import { assembleChatContext } from "./assemble-chat-context";
-import { requireAnthropicClient } from "./client";
+import { requireModel } from "./client";
 import { buildSystemPrompt } from "./system-prompts";
 
 export async function generateNudge(
@@ -14,12 +16,11 @@ export async function generateNudge(
   stalled: StalledTop3Task[],
   slipped: SlippedTop3Task[]
 ): Promise<string> {
-  if (!isAnthropicConfigured()) {
+  if (!isModelConfigured()) {
     return templateStallNudge(stalled, slipped);
   }
 
-  const anthropic = requireAnthropicClient();
-  const config = getAnthropicConfig();
+  const config = getModelConfig();
   if (!config.configured) {
     return templateStallNudge(stalled, slipped);
   }
@@ -56,16 +57,15 @@ export async function generateNudge(
   ].join("\n");
 
   try {
-    const response = await anthropic.messages.create({
-      model: config.model,
-      max_tokens: 120,
+    const { text: raw } = await generateText({
+      model: requireModel(),
+      maxOutputTokens: 120,
       temperature: 0.5,
       system: buildSystemPrompt("companion"),
       messages: [{ role: "user", content: userPayload }],
     });
 
-    const block = response.content.find((b) => b.type === "text");
-    const text = block?.type === "text" ? block.text.trim() : "";
+    const text = raw.trim();
     if (!text) return templateStallNudge(stalled, slipped);
     return text;
   } catch {

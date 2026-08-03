@@ -16,7 +16,7 @@ import {
 import { captureContextSchema } from "@/lib/chat/capture-context";
 import { confirmUndoFrameSchema } from "@/lib/chat/confirm-undo";
 import { GLOBAL_THREAD_ID, taskIdForThread, threadIdSchema } from "@/lib/chat/threads";
-import { isAnthropicConfigured, isBingoCoachEnabled } from "@/lib/env";
+import { isModelConfigured, isBingoCoachEnabled } from "@/lib/env";
 import { buildWorkOnSuggestion } from "@/server/chat/build-work-on-suggestion";
 import { applyProposedActionPayload } from "@/server/claude/apply-proposed-action";
 import {
@@ -251,8 +251,8 @@ export const chatRouter = createTRPCRouter({
     // bingoCoachEnabled implies configured — the coach needs the API. Callers gate the
     // goals dock on both flags.
     return {
-      configured: isAnthropicConfigured(),
-      bingoCoachEnabled: isAnthropicConfigured() && isBingoCoachEnabled(),
+      configured: isModelConfigured(),
+      bingoCoachEnabled: isModelConfigured() && isBingoCoachEnabled(),
     };
   }),
 

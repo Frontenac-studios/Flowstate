@@ -259,8 +259,8 @@ export function MorningTriageChat({
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-[var(--space-3)] py-[var(--space-2)]">
           {!configured ? (
             <p className="rounded-control bg-accent-soft px-3 py-2 text-caption text-ink-muted">
-              Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code>{" "}
-              to your environment.
+              AI isn&apos;t configured — add <code className="text-ink">OPENROUTER_API_KEY</code> to
+              your environment.
             </p>
           ) : null}
 

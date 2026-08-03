@@ -102,8 +102,8 @@ export function ChatRail() {
 
         {!configured ? (
           <p className="mb-3 rounded-control bg-accent-soft px-3 py-2 text-xs text-ink-muted">
-            Claude isn&apos;t configured — add <code className="text-ink">ANTHROPIC_API_KEY</code>{" "}
-            to your environment.
+            AI isn&apos;t configured — add <code className="text-ink">OPENROUTER_API_KEY</code> to
+            your environment.
           </p>
         ) : null}
 

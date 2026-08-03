@@ -1,26 +1,39 @@
 import "server-only";
 
-import Anthropic from "@anthropic-ai/sdk";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import type { LanguageModel } from "ai";
 
-import { getAnthropicConfig } from "@/lib/env";
+import { getModelConfig } from "@/lib/env";
 
-let client: Anthropic | null = null;
+let provider: ReturnType<typeof createOpenRouter> | null = null;
 
-export function getAnthropicClient(): Anthropic | null {
-  const config = getAnthropicConfig();
+/**
+ * Returns the configured language model (routed through OpenRouter), or null when no
+ * OPENROUTER_API_KEY is set. Every AI call in the app resolves its model here, so the
+ * model is swappable via OPENROUTER_MODEL without touching call sites.
+ */
+export function getModel(): LanguageModel | null {
+  const config = getModelConfig();
   if (!config.configured) return null;
 
-  if (!client) {
-    client = new Anthropic({ apiKey: config.apiKey });
+  if (!provider) {
+    provider = createOpenRouter({
+      apiKey: config.apiKey,
+      // App attribution on the openrouter.ai dashboard (optional but recommended).
+      headers: {
+        "HTTP-Referer": "https://flowstate.app",
+        "X-Title": "Flowstate",
+      },
+    });
   }
 
-  return client;
+  return provider(config.model);
 }
 
-export function requireAnthropicClient(): Anthropic {
-  const anthropic = getAnthropicClient();
-  if (!anthropic) {
-    throw new Error("ANTHROPIC_API_KEY is not configured.");
+export function requireModel(): LanguageModel {
+  const model = getModel();
+  if (!model) {
+    throw new Error("OPENROUTER_API_KEY is not configured.");
   }
-  return anthropic;
+  return model;
 }

@@ -1,19 +1,20 @@
 import { z } from "zod";
 
-const anthropicEnvSchema = z.object({
-  ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  ANTHROPIC_MODEL: z.string().min(1).optional(),
+const modelEnvSchema = z.object({
+  OPENROUTER_API_KEY: z.string().min(1).optional(),
+  OPENROUTER_MODEL: z.string().min(1).optional(),
 });
 
-export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929";
+// OpenRouter model slug. Swap this (or set OPENROUTER_MODEL) to route every AI call to a
+// different model/provider — e.g. "openai/gpt-4o-mini", "google/gemini-2.5-pro".
+export const DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
 
-export function getAnthropicConfig():
+export function getModelConfig():
   | { configured: true; apiKey: string; model: string }
   | { configured: false; apiKey: null; model: string } {
-  const parsed = anthropicEnvSchema.safeParse(process.env);
-  const model =
-    (parsed.success ? parsed.data.ANTHROPIC_MODEL : undefined) ?? DEFAULT_ANTHROPIC_MODEL;
-  const apiKey = parsed.success ? parsed.data.ANTHROPIC_API_KEY : undefined;
+  const parsed = modelEnvSchema.safeParse(process.env);
+  const model = (parsed.success ? parsed.data.OPENROUTER_MODEL : undefined) ?? DEFAULT_MODEL;
+  const apiKey = parsed.success ? parsed.data.OPENROUTER_API_KEY : undefined;
 
   if (!apiKey) {
     return { configured: false, apiKey: null, model };
@@ -22,8 +23,8 @@ export function getAnthropicConfig():
   return { configured: true, apiKey, model };
 }
 
-export function isAnthropicConfigured(): boolean {
-  return getAnthropicConfig().configured;
+export function isModelConfigured(): boolean {
+  return getModelConfig().configured;
 }
 
 const bingoCoachEnvSchema = z.object({
@@ -32,8 +33,8 @@ const bingoCoachEnvSchema = z.object({
 
 /**
  * Feature gate for the bingo-goals AI coach. Off by default; enable with
- * KASH_BINGO_COACH_ENABLED=1 (or "true"). The coach also requires Anthropic to be
- * configured — callers should treat "enabled" as gated behind isAnthropicConfigured().
+ * KASH_BINGO_COACH_ENABLED=1 (or "true"). The coach also requires a model to be
+ * configured — callers should treat "enabled" as gated behind isModelConfigured().
  */
 export function isBingoCoachEnabled(): boolean {
   const parsed = bingoCoachEnvSchema.safeParse(process.env);
