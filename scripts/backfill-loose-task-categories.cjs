@@ -43,7 +43,7 @@ const CATEGORY_GUIDE = {
 const FLOOR = 0.7;
 const MARGIN = 0.1;
 const FALLBACK_CATEGORY = "adulting";
-const MODEL = process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-4.5";
+const MODEL = process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-5";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const limitArg = process.argv.indexOf("--limit");

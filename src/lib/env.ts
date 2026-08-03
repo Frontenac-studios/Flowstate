@@ -11,7 +11,7 @@ const modelEnvSchema = z.object({
 // OpenRouter model slug used when no per-role override is set. Swap this (or OPENROUTER_MODEL)
 // to route every AI call to a different model/provider — e.g. "z-ai/glm-4.7", "openai/gpt-5.1",
 // "google/gemini-2.5-flash".
-export const DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
+export const DEFAULT_MODEL = "anthropic/claude-sonnet-5";
 
 /**
  * Per-task model tiers. Each falls back to OPENROUTER_MODEL (then DEFAULT_MODEL) when its
