@@ -849,6 +849,9 @@ export function WeekCanvas({
               isoDate={iso}
               label={WEEKDAY_LABELS[index]!}
               isToday={isToday}
+              // Execution week (this-week) hides the project chip — the tasks are
+              // already scoped to the week and the coach dock carries planning context.
+              showProject={surface !== "week"}
               tasks={(partitioned.byDate[iso] ?? []).map(toRow)}
               completions={completionsByDay.get(iso) ?? []}
               pinnedBySlot={pinnedBySlot}

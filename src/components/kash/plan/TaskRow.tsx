@@ -580,8 +580,8 @@ export function TaskRow({
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 overflow-hidden rounded-card border bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move motion-reduce:transition-none ${
-            isBlocked ? "border-dashed border-ink-faint" : "border-subtle"
+          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 overflow-hidden rounded-card bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move motion-reduce:transition-none ${
+            isBlocked ? "border-l-2 border-dashed border-ink-faint" : ""
           } ${task.isTop3 ? "border-l-2 border-accent" : ""} ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
           style={flingOffset > 0 ? { transform: `translateX(${flingOffset}px)` } : undefined}
           onClick={() => {
@@ -686,7 +686,7 @@ export function TaskRow({
             ) : (
               <>
                 <span
-                  className={`block break-words ${
+                  className={`block break-words text-sm leading-snug ${
                     completing ? "text-ink-faint line-through" : "text-ink"
                   } ${isOverdue ? "font-medium" : ""}`}
                 >

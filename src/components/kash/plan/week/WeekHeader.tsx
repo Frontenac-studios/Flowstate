@@ -3,11 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 
-import { createCaptureContext } from "@/lib/chat/capture-context";
 import { COMPOSER_DRAFT_KEYS } from "@/lib/composer/composer-draft-constants";
 
-import { useChat } from "../../chat/ChatProvider";
-import { AddTaskPopover, type AddTaskPopoverHandle } from "../AddTaskPopover";
 import { usePlanMode } from "../PlanProvider";
 import { QuickInput, type QuickInputHandle } from "../QuickInput";
 
@@ -25,26 +22,27 @@ type Props = {
 
 const ACTION_BTN =
   "rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
+const ADD_BTN =
+  "flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
 
 /**
  * Care-style page header for This Week: an `h1` + date-range subtitle with a
  * right-aligned action cluster (overdue triage chip, default-week setup,
- * reflection toggle, and the relocated task composer). The composer keeps the
- * AddTaskPopover behavior — "Ask chat" opens the rail, "Type tasks" reveals an
- * inline QuickInput that creates unscheduled tasks in Plan Tasks.
+ * reflection toggle, and the task composer). The always-visible Week coach dock
+ * now owns chat-drafting, so the "+" drops the old "Ask chat" popover and simply
+ * reveals an inline QuickInput that creates unscheduled tasks.
  */
 export function WeekHeader({ weekRange, overdueCount, reflectionOpen, onToggleReflection }: Props) {
-  const { openRail } = useChat();
   const { touchActivity } = usePlanMode();
   const [composerOpen, setComposerOpen] = useState(false);
   const quickInputRef = useRef<QuickInputHandle>(null);
-  const addTaskRef = useRef<AddTaskPopoverHandle>(null);
+  const addTaskRef = useRef<HTMLButtonElement>(null);
 
   return (
     <section className="flex shrink-0 flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold text-ink">This Week</h1>
+          <h1 className="text-title font-semibold text-ink">This Week</h1>
           <p className="text-meta text-ink-faint">{weekRange}</p>
         </div>
 
@@ -65,21 +63,19 @@ export function WeekHeader({ weekRange, overdueCount, reflectionOpen, onToggleRe
           >
             Reflection
           </button>
-          <AddTaskPopover
+          <button
             ref={addTaskRef}
-            onAskChat={() =>
-              openRail({
-                captureContext: createCaptureContext({
-                  surface: "week",
-                  defaultBucket: "inbox",
-                }),
-              })
-            }
-            onTypeManually={() => {
+            type="button"
+            aria-label="Add task"
+            aria-expanded={composerOpen}
+            className={ADD_BTN}
+            onClick={() => {
               setComposerOpen(true);
               requestAnimationFrame(() => quickInputRef.current?.focus());
             }}
-          />
+          >
+            <span aria-hidden>+</span>
+          </button>
         </div>
       </div>
 
@@ -89,7 +85,7 @@ export function WeekHeader({ weekRange, overdueCount, reflectionOpen, onToggleRe
             if (e.key === "Escape") {
               e.stopPropagation();
               setComposerOpen(false);
-              requestAnimationFrame(() => addTaskRef.current?.focusTrigger());
+              requestAnimationFrame(() => addTaskRef.current?.focus());
             }
           }}
         >

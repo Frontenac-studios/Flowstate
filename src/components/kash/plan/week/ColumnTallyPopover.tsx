@@ -141,11 +141,9 @@ export default function ColumnTallyPopover({
             </span>
           </p>
         ) : (
-          <p className="text-meta text-ink-muted">{headerDate}</p>
+          <p className="text-micro text-ink-muted">{headerDate}</p>
         )}
-        {meetingSummary ? (
-          <p className="mt-1 text-caption text-ink-faint">{meetingSummary}</p>
-        ) : null}
+        {meetingSummary ? <p className="mt-1 text-micro text-ink-faint">{meetingSummary}</p> : null}
         {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
       </button>
     </div>

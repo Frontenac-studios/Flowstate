@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { notFound } from "next/navigation";
 
+import { SurfaceCoachLayout } from "@/components/kash/chat/SurfaceCoachLayout";
 import ProjectWorkspace from "@/components/kash/projects/ProjectWorkspace";
 import type { ProjectDetail } from "@/components/kash/projects/types";
 import { getTRPCCaller } from "@/trpc/server";
@@ -27,5 +28,9 @@ export default async function ProjectPage({ params }: Props) {
     throw error;
   }
 
-  return <ProjectWorkspace project={project} showBackToProjects />;
+  return (
+    <SurfaceCoachLayout surface="projects">
+      <ProjectWorkspace project={project} showBackToProjects />
+    </SurfaceCoachLayout>
+  );
 }

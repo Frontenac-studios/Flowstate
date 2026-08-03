@@ -91,7 +91,11 @@ export function ThisWeekSurface() {
                 <LensControlBar />
               </div>
             ) : null}
-            <WeekCanvas surface="week" showWeekChrome={hasWeekPlanData} />
+            {/* The Week coach dock (SurfaceCoachLayout) now carries planning/drafting,
+                so the bottom inbox rail is suppressed here to avoid two chat surfaces —
+                matching the Goals-chrome "no inbox" direction. Task capture stays on the
+                WeekHeader "+" composer; the day grid and Later defer column remain. */}
+            <WeekCanvas surface="week" showWeekChrome={hasWeekPlanData} showPlanningRail={false} />
           </div>
         </LensProvider>
       </div>
