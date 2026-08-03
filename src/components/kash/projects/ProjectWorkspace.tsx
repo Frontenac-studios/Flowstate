@@ -143,10 +143,6 @@ export default function ProjectWorkspace({
           selectedPath={selectedPath}
           onSelectPath={setSelectedPath}
           milestones={milestonesQuery.data ?? []}
-          onEditMilestones={() => {
-            setSetupMode("edit");
-            setWizardOpen(true);
-          }}
           estimateSampleCount={estimateSampleCount}
           onOpenSetup={() => {
             setSetupMode("edit");
@@ -154,15 +150,13 @@ export default function ProjectWorkspace({
           }}
         />
       ) : (
-        <>
+        // Calendar is natural-height; under the fill layout give it the remaining
+        // space with its own vertical scroll so a tall timeline never clips.
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
           {(milestonesQuery.data?.length ?? 0) > 0 ? (
             <ProjectMilestoneStrip
               projectId={initialProject.id}
               milestones={milestonesQuery.data ?? []}
-              onEdit={() => {
-                setSetupMode("edit");
-                setWizardOpen(true);
-              }}
             />
           ) : null}
           <CalendarBoardView
@@ -171,7 +165,7 @@ export default function ProjectWorkspace({
             category={project.category}
             milestones={milestonesQuery.data ?? []}
           />
-        </>
+        </div>
       )}
 
       {/*

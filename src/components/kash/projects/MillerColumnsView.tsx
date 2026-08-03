@@ -68,8 +68,6 @@ type Props = {
   selectedPath: string[];
   onSelectPath: (path: string[]) => void;
   milestones: ProjectMilestone[];
-  /** Open the setup wizard on the Milestones step (the strip's "Edit"). */
-  onEditMilestones: () => void;
   estimateSampleCount?: number;
   onOpenSetup?: () => void;
 };
@@ -96,7 +94,6 @@ export default function MillerColumnsView({
   selectedPath,
   onSelectPath,
   milestones,
-  onEditMilestones,
   estimateSampleCount = 0,
   onOpenSetup,
 }: Props) {
@@ -130,6 +127,11 @@ export default function MillerColumnsView({
       writePriorityFilter(next);
       return next;
     });
+  }, []);
+  const clearPriorityFilter = useCallback(() => {
+    const empty = new Set<number>();
+    setPriorityLevels(empty);
+    writePriorityFilter(empty);
   }, []);
 
   const { nodeById, taskById } = useMemo(() => {
@@ -184,22 +186,35 @@ export default function MillerColumnsView({
   );
 
   const columns = useMemo(() => {
-    const result: { level: number; parentPhaseId: string | null; items: ColumnItem[] }[] = [];
-    result.push({
-      level: 0,
-      parentPhaseId: null,
-      items: orderItems(tree.rootPhases, filterTasksByPriority(tree.looseTasks, priorityLevels)),
-    });
+    const result: {
+      level: number;
+      parentPhaseId: string | null;
+      items: ColumnItem[];
+      /** Tasks the priority lens is suppressing in this column (badge counts them, body doesn't). */
+      hiddenTaskCount: number;
+    }[] = [];
+    const pushColumn = (
+      level: number,
+      parentPhaseId: string | null,
+      phaseNodes: Node[],
+      columnTasks: ProjectTask[]
+    ) => {
+      const visible = filterTasksByPriority(columnTasks, priorityLevels);
+      result.push({
+        level,
+        parentPhaseId,
+        items: orderItems(phaseNodes, visible),
+        hiddenTaskCount: columnTasks.length - visible.length,
+      });
+    };
+
+    pushColumn(0, null, tree.rootPhases, tree.looseTasks);
 
     let currentPhases = tree.rootPhases;
     for (let i = 0; i < selectedPath.length; i += 1) {
       const node = currentPhases.find((n) => n.phase.id === selectedPath[i]);
       if (!node) break;
-      result.push({
-        level: i + 1,
-        parentPhaseId: node.phase.id,
-        items: orderItems(node.children, filterTasksByPriority(node.tasks, priorityLevels)),
-      });
+      pushColumn(i + 1, node.phase.id, node.children, node.tasks);
       currentPhases = node.children;
     }
     return result;
@@ -508,7 +523,8 @@ export default function MillerColumnsView({
 
   const createPending =
     m.createTask.isPending || m.createPhase.isPending || m.bulkCreateTasks.isPending;
-  const isBlank = columns.length === 1 && columns[0].items.length === 0;
+  const isBlank =
+    columns.length === 1 && columns[0].items.length === 0 && columns[0].hiddenTaskCount === 0;
   const composerParentPhaseId =
     selectedPath.length > 0 ? (selectedPath[selectedPath.length - 1] ?? null) : null;
   const composerPhaseName = composerParentPhaseId
@@ -578,7 +594,6 @@ export default function MillerColumnsView({
             <ProjectMilestoneStrip
               projectId={projectId}
               milestones={milestones}
-              onEdit={onEditMilestones}
               alwaysRender
               addSlot={
                 <AddTaskPopover
@@ -631,72 +646,83 @@ export default function MillerColumnsView({
             </div>
           ) : null}
 
-          {!isBlank ? (
-            <div className="flex shrink-0 items-center justify-end px-1">
-              <MillerPriorityFilter value={priorityLevels} onToggle={togglePriority} />
-            </div>
-          ) : null}
+          {/* Option D: the priority filter + columns share one bounded card — a
+              toolbar header atop a bordered body so they read as one board (mirrors
+              the Milestones panel's card tokens above). */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-card border border-subtle bg-surface shadow-surface">
+            {!isBlank ? (
+              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-subtle bg-surface-2 px-3 py-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                  Columns
+                </span>
+                <MillerPriorityFilter value={priorityLevels} onToggle={togglePriority} />
+              </div>
+            ) : null}
 
-          <div
-            ref={stripRef}
-            tabIndex={0}
-            onKeyDown={handleKeyDown}
-            aria-label="Project columns"
-            className="miller-column-scroll flex min-h-0 flex-1 items-stretch gap-1.5 overflow-x-auto pb-1 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
-          >
-            {columns.map((col) => (
-              <MillerColumn
-                key={col.level}
-                projectId={projectId}
-                level={col.level}
-                parentPhaseId={col.parentPhaseId}
-                category={category}
-                items={col.items}
-                openPhaseId={selectedPath[col.level] ?? null}
-                detail={detail}
-                focusIndex={focus.col === col.level ? focus.index : null}
-                isActive={col.level === activeColumnLevel}
-                shellClassName={millerColumnShellClass(widthClassName)}
-                phaseMetrics={phaseMetrics}
-                highlightTaskIds={highlightTaskIds}
-                blankInvitation={
-                  isBlank && col.level === 0 ? (
-                    <ColoredEmptyInvitation
-                      title="Add your first phase"
-                      hint="Tap + above to type them in — one per line. Start a line with ;;; to add a phase."
-                      className="mx-1 my-2 border-none bg-transparent px-3 py-6 shadow-none"
-                      action={
-                        onOpenSetup ? (
-                          <Button type="button" variant="ghost" onClick={onOpenSetup}>
-                            Set up project
-                          </Button>
-                        ) : undefined
-                      }
-                    />
-                  ) : null
-                }
-                renderDetail={renderDetail}
-                onDrillPhase={(node) => drillPhase(col.level, node)}
-                onEditPhase={(node) => togglePhaseDetail(node.phase.id)}
-                onTogglePhaseComplete={(node) =>
-                  m.setPhaseComplete.mutate({
-                    id: node.phase.id,
-                    completed: node.phase.completedAt === null,
-                  })
-                }
-                onSelectTask={(_task, index) => selectTask(col.level, index)}
-                onToggleTaskDetail={(task) => toggleTaskDetail(col.level, task)}
-                onToggleTask={toggleTask}
-                onRequestDeleteTask={(task) => setConfirm({ kind: "task-delete", id: task.id })}
-              />
-            ))}
-            {Array.from({ length: ghostColumnCount }).map((_, i) => (
-              <div
-                key={`ghost:${i}`}
-                aria-hidden
-                className={`${millerColumnShellClass(widthClassName)} rounded-card border border-subtle bg-surface p-2`}
-              />
-            ))}
+            <div
+              ref={stripRef}
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
+              aria-label="Project columns"
+              className="miller-column-scroll flex min-h-0 flex-1 items-stretch overflow-x-auto focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+            >
+              {columns.map((col) => (
+                <MillerColumn
+                  key={col.level}
+                  projectId={projectId}
+                  level={col.level}
+                  parentPhaseId={col.parentPhaseId}
+                  category={category}
+                  items={col.items}
+                  openPhaseId={selectedPath[col.level] ?? null}
+                  detail={detail}
+                  focusIndex={focus.col === col.level ? focus.index : null}
+                  isActive={col.level === activeColumnLevel}
+                  shellClassName={millerColumnShellClass(widthClassName)}
+                  framed
+                  phaseMetrics={phaseMetrics}
+                  highlightTaskIds={highlightTaskIds}
+                  hiddenTaskCount={col.hiddenTaskCount}
+                  onClearPriorityFilter={clearPriorityFilter}
+                  blankInvitation={
+                    isBlank && col.level === 0 ? (
+                      <ColoredEmptyInvitation
+                        title="Add your first phase"
+                        hint="Tap + above to type them in — one per line. Start a line with ;;; to add a phase."
+                        className="mx-1 my-2 border-none bg-transparent px-3 py-6 shadow-none"
+                        action={
+                          onOpenSetup ? (
+                            <Button type="button" variant="ghost" onClick={onOpenSetup}>
+                              Set up project
+                            </Button>
+                          ) : undefined
+                        }
+                      />
+                    ) : null
+                  }
+                  renderDetail={renderDetail}
+                  onDrillPhase={(node) => drillPhase(col.level, node)}
+                  onEditPhase={(node) => togglePhaseDetail(node.phase.id)}
+                  onTogglePhaseComplete={(node) =>
+                    m.setPhaseComplete.mutate({
+                      id: node.phase.id,
+                      completed: node.phase.completedAt === null,
+                    })
+                  }
+                  onSelectTask={(_task, index) => selectTask(col.level, index)}
+                  onToggleTaskDetail={(task) => toggleTaskDetail(col.level, task)}
+                  onToggleTask={toggleTask}
+                  onRequestDeleteTask={(task) => setConfirm({ kind: "task-delete", id: task.id })}
+                />
+              ))}
+              {Array.from({ length: ghostColumnCount }).map((_, i) => (
+                <div
+                  key={`ghost:${i}`}
+                  aria-hidden
+                  className={`${millerColumnShellClass(widthClassName)} border-l border-subtle`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </DndContext>
