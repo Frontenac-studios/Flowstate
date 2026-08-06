@@ -1,9 +1,11 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 
+import { db } from "@/db";
 import { resolveAuthContext } from "@/lib/auth/auth-bypass";
 import { getVerifiedUser } from "@/lib/auth/verify-jwt";
 import { createClient } from "@/lib/supabase/server";
+import { type OrgRole, ensureOrgForUser } from "@/server/orgs/ensure-org-for-user";
 
 export const createTRPCContext = async ({ headers }: { headers: Headers }) => {
   void headers;
@@ -12,9 +14,26 @@ export const createTRPCContext = async ({ headers }: { headers: Headers }) => {
 
   const auth = resolveAuthContext(user);
 
+  if (!auth) {
+    return { userId: null, email: null, orgId: null, role: null };
+  }
+
+  // Resolves the caller's tenant, creating one on first sight. Nothing reads
+  // `orgId` yet — tenant tables gain their `org_id` column in the follow-up PR —
+  // but resolving it here means that PR is a stamping change, not a plumbing one.
+  const org = await ensureOrgForUser(db, auth.userId);
+
   return {
-    userId: auth?.userId ?? null,
-    email: auth?.email ?? null,
+    userId: auth.userId,
+    email: auth.email,
+    orgId: org.orgId,
+    /**
+     * Stored and exposed, checked by nothing. There is deliberately no
+     * `requireRole` middleware: roles become enforcement when the Partner and
+     * Member tiers actually ship, and the rules will live in
+     * `src/db/tenancy.ts`'s visibility classes rather than scattered here.
+     */
+    role: org.role satisfies OrgRole,
   };
 };
 
@@ -51,10 +70,18 @@ export const protectedProcedure = t.procedure.use(errorLoggingMiddleware).use(({
   if (!ctx.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
+  if (!ctx.orgId || !ctx.role) {
+    // Unreachable via createTRPCContext (a userId always comes with an org), but
+    // it keeps `orgId` non-nullable downstream so the stamping PR doesn't have to
+    // null-check at every insert.
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No org resolved for user" });
+  }
   return next({
     ctx: {
       userId: ctx.userId,
       email: ctx.email,
+      orgId: ctx.orgId,
+      role: ctx.role,
     },
   });
 });

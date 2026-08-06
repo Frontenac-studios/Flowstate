@@ -647,6 +647,29 @@ CREATE UNIQUE INDEX IF NOT EXISTS external_calendar_events_connection_calendar_e
   ON external_calendar_events (connection_id, calendar_id, provider_event_id);
 CREATE INDEX IF NOT EXISTS external_calendar_events_user_id_start_at_idx
   ON external_calendar_events (user_id, start_at);
+
+-- Tenancy. Local-only: these are NOT in SYNC_TABLES. The desktop app runs the
+-- same tRPC context code as web (under the auth bypass), so it needs to resolve
+-- an org locally; hosted resolves its own from Supabase.
+CREATE TABLE IF NOT EXISTS orgs (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS org_memberships (
+  id TEXT PRIMARY KEY NOT NULL,
+  org_id TEXT NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS org_memberships_org_id_user_id_idx
+  ON org_memberships (org_id, user_id);
+CREATE INDEX IF NOT EXISTS org_memberships_user_id_idx
+  ON org_memberships (user_id);
 `;
 
 // SQLite has no "ADD COLUMN IF NOT EXISTS", so add each new column only when the

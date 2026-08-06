@@ -43,6 +43,8 @@ import { tasks as pgTasks } from "./schema/tasks";
 import { weekDayPriorities as pgWeekDayPriorities } from "./schema/week-day-priorities";
 import { weekReviews as pgWeekReviews } from "./schema/week-reviews";
 import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
+import { orgMemberships as pgOrgMemberships } from "./schema/org-memberships";
+import { orgs as pgOrgs } from "./schema/orgs";
 
 import { isSqliteMode } from "./mode";
 
@@ -165,3 +167,7 @@ export const calendarConnections = (
 export const externalCalendarEvents = (
   isSqliteMode() ? sqliteSchema.externalCalendarEvents : pgExternalCalendarEvents
 ) as typeof pgExternalCalendarEvents;
+export const orgs = (isSqliteMode() ? sqliteSchema.orgs : pgOrgs) as typeof pgOrgs;
+export const orgMemberships = (
+  isSqliteMode() ? sqliteSchema.orgMemberships : pgOrgMemberships
+) as typeof pgOrgMemberships;
