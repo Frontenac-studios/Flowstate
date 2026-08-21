@@ -316,19 +316,51 @@ starts cleanly before it.
 
 ---
 
-### W2 — Time tracking, finished · **M (10h)** · deps: W1
+### W2 — Time tracking, Clockify-grade · **L (~30h)** · deps: W1
 
-**Acceptance criteria**
+The largest item in v1, and correctly so: every number in the product — the Budget, the
+Ledger, invoices, effective rate, the hire trigger — is downstream of this log. Decisions Q2
+and the timer questions of 2026-08-21 are folded in below.
 
-- [ ] `task_time_entries` → `time_entries`: `task_id` becomes nullable, `project_id` added and **required**, `billable` bool added (defaults from `project.client_id is not null`), `note` text.
-- [ ] Start/stop a timer from a project, not only from a task or a focus session.
-- [ ] Exactly one timer can run at a time; starting a second stops the first and says so.
-- [ ] A running timer is visible from every screen and survives reload and app restart.
-- [ ] Manual entry and edit for a past day, including a duration typed as `1h15`.
-- [ ] Backfill: every existing entry gets `project_id` from its task; entries on tasks with no project land on a named "Unassigned" project rather than being dropped.
-- [ ] Desktop SQLite mirror updated for every new column (per the known drift failure mode) — or moot if desktop is parked.
+#### Data
 
-**Missing today:** project scope, billable, single-timer guarantee, global visibility, backfill.
+- [ ] `task_time_entries` → `time_entries`. `project_id` **NOT NULL**; `task_id` nullable; `description` text; `tag_id` nullable FK; `billable` bool (defaults from whether the project has a client); `source` (`timer | manual | gap_fill`); `invoiced_at` nullable.
+- [ ] **No `client_id` on the entry.** Client is derived through `project_id`. A second copy drifts the moment a project is reassigned.
+- [ ] `time_tags`: a **controlled list** the user manages in Settings (`Development`, `Meetings`, `Revisions`, …), because a tag is invoice structure and a typo becomes a wrong invoice line. Classified `org_shared`; free text is explicitly rejected.
+- [ ] Backfill: every existing entry takes `project_id` from its task; entries whose task has no project land on a named "Unassigned" project rather than being dropped. Verified by a query returning 0 nulls.
+- [ ] Desktop SQLite mirror gains every new column in the same PR, and `sqlite-defaults.test.ts` passes.
+
+#### The timer
+
+- [ ] Pick a project, type a description, hit start — **under two seconds, no task required.** Task links optionally, and when linked drives estimate-vs-actual.
+- [ ] Exactly one timer runs at a time. Starting a second stops the first and names what it stopped.
+- [ ] **Start time is authoritative; elapsed is computed, never accumulated.** The timer survives app quit, machine sleep, network loss, and midnight. A test asserts a timer started before a simulated quit reports correct elapsed after restart.
+- [ ] **Menu-bar timer** (Tauri): shows the current project and elapsed, one click to stop, one to switch project. Start/stop/switch only — editing lives in the app.
+- [ ] Timer is visible in the Today header while the app is open.
+
+#### Accuracy, not discipline
+
+- [ ] **Idle detection**: after 10 minutes of no input, on return prompt _"You were away 34 minutes — keep or trim?"_ with **trim preselected**. Never silently deletes; the default is the common case, the escape hatch covers thinking away from the keyboard.
+- [ ] **End-of-day gap fill**: the close lists untracked spans over 15 minutes — _"2:10–4:00 is untracked, what was that?"_ — with one-click assign to a recent project, or dismiss.
+- [ ] Manual entry and edit for any past day, accepting `1h15`, `75m`, `1.25` as durations.
+
+#### Thresholds (all four fire native notifications; each at most once per crossing)
+
+- [ ] **Client billing threshold** — _"Great White has passed 20h for August."_ Offers to draft the invoice (W4).
+- [ ] **Timer running long / past day end** — _"Still tracking Hume — 6h14m."_ Catches the forgot-to-stop error that silently corrupts everything downstream.
+- [ ] **Project over estimate** — fires only on projects that carry an estimate; hourly work without one never triggers it.
+- [ ] **Weekly hours worked** — once per week maximum, worded as a rate and delivery-risk signal and surfaced next to effective hourly rate on Money, per MISSION.md's framing. Not a wellness prompt, no streak, no daily variant.
+- [ ] No threshold fires twice for the same crossing, and all four are individually switchable off (law 3).
+
+#### Export
+
+- [ ] CSV of raw entries for any period: date, client, project, task, tag, description, duration, billable, invoiced.
+- [ ] The same rows feed W3's reporting and W4's invoice drafts — one query path, not three.
+
+**Rounding rule, stated once:** entries are tracked to the second and reported exactly.
+Rounding to 0.25h happens **only** when an invoice line is generated (W4).
+
+**Missing today:** all of it except a task-scoped start/stop and manual entry.
 
 ---
 
@@ -700,7 +732,7 @@ other, this document treats five surfaces as the decision and Law 4c as pending 
 | Q6 client onboarding automation                       | +14      |
 | Q7 tickler                                            | +6       |
 | Q8 sent/paid toggle                                   | +1       |
-| **Remaining**                                         | **~164** |
+| **Remaining**                                         | **~166** |
 
 At 8–10 h/week that is **16–20 weeks**. A quarter is 13. As now scoped, v1 is roughly **1.3
 to 1.6 quarters**, and 55% above the cut line this document recommended.
