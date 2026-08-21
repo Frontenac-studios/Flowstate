@@ -20,6 +20,8 @@ export * from "./goal-milestones";
 export * from "./goals";
 export * from "./month-intentions";
 export * from "./nudge-events";
+export * from "./org-memberships";
+export * from "./orgs";
 export * from "./phases";
 export * from "./planning-enums";
 export * from "./planning-suggestions";
