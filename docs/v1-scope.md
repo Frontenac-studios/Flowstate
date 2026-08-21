@@ -284,12 +284,28 @@ Everything in v1 scope with no code, or materially incomplete.
 
 Sizes: **S** <4h · **M** 4–12h · **L** 12–40h · **XL** >40h.
 
-### W1 — Data reshape: clients, rates, category collapse · **L (16h)** · deps: none
+### W0 — Land PR #262 (orgs + tenancy classification) · **S (2h)** · deps: none
+
+Open, CI-green, unmerged. It adds `orgs`, `org_memberships`, an org-resolving tRPC context,
+and `src/db/tenancy.ts` — which every table added in W1–W4 must be classified in, with a
+test that fails if one isn't. Merge it **before** the teardown, so the teardown is a
+deletion of ~18 entries from a map rather than a rebase across 18 dropped tables.
 
 **Acceptance criteria**
 
-- [ ] `clients` table: `id, user_id, org_id, name, default_rate_cents, currency, status, notes, archived_at`. RLS: owner-only, anon denied.
-- [ ] `projects` gains `client_id` (nullable — personal/internal work has none), `rate_cents` (null ⇒ inherit client default), `state` (`prospect | active | paused | done`), `is_maintenance` (bool).
+- [ ] #262 merged to `main`; typecheck, lint, test and build green.
+- [ ] Hosted DB migrated via the `apply-*.cjs` path (not `drizzle-kit migrate` — the hosted journal diverges), RLS re-verified afterwards.
+
+---
+
+### W1 — Data reshape: clients, rates, category collapse · **L (16h)** · deps: W0
+
+**Acceptance criteria**
+
+- [ ] `clients` table: `id, user_id, org_id, name, currency, status, notes, archived_at`. Classified `org_shared` in `tenancy.ts`. RLS: owner-only, anon denied.
+- [ ] **Rates live in their own `financial`-class table, never as a column on `clients` or `projects`.** `rates`: `id, user_id, org_id, client_id, project_id (nullable), amount_cents, effective_from`. This is a project rule in CLAUDE.md, enforced by the tenancy test in #262 — and it is right on the merits: a member's `SELECT *` on `projects` must not be able to leak a rate.
+- [ ] Rate resolution is one function: project rate → client rate → explicit error. Tested.
+- [ ] `projects` gains `client_id` (nullable — personal/internal work has none), `state` (`prospect | active | paused | done`), `is_maintenance` (bool). **No money columns.**
 - [ ] `project_category` collapsed to `business | personal`; migration maps `professional→business`, all four others→`personal`, and is reviewed as SQL before commit.
 - [ ] A project with `is_maintenance = true` requires no target and never appears in any goal-layer query — enforced in the query layer, with a test that asserts a maintenance project is absent from Target progress.
 - [ ] `/clients` list + detail: create, edit rate, archive. No delete (archive only).
@@ -484,20 +500,21 @@ MISSION.md's own rule: 20 hours of build to save 15 minutes a month = don't buil
 
 Dependency-respecting, money-first. Each phase ends with the app in a shippable state.
 
-| #      | Phase                                 | Items                   | Hours    | Why here                                                                                         |
-| ------ | ------------------------------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------ |
-| **P0** | Clear the decks                       | W12 teardown, W13 flags | 16       | Every later hour is spent in a smaller app. Also the only phase that can slip without cost.      |
-| **P1** | Clients + rates                       | W1                      | 16       | Keystone. Nothing about money works without it.                                                  |
-| **P2** | Time, honestly                        | W2                      | 10       | You start capturing correct data immediately — even before reporting exists, the entries accrue. |
-| **P3** | Get paid                              | W3, W4                  | 26       | **First money-positive milestone.** Ship here and Flowstate has already earned its quarter.      |
-| **P4** | Direction                             | W5, W11                 | 18       | The priority layer, minus the mechanics.                                                         |
-| **P5** | The two mechanics that change Tuesday | W6 Budget, W7 Sweep     | 20       | The mission's actual differentiator.                                                             |
-| —      | **Cut line**                          |                         | **106**  |                                                                                                  |
-| P6     | W8 Ledger                             |                         | 8        | Nice, not load-bearing, once the Budget is live.                                                 |
-| P7     | W9 Client onboarding                  |                         | 10       | Saves 20 min, 6× a year.                                                                         |
-| P8     | W10 Filter (cut version)              |                         | 10       | Highest-leverage _idea_; lowest-confidence _weights_.                                            |
-| P9     | W10 Filter public link                |                         | 14       | v1.1 by any reading.                                                                             |
-|        | **Total as scoped**                   |                         | **~148** |                                                                                                  |
+| #       | Phase                                 | Items                   | Hours    | Why here                                                                                         |
+| ------- | ------------------------------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| **P-1** | Land the boundary                     | W0 (PR #262)            | 2        | Already built and green. Merging first makes the teardown a map edit, not a rebase.              |
+| **P0**  | Clear the decks                       | W12 teardown, W13 flags | 16       | Every later hour is spent in a smaller app. Also the only phase that can slip without cost.      |
+| **P1**  | Clients + rates                       | W1                      | 16       | Keystone. Nothing about money works without it.                                                  |
+| **P2**  | Time, honestly                        | W2                      | 10       | You start capturing correct data immediately — even before reporting exists, the entries accrue. |
+| **P3**  | Get paid                              | W3, W4                  | 26       | **First money-positive milestone.** Ship here and Flowstate has already earned its quarter.      |
+| **P4**  | Direction                             | W5, W11                 | 18       | The priority layer, minus the mechanics.                                                         |
+| **P5**  | The two mechanics that change Tuesday | W6 Budget, W7 Sweep     | 20       | The mission's actual differentiator.                                                             |
+| —       | **Cut line**                          |                         | **108**  |                                                                                                  |
+| P6      | W8 Ledger                             |                         | 8        | Nice, not load-bearing, once the Budget is live.                                                 |
+| P7      | W9 Client onboarding                  |                         | 10       | Saves 20 min, 6× a year.                                                                         |
+| P8      | W10 Filter (cut version)              |                         | 10       | Highest-leverage _idea_; lowest-confidence _weights_.                                            |
+| P9      | W10 Filter public link                |                         | 14       | v1.1 by any reading.                                                                             |
+|         | **Total as scoped**                   |                         | **~150** |                                                                                                  |
 
 Item 8, the tickler, is 0 hours because it is bought.
 
@@ -519,7 +536,7 @@ thirteen-week budget before a single new feature lands.
 
 ### 7.3 The cut line
 
-**Ship v1 at P0–P5: ~106 hours.** That fits a quarter at 8–10 h/week with roughly a week of
+**Ship v1 at P-1–P5: ~108 hours.** That fits a quarter at 8–10 h/week with roughly a week of
 slack, and it is genuinely useful standing alone:
 
 > A tool where every client engagement is a project with a rate, every minute is tracked and
@@ -586,5 +603,5 @@ the swap is clean: Filter (cut version, 10h) in, Sweep (10h) out, same total.
 | **GAPS** (v1 scope with no code)  | 18    |
 | **NEEDS KAT**                     | 10    |
 
-**Total v1 as scoped: ~148h. Recommended cut line: ~106h. Fits a quarter: only at the cut
+**Total v1 as scoped: ~150h. Recommended cut line: ~108h. Fits a quarter: only at the cut
 line.**
