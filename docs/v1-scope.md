@@ -593,6 +593,71 @@ the swap is clean: Filter (cut version, 10h) in, Sweep (10h) out, same total.
 
 ---
 
+## 8a. Decisions made 2026-08-21 (supersede the leans in §8)
+
+| #   | Question                             | **Decision**       | Consequence                                                                                                                                                        |
+| --- | ------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Desktop app                          | **KEEP**           | Every schema change in W1–W4 pays a SQLite mirror tax. ~+9h across the quarter. Also now mandated by MISSION.md's new "Desktop is not a wrapper" section.          |
+| 2   | Care                                 | **PARK, not kill** | 4 tables + 21 components + the `care` router stay, flagged off. Hosted holds **0 care rows**, so nothing to export. Teardown shrinks ~2h; flag plumbing grows ~1h. |
+| 3   | Chat                                 | **PARK**           | Coach docks removed from every surface; the composer's "+" must be un-hidden in the same PR or task creation breaks.                                               |
+| 4   | `protected_blocks` / `reserved_days` | **KILL**           | As specced. 38 UI references — the largest single deletion.                                                                                                        |
+
+Parked list is now **five**: Calendar, Chat, Focus, Care, and (no longer) Desktop.
+
+### Revised estimate
+
+|                                        | Hours    |
+| -------------------------------------- | -------- |
+| Cut line as written (§7.3)             | 108      |
+| Care parked instead of killed          | −1       |
+| Desktop kept — mirror tax across W1–W4 | +9       |
+| **Revised cut line**                   | **~116** |
+
+At 8–10 h/week × 13 weeks (104–130h), the slack is gone. It still fits at the top of that
+range, but there is no longer room for a bad fortnight. **This does not yet price the
+MISSION.md additions below.**
+
+---
+
+## 8b. MISSION.md changed on 2026-08-21 — what it costs
+
+Four new sections landed after this triage was written. Three of them add scope.
+
+**Product Law 4c — four surfaces (Today, Week, Money, Quarter).** The v1 nav proposed in
+§3.2 was eight entries (Today · Week · Projects · Clients · Time · Goals · Backlog ·
+Settings). That now violates a product law. Projects, Clients, Time, Backlog and Goals must
+fold into the four: Projects/Clients into **Money** and **Week**, Time reporting into
+**Money**, Goals into **Quarter**, the Sweep and Backlog into **Week**. This is an
+information-architecture rework of W3/W5/W7's surfaces, not new functionality. **~+6h**, and
+it should be decided before W3 is built, not after.
+
+**"Time tracking has to be nearly free."** W2 was specced as project-scoped entries plus a
+timer: 10h. The new section requires a **menu-bar timer**, **idle detection with a trim
+offer**, and **retroactive end-of-day gap-filling** ("2:10–4:00 is untracked, what was
+that?"). Those are three separate features, two of them Tauri-side. W2 becomes **L, ~22h
+(+12)**. Given "every number in this product is downstream of the time log," I think this is
+correctly prioritised — but it is the largest single scope increase in the document.
+
+**"Desktop is not a wrapper."** This closes NEEDS-KAT #1 (keep desktop — already decided
+above) and **reverses my build-vs-buy call on client onboarding**. §6 recommended a checklist
+instead of folder automation, on the grounds that the API work cost 20h to save 2h/year.
+MISSION.md now names local folder + starter-contract creation "the single most valuable
+automation in the product" and puts it at automation Level 3. Local filesystem writes from
+Tauri are much cheaper than the Drive API I was pricing against, so the objection is
+substantially answered. W9 goes from a 10h checklist to **~14h of real automation**, and it
+arguably moves above the cut line. **NEEDS KAT.**
+
+**"Reviews arrive pre-answered" / "never a blank page."** Not new scope so much as a binding
+constraint on W4, W7 and W8: each must open as a populated draft the user edits, never a
+form. Already how W4 and W7 are specced; W8's acceptance criteria should say so explicitly.
+
+**Revised total including the MISSION.md additions: cut line ~134h.** That no longer fits a
+quarter of evenings and weekends at any realistic rate. Something below the line has to move
+out, or W2's desktop-side time features (menu-bar timer, idle detection) become v1.1 while
+the plain project timer ships in v1. **NEEDS KAT.**
+
+---
+
 ## 9. Scoreboard
 
 | Bucket                            | Count |
