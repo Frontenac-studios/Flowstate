@@ -658,6 +658,75 @@ the plain project timer ships in v1. **NEEDS KAT.**
 
 ---
 
+## 8c. Decisions made 2026-08-21 (second pass)
+
+| Q                   | Decision                                                                                                                                                 | Effect                                                                                                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 Four surfaces     | **B — five surfaces.** Today · Week · **Projects** · Money · Quarter                                                                                     | Projects keeps its own home and the Miller board stays one click away. **Conflicts with Product Law 4c**, added to MISSION.md the same day — see the note below. IA rework +3h (vs +6h for strict four). |
+| 2 Timer scope       | **A — all three desktop time features in v1**, plus Clockify-grade entry (tags, required project, client, threshold notifications, invoice-ready export) | W2 goes 10h → **~28h**. Largest item in the plan.                                                                                                                                                        |
+| 3 Calendar          | **Keep** (not parked)                                                                                                                                    | Meeting bars stay on Today; the Budget can net out booked time. Calendar must survive the W1 category collapse. +1h.                                                                                     |
+| 4 Goals data        | **Keep**                                                                                                                                                 | The single goal row is migrated into the new Targets model rather than dropped. Bingo schema still goes. +1h.                                                                                            |
+| 5 The Filter        | **Third option** — self-entered scoring panel in v1, public intake link in v1.1                                                                          | +6h. Decision system in v1, token/anon-route infrastructure deferred.                                                                                                                                    |
+| 6 Client onboarding | **Keep, above the line**                                                                                                                                 | Local folder tree + starter contracts + project + phases + tasks, opened in Finder. Level 3. +14h.                                                                                                       |
+| 7 Tickler           | **Build**                                                                                                                                                | ~6h once Today has a due strip. Surfaces on Today on the trigger date only; no fifth surface.                                                                                                            |
+| 8 Invoice output    | **A now, B later**                                                                                                                                       | Markdown + CSV export and a manual sent/paid toggle in v1. In-app PDF and payment tracking explicitly back-burnered. +1h.                                                                                |
+
+Parked list is now **three**: Chat, Focus, Care. (Focus needs revisiting once the new timer
+lands — see §8e.)
+
+### Law 4c conflict
+
+MISSION.md gained Product Law 4c — _"Four surfaces. Today, Week, Money, Quarter. A feature
+that needs a fifth home is a feature that doesn't belong"_ — on 2026-08-21. Decision Q1
+above creates a fifth home for Projects on the same day. That is a legitimate call to make;
+what is not legitimate is leaving both statements standing, because the next scoping
+argument will cite whichever one is convenient. **Either amend Law 4c to name five surfaces,
+or record Projects as its one documented exception.** Until MISSION.md says one or the
+other, this document treats five surfaces as the decision and Law 4c as pending amendment.
+
+### 8d. Revised arithmetic
+
+|                                                       | Hours    |
+| ----------------------------------------------------- | -------- |
+| Cut line as recommended in §7.3                       | 108      |
+| W0 complete (merged + hosted migrated)                | −2       |
+| Care parked rather than killed                        | −1       |
+| Desktop kept — SQLite mirror tax across W1–W4         | +9       |
+| Q1 five-surface IA rework                             | +3       |
+| Q2 W2 → full Clockify-grade time tracking (10h → 28h) | +18      |
+| Q3 calendar retained through the reshape              | +1       |
+| Q4 goal row migrated rather than dropped              | +1       |
+| Q5 Filter scoring panel                               | +6       |
+| Q6 client onboarding automation                       | +14      |
+| Q7 tickler                                            | +6       |
+| Q8 sent/paid toggle                                   | +1       |
+| **Remaining**                                         | **~164** |
+
+At 8–10 h/week that is **16–20 weeks**. A quarter is 13. As now scoped, v1 is roughly **1.3
+to 1.6 quarters**, and 55% above the cut line this document recommended.
+
+Nothing above was the wrong call in isolation. Taken together they restore most of what the
+cut line removed. The three cheapest ways back under 130h, in order of least pain:
+
+1. **Split W2 after all** — menu-bar timer and idle detection to v1.1, keep tags, required
+   project, thresholds, exports and end-of-day gap filling. **−8h.**
+2. **Client onboarding to v1.1** — it pays off per new client signed; if the pipeline is
+   quiet this quarter it is 14h waiting for work. **−14h.**
+3. **Tickler to v1.1** — eight dates a year, and the calendar handles them until then.
+   **−6h.**
+
+All three: **136h**. Any two: ~142–150h. This is a decision to take deliberately, not by
+discovering it in week eleven.
+
+### 8e. Focus mode
+
+Focus is still on the parked list, but decision Q2 makes it ambiguous: Focus is currently
+the only place a timer starts, and W2 replaces that with a first-class timer. Once W2 lands,
+Focus is either redundant (park as planned) or it becomes the timer's full-screen mode
+(un-park and fold in). Defer until W2 is built and the new timer can be used for a week.
+
+---
+
 ## 9. Scoreboard
 
 | Bucket                            | Count |
