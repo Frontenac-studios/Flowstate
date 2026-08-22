@@ -9,6 +9,33 @@ _Revised August 2026. Supersedes the "whole-life planning app" framing in README
 Every other tool helps you manage work you've already accepted. Flowstate helps you not accept
 the wrong work — and then get the work you did accept actually done.
 
+## The second sell: calm through transparency
+
+The first sell is subtraction. The second is what's left over once you've subtracted: **a quiet,
+truthful workspace where nothing is hiding.**
+
+The anxiety in running a small service business does not come from having a lot to do. It comes
+from **suspecting there is something you've forgotten** — an unbilled month, a deliverable due
+Thursday you haven't looked at, a client who's gone quiet, a project you can't say is on track or
+not. That suspicion is what makes people check things compulsively, keep six tabs open, and
+re-read their task list at 11pm without changing anything.
+
+So calm is not achieved by showing less. It's achieved by being **trustworthy enough that the
+user stops checking.** If Flowstate reliably surfaces what's coming and what's slipping, the user
+can safely ignore everything else — and _that_ is the calm. Every design decision follows from
+earning that trust:
+
+- **Capture must be complete**, or the user keeps a second list, and a second list means the
+  first one can't be trusted, and the whole thing collapses.
+- **The numbers must be true.** A time total that's approximately right is worse than none,
+  because it teaches the user to double-check.
+- **Nothing important may live only in the user's head.** Deadlines, unbilled hours, stale
+  projects, and upcoming deliverables have exactly one home.
+
+**Transparency and calm are in tension, and the resolution is a rule:** transparency means every
+truth is _available and accurate_, not that it's _on screen_. One screen shows what's needed now.
+Everything else is one keystroke away and always correct.
+
 ## What it is
 
 An operating system for a solo founder or a very small service business. It runs the business —
@@ -165,6 +192,109 @@ when your skills do, so learning is treated as a business investment, not a hobb
 
 ---
 
+---
+
+## How it feels to use
+
+### Five surfaces, and that's all
+
+**Today. Week. Projects. Money. Quarter.** One surface per altitude. Every feature must live
+inside one of them or it doesn't exist. This cap is the clutter defense — the reason tools get
+noisy is that each new feature gets a new home, and nobody ever removes one.
+
+Projects is the one surface that is not an altitude. It earns its place because the Miller board
+is the daily working view for delivery, and burying it a click inside Week would cost more than
+the extra row in the rail. It is the exception, and it is the last one.
+
+**Today** is a single column. The Top 3, the running timer, and everything else collapsed
+beneath. No badge counts, no sidebar of numbers, no notification dots. A badge is an anxiety
+generator that never turns off.
+
+**Week** is the steering surface: pipeline, what's due in the next fourteen days across every
+client, what's gone stale, and the Sweep.
+
+**Money** is the monthly surface: revenue, effective rate, hours billed vs. worked, invoices sent
+and unpaid.
+
+**Quarter** is the bet: Directions, Targets, the learning roadmap.
+
+### Rhythm, not interruption
+
+Flowstate is silent during the working day. Its touchpoints are **four per fortnight**, not forty
+per day:
+
+- **Morning open** — today's plan, the Top 3, one thing handed to you to start.
+- **End-of-day close** — under two minutes. Confirm the time log, capture what landed.
+- **Friday steering** — the weekly review, pre-answered (see below).
+- **Biweekly ledger** — the one honest number.
+
+Everything else is silent unless evidence has earned an interruption. A tool that has to shout to
+be useful has already failed.
+
+### Reviews arrive pre-answered
+
+A review is never a blank form. It is a **draft the user edits.** Flowstate already knows what
+happened — it has the time log, the completed tasks, the invoices, the stale items. So the weekly
+review opens as: _here's your week, here's the ledger, here are six things that have gone quiet —
+rule on them._ Five minutes of judgment, not forty-five minutes of recall. The user's scarce
+resource is decisions, not typing.
+
+### It arrives with a draft, never a blank page
+
+This is the difference between a tool and an assistant. Paste a client email → tasks are
+proposed. A lead comes in → the Filter has already scored it. Hours cross the billing threshold →
+an invoice is drafted and waiting. A project goes quiet for two weeks → it shows up in the Sweep
+without being asked.
+
+The user's job is to **approve, edit, or reject** — never to compose from nothing.
+
+### Time tracking has to be nearly free
+
+Every number in this product — the Budget, the Ledger, invoices, effective rate, the hire trigger
+— is downstream of the time log. If tracking time takes discipline, the log will be wrong, and
+every promise this product makes fails at once. So:
+
+- Starting a timer is one click from the task, and stopping is automatic when another starts.
+- The desktop app notices idle time and offers to trim it.
+- Gaps get filled **retroactively at end of day** — _"2:10–4:00 is untracked, what was that?"_ —
+  because correcting the past is far easier than sustaining discipline in the present.
+
+**Design principle: never ask the user to be disciplined when you can ask them to be accurate
+later.**
+
+## Desktop is not a wrapper
+
+The desktop app (Tauri) exists because four things are impossible or bad in a browser:
+
+1. **Local file system access.** Client onboarding creates real folders and real starter contracts
+   on the user's actual disk. This is the single most valuable automation in the product and a web
+   app simply cannot do it.
+2. **Global capture hotkey.** A thought becomes a captured item in under two seconds, from
+   anywhere, without switching windows. Capture friction is what creates second lists.
+3. **A menu-bar timer.** Always visible, one click, shows the current task. Time tracking that
+   requires finding a tab is time tracking that doesn't happen.
+4. **Idle detection and offline-first.** The timer keeps running without a network, and the app
+   knows when the user walked away.
+
+Launches at login, opens to Today. Native notifications exist but are rationed to the rhythm
+above.
+
+## The automation ladder
+
+Every workflow sits at one of four levels, and the level is a deliberate choice:
+
+| Level | What it means            | Examples                                                                                           |
+| ----- | ------------------------ | -------------------------------------------------------------------------------------------------- |
+| 0     | Manual                   | Deciding a price. Writing the actual work.                                                         |
+| 1     | Templated                | Client onboarding folder structure, starter contracts, recurring task sets.                        |
+| 2     | **Drafted for approval** | Invoices at threshold, tasks parsed from an email, the Filter's recommendation, the weekly review. |
+| 3     | Silent                   | Folder creation, project scaffolding, recurring task generation, tickler firing, time roll-ups.    |
+
+**The rule: anything that touches a client, a price, or a commitment stops at Level 2, forever.**
+Internal bookkeeping may run at Level 3. This is Product Law 1, expressed as a ladder.
+
+---
+
 ## Product laws
 
 1. **Flowstate drafts. You sign.** The tool prepares invoices, proposals, folders, and
@@ -179,6 +309,11 @@ when your skills do, so learning is treated as a business investment, not a hobb
    faster than any habit it was meant to build. Knowing when _not_ to fire is the entire
    difference between day 3 and day 300.
 4. **Time is the score.** Not tasks completed. Not streaks.
+   4b. **Silence is the default state.** The product's resting condition is quiet. Anything that
+   speaks must justify itself, and a feature that needs a badge to be noticed is a feature that
+   isn't earning its place.
+   4c. **Five surfaces.** Today, Week, Projects, Money, Quarter. A feature that needs a sixth
+   home is a feature that doesn't belong.
 5. **A parked feature is a door left ajar.** Park only what is finished and harmless. Kill the
    rest.
 6. **Build for one user.** Don't design for a market. But don't make irreversible decisions
