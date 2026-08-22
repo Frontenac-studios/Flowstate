@@ -30,6 +30,7 @@
     "test:e2e": "playwright test",
     "db:e2e-setup": "node scripts/apply-drizzle-migrations.cjs && node scripts/apply-supabase-migrations.cjs",
     "db:check": "node scripts/check-database.cjs",
+    "db:diff-hosted": "node scripts/diff-hosted-schema.cjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -100,7 +101,7 @@
     "vitest": "^4.1.6"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "*.{js,cjs,mjs,jsx,ts,tsx}": [
       "eslint --fix --max-warnings=0",
       "prettier --write"
     ],
