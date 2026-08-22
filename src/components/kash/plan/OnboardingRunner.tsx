@@ -177,7 +177,7 @@ export function OnboardingRunner() {
 
   const holdCategory = useMemo((): ProjectCategory => {
     const first = incompletePinned.find((t) => t.category && !t.categoryUnresolved);
-    return first?.category ?? "professional";
+    return first?.category ?? "business";
   }, [incompletePinned]);
 
   const holdPreview = useMemo(() => {

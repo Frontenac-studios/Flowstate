@@ -3,8 +3,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createSqliteDb, type SqliteDb } from "../index";
 import { careEvents } from "./care-events";
+import { clients } from "./clients";
 import { phases } from "./phases";
 import { projects } from "./projects";
+import { rates } from "./rates";
 
 // Regression: the SQLite schema must mirror the Postgres `defaultRandom()` /
 // `defaultNow()` defaults so that inserts which omit `id`/`created_at`/`updated_at`
@@ -26,7 +28,7 @@ describe("sqlite schema insert-time defaults", () => {
         userId: "11111111-1111-1111-1111-111111111111",
         name: "Frontenac Studios Launch",
         slug: "frontenac-studios-launch",
-        category: "professional",
+        category: "business",
       })
       .returning();
 
@@ -41,7 +43,7 @@ describe("sqlite schema insert-time defaults", () => {
     const userId = "11111111-1111-1111-1111-111111111111";
     const [project] = await db
       .insert(projects)
-      .values({ userId, name: "P", slug: "p", category: "adulting" })
+      .values({ userId, name: "P", slug: "p", category: "personal" })
       .returning();
 
     const [phase] = await db
@@ -57,6 +59,64 @@ describe("sqlite schema insert-time defaults", () => {
 
     const [fetched] = await db.select().from(phases).where(eq(phases.id, phase!.id));
     expect(fetched!.projectId).toBe(project!.id);
+  });
+
+  it("creates a project with is_maintenance/state defaults from the mirror", async () => {
+    const [row] = await db
+      .insert(projects)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        name: "P",
+        slug: "p",
+        category: "business",
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(row!.state).toBe("active");
+    expect(row!.isMaintenance).toBe(false);
+    expect(row!.clientId).toBeNull();
+  });
+
+  it("creates a client without explicit id/timestamps/currency/status", async () => {
+    const [row] = await db
+      .insert(clients)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        name: "Great White",
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.currency).toBe("USD");
+    expect(row!.status).toBe("active");
+    expect(row!.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a rate row with default effectiveFrom/timestamps", async () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    const orgId = "22222222-2222-2222-2222-222222222222";
+    const [client] = await db
+      .insert(clients)
+      .values({ userId, orgId, name: "Great White" })
+      .returning();
+
+    const [row] = await db
+      .insert(rates)
+      .values({
+        userId,
+        orgId,
+        clientId: client!.id,
+        amountCents: 15000,
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(row!.amountCents).toBe(15000);
+    expect(row!.projectId).toBeNull();
+    expect(row!.effectiveFrom).toBeInstanceOf(Date);
   });
 
   it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {

@@ -7,15 +7,15 @@ import {
   resolveTaskCategory,
 } from "./resolveTaskCategory";
 
-// A confident inference of "relationships" — strong enough to clear the threshold.
-const inferRelationships: InferCategoryFromTitle = () => ({
-  category: "relationships",
+// A confident inference of "personal" — strong enough to clear the threshold.
+const inferPersonal: InferCategoryFromTitle = () => ({
+  category: "personal",
   confidence: 0.95,
 });
 
 // Inference that has an opinion but is below the default threshold.
 const inferWeakly: InferCategoryFromTitle = () => ({
-  category: "relationships",
+  category: "personal",
   confidence: 0.4,
 });
 
@@ -27,38 +27,38 @@ describe("resolveTaskCategory", () => {
     const result = resolveTaskCategory(
       "Call mom",
       {
-        explicit: "professional",
-        projectCategory: "personal_projects",
-        lastUsed: "body_mind",
+        explicit: "business",
+        projectCategory: "personal",
+        lastUsed: "personal",
         online: true,
       },
-      inferRelationships
+      inferPersonal
     );
-    expect(result).toEqual({ category: "professional", unresolved: false, source: "explicit" });
+    expect(result).toEqual({ category: "business", unresolved: false, source: "explicit" });
   });
 
   it("project category wins when there is no explicit value", () => {
     const result = resolveTaskCategory(
       "Ship the build",
-      { projectCategory: "personal_projects", lastUsed: "professional", online: true },
-      inferRelationships
+      { projectCategory: "personal", lastUsed: "business", online: true },
+      inferPersonal
     );
-    expect(result.category).toBe("personal_projects");
+    expect(result.category).toBe("personal");
     expect(result.source).toBe("project");
   });
 
   it("AI wins over last-used when online and above the threshold", () => {
     const result = resolveTaskCategory(
       "Call mom",
-      { lastUsed: "professional", online: true },
-      inferRelationships
+      { lastUsed: "business", online: true },
+      inferPersonal
     );
-    expect(result).toEqual({ category: "relationships", unresolved: false, source: "ai" });
+    expect(result).toEqual({ category: "personal", unresolved: false, source: "ai" });
   });
 
   it("AI is accepted exactly at the threshold (>=)", () => {
     const inferAtThreshold: InferCategoryFromTitle = () => ({
-      category: "relationships",
+      category: "personal",
       confidence: AI_CONFIDENCE_THRESHOLD,
     });
     const result = resolveTaskCategory("Call mom", { online: true }, inferAtThreshold);
@@ -68,34 +68,30 @@ describe("resolveTaskCategory", () => {
   it("falls back to last-used when the AI guess is below the threshold", () => {
     const result = resolveTaskCategory(
       "Call mom",
-      { lastUsed: "professional", online: true },
+      { lastUsed: "business", online: true },
       inferWeakly
     );
-    expect(result).toEqual({ category: "professional", unresolved: false, source: "lastUsed" });
+    expect(result).toEqual({ category: "business", unresolved: false, source: "lastUsed" });
   });
 
   it("falls back to last-used when the AI abstains", () => {
     const result = resolveTaskCategory(
       "Do the thing",
-      { lastUsed: "professional", online: true },
+      { lastUsed: "business", online: true },
       inferNothing
     );
     expect(result.source).toBe("lastUsed");
   });
 
   it("skips the AI layer entirely when offline, even if it would be confident", () => {
-    const infer = vi.fn(inferRelationships);
-    const result = resolveTaskCategory(
-      "Call mom",
-      { lastUsed: "professional", online: false },
-      infer
-    );
+    const infer = vi.fn(inferPersonal);
+    const result = resolveTaskCategory("Call mom", { lastUsed: "business", online: false }, infer);
     expect(infer).not.toHaveBeenCalled();
-    expect(result).toEqual({ category: "professional", unresolved: false, source: "lastUsed" });
+    expect(result).toEqual({ category: "business", unresolved: false, source: "lastUsed" });
   });
 
   it("returns the unresolved invisible-plumbing fallback when nothing else resolves", () => {
-    const result = resolveTaskCategory("Call mom", { online: false }, inferRelationships);
+    const result = resolveTaskCategory("Call mom", { online: false }, inferPersonal);
     expect(result).toEqual({
       category: DEFAULT_FALLBACK_CATEGORY,
       unresolved: true,
@@ -112,11 +108,11 @@ describe("resolveTaskCategory", () => {
   it("honours a custom threshold (0 makes any AI opinion win)", () => {
     const result = resolveTaskCategory(
       "Call mom",
-      { lastUsed: "professional", online: true },
+      { lastUsed: "business", online: true },
       inferWeakly,
       0
     );
     expect(result.source).toBe("ai");
-    expect(result.category).toBe("relationships");
+    expect(result.category).toBe("personal");
   });
 });

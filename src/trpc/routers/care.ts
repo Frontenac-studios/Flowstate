@@ -272,7 +272,7 @@ export const careRouter = createTRPCRouter({
 
   // Add to my day — spawn a Body & Mind task linked back via tasks.care_activity_id,
   // plus a recurrence row when the practice carries a cadence. Mirrors the task +
-  // recurrence creation path in tasks.create (category forced to body_mind here).
+  // recurrence creation path in tasks.create (category forced to personal here).
   addToMyDay: protectedProcedure
     .input(
       z.object({
@@ -296,7 +296,7 @@ export const careRouter = createTRPCRouter({
           userId: ctx.userId,
           title: activity.title,
           priority: 0,
-          category: "body_mind",
+          category: "personal",
           categoryUnresolved: false,
           careActivityId: activity.id,
           scheduledDate: rrule ? null : pinDate,

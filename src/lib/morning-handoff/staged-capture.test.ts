@@ -8,7 +8,7 @@ describe("staged-capture", () => {
       {
         itemId: "a",
         title: " Email lease ",
-        category: "adulting",
+        category: "personal",
         projectSlug: null,
         priority: 1,
       },
@@ -17,6 +17,6 @@ describe("staged-capture", () => {
     expect(isStagedCaptureId(rows[0]!.id)).toBe(true);
     expect(rows[0]!.title).toBe("Email lease");
     expect(rows[0]!.sourceItemId).toBe("a");
-    expect(rows[0]!.category).toBe("adulting");
+    expect(rows[0]!.category).toBe("personal");
   });
 });

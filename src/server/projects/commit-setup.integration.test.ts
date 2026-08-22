@@ -37,7 +37,7 @@ describe("commitProjectSetup integration (sqlite)", () => {
           userId,
           name: "Move",
           slug: "move",
-          category: "adulting",
+          category: "personal",
           createdAt: now,
           updatedAt: now,
         })

@@ -5,7 +5,7 @@ import { formatCreateTaskPlacementSummary } from "./resolve-create-task-placemen
 
 describe("buildCreateTaskPlacementSummary", () => {
   const inboxLine = formatCreateTaskPlacementSummary({
-    category: "adulting",
+    category: "personal",
     projectName: null,
     phaseName: null,
     landing: "inbox",
@@ -30,7 +30,7 @@ describe("buildCreateTaskPlacementSummary", () => {
 
   it("omits the placement when created tasks landed in different places", () => {
     const projectLine = formatCreateTaskPlacementSummary({
-      category: "professional",
+      category: "business",
       projectName: "Launch",
       phaseName: "Build",
       landing: "inbox",

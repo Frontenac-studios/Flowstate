@@ -11,7 +11,7 @@ function item(
 ): AbyssBalanceItemInput {
   return {
     type: "idea",
-    category: "body_mind",
+    category: "personal",
     promotedTaskId: null,
     resurfaceCount: 0,
     lastTouchedAt: new Date("2026-06-01T12:00:00Z"),
@@ -26,11 +26,11 @@ describe("abyss-balance-candidates", () => {
         item({ id: "1", title: "Idea first", type: "idea", resurfaceCount: 9 }),
         item({ id: "2", title: "Task wins", type: "task" }),
       ],
-      ["body_mind"]
+      ["personal"]
     );
 
     expect(picked).toEqual([
-      { abyssItemId: "2", taskId: null, title: "Task wins", category: "body_mind" },
+      { abyssItemId: "2", taskId: null, title: "Task wins", category: "personal" },
     ]);
   });
 
@@ -56,7 +56,7 @@ describe("abyss-balance-candidates", () => {
           lastTouchedAt: new Date("2026-05-01T12:00:00Z"),
         }),
       ],
-      ["body_mind"]
+      ["personal"]
     );
 
     expect(picked[0]?.title).toBe("Brightest");
@@ -65,23 +65,22 @@ describe("abyss-balance-candidates", () => {
   it("returns one candidate per requested category and preserves order", () => {
     const picked = pickAbyssBalanceCandidates(
       [
-        item({ id: "1", title: "Walk more", category: "body_mind" }),
-        item({ id: "2", title: "Call mom", category: "relationships" }),
-        item({ id: "3", title: "Side project", category: "personal_projects" }),
+        item({ id: "1", title: "Walk more", category: "personal" }),
+        item({ id: "2", title: "Send invoice", category: "business" }),
       ],
-      ["relationships", "body_mind"]
+      ["business", "personal"]
     );
 
     expect(picked).toEqual([
-      { abyssItemId: "2", taskId: null, title: "Call mom", category: "relationships" },
-      { abyssItemId: "1", taskId: null, title: "Walk more", category: "body_mind" },
+      { abyssItemId: "2", taskId: null, title: "Send invoice", category: "business" },
+      { abyssItemId: "1", taskId: null, title: "Walk more", category: "personal" },
     ]);
   });
 
   it("passes through a linked task id when present", () => {
     const picked = pickAbyssBalanceCandidates(
       [item({ id: "1", title: "Promoted task", promotedTaskId: "task-abc", type: "task" })],
-      ["body_mind"]
+      ["personal"]
     );
 
     expect(picked[0]?.taskId).toBe("task-abc");

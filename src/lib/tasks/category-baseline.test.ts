@@ -11,14 +11,12 @@ function week(partial: Partial<CategoryAttention>): CategoryAttention {
 }
 
 describe("evaluateCategoryBaseline", () => {
-  const workHeavyHistory = Array.from({ length: 4 }, () =>
-    week({ professional: 80, body_mind: 10, relationships: 10 })
-  );
+  const workHeavyHistory = Array.from({ length: 4 }, () => week({ business: 80, personal: 20 }));
 
   it("suppresses nudges during cold start", () => {
     const result = evaluateCategoryBaseline({
       historicalWeeks: workHeavyHistory.slice(0, 2),
-      currentWeek: week({ professional: 90, body_mind: 5, relationships: 5 }),
+      currentWeek: week({ business: 90, personal: 5 }),
     });
     expect(result.ready).toBe(false);
     expect(result.mostStarved).toBeNull();
@@ -27,34 +25,18 @@ describe("evaluateCategoryBaseline", () => {
   it("flags most-starved category when lopsided and below baseline", () => {
     const result = evaluateCategoryBaseline({
       historicalWeeks: workHeavyHistory,
-      currentWeek: week({ professional: 90, body_mind: 3, relationships: 5 }),
+      currentWeek: week({ business: 90, personal: 5 }),
     });
     expect(result.ready).toBe(true);
     expect(result.lopsided).toBe(true);
-    expect(result.mostStarved).toBe("body_mind");
+    expect(result.mostStarved).toBe("personal");
   });
 
-  it("does not flag when mix is balanced", () => {
-    const balanced = Array.from({ length: 4 }, () =>
-      week({
-        professional: 20,
-        body_mind: 20,
-        relationships: 20,
-        adulting: 20,
-        personal_projects: 20,
-      })
-    );
+  it("does not flag when attention holds at its usual baseline", () => {
     const result = evaluateCategoryBaseline({
-      historicalWeeks: balanced,
-      currentWeek: week({
-        professional: 20,
-        body_mind: 20,
-        relationships: 20,
-        adulting: 20,
-        personal_projects: 20,
-      }),
+      historicalWeeks: workHeavyHistory,
+      currentWeek: week({ business: 80, personal: 20 }),
     });
-    expect(result.lopsided).toBe(false);
     expect(result.mostStarved).toBeNull();
   });
 });

@@ -10,7 +10,7 @@ function makeTask(overrides: Partial<TriagePickTask> = {}): TriagePickTask {
     id: "task-1",
     title: "Scope Trainer Tool Build",
     projectName: "Hume Builds",
-    category: "professional",
+    category: "business",
     ...overrides,
   };
 }
@@ -26,7 +26,7 @@ describe("TriageTaskPickList", () => {
     const row = screen.getByText("Scope Trainer Tool Build");
     expect(row).toHaveTextContent("· Hume Builds");
     const name = screen.getByText(/· Hume Builds/);
-    expect(name).toHaveStyle({ color: "var(--cat-professional-text)" });
+    expect(name).toHaveStyle({ color: "var(--cat-business-text)" });
   });
 
   it("does not render a #slug meta line", () => {

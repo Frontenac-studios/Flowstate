@@ -103,11 +103,8 @@ const TYPE_LABELS: Record<AbyssItemType, string> = {
 };
 
 const CATEGORY_LABELS: Record<ProjectCategory, string> = {
-  professional: "Professional",
-  personal_projects: "Personal Projects",
-  relationships: "Relationships",
-  body_mind: "Body & Mind",
-  adulting: "Adulting",
+  business: "Business",
+  personal: "Personal",
 };
 
 function pushSorted<T extends AbyssGroupableItem>(

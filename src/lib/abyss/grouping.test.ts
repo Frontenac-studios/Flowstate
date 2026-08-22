@@ -104,15 +104,11 @@ describe("selectKeepsCalling", () => {
 describe("groupItems", () => {
   it("groups by category in enum order, uncategorised last, dropping empties", () => {
     const groups = groupItems(
-      [
-        item({ category: "adulting" }),
-        item({ category: "professional" }),
-        item({ category: null }),
-      ],
+      [item({ category: "personal" }), item({ category: "business" }), item({ category: null })],
       "category",
       NOW
     );
-    expect(groups.map((g) => g.key)).toEqual(["professional", "adulting", "uncategorised"]);
+    expect(groups.map((g) => g.key)).toEqual(["business", "personal", "uncategorised"]);
   });
 
   it("groups by type", () => {
@@ -132,8 +128,8 @@ describe("groupItems", () => {
   it("sorts within a group by recency (newest first)", () => {
     const groups = groupItems(
       [
-        item({ category: "professional", title: "older", lastTouchedAt: daysAgo(10) }),
-        item({ category: "professional", title: "newer", lastTouchedAt: daysAgo(1) }),
+        item({ category: "business", title: "older", lastTouchedAt: daysAgo(10) }),
+        item({ category: "business", title: "newer", lastTouchedAt: daysAgo(1) }),
       ],
       "category",
       NOW

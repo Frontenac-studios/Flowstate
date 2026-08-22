@@ -15,21 +15,21 @@ describe("category-settings defaults", () => {
   });
 
   it("default label matches the seed meta label", () => {
-    expect(defaultCategoryLabel("body_mind")).toBe("Body & Mind");
-    expect(defaultCategoryLabel("professional")).toBe("Professional");
+    expect(defaultCategoryLabel("personal")).toBe("Personal");
+    expect(defaultCategoryLabel("business")).toBe("Business");
   });
 });
 
 describe("effectiveCategoryLabel", () => {
   it("uses a trimmed override when present", () => {
-    expect(effectiveCategoryLabel("body_mind", "  Wellbeing  ")).toBe("Wellbeing");
+    expect(effectiveCategoryLabel("personal", "  Wellbeing  ")).toBe("Wellbeing");
   });
 
   it("falls back to the seed label when the override is null", () => {
-    expect(effectiveCategoryLabel("body_mind", null)).toBe("Body & Mind");
+    expect(effectiveCategoryLabel("personal", null)).toBe("Personal");
   });
 
   it("treats a blank override as no override", () => {
-    expect(effectiveCategoryLabel("professional", "   ")).toBe("Professional");
+    expect(effectiveCategoryLabel("business", "   ")).toBe("Business");
   });
 });

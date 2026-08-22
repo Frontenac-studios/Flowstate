@@ -81,6 +81,7 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // ---- ORG_SHARED: artifacts about the work itself. ----
   // What needs doing, for which project, by whom. Still filtered to the owning
   // user today — the class only says a Partner *could* be granted read later.
+  clients: "org_shared",
   goal_milestones: "org_shared",
   goals: "org_shared",
   phases: "org_shared",
@@ -94,8 +95,12 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   task_time_entries: "org_shared",
   tasks: "org_shared",
 
-  // ---- FINANCIAL: intentionally empty. ----
-  // See the doc comment above: new tables, never new columns.
+  // ---- FINANCIAL: money a Member never reads. ----
+  // Rates (and later revenue, invoices) get their own tables here rather than a
+  // column on `projects` or `clients`. That is what keeps column-level security
+  // unnecessary — a Member's `SELECT *` cannot leak a rate that is not in the
+  // table they can read.
+  rates: "financial",
 };
 
 /**

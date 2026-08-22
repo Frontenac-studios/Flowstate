@@ -12,7 +12,7 @@ const task = (overrides: Partial<ChatCreatedTask> = {}): ChatCreatedTask => ({
   title: "Pay water bill",
   projectId: null,
   phaseId: null,
-  category: "adulting",
+  category: "personal",
   suggestedScheduledDate: "2026-07-09",
   ...overrides,
 });
@@ -30,7 +30,7 @@ describe("chat-task-created-events", () => {
     expect(detail.tasks).toHaveLength(1);
     expect(detail.tasks[0]).toMatchObject({
       id: "t1",
-      category: "adulting",
+      category: "personal",
       suggestedScheduledDate: "2026-07-09",
     });
 
@@ -42,9 +42,7 @@ describe("chat-task-created-events", () => {
     const off = onChatTasksCreated(handler);
 
     dispatchChatTasksCreated({
-      tasks: [
-        task({ id: "t2", projectId: "proj-1", phaseId: "phase-1", category: "personal_projects" }),
-      ],
+      tasks: [task({ id: "t2", projectId: "proj-1", phaseId: "phase-1", category: "personal" })],
       surface: "projects",
     });
 

@@ -4,22 +4,18 @@ import { fuzzyCategorySuggestions, matchCategorySegment } from "./fuzzy-category
 
 describe("matchCategorySegment", () => {
   it("matches a category key exactly", () => {
-    expect(matchCategorySegment("relationships")).toBe("relationships");
-    expect(matchCategorySegment("personal_projects")).toBe("personal_projects");
+    expect(matchCategorySegment("business")).toBe("business");
+    expect(matchCategorySegment("personal")).toBe("personal");
   });
 
   it("matches a display label case-insensitively", () => {
-    expect(matchCategorySegment("Professional")).toBe("professional");
-    expect(matchCategorySegment("professional")).toBe("professional");
+    expect(matchCategorySegment("Business")).toBe("business");
+    expect(matchCategorySegment("business")).toBe("business");
   });
 
-  it("normalizes ampersand and spacing for Body & Mind", () => {
-    expect(matchCategorySegment("Body & Mind")).toBe("body_mind");
-    expect(matchCategorySegment("body and mind")).toBe("body_mind");
-  });
-
-  it("matches the key for a multi-word label", () => {
-    expect(matchCategorySegment("Personal Projects")).toBe("personal_projects");
+  it("normalizes surrounding whitespace and casing", () => {
+    expect(matchCategorySegment("  BUSINESS  ")).toBe("business");
+    expect(matchCategorySegment("Personal")).toBe("personal");
   });
 
   it("returns null for a non-category word", () => {
@@ -28,37 +24,33 @@ describe("matchCategorySegment", () => {
   });
 
   it("does not loosely match a partial as exact", () => {
-    expect(matchCategorySegment("rel")).toBeNull();
+    expect(matchCategorySegment("busi")).toBeNull();
   });
 
   it("honours a custom label map", () => {
     const labels = {
-      professional: "Work",
-      personal_projects: "Side Projects",
-      relationships: "People",
-      body_mind: "Wellbeing",
-      adulting: "Life Admin",
+      business: "Work",
+      personal: "Wellbeing",
     };
-    expect(matchCategorySegment("Wellbeing", labels)).toBe("body_mind");
-    // The old label (which isn't also the key) no longer matches once renamed.
-    expect(matchCategorySegment("Body & Mind", labels)).toBeNull();
+    expect(matchCategorySegment("Wellbeing", labels)).toBe("personal");
+    expect(matchCategorySegment("Work", labels)).toBe("business");
     // The stable key still matches regardless of label overrides.
-    expect(matchCategorySegment("body_mind", labels)).toBe("body_mind");
+    expect(matchCategorySegment("personal", labels)).toBe("personal");
   });
 });
 
 describe("fuzzyCategorySuggestions", () => {
   it("ranks an exact-ish prefix first", () => {
-    const [top] = fuzzyCategorySuggestions("rel");
-    expect(top.category).toBe("relationships");
+    const [top] = fuzzyCategorySuggestions("bus");
+    expect(top.category).toBe("business");
   });
 
-  it("returns all five for an empty query", () => {
-    expect(fuzzyCategorySuggestions("")).toHaveLength(5);
+  it("returns all categories for an empty query", () => {
+    expect(fuzzyCategorySuggestions("")).toHaveLength(2);
   });
 
   it("tolerates a typo", () => {
-    const [top] = fuzzyCategorySuggestions("professonal");
-    expect(top.category).toBe("professional");
+    const [top] = fuzzyCategorySuggestions("bussiness");
+    expect(top.category).toBe("business");
   });
 });

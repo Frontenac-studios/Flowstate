@@ -58,7 +58,7 @@ type Draft = {
 };
 
 const EMPTY_DRAFT: Draft = {
-  category: "relationships",
+  category: "personal",
   isoWeekday: 0,
   label: "",
   allDay: true,

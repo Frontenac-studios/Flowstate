@@ -28,7 +28,7 @@ describe("desktop sqlite inserts", () => {
       .values({
         userId,
         title: "Call mom",
-        category: "relationships",
+        category: "personal",
         tags: null,
       })
       .returning()
@@ -59,7 +59,7 @@ describe("desktop sqlite inserts", () => {
       .values({
         userId,
         title: "Ship the deck",
-        category: "professional",
+        category: "business",
         scheduledDate: null,
         bucketOverride: "later",
         suggestedScheduledDate: "2026-07-10",
@@ -77,14 +77,14 @@ describe("desktop sqlite inserts", () => {
 
   it("upserts lastUsedCategory via onConflictDoUpdate", () => {
     db.insert(appSettings)
-      .values({ userId, lastUsedCategory: "professional" })
+      .values({ userId, lastUsedCategory: "business" })
       .onConflictDoUpdate({
         target: appSettings.userId,
-        set: { lastUsedCategory: "professional", updatedAt: new Date() },
+        set: { lastUsedCategory: "business", updatedAt: new Date() },
       })
       .run();
 
     const row = db.select().from(appSettings).where(eq(appSettings.userId, userId)).get();
-    expect(row?.lastUsedCategory).toBe("professional");
+    expect(row?.lastUsedCategory).toBe("business");
   });
 });

@@ -20,17 +20,12 @@ describe("hasTemplateFeatures", () => {
 
 describe("isSimilarCategoryAllowed", () => {
   it("allows same category", () => {
-    expect(isSimilarCategoryAllowed("relationships", "relationships")).toBe(true);
+    expect(isSimilarCategoryAllowed("personal", "personal")).toBe(true);
+    expect(isSimilarCategoryAllowed("business", "business")).toBe(true);
   });
 
-  it("allows professional ↔ personal_projects cross-suggest", () => {
-    expect(isSimilarCategoryAllowed("professional", "personal_projects")).toBe(true);
-    expect(isSimilarCategoryAllowed("personal_projects", "professional")).toBe(true);
-  });
-
-  it("blocks other cross-category pairs", () => {
-    expect(isSimilarCategoryAllowed("professional", "adulting")).toBe(false);
-    expect(isSimilarCategoryAllowed("relationships", "body_mind")).toBe(false);
-    expect(isSimilarCategoryAllowed("personal_projects", "adulting")).toBe(false);
+  it("allows business ↔ personal cross-suggest", () => {
+    expect(isSimilarCategoryAllowed("business", "personal")).toBe(true);
+    expect(isSimilarCategoryAllowed("personal", "business")).toBe(true);
   });
 });

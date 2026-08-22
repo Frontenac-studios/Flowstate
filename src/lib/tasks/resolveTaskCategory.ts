@@ -9,11 +9,11 @@ import { type ProjectCategory } from "../projects/categories";
 //   2. project    — project.category when the task has a project   → context
 //   3. ai         — inferCategoryFromTitle, online AND confident   → AI-forward
 //   4. lastUsed   — app_settings.last_used_category                → habit
-//   5. fallback   — adulting (NOT NULL) + unresolved = true        → invisible plumbing
+//   5. fallback   — personal (NOT NULL) + unresolved = true        → invisible plumbing
 
 // 1.4d: the NOT-NULL placeholder used when nothing resolves. Stored but never shown
 // as a real category — the row is flagged `unresolved` and rendered as a neutral marker.
-export const DEFAULT_FALLBACK_CATEGORY: ProjectCategory = "adulting";
+export const DEFAULT_FALLBACK_CATEGORY: ProjectCategory = "personal";
 
 // 1.4c: AI must clear this confidence to outrank the user's last-used habit.
 // Tunable; if the inference call cannot supply a usable confidence score this

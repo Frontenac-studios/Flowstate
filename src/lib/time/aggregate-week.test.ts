@@ -6,7 +6,7 @@ function entry(over: Partial<WeekEntryInput>): WeekEntryInput {
   return {
     startedAt: new Date("2026-06-24T09:00:00Z"),
     endedAt: new Date("2026-06-24T10:00:00Z"),
-    category: "professional",
+    category: "business",
     projectId: "p1",
     projectName: "Website Relaunch",
     ...over,
@@ -22,21 +22,21 @@ describe("aggregateWeek", () => {
   it("sums seconds per category and per project", () => {
     const r = aggregateWeek({
       entries: [
-        entry({}), // 1h professional / p1
+        entry({}), // 1h business / p1
         entry({
           startedAt: new Date("2026-06-24T11:00:00Z"),
           endedAt: new Date("2026-06-24T11:30:00Z"),
-          category: "body_mind",
+          category: "personal",
           projectId: "p2",
           projectName: "Marathon Training",
-        }), // 30m body_mind / p2
+        }), // 30m personal / p2
       ],
     });
     expect(r.totalSeconds).toBe(5400);
     expect(r.entryCount).toBe(2);
     expect(r.byCategory).toEqual([
-      { category: "professional", seconds: 3600 },
-      { category: "body_mind", seconds: 1800 },
+      { category: "business", seconds: 3600 },
+      { category: "personal", seconds: 1800 },
     ]);
     expect(r.byProject).toEqual([
       { projectId: "p1", projectName: "Website Relaunch", seconds: 3600 },
@@ -54,7 +54,7 @@ describe("aggregateWeek", () => {
         }),
       ],
     });
-    expect(r.byCategory).toEqual([{ category: "professional", seconds: 5400 }]);
+    expect(r.byCategory).toEqual([{ category: "business", seconds: 5400 }]);
     expect(r.byProject).toEqual([
       { projectId: "p1", projectName: "Website Relaunch", seconds: 5400 },
     ]);
@@ -69,7 +69,7 @@ describe("aggregateWeek", () => {
           projectName: null,
           startedAt: new Date("2026-06-25T09:00:00Z"),
           endedAt: new Date("2026-06-25T11:00:00Z"),
-          category: "adulting",
+          category: "personal",
         }),
       ],
     });
@@ -79,17 +79,17 @@ describe("aggregateWeek", () => {
   it("sorts both groupings by seconds descending", () => {
     const r = aggregateWeek({
       entries: [
-        entry({ category: "adulting", projectId: "p1", projectName: "A" }), // 1h
+        entry({ category: "business", projectId: "p1", projectName: "A" }), // 1h
         entry({
           startedAt: new Date("2026-06-24T09:00:00Z"),
           endedAt: new Date("2026-06-24T12:00:00Z"),
-          category: "relationships",
+          category: "personal",
           projectId: "p2",
           projectName: "B",
         }), // 3h
       ],
     });
-    expect(r.byCategory.map((c) => c.category)).toEqual(["relationships", "adulting"]);
+    expect(r.byCategory.map((c) => c.category)).toEqual(["personal", "business"]);
     expect(r.byProject.map((p) => p.projectName)).toEqual(["B", "A"]);
   });
 

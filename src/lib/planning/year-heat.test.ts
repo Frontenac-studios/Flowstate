@@ -26,68 +26,64 @@ describe("year-heat", () => {
     const result = aggregateYearActivity({
       year: 2026,
       completedTasks: [
-        { completedAt: new Date(2026, 0, 6), category: "adulting" },
-        { completedAt: new Date(2026, 0, 6), category: "adulting" },
-        { completedAt: new Date(2026, 0, 6), category: "adulting" },
+        { completedAt: new Date(2026, 0, 6), category: "personal" },
+        { completedAt: new Date(2026, 0, 6), category: "personal" },
+        { completedAt: new Date(2026, 0, 6), category: "personal" },
       ],
       timeEntries: [
         {
           startedAt: weekMonday,
           endedAt: new Date(2026, 0, 5, 12, 0, 0),
-          category: "professional",
+          category: "business",
         },
       ],
     });
 
     const q1 = result.quarters.find((q) => q.quarter === 1);
     const week = q1?.weeks.find((w) => w.weekStart === "2026-01-05");
-    expect(week?.dominantCategory).toBe("professional");
+    expect(week?.dominantCategory).toBe("business");
   });
 
   it("falls back to completion counts when no time data", () => {
     const result = aggregateYearActivity({
       year: 2026,
       completedTasks: [
-        { completedAt: new Date(2026, 1, 10), category: "body_mind" },
-        { completedAt: new Date(2026, 1, 11), category: "body_mind" },
-        { completedAt: new Date(2026, 1, 12), category: "relationships" },
+        { completedAt: new Date(2026, 1, 10), category: "personal" },
+        { completedAt: new Date(2026, 1, 11), category: "personal" },
+        { completedAt: new Date(2026, 1, 12), category: "business" },
       ],
       timeEntries: [],
     });
 
     const q1 = result.quarters.find((q) => q.quarter === 1);
     const week = q1?.weeks.find((w) => w.weekStart === "2026-02-09");
-    expect(week?.dominantCategory).toBe("body_mind");
+    expect(week?.dominantCategory).toBe("personal");
   });
 
   it("builds proportional quarter weights", () => {
     const result = aggregateYearActivity({
       year: 2026,
       completedTasks: [
-        { completedAt: new Date(2026, 0, 6), category: "professional" },
-        { completedAt: new Date(2026, 0, 7), category: "professional" },
-        { completedAt: new Date(2026, 0, 8), category: "body_mind" },
+        { completedAt: new Date(2026, 0, 6), category: "business" },
+        { completedAt: new Date(2026, 0, 7), category: "business" },
+        { completedAt: new Date(2026, 0, 8), category: "personal" },
       ],
       timeEntries: [],
     });
 
     const q1 = result.quarters.find((q) => q.quarter === 1);
-    expect(q1?.categoryWeights.professional).toBe(2);
-    expect(q1?.categoryWeights.body_mind).toBe(1);
+    expect(q1?.categoryWeights.business).toBe(2);
+    expect(q1?.categoryWeights.personal).toBe(1);
   });
 
   it("detects neglected categories below floor share", () => {
     const totals = {
-      professional: 90,
-      personal_projects: 5,
-      relationships: 2,
-      body_mind: 2,
-      adulting: 1,
+      business: 98,
+      personal: 2,
     };
     const neglected = detectNeglectedCategories(totals);
-    expect(neglected).toContain("adulting");
-    expect(neglected).toContain("relationships");
-    expect(neglected).not.toContain("professional");
+    expect(neglected).toContain("personal");
+    expect(neglected).not.toContain("business");
   });
 
   it("returns no neglected categories when year is empty", () => {

@@ -4,7 +4,7 @@ import type { ProjectCategory } from "@/lib/projects/categories";
 export function protectedBlockCategoryForReservedDay(
   type: "outside" | "personal"
 ): ProjectCategory {
-  return type === "outside" ? "body_mind" : "personal_projects";
+  return type === "outside" ? "personal" : "personal";
 }
 
 export function defaultReservedDayLabel(type: "outside" | "personal"): string {

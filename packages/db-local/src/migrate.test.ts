@@ -16,7 +16,7 @@ const USER = "11111111-1111-1111-1111-111111111111";
 describe("sqlite projects.archived_at", () => {
   it("runs the archived-filter query on a freshly migrated db", async () => {
     const db = createSqliteDb(":memory:").db;
-    await db.insert(projects).values({ userId: USER, name: "P", slug: "p", category: "adulting" });
+    await db.insert(projects).values({ userId: USER, name: "P", slug: "p", category: "personal" });
 
     const rows = await db
       .select()
@@ -64,7 +64,7 @@ describe("sqlite projects.archived_at", () => {
 describe("sqlite project_milestones", () => {
   it("creates the table on a freshly migrated db and round-trips a row", async () => {
     const db = createSqliteDb(":memory:").db;
-    await db.insert(projects).values({ userId: USER, name: "P", slug: "p", category: "adulting" });
+    await db.insert(projects).values({ userId: USER, name: "P", slug: "p", category: "personal" });
     const [project] = await db.select().from(projects).where(eq(projects.userId, USER));
 
     await db.insert(projectMilestones).values({

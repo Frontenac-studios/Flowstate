@@ -19,7 +19,7 @@ function taskLine(overrides: Partial<PlanTaskLine> = {}): PlanTaskLine {
     priority: 0,
     projectSlug: null,
     scheduledDate: null,
-    category: "adulting",
+    category: "personal",
     categoryUnresolved: false,
     suggestedScheduledDate: null,
     ...overrides,
@@ -43,21 +43,21 @@ describe("formatPlanTaskLines", () => {
     ]);
 
     expect(out).toBe(
-      "Later:\n- id=abc | Pay electric bill (adulting, inbox, suggested 2026-07-09, #slug, p2)"
+      "Later:\n- id=abc | Pay electric bill (personal, inbox, suggested 2026-07-09, #slug, p2)"
     );
   });
 
-  it("row 1 context: an inbox task with an adulting category and suggested Thursday", () => {
+  it("row 1 context: an inbox task with a personal category and suggested Thursday", () => {
     const out = formatPlanTaskLines("Later", [
       taskLine({
         id: "water",
         title: "Pay water bill",
-        category: "adulting",
+        category: "personal",
         scheduledDate: null,
         suggestedScheduledDate: "2026-07-09",
       }),
     ]);
-    expect(out).toContain("adulting");
+    expect(out).toContain("personal");
     expect(out).toContain("inbox");
     expect(out).toContain("suggested 2026-07-09");
   });
@@ -87,13 +87,13 @@ describe("formatLooseTaskCounts", () => {
 
   it("groups by category, omits zero counts, and buckets unresolved", () => {
     const out = formatLooseTaskCounts([
-      { category: "adulting" },
-      { category: "adulting" },
-      { category: "relationships" },
-      { category: "adulting", categoryUnresolved: true },
+      { category: "business" },
+      { category: "personal" },
+      { category: "personal" },
+      { category: "personal", categoryUnresolved: true },
     ]);
 
-    expect(out).toBe("Loose tasks (no project): relationships 1, adulting 2, uncategorized 1");
+    expect(out).toBe("Loose tasks (no project): business 1, personal 2, uncategorized 1");
   });
 });
 
@@ -105,15 +105,13 @@ describe("formatWeekCategoryLoadSummary", () => {
 
   it("summarises weights and empty categories", () => {
     const snapshot = computeWeekCategoryLoad({
-      tasks: [{ category: "professional", isTop3: true }, { category: "relationships" }],
-      protectedBlocks: [{ category: "body_mind" }],
+      tasks: [{ category: "business" }],
+      protectedBlocks: [],
     });
 
     const out = formatWeekCategoryLoadSummary(snapshot);
-    expect(out).toContain("Professional 3");
-    expect(out).toContain("Relationships 1");
-    expect(out).toContain("Body & Mind 1");
-    expect(out).toContain("no attention: Personal Projects, Adulting");
+    expect(out).toContain("Business 1");
+    expect(out).toContain("no attention: Personal");
   });
 });
 

@@ -5,8 +5,8 @@ describe("buildMultiProjectCalendarRows", () => {
   it("merges spans across projects", () => {
     const { span, rows } = buildMultiProjectCalendarRows(
       [
-        { id: "p1", name: "A", category: "professional" },
-        { id: "p2", name: "B", category: "adulting" },
+        { id: "p1", name: "A", category: "business" },
+        { id: "p2", name: "B", category: "personal" },
       ],
       [
         {
