@@ -7,6 +7,7 @@ import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
 import { OPEN_ABYSS_CAPTURE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
 import { useChat } from "./chat/ChatProvider";
+import { FLAGS } from "@/lib/flags";
 
 const CommandPalette = dynamic(() =>
   import("./CommandPalette").then((m) => ({ default: m.CommandPalette }))
@@ -43,6 +44,10 @@ type PendingOverlay = {
  */
 export function AppShellChatRail() {
   const { railOpen, ritualOpen } = useChat();
+  // Chat parked (docs/v1-scope.md §3.2). ChatProvider still wraps the shell so
+  // the context exists for the components that read it, but nothing can open
+  // the rail and the chunk is never fetched.
+  if (!FLAGS.chat) return null;
   if (!railOpen || ritualOpen) return null;
   return <ChatRail />;
 }

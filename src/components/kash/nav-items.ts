@@ -6,7 +6,6 @@ import {
   Folder,
   GalleryVerticalEnd,
   SlidersHorizontal,
-  Sprout,
   Sun,
 } from "@/components/kash/ui/icon";
 
@@ -36,7 +35,6 @@ export const NAV_GROUP_REFLECT_PLAN: NavGroup = {
   items: [
     { href: "/plan", label: "Plan", icon: Compass, match: ["/plan"] },
     { href: "/backlog", label: "Backlog", icon: GalleryVerticalEnd, match: ["/backlog"] },
-    { href: "/care", label: "Care", icon: Sprout, match: ["/care"] },
   ],
 };
 

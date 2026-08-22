@@ -1,4 +1,5 @@
 import PlanCoachDock from "@/components/kash/plan/PlanCoachDock";
+import { FLAGS } from "@/lib/flags";
 import { COACH_SURFACE_CONFIG } from "@/lib/chat/coach-surfaces";
 import { coachThreadId, type CoachDockSurface } from "@/lib/chat/threads";
 
@@ -21,6 +22,10 @@ type Props = {
  * this to give it the same permanently-visible coach the planning surfaces carry.
  */
 export function SurfaceCoachLayout({ surface, variant = "flow", children }: Props) {
+  // Chat parked (docs/v1-scope.md §3.2): the dock column disappears entirely
+  // rather than rendering empty, so pages get their full width back.
+  if (!FLAGS.chat) return <>{children}</>;
+
   const isFill = variant === "fill";
   const containerClass = isFill
     ? "flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch"
