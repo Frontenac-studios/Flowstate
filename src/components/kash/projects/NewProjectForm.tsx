@@ -1,14 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
 import { InPageSwitcher } from "@/components/kash/InPageSwitcher";
 import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
-import { ProjectSimilarityPicker } from "@/components/kash/projects/ProjectSimilarityPicker";
-import { useProjectEmbedding } from "@/hooks/useProjectEmbedding";
 import {
   categoryFillVar,
   categorySeedLabel,
@@ -34,36 +32,24 @@ const CREATION_MODES: { value: CreationMode; label: string }[] = [
 export default function NewProjectForm({ showTemplateFeatures, onCreated, onCancel }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const backfillEmbedding = useProjectEmbedding();
 
   const [mode, setMode] = useState<CreationMode>("blank");
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
   const [templateId, setTemplateId] = useState<string | null>(null);
-  const [similarProjectId, setSimilarProjectId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const similarProjectIds = useMemo(
-    () => (similarProjectId ? [similarProjectId] : undefined),
-    [similarProjectId]
-  );
-
   const { data: templates, isLoading: templatesLoading } = useQuery({
-    ...trpc.projects.listTemplates.queryOptions(
-      similarProjectIds ? { similarProjectIds } : undefined
-    ),
+    ...trpc.projects.listTemplates.queryOptions(),
     enabled: showTemplateFeatures && mode === "template",
   });
   const { data: estimateSampleCount = 0 } = useQuery({
-    ...trpc.projects.estimateSampleCount.queryOptions(
-      similarProjectIds ? { similarProjectIds } : undefined
-    ),
+    ...trpc.projects.estimateSampleCount.queryOptions(),
     enabled: showTemplateFeatures && mode === "template",
   });
 
-  const handleCreated = (project: { id: string; name: string }, fromTemplate: boolean) => {
+  const handleCreated = (project: { id: string }, fromTemplate: boolean) => {
     void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
-    void backfillEmbedding(project.id, project.name, true);
     onCreated({ id: project.id, fromTemplate });
   };
 
@@ -114,24 +100,13 @@ export default function NewProjectForm({ showTemplateFeatures, onCreated, onCanc
     if (!canSubmit || category === null) return;
     setError(null);
 
-    const similar = similarProjectId ? { similarProjectId } : {};
-
     if (mode === "blank") {
-      createMutation.mutate({
-        name: trimmedName,
-        category,
-        ...similar,
-      });
+      createMutation.mutate({ name: trimmedName, category });
       return;
     }
 
     if (templateId === null) return;
-    createFromTemplateMutation.mutate({
-      templateId,
-      name: trimmedName,
-      category,
-      ...similar,
-    });
+    createFromTemplateMutation.mutate({ templateId, name: trimmedName, category });
   };
 
   return (
@@ -158,15 +133,6 @@ export default function NewProjectForm({ showTemplateFeatures, onCreated, onCanc
           autoFocus
         />
       </div>
-
-      {showTemplateFeatures ? (
-        <ProjectSimilarityPicker
-          liveName={name}
-          preferredCategory={category}
-          selectedId={similarProjectId}
-          onSelect={setSimilarProjectId}
-        />
-      ) : null}
 
       {showTemplateFeatures && mode === "template" ? (
         <fieldset className="flex flex-col gap-1.5">

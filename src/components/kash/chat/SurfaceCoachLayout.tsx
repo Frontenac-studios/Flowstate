@@ -1,4 +1,4 @@
-import PlanCoachDock from "@/components/kash/plan/bingo/PlanCoachDock";
+import PlanCoachDock from "@/components/kash/plan/PlanCoachDock";
 import { COACH_SURFACE_CONFIG } from "@/lib/chat/coach-surfaces";
 import { coachThreadId, type CoachDockSurface } from "@/lib/chat/threads";
 

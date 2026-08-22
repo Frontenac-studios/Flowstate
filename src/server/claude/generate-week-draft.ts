@@ -10,7 +10,6 @@ import { templateWeekDraft, type WeekDraftProposal } from "@/lib/week/template-w
 import { weekDraftValidationContextFromSource } from "@/lib/week/week-draft-validation-context";
 
 import { requireModel } from "./client";
-import { fetchAboutMeContextBlock } from "./fetch-about-me-context";
 import type { WeekDraftContext } from "./fetch-week-draft-context";
 import { buildSystemPrompt } from "./system-prompts";
 
@@ -45,7 +44,6 @@ function templateFromContext(ctx: WeekDraftContext): WeekDraftProposal {
       taskWeightById: Object.fromEntries(
         [...ctx.inbox, ...ctx.scheduledInWeek].map((task) => [task.id, task.loadWeight])
       ),
-      userConstraints: ctx.userConstraints,
     }
   );
 
@@ -143,10 +141,7 @@ function formatBalanceGaps(ctx: WeekDraftContext): string {
   return ctx.balanceGaps.map((gap) => `  - ${gap.label}`).join("\n");
 }
 
-export async function generateWeekDraft(
-  ctx: WeekDraftContext,
-  userId: string
-): Promise<WeekDraftProposal> {
+export async function generateWeekDraft(ctx: WeekDraftContext): Promise<WeekDraftProposal> {
   const weekRef = weekRefFromContext(ctx);
   const weekDates = new Set(
     ctx.weekDates.length > 0 ? ctx.weekDates : datesInIsoWeek(weekRef).map(toISODateString)
@@ -161,8 +156,6 @@ export async function generateWeekDraft(
   if (!config.configured) {
     return fallback;
   }
-
-  const aboutMe = await fetchAboutMeContextBlock(userId);
 
   const inboxLines =
     ctx.inbox.length === 0
@@ -227,9 +220,6 @@ export async function generateWeekDraft(
     "",
     "Top 3 still open:",
     top3,
-    "",
-    "About me:",
-    aboutMe,
   ].join("\n");
 
   try {

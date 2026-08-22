@@ -13,7 +13,7 @@ import { useFocusSession } from "@/hooks/useFocusSession";
 import { occurrenceRef } from "@/lib/tasks/occurrence-ref";
 import { useFocusTimeEntry } from "@/hooks/useFocusTimeEntry";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
-import { setOsDoNotDisturb } from "@/lib/about-me/os-dnd";
+import { setOsDoNotDisturb } from "@/lib/desktop/os-dnd";
 import { resolveFocusWorkDurationSeconds } from "@/lib/focus/resolve-focus-duration";
 import {
   categoryFillVar,

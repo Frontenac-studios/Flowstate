@@ -3,8 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { focusBlocks, tasks, userConstraints } from "@/db/tables";
-import { evaluateProposedSlot, toEvaluableConstraint } from "@/lib/about-me/constraint-eval";
+import { focusBlocks, tasks } from "@/db/tables";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -34,36 +33,6 @@ async function assertTaskOwned(userId: string, taskId: string): Promise<void> {
 
   if (!task) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Task not found." });
-  }
-}
-
-async function loadUserConstraints(userId: string) {
-  const rows = await db
-    .select({
-      id: userConstraints.id,
-      type: userConstraints.type,
-      label: userConstraints.label,
-      schedule: userConstraints.schedule,
-      severity: userConstraints.severity,
-    })
-    .from(userConstraints)
-    .where(eq(userConstraints.userId, userId));
-  return rows.map(toEvaluableConstraint);
-}
-
-function assertSlotHonorsHardConstraints(
-  constraints: ReturnType<typeof toEvaluableConstraint>[],
-  dateIso: string,
-  startMin: number,
-  endMin: number
-): void {
-  const evaluation = evaluateProposedSlot(constraints, { dateIso, startMin, endMin });
-  if (!evaluation.ok) {
-    const label = evaluation.hardViolations[0]?.label ?? "a personal constraint";
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `That time overlaps ${label}. Pick another slot.`,
-    });
   }
 }
 
@@ -108,9 +77,6 @@ export const focusBlocksRouter = createTRPCRouter({
 
       const startMin = snap(input.startMin);
       const endMin = Math.min(DAY_MINUTES, startMin + input.durationMin);
-      const constraints = await loadUserConstraints(ctx.userId);
-      assertSlotHonorsHardConstraints(constraints, input.date, startMin, endMin);
-
       const now = new Date();
 
       const [row] = await db
@@ -164,9 +130,6 @@ export const focusBlocksRouter = createTRPCRouter({
       const startMin = snap(input.startMin);
       const endMin = Math.min(DAY_MINUTES, startMin + duration);
 
-      const constraints = await loadUserConstraints(ctx.userId);
-      assertSlotHonorsHardConstraints(constraints, existing.date, startMin, endMin);
-
       const [row] = await db
         .update(focusBlocks)
         .set({ startMin, endMin, updatedAt: new Date() })
@@ -206,9 +169,6 @@ export const focusBlocksRouter = createTRPCRouter({
         endMin = Math.min(DAY_MINUTES, startMin + SNAP_MINUTES);
         if (endMin - startMin < SNAP_MINUTES) startMin = Math.max(0, endMin - SNAP_MINUTES);
       }
-
-      const constraints = await loadUserConstraints(ctx.userId);
-      assertSlotHonorsHardConstraints(constraints, existing.date, startMin, endMin);
 
       const [row] = await db
         .update(focusBlocks)

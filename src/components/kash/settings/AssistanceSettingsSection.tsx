@@ -55,11 +55,7 @@ export function AssistanceSettingsSection() {
   );
 
   const assistanceEnabled = data?.assistanceEnabled ?? true;
-  const morningHandoffOn = (data?.morningHandoff ?? "on") === "on";
-  const goalSteeringOn = (data?.goalSteering ?? "on") === "on";
-  const balanceNudgeOn = (data?.balanceNudge ?? "on") === "on";
   const middayOn = (data?.top3MiddayCheckin ?? "on") === "on";
-  const evidenceCadence = (data?.evidenceCadence ?? "quarterly") as "monthly" | "quarterly" | "off";
   const busy = isLoading || mutation.isPending;
 
   type AssistancePatch = Parameters<typeof mutation.mutate>[0];
@@ -70,29 +66,14 @@ export function AssistanceSettingsSection() {
   useEffect(() => {
     latestRef.current = {
       assistanceEnabled,
-      morningHandoff: morningHandoffOn ? "on" : "off",
-      goalSteering: goalSteeringOn ? "on" : "off",
-      balanceNudge: balanceNudgeOn ? "on" : "off",
       top3MiddayCheckin: middayOn ? "on" : "off",
-      evidenceCadence,
     };
-  }, [
-    assistanceEnabled,
-    morningHandoffOn,
-    goalSteeringOn,
-    balanceNudgeOn,
-    middayOn,
-    evidenceCadence,
-  ]);
+  }, [assistanceEnabled, middayOn]);
 
   const save = (patch: Partial<AssistancePatch>) => {
     const base: AssistancePatch = latestRef.current ?? {
       assistanceEnabled,
-      morningHandoff: morningHandoffOn ? "on" : "off",
-      goalSteering: goalSteeringOn ? "on" : "off",
-      balanceNudge: balanceNudgeOn ? "on" : "off",
       top3MiddayCheckin: middayOn ? "on" : "off",
-      evidenceCadence,
     };
     const next: AssistancePatch = { ...base, ...patch };
     latestRef.current = next;
@@ -115,52 +96,12 @@ export function AssistanceSettingsSection() {
           onChange={(next) => save({ assistanceEnabled: next })}
         />
         <OnOffToggle
-          label="Morning hand-off"
-          description="Show a brief once-per-day opening hand-off on Today."
-          checked={morningHandoffOn}
-          disabled={!assistanceEnabled}
-          onChange={(next) => save({ morningHandoff: next ? "on" : "off" })}
-        />
-        <OnOffToggle
-          label="Goal steering"
-          description="Allow small next-step goal suggestions in calm moments."
-          checked={goalSteeringOn}
-          disabled={!assistanceEnabled}
-          onChange={(next) => save({ goalSteering: next ? "on" : "off" })}
-        />
-        <OnOffToggle
-          label="Balance nudge"
-          description="Nudge when one life category is being starved."
-          checked={balanceNudgeOn}
-          disabled={!assistanceEnabled}
-          onChange={(next) => save({ balanceNudge: next ? "on" : "off" })}
-        />
-        <OnOffToggle
           label="Top-3 midday check-in"
           description='On busy days this hides automatically. When on, incomplete Top 3 show a quiet "still time for these" line after noon.'
           checked={middayOn}
           disabled={!assistanceEnabled}
           onChange={(next) => save({ top3MiddayCheckin: next ? "on" : "off" })}
         />
-        <label className="flex items-center justify-between gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
-          <span>
-            <span className="text-sm font-medium text-ink">Evidence cadence</span>
-            <span className="mt-0.5 block text-sm text-ink-muted">
-              How often wins memory resurfaces.
-            </span>
-          </span>
-          <Select
-            value={evidenceCadence}
-            disabled={!assistanceEnabled}
-            onChange={(e) =>
-              save({ evidenceCadence: e.target.value as "monthly" | "quarterly" | "off" })
-            }
-          >
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="off">Off</option>
-          </Select>
-        </label>
       </fieldset>
 
       {mutation.isError ? (

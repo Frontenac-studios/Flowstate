@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
-import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import {
   isSkippedForDate,
   isSnoozed,
@@ -16,7 +15,6 @@ import {
 import { resolveEodUiState } from "@/lib/eod/resolve-eod-ui-state";
 import type { EodUiState } from "@/lib/eod/types";
 import { useWindDownHour } from "@/hooks/useWindDownHour";
-import { useUserConstraints } from "@/hooks/useUserConstraints";
 import { useTRPC } from "@/trpc/client";
 
 function clientTzOffsetMinutes(): number {
@@ -44,8 +42,6 @@ export function useEodReviewTrigger() {
 
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const [windDownHour] = useWindDownHour();
-  const { constraints } = useUserConstraints();
-  const nudgeQuiet = shouldSuppressInAppNudges(new Date(), constraints);
 
   const { data: savedRow } = useQuery({
     ...trpc.dayReviews.getForDate.queryOptions({ localDate }),
@@ -140,7 +136,7 @@ export function useEodReviewTrigger() {
     closeModal();
   }, [closeModal, localDate, refreshStorage]);
 
-  const showBanner = uiState === "banner" && !nudgeQuiet;
+  const showBanner = uiState === "banner";
 
   return {
     localDate,

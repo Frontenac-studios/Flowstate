@@ -5,28 +5,20 @@ import { db } from "@/db";
 import { appSettings } from "@/db/tables";
 import {
   abyssArchiveAfterDaysSchema,
-  balanceNudgeSchema,
   bucketModeSchema,
   calendarAiEnabledSchema,
   DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
-  DEFAULT_BALANCE_NUDGE,
   DEFAULT_BUCKET_MODE,
   DEFAULT_CALENDAR_AI_ENABLED,
   DEFAULT_DAY_END_HOUR,
   DEFAULT_DAY_START_HOUR,
-  DEFAULT_EVIDENCE_CADENCE,
   DEFAULT_GOAL_COACH_ADAPTATIONS,
   DEFAULT_GOAL_COACH_AMBITION,
   DEFAULT_GOAL_COACH_NOTE,
-  DEFAULT_GOAL_STEERING,
-  DEFAULT_MORNING_HANDOFF,
   DEFAULT_TOP3_MIDDAY_CHECKIN,
-  evidenceCadenceSchema,
   goalCoachAdaptationsSchema,
   goalCoachAmbitionSchema,
   goalCoachNoteSchema,
-  goalSteeringSchema,
-  morningHandoffSchema,
   notificationPrefsSchema,
   top3MiddayCheckinSchema,
   workingHoursSchema,
@@ -35,11 +27,7 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 
 const assistanceSettingsSchema = z.object({
   assistanceEnabled: z.boolean(),
-  morningHandoff: morningHandoffSchema,
-  goalSteering: goalSteeringSchema,
-  balanceNudge: balanceNudgeSchema,
   top3MiddayCheckin: top3MiddayCheckinSchema,
-  evidenceCadence: evidenceCadenceSchema,
 });
 async function getOrCreateSettings(userId: string) {
   const [existing] = await db
@@ -72,18 +60,6 @@ export const settingsRouter = createTRPCRouter({
       notificationsEnabled: row.notificationsEnabled ?? true,
       focusDndEnabled: row.focusDndEnabled ?? true,
       assistanceEnabled: row.assistanceEnabled ?? true,
-      morningHandoff: morningHandoffSchema.safeParse(row.morningHandoff).success
-        ? row.morningHandoff
-        : DEFAULT_MORNING_HANDOFF,
-      goalSteering: goalSteeringSchema.safeParse(row.goalSteering).success
-        ? row.goalSteering
-        : DEFAULT_GOAL_STEERING,
-      balanceNudge: balanceNudgeSchema.safeParse(row.balanceNudge).success
-        ? row.balanceNudge
-        : DEFAULT_BALANCE_NUDGE,
-      evidenceCadence: evidenceCadenceSchema.safeParse(row.evidenceCadence).success
-        ? row.evidenceCadence
-        : DEFAULT_EVIDENCE_CADENCE,
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
       calendarAiEnabled: row.calendarAiEnabled ?? DEFAULT_CALENDAR_AI_ENABLED,
@@ -193,11 +169,7 @@ export const settingsRouter = createTRPCRouter({
         .update(appSettings)
         .set({
           assistanceEnabled: input.assistanceEnabled,
-          morningHandoff: input.morningHandoff,
-          goalSteering: input.goalSteering,
-          balanceNudge: input.balanceNudge,
           top3MiddayCheckin: input.top3MiddayCheckin,
-          evidenceCadence: input.evidenceCadence,
           updatedAt: new Date(),
         })
         .where(eq(appSettings.userId, ctx.userId))

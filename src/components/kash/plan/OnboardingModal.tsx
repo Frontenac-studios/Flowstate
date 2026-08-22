@@ -123,7 +123,6 @@ export function OnboardingModal({
     return (
       <MorningHandoffModal
         localDate={localDate}
-        opener={null}
         tasks={tasks}
         projects={[]}
         pinnedBySlot={pinnedBySlot}
@@ -132,7 +131,6 @@ export function OnboardingModal({
         holdPreview={holdDeclined ? null : holdPreview}
         holdDeclined={holdDeclined}
         isOverCommitted={false}
-        goalOffer={null}
         isPending={isPending}
         previewBanner="Tomorrow morning opens on this ritual — you're already familiar."
         beginLabel="Start today"
@@ -142,8 +140,6 @@ export function OnboardingModal({
         onDropCarryover={() => undefined}
         onConfirmProjectTask={() => undefined}
         onDeferProjectTask={() => undefined}
-        onAcceptGoalOffer={() => undefined}
-        onDismissGoalOffer={() => undefined}
         onPinTop3={() => undefined}
         onUnpinTop3={() => undefined}
         onPinStagedTop3={() => undefined}

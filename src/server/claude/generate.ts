@@ -46,7 +46,7 @@ export async function generateNarration(
   threadId: string,
   task: NarrationInput
 ): Promise<string> {
-  const { aboutMeBlock, contextBlock } = await assembleChatContext(userId, threadId);
+  const { contextBlock } = await assembleChatContext(userId, threadId);
 
   const userPayload = [
     "Generate a one-line RDM narration for this pick.",
@@ -56,8 +56,6 @@ export async function generateNarration(
     task.projectSlug ? `Project: #${task.projectSlug}` : null,
     `Pick reason: ${task.pickReason}`,
     "",
-    "About me:",
-    aboutMeBlock,
     "",
     "Context:",
     contextBlock,

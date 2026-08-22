@@ -5,12 +5,10 @@ import MobileBottomNav from "./MobileBottomNav";
 import { ChatProvider } from "./chat/ChatProvider";
 import { EphemeralCelebrationHost } from "./mechanics/EphemeralCelebration";
 import ToastProvider from "./ui/ToastProvider";
-import { ProactiveNudgesRunner } from "./nudges/ProactiveNudgesRunner";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ChatProvider>
       <ToastProvider>
-        <ProactiveNudgesRunner />
         <EphemeralCelebrationHost />
         <div className="relative min-h-screen lg:flex">
           {/* Rail sits outside the padded/centered shell so it anchors flush to

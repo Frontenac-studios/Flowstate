@@ -1,31 +1,22 @@
 import type { SqliteDb } from "@kash/db-local";
 import {
   appSettings,
-  bingoCards,
   categorySettings,
   chatMessages,
-  dailyWins,
   dayReviews,
-  evidenceEditions,
   goalMilestones,
   goals,
-  monthIntentions,
-  nudgeEvents,
   phases,
-  planningSuggestions,
   projectMilestones,
   projects,
-  projectSimilarity,
   projectTemplates,
   protectedBlockTemplates,
   protectedBlocks,
   weekDayPriorities,
-  quarterThemes,
   reservedDays,
   syncWatermarks,
   taskBulkImportItems,
   taskBulkImports,
-  taskDependencies,
   taskOccurrenceOverrides,
   taskRecurrence,
   taskTimeEntries,
@@ -182,22 +173,6 @@ async function upsertRow(
       else await db.insert(projects).values(mapped as never);
       return true;
     }
-    case "project_similarity": {
-      const id = mapped.id as string;
-      const [existing] = await db
-        .select()
-        .from(projectSimilarity)
-        .where(eq(projectSimilarity.id, id))
-        .limit(1);
-      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
-      if (existing)
-        await db
-          .update(projectSimilarity)
-          .set(mapped as never)
-          .where(eq(projectSimilarity.id, id));
-      else await db.insert(projectSimilarity).values(mapped as never);
-      return true;
-    }
     case "tasks": {
       const id = mapped.id as string;
       const [existing] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
@@ -220,22 +195,6 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(phases.id, id));
       else await db.insert(phases).values(mapped as never);
-      return true;
-    }
-    case "task_dependencies": {
-      const id = mapped.id as string;
-      const [existing] = await db
-        .select()
-        .from(taskDependencies)
-        .where(eq(taskDependencies.id, id))
-        .limit(1);
-      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
-      if (existing)
-        await db
-          .update(taskDependencies)
-          .set(mapped as never)
-          .where(eq(taskDependencies.id, id));
-      else await db.insert(taskDependencies).values(mapped as never);
       return true;
     }
     case "task_recurrence": {
@@ -390,34 +349,6 @@ async function upsertRow(
       else await db.insert(chatMessages).values(mapped as never);
       return true;
     }
-    case "daily_wins": {
-      const id = mapped.id as string;
-      const [existing] = await db.select().from(dailyWins).where(eq(dailyWins.id, id)).limit(1);
-      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
-      if (existing)
-        await db
-          .update(dailyWins)
-          .set(mapped as never)
-          .where(eq(dailyWins.id, id));
-      else await db.insert(dailyWins).values(mapped as never);
-      return true;
-    }
-    case "evidence_editions": {
-      const id = mapped.id as string;
-      const [existing] = await db
-        .select()
-        .from(evidenceEditions)
-        .where(eq(evidenceEditions.id, id))
-        .limit(1);
-      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
-      if (existing)
-        await db
-          .update(evidenceEditions)
-          .set(mapped as never)
-          .where(eq(evidenceEditions.id, id));
-      else await db.insert(evidenceEditions).values(mapped as never);
-      return true;
-    }
     case "day_reviews": {
       const id = mapped.id as string;
       const [existing] = await db.select().from(dayReviews).where(eq(dayReviews.id, id)).limit(1);
@@ -444,18 +375,6 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(appSettings.userId, userId));
       else await db.insert(appSettings).values(mapped as never);
-      return true;
-    }
-    case "nudge_events": {
-      const id = mapped.id as string;
-      const [existing] = await db.select().from(nudgeEvents).where(eq(nudgeEvents.id, id)).limit(1);
-      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
-      if (existing)
-        await db
-          .update(nudgeEvents)
-          .set(mapped as never)
-          .where(eq(nudgeEvents.id, id));
-      else await db.insert(nudgeEvents).values(mapped as never);
       return true;
     }
     case "task_bulk_imports": {
@@ -496,22 +415,14 @@ async function upsertRow(
       return true;
     }
     case "project_milestones":
-    case "bingo_cards":
     case "goals":
     case "goal_milestones":
-    case "quarter_themes":
-    case "month_intentions":
-    case "reserved_days":
-    case "planning_suggestions": {
+    case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
-        bingo_cards: bingoCards,
         goals,
         goal_milestones: goalMilestones,
-        quarter_themes: quarterThemes,
-        month_intentions: monthIntentions,
         reserved_days: reservedDays,
-        planning_suggestions: planningSuggestions,
       } as const;
       const sqliteTable = tableMap[table];
       const id = mapped.id as string;

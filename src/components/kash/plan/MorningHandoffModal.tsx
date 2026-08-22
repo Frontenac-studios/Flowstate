@@ -37,8 +37,6 @@ import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projec
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import type { CreateTaskItemEdit } from "@/lib/chat/proposed-actions";
-import type { EssentialNudgeChipPayload } from "@/lib/nudges/essential-nudge-types";
-import type { GoalSteeringOffer } from "@/lib/planning/goal-journey";
 import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import {
   formatGreetingOpener,
@@ -118,11 +116,6 @@ function TodayDropZone({
   );
 }
 
-const ROW_ACTION =
-  "rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-[var(--accent-soft)]";
-const ROW_ACTION_MUTED =
-  "rounded-pill border border-border px-2 py-0.5 text-caption text-ink-muted transition hover:text-ink";
-
 type ProjectRef = { id: string; slug: string; name: string };
 
 type HoldPreview = {
@@ -145,7 +138,6 @@ type CartRow = {
 
 type Props = {
   localDate: string;
-  opener: EssentialNudgeChipPayload | null;
   calendarSummaryLine?: string | null;
   /** Timed events behind the summary line — shown in its hover tooltip. */
   calendarMeetings?: readonly MeetingTooltipEvent[] | null;
@@ -159,7 +151,6 @@ type Props = {
   /** Daily triage disables focus-hold suggestions; onboarding leaves them on. */
   enableFocusHold?: boolean;
   isOverCommitted: boolean;
-  goalOffer: GoalSteeringOffer | null;
   isPending: boolean;
   /** V8: onboarding ends on a hand-off preview so day 2 opens familiar. */
   previewBanner?: string | null;
@@ -175,8 +166,6 @@ type Props = {
   onConfirmProjectTask: (taskId: string) => void;
   /** Defer a project-today suggestion off today (back to later). */
   onDeferProjectTask: (taskId: string) => void;
-  onAcceptGoalOffer: () => void;
-  onDismissGoalOffer: () => void;
   onPinTop3: (taskId: string, slot: Top3Slot) => void;
   onUnpinTop3: (taskId: string) => void;
   onPinStagedTop3: (stagedId: string, slot: Top3Slot) => void;
@@ -338,7 +327,6 @@ function CartRowItem({
 
 export function MorningHandoffModal({
   localDate,
-  opener,
   calendarSummaryLine = null,
   calendarMeetings = null,
   tasks,
@@ -350,7 +338,6 @@ export function MorningHandoffModal({
   holdDeclined,
   enableFocusHold = true,
   isOverCommitted,
-  goalOffer,
   isPending,
   previewBanner = null,
   beginLabel = "Begin day",
@@ -361,8 +348,6 @@ export function MorningHandoffModal({
   onDeferToLater,
   onConfirmProjectTask,
   onDeferProjectTask,
-  onAcceptGoalOffer,
-  onDismissGoalOffer,
   onPinTop3,
   onUnpinTop3,
   onPinStagedTop3,
@@ -565,23 +550,16 @@ export function MorningHandoffModal({
     phase,
   });
 
-  const scriptedMessages = useMemo(() => {
-    const messages = [
+  const scriptedMessages = useMemo(
+    () => [
       {
         id: "greeting-opener",
         role: "assistant" as const,
         text: formatGreetingOpener(period),
       },
-    ];
-    if (period !== "late" && opener?.message) {
-      messages.push({
-        id: "essential-nudge",
-        role: "assistant" as const,
-        text: opener.message,
-      });
-    }
-    return messages;
-  }, [period, opener?.message]);
+    ],
+    [period]
+  );
 
   const actSlot = useMemo(() => {
     if (showCircleBack) {
@@ -958,50 +936,6 @@ export function MorningHandoffModal({
             {/* Right: cart — Top 3, Today, the balance preview, and the sheet actions. */}
             <div className="flex min-h-0 flex-col lg:h-full">
               <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-4)] lg:overflow-y-auto lg:pr-[var(--space-1)]">
-                {goalOffer ? (
-                  <Section title="Goal step offer">
-                    <div className="flex items-start justify-between gap-3 rounded-row border border-dashed border-subtle bg-surface-2 px-[var(--space-3)] py-[var(--space-3)]">
-                      <div className="min-w-0 flex-1">
-                        <span className="mr-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
-                          ✦ suggested
-                        </span>
-                        <p className="text-body text-ink">
-                          Work toward {goalOffer.goalTitle}: {goalOffer.stepTitle}
-                        </p>
-                        <p className="mt-1 text-caption text-ink-muted">
-                          {goalOffer.milestoneTitle}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 gap-1">
-                        <button
-                          type="button"
-                          aria-label={`Add ${goalOffer.stepTitle} to today`}
-                          className={ROW_ACTION}
-                          disabled={isPending}
-                          onClick={onAcceptGoalOffer}
-                        >
-                          Add to today
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Dismiss goal step offer"
-                          className={ROW_ACTION_MUTED}
-                          disabled={isPending}
-                          onClick={onDismissGoalOffer}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  </Section>
-                ) : isOverCommitted ? (
-                  <Section title="Goal step offer">
-                    <p className="text-caption text-ink-muted">
-                      Today is already full — goal steering will wait for a lighter morning.
-                    </p>
-                  </Section>
-                ) : null}
-
                 <Section title="Top 3">
                   <ul className="grid grid-cols-3 gap-2">
                     {top3SlotEntries.map(({ slot, title, category }) => (

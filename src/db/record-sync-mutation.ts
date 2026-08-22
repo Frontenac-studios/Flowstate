@@ -93,14 +93,6 @@ export async function syncProjectTemplateRow(
   await recordSyncMutation({ table: "project_templates", rowId, op, payload });
 }
 
-export async function syncProjectSimilarityRow(
-  rowId: string,
-  op: SyncOp,
-  payload: unknown
-): Promise<void> {
-  await recordSyncMutation({ table: "project_similarity", rowId, op, payload });
-}
-
 export async function syncPhaseRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "phases", rowId, op, payload });
 }
@@ -149,44 +141,10 @@ export async function syncCareReflectionRow(
   await recordSyncMutation({ table: "care_reflections", rowId, op, payload });
 }
 
-export async function syncDailyWinRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
-  await recordSyncMutation({ table: "daily_wins", rowId, op, payload });
-}
-
-export async function syncEvidenceEditionRow(
-  rowId: string,
-  op: SyncOp,
-  payload: unknown
-): Promise<void> {
-  await recordSyncMutation({ table: "evidence_editions", rowId, op, payload });
-}
-
-type PlanningSyncTable =
-  | "bingo_cards"
-  | "goals"
-  | "goal_milestones"
-  | "quarter_themes"
-  | "month_intentions"
-  | "reserved_days"
-  | "planning_suggestions";
+type PlanningSyncTable = "goals" | "goal_milestones" | "reserved_days";
 
 export async function syncPlanningRow(
   table: PlanningSyncTable,
-  rowId: string,
-  op: SyncOp,
-  payload: unknown
-): Promise<void> {
-  await recordSyncMutation({ table, rowId, op, payload });
-}
-
-type AboutMeSyncTable =
-  | "user_values"
-  | "about_me_sections"
-  | "user_constraints"
-  | "about_me_suggestions";
-
-export async function syncAboutMeRow(
-  table: AboutMeSyncTable,
   rowId: string,
   op: SyncOp,
   payload: unknown

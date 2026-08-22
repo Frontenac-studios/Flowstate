@@ -1,8 +1,3 @@
-import {
-  dayOnlySlot,
-  evaluateProposedSlot,
-  type EvaluableConstraint,
-} from "@/lib/about-me/constraint-eval";
 import { datesInIsoWeek, toISODateString } from "@/lib/dates/local-day";
 import { DEFAULT_OVER_COMMIT_THRESHOLD } from "./over-commit-threshold";
 import { computeDayLoad } from "./day-load";
@@ -16,8 +11,7 @@ export type WeekDraftValidationError =
   | "DUPLICATE_TASK"
   | "DATE_OUT_OF_WEEK"
   | "UNKNOWN_TASK"
-  | "DAY_OVER_CAPACITY"
-  | "HARD_CONSTRAINT_VIOLATION";
+  | "DAY_OVER_CAPACITY";
 
 export type WeekDraftValidationContext = {
   protectedCountByDate: Readonly<Record<string, number>>;
@@ -25,7 +19,6 @@ export type WeekDraftValidationContext = {
   priorityTaskIdsByDate: Readonly<Record<string, ReadonlySet<string>>>;
   taskWeightById: Readonly<Record<string, number>>;
   overCommitThreshold?: number;
-  userConstraints?: readonly EvaluableConstraint[];
 };
 
 function dayLoadForAssignments(
@@ -50,7 +43,7 @@ export function validateWeekDraftAssignments(
   assignments: WeekDraftAssignment[],
   ownedTaskIds: Set<string>,
   now: Date = new Date(),
-  constraints?: WeekDraftValidationContext
+  capacity?: WeekDraftValidationContext
 ):
   | { ok: true; normalized: WeekDraftAssignment[] }
   | { ok: false; error: WeekDraftValidationError } {
@@ -75,20 +68,10 @@ export function validateWeekDraftAssignments(
     normalized.push(row);
   }
 
-  if (constraints) {
-    const userConstraints = constraints.userConstraints ?? [];
-    for (const row of normalized) {
-      if (userConstraints.length > 0) {
-        const evaluation = evaluateProposedSlot(userConstraints, dayOnlySlot(row.scheduledDate));
-        if (!evaluation.ok) {
-          return { ok: false, error: "HARD_CONSTRAINT_VIOLATION" };
-        }
-      }
-    }
-
-    const threshold = constraints.overCommitThreshold ?? DEFAULT_OVER_COMMIT_THRESHOLD;
+  if (capacity) {
+    const threshold = capacity.overCommitThreshold ?? DEFAULT_OVER_COMMIT_THRESHOLD;
     for (const iso of Array.from(weekDates)) {
-      if (dayLoadForAssignments(iso, normalized, constraints) > threshold) {
+      if (dayLoadForAssignments(iso, normalized, capacity) > threshold) {
         return { ok: false, error: "DAY_OVER_CAPACITY" };
       }
     }

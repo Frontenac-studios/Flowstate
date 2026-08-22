@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/db";
 import { taskTagsColumn } from "@/db/task-tags-for-db";
@@ -13,16 +13,7 @@ import {
   syncTaskRow,
   syncWeekDayPriorityRow,
 } from "@/db/record-sync-mutation";
-import {
-  bingoCards,
-  goals,
-  phases,
-  projects,
-  protectedBlocks,
-  tasks,
-  weekDayPriorities,
-} from "@/db/tables";
-import { nextEmptyCellIndex } from "@/lib/planning/bingo-cells";
+import { goals, phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
 import normalizeGoalTitle from "@/lib/planning/goal-title";
 import { buildCreateTaskPlacementSummary } from "@/lib/chat/build-create-task-placement-summary";
 import type { CaptureContext } from "@/lib/chat/capture-context";
@@ -101,21 +92,6 @@ async function resolveProjectId(
     .where(eq(projects.userId, userId));
   const match = findProjectBySlug(projectSlug.trim(), projectRows);
   return projectRows.find((p) => p.slug === match?.slug)?.id ?? null;
-}
-
-/**
- * The bingo card a goal proposal commits into: the user's most recent DRAFT card.
- * Returns null when there is no draft card (finalized-only or none) — the coach is
- * hidden in those states, so this is a defensive no-op.
- */
-async function resolveDraftBingoCardId(userId: string): Promise<string | null> {
-  const [card] = await db
-    .select({ id: bingoCards.id })
-    .from(bingoCards)
-    .where(and(eq(bingoCards.userId, userId), eq(bingoCards.status, "draft")))
-    .orderBy(desc(bingoCards.cardYear))
-    .limit(1);
-  return card?.id ?? null;
 }
 
 export type ApplyProposedActionOptions = {
@@ -926,19 +902,6 @@ export async function applyProposedActionPayload(
     }
 
     case "propose_bingo_goals": {
-      const cardId = await resolveDraftBingoCardId(userId);
-      if (!cardId) return { applied: 0, titles: [], undoFrames, createdTasks: [] };
-
-      const existingGoals = await db
-        .select({ cellIndex: goals.cellIndex })
-        .from(goals)
-        .where(and(eq(goals.userId, userId), eq(goals.bingoCardId, cardId)));
-
-      const occupied = new Set<number>();
-      for (const g of existingGoals) {
-        if (g.cellIndex != null) occupied.add(g.cellIndex);
-      }
-
       const titles: string[] = [];
       const goalIds: string[] = [];
       let applied = 0;
@@ -947,24 +910,18 @@ export async function applyProposedActionPayload(
         // Category is required to create a goal; the confirm card blocks untagged rows,
         // so skip defensively if one slips through.
         if (!item.category) continue;
-        const cellIndex = nextEmptyCellIndex(occupied);
-        if (cellIndex == null) break; // card is full
 
         const [row] = await db
           .insert(goals)
           .values({
             userId,
-            bingoCardId: cardId,
             title: normalizeGoalTitle(item.title),
             category: item.category,
-            cellIndex,
-            valueId: item.valueId ?? null,
           })
           .returning();
 
         if (row) {
           await syncPlanningRow("goals", row.id, "insert", row);
-          occupied.add(cellIndex);
           titles.push(row.title);
           goalIds.push(row.id);
           applied += 1;

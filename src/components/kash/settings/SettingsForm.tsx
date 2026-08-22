@@ -11,7 +11,6 @@ import type { BucketMode } from "@/lib/settings/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
-import AboutMeSection from "./about-me/AboutMeSection";
 import { CalendarSyncSection } from "./CalendarSyncSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
@@ -175,8 +174,6 @@ export function SettingsForm() {
         ) : null}
 
         {tab === "categories" ? <CategorySettingsSection /> : null}
-
-        {tab === "about" ? <AboutMeSection /> : null}
 
         {tab === "notifications" ? <NotificationsAndAssistanceSection /> : null}
 

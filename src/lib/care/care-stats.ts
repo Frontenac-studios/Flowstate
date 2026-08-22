@@ -1,5 +1,4 @@
-import type { WinFacet } from "@/lib/daily-wins/facets";
-import { carePracticeFacet } from "@/lib/daily-wins/facets";
+import { carePracticeFacet, type WinFacet } from "@/lib/care/facets";
 import type { CareKind, CareTheme } from "@/lib/care/types";
 
 export type DailyFrequency = { date: string; count: number };

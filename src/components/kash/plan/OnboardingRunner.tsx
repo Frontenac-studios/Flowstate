@@ -13,7 +13,6 @@ import {
 import { shouldShowOnboarding } from "@/lib/onboarding/should-show-onboarding";
 import type { HandoffPlanTask } from "@/lib/morning-handoff/handoff-task-filters";
 import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
-import { markMorningHandoffDismissedForDate } from "@/lib/nudges/morning-handoff-storage";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
 import { TOP3_HOLD_SOURCE } from "@/lib/top3/constants";
@@ -152,7 +151,6 @@ export function OnboardingRunner() {
       },
     })
   );
-  const markHandoffSeen = useMutation(trpc.nudges.markMorningHandoffForDate.mutationOptions());
 
   const pinnedBySlot = useMemo(() => {
     const map = new Map<number, HandoffPlanTask & { top3Order: number }>();
@@ -204,10 +202,8 @@ export function OnboardingRunner() {
 
   const finish = useCallback(() => {
     markOnboardingCompleted();
-    markMorningHandoffDismissedForDate(localDate);
     setCompleted(true);
-    markHandoffSeen.mutate({ localDate });
-  }, [localDate, markHandoffSeen]);
+  }, []);
 
   const advance = useCallback(() => {
     const next = nextStep(step);

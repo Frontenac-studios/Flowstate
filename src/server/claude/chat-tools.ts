@@ -13,8 +13,6 @@ import {
 } from "@/lib/chat/proposed-actions";
 import { findProjectBySlug } from "@/lib/parser/fuzzy-project";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
-import { normalizeChatToolProposal } from "@/server/about-me/normalize-tool-proposal";
-import { proposeAboutMeEdit } from "@/server/about-me/propose-about-me-edit";
 import type { KashRegister } from "@/server/claude/system-prompts";
 import {
   PLANNING_CHAT_TOOLS,
@@ -81,7 +79,6 @@ type ParkInAbyssInput = {
 
 type QueryProjectsInput = { slugContains?: string };
 type QueryAbyssInput = { query?: string; limit?: number };
-type ProposeAboutMeEditToolInput = { proposals?: unknown[] };
 
 export type ChatToolResult = {
   content: string;
@@ -670,35 +667,6 @@ export async function executeChatTool(
         content: JSON.stringify({ ok: true, proposed: true, action: built.proposal }),
         mutatedTasks: false,
         proposal: built.proposal,
-      };
-    }
-
-    if (name === "propose_about_me_edit") {
-      const parsed = input as ProposeAboutMeEditToolInput;
-      const rawProposals = Array.isArray(parsed?.proposals) ? parsed.proposals : [];
-      if (!rawProposals.length) {
-        return {
-          content: JSON.stringify({ ok: false, error: "proposals array is required" }),
-          mutatedTasks: false,
-        };
-      }
-      const proposals = rawProposals
-        .map((item) => {
-          const raw = (item ?? {}) as Record<string, unknown>;
-          if (raw.constraintType != null && raw.type == null) raw.type = raw.constraintType;
-          return normalizeChatToolProposal(raw as Parameters<typeof normalizeChatToolProposal>[0]);
-        })
-        .filter((x): x is NonNullable<typeof x> => x != null);
-      if (!proposals.length) {
-        return {
-          content: JSON.stringify({ ok: false, error: "No valid proposals." }),
-          mutatedTasks: false,
-        };
-      }
-      const result = await proposeAboutMeEdit(userId, proposals);
-      return {
-        content: JSON.stringify({ ok: true, created: result.created, skipped: result.skipped }),
-        mutatedTasks: false,
       };
     }
 

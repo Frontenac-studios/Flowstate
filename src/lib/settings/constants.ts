@@ -29,18 +29,6 @@ export const top3MiddayCheckinSchema = z.enum(["on", "off"]);
 export type Top3MiddayCheckin = z.infer<typeof top3MiddayCheckinSchema>;
 export const DEFAULT_TOP3_MIDDAY_CHECKIN: Top3MiddayCheckin = "on";
 
-export const morningHandoffSchema = z.enum(["on", "off"]);
-export type MorningHandoff = z.infer<typeof morningHandoffSchema>;
-export const DEFAULT_MORNING_HANDOFF: MorningHandoff = "on";
-
-export const goalSteeringSchema = z.enum(["on", "off"]);
-export type GoalSteering = z.infer<typeof goalSteeringSchema>;
-export const DEFAULT_GOAL_STEERING: GoalSteering = "on";
-
-export const balanceNudgeSchema = z.enum(["on", "off"]);
-export type BalanceNudge = z.infer<typeof balanceNudgeSchema>;
-export const DEFAULT_BALANCE_NUDGE: BalanceNudge = "on";
-
 export const goalCoachAmbitionSchema = z.enum(["gentle", "balanced", "stretch"]);
 export type GoalCoachAmbition = z.infer<typeof goalCoachAmbitionSchema>;
 export const DEFAULT_GOAL_COACH_AMBITION: GoalCoachAmbition = "balanced";
@@ -59,10 +47,6 @@ export const goalCoachAdaptationsSchema = z.object({
 });
 export type GoalCoachAdaptations = z.infer<typeof goalCoachAdaptationsSchema>;
 export const DEFAULT_GOAL_COACH_ADAPTATIONS: GoalCoachAdaptations = { eased: [] };
-
-export const evidenceCadenceSchema = z.enum(["monthly", "quarterly", "off"]);
-export type EvidenceCadence = z.infer<typeof evidenceCadenceSchema>;
-export const DEFAULT_EVIDENCE_CADENCE: EvidenceCadence = "quarterly";
 
 export const calendarAiEnabledSchema = z.boolean();
 export type CalendarAiEnabled = z.infer<typeof calendarAiEnabledSchema>;

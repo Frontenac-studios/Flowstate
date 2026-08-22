@@ -10,9 +10,6 @@ export const appSettings = pgTable("app_settings", {
   notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
   focusDndEnabled: boolean("focus_dnd_enabled").notNull().default(true),
   assistanceEnabled: boolean("assistance_enabled").notNull().default(true),
-  morningHandoff: text("morning_handoff").notNull().default("on"),
-  goalSteering: text("goal_steering").notNull().default("on"),
-  balanceNudge: text("balance_nudge").notNull().default("on"),
   /** Goals-coach ambition dial (gentle|balanced|stretch) — how bold its suggestions run. */
   goalCoachAmbition: text("goal_coach_ambition").notNull().default("balanced"),
   /** Free-text steer for the goals coach ("keep it gentle", "avoid Adulting", …). */
@@ -22,7 +19,6 @@ export const appSettings = pgTable("app_settings", {
    * Null until the first surface-and-ask agreement; never written silently.
    */
   goalCoachAdaptations: jsonb("goal_coach_adaptations").$type<GoalCoachAdaptations>(),
-  evidenceCadence: text("evidence_cadence").notNull().default("quarterly"),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   calendarAiEnabled: boolean("calendar_ai_enabled").notNull().default(true),

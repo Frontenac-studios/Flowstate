@@ -7,30 +7,12 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'adulting',
-  embedding TEXT,
   archived_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS projects_user_id_slug_idx ON projects (user_id, slug);
 CREATE INDEX IF NOT EXISTS projects_user_id_updated_at_idx ON projects (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS project_similarity (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  project_id TEXT NOT NULL,
-  similar_project_id TEXT NOT NULL,
-  source TEXT NOT NULL,
-  score REAL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS project_similarity_project_similar_uidx
-  ON project_similarity (user_id, project_id, similar_project_id);
-CREATE INDEX IF NOT EXISTS project_similarity_user_id_updated_at_idx
-  ON project_similarity (user_id, updated_at);
-CREATE INDEX IF NOT EXISTS project_similarity_user_id_project_id_idx
-  ON project_similarity (user_id, project_id);
 
 CREATE TABLE IF NOT EXISTS project_templates (
   id TEXT PRIMARY KEY NOT NULL,
@@ -111,20 +93,6 @@ CREATE TABLE IF NOT EXISTS task_time_entries (
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS task_time_entries_user_id_updated_at_idx ON task_time_entries (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS task_dependencies (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  blocker_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-  blocked_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-  expires_at INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS task_dependencies_user_blocker_blocked_idx ON task_dependencies (user_id, blocker_task_id, blocked_task_id);
-CREATE INDEX IF NOT EXISTS task_dependencies_blocked_idx ON task_dependencies (user_id, blocked_task_id);
-CREATE INDEX IF NOT EXISTS task_dependencies_blocker_idx ON task_dependencies (user_id, blocker_task_id);
-CREATE INDEX IF NOT EXISTS task_dependencies_user_id_updated_at_idx ON task_dependencies (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS task_recurrence (
   id TEXT PRIMARY KEY NOT NULL,
@@ -271,19 +239,6 @@ CREATE TABLE IF NOT EXISTS category_settings (
 );
 CREATE INDEX IF NOT EXISTS category_settings_user_id_updated_at_idx ON category_settings (user_id, updated_at);
 
-CREATE TABLE IF NOT EXISTS nudge_events (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  kind TEXT NOT NULL,
-  local_date TEXT NOT NULL,
-  task_ids TEXT NOT NULL DEFAULT '[]',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS nudge_events_user_id_kind_local_date_idx
-  ON nudge_events (user_id, kind, local_date);
-CREATE INDEX IF NOT EXISTS nudge_events_user_id_updated_at_idx ON nudge_events (user_id, updated_at);
-
 CREATE TABLE IF NOT EXISTS task_bulk_imports (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
@@ -322,32 +277,17 @@ CREATE TABLE IF NOT EXISTS chat_custom_suggestions (
 CREATE UNIQUE INDEX IF NOT EXISTS chat_custom_suggestions_user_id_normalized_text_idx
   ON chat_custom_suggestions (user_id, normalized_text);
 
-CREATE TABLE IF NOT EXISTS bingo_cards (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  card_year INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'draft',
-  finalized_at INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS bingo_cards_user_id_card_year_idx ON bingo_cards (user_id, card_year);
-CREATE INDEX IF NOT EXISTS bingo_cards_user_id_updated_at_idx ON bingo_cards (user_id, updated_at);
-
 CREATE TABLE IF NOT EXISTS goals (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
-  bingo_card_id TEXT REFERENCES bingo_cards(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   category TEXT NOT NULL,
   obligation_desire TEXT,
-  value_id TEXT,
   target_horizon TEXT,
   target_year INTEGER,
   target_quarter INTEGER,
   target_month INTEGER,
   project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
-  cell_index INTEGER,
   state TEXT NOT NULL DEFAULT 'active',
   completed_at INTEGER,
   sort_order INTEGER NOT NULL DEFAULT 0,
@@ -355,8 +295,6 @@ CREATE TABLE IF NOT EXISTS goals (
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS goals_user_id_updated_at_idx ON goals (user_id, updated_at);
-CREATE INDEX IF NOT EXISTS goals_bingo_card_id_idx ON goals (bingo_card_id);
-CREATE UNIQUE INDEX IF NOT EXISTS goals_bingo_card_cell_idx ON goals (bingo_card_id, cell_index);
 
 CREATE TABLE IF NOT EXISTS goal_milestones (
   id TEXT PRIMARY KEY NOT NULL,
@@ -372,33 +310,6 @@ CREATE TABLE IF NOT EXISTS goal_milestones (
 CREATE INDEX IF NOT EXISTS goal_milestones_goal_id_idx ON goal_milestones (goal_id);
 CREATE INDEX IF NOT EXISTS goal_milestones_user_id_updated_at_idx ON goal_milestones (user_id, updated_at);
 
-CREATE TABLE IF NOT EXISTS quarter_themes (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  year INTEGER NOT NULL,
-  quarter INTEGER NOT NULL,
-  phrase TEXT,
-  focus_categories TEXT NOT NULL DEFAULT '[]',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS quarter_themes_user_year_quarter_idx ON quarter_themes (user_id, year, quarter);
-CREATE INDEX IF NOT EXISTS quarter_themes_user_id_updated_at_idx ON quarter_themes (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS month_intentions (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  year INTEGER NOT NULL,
-  month INTEGER NOT NULL,
-  category TEXT NOT NULL,
-  text TEXT NOT NULL DEFAULT '',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS month_intentions_user_year_month_category_idx
-  ON month_intentions (user_id, year, month, category);
-CREATE INDEX IF NOT EXISTS month_intentions_user_id_updated_at_idx ON month_intentions (user_id, updated_at);
-
 CREATE TABLE IF NOT EXISTS reserved_days (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
@@ -412,19 +323,6 @@ CREATE TABLE IF NOT EXISTS reserved_days (
 );
 CREATE INDEX IF NOT EXISTS reserved_days_user_year_month_idx ON reserved_days (user_id, year, month);
 CREATE INDEX IF NOT EXISTS reserved_days_user_id_updated_at_idx ON reserved_days (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS planning_suggestions (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  surface TEXT NOT NULL,
-  payload TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS planning_suggestions_user_surface_status_idx
-  ON planning_suggestions (user_id, surface, status);
-CREATE INDEX IF NOT EXISTS planning_suggestions_user_id_updated_at_idx ON planning_suggestions (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS abyss_items (
   id TEXT PRIMARY KEY NOT NULL,
@@ -448,58 +346,6 @@ CREATE TABLE IF NOT EXISTS abyss_items (
 );
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_status_idx ON abyss_items (user_id, status);
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_last_touched_at_idx ON abyss_items (user_id, last_touched_at);
-
-CREATE TABLE IF NOT EXISTS user_values (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  label TEXT NOT NULL,
-  source TEXT NOT NULL,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS user_values_user_id_updated_at_idx ON user_values (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS about_me_sections (
-  user_id TEXT NOT NULL,
-  section TEXT NOT NULL,
-  body TEXT NOT NULL DEFAULT '',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL,
-  PRIMARY KEY (user_id, section)
-);
-
-CREATE TABLE IF NOT EXISTS user_constraints (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  type TEXT NOT NULL,
-  label TEXT NOT NULL,
-  schedule TEXT,
-  severity TEXT NOT NULL,
-  author TEXT NOT NULL DEFAULT 'user',
-  source_text TEXT,
-  learned_at INTEGER,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS user_constraints_user_id_updated_at_idx ON user_constraints (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS about_me_suggestions (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  target_section TEXT NOT NULL,
-  payload TEXT NOT NULL,
-  source_text TEXT,
-  learned_at INTEGER,
-  status TEXT NOT NULL DEFAULT 'pending',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS about_me_suggestions_user_target_status_idx
-  ON about_me_suggestions (user_id, target_section, status);
-CREATE INDEX IF NOT EXISTS about_me_suggestions_user_id_updated_at_idx
-  ON about_me_suggestions (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS care_activities (
   id TEXT PRIMARY KEY NOT NULL,
@@ -546,41 +392,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS care_reflections_user_date_scope_uidx
   ON care_reflections (user_id, reflection_date, scope);
 CREATE INDEX IF NOT EXISTS care_reflections_user_id_updated_at_idx
   ON care_reflections (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS daily_wins (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  win_date TEXT NOT NULL,
-  slot INTEGER,
-  source TEXT NOT NULL,
-  ref_id TEXT,
-  label TEXT,
-  state TEXT NOT NULL,
-  author TEXT NOT NULL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS daily_wins_user_id_win_date_idx ON daily_wins (user_id, win_date);
-CREATE INDEX IF NOT EXISTS daily_wins_user_id_updated_at_idx ON daily_wins (user_id, updated_at);
-CREATE UNIQUE INDEX IF NOT EXISTS daily_wins_user_date_slot_accepted_uidx ON daily_wins (user_id, win_date, slot);
-CREATE UNIQUE INDEX IF NOT EXISTS daily_wins_user_date_ref_dismissed_uidx ON daily_wins (user_id, win_date, ref_id);
-
-CREATE TABLE IF NOT EXISTS evidence_editions (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  kind TEXT NOT NULL,
-  period_start TEXT NOT NULL,
-  period_end TEXT NOT NULL,
-  ref_id TEXT,
-  narrative TEXT NOT NULL DEFAULT '{}',
-  state TEXT NOT NULL DEFAULT 'unseen',
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS evidence_editions_user_id_updated_at_idx
-  ON evidence_editions (user_id, updated_at);
-CREATE INDEX IF NOT EXISTS evidence_editions_user_kind_period_idx
-  ON evidence_editions (user_id, kind, period_start);
 
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
@@ -705,21 +516,6 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   {
     table: "app_settings",
-    column: "morning_handoff",
-    definition: "TEXT NOT NULL DEFAULT 'on'",
-  },
-  {
-    table: "app_settings",
-    column: "goal_steering",
-    definition: "TEXT NOT NULL DEFAULT 'on'",
-  },
-  {
-    table: "app_settings",
-    column: "balance_nudge",
-    definition: "TEXT NOT NULL DEFAULT 'on'",
-  },
-  {
-    table: "app_settings",
     column: "goal_coach_ambition",
     definition: "TEXT NOT NULL DEFAULT 'balanced'",
   },
@@ -735,16 +531,10 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   {
     table: "app_settings",
-    column: "evidence_cadence",
-    definition: "TEXT NOT NULL DEFAULT 'quarterly'",
-  },
-  {
-    table: "app_settings",
     column: "calendar_ai_enabled",
     definition: "INTEGER NOT NULL DEFAULT 1",
   },
   { table: "protected_blocks", column: "source", definition: "TEXT" },
-  { table: "projects", column: "embedding", definition: "TEXT" },
   { table: "projects", column: "archived_at", definition: "INTEGER" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
   { table: "goal_milestones", column: "target_date", definition: "TEXT" },

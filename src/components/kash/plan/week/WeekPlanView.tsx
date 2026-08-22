@@ -15,7 +15,6 @@ import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates
 import { useTRPC } from "@/trpc/client";
 
 import { WeekCanvas } from "./WeekCanvas";
-import WeekDraftGhosts from "./WeekDraftGhosts";
 
 type Props = {
   breadcrumb: PlanningBreadcrumb;
@@ -73,8 +72,6 @@ export default function WeekPlanView({ breadcrumb }: Props) {
               <LensControlBar />
             </div>
           ) : null}
-
-          <WeekDraftGhosts anchorDate={anchorDate} hasInboxTasks={hasInboxTasks} />
 
           <WeekCanvas anchorDate={anchorDate} showWeekChrome={hasWeekPlanData} />
         </LensProvider>

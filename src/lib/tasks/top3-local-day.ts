@@ -1,4 +1,4 @@
-import { pinReferenceLocalDate } from "@/lib/nudges/local-time";
+import { pinReferenceLocalDate } from "@/lib/dates/local-time";
 
 export type Top3PinDateFields = {
   top3PinnedAt: Date | null;

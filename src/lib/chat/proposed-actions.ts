@@ -167,7 +167,6 @@ export const bingoGoalProposalItemSchema = proposalItemBaseSchema.extend({
   // Untagged rows must be assigned a category on the confirm card before commit.
   category: categorySchema.optional(),
   rationale: z.string().max(280).optional(),
-  valueId: z.string().uuid().nullable().optional(),
 });
 
 export const rescheduleTasksProposalSchema = z.object({

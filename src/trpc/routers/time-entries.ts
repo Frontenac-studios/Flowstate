@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { projects, taskTimeEntries, tasks } from "@/db/tables";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
-import { startedOnLocalDay } from "@/lib/nudges/local-time";
+import { startedOnLocalDay } from "@/lib/dates/local-time";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 

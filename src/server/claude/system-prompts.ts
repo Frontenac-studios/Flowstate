@@ -45,10 +45,7 @@ Week planning: use set_protected_block and set_day_priorities for protected time
 Balance pass: use apply_balance_suggestions to propose small tasks that rebalance categories.
 Projects: use create_project, create_phase, edit_phase, delete_phase, move_task_to_phase, and replan_project_dates for project structure work.
 Phases nest arbitrarily deep (Miller directories). Always call create_phase to propose new phases/subphases — never list them as if they already exist from prose alone. Pass projectSlug without #; nest under a parent with parentPhaseId (UUID from context) or parentPhaseName; omit parent for a root phase. After the tool succeeds, say you proposed them and that the user must Accept the confirm card; never say you've created or nested them until they accept. delete_phase cascades to nested child phases (tasks become unphased) — warn before proposing.
-
-About-me memory: when you learn durable facts about the user's work, life, values, or constraints, use propose_about_me_edit.
-Proposals become ghosted suggestions in Settings → About me for the user to accept or dismiss — never claim you've saved them until accepted.
-Include sourceText (where you learned it, e.g. "planning chat · Jun") on each proposal.`,
+`,
 
   focus: `Register: Focus.
 Tone: minimal and non-distracting — one short sentence when possible. No questions unless essential.
@@ -89,7 +86,7 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
   today:
     "Surface: Today — daily execution, Top 3, reschedule/complete/park. Prefer concrete next steps.",
   week: "Surface: Week — seven-day layout, draft_week, moving tasks across days, protected time.",
-  plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions. propose_about_me_edit is available here.",
+  plan: "Surface: Plan — horizon planning, balance pass, month/quarter intentions.",
   projects:
     "Surface: Projects — project slugs, phases/subphases (unlimited nesting), creating and scheduling project tasks. Prefer create_phase / edit_phase / delete_phase for structure.",
   "loose-tasks":

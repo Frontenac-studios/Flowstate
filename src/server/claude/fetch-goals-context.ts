@@ -3,10 +3,7 @@ import "server-only";
 import { and, desc, eq, ne } from "drizzle-orm";
 
 import { db } from "@/db";
-import { abyssItems, appSettings, bingoCards, goals } from "@/db/tables";
-import { BINGO_CELL_COUNT, BINGO_FREE_CELL_INDEX } from "@/db/schema/planning-enums";
-import type { BingoGoal } from "@/lib/planning/bingo-grid";
-import { categoryBalance } from "@/lib/planning/bingo-grid";
+import { abyssItems, appSettings, goals } from "@/db/tables";
 import { deriveCategorySignal, detectEaseOffCandidates } from "@/lib/planning/goal-coach-signal";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import {
@@ -24,134 +21,108 @@ const MAX_HISTORY_MESSAGES = 20;
 const MAX_PAST_GOALS = 40;
 const MAX_ABYSS_ITEMS = 15;
 
-/** Squares available to hold a goal (25 total minus the FREE center). */
-const PLACEABLE_CELLS = BINGO_CELL_COUNT - 1;
-
 function truncateContext(text: string): string {
   if (text.length <= MAX_CONTEXT_CHARS) return text;
   return `${text.slice(0, MAX_CONTEXT_CHARS)}\n…(truncated)`;
 }
 
-type CardRow = { id: string; cardYear: number; status: "draft" | "final" };
 type GoalRow = {
   id: string;
-  bingoCardId: string | null;
+  targetYear: number | null;
   title: string;
   category: ProjectCategory;
-  cellIndex: number | null;
   state: "active" | "done" | "backburnered";
 };
 
-function isPlacedGoal(cellIndex: number | null): cellIndex is number {
-  return (
-    cellIndex != null &&
-    cellIndex !== BINGO_FREE_CELL_INDEX &&
-    cellIndex >= 0 &&
-    cellIndex < BINGO_CELL_COUNT
-  );
-}
-
-function toBingoGoal(row: GoalRow): BingoGoal {
-  return {
-    id: row.id,
-    title: row.title,
-    category: row.category,
-    cellIndex: row.cellIndex,
-    state: row.state,
-  };
+/** Count of goals per category — drives the balance read the coach sees. */
+function categoryBalance(rows: readonly GoalRow[]): Record<ProjectCategory, number> {
+  const counts = Object.fromEntries(PROJECT_CATEGORIES.map((c) => [c, 0])) as Record<
+    ProjectCategory,
+    number
+  >;
+  for (const row of rows) counts[row.category] += 1;
+  return counts;
 }
 
 /**
- * Load the goal-coaching source data for a user, split into the current card (the
- * latest year) and prior years. Shared by the context builder and the query_goals /
- * query_past_goals read tools so they never drift.
+ * Load the goal-coaching source data for a user, split into the current year (the
+ * latest target year on record) and prior years. Shared by the context builder and
+ * the query_goals / query_past_goals read tools so they never drift.
  *
- * NOTE: "current" = the highest card year. Phase 3's per-card-year coaching thread can
- * refine this to the exact card the session is about.
+ * Goals with no target year are treated as belonging to the current year.
  */
 export async function loadCoachGoalData(userId: string): Promise<{
-  currentCard: CardRow | null;
+  currentYear: number | null;
   currentGoals: GoalRow[];
-  pastCardsByYear: { card: CardRow; goals: GoalRow[] }[];
+  pastGoalsByYear: { year: number; goals: GoalRow[] }[];
 }> {
-  const cardRows = (await db
-    .select({ id: bingoCards.id, cardYear: bingoCards.cardYear, status: bingoCards.status })
-    .from(bingoCards)
-    .where(eq(bingoCards.userId, userId))
-    .orderBy(desc(bingoCards.cardYear))) as CardRow[];
-
-  if (cardRows.length === 0) {
-    return { currentCard: null, currentGoals: [], pastCardsByYear: [] };
-  }
-
   const goalRows = (await db
     .select({
       id: goals.id,
-      bingoCardId: goals.bingoCardId,
+      targetYear: goals.targetYear,
       title: goals.title,
       category: goals.category,
-      cellIndex: goals.cellIndex,
       state: goals.state,
     })
     .from(goals)
     .where(eq(goals.userId, userId))) as GoalRow[];
 
-  const goalsByCard = new Map<string, GoalRow[]>();
-  for (const goal of goalRows) {
-    if (!goal.bingoCardId) continue;
-    const list = goalsByCard.get(goal.bingoCardId) ?? [];
-    list.push(goal);
-    goalsByCard.set(goal.bingoCardId, list);
+  if (goalRows.length === 0) {
+    return { currentYear: null, currentGoals: [], pastGoalsByYear: [] };
   }
 
-  const [currentCard, ...pastCards] = cardRows;
+  const years = goalRows.flatMap((g) => (g.targetYear != null ? [g.targetYear] : []));
+  const currentYear = years.length > 0 ? Math.max(...years) : new Date().getFullYear();
+
+  const currentGoals: GoalRow[] = [];
+  const byYear = new Map<number, GoalRow[]>();
+  for (const goal of goalRows) {
+    if (goal.targetYear == null || goal.targetYear === currentYear) {
+      currentGoals.push(goal);
+      continue;
+    }
+    const list = byYear.get(goal.targetYear) ?? [];
+    list.push(goal);
+    byYear.set(goal.targetYear, list);
+  }
+
   return {
-    currentCard: currentCard ?? null,
-    currentGoals: currentCard ? (goalsByCard.get(currentCard.id) ?? []) : [],
-    pastCardsByYear: pastCards.map((card) => ({
-      card,
-      goals: goalsByCard.get(card.id) ?? [],
-    })),
+    currentYear,
+    currentGoals,
+    pastGoalsByYear: Array.from(byYear.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([year, rows]) => ({ year, goals: rows })),
   };
 }
 
-/** Structured current-card read for the query_goals tool. */
+/** Structured current-year read for the query_goals tool. */
 export async function queryCoachCurrentGoals(userId: string) {
-  const { currentCard, currentGoals } = await loadCoachGoalData(userId);
-  if (!currentCard) {
-    return { ok: true as const, card: null, balance: {}, goals: [] as unknown[] };
+  const { currentYear, currentGoals } = await loadCoachGoalData(userId);
+  if (currentYear == null) {
+    return { ok: true as const, year: null, balance: {}, goals: [] as unknown[] };
   }
-
-  const placed = currentGoals.filter((g) => isPlacedGoal(g.cellIndex));
-  const balance = categoryBalance(currentGoals.map(toBingoGoal));
 
   return {
     ok: true as const,
-    card: {
-      year: currentCard.cardYear,
-      status: currentCard.status,
-      placed: placed.length,
-      empty: PLACEABLE_CELLS - placed.length,
-    },
-    balance,
+    year: currentYear,
+    balance: categoryBalance(currentGoals),
     goals: currentGoals.map((g) => ({
       title: g.title,
       category: g.category,
       state: g.state,
-      cellIndex: g.cellIndex,
     })),
   };
 }
 
 /** Structured prior-years read for the query_past_goals tool. */
 export async function queryCoachPastGoals(userId: string, limit = MAX_PAST_GOALS) {
-  const { pastCardsByYear } = await loadCoachGoalData(userId);
+  const { pastGoalsByYear } = await loadCoachGoalData(userId);
   const cap = Math.min(Math.max(limit, 1), MAX_PAST_GOALS);
-  const flattened = pastCardsByYear.flatMap(({ card, goals: cardGoals }) =>
-    cardGoals.map((g) => ({
+  const flattened = pastGoalsByYear.flatMap(({ year, goals: yearGoals }) =>
+    yearGoals.map((g) => ({
       title: g.title,
       category: g.category,
-      year: card.cardYear,
+      year,
       completed: g.state === "done",
     }))
   );
@@ -203,7 +174,7 @@ function formatLearnedSignalBlock(
 
 function formatBalanceLine(balance: Record<ProjectCategory, number>): string {
   const parts = PROJECT_CATEGORIES.map((c) => `${categoryLabel(c)} ${balance[c]}`);
-  return `Category balance (placed goals): ${parts.join(", ")}`;
+  return `Category balance: ${parts.join(", ")}`;
 }
 
 function formatGoalLines(rows: GoalRow[]): string {
@@ -219,7 +190,7 @@ function formatGoalLines(rows: GoalRow[]): string {
 
 /**
  * Assemble the goal-coaching context block (parallel to fetchPlanContextSnapshot). Includes
- * the current card + balance, prior years' goals for continuity, and parked ideas as raw
+ * this year's goals + balance, prior years' goals for continuity, and parked ideas as raw
  * inspiration. Deliberately contains NO active tasks — the coach must not repackage them.
  */
 export async function fetchGoalsContextSnapshot(
@@ -227,7 +198,7 @@ export async function fetchGoalsContextSnapshot(
   threadId: string
 ): Promise<PlanContextSnapshot> {
   const [
-    { currentCard, currentGoals, pastCardsByYear },
+    { currentYear, currentGoals, pastGoalsByYear },
     abyssRows,
     threadRows,
     settingsRows,
@@ -268,22 +239,19 @@ export async function fetchGoalsContextSnapshot(
   const learnedSignal = formatLearnedSignalBlock(easeOffCandidates, easedCategories);
   if (learnedSignal) sections.push(learnedSignal);
 
-  if (currentCard) {
-    const placed = currentGoals.filter((g) => isPlacedGoal(g.cellIndex));
-    const empty = PLACEABLE_CELLS - placed.length;
-    const balance = categoryBalance(currentGoals.map(toBingoGoal));
+  if (currentYear != null) {
     sections.push(
-      `This year's bingo card (${currentCard.cardYear}, ${currentCard.status}): ${placed.length} of ${PLACEABLE_CELLS} squares filled, ${empty} empty.`,
-      formatBalanceLine(balance),
-      `Goals on the card:\n${formatGoalLines(currentGoals)}`
+      `This year's goals (${currentYear}): ${currentGoals.length} on record.`,
+      formatBalanceLine(categoryBalance(currentGoals)),
+      `Goals:\n${formatGoalLines(currentGoals)}`
     );
   } else {
-    sections.push("No bingo card yet — this is a fresh start.");
+    sections.push("No goals yet — this is a fresh start.");
   }
 
-  if (pastCardsByYear.length > 0) {
-    const pastBlock = pastCardsByYear
-      .map(({ card, goals: cardGoals }) => `${card.cardYear}:\n${formatGoalLines(cardGoals)}`)
+  if (pastGoalsByYear.length > 0) {
+    const pastBlock = pastGoalsByYear
+      .map(({ year, goals: yearGoals }) => `${year}:\n${formatGoalLines(yearGoals)}`)
       .join("\n");
     sections.push(`Previous years' goals (for continuity):\n${pastBlock}`);
   }

@@ -1,46 +1,29 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
-import { formatWinLabel } from "@/lib/daily-wins/format-win-label";
-import { toLocalISODate } from "@/lib/nudges/local-time";
 import { useTRPC } from "@/trpc/client";
 
 import { GardenScene } from "./GardenScene";
 import { RestorativeTimeCard } from "./RestorativeTimeCard";
 import { useGardenNourishPulse } from "./useGardenNourishPulse";
 
-function clientTzOffsetMinutes(): number {
-  return -new Date().getTimezoneOffset();
-}
-
 type Props = { onOpenBreathing?: () => void };
 
 export function CareGardenHome({ onOpenBreathing }: Props) {
   const trpc = useTRPC();
-  const tzOffsetMinutes = useMemo(() => clientTzOffsetMinutes(), []);
-  const todayIso = useMemo(() => toLocalISODate(new Date(), tzOffsetMinutes), [tzOffsetMinutes]);
   const [promptDismissed, setPromptDismissed] = useState(false);
 
   const gardenQuery = useQuery(trpc.care.getGardenState.queryOptions());
   const liftsQuery = useQuery(trpc.care.getLiftsMe.queryOptions());
   const nourishmentsQuery = useQuery(trpc.care.recentWinNourishments.queryOptions({ limit: 8 }));
-  const dayQuery = useQuery(
-    trpc.dailyWins.getDay.queryOptions({ winDate: todayIso, tzOffsetMinutes })
-  );
 
   const { activeBeat, pulseKey } = useGardenNourishPulse(nourishmentsQuery.data);
   const garden = gardenQuery.data;
-  const slots = dayQuery.data?.slots ?? [null, null, null];
   const lifts = liftsQuery.data ?? [];
-
-  const wins = slots.map((slot, index) => {
-    if (!slot) return { key: `empty-${index}`, label: "One more to notice…", done: false };
-    return { key: slot.id, label: formatWinLabel(slot), done: true };
-  });
 
   return (
     <div className="flex flex-col gap-3">
@@ -53,37 +36,6 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
           nourishPulseKey={pulseKey}
         />
         <div className="flex flex-col gap-3">
-          <section className="rounded-card border border-subtle bg-surface p-3 shadow-surface">
-            <h2 className="mb-2 text-caption font-medium text-ink-muted">Today&apos;s wins</h2>
-            {dayQuery.isLoading && !dayQuery.data ? (
-              <p className="text-meta text-ink-faint">Loading…</p>
-            ) : dayQuery.isError && !dayQuery.data ? (
-              <QueryErrorNotice
-                message="Today's wins didn't load."
-                onRetry={() => void dayQuery.refetch()}
-              />
-            ) : (
-              <ul className="flex flex-col gap-0.5">
-                {wins.map((win) => (
-                  <li key={win.key} className="flex items-center gap-2 rounded-row px-1 py-0.5">
-                    <span
-                      className={
-                        win.done
-                          ? "text-on-accent flex h-4 w-4 items-center justify-center rounded-[4px] bg-cat-body-mind text-caption"
-                          : "h-4 w-4 rounded-[4px] border-emphasis border-[var(--priority-low)]"
-                      }
-                      aria-hidden
-                    >
-                      {win.done ? "✓" : ""}
-                    </span>
-                    <span className={win.done ? "text-body text-ink" : "text-body text-ink-faint"}>
-                      {win.label}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
           <section className="rounded-card border border-subtle bg-surface p-3 shadow-surface">
             <h2 className="mb-2 text-caption font-medium text-ink-muted">What lifts me</h2>
             {liftsQuery.isLoading ? (
@@ -135,9 +87,6 @@ export function CareGardenHome({ onOpenBreathing }: Props) {
           <RestorativeTimeCard />
         </div>
       </div>
-      <p className="px-0.5 text-caption text-ink-faint">
-        See your wins history and gentle trends in the Evidence tab.
-      </p>
     </div>
   );
 }
