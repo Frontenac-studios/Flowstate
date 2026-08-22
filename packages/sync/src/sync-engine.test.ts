@@ -270,36 +270,29 @@ describe("pushPendingMutations (via runSync)", () => {
     expect(await listPendingMutations(db)).toHaveLength(0);
   });
 
-  it("queues and pushes offline daily_wins accept mutations", async () => {
+  it("queues and pushes offline abyss_items mutations as one coalesced upsert", async () => {
     await recordSyncMutation(db, {
-      table: "daily_wins",
-      rowId: "w1",
+      table: "abyss_items",
+      rowId: "a1",
       op: "insert",
       payload: {
-        id: "w1",
+        id: "a1",
         userId: "u1",
-        winDate: "2026-07-01",
-        slot: 0,
-        source: "task",
-        refId: "00000000-0000-4000-8000-000000000001",
-        label: "Shipped fix",
-        state: "accepted",
-        author: "ai",
+        title: "Idea one",
+        type: "idea",
+        status: "active",
       },
     });
     await recordSyncMutation(db, {
-      table: "daily_wins",
-      rowId: "w2",
+      table: "abyss_items",
+      rowId: "a2",
       op: "insert",
       payload: {
-        id: "w2",
+        id: "a2",
         userId: "u1",
-        winDate: "2026-07-01",
-        slot: null,
-        source: "task",
-        refId: "00000000-0000-4000-8000-000000000002",
-        state: "dismissed",
-        author: "ai",
+        title: "Idea two",
+        type: "idea",
+        status: "archived",
       },
     });
 
@@ -308,12 +301,12 @@ describe("pushPendingMutations (via runSync)", () => {
 
     expect(res.errors).toEqual([]);
 
-    const upserts = fake.calls.filter((c) => c.op === "upsert" && c.table === "daily_wins");
+    const upserts = fake.calls.filter((c) => c.op === "upsert" && c.table === "abyss_items");
     expect(upserts).toHaveLength(1);
-    const rows = upserts[0].rows as Array<{ id: string; state: string }>;
+    const rows = upserts[0].rows as Array<{ id: string; status: string }>;
     expect(rows).toHaveLength(2);
-    expect(rows.find((r) => r.id === "w1")?.state).toBe("accepted");
-    expect(rows.find((r) => r.id === "w2")?.state).toBe("dismissed");
+    expect(rows.find((r) => r.id === "a1")?.status).toBe("active");
+    expect(rows.find((r) => r.id === "a2")?.status).toBe("archived");
 
     const { listPendingMutations } = await import("./mutation-log");
     expect(await listPendingMutations(db)).toHaveLength(0);

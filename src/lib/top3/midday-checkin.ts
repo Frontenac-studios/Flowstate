@@ -1,5 +1,5 @@
 import { top3TargetHour } from "@/lib/eod/wind-down";
-import { getLocalHour } from "@/lib/nudges/local-time";
+import { getLocalHour } from "@/lib/dates/local-time";
 
 import { TOP3_MIDDAY_CHECKIN_HOUR } from "./constants";
 

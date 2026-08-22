@@ -18,7 +18,6 @@ import { filterAssembledTodayList } from "@/lib/morning-handoff/handoff-task-fil
 import { renderInlineBold } from "@/lib/markdown/inline-bold";
 import { useTRPC } from "@/trpc/client";
 
-import { DailyWinsTracker } from "./DailyWinsTracker";
 import { EodLeftoverTriage } from "./EodLeftoverTriage";
 import { FocusTimeChart } from "./FocusTimeChart";
 import { Top3ReviewSummary } from "./Top3ReviewSummary";
@@ -234,7 +233,6 @@ export function EodReviewModal({
               {payload.completionsToday === 1 ? "" : "s"} completed today
             </p>
             <BalanceBar tasks={todayTasks} showGhostWhenSparse />
-            <DailyWinsTracker winDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
             <section aria-label="Top 3 status">
               <p className="mb-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
                 Top 3

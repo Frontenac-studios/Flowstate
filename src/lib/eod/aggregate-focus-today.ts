@@ -1,4 +1,4 @@
-import { startedOnLocalDay } from "@/lib/nudges/local-time";
+import { startedOnLocalDay } from "@/lib/dates/local-time";
 
 import type { EodFocusBar, TimeEntryFocusInput } from "./types";
 

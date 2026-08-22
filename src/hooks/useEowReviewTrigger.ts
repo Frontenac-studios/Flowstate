@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { currentWeekStartIso } from "@/lib/eow/current-week-key";
-import { shouldSuppressInAppNudges } from "@/lib/about-me/constraint-eval";
 import {
   isEowDismissedForWeek,
   isEowSkippedForWeek,
@@ -16,13 +15,10 @@ import { resolveEowUiState } from "@/lib/eow/resolve-eow-ui-state";
 import type { EowUiState } from "@/lib/eow/types";
 import { isWeekWindDownDue } from "@/lib/eow/week-wind-down";
 import { useWeekWindDown } from "@/hooks/useWeekWindDown";
-import { useUserConstraints } from "@/hooks/useUserConstraints";
 
 export function useEowReviewTrigger() {
   const pathname = usePathname();
   const [weekWindDown] = useWeekWindDown();
-  const { constraints } = useUserConstraints();
-  const nudgeQuiet = shouldSuppressInAppNudges(new Date(), constraints);
   const [storageTick, setStorageTick] = useState(0);
   const [crossedOnPage, setCrossedOnPage] = useState(false);
   const [initialAfterDue, setInitialAfterDue] = useState(false);
@@ -113,7 +109,7 @@ export function useEowReviewTrigger() {
     weekStartIso,
     weekWindDown,
     uiState,
-    showChip: uiState === "chip" && !nudgeQuiet,
+    showChip: uiState === "chip",
     reviewDue,
     openReview,
     dismissChip,

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useWindDownHour } from "@/hooks/useWindDownHour";
-import { evaluateTop3Stall, type Top3TaskInput } from "@/lib/nudges/evaluate-top3-stall";
+import { evaluateTop3Stall, type Top3TaskInput } from "@/lib/top3/evaluate-top3-stall";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { computeTop3HoldSlot } from "@/lib/top3/compute-top3-hold-slot";
@@ -18,7 +18,7 @@ import type { Top3MiddayCheckin } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
 import type { Top3SlotTask } from "@/components/kash/plan/Top3Slots";
-import { startedOnLocalDay } from "@/lib/nudges/local-time";
+import { startedOnLocalDay } from "@/lib/dates/local-time";
 
 function readDeclinedHold(localDate: string): boolean {
   if (typeof window === "undefined") return false;

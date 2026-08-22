@@ -16,10 +16,10 @@ import { buildBalanceDigestRows, templateBalanceDigest } from "@/lib/eow/balance
 import { categorySeedLabel } from "@/lib/projects/category-tokens";
 import { evaluateOverCommitDrift } from "@/lib/week/over-commit-drift";
 import { localIsoDateFromUtcInstant, localWeekUtcBounds } from "@/lib/time/local-week-bounds";
-import { fetchWeeklyCategoryAttention } from "@/server/nudges/fetch-balance-nudge-context";
 import { evaluateCategoryBaseline } from "@/lib/tasks/category-baseline";
 import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
 import { fetchOverCommitThreshold } from "@/server/week/fetch-over-commit-threshold";
+import { fetchWeeklyCategoryAttention } from "@/server/week/fetch-weekly-category-attention";
 import { generateEowReview } from "@/server/claude/generate-eow-review";
 
 import { createTRPCRouter, protectedProcedure } from "../init";

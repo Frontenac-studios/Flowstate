@@ -21,7 +21,7 @@ import {
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
 import { timelineBlockStyle } from "@/lib/timeline/block-geometry";
 import { calendarEventColors } from "@/lib/calendar/event-color";
-import { largestOpenGap, nextOpenSlotMin } from "@/lib/timeline/living-record";
+import { nextOpenSlotMin } from "@/lib/timeline/living-record";
 import { mergeDayBusySources } from "@/lib/calendar/merge-day-busy-sources";
 import { useTRPC } from "@/trpc/client";
 import type { EventForDay } from "@/trpc/routers/calendar";
@@ -33,15 +33,9 @@ import {
   ExternalEventAllDayChip,
   ExternalEventBlock,
 } from "@/components/kash/plan/ExternalEventBlock";
-import {
-  dispatchSelfCareBreatheStart,
-  dispatchSelfCareWalkStart,
-} from "@/lib/nudges/self-care-session-events";
 import { TOP3_HOLD_LABEL } from "@/lib/top3/constants";
 import { ChevronLeft, ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
-
-import { SelfCareGapRow } from "./SelfCareGapRow";
 
 const HOUR_HEIGHT = 56; // px per hour
 const SLOT_MINUTES = 15;
@@ -476,17 +470,11 @@ export function TimelinePane({
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const [now, setNow] = useState<Date | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);
-  const gapDismissKey = `selfCareGapDismiss:${date}`;
-  const [gapDismissed, setGapDismissed] = useState(false);
 
   useEffect(() => {
     // Calendar view always shows the full pane; reset when switching back to list.
     if (density === "full") setRailExpanded(false);
   }, [density]);
-
-  useEffect(() => {
-    setGapDismissed(localStorage.getItem(gapDismissKey) === "1");
-  }, [gapDismissKey]);
 
   useEffect(() => {
     setNow(new Date());
@@ -646,12 +634,6 @@ export function TimelinePane({
   const NEXT_BLOCK_MIN = 45;
   const decideSlotMin =
     nowMinutes != null ? nextOpenSlotMin(busy, nowMinutes, rangeEnd, NEXT_BLOCK_MIN) : null;
-  const selfCareBusy =
-    decideSlotMin != null
-      ? [...busy, { startMin: decideSlotMin, endMin: decideSlotMin + NEXT_BLOCK_MIN }]
-      : busy;
-  const selfCareGap =
-    nowMinutes != null ? largestOpenGap(selfCareBusy, nowMinutes, rangeEnd, 60) : null;
 
   const showNowLine = nowMinutes != null && nowMinutes >= rangeStart && nowMinutes <= rangeEnd;
   const showTimelineChrome =
@@ -864,18 +846,6 @@ export function TimelinePane({
                 <span className="shrink-0 text-caption text-ink-faint">✓</span>
               </div>
             ))}
-
-            {showTimelineChrome && selfCareGap && !gapDismissed ? (
-              <SelfCareGapRow
-                top={((selfCareGap.startMin - rangeStart) / 60) * HOUR_HEIGHT + 4}
-                onStartWalk={dispatchSelfCareWalkStart}
-                onStartBreathe={dispatchSelfCareBreatheStart}
-                onDismiss={() => {
-                  localStorage.setItem(gapDismissKey, "1");
-                  setGapDismissed(true);
-                }}
-              />
-            ) : null}
 
             {showTimelineChrome && decideSlotMin != null ? (
               <div

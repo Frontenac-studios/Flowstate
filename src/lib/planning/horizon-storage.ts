@@ -1,4 +1,4 @@
-export const PLANNING_HORIZONS = ["week", "month", "quarter", "year", "goals"] as const;
+export const PLANNING_HORIZONS = ["week", "month", "quarter", "year"] as const;
 
 export type PlanningHorizon = (typeof PLANNING_HORIZONS)[number];
 
@@ -17,7 +17,6 @@ export const HORIZON_OPTIONS = [
   { value: "month" as const, label: "Month" },
   { value: "quarter" as const, label: "Quarter" },
   { value: "year" as const, label: "Year" },
-  { value: "goals" as const, label: "Goals" },
 ];
 
 export const HORIZON_PLACEHOLDER_COPY: Record<PlanningHorizon, string> = {
@@ -25,5 +24,4 @@ export const HORIZON_PLACEHOLDER_COPY: Record<PlanningHorizon, string> = {
   month: "Nothing planned yet for this month.",
   quarter: "Nothing planned yet for this quarter.",
   year: "Nothing planned yet for this year.",
-  goals: "Your goals — bingo grid or list overview.",
 };

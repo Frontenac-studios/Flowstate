@@ -14,20 +14,6 @@ describe("row-mapper", () => {
     expect(mapped.reviewDate).toBe("2026-05-27");
   });
 
-  it("stringifies nudge_events task_ids and drops snake_case key", () => {
-    const mapped = mapRemoteRow("nudge_events", {
-      id: "n1",
-      user_id: "u",
-      kind: "top3_stall",
-      local_date: "2026-05-27",
-      task_ids: '["a","b"]',
-      created_at: "2026-05-27T00:00:00Z",
-      updated_at: "2026-05-27T00:00:00Z",
-    });
-    expect(mapped.taskIds).toBe('["a","b"]');
-    expect(mapped).not.toHaveProperty("task_ids");
-  });
-
   it("passes chat_messages content through as an object (json-mode column serializes)", () => {
     const content = { type: "text", text: "hi" };
     const mapped = mapRemoteRow("chat_messages", {

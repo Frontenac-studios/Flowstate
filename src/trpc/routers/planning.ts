@@ -1,214 +1,39 @@
-import { and, asc, eq, gte, inArray, isNotNull, isNull, lt } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { syncPlanningRow, syncProtectedBlockRow, syncTaskRow } from "@/db/record-sync-mutation";
 import {
-  bingoCards,
   goalMilestones,
   goals,
-  monthIntentions,
-  nudgeEvents,
   phases,
-  planningSuggestions,
   projects,
   protectedBlocks,
-  quarterThemes,
   reservedDays,
   taskTimeEntries,
   tasks,
-  userValues,
 } from "@/db/tables";
-import { assertEditableBingoCell } from "@/lib/planning/bingo-cells";
 import normalizeGoalTitle from "@/lib/planning/goal-title";
-import {
-  balancePassScopeKey,
-  balanceSuggestionLabel,
-  computeBalanceFlags,
-  weightsFromActivity,
-} from "@/lib/planning/balance-pass";
-import { resolveBalancePassSuggestion } from "@/lib/planning/balance-pass-suggestion";
-import { checkInDepthSchema, checkInScopeKey } from "@/lib/planning/check-in";
-import { templateCheckInSuggestions } from "@/lib/planning/check-in-templates";
-import { runCheckInAboutMeProducer } from "@/server/about-me/register-hooks";
 import {
   goalProgressPercent,
   milestoneIsComplete,
   type MilestoneProgress,
 } from "@/lib/planning/goal-progress";
 import { aggregateYearActivity } from "@/lib/planning/year-heat";
-import { mockReservedDayDate } from "@/lib/planning/month-calendar";
-import { monthsForQuarter } from "@/lib/planning/quarter-months";
 import {
   defaultReservedDayLabel,
   protectedBlockCategoryForReservedDay,
 } from "@/lib/planning/reserved-day-category";
-import { addDays, parseISODateString, toISODateString } from "@/lib/dates/local-day";
-import { PROJECT_CATEGORIES, categoryLabel } from "@/lib/projects/categories";
+import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { slugifyProjectName } from "@/lib/projects/slugify";
-import { fetchWeekDraftContext } from "@/server/claude/fetch-week-draft-context";
-import { generateWeekDraft } from "@/server/claude/generate-week-draft";
-import { fetchAbyssBalanceCandidates } from "@/server/planning/fetch-abyss-balance-candidates";
-import {
-  fetchGoalSteeringOffer,
-  fetchGoalSteeringOfferForGoal,
-  pullGoalStepToToday,
-  recordGoalSteeringNudge,
-} from "@/server/planning/fetch-goal-steering-offer";
-import { fetchIsOverCommittedForDate } from "@/server/week/fetch-over-commit-for-date";
-import { maybeTriggerEvidenceMilestoneEdition } from "@/server/evidence/maybe-trigger-milestone";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
-
-const balanceHorizonSchema = z.enum(["week", "month"]);
-
-/** Local calendar month [start, end) as UTC instants for activity queries. */
-function monthUtcBounds(
-  year: number,
-  month: number,
-  tzOffsetMinutes: number
-): { start: Date; end: Date } {
-  const startLocalMidnight = Date.UTC(year, month - 1, 1);
-  const endLocalMidnight = Date.UTC(year, month, 1);
-  return {
-    start: new Date(startLocalMidnight - tzOffsetMinutes * 60_000),
-    end: new Date(endLocalMidnight - tzOffsetMinutes * 60_000),
-  };
-}
-
-/** ISO week [start, end) as UTC instants from Monday anchor. */
-function weekUtcBounds(weekStart: string, tzOffsetMinutes: number): { start: Date; end: Date } {
-  const monday = parseISODateString(weekStart);
-  const startLocalMidnight = Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate());
-  const endLocalMidnight = startLocalMidnight + 7 * 86_400_000;
-  return {
-    start: new Date(startLocalMidnight - tzOffsetMinutes * 60_000),
-    end: new Date(endLocalMidnight - tzOffsetMinutes * 60_000),
-  };
-}
-
-async function categoryActivityForScope(
-  userId: string,
-  input: {
-    horizon: "week" | "month";
-    year: number;
-    month?: number;
-    weekStart?: string;
-    tzOffsetMinutes: number;
-  }
-) {
-  const bounds =
-    input.horizon === "week" && input.weekStart
-      ? weekUtcBounds(input.weekStart, input.tzOffsetMinutes)
-      : monthUtcBounds(input.year, input.month ?? 1, input.tzOffsetMinutes);
-
-  const weekDates =
-    input.horizon === "week" && input.weekStart
-      ? Array.from({ length: 7 }, (_, index) =>
-          toISODateString(addDays(parseISODateString(input.weekStart!), index))
-        )
-      : null;
-
-  const scheduledCondition =
-    weekDates != null
-      ? and(inArray(tasks.scheduledDate, weekDates), isNull(tasks.completedAt))
-      : and(
-          gte(tasks.scheduledDate, `${input.year}-${String(input.month).padStart(2, "0")}-01`),
-          lt(
-            tasks.scheduledDate,
-            input.month === 12
-              ? `${input.year + 1}-01-01`
-              : `${input.year}-${String((input.month ?? 0) + 1).padStart(2, "0")}-01`
-          ),
-          isNull(tasks.completedAt)
-        );
-
-  const [scheduledRows, completedRows] = await Promise.all([
-    db
-      .select({ category: tasks.category })
-      .from(tasks)
-      .where(and(eq(tasks.userId, userId), scheduledCondition)),
-    db
-      .select({ category: tasks.category })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.userId, userId),
-          isNotNull(tasks.completedAt),
-          gte(tasks.completedAt, bounds.start),
-          lt(tasks.completedAt, bounds.end)
-        )
-      ),
-  ]);
-
-  return weightsFromActivity([...scheduledRows, ...completedRows]);
-}
-
-async function statedCategoriesForScope(
-  userId: string,
-  input: { year: number; month?: number; quarter?: number }
-): Promise<Set<(typeof PROJECT_CATEGORIES)[number]>> {
-  const stated = new Set<(typeof PROJECT_CATEGORIES)[number]>();
-
-  if (input.month != null) {
-    const intentions = await db
-      .select({ category: monthIntentions.category, text: monthIntentions.text })
-      .from(monthIntentions)
-      .where(
-        and(
-          eq(monthIntentions.userId, userId),
-          eq(monthIntentions.year, input.year),
-          eq(monthIntentions.month, input.month)
-        )
-      );
-    for (const row of intentions) {
-      if (row.text.trim()) stated.add(row.category);
-    }
-  }
-
-  if (input.quarter != null) {
-    const [theme] = await db
-      .select({ focusCategories: quarterThemes.focusCategories })
-      .from(quarterThemes)
-      .where(
-        and(
-          eq(quarterThemes.userId, userId),
-          eq(quarterThemes.year, input.year),
-          eq(quarterThemes.quarter, input.quarter)
-        )
-      )
-      .limit(1);
-    const focus = theme?.focusCategories;
-    if (Array.isArray(focus)) {
-      for (const category of focus) {
-        if (PROJECT_CATEGORIES.includes(category as (typeof PROJECT_CATEGORIES)[number])) {
-          stated.add(category as (typeof PROJECT_CATEGORIES)[number]);
-        }
-      }
-    }
-  }
-
-  return stated;
-}
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const yearSchema = z.number().int().min(2000).max(2100);
 const monthSchema = z.number().int().min(1).max(12);
 const quarterSchema = z.number().int().min(1).max(4);
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD).");
-
-const suggestionSurfaceSchema = z.enum([
-  "quarter_spread",
-  "week_draft",
-  "balance_pass",
-  "milestone_breakdown",
-  "reserved_day",
-  "check_in",
-  "year_rollover",
-]);
-
-const suggestionStatusSchema = z.enum(["pending", "staged", "applied", "dismissed"]);
 
 /** UTC instants for [start, end) of a calendar year in browser-local wall-clock. */
 function yearUtcBounds(year: number, tzOffsetMinutes: number): { start: Date; end: Date } {
@@ -276,14 +101,7 @@ async function fetchActivitySourceRows(userId: string, start: Date, end: Date) {
 }
 
 async function syncRow(
-  table:
-    | "bingo_cards"
-    | "goals"
-    | "goal_milestones"
-    | "quarter_themes"
-    | "month_intentions"
-    | "reserved_days"
-    | "planning_suggestions",
+  table: "goals" | "goal_milestones" | "reserved_days",
   rowId: string,
   op: "insert" | "update" | "delete",
   payload: unknown
@@ -292,94 +110,19 @@ async function syncRow(
 }
 
 export const planningRouter = createTRPCRouter({
-  getBingoCard: protectedProcedure
-    .input(z.object({ cardYear: yearSchema }))
-    .query(async ({ ctx, input }) => {
-      const [card] = await db
-        .select()
-        .from(bingoCards)
-        .where(and(eq(bingoCards.userId, ctx.userId), eq(bingoCards.cardYear, input.cardYear)))
-        .limit(1);
-      return card ?? null;
-    }),
-
-  getOrCreateBingoCard: protectedProcedure
-    .input(z.object({ cardYear: yearSchema }))
-    .mutation(async ({ ctx, input }) => {
-      const [existing] = await db
-        .select()
-        .from(bingoCards)
-        .where(and(eq(bingoCards.userId, ctx.userId), eq(bingoCards.cardYear, input.cardYear)))
-        .limit(1);
-
-      if (existing) return existing;
-
-      const [row] = await db
-        .insert(bingoCards)
-        .values({ userId: ctx.userId, cardYear: input.cardYear })
-        .returning();
-
-      if (!row) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create bingo card.",
-        });
-      }
-
-      await syncRow("bingo_cards", row.id, "insert", row);
-      return row;
-    }),
-
-  finalizeBingoCard: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      const now = new Date();
-      const [row] = await db
-        .update(bingoCards)
-        .set({ status: "final", finalizedAt: now, updatedAt: now })
-        .where(and(eq(bingoCards.id, input.id), eq(bingoCards.userId, ctx.userId)))
-        .returning();
-
-      if (!row) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Bingo card not found." });
-      }
-
-      await syncRow("bingo_cards", row.id, "update", row);
-      return row;
-    }),
-
   listGoals: protectedProcedure
-    .input(
-      z
-        .object({
-          bingoCardId: z.string().uuid().optional(),
-          cardYear: yearSchema.optional(),
-        })
-        .optional()
-    )
+    .input(z.object({ targetYear: yearSchema.optional() }).optional())
     .query(async ({ ctx, input }) => {
       const conditions = [eq(goals.userId, ctx.userId)];
-      if (input?.bingoCardId) {
-        conditions.push(eq(goals.bingoCardId, input.bingoCardId));
+      if (input?.targetYear != null) {
+        conditions.push(eq(goals.targetYear, input.targetYear));
       }
 
-      const rows = await db
+      return db
         .select()
         .from(goals)
         .where(and(...conditions))
         .orderBy(asc(goals.sortOrder), asc(goals.createdAt));
-
-      if (input?.cardYear == null) return rows;
-
-      const card = await db
-        .select({ id: bingoCards.id })
-        .from(bingoCards)
-        .where(and(eq(bingoCards.userId, ctx.userId), eq(bingoCards.cardYear, input.cardYear)))
-        .limit(1);
-
-      const cardId = card[0]?.id;
-      if (!cardId) return [];
-      return rows.filter((g) => g.bingoCardId === cardId);
     }),
 
   createGoal: protectedProcedure
@@ -387,10 +130,7 @@ export const planningRouter = createTRPCRouter({
       z.object({
         title: z.string().min(1).max(500),
         category: categorySchema,
-        bingoCardId: z.string().uuid().optional(),
-        cellIndex: z.number().int().min(0).max(24).optional(),
         obligationDesire: z.enum(["obligation", "desire"]).optional(),
-        valueId: z.string().uuid().nullable().optional(),
         targetHorizon: z.enum(["year", "quarter", "month"]).optional(),
         targetYear: yearSchema.optional(),
         targetQuarter: quarterSchema.optional(),
@@ -400,20 +140,13 @@ export const planningRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (input.cellIndex != null) {
-        assertEditableBingoCell(input.cellIndex);
-      }
-
       const [row] = await db
         .insert(goals)
         .values({
           userId: ctx.userId,
           title: normalizeGoalTitle(input.title),
           category: input.category,
-          bingoCardId: input.bingoCardId ?? null,
-          cellIndex: input.cellIndex ?? null,
           obligationDesire: input.obligationDesire ?? null,
-          valueId: input.valueId ?? null,
           targetHorizon: input.targetHorizon ?? null,
           targetYear: input.targetYear ?? null,
           targetQuarter: input.targetQuarter ?? null,
@@ -437,9 +170,7 @@ export const planningRouter = createTRPCRouter({
         id: z.string().uuid(),
         title: z.string().min(1).max(500).optional(),
         category: categorySchema.optional(),
-        cellIndex: z.number().int().min(0).max(24).nullable().optional(),
         obligationDesire: z.enum(["obligation", "desire"]).nullable().optional(),
-        valueId: z.string().uuid().nullable().optional(),
         targetHorizon: z.enum(["year", "quarter", "month"]).nullable().optional(),
         targetYear: yearSchema.nullable().optional(),
         targetQuarter: quarterSchema.nullable().optional(),
@@ -450,10 +181,6 @@ export const planningRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (input.cellIndex != null) {
-        assertEditableBingoCell(input.cellIndex);
-      }
-
       const [existing] = await db
         .select()
         .from(goals)
@@ -464,27 +191,11 @@ export const planningRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Goal not found." });
       }
 
-      if (input.title != null && existing.bingoCardId) {
-        const [card] = await db
-          .select({ status: bingoCards.status })
-          .from(bingoCards)
-          .where(eq(bingoCards.id, existing.bingoCardId))
-          .limit(1);
-        if (card?.status === "final") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Goal statement is locked after the bingo card is finalized.",
-          });
-        }
-      }
-
       const now = new Date();
       const patch: Record<string, unknown> = { updatedAt: now };
       if (input.title !== undefined) patch.title = normalizeGoalTitle(input.title);
       if (input.category !== undefined) patch.category = input.category;
-      if (input.cellIndex !== undefined) patch.cellIndex = input.cellIndex;
       if (input.obligationDesire !== undefined) patch.obligationDesire = input.obligationDesire;
-      if (input.valueId !== undefined) patch.valueId = input.valueId;
       if (input.targetHorizon !== undefined) patch.targetHorizon = input.targetHorizon;
       if (input.targetYear !== undefined) patch.targetYear = input.targetYear;
       if (input.targetQuarter !== undefined) patch.targetQuarter = input.targetQuarter;
@@ -507,9 +218,6 @@ export const planningRouter = createTRPCRouter({
       }
 
       await syncRow("goals", row.id, "update", row);
-      if (input.state === "done") {
-        void maybeTriggerEvidenceMilestoneEdition(ctx.userId, row.id).catch(() => {});
-      }
       return row;
     }),
 
@@ -613,88 +321,6 @@ export const planningRouter = createTRPCRouter({
       return row;
     }),
 
-  getQuarterTheme: protectedProcedure
-    .input(z.object({ year: yearSchema, quarter: quarterSchema }))
-    .query(async ({ ctx, input }) => {
-      const [row] = await db
-        .select()
-        .from(quarterThemes)
-        .where(
-          and(
-            eq(quarterThemes.userId, ctx.userId),
-            eq(quarterThemes.year, input.year),
-            eq(quarterThemes.quarter, input.quarter)
-          )
-        )
-        .limit(1);
-      return row ?? null;
-    }),
-
-  upsertQuarterTheme: protectedProcedure
-    .input(
-      z.object({
-        year: yearSchema,
-        quarter: quarterSchema,
-        phrase: z.string().max(500).nullable().optional(),
-        focusCategories: z.array(categorySchema).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const now = new Date();
-      const [existing] = await db
-        .select({ id: quarterThemes.id })
-        .from(quarterThemes)
-        .where(
-          and(
-            eq(quarterThemes.userId, ctx.userId),
-            eq(quarterThemes.year, input.year),
-            eq(quarterThemes.quarter, input.quarter)
-          )
-        )
-        .limit(1);
-
-      const values = {
-        phrase: input.phrase ?? null,
-        focusCategories: input.focusCategories ?? [],
-        updatedAt: now,
-      };
-
-      if (existing) {
-        const [row] = await db
-          .update(quarterThemes)
-          .set(values)
-          .where(eq(quarterThemes.id, existing.id))
-          .returning();
-        if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-        await syncRow("quarter_themes", row.id, "update", row);
-        return row;
-      }
-
-      const [row] = await db
-        .insert(quarterThemes)
-        .values({
-          userId: ctx.userId,
-          year: input.year,
-          quarter: input.quarter,
-          ...values,
-        })
-        .returning();
-
-      if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await syncRow("quarter_themes", row.id, "insert", row);
-      return row;
-    }),
-
-  listQuarterThemes: protectedProcedure
-    .input(z.object({ year: yearSchema }))
-    .query(async ({ ctx, input }) => {
-      return db
-        .select()
-        .from(quarterThemes)
-        .where(and(eq(quarterThemes.userId, ctx.userId), eq(quarterThemes.year, input.year)))
-        .orderBy(asc(quarterThemes.quarter));
-    }),
-
   getYearActivity: protectedProcedure
     .input(
       z.object({
@@ -730,73 +356,6 @@ export const planningRouter = createTRPCRouter({
         completedTasks,
         timeEntries,
       }).quarters[input.quarter - 1]!;
-    }),
-
-  listMonthIntentions: protectedProcedure
-    .input(z.object({ year: yearSchema, month: monthSchema }))
-    .query(async ({ ctx, input }) => {
-      return db
-        .select()
-        .from(monthIntentions)
-        .where(
-          and(
-            eq(monthIntentions.userId, ctx.userId),
-            eq(monthIntentions.year, input.year),
-            eq(monthIntentions.month, input.month)
-          )
-        )
-        .orderBy(asc(monthIntentions.category));
-    }),
-
-  upsertMonthIntention: protectedProcedure
-    .input(
-      z.object({
-        year: yearSchema,
-        month: monthSchema,
-        category: categorySchema,
-        text: z.string().max(2000),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const now = new Date();
-      const [existing] = await db
-        .select({ id: monthIntentions.id })
-        .from(monthIntentions)
-        .where(
-          and(
-            eq(monthIntentions.userId, ctx.userId),
-            eq(monthIntentions.year, input.year),
-            eq(monthIntentions.month, input.month),
-            eq(monthIntentions.category, input.category)
-          )
-        )
-        .limit(1);
-
-      if (existing) {
-        const [row] = await db
-          .update(monthIntentions)
-          .set({ text: input.text, updatedAt: now })
-          .where(eq(monthIntentions.id, existing.id))
-          .returning();
-        if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-        await syncRow("month_intentions", row.id, "update", row);
-        return row;
-      }
-
-      const [row] = await db
-        .insert(monthIntentions)
-        .values({
-          userId: ctx.userId,
-          year: input.year,
-          month: input.month,
-          category: input.category,
-          text: input.text,
-        })
-        .returning();
-
-      if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await syncRow("month_intentions", row.id, "insert", row);
-      return row;
     }),
 
   listReservedDays: protectedProcedure
@@ -951,69 +510,6 @@ export const planningRouter = createTRPCRouter({
       return row;
     }),
 
-  listSuggestions: protectedProcedure
-    .input(
-      z.object({
-        surface: suggestionSurfaceSchema.optional(),
-        status: suggestionStatusSchema.optional(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const conditions = [eq(planningSuggestions.userId, ctx.userId)];
-      if (input.surface) conditions.push(eq(planningSuggestions.surface, input.surface));
-      if (input.status) conditions.push(eq(planningSuggestions.status, input.status));
-
-      return db
-        .select()
-        .from(planningSuggestions)
-        .where(and(...conditions))
-        .orderBy(asc(planningSuggestions.createdAt));
-    }),
-
-  createSuggestion: protectedProcedure
-    .input(
-      z.object({
-        surface: suggestionSurfaceSchema,
-        payload: z.record(z.string(), z.unknown()),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const [row] = await db
-        .insert(planningSuggestions)
-        .values({
-          userId: ctx.userId,
-          surface: input.surface,
-          payload: input.payload,
-        })
-        .returning();
-
-      if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await syncRow("planning_suggestions", row.id, "insert", row);
-      return row;
-    }),
-
-  updateSuggestionStatus: protectedProcedure
-    .input(
-      z.object({
-        id: z.string().uuid(),
-        status: suggestionStatusSchema,
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const now = new Date();
-      const [row] = await db
-        .update(planningSuggestions)
-        .set({ status: input.status, updatedAt: now })
-        .where(
-          and(eq(planningSuggestions.id, input.id), eq(planningSuggestions.userId, ctx.userId))
-        )
-        .returning();
-
-      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-      await syncRow("planning_suggestions", row.id, "update", row);
-      return row;
-    }),
-
   getGoalDetail: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
@@ -1082,16 +578,6 @@ export const planningRouter = createTRPCRouter({
         projectName = project?.name ?? null;
       }
 
-      let valueLabel: string | null = null;
-      if (goal.valueId) {
-        const [value] = await db
-          .select({ label: userValues.label })
-          .from(userValues)
-          .where(and(eq(userValues.id, goal.valueId), eq(userValues.userId, ctx.userId)))
-          .limit(1);
-        valueLabel = value?.label ?? null;
-      }
-
       return {
         goal,
         milestones,
@@ -1099,7 +585,6 @@ export const planningRouter = createTRPCRouter({
         taskEstimates,
         projectSlug,
         projectName,
-        valueLabel,
       };
     }),
 
@@ -1258,721 +743,5 @@ export const planningRouter = createTRPCRouter({
 
       await syncRow("goals", updatedGoal.id, "update", updatedGoal);
       return { project, goal: updatedGoal };
-    }),
-
-  suggestMilestoneBreakdown: protectedProcedure
-    .input(z.object({ goalId: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      const [goal] = await db
-        .select({ title: goals.title })
-        .from(goals)
-        .where(and(eq(goals.id, input.goalId), eq(goals.userId, ctx.userId)))
-        .limit(1);
-
-      if (!goal) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Goal not found." });
-      }
-
-      const titles = [
-        `Research & plan: ${goal.title}`,
-        `Execute core work on ${goal.title}`,
-        `Finish & review: ${goal.title}`,
-      ];
-
-      const rows = await Promise.all(
-        titles.map(async (title, index) => {
-          const [row] = await db
-            .insert(planningSuggestions)
-            .values({
-              userId: ctx.userId,
-              surface: "milestone_breakdown",
-              payload: { goalId: input.goalId, title, sortOrder: index },
-            })
-            .returning();
-          return row;
-        })
-      );
-
-      for (const row of rows) {
-        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
-      }
-
-      return rows.filter(Boolean);
-    }),
-
-  suggestQuarterSpread: protectedProcedure
-    .input(z.object({ year: yearSchema, quarter: quarterSchema }))
-    .mutation(async ({ ctx, input }) => {
-      const goalRows = await db
-        .select({
-          id: goals.id,
-          title: goals.title,
-          targetHorizon: goals.targetHorizon,
-          targetYear: goals.targetYear,
-          targetQuarter: goals.targetQuarter,
-          targetMonth: goals.targetMonth,
-          state: goals.state,
-        })
-        .from(goals)
-        .where(eq(goals.userId, ctx.userId));
-
-      const unassigned = goalRows.filter(
-        (goal) =>
-          goal.state === "active" &&
-          goal.targetYear === input.year &&
-          goal.targetQuarter === input.quarter &&
-          goal.targetMonth == null &&
-          (goal.targetHorizon === "quarter" || goal.targetHorizon === null)
-      );
-
-      if (unassigned.length === 0) {
-        return [];
-      }
-
-      const months = monthsForQuarter(input.quarter);
-      const rows = await Promise.all(
-        unassigned.map(async (goal, index) => {
-          const targetMonth = months[index % months.length]!;
-          const [row] = await db
-            .insert(planningSuggestions)
-            .values({
-              userId: ctx.userId,
-              surface: "quarter_spread",
-              payload: {
-                year: input.year,
-                quarter: input.quarter,
-                goalId: goal.id,
-                goalTitle: goal.title,
-                targetMonth,
-              },
-            })
-            .returning();
-          return row;
-        })
-      );
-
-      for (const row of rows) {
-        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
-      }
-
-      return rows.filter(Boolean);
-    }),
-
-  suggestReservedDayDates: protectedProcedure
-    .input(z.object({ year: yearSchema, month: monthSchema }))
-    .mutation(async ({ ctx, input }) => {
-      const slots = await db
-        .select()
-        .from(reservedDays)
-        .where(
-          and(
-            eq(reservedDays.userId, ctx.userId),
-            eq(reservedDays.year, input.year),
-            eq(reservedDays.month, input.month)
-          )
-        );
-
-      const unresolved = slots.filter((slot) => !slot.resolvedDate);
-      if (unresolved.length === 0) return [];
-
-      const taken = new Set(
-        slots.flatMap((slot) => (slot.resolvedDate ? [slot.resolvedDate] : []))
-      );
-
-      const rows = await Promise.all(
-        unresolved.map(async (slot) => {
-          const suggestedDate = mockReservedDayDate(input.year, input.month, slot.type, taken);
-          if (!suggestedDate) return null;
-          taken.add(suggestedDate);
-
-          const label = slot.label ?? defaultReservedDayLabel(slot.type);
-          const category = protectedBlockCategoryForReservedDay(slot.type);
-
-          const [row] = await db
-            .insert(planningSuggestions)
-            .values({
-              userId: ctx.userId,
-              surface: "reserved_day",
-              payload: {
-                year: input.year,
-                month: input.month,
-                reservedDayId: slot.id,
-                suggestedDate,
-                label,
-                type: slot.type,
-                category,
-              },
-            })
-            .returning();
-          return row;
-        })
-      );
-
-      for (const row of rows) {
-        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
-      }
-
-      return rows.filter(Boolean);
-    }),
-
-  suggestWeekDraft: protectedProcedure
-    .input(z.object({ anchorDate: isoDateSchema }))
-    .mutation(async ({ ctx, input }) => {
-      const pendingRows = await db
-        .select()
-        .from(planningSuggestions)
-        .where(
-          and(
-            eq(planningSuggestions.userId, ctx.userId),
-            eq(planningSuggestions.surface, "week_draft"),
-            eq(planningSuggestions.status, "pending")
-          )
-        );
-
-      const forWeek = pendingRows.filter((row) => {
-        const payload = row.payload as { weekStart?: string };
-        return payload.weekStart === input.anchorDate;
-      });
-      if (forWeek.length > 0) return forWeek;
-
-      const draftContext = await fetchWeekDraftContext(ctx.userId, input.anchorDate);
-      if (draftContext.inbox.length === 0) {
-        return [];
-      }
-
-      const proposal = await generateWeekDraft(draftContext, ctx.userId);
-
-      const inboxById = new Map(draftContext.inbox.map((task) => [task.id, task]));
-
-      const rows = await Promise.all(
-        proposal.assignments.map(async (assignment) => {
-          const task = inboxById.get(assignment.taskId);
-          const [row] = await db
-            .insert(planningSuggestions)
-            .values({
-              userId: ctx.userId,
-              surface: "week_draft",
-              payload: {
-                weekStart: input.anchorDate,
-                taskId: assignment.taskId,
-                taskTitle: task?.title,
-                scheduledDate: assignment.scheduledDate,
-                rationale: assignment.rationale,
-                summary: proposal.summary,
-              },
-            })
-            .returning();
-          return row;
-        })
-      );
-
-      for (const row of rows) {
-        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
-      }
-
-      return rows.filter(Boolean);
-    }),
-
-  suggestBalancePass: protectedProcedure
-    .input(
-      z.object({
-        horizon: balanceHorizonSchema,
-        year: yearSchema,
-        month: monthSchema.optional(),
-        quarter: quarterSchema.optional(),
-        weekStart: isoDateSchema.optional(),
-        tzOffsetMinutes: z.number().int().min(-720).max(840),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      if (input.horizon === "week" && !input.weekStart) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "weekStart is required for week balance pass.",
-        });
-      }
-      if (input.horizon === "month" && input.month == null) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "month is required for month balance pass.",
-        });
-      }
-
-      const scopeKey = balancePassScopeKey(input);
-      const pendingRows = await db
-        .select()
-        .from(planningSuggestions)
-        .where(
-          and(
-            eq(planningSuggestions.userId, ctx.userId),
-            eq(planningSuggestions.surface, "balance_pass"),
-            eq(planningSuggestions.status, "pending")
-          )
-        );
-
-      const forScope = pendingRows.filter((row) => {
-        const payload = row.payload as { scopeKey?: string };
-        return payload.scopeKey === scopeKey;
-      });
-      if (forScope.length > 0) return forScope;
-
-      const categoryWeights = await categoryActivityForScope(ctx.userId, input);
-      const stated = await statedCategoriesForScope(ctx.userId, {
-        year: input.year,
-        month: input.month,
-        quarter: input.quarter,
-      });
-
-      const flags = computeBalanceFlags(categoryWeights, stated);
-      if (flags.length === 0) return [];
-
-      const abyssCandidates = await fetchAbyssBalanceCandidates(
-        ctx.userId,
-        flags.map((f) => f.category)
-      );
-      const abyssByCategory = new Map(
-        abyssCandidates.map((candidate) => [candidate.category, candidate])
-      );
-
-      const rows = await Promise.all(
-        flags.map(async (flag) => {
-          const abyss = abyssByCategory.get(flag.category);
-          const label = balanceSuggestionLabel(
-            flag.category,
-            categoryLabel(flag.category),
-            flag.tier
-          );
-          const suggestion = resolveBalancePassSuggestion(abyss, categoryLabel(flag.category));
-
-          const [row] = await db
-            .insert(planningSuggestions)
-            .values({
-              userId: ctx.userId,
-              surface: "balance_pass",
-              payload: {
-                scopeKey,
-                horizon: input.horizon,
-                year: input.year,
-                month: input.month ?? null,
-                quarter: input.quarter ?? null,
-                weekStart: input.weekStart ?? null,
-                category: flag.category,
-                tier: flag.tier,
-                rank: flag.rank,
-                label,
-                taskTitle: suggestion.taskTitle,
-                taskId: suggestion.taskId,
-                source: suggestion.source,
-              },
-            })
-            .returning();
-          return row;
-        })
-      );
-
-      for (const row of rows) {
-        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
-      }
-
-      return rows.filter(Boolean);
-    }),
-
-  suggestCheckIn: protectedProcedure
-    .input(
-      z.object({
-        depth: checkInDepthSchema,
-        year: yearSchema,
-        month: monthSchema.optional(),
-        quarter: quarterSchema.optional(),
-        weekStart: isoDateSchema.optional(),
-        tzOffsetMinutes: z.number().int().min(-720).max(840),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      if (input.depth === "week" && !input.weekStart) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "weekStart is required for week check-in.",
-        });
-      }
-      if (input.depth === "month" && input.month == null) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "month is required for month check-in.",
-        });
-      }
-      if (input.depth === "quarter" && input.quarter == null) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "quarter is required for quarter check-in.",
-        });
-      }
-
-      const scope = {
-        depth: input.depth,
-        year: input.year,
-        month: input.month,
-        quarter: input.quarter,
-        weekStart: input.weekStart,
-      };
-      const scopeKey = checkInScopeKey(scope);
-
-      const pendingRows = await db
-        .select()
-        .from(planningSuggestions)
-        .where(
-          and(
-            eq(planningSuggestions.userId, ctx.userId),
-            eq(planningSuggestions.surface, "check_in"),
-            eq(planningSuggestions.status, "pending")
-          )
-        );
-
-      const forScope = pendingRows.filter((row) => {
-        const payload = row.payload as { scopeKey?: string };
-        return payload.scopeKey === scopeKey;
-      });
-      if (forScope.length > 0) return forScope;
-
-      const goalRows = await db
-        .select({
-          id: goals.id,
-          title: goals.title,
-          targetHorizon: goals.targetHorizon,
-          targetYear: goals.targetYear,
-          targetQuarter: goals.targetQuarter,
-          targetMonth: goals.targetMonth,
-          state: goals.state,
-          valueId: goals.valueId,
-        })
-        .from(goals)
-        .where(eq(goals.userId, ctx.userId));
-
-      const valueRows = await db
-        .select({
-          id: userValues.id,
-          label: userValues.label,
-        })
-        .from(userValues)
-        .where(eq(userValues.userId, ctx.userId))
-        .orderBy(asc(userValues.sortOrder), asc(userValues.createdAt));
-
-      const taskRows = await db
-        .select({
-          id: tasks.id,
-          title: tasks.title,
-          scheduledDate: tasks.scheduledDate,
-        })
-        .from(tasks)
-        .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)));
-
-      const milestoneRows = await db
-        .select({ goalId: goalMilestones.goalId })
-        .from(goalMilestones)
-        .where(eq(goalMilestones.userId, ctx.userId));
-
-      const proposals = templateCheckInSuggestions(
-        scope,
-        goalRows,
-        taskRows,
-        milestoneRows,
-        valueRows
-      );
-
-      const rows = await Promise.all(
-        proposals.map(async (payload) => {
-          const [row] = await db
-            .insert(planningSuggestions)
-            .values({
-              userId: ctx.userId,
-              surface: "check_in",
-              payload,
-            })
-            .returning();
-          return row;
-        })
-      );
-
-      for (const row of rows) {
-        if (row) await syncRow("planning_suggestions", row.id, "insert", row);
-      }
-
-      try {
-        await runCheckInAboutMeProducer(ctx.userId, input.depth, scopeKey, input.year, goalRows);
-      } catch {}
-
-      return rows.filter(Boolean);
-    }),
-
-  applyStagedSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
-    const now = new Date();
-    const staged = await db
-      .select()
-      .from(planningSuggestions)
-      .where(
-        and(eq(planningSuggestions.userId, ctx.userId), eq(planningSuggestions.status, "staged"))
-      );
-
-    for (const row of staged) {
-      if (row.surface === "milestone_breakdown") {
-        const payload = row.payload as { goalId?: string; title?: string; sortOrder?: number };
-        if (payload.goalId && payload.title) {
-          const [created] = await db
-            .insert(goalMilestones)
-            .values({
-              userId: ctx.userId,
-              goalId: payload.goalId,
-              title: payload.title,
-              sortOrder: payload.sortOrder ?? 0,
-            })
-            .returning();
-          if (created) await syncRow("goal_milestones", created.id, "insert", created);
-        }
-      }
-
-      if (row.surface === "quarter_spread") {
-        const payload = row.payload as {
-          goalId?: string;
-          targetMonth?: number;
-          year?: number;
-          quarter?: number;
-        };
-        if (payload.goalId && payload.targetMonth && payload.year && payload.quarter) {
-          const [updated] = await db
-            .update(goals)
-            .set({
-              targetHorizon: "month",
-              targetYear: payload.year,
-              targetQuarter: payload.quarter,
-              targetMonth: payload.targetMonth,
-              updatedAt: now,
-            })
-            .where(and(eq(goals.id, payload.goalId), eq(goals.userId, ctx.userId)))
-            .returning();
-          if (updated) await syncRow("goals", updated.id, "update", updated);
-        }
-      }
-
-      if (row.surface === "reserved_day") {
-        const payload = row.payload as {
-          reservedDayId?: string;
-          suggestedDate?: string;
-          label?: string;
-          category?: (typeof PROJECT_CATEGORIES)[number];
-        };
-        if (payload.reservedDayId && payload.suggestedDate && payload.category) {
-          const [block] = await db
-            .insert(protectedBlocks)
-            .values({
-              userId: ctx.userId,
-              category: payload.category,
-              scheduledDate: payload.suggestedDate,
-              label: payload.label ?? null,
-              status: "proposed",
-            })
-            .returning();
-          if (block) await syncProtectedBlockRow(block.id, "insert", block);
-
-          const [updatedReserved] = await db
-            .update(reservedDays)
-            .set({ resolvedDate: payload.suggestedDate, updatedAt: now })
-            .where(
-              and(eq(reservedDays.id, payload.reservedDayId), eq(reservedDays.userId, ctx.userId))
-            )
-            .returning();
-          if (updatedReserved)
-            await syncRow("reserved_days", updatedReserved.id, "update", updatedReserved);
-        }
-      }
-
-      if (row.surface === "week_draft") {
-        const payload = row.payload as { taskId?: string; scheduledDate?: string };
-        if (payload.taskId && payload.scheduledDate) {
-          const [updated] = await db
-            .update(tasks)
-            .set({
-              scheduledDate: payload.scheduledDate,
-              bucketOverride: null,
-              updatedAt: now,
-            })
-            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)))
-            .returning();
-          if (updated) await syncTaskRow(updated.id, "update", updated);
-        }
-      }
-
-      if (row.surface === "balance_pass") {
-        const payload = row.payload as {
-          taskId?: string | null;
-          taskTitle?: string;
-          category?: (typeof PROJECT_CATEGORIES)[number];
-          weekStart?: string | null;
-        };
-        if (payload.taskId) {
-          const patch: Record<string, unknown> = { updatedAt: now, bucketOverride: null };
-          if (payload.weekStart) patch.scheduledDate = payload.weekStart;
-          const [updated] = await db
-            .update(tasks)
-            .set(patch)
-            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)))
-            .returning();
-          if (updated) await syncTaskRow(updated.id, "update", updated);
-        } else if (payload.taskTitle && payload.category) {
-          const [created] = await db
-            .insert(tasks)
-            .values({
-              userId: ctx.userId,
-              title: payload.taskTitle,
-              category: payload.category,
-              scheduledDate: payload.weekStart ?? null,
-              bucketOverride: payload.weekStart ? null : "later",
-            })
-            .returning();
-          if (created) await syncTaskRow(created.id, "insert", created);
-        }
-      }
-
-      if (row.surface === "check_in") {
-        const payload = row.payload as {
-          action?: "goal_horizon" | "milestone" | "task_schedule";
-          goalId?: string;
-          milestoneTitle?: string;
-          sortOrder?: number;
-          taskId?: string;
-          scheduledDate?: string;
-          targetHorizon?: "quarter" | "month";
-          targetYear?: number;
-          targetQuarter?: number;
-          targetMonth?: number;
-          year?: number;
-        };
-
-        if (payload.action === "goal_horizon" && payload.goalId && payload.targetHorizon) {
-          const [updated] = await db
-            .update(goals)
-            .set({
-              targetHorizon: payload.targetHorizon,
-              targetYear: payload.year ?? payload.targetYear,
-              targetQuarter: payload.targetQuarter ?? null,
-              targetMonth: payload.targetMonth ?? null,
-              updatedAt: now,
-            })
-            .where(and(eq(goals.id, payload.goalId), eq(goals.userId, ctx.userId)))
-            .returning();
-          if (updated) await syncRow("goals", updated.id, "update", updated);
-        }
-
-        if (payload.action === "milestone" && payload.goalId && payload.milestoneTitle) {
-          const [created] = await db
-            .insert(goalMilestones)
-            .values({
-              userId: ctx.userId,
-              goalId: payload.goalId,
-              title: payload.milestoneTitle,
-              sortOrder: payload.sortOrder ?? 0,
-            })
-            .returning();
-          if (created) await syncRow("goal_milestones", created.id, "insert", created);
-        }
-
-        if (payload.action === "task_schedule" && payload.taskId && payload.scheduledDate) {
-          const [updated] = await db
-            .update(tasks)
-            .set({
-              scheduledDate: payload.scheduledDate,
-              bucketOverride: null,
-              updatedAt: now,
-            })
-            .where(and(eq(tasks.id, payload.taskId), eq(tasks.userId, ctx.userId)))
-            .returning();
-          if (updated) await syncTaskRow(updated.id, "update", updated);
-        }
-      }
-    }
-
-    const rows = await db
-      .update(planningSuggestions)
-      .set({ status: "applied", updatedAt: now })
-      .where(
-        and(eq(planningSuggestions.userId, ctx.userId), eq(planningSuggestions.status, "staged"))
-      )
-      .returning();
-
-    for (const row of rows) {
-      await syncRow("planning_suggestions", row.id, "update", row);
-    }
-
-    return { applied: rows.length };
-  }),
-
-  getGoalSteeringOfferForHandoff: protectedProcedure
-    .input(
-      z.object({
-        localDate: isoDateSchema,
-        tzOffsetMinutes: z.number().int().min(-720).max(840),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const [nudgedToday, isOverCommitted, offer] = await Promise.all([
-        db
-          .select({ id: nudgeEvents.id })
-          .from(nudgeEvents)
-          .where(
-            and(
-              eq(nudgeEvents.userId, ctx.userId),
-              eq(nudgeEvents.kind, "goal_step"),
-              eq(nudgeEvents.localDate, input.localDate)
-            )
-          )
-          .limit(1),
-        fetchIsOverCommittedForDate(ctx.userId, input.localDate, input.tzOffsetMinutes),
-        fetchGoalSteeringOffer(ctx.userId),
-      ]);
-
-      if (nudgedToday.length > 0 || isOverCommitted || !offer) {
-        return { offer: null as null };
-      }
-
-      return { offer };
-    }),
-
-  pullGoalStepToToday: protectedProcedure
-    .input(
-      z.object({
-        goalId: z.string().uuid(),
-        localDate: isoDateSchema,
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const offer = await fetchGoalSteeringOfferForGoal(ctx.userId, input.goalId);
-      if (!offer) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "No goal step to pull in." });
-      }
-
-      const pulled = await pullGoalStepToToday(ctx.userId, offer, input.localDate);
-      if (!pulled) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to pull goal step into today.",
-        });
-      }
-
-      await recordGoalSteeringNudge(ctx.userId, input.localDate, offer.goalId);
-
-      const [row] = await db
-        .select()
-        .from(tasks)
-        .where(and(eq(tasks.id, pulled.taskId), eq(tasks.userId, ctx.userId)))
-        .limit(1);
-      if (row) await syncTaskRow(row.id, pulled.created ? "insert" : "update", row);
-
-      return { taskId: pulled.taskId, offer };
-    }),
-
-  dismissGoalSteeringOffer: protectedProcedure
-    .input(z.object({ localDate: isoDateSchema, goalId: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      await recordGoalSteeringNudge(ctx.userId, input.localDate, input.goalId);
-      return { ok: true as const };
     }),
 });

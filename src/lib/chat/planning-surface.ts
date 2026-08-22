@@ -24,7 +24,6 @@ export function planningSurfaceFromPathname(pathname: string): PlanningChatSurfa
     return "loose-tasks";
   if (pathname === "/projects" || pathname.startsWith("/projects/")) return "projects";
   if (pathname === "/backlog" || pathname.startsWith("/backlog/")) return "backlog";
-  if (pathname === "/abyss" || pathname.startsWith("/abyss/")) return "backlog";
   if (pathname === "/care" || pathname.startsWith("/care/")) return "care";
   return null;
 }

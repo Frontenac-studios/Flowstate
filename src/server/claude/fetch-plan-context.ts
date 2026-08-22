@@ -18,7 +18,7 @@ import {
   formatProjectStructureBlock,
   formatWeekCategoryLoadSummary,
 } from "@/lib/chat/format-plan-context";
-import { evaluateTop3Stall } from "@/lib/nudges/evaluate-top3-stall";
+import { evaluateTop3Stall } from "@/lib/top3/evaluate-top3-stall";
 import { partitionPlanTasks } from "@/lib/tasks/partition-plan-tasks";
 import { taskIdForThread } from "@/lib/chat/threads";
 import { computeWeekCategoryLoad } from "@/lib/week/week-category-load";

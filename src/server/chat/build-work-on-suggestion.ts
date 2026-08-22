@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { appSettings, taskTimeEntries, tasks } from "@/db/tables";
 import { getChatSuggestionDef } from "@/lib/chat/chat-suggestion-defs";
 import { formatWorkOnReply } from "@/lib/chat/format-work-on-reply";
-import { getLocalHour, nudgeThresholdHour, startedOnLocalDay } from "@/lib/nudges/local-time";
+import { getLocalHour, nudgeThresholdHour, startedOnLocalDay } from "@/lib/dates/local-time";
 import { pickWorkOnTask } from "@/lib/rdm/pick-work-on-task";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { matchesTodayList } from "@/lib/tasks/matches-today-list";

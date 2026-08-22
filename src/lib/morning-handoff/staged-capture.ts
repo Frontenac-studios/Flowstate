@@ -30,12 +30,6 @@ export type StagedCapture = {
   blocksItemIds: string[];
 };
 
-/** Edge expressed with proposal/staged item ids; remapped to real task ids on Begin. */
-export type StagedDependencyEdge = {
-  blockerItemId: string;
-  blockedItemId: string;
-};
-
 function uniqueIds(ids: readonly string[]): string[] {
   return Array.from(new Set(ids));
 }
@@ -58,20 +52,4 @@ export function stagedCapturesFromEdits(
       ...(blocksByItemId.get(edit.itemId) ?? []),
     ]),
   }));
-}
-
-export function collectStagedDependencyEdges(
-  staged: readonly StagedCapture[]
-): StagedDependencyEdge[] {
-  const sourceIds = new Set(staged.map((row) => row.sourceItemId));
-  const edges: StagedDependencyEdge[] = [];
-
-  for (const row of staged) {
-    for (const blocked of row.blocksItemIds) {
-      if (!sourceIds.has(blocked) || blocked === row.sourceItemId) continue;
-      edges.push({ blockerItemId: row.sourceItemId, blockedItemId: blocked });
-    }
-  }
-
-  return edges;
 }

@@ -19,8 +19,6 @@ import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useTop3Assurance } from "@/hooks/useTop3Assurance";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
 import { useTaskSelection } from "@/hooks/useTaskSelection";
-import { useUserConstraints } from "@/hooks/useUserConstraints";
-import { evaluateProposedSlot } from "@/lib/about-me/constraint-eval";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
 import { dispatchCompleteTask } from "@/lib/tasks/complete-task-event";
@@ -48,12 +46,6 @@ import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "./AddTaskPopover";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
-import { BreathingOverlay } from "../care/BreathingOverlay";
-import { WalkTimerOverlay } from "../care/WalkTimerOverlay";
-import {
-  SELF_CARE_START_BREATHE,
-  SELF_CARE_START_WALK,
-} from "@/lib/nudges/self-care-session-events";
 import type { PlanTaskRow } from "./TaskRow";
 import { BalanceBar } from "./BalanceBar";
 import { LensControlBar } from "./LensControlBar";
@@ -156,8 +148,6 @@ export function DayPlanCanvas() {
     setView(next);
     writeStoredTodayView(next);
   }, []);
-  const [walkOverlayOpen, setWalkOverlayOpen] = useState(false);
-  const [breatheOverlayOpen, setBreatheOverlayOpen] = useState(false);
   const top3CelebratedRef = useRef(false);
   const top3HighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -168,7 +158,6 @@ export function DayPlanCanvas() {
     () => toast({ message: "That change didn't save. Please try again.", variant: "error" }),
     [toast]
   );
-  const { constraints } = useUserConstraints();
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const { data: calendarSync } = useQuery(trpc.calendar.connections.getSyncStatus.queryOptions());
@@ -177,17 +166,6 @@ export function DayPlanCanvas() {
   const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
   const top3MiddayCheckin = settings?.top3MiddayCheckin ?? DEFAULT_TOP3_MIDDAY_CHECKIN;
   const { openRail } = useChat();
-
-  useEffect(() => {
-    const onWalk = () => setWalkOverlayOpen(true);
-    const onBreathe = () => setBreatheOverlayOpen(true);
-    window.addEventListener(SELF_CARE_START_WALK, onWalk);
-    window.addEventListener(SELF_CARE_START_BREATHE, onBreathe);
-    return () => {
-      window.removeEventListener(SELF_CARE_START_WALK, onWalk);
-      window.removeEventListener(SELF_CARE_START_BREATHE, onBreathe);
-    };
-  }, []);
 
   /** Stable calendar anchor for partitioning and pulse targets (same mount session). */
   const now = useMemo(() => new Date(), []);
@@ -645,24 +623,6 @@ export function DayPlanCanvas() {
     })
   );
 
-  const validateFocusSlot = useCallback(
-    (dateIso: string, startMin: number, durationMin: number): boolean => {
-      const endMin = startMin + durationMin;
-      const evaluation = evaluateProposedSlot(constraints, { dateIso, startMin, endMin });
-      if (!evaluation.ok) {
-        const label = evaluation.hardViolations[0]?.label ?? "a personal constraint";
-        toast({ message: `That time overlaps ${label}.`, variant: "neutral" });
-        return false;
-      }
-      if (evaluation.softViolations.length > 0) {
-        const label = evaluation.softViolations[0]?.label ?? "a preference";
-        toast({ message: `Placed anyway — overlaps ${label}.`, variant: "neutral" });
-      }
-      return true;
-    },
-    [constraints, toast]
-  );
-
   const handleActivateTask = useCallback(
     (taskId: string) => {
       router.push(`/today/focus?${new URLSearchParams({ taskId }).toString()}`);
@@ -768,9 +728,7 @@ export function DayPlanCanvas() {
       const startMin = timelineDropStartMin(overId);
       if (startMin == null) return;
       const blockId = activeId.slice("block:".length);
-      if (validateFocusSlot(todayIso, startMin, DEFAULT_FOCUS_BLOCK_MIN)) {
-        moveBlockMutation.mutate({ id: blockId, startMin });
-      }
+      moveBlockMutation.mutate({ id: blockId, startMin });
       return;
     }
 
@@ -795,21 +753,19 @@ export function DayPlanCanvas() {
     if (overId.startsWith("timeline:")) {
       const startMin = timelineDropStartMin(overId);
       if (startMin == null) return;
-      if (validateFocusSlot(todayIso, startMin, DEFAULT_FOCUS_BLOCK_MIN)) {
-        const droppedOnNow = overId === "timeline:now";
-        const shouldOpenFocus = droppedOnNow || overlapsNow(startMin, DEFAULT_FOCUS_BLOCK_MIN);
-        createBlockMutation.mutate(
-          { taskId, date: todayIso, startMin },
-          {
-            onSuccess: (block) => {
-              if (shouldOpenFocus) {
-                const params = new URLSearchParams({ taskId, blockId: block.id });
-                router.push(`/today/focus?${params.toString()}`);
-              }
-            },
-          }
-        );
-      }
+      const droppedOnNow = overId === "timeline:now";
+      const shouldOpenFocus = droppedOnNow || overlapsNow(startMin, DEFAULT_FOCUS_BLOCK_MIN);
+      createBlockMutation.mutate(
+        { taskId, date: todayIso, startMin },
+        {
+          onSuccess: (block) => {
+            if (shouldOpenFocus) {
+              const params = new URLSearchParams({ taskId, blockId: block.id });
+              router.push(`/today/focus?${params.toString()}`);
+            }
+          },
+        }
+      );
       return;
     }
 
@@ -964,8 +920,6 @@ export function DayPlanCanvas() {
           </div>
         )}
       </div>
-      <WalkTimerOverlay open={walkOverlayOpen} onClose={() => setWalkOverlayOpen(false)} />
-      <BreathingOverlay open={breatheOverlayOpen} onClose={() => setBreatheOverlayOpen(false)} />
     </DndContext>
   );
 }

@@ -1,4 +1,4 @@
-import { toLocalISODate } from "@/lib/nudges/local-time";
+import { toLocalISODate } from "@/lib/dates/local-time";
 
 export function countCompletionsToday(
   rows: { completedAt: Date | null }[],

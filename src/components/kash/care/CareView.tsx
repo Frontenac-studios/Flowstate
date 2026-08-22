@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { InPageSwitcher } from "../InPageSwitcher";
 
 import { CareBreathing } from "./CareBreathing";
-import { CareEvidence } from "./CareEvidence";
 import { CareGardenHome } from "./CareGardenHome";
 import { CareReflection } from "./CareReflection";
 import { CareTasks } from "./CareTasks";
@@ -31,8 +30,6 @@ export function CareView() {
 
       {tab === "garden" ? (
         <CareGardenHome onOpenBreathing={() => setTab("breathing")} />
-      ) : tab === "evidence" ? (
-        <CareEvidence />
       ) : tab === "tasks" ? (
         <CareTasks />
       ) : tab === "breathing" ? (

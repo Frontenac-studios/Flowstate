@@ -17,8 +17,7 @@
  * TIE-BREAKER: when a table could plausibly go either way, classify it
  * PERSONAL. Misclassifying toward PERSONAL costs a future migration;
  * misclassifying toward ORG_SHARED costs a privacy leak the day a second person
- * joins. `protected_blocks`, `quarter_themes`, `month_intentions` and
- * `week_day_priorities` are all judgment calls resolved this way — they are
+ * joins. `protected_blocks` and `week_day_priorities` are judgment calls resolved this way — they are
  * about how one person shapes their own time, not about the work itself.
  */
 
@@ -33,9 +32,11 @@ export type VisibilityClass = (typeof VISIBILITY_CLASSES)[number];
 
 /**
  * Tables with no tenant boundary at all — no `user_id`, no `org_id`, never will
- * have either. `health_checks` is an ops liveness probe.
+ * have either. Empty since `health_checks` was removed in the v1 teardown; kept
+ * because the totality check in `tenancy.test.ts` needs somewhere to put a table
+ * that is deliberately outside the boundary rather than merely unclassified.
  */
-export const GLOBAL_TABLES = ["health_checks"] as const;
+export const GLOBAL_TABLES: readonly string[] = [];
 
 /**
  * The tenancy machinery itself. These carry `org_id`/`user_id` semantics but are
@@ -59,11 +60,8 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // ---- PERSONAL: artifacts about the person, not the work. ----
   // Reflection, wellbeing, private ritual, personal preference, connected
   // accounts, and the shape of one's own day. A Partner never sees these.
-  about_me_sections: "personal",
-  about_me_suggestions: "personal",
   abyss_items: "personal",
   app_settings: "personal",
-  bingo_cards: "personal",
   calendar_connections: "personal",
   care_activities: "personal",
   care_events: "personal",
@@ -71,19 +69,12 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   category_settings: "personal",
   chat_custom_suggestions: "personal",
   chat_messages: "personal",
-  daily_wins: "personal",
   day_reviews: "personal",
-  evidence_editions: "personal",
   external_calendar_events: "personal",
   focus_blocks: "personal",
-  month_intentions: "personal",
-  nudge_events: "personal",
   protected_block_templates: "personal",
   protected_blocks: "personal",
-  quarter_themes: "personal",
   reserved_days: "personal",
-  user_constraints: "personal",
-  user_values: "personal",
   week_day_priorities: "personal",
   week_reviews: "personal",
 
@@ -93,14 +84,11 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   goal_milestones: "org_shared",
   goals: "org_shared",
   phases: "org_shared",
-  planning_suggestions: "org_shared",
   project_milestones: "org_shared",
-  project_similarity: "org_shared",
   project_templates: "org_shared",
   projects: "org_shared",
   task_bulk_import_items: "org_shared",
   task_bulk_imports: "org_shared",
-  task_dependencies: "org_shared",
   task_occurrence_overrides: "org_shared",
   task_recurrence: "org_shared",
   task_time_entries: "org_shared",
@@ -111,14 +99,17 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
 };
 
 /**
- * `goals` is ORG_SHARED but FKs to `bingo_cards`, which is PERSONAL. This
- * cross-class edge is intentional and safe — RLS evaluates each table
- * independently, so a Partner reading a Member's goal simply gets nothing back
- * for the card. Do not "fix" it by reclassifying either side.
+ * Cross-class FK edges that are intentional and safe: RLS evaluates each table
+ * independently, so a reader who can see one side and not the other simply gets
+ * nothing back for the other. Empty since the `goals` -> `bingo_cards` edge was
+ * removed with the bingo layer. Record new ones here rather than "fixing" them
+ * by reclassifying either side.
  */
-export const DOCUMENTED_CROSS_CLASS_EDGES = [
-  { from: "goals", to: "bingo_cards", reason: "goal may sit on a personal annual bingo card" },
-] as const;
+export const DOCUMENTED_CROSS_CLASS_EDGES: readonly {
+  from: string;
+  to: string;
+  reason: string;
+}[] = [];
 
 /**
  * All Drizzle table names reachable from the schema barrel, including global and

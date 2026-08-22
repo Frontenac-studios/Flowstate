@@ -4,10 +4,8 @@ const PROTECTED_PREFIXES = [
   "/this-week",
   "/projects",
   "/backlog",
-  "/abyss",
   "/care",
   "/settings",
-  "/health",
 ] as const;
 
 export function isProtectedPath(pathname: string): boolean {

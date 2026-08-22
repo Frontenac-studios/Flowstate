@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -19,7 +19,6 @@ import {
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 import { countEstimateSamplesForUser } from "@/lib/projects/count-estimate-samples";
 import { buildMultiProjectCalendarRows } from "@/lib/projects/multi-project-calendar";
-import { rankTemplatesBySimilarProjects } from "@/lib/projects/project-similarity";
 import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import { hasTemplateFeatures } from "@/lib/projects/template-milestone";
@@ -36,15 +35,6 @@ import {
 import { countActiveProjects } from "@/server/projects/count-active";
 import { applyProjectTemplate, syncAppliedTemplateRows } from "@/server/projects/apply-template";
 import { commitProjectSetup } from "@/server/projects/commit-setup";
-import {
-  backfillProjectEmbedding,
-  clearUserSimilarityLink,
-  enrichStructureWithSimilarDurations,
-  inferAndStoreSimilarProjects,
-  listProjectSimilarityLinks,
-  listSimilarCandidatesForUser,
-  upsertProjectSimilarity,
-} from "@/server/projects/similarity";
 import {
   applyProjectSlipReplanProposal,
   buildProjectSlipReplanProposal,
@@ -336,55 +326,39 @@ export const projectsRouter = createTRPCRouter({
     };
   }),
 
-  listTemplates: protectedProcedure
-    .input(
-      z
-        .object({
-          similarProjectIds: z.array(z.string().uuid()).max(20).optional(),
-        })
-        .optional()
-    )
-    .query(async ({ ctx, input }) => {
-      const projectCount = await countActiveProjects(ctx.userId);
-      if (!hasTemplateFeatures(projectCount)) {
-        return [];
-      }
+  listTemplates: protectedProcedure.query(async ({ ctx }) => {
+    const projectCount = await countActiveProjects(ctx.userId);
+    if (!hasTemplateFeatures(projectCount)) {
+      return [];
+    }
 
-      const rows = await db
-        .select({
-          id: projectTemplates.id,
-          name: projectTemplates.name,
-          category: projectTemplates.category,
-          structure: projectTemplates.structure,
-          updatedAt: projectTemplates.updatedAt,
-        })
-        .from(projectTemplates)
-        .where(eq(projectTemplates.userId, ctx.userId))
-        .orderBy(asc(projectTemplates.name));
+    const rows = await db
+      .select({
+        id: projectTemplates.id,
+        name: projectTemplates.name,
+        category: projectTemplates.category,
+        structure: projectTemplates.structure,
+        updatedAt: projectTemplates.updatedAt,
+      })
+      .from(projectTemplates)
+      .where(eq(projectTemplates.userId, ctx.userId))
+      .orderBy(asc(projectTemplates.name));
 
-      const mapped = rows.map((row) => {
-        const parsed = projectTemplateStructureSchema.parse(row.structure);
-        const counts = countTemplateItems(parsed);
-        return {
-          id: row.id,
-          name: row.name,
-          category: row.category,
-          phaseCount: counts.phaseCount,
-          taskCount: counts.taskCount,
-          updatedAt: row.updatedAt,
-        };
-      });
+    const mapped = rows.map((row) => {
+      const parsed = projectTemplateStructureSchema.parse(row.structure);
+      const counts = countTemplateItems(parsed);
+      return {
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        phaseCount: counts.phaseCount,
+        taskCount: counts.taskCount,
+        updatedAt: row.updatedAt,
+      };
+    });
 
-      const similarIds = input?.similarProjectIds ?? [];
-      if (similarIds.length === 0) return mapped;
-
-      const similarForRank = await db
-        .select({ name: projects.name, category: projects.category })
-        .from(projects)
-        .where(and(eq(projects.userId, ctx.userId), inArray(projects.id, similarIds)));
-
-      return rankTemplatesBySimilarProjects(mapped, similarForRank);
-    }),
+    return mapped;
+  }),
 
   estimateSampleCount: protectedProcedure
     .input(
@@ -410,15 +384,10 @@ export const projectsRouter = createTRPCRouter({
         name: z.string().min(1).max(120),
         slug: z.string().min(1).max(64).optional(),
         category: categorySchema,
-        similarProjectId: z.string().uuid().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const slug = (input.slug ?? slugifyProjectName(input.name)).toLowerCase();
-
-      if (input.similarProjectId) {
-        await getOwnedProject(ctx.userId, input.similarProjectId);
-      }
 
       const [existing] = await db
         .select({ id: projects.id })
@@ -471,15 +440,6 @@ export const projectsRouter = createTRPCRouter({
         throw error;
       }
 
-      if (input.similarProjectId) {
-        await upsertProjectSimilarity({
-          userId: ctx.userId,
-          projectId: row.id,
-          similarProjectId: input.similarProjectId,
-          source: "user",
-        });
-      }
-
       return row;
     }),
 
@@ -489,20 +449,12 @@ export const projectsRouter = createTRPCRouter({
         templateId: z.string().uuid(),
         name: z.string().min(1).max(120),
         category: categorySchema,
-        similarProjectId: z.string().uuid().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const template = await getOwnedTemplate(ctx.userId, input.templateId);
-      let structure = projectTemplateStructureSchema.parse(template.structure);
+      const structure = projectTemplateStructureSchema.parse(template.structure);
       const slug = slugifyProjectName(input.name).toLowerCase();
-
-      if (input.similarProjectId) {
-        await getOwnedProject(ctx.userId, input.similarProjectId);
-        structure = await enrichStructureWithSimilarDurations(ctx.userId, structure, [
-          input.similarProjectId,
-        ]);
-      }
 
       const [existing] = await db
         .select({ id: projects.id })
@@ -549,15 +501,6 @@ export const projectsRouter = createTRPCRouter({
 
         await syncProjectRow(project.id, "insert", project);
         await syncAppliedTemplateRows(applied);
-
-        if (input.similarProjectId) {
-          await upsertProjectSimilarity({
-            userId: ctx.userId,
-            projectId: project.id,
-            similarProjectId: input.similarProjectId,
-            source: "user",
-          });
-        }
 
         return project;
       } catch (error) {
@@ -787,97 +730,5 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "No enabled phase updates." });
       }
       return applyProjectSlipReplanProposal(ctx.userId, filtered);
-    }),
-
-  /** Past projects ranked for the "Like this past one" picker (§5 P2). */
-  listSimilarCandidates: protectedProcedure
-    .input(
-      z.object({
-        excludeProjectId: z.string().uuid().optional(),
-        embedding: z.array(z.number()).max(4096).optional(),
-        preferredCategory: categorySchema.nullable().optional(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      return listSimilarCandidatesForUser(ctx.userId, {
-        excludeProjectId: input.excludeProjectId,
-        embedding: input.embedding,
-        preferredCategory: input.preferredCategory ?? null,
-      });
-    }),
-
-  listSimilarityLinks: protectedProcedure
-    .input(z.object({ projectId: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
-      await getOwnedProject(ctx.userId, input.projectId);
-      return listProjectSimilarityLinks(ctx.userId, input.projectId);
-    }),
-
-  tagSimilar: protectedProcedure
-    .input(
-      z.object({
-        projectId: z.string().uuid(),
-        similarProjectId: z.string().uuid(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      if (input.projectId === input.similarProjectId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "A project cannot be similar to itself.",
-        });
-      }
-      await getOwnedProject(ctx.userId, input.projectId);
-      await getOwnedProject(ctx.userId, input.similarProjectId);
-      return upsertProjectSimilarity({
-        userId: ctx.userId,
-        projectId: input.projectId,
-        similarProjectId: input.similarProjectId,
-        source: "user",
-      });
-    }),
-
-  untagSimilar: protectedProcedure
-    .input(
-      z.object({
-        projectId: z.string().uuid(),
-        similarProjectId: z.string().uuid(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      await getOwnedProject(ctx.userId, input.projectId);
-      await clearUserSimilarityLink(ctx.userId, input.projectId, input.similarProjectId);
-      return { ok: true as const };
-    }),
-
-  /**
-   * Store a client-computed MiniLM embedding and optionally infer similar past projects.
-   * Model never runs server-side (Backlog seam).
-   */
-  backfillEmbedding: protectedProcedure
-    .input(
-      z.object({
-        projectId: z.string().uuid(),
-        embedding: z.array(z.number()).min(1).max(4096),
-        inferSimilar: z.boolean().default(true),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const project = await getOwnedProject(ctx.userId, input.projectId);
-      const updated = await backfillProjectEmbedding(ctx.userId, input.projectId, input.embedding);
-      if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
-      }
-
-      const inferred = input.inferSimilar
-        ? await inferAndStoreSimilarProjects(
-            ctx.userId,
-            input.projectId,
-            input.embedding,
-            project.category
-          )
-        : [];
-
-      return { projectId: updated.id, inferred };
     }),
 });

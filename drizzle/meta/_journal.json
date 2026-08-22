@@ -309,6 +309,13 @@
       "when": 1785997389945,
       "tag": "0043_ambiguous_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1787359615737,
+      "tag": "0044_safe_bloodstrike",
+      "breakpoints": true
     }
   ]
 }

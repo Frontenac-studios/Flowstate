@@ -19,15 +19,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { taskTagsColumn } from "@/db/task-tags-for-db";
 import { syncRecurrenceRow, syncTaskCompletion, syncTaskRow } from "@/db/record-sync-mutation";
-import {
-  phases,
-  projects,
-  taskDependencies,
-  taskOccurrenceOverrides,
-  taskRecurrence,
-  tasks,
-} from "@/db/tables";
-import { computeDependencyState } from "@/lib/tasks/dependencies/blocked";
+import { phases, projects, taskOccurrenceOverrides, taskRecurrence, tasks } from "@/db/tables";
 import {
   isDateInIsoWeek,
   parseISODateString,
@@ -253,30 +245,12 @@ export const tasksRouter = createTRPCRouter({
         overridesByRecurrence,
       });
 
-      // Phase 3: surface live dependency state (isBlocked drives RDM-skip, unblocksCount
-      // drives blocker weight). Dependency ids use template task ids for occurrences.
-      const edges = await db
-        .select({
-          blockerTaskId: taskDependencies.blockerTaskId,
-          blockedTaskId: taskDependencies.blockedTaskId,
-          expiresAt: taskDependencies.expiresAt,
-        })
-        .from(taskDependencies)
-        .where(eq(taskDependencies.userId, ctx.userId));
-
-      const depTaskIds = mergedRows.map((r) => r.templateTaskId ?? r.id);
-      const depState = computeDependencyState(edges, depTaskIds);
-
-      return mergedRows.map((row) => {
-        const depId = row.templateTaskId ?? row.id;
-        const state = depState.get(depId);
-        return {
-          ...row,
-          isBlocked: state?.isBlocked ?? false,
-          blockedByIds: state?.blockedByIds ?? [],
-          unblocksCount: state?.unblocksCount ?? 0,
-        };
-      });
+      return mergedRows.map((row) => ({
+        ...row,
+        isBlocked: false,
+        blockedByIds: [] as string[],
+        unblocksCount: 0,
+      }));
     }),
 
   listToday: protectedProcedure.query(async ({ ctx }) => {
@@ -639,9 +613,7 @@ export const tasksRouter = createTRPCRouter({
               ? "Duplicate task in draft."
               : validation.error === "DAY_OVER_CAPACITY"
                 ? "One or more days would be over capacity with protected blocks."
-                : validation.error === "HARD_CONSTRAINT_VIOLATION"
-                  ? "One or more assignments overlap a hard personal constraint."
-                  : "One or more dates are outside the current week.";
+                : "One or more dates are outside the current week.";
         throw new TRPCError({ code: "BAD_REQUEST", message });
       }
 
@@ -1037,38 +1009,12 @@ export const tasksRouter = createTRPCRouter({
         .where(and(eq(tasks.userId, ctx.userId), eq(tasks.projectId, input.projectId)))
         .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
 
-      const incompleteIds = rows.filter((r) => r.completedAt === null).map((r) => r.id);
-      if (incompleteIds.length === 0) {
-        return rows.map((row) => ({
-          ...row,
-          isBlocked: false,
-          blockedByIds: [] as string[],
-          blockerTitle: undefined as string | undefined,
-        }));
-      }
-
-      const edges = await db
-        .select({
-          blockerTaskId: taskDependencies.blockerTaskId,
-          blockedTaskId: taskDependencies.blockedTaskId,
-          expiresAt: taskDependencies.expiresAt,
-        })
-        .from(taskDependencies)
-        .where(eq(taskDependencies.userId, ctx.userId));
-
-      const depState = computeDependencyState(edges, incompleteIds);
-      const titleById = Object.fromEntries(rows.map((r) => [r.id, r.title]));
-
-      return rows.map((row) => {
-        const state = row.completedAt === null ? depState.get(row.id) : undefined;
-        return {
-          ...row,
-          isBlocked: state?.isBlocked ?? false,
-          blockedByIds: state?.blockedByIds ?? [],
-          blockerTitle:
-            state?.blockedByIds?.[0] != null ? titleById[state.blockedByIds[0]] : undefined,
-        };
-      });
+      return rows.map((row) => ({
+        ...row,
+        isBlocked: false,
+        blockedByIds: [] as string[],
+        blockerTitle: undefined as string | undefined,
+      }));
     }),
 
   moveToPhase: protectedProcedure

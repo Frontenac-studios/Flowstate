@@ -21,8 +21,7 @@ WHERE n.nspname = 'public'
     'chat_messages',
     'day_reviews',
     'app_settings',
-    'nudge_events',
-    'health_checks'
+    'nudge_events'
   )
 ORDER BY c.relname;
 

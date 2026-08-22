@@ -44,17 +44,8 @@ export default function ProjectWorkspace({
   const { data: timeRollups } = useQuery(
     trpc.projects.getTimeRollups.queryOptions({ projectId: initialProject.id })
   );
-  const { data: similarityLinks = [] } = useQuery(
-    trpc.projects.listSimilarityLinks.queryOptions({ projectId: initialProject.id })
-  );
-  const similarProjectIds = useMemo(
-    () => similarityLinks.map((link) => link.similarProjectId),
-    [similarityLinks]
-  );
   const { data: estimateSampleCount = 0 } = useQuery(
-    trpc.projects.estimateSampleCount.queryOptions(
-      similarProjectIds.length > 0 ? { similarProjectIds } : undefined
-    )
+    trpc.projects.estimateSampleCount.queryOptions()
   );
   const { data: allProjects = [] } = useQuery(trpc.projects.list.queryOptions());
   const showTemplateFeatures = hasTemplateFeatures(allProjects.length);

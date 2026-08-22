@@ -8,8 +8,8 @@ import "@/components/kash/ui/feedback-motion.css";
 import IconButton from "@/components/kash/ui/IconButton";
 import { kashIconProps } from "@/components/kash/ui/icon";
 import { cn } from "@/lib/cn";
-import { templateTop3SlipMessage } from "@/lib/nudges/template-top3-slip";
-import type { SlippedTop3Task } from "@/lib/nudges/evaluate-top3-stall";
+import { templateTop3SlipMessage } from "@/lib/top3/template-top3-slip";
+import type { SlippedTop3Task } from "@/lib/top3/evaluate-top3-stall";
 
 const EXIT_MS = 160;
 

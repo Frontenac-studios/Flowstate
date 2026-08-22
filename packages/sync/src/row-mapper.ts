@@ -16,26 +16,8 @@ export function mapRemoteRow(
   // the object itself on insert. Passing an already-stringified value here would
   // double-encode it.
 
-  if (table === "nudge_events" && base.task_ids != null) {
-    base.taskIds =
-      typeof base.task_ids === "string" ? base.task_ids : JSON.stringify(base.task_ids);
-    delete base.task_ids;
-  }
-
   if (table === "task_occurrence_overrides" && base.patch != null) {
     base.patch = typeof base.patch === "string" ? base.patch : JSON.stringify(base.patch);
-  }
-
-  if (table === "quarter_themes" && base.focus_categories != null) {
-    base.focusCategories =
-      typeof base.focus_categories === "string"
-        ? base.focus_categories
-        : JSON.stringify(base.focus_categories);
-    delete base.focus_categories;
-  }
-
-  if (table === "planning_suggestions" && base.payload != null) {
-    base.payload = typeof base.payload === "string" ? base.payload : JSON.stringify(base.payload);
   }
 
   if (table === "abyss_items" && base.links != null) {
@@ -43,11 +25,6 @@ export function mapRemoteRow(
   }
 
   if (table === "abyss_items" && base.embedding != null) {
-    base.embedding =
-      typeof base.embedding === "string" ? base.embedding : JSON.stringify(base.embedding);
-  }
-
-  if (table === "projects" && base.embedding != null) {
     base.embedding =
       typeof base.embedding === "string" ? base.embedding : JSON.stringify(base.embedding);
   }
@@ -60,23 +37,9 @@ export function mapRemoteRow(
     base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
   }
 
-  if (table === "user_constraints" && base.schedule != null) {
-    base.schedule =
-      typeof base.schedule === "string" ? base.schedule : JSON.stringify(base.schedule);
-  }
-
-  if (table === "about_me_suggestions" && base.payload != null) {
-    base.payload = typeof base.payload === "string" ? base.payload : JSON.stringify(base.payload);
-  }
-
   if (table === "project_templates" && base.structure != null) {
     base.structure =
       typeof base.structure === "string" ? base.structure : JSON.stringify(base.structure);
-  }
-
-  if (table === "evidence_editions" && base.narrative != null) {
-    base.narrative =
-      typeof base.narrative === "string" ? base.narrative : JSON.stringify(base.narrative);
   }
 
   const dateFields = [
@@ -137,7 +100,6 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   top3PinnedAt: "top_3_pinned_at",
   userId: "user_id",
   projectId: "project_id",
-  similarProjectId: "similar_project_id",
   parentPhaseId: "parent_phase_id",
   startDate: "start_date",
   endDate: "end_date",
@@ -157,29 +119,21 @@ const CAMEL_TO_SNAKE: Record<string, string> = {
   endMin: "end_min",
   milestoneId: "milestone_id",
   timeEstimateMinutes: "time_estimate_minutes",
-  bingoCardId: "bingo_card_id",
   obligationDesire: "obligation_desire",
-  valueId: "value_id",
   targetHorizon: "target_horizon",
   targetYear: "target_year",
   targetQuarter: "target_quarter",
   targetMonth: "target_month",
-  cellIndex: "cell_index",
   goalId: "goal_id",
-  cardYear: "card_year",
-  finalizedAt: "finalized_at",
-  focusCategories: "focus_categories",
   resolvedDate: "resolved_date",
   threadId: "thread_id",
   reviewDate: "date",
-  winDate: "win_date",
   refId: "ref_id",
   reflectionText: "reflection_text",
   reflectiveQuestion: "reflective_question",
   top3Status: "top_3_status",
   bucketMode: "bucket_mode",
   localDate: "local_date",
-  taskIds: "task_ids",
   startedAt: "started_at",
   endedAt: "ended_at",
   taskCount: "task_count",
@@ -211,10 +165,6 @@ export function mapPayloadToRemote(
     }
   }
 
-  if (table === "nudge_events" && typeof out.task_ids === "string") {
-    out.task_ids = JSON.parse(out.task_ids as string);
-  }
-
   if (table === "task_occurrence_overrides" && typeof out.patch === "string") {
     try {
       out.patch = JSON.parse(out.patch as string);
@@ -243,30 +193,6 @@ export function mapPayloadToRemote(
     out.patch = JSON.stringify(out.patch);
   }
 
-  if (table === "quarter_themes" && typeof out.focus_categories === "string") {
-    try {
-      out.focus_categories = JSON.parse(out.focus_categories as string);
-    } catch {
-      /* keep string */
-    }
-  }
-
-  if (table === "planning_suggestions" && typeof out.payload === "string") {
-    try {
-      out.payload = JSON.parse(out.payload as string);
-    } catch {
-      /* keep string */
-    }
-  }
-
-  if (table === "evidence_editions" && typeof out.narrative === "string") {
-    try {
-      out.narrative = JSON.parse(out.narrative as string);
-    } catch {
-      /* keep string */
-    }
-  }
-
   if (table === "abyss_items" && typeof out.links === "string") {
     try {
       out.links = JSON.parse(out.links as string);
@@ -283,48 +209,12 @@ export function mapPayloadToRemote(
     }
   }
 
-  if (table === "projects" && typeof out.embedding === "string") {
-    try {
-      out.embedding = JSON.parse(out.embedding as string);
-    } catch {
-      /* keep string */
-    }
-  }
-
   if (table === "abyss_items" && typeof out.tags === "string") {
     try {
       out.tags = JSON.parse(out.tags as string);
     } catch {
       /* keep string */
     }
-  }
-
-  if (table === "user_constraints" && typeof out.schedule === "string") {
-    try {
-      out.schedule = JSON.parse(out.schedule as string);
-    } catch {
-      /* keep string */
-    }
-  }
-
-  if (table === "about_me_suggestions" && typeof out.payload === "string") {
-    try {
-      out.payload = JSON.parse(out.payload as string);
-    } catch {
-      /* keep string */
-    }
-  }
-
-  if (
-    table === "quarter_themes" &&
-    typeof out.focus_categories === "object" &&
-    out.focus_categories
-  ) {
-    out.focus_categories = JSON.stringify(out.focus_categories);
-  }
-
-  if (table === "planning_suggestions" && typeof out.payload === "object" && out.payload) {
-    out.payload = JSON.stringify(out.payload);
   }
 
   if (table === "abyss_items" && typeof out.links === "object" && out.links) {
@@ -335,24 +225,12 @@ export function mapPayloadToRemote(
     out.embedding = JSON.stringify(out.embedding);
   }
 
-  if (table === "projects" && typeof out.embedding === "object" && out.embedding) {
-    out.embedding = JSON.stringify(out.embedding);
-  }
-
   if (table === "abyss_items" && typeof out.tags === "object" && out.tags) {
     out.tags = JSON.stringify(out.tags);
   }
 
   if (table === "tasks" && typeof out.tags === "object" && out.tags) {
     out.tags = JSON.stringify(out.tags);
-  }
-
-  if (table === "user_constraints" && typeof out.schedule === "object" && out.schedule) {
-    out.schedule = JSON.stringify(out.schedule);
-  }
-
-  if (table === "about_me_suggestions" && typeof out.payload === "object" && out.payload) {
-    out.payload = JSON.stringify(out.payload);
   }
 
   if (table === "project_templates" && typeof out.structure === "string") {

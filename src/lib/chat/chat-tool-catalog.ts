@@ -400,17 +400,6 @@ const REPLAN_PROJECT_DATES_TOOL: ChatToolDef = {
   },
 };
 
-const PROPOSE_ABOUT_ME_EDIT_TOOL: ChatToolDef = {
-  name: "propose_about_me_edit",
-  description: "Propose About me edits.",
-  input_schema: {
-    type: "object",
-    properties: { proposals: { type: "array", items: { type: "object" } } },
-    required: ["proposals"],
-    additionalProperties: false,
-  },
-};
-
 const PARK_IN_ABYSS_TOOL: ChatToolDef = {
   name: "park_in_abyss",
   description: "Park in Backlog.",
@@ -454,7 +443,6 @@ const TOOL_BY_NAME: Record<string, ChatToolDef> = {
   delete_phase: DELETE_PHASE_TOOL,
   move_task_to_phase: MOVE_TASK_TO_PHASE_TOOL,
   replan_project_dates: REPLAN_PROJECT_DATES_TOOL,
-  propose_about_me_edit: PROPOSE_ABOUT_ME_EDIT_TOOL,
   park_in_abyss: PARK_IN_ABYSS_TOOL,
 };
 
@@ -501,7 +489,6 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "edit_task",
     "delete_task",
     "apply_balance_suggestions",
-    "propose_about_me_edit",
     ...PHASE_STRUCTURE_TOOLS,
   ],
   projects: [
@@ -534,17 +521,9 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "draft_balance_pass",
     "complete_task",
     "apply_balance_suggestions",
-    "propose_about_me_edit",
     ...PHASE_STRUCTURE_TOOLS,
   ],
-  care: [
-    "query_tasks",
-    "query_state",
-    "draft_eod",
-    "complete_task",
-    "propose_about_me_edit",
-    ...PHASE_STRUCTURE_TOOLS,
-  ],
+  care: ["query_tasks", "query_state", "draft_eod", "complete_task", ...PHASE_STRUCTURE_TOOLS],
   "morning-handoff": ["query_tasks", "query_state", "create_task", ...PHASE_STRUCTURE_TOOLS],
   // Goals coach: goal reads + the goal-proposing write + the consent-gated learning
   // adjustment. Deliberately NO task/schedule/milestone tools — the coach must not
@@ -575,7 +554,6 @@ export const PLANNING_CHAT_TOOLS: ChatToolDef[] = [
   DELETE_PHASE_TOOL,
   MOVE_TASK_TO_PHASE_TOOL,
   REPLAN_PROJECT_DATES_TOOL,
-  PROPOSE_ABOUT_ME_EDIT_TOOL,
   PARK_IN_ABYSS_TOOL,
 ];
 
@@ -601,7 +579,6 @@ export const REFLECTION_CHAT_TOOLS: ChatToolDef[] = [
   RESCHEDULE_TASKS_TOOL,
   COMPLETE_TASK_TOOL,
   APPLY_BALANCE_SUGGESTIONS_TOOL,
-  PROPOSE_ABOUT_ME_EDIT_TOOL,
 ];
 
 function pickTools(names: readonly string[]): ChatToolDef[] {

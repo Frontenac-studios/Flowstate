@@ -189,7 +189,7 @@ describe("planningSurfaceFromPathname", () => {
     expect(planningSurfaceFromPathname("/this-week")).toBe("week");
     expect(planningSurfaceFromPathname("/plan")).toBe("plan");
     expect(planningSurfaceFromPathname("/projects/foo")).toBe("projects");
-    expect(planningSurfaceFromPathname("/abyss")).toBe("backlog");
+    expect(planningSurfaceFromPathname("/backlog")).toBe("backlog");
     expect(planningSurfaceFromPathname("/care")).toBe("care");
   });
 });

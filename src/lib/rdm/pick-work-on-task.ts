@@ -1,4 +1,4 @@
-import { nudgeThresholdHour } from "@/lib/nudges/local-time";
+import { nudgeThresholdHour } from "@/lib/dates/local-time";
 
 export type WorkOnPickTask = {
   id: string;
