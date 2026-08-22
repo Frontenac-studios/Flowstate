@@ -101,7 +101,7 @@
     "vitest": "^4.1.6"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "*.{js,cjs,mjs,jsx,ts,tsx}": [
       "eslint --fix --max-warnings=0",
       "prettier --write"
     ],

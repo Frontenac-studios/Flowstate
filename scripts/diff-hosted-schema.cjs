@@ -126,9 +126,7 @@ async function main() {
     for (const [column, spec] of Object.entries(columns)) {
       const live = actual[table][column];
       if (!live) {
-        drift.push(
-          `MISSING COLUMN   ${table}.${column}${spec.notNull ? "  (NOT NULL)" : ""}`
-        );
+        drift.push(`MISSING COLUMN   ${table}.${column}${spec.notNull ? "  (NOT NULL)" : ""}`);
         continue;
       }
       if (spec.notNull !== live.notNull) {
