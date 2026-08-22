@@ -10,6 +10,7 @@ import { planningSurfaceSchema } from "@/lib/chat/planning-surface";
 import { appendAssistantMessage } from "@/server/claude/persist-message";
 import { streamCompanionReply } from "@/server/claude/generate";
 import { getRouteUserId } from "@/server/claude/route-auth";
+import { FLAGS } from "@/lib/flags";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,10 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Chat parked (docs/v1-scope.md §3.2). The route stays registered but
+  // answers nothing, so a parked feature has no reachable surface at all.
+  if (!FLAGS.chat) return new NextResponse(null, { status: 404 });
+
   const userId = await getRouteUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!isModelConfigured()) {

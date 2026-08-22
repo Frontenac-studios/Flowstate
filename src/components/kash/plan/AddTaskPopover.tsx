@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 
+import { FLAGS } from "@/lib/flags";
+
 export type AddTaskPopoverHandle = {
   /** Return focus to the trigger — used when a revealed composer collapses. */
   focusTrigger: () => void;
@@ -88,6 +90,30 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
     setOpen(false);
     action();
   };
+
+  // Chat parked (docs/v1-scope.md §3.2). The popover exists only to choose
+  // between chat and the manual composer; with chat gone there is nothing to
+  // choose, so "+" reveals the composer directly. Without this, "+" would open a
+  // one-item menu and task creation would gain a pointless click.
+  if (!FLAGS.chat) {
+    return (
+      <div className={`relative ${className ?? ""}`}>
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-label={`Add ${noun}`}
+          onClick={onTypeManually}
+          className={
+            embedded
+              ? `flex h-8 w-8 items-center justify-center rounded-pill border border-transparent bg-transparent text-lg leading-none text-ink-muted transition hover:bg-active-raised hover:text-ink ${MENU_BTN_FOCUS}`
+              : `flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink ${MENU_BTN_FOCUS}`
+          }
+        >
+          <span aria-hidden>+</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>

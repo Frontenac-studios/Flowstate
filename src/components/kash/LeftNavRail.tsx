@@ -6,6 +6,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 
 import { kashIconProps, Pin, Search } from "@/components/kash/ui/icon";
 import { ChatToggleButton } from "@/components/kash/chat/ChatToggleButton";
+import { FLAGS } from "@/lib/flags";
 import { OPEN_PALETTE_EVENT } from "@/components/kash/chrome-events";
 import {
   isNavItemActive,
@@ -346,7 +347,7 @@ export function LeftNavRail() {
         {/* Header chrome absorbed from the retired AppHeader. */}
         <div className="mb-1 flex flex-col gap-1">
           <RailSearchButton expanded={expanded} />
-          <ChatToggleButton expanded={expanded} />
+          {FLAGS.chat ? <ChatToggleButton expanded={expanded} /> : null}
         </div>
 
         <NavSections

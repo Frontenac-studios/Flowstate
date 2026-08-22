@@ -60,13 +60,6 @@ export function CommandPalette() {
         keywords: "backburner ideas later parked backlog",
         run: () => router.push("/backlog"),
       },
-      {
-        id: "go-care",
-        label: "Go to Care",
-        hint: "Reflect & plan",
-        keywords: "self-care wellbeing walks breathing reflection",
-        run: () => router.push("/care"),
-      },
       { id: "go-settings", label: "Go to Settings", run: () => router.push("/settings") },
       {
         id: "decide",
