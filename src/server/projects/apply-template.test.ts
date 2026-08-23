@@ -38,7 +38,7 @@ describe("applyProjectTemplate taskValues", () => {
     const values = taskValues(
       userId,
       projectId,
-      "professional",
+      "business",
       phaseId,
       { title: "  Draft brief  " },
       0

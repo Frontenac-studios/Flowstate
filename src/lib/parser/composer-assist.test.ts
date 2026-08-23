@@ -147,7 +147,7 @@ describe("getComposerAssist", () => {
   });
 
   it("does not suggest a sixth property after category", () => {
-    const line = "walk dog; today; !; rdm; relationships; ";
+    const line = "walk dog; today; !; rdm; personal; ";
     const state = assist(line, line.length);
     expect(state.suggestion).toBeNull();
     expect(state.suggestionSuffix).toBeNull();
@@ -155,15 +155,15 @@ describe("getComposerAssist", () => {
   });
 
   it("completes a partial category to its label", () => {
-    const line = "walk dog; today; !; rdm; rel";
+    const line = "walk dog; today; !; rdm; bus";
     const state = assist(line, line.length);
     expect(state.activeProperty).toBe("category");
-    expect(state.suggestion).toBe("Relationships");
-    expect(state.suggestionSuffix).toBe("ationships");
+    expect(state.suggestion).toBe("Business");
+    expect(state.suggestionSuffix).toBe("iness");
   });
 
   it("marks a completed category segment as filled once the cursor moves past it", () => {
-    const line = "walk dog; today; !; rdm; relationships; ";
+    const line = "walk dog; today; !; rdm; personal; ";
     const state = assist(line, line.length);
     expect(state.properties.find((p) => p.key === "category")?.status).toBe("filled");
   });
@@ -214,7 +214,7 @@ describe("getComposerAssist", () => {
   });
 
   it("prefers tag suggestions over project when both could match in extra segments", () => {
-    const line = "walk dog; today; !; rdm; relationships; urg";
+    const line = "walk dog; today; !; rdm; personal; urg";
     const state = getComposerAssist(line, line.length, {
       ...ctx,
       tagVocabulary: ["urgent", "waiting"],

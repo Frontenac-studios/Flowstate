@@ -43,6 +43,7 @@ import {
 import { createTRPCRouter, protectedProcedure } from "../init";
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
+const stateSchema = z.enum(["prospect", "active", "paused", "done"]);
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -384,6 +385,9 @@ export const projectsRouter = createTRPCRouter({
         name: z.string().min(1).max(120),
         slug: z.string().min(1).max(64).optional(),
         category: categorySchema,
+        clientId: z.string().uuid().nullable().optional(),
+        state: stateSchema.optional(),
+        isMaintenance: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -411,6 +415,9 @@ export const projectsRouter = createTRPCRouter({
             name: input.name.trim(),
             slug,
             category: input.category,
+            clientId: input.clientId ?? null,
+            state: input.state ?? "active",
+            isMaintenance: input.isMaintenance ?? false,
           })
           .returning();
       } catch (error) {
@@ -583,6 +590,9 @@ export const projectsRouter = createTRPCRouter({
         id: z.string().uuid(),
         name: z.string().min(1).max(120).optional(),
         category: categorySchema.optional(),
+        clientId: z.string().uuid().nullable().optional(),
+        state: stateSchema.optional(),
+        isMaintenance: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -591,6 +601,9 @@ export const projectsRouter = createTRPCRouter({
       const patch: Partial<typeof projects.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) patch.name = input.name.trim();
       if (input.category !== undefined) patch.category = input.category;
+      if (input.clientId !== undefined) patch.clientId = input.clientId;
+      if (input.state !== undefined) patch.state = input.state;
+      if (input.isMaintenance !== undefined) patch.isMaintenance = input.isMaintenance;
 
       const [row] = await db
         .update(projects)

@@ -7,6 +7,7 @@ import {
   GalleryVerticalEnd,
   SlidersHorizontal,
   Sun,
+  Wallet,
 } from "@/components/kash/ui/icon";
 
 export type NavItem = {
@@ -27,6 +28,9 @@ export const NAV_GROUP_DO_NOW: NavGroup = {
     { href: "/today", label: "Today", icon: Sun, match: ["/today"] },
     { href: "/this-week", label: "Week", icon: Calendar, match: ["/this-week"] },
     { href: "/projects", label: "Projects", icon: Folder, match: ["/projects"] },
+    // Money is a MISSION.md law-4c surface; Clients lives inside it, so /clients
+    // highlights Money too. Revenue/invoices arrive with W3/W4.
+    { href: "/money", label: "Money", icon: Wallet, match: ["/money", "/clients"] },
   ],
 };
 

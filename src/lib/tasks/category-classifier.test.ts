@@ -11,11 +11,8 @@ import {
 // Orthogonal unit vectors so cosine is exactly 1 with self, 0 with others — keeps the
 // gating math easy to reason about without a real model.
 const PROTOTYPES: CategoryPrototype[] = [
-  { category: "professional", vector: [1, 0, 0, 0, 0] },
-  { category: "personal_projects", vector: [0, 1, 0, 0, 0] },
-  { category: "relationships", vector: [0, 0, 1, 0, 0] },
-  { category: "body_mind", vector: [0, 0, 0, 1, 0] },
-  { category: "adulting", vector: [0, 0, 0, 0, 1] },
+  { category: "business", vector: [1, 0] },
+  { category: "personal", vector: [0, 1] },
 ];
 
 describe("cosineSimilarity", () => {
@@ -46,25 +43,25 @@ describe("softmax", () => {
 
 describe("classifyEmbedding", () => {
   it("picks the prototype the query points at, above threshold", () => {
-    const result = classifyEmbedding([0, 0, 0.9, 0, 0], PROTOTYPES);
+    const result = classifyEmbedding([0, 0.9], PROTOTYPES);
     expect(result).not.toBeNull();
-    expect(result?.category).toBe("relationships");
+    expect(result?.category).toBe("personal");
     expect(result?.confidence).toBeGreaterThanOrEqual(DEFAULT_CLASSIFIER_CONFIG.floor);
   });
 
   it("abstains when the query is ambiguous between two prototypes (margin fails)", () => {
-    // Equidistant from professional and personal_projects → no clear winner.
-    const result = classifyEmbedding([0.7, 0.7, 0, 0, 0], PROTOTYPES);
+    // Equidistant from business and personal → no clear winner.
+    const result = classifyEmbedding([0.7, 0.7], PROTOTYPES);
     expect(result).toBeNull();
   });
 
   it("abstains on an empty query or no prototypes", () => {
     expect(classifyEmbedding([], PROTOTYPES)).toBeNull();
-    expect(classifyEmbedding([1, 0, 0, 0, 0], [])).toBeNull();
+    expect(classifyEmbedding([1, 0], [])).toBeNull();
   });
 
   it("respects a custom floor — a high floor forces abstention", () => {
-    const strict = { ...DEFAULT_CLASSIFIER_CONFIG, floor: 0.9999 };
-    expect(classifyEmbedding([0, 0, 1, 0, 0], PROTOTYPES, strict)).toBeNull();
+    const strict = { ...DEFAULT_CLASSIFIER_CONFIG, floor: 0.99999 };
+    expect(classifyEmbedding([0, 1], PROTOTYPES, strict)).toBeNull();
   });
 });

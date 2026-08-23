@@ -124,7 +124,7 @@ describe("proposed-actions", () => {
           title: "Order dumpster",
           projectSlug: "reno",
           phaseName: "Demolition",
-          category: "professional",
+          category: "business",
         },
       ],
     });
@@ -132,13 +132,13 @@ describe("proposed-actions", () => {
       {
         itemId: "a",
         title: "Order the dumpster",
-        category: "adulting",
+        category: "personal",
         phaseId: "00000000-0000-4000-8000-000000000099",
       },
     ]);
     if (merged?.kind === "create_task") {
       expect(merged.items[0]?.title).toBe("Order the dumpster");
-      expect(merged.items[0]?.category).toBe("adulting");
+      expect(merged.items[0]?.category).toBe("personal");
       expect(merged.items[0]?.phaseId).toBe("00000000-0000-4000-8000-000000000099");
     }
   });
@@ -154,7 +154,7 @@ describe("proposed-actions", () => {
           title: "Rough-in plumbing",
           projectSlug: "reno",
           phaseId: "00000000-0000-4000-8000-000000000001",
-          category: "professional",
+          category: "business",
           tags: ["plumber"],
           timeEstimateMinutes: 120,
         },
@@ -231,7 +231,7 @@ describe("proposed-actions", () => {
         itemId: "a",
         enabled: true,
         title: "Run a 10k",
-        category: "body_mind",
+        category: "personal",
         rationale: "you love running",
       },
       { itemId: "b", enabled: true, title: "Take a solo trip abroad" },
@@ -241,7 +241,7 @@ describe("proposed-actions", () => {
   it("parses propose_bingo_goals with a tagged and an untagged row", () => {
     expect(bingoGoals.kind).toBe("propose_bingo_goals");
     if (bingoGoals.kind === "propose_bingo_goals") {
-      expect(bingoGoals.items[0]?.category).toBe("body_mind");
+      expect(bingoGoals.items[0]?.category).toBe("personal");
       expect(bingoGoals.items[1]?.category).toBeUndefined();
     }
   });
@@ -251,21 +251,19 @@ describe("proposed-actions", () => {
   });
 
   it("mergeBingoGoalEdits overlays chosen categories and keeps only listed rows", () => {
-    const merged = mergeBingoGoalEdits(bingoGoals, [
-      { itemId: "b", category: "personal_projects" },
-    ]);
+    const merged = mergeBingoGoalEdits(bingoGoals, [{ itemId: "b", category: "personal" }]);
     expect(merged?.kind).toBe("propose_bingo_goals");
     if (merged?.kind === "propose_bingo_goals") {
       expect(merged.items).toHaveLength(1);
       expect(merged.items[0]?.itemId).toBe("b");
-      expect(merged.items[0]?.category).toBe("personal_projects");
+      expect(merged.items[0]?.category).toBe("personal");
     }
   });
 
   it("mergeBingoGoalEdits preserves a pre-tagged category when none is supplied", () => {
     const merged = mergeBingoGoalEdits(bingoGoals, [{ itemId: "a" }]);
     if (merged?.kind === "propose_bingo_goals") {
-      expect(merged.items[0]?.category).toBe("body_mind");
+      expect(merged.items[0]?.category).toBe("personal");
     }
   });
 

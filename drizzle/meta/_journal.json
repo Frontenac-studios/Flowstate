@@ -316,6 +316,13 @@
       "when": 1787359615737,
       "tag": "0044_safe_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1787429803525,
+      "tag": "0045_military_outlaw_kid",
+      "breakpoints": true
     }
   ]
 }

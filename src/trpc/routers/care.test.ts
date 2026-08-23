@@ -171,7 +171,7 @@ describe("care persistence (sqlite)", () => {
     expect(active).toHaveLength(1);
   });
 
-  it("addToMyDay spawns a body_mind task with the join + a recurrence row when cadence is set", () => {
+  it("addToMyDay spawns a personal task with the join + a recurrence row when cadence is set", () => {
     const now = new Date();
     const activity = db
       .insert(careActivities)
@@ -198,7 +198,7 @@ describe("care persistence (sqlite)", () => {
         id: randomUUID(),
         userId,
         title: activity.title,
-        category: "body_mind",
+        category: "personal",
         careActivityId: activity.id,
         scheduledDate: rrule ? null : "2026-06-29",
         createdAt: now,
@@ -207,7 +207,7 @@ describe("care persistence (sqlite)", () => {
       .returning()
       .get();
 
-    expect(task.category).toBe("body_mind");
+    expect(task.category).toBe("personal");
     expect(task.careActivityId).toBe(activity.id);
     expect(task.scheduledDate).toBeNull();
 
@@ -258,7 +258,7 @@ describe("care persistence (sqlite)", () => {
         id: randomUUID(),
         userId,
         title: activity.title,
-        category: "body_mind",
+        category: "personal",
         careActivityId: activity.id,
         scheduledDate: rrule ? null : "2026-06-29",
         createdAt: now,

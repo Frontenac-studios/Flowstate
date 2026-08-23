@@ -239,7 +239,7 @@ function Top3HoldGhost({
     <ProtectedTimelineBlock
       block={{
         id: "top3-hold-ghost",
-        category: "professional",
+        category: "business",
         label: TOP3_HOLD_LABEL,
         startMin: slot.startMin,
         endMin: slot.endMin,

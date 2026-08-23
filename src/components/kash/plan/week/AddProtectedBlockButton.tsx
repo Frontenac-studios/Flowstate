@@ -16,7 +16,7 @@ export default function AddProtectedBlockButton({ isoDate }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState<ProjectCategory>("relationships");
+  const [category, setCategory] = useState<ProjectCategory>("personal");
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: trpc.protectedBlocks.listForWeek.queryKey() });

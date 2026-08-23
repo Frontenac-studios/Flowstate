@@ -2,15 +2,13 @@ import { PROJECT_CATEGORY_META, type ProjectCategory } from "./categories";
 
 /**
  * Maps each category enum value to its design-token suffix (DT-3, tokens.css).
- * The enum keys and token names diverge (`personal_projects` → `personal`,
- * `body_mind` → `body-mind`), so this is the single source for that mapping.
+ * Since the enum collapsed to business|personal the suffix now matches the enum
+ * value, but the indirection stays: it is the single seam if the two ever diverge
+ * again, and every caller already goes through it.
  */
 const CATEGORY_TOKEN_SUFFIX: Record<ProjectCategory, string> = {
-  professional: "professional",
-  personal_projects: "personal",
-  relationships: "relationships",
-  body_mind: "body-mind",
-  adulting: "adulting",
+  business: "business",
+  personal: "personal",
 };
 
 /** The `--cat-{suffix}-solid` CSS variable reference for a category's accent. */

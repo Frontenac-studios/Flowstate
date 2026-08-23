@@ -19,11 +19,10 @@ import { getModel } from "@/server/claude/client";
 
 // Mirrors scripts/backfill-loose-task-categories.cjs and the data-spine §7 category guide.
 const CATEGORY_GUIDE: Record<ProjectCategory, string> = {
-  professional: "paid work, job, clients, meetings, work projects",
-  personal_projects: "self-directed creative or learning projects, hobbies, side builds",
-  relationships: "family, friends, partner, social plans, gifts, staying in touch",
-  body_mind: "health, fitness, exercise, medical/dental, rest, mindfulness",
-  adulting: "chores, errands, bills, admin, home maintenance, logistics",
+  business: "paid work, job, clients, meetings, work projects",
+  personal:
+    "everything outside paid work: hobbies and side projects, family and friends, " +
+    "health and fitness, chores, errands, bills, admin, and home logistics",
 };
 
 /** Layer-3 inference: ask the hosted model for a category distribution, parse + gate it. */

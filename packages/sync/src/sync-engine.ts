@@ -3,6 +3,7 @@ import {
   appSettings,
   categorySettings,
   chatMessages,
+  clients,
   dayReviews,
   goalMilestones,
   goals,
@@ -10,6 +11,7 @@ import {
   projectMilestones,
   projects,
   projectTemplates,
+  rates,
   protectedBlockTemplates,
   protectedBlocks,
   weekDayPriorities,
@@ -171,6 +173,30 @@ async function upsertRow(
           .set(mapped as never)
           .where(eq(projects.id, id));
       else await db.insert(projects).values(mapped as never);
+      return true;
+    }
+    case "clients": {
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(clients).where(eq(clients.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(clients)
+          .set(mapped as never)
+          .where(eq(clients.id, id));
+      else await db.insert(clients).values(mapped as never);
+      return true;
+    }
+    case "rates": {
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(rates).where(eq(rates.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(rates)
+          .set(mapped as never)
+          .where(eq(rates.id, id));
+      else await db.insert(rates).values(mapped as never);
       return true;
     }
     case "tasks": {

@@ -23,7 +23,7 @@ describe("capture-context", () => {
       projectSlug: "kitchen-reno",
       phaseId: PHASE_ID,
       phaseName: "Demolition",
-      category: "adulting",
+      category: "personal",
     });
     const parsed = captureContextSchema.safeParse(ctx);
     expect(parsed.success).toBe(true);
@@ -64,7 +64,7 @@ describe("capture-context", () => {
       projectSlug: "kitchen-reno",
       phaseId: PHASE_ID,
       phaseName: "Demolition",
-      category: "adulting",
+      category: "personal",
     });
     const parsed = captureContextSchema.parse(JSON.parse(JSON.stringify(ctx)));
     expect(parsed).toEqual(ctx);
@@ -76,13 +76,13 @@ describe("capture-context", () => {
         surface: "projects",
         projectSlug: "kitchen-reno",
         phaseName: "Demolition",
-        category: "adulting",
+        category: "personal",
       })
     );
     expect(block).toContain("Surface: projects");
     expect(block).toContain("Project: #kitchen-reno");
     expect(block).toContain("Phase: Demolition");
-    expect(block).toContain("Category: adulting");
+    expect(block).toContain("Category: personal");
   });
 
   it("formatCaptureContextBlock shows inbox default for week", () => {
@@ -133,9 +133,9 @@ describe("captureContextPlaceholder", () => {
   it("names the category for a loose-tasks row (no project)", () => {
     expect(
       captureContextPlaceholder(
-        createCaptureContext({ surface: "projects", category: "adulting", defaultBucket: "inbox" })
+        createCaptureContext({ surface: "projects", category: "personal", defaultBucket: "inbox" })
       )
-    ).toBe("Add Adulting tasks…");
+    ).toBe("Add Personal tasks…");
   });
 
   it("prompts to plan a task from the backlog", () => {
@@ -183,7 +183,7 @@ describe("capture context creation per surface", () => {
       projectSlug: "demolition",
       phaseId: PHASE_ID,
       phaseName: "Demolition",
-      category: "personal_projects",
+      category: "personal",
     });
     expect(ctx.projectSlug).toBe("demolition");
     expect(ctx.phaseId).toBe(PHASE_ID);
@@ -194,10 +194,10 @@ describe("capture context creation per surface", () => {
   it("row 3 — category lens/loose row +: category only, no project or phase", () => {
     const ctx = createCaptureContext({
       surface: "projects",
-      category: "adulting",
+      category: "personal",
       defaultBucket: "inbox",
     });
-    expect(ctx.category).toBe("adulting");
+    expect(ctx.category).toBe("personal");
     expect(ctx.projectId).toBeUndefined();
     expect(ctx.projectSlug).toBeUndefined();
     expect(ctx.phaseId).toBeUndefined();

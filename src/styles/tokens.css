@@ -57,7 +57,15 @@
   --active-raised: #ffffff; /* inset white pill · Week "today" column — raised, not filled */
   --active-raised-border: #e2e4e8; /* hairline that sells the raised pill; NO shadow (kept flat) */
 
-  /* ---- category palette (DT-3, Apple set): fill / solid / text ---- */
+  /* ---- category palette (DT-3, Apple set): fill / solid / text ----
+     The enum collapsed to business|personal (W1). `business` reuses the old
+     professional blue; `personal` keeps its purple. The other three (relationships,
+     adulting, body-mind) are retained because non-category tokens still reference
+     them (e.g. --action-edit, --action-complete) and the project-cycle palette. */
+  --cat-business-fill: #e5f5fc;
+  --cat-business-solid: #009ddc;
+  --cat-business-text: #0a6a93;
+
   --cat-professional-fill: #e5f5fc;
   --cat-professional-solid: #009ddc;
   --cat-professional-text: #0a6a93;
@@ -677,6 +685,7 @@ html.is-desktop[data-spacing-variant="b"] {
   --abyss-accent: #e8eaf0;
   --abyss-on-accent: #07090d;
 
+  --cat-business-solid: #3bb6e6;
   --cat-professional-solid: #3bb6e6;
   --cat-personal-solid: #c06fc0;
   --cat-relationships-solid: #f06366;

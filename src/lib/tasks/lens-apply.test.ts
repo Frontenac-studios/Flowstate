@@ -29,11 +29,9 @@ function task(over: Partial<PlanTaskRow> & { id: string }): PlanTaskRow {
 
 describe("taskLensValue", () => {
   it("resolves category, falling back to none when unresolved/absent", () => {
-    expect(taskLensValue(task({ id: "a", category: "professional" }), "category")).toBe(
-      "professional"
-    );
+    expect(taskLensValue(task({ id: "a", category: "business" }), "category")).toBe("business");
     expect(
-      taskLensValue(task({ id: "b", category: "adulting", categoryUnresolved: true }), "category")
+      taskLensValue(task({ id: "b", category: "personal", categoryUnresolved: true }), "category")
     ).toBe(LENS_NONE);
     expect(taskLensValue(task({ id: "c" }), "category")).toBe(LENS_NONE);
   });
@@ -65,8 +63,8 @@ describe("taskLensValue", () => {
 
 describe("filterTasks", () => {
   const tasks = [
-    task({ id: "a", category: "professional" }),
-    task({ id: "b", category: "relationships" }),
+    task({ id: "a", category: "business" }),
+    task({ id: "b", category: "personal" }),
     task({ id: "c" }), // no category → none
   ];
 
@@ -78,7 +76,7 @@ describe("filterTasks", () => {
     const state: LensState = {
       active: ["category"],
       group: null,
-      filters: { category: ["professional", "relationships"] },
+      filters: { category: ["business", "personal"] },
     };
     expect(filterTasks(tasks, state).map((t) => t.id)).toEqual(["a", "b"]);
   });
@@ -94,13 +92,13 @@ describe("filterTasks", () => {
 
   it("ANDs across two lenses", () => {
     const two = [
-      task({ id: "a", category: "professional", priority: 3 }),
-      task({ id: "b", category: "professional", priority: 1 }),
+      task({ id: "a", category: "business", priority: 3 }),
+      task({ id: "b", category: "business", priority: 1 }),
     ];
     const state: LensState = {
       active: ["category", "priority"],
       group: null,
-      filters: { category: ["professional"], priority: ["3"] },
+      filters: { category: ["business"], priority: ["3"] },
     };
     expect(filterTasks(two, state).map((t) => t.id)).toEqual(["a"]);
   });
@@ -126,13 +124,13 @@ describe("sortWithinGroup", () => {
 describe("groupTasks", () => {
   it("emits non-empty groups in canonical category order, none last", () => {
     const tasks = [
-      task({ id: "a", category: "adulting" }),
-      task({ id: "b", category: "professional" }),
+      task({ id: "a", category: "personal" }),
+      task({ id: "b", category: "business" }),
       task({ id: "c" }), // none
     ];
     const groups = groupTasks(tasks, "category");
-    expect(groups.map((g) => g.key)).toEqual(["professional", "adulting", LENS_NONE]);
-    expect(groups[0]!.label).toBe("Professional");
+    expect(groups.map((g) => g.key)).toEqual(["business", "personal", LENS_NONE]);
+    expect(groups[0]!.label).toBe("Business");
     expect(groups.at(-1)!.label).toBe("No category");
   });
 
@@ -150,16 +148,16 @@ describe("groupTasks", () => {
 
 describe("applyLens", () => {
   const tasks = [
-    task({ id: "a", category: "professional", priority: 3 }),
-    task({ id: "b", category: "professional", priority: 1 }),
-    task({ id: "c", category: "relationships", priority: 2 }),
+    task({ id: "a", category: "business", priority: 3 }),
+    task({ id: "b", category: "business", priority: 1 }),
+    task({ id: "c", category: "personal", priority: 2 }),
   ];
 
   it("returns a flat filtered list when no group lens is set", () => {
     const state: LensState = {
       active: ["category"],
       group: null,
-      filters: { category: ["professional"] },
+      filters: { category: ["business"] },
     };
     const result = applyLens(tasks, state);
     expect(result.kind).toBe("flat");
@@ -170,12 +168,12 @@ describe("applyLens", () => {
     const state: LensState = {
       active: ["category", "priority"],
       group: "priority",
-      filters: { category: ["professional"] },
+      filters: { category: ["business"] },
     };
     const result = applyLens(tasks, state);
     expect(result.kind).toBe("grouped");
     if (result.kind === "grouped") {
-      // only professional tasks remain, grouped by priority 3 then 1
+      // only business tasks remain, grouped by priority 3 then 1
       expect(result.groups.map((g) => g.key)).toEqual(["3", "1"]);
     }
   });

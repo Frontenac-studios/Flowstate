@@ -16,87 +16,77 @@ describe("computeCategoryBalance", () => {
 
   it("weights resolved categories and orders them canonically", () => {
     const { segments, total, totalTasks } = computeCategoryBalance([
-      { category: "adulting" },
-      { category: "professional" },
-      { category: "adulting" },
-      { category: "body_mind" },
+      { category: "personal" },
+      { category: "business" },
+      { category: "personal" },
+      { category: "personal" },
     ]);
 
     expect(totalTasks).toBe(4);
     expect(total).toBe(4);
-    // professional precedes body_mind precedes adulting per PROJECT_CATEGORIES,
-    // regardless of input order.
+    // business precedes personal per PROJECT_CATEGORIES, regardless of input order.
     expect(segments).toEqual([
-      { category: "professional", weight: 1, taskCount: 1 },
-      { category: "body_mind", weight: 1, taskCount: 1 },
-      { category: "adulting", weight: 2, taskCount: 2 },
+      { category: "business", weight: 1, taskCount: 1 },
+      { category: "personal", weight: 3, taskCount: 3 },
     ]);
   });
 
   it("counts a Top-3 task as three weighted units but one task", () => {
     const { segments, total } = computeCategoryBalance([
-      { category: "professional", isTop3: true },
-      { category: "professional" },
+      { category: "business", isTop3: true },
+      { category: "business" },
     ]);
 
     expect(total).toBe(4);
-    expect(segments).toEqual([{ category: "professional", weight: 4, taskCount: 2 }]);
+    expect(segments).toEqual([{ category: "business", weight: 4, taskCount: 2 }]);
   });
 
   it("reports core life-areas with nothing planned as empty", () => {
-    const { emptyCategories } = computeCategoryBalance([{ category: "professional" }]);
+    const { emptyCategories } = computeCategoryBalance([{ category: "business" }]);
 
-    expect(emptyCategories).toEqual([
-      "personal_projects",
-      "relationships",
-      "body_mind",
-      "adulting",
-    ]);
+    expect(emptyCategories).toEqual(["personal"]);
   });
 
   it("flags a dominant life-area and a lopsided day", () => {
-    // A Top-3 deck (weight 3) dwarfs a lone errand; relationships sit empty.
+    // A Top-3 deck (weight 3) dwarfs a lone task; personal sits empty.
     const { dominant, lopsided } = computeCategoryBalance([
-      { category: "professional", isTop3: true },
-      { category: "adulting" },
+      { category: "business", isTop3: true },
+      { category: "business" },
     ]);
 
-    expect(dominant).toBe("professional");
+    expect(dominant).toBe("business");
     expect(lopsided).toBe(true);
   });
 
   it("is not lopsided when every life-area has something planned", () => {
     const { dominant, lopsided, emptyCategories } = computeCategoryBalance([
-      { category: "professional", isTop3: true },
-      { category: "personal_projects" },
-      { category: "relationships" },
-      { category: "body_mind" },
-      { category: "adulting" },
+      { category: "business", isTop3: true },
+      { category: "personal" },
     ]);
 
-    expect(dominant).toBe("professional");
+    expect(dominant).toBe("business");
     expect(emptyCategories).toEqual([]);
     expect(lopsided).toBe(false);
   });
 
   it("buckets unset and unresolved categories into a trailing null slice", () => {
     const { segments, total } = computeCategoryBalance([
-      { category: "professional" },
+      { category: "business" },
       { category: null },
-      { category: "adulting", categoryUnresolved: true },
+      { category: "personal", categoryUnresolved: true },
       {},
     ]);
 
     expect(total).toBe(4);
     expect(segments).toEqual([
-      { category: "professional", weight: 1, taskCount: 1 },
+      { category: "business", weight: 1, taskCount: 1 },
       { category: null, weight: 3, taskCount: 3 },
     ]);
   });
 
   it("keeps the uncategorised slice last even when categories are present", () => {
-    const { segments } = computeCategoryBalance([{ category: null }, { category: "body_mind" }]);
+    const { segments } = computeCategoryBalance([{ category: null }, { category: "personal" }]);
 
-    expect(segments.map((s) => s.category)).toEqual(["body_mind", null]);
+    expect(segments.map((s) => s.category)).toEqual(["personal", null]);
   });
 });

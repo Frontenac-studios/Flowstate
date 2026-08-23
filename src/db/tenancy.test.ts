@@ -94,7 +94,12 @@ describe("financial data placement", () => {
   // Money lives in its own FINANCIAL-class tables, never as a column on a table a
   // Member can read. Enforcing that here is what makes column-level security
   // unnecessary: a Member's `SELECT *` cannot leak a rate that is not in the row.
-  const MONEY_COLUMN = /(^|_)(rate|rates|revenue|invoice|price|salary|billable|currency)(_|$)/;
+  //
+  // `currency` is deliberately NOT in this list. It is an ISO denomination code
+  // (USD/GBP), not an amount — a Member seeing "this client bills in GBP" leaks
+  // nothing, and `clients.currency` (org_shared) is required by the W1 spec. The
+  // guard is about amounts (rate, revenue, price, salary) and billable state.
+  const MONEY_COLUMN = /(^|_)(rate|rates|revenue|invoice|price|salary|billable)(_|$)/;
 
   const tenantTables = (Object.values(schema) as unknown[])
     .filter(isPgTable)
@@ -119,10 +124,10 @@ describe("financial data placement", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("starts with no financial tables", () => {
-    // Not a permanent invariant — delete this assertion when the first real
-    // financial table lands. It exists so the empty class is a deliberate state
-    // rather than an oversight.
-    expect(tablesInClass("financial")).toEqual([]);
+  it("keeps `rates` — and only rates — in the financial class", () => {
+    // The first (and, in W1, only) financial table. This replaces the original
+    // "starts with no financial tables" assertion, which existed to prove the
+    // empty class was deliberate. Update the expected list as financial tables land.
+    expect(tablesInClass("financial")).toEqual(["rates"]);
   });
 });

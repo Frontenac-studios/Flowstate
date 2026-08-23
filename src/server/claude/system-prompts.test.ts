@@ -141,11 +141,11 @@ describe("system-prompts", () => {
   it("defaults loose-row capture to a category with no project", () => {
     const ctx = createCaptureContext({
       surface: "projects",
-      category: "adulting",
+      category: "personal",
       defaultBucket: "inbox",
     });
     const prompt = buildChatSystemPrompt(GLOBAL_THREAD_ID, "projects", ctx);
-    expect(prompt).toContain("Default new tasks to loose adulting tasks (a category, no project)");
+    expect(prompt).toContain("Default new tasks to loose personal tasks (a category, no project)");
   });
 
   it("tells morning handoff capture to use the Stage confirm card", () => {

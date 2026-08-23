@@ -58,14 +58,14 @@ describe("buildCreateTaskProposal", () => {
           projectSlug: "demolition",
           phaseId: PHASE_ID,
           phaseName: "Demolition",
-          category: "personal_projects",
+          category: "personal",
         })
       )
     );
     expect(item.projectSlug).toBe("demolition");
     expect(item.phaseId).toBe(PHASE_ID);
     expect(item.phaseName).toBe("Demolition");
-    expect(item.category).toBe("personal_projects");
+    expect(item.category).toBe("personal");
   });
 
   it("prefers explicit item fields over capture context", () => {
@@ -77,7 +77,7 @@ describe("buildCreateTaskProposal", () => {
               title: "order dumpster",
               projectSlug: "other-project",
               phaseName: "Framing",
-              category: "professional",
+              category: "business",
             },
           ],
         },
@@ -85,23 +85,23 @@ describe("buildCreateTaskProposal", () => {
           surface: "projects",
           projectSlug: "demolition",
           phaseName: "Demolition",
-          category: "personal_projects",
+          category: "personal",
         })
       )
     );
     expect(item.projectSlug).toBe("other-project");
     expect(item.phaseName).toBe("Framing");
-    expect(item.category).toBe("professional");
+    expect(item.category).toBe("business");
   });
 
   it("row 3 (category lens): keeps an explicit category with no project/phase", () => {
     const item = createItem(
       buildCreateTaskProposal(
         { tasks: [{ title: "renew passport" }] },
-        createCaptureContext({ surface: "projects", category: "adulting", defaultBucket: "inbox" })
+        createCaptureContext({ surface: "projects", category: "personal", defaultBucket: "inbox" })
       )
     );
-    expect(item.category).toBe("adulting");
+    expect(item.category).toBe("personal");
     expect(item.projectSlug).toBeNull();
     expect(item.phaseName).toBeNull();
     // phaseId comes from capture context (undefined here) — not forced to null.
@@ -132,10 +132,10 @@ describe("buildCreateTaskProposal", () => {
     const item = createItem(
       buildCreateTaskProposal(
         { tasks: [{ title: "task", category: "not-a-category" }] },
-        createCaptureContext({ surface: "week", category: "body_mind" })
+        createCaptureContext({ surface: "week", category: "personal" })
       )
     );
-    expect(item.category).toBe("body_mind");
+    expect(item.category).toBe("personal");
   });
 
   it("passes through tags, estimate, and priority", () => {

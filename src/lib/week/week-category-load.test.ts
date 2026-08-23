@@ -6,25 +6,24 @@ describe("computeWeekCategoryLoad", () => {
   it("weights tasks and protected blocks per category", () => {
     const snapshot = computeWeekCategoryLoad({
       tasks: [
-        { category: "professional", isTop3: true },
-        { category: "professional", dayPriorityOrder: 1 },
-        { category: "relationships" },
+        { category: "business", isTop3: true },
+        { category: "business", dayPriorityOrder: 1 },
+        { category: "personal" },
       ],
-      protectedBlocks: [{ category: "body_mind" }, { category: "body_mind" }],
+      protectedBlocks: [{ category: "personal" }, { category: "personal" }],
     });
 
-    expect(snapshot.byCategory.professional.weight).toBe(6);
-    expect(snapshot.byCategory.professional.taskCount).toBe(2);
-    expect(snapshot.byCategory.relationships.weight).toBe(1);
-    expect(snapshot.byCategory.body_mind.weight).toBe(2);
-    expect(snapshot.byCategory.body_mind.protectedBlockCount).toBe(2);
-    expect(snapshot.emptyCategories).toContain("adulting");
-    expect(snapshot.emptyCategories).toContain("personal_projects");
+    expect(snapshot.byCategory.business.weight).toBe(6);
+    expect(snapshot.byCategory.business.taskCount).toBe(2);
+    expect(snapshot.byCategory.personal.weight).toBe(3);
+    expect(snapshot.byCategory.personal.taskCount).toBe(1);
+    expect(snapshot.byCategory.personal.protectedBlockCount).toBe(2);
+    expect(snapshot.emptyCategories).toHaveLength(0);
   });
 
   it("ignores unresolved categories", () => {
     const snapshot = computeWeekCategoryLoad({
-      tasks: [{ category: "adulting", categoryUnresolved: true }],
+      tasks: [{ category: "personal", categoryUnresolved: true }],
       protectedBlocks: [],
     });
 

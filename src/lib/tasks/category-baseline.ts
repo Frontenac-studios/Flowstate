@@ -24,11 +24,8 @@ export type CategoryBaselineEvaluation = {
 
 export function emptyCategoryAttention(): CategoryAttention {
   return {
-    professional: 0,
-    personal_projects: 0,
-    relationships: 0,
-    body_mind: 0,
-    adulting: 0,
+    business: 0,
+    personal: 0,
   };
 }
 

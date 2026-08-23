@@ -6,13 +6,48 @@ CREATE TABLE IF NOT EXISTS projects (
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
-  category TEXT NOT NULL DEFAULT 'adulting',
+  category TEXT NOT NULL DEFAULT 'personal',
+  client_id TEXT,
+  state TEXT NOT NULL DEFAULT 'active',
+  is_maintenance INTEGER NOT NULL DEFAULT 0,
   archived_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS projects_user_id_slug_idx ON projects (user_id, slug);
 CREATE INDEX IF NOT EXISTS projects_user_id_updated_at_idx ON projects (user_id, updated_at);
+-- The projects_user_id_client_id_idx index is created AFTER the ADDED_COLUMNS loop
+-- (see runSqliteMigrations): on a pre-existing local DB, client_id is added there,
+-- so an index referencing it here would fail with "no such column: client_id".
+
+CREATE TABLE IF NOT EXISTS clients (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'active',
+  notes TEXT,
+  archived_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS clients_user_id_status_idx ON clients (user_id, status);
+CREATE INDEX IF NOT EXISTS clients_user_id_updated_at_idx ON clients (user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS rates (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  amount_cents INTEGER NOT NULL,
+  effective_from INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS rates_user_id_client_id_idx ON rates (user_id, client_id);
+CREATE INDEX IF NOT EXISTS rates_user_id_project_id_idx ON rates (user_id, project_id);
 
 CREATE TABLE IF NOT EXISTS project_templates (
   id TEXT PRIMARY KEY NOT NULL,
@@ -536,6 +571,9 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   { table: "protected_blocks", column: "source", definition: "TEXT" },
   { table: "projects", column: "archived_at", definition: "INTEGER" },
+  { table: "projects", column: "client_id", definition: "TEXT" },
+  { table: "projects", column: "state", definition: "TEXT NOT NULL DEFAULT 'active'" },
+  { table: "projects", column: "is_maintenance", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
   { table: "goal_milestones", column: "target_date", definition: "TEXT" },
   { table: "goal_milestones", column: "completed_at", definition: "INTEGER" },
@@ -555,4 +593,11 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
       sqlite.exec(alterSql);
     }
   }
+
+  // Indexes on columns that ADDED_COLUMNS may have only just created. These must
+  // run after the loop, not inside MIGRATION_SQL, or a pre-existing local table
+  // (created before the column) makes the index reference a missing column.
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS projects_user_id_client_id_idx ON projects (user_id, client_id);"
+  );
 }

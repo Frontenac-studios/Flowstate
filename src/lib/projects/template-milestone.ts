@@ -7,12 +7,12 @@ export function hasTemplateFeatures(projectCount: number): boolean {
   return projectCount >= TEMPLATE_FEATURES_MIN_PROJECTS;
 }
 
-const CROSS_CATEGORY_PAIR = new Set<ProjectCategory>(["professional", "personal_projects"]);
+const CROSS_CATEGORY_PAIR = new Set<ProjectCategory>(["business", "personal"]);
 
 /**
  * Whether a past project may be suggested as "like this past one" when creating
  * in `targetCategory`. Same category always allowed; cross-category only
- * professional ↔ personal_projects.
+ * business ↔ personal.
  */
 export function isSimilarCategoryAllowed(
   targetCategory: ProjectCategory,
