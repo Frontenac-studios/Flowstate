@@ -93,6 +93,22 @@ export async function syncRateRow(rowId: string, op: SyncOp, payload: unknown): 
   await recordSyncMutation({ table: "rates", rowId, op, payload });
 }
 
+export async function syncBusinessExpenseRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "business_expenses", rowId, op, payload });
+}
+
+export async function syncMoneySettingsRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "money_settings", rowId, op, payload });
+}
+
 export async function syncProjectTemplateRow(
   rowId: string,
   op: SyncOp,

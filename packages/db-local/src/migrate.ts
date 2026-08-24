@@ -49,6 +49,36 @@ CREATE TABLE IF NOT EXISTS rates (
 CREATE INDEX IF NOT EXISTS rates_user_id_client_id_idx ON rates (user_id, client_id);
 CREATE INDEX IF NOT EXISTS rates_user_id_project_id_idx ON rates (user_id, project_id);
 
+-- Financial-class Draw-panel pipe (W1.5). Owner-only; mirrored from
+-- src/db/schema/{business-expenses,money-settings}.ts.
+CREATE TABLE IF NOT EXISTS business_expenses (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  description TEXT,
+  category TEXT,
+  incurred_on INTEGER NOT NULL,
+  source TEXT NOT NULL DEFAULT 'manual',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS business_expenses_user_id_incurred_on_idx
+  ON business_expenses (user_id, incurred_on);
+
+CREATE TABLE IF NOT EXISTS money_settings (
+  user_id TEXT PRIMARY KEY NOT NULL,
+  org_id TEXT NOT NULL,
+  tax_reserve_percent INTEGER,
+  cost_of_living_cents INTEGER,
+  personal_savings_cents INTEGER,
+  minimum_draw_cents INTEGER,
+  bank_balance_cents INTEGER,
+  bank_balance_reconciled_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS project_templates (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

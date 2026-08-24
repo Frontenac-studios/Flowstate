@@ -2,8 +2,10 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { createSqliteDb, type SqliteDb } from "../index";
+import { businessExpenses } from "./business-expenses";
 import { careEvents } from "./care-events";
 import { clients } from "./clients";
+import { moneySettings } from "./money-settings";
 import { phases } from "./phases";
 import { projects } from "./projects";
 import { rates } from "./rates";
@@ -117,6 +119,41 @@ describe("sqlite schema insert-time defaults", () => {
     expect(row!.amountCents).toBe(15000);
     expect(row!.projectId).toBeNull();
     expect(row!.effectiveFrom).toBeInstanceOf(Date);
+  });
+
+  it("creates a business expense without explicit id/source/timestamps", async () => {
+    const [row] = await db
+      .insert(businessExpenses)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        amountCents: 4200,
+        incurredOn: new Date("2026-08-01"),
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.source).toBe("manual");
+    expect(row!.category).toBeNull();
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a money_settings row (user-keyed) without explicit timestamps", async () => {
+    const [row] = await db
+      .insert(moneySettings)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(row!.taxReservePercent).toBeNull();
+    expect(row!.costOfLivingCents).toBeNull();
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
   });
 
   it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {

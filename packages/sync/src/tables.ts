@@ -1,6 +1,8 @@
 export const SYNC_TABLES = [
   "abyss_items",
+  "business_expenses",
   "clients",
+  "money_settings",
   "rates",
   "projects",
   "project_templates",
