@@ -3,7 +3,7 @@ import "server-only";
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, ne, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { phases, projects, protectedBlocks, taskTimeEntries, tasks } from "@/db/tables";
+import { phases, projects, protectedBlocks, timeEntries, tasks } from "@/db/tables";
 import {
   addDays,
   datesInIsoWeek,
@@ -255,19 +255,19 @@ export async function fetchPlanContextSnapshot(
     const focusTask = incompleteRows.find((t) => t.id === focusTaskId);
     const timeRows = await db
       .select({
-        startedAt: taskTimeEntries.startedAt,
-        endedAt: taskTimeEntries.endedAt,
-        reason: taskTimeEntries.reason,
+        startedAt: timeEntries.startedAt,
+        endedAt: timeEntries.endedAt,
+        reason: timeEntries.reason,
       })
-      .from(taskTimeEntries)
+      .from(timeEntries)
       .where(
         and(
-          eq(taskTimeEntries.userId, userId),
-          eq(taskTimeEntries.taskId, focusTaskId),
-          isNotNull(taskTimeEntries.endedAt)
+          eq(timeEntries.userId, userId),
+          eq(timeEntries.taskId, focusTaskId),
+          isNotNull(timeEntries.endedAt)
         )
       )
-      .orderBy(desc(taskTimeEntries.startedAt))
+      .orderBy(desc(timeEntries.startedAt))
       .limit(5);
 
     focusSection = `\nFocus task: ${focusTask?.title ?? "(unknown)"}`;

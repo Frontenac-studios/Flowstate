@@ -9,7 +9,7 @@ import {
   projectTemplates,
   projects,
   tasks,
-  taskTimeEntries,
+  timeEntries,
   weekDayPriorities,
 } from "@/db/tables";
 import {
@@ -111,14 +111,14 @@ export const projectsRouter = createTRPCRouter({
         .where(eq(weekDayPriorities.userId, ctx.userId)),
       db
         .select({
-          taskId: taskTimeEntries.taskId,
-          startedAt: taskTimeEntries.startedAt,
-          endedAt: taskTimeEntries.endedAt,
+          taskId: timeEntries.taskId,
+          startedAt: timeEntries.startedAt,
+          endedAt: timeEntries.endedAt,
           projectId: tasks.projectId,
         })
-        .from(taskTimeEntries)
-        .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
-        .where(and(eq(taskTimeEntries.userId, ctx.userId), isNotNull(tasks.projectId))),
+        .from(timeEntries)
+        .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
+        .where(and(eq(timeEntries.userId, ctx.userId), isNotNull(tasks.projectId))),
     ]);
 
     const pinnedTaskIds = new Set(pinnedRows.map((row) => row.taskId));
@@ -261,13 +261,13 @@ export const projectsRouter = createTRPCRouter({
           .where(and(eq(phases.userId, ctx.userId), eq(phases.projectId, input.projectId))),
         db
           .select({
-            taskId: taskTimeEntries.taskId,
-            startedAt: taskTimeEntries.startedAt,
-            endedAt: taskTimeEntries.endedAt,
+            taskId: timeEntries.taskId,
+            startedAt: timeEntries.startedAt,
+            endedAt: timeEntries.endedAt,
           })
-          .from(taskTimeEntries)
-          .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
-          .where(and(eq(taskTimeEntries.userId, ctx.userId), eq(tasks.projectId, input.projectId))),
+          .from(timeEntries)
+          .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
+          .where(and(eq(timeEntries.userId, ctx.userId), eq(tasks.projectId, input.projectId))),
       ]);
 
       const byTaskSeconds = aggregateSecondsByTask(timeRows);

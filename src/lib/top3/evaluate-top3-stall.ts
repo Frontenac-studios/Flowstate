@@ -17,7 +17,9 @@ export type Top3TaskInput = {
 };
 
 export type TimeEntryInput = {
-  taskId: string;
+  // Nullable since W2: a project-only entry never matches a Top-3 task id, so it
+  // simply doesn't count as focus on any tracked task.
+  taskId: string | null;
   startedAt: Date;
 };
 

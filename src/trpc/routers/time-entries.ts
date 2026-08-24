@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { projects, taskTimeEntries, tasks } from "@/db/tables";
+import { projects, timeEntries, tasks } from "@/db/tables";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 import { startedOnLocalDay } from "@/lib/dates/local-time";
@@ -22,16 +22,29 @@ const manualWindow = z
     message: "Entry can't be longer than 24 hours.",
   });
 
-/** Confirm the task exists and belongs to the caller (RLS belt-and-braces). */
-async function assertOwnsTask(taskId: string, userId: string) {
-  const [task] = await db
-    .select({ id: tasks.id })
+/**
+ * Resolve the project a task belongs to (required — an entry is project-scoped as
+ * of W2) and whether its time is billable by default (the project has a client).
+ * Until the project-first timer lands (W2b), a timer is still started from a task,
+ * so a task with no project is a clear error rather than a silent null.
+ */
+async function resolveEntryProject(taskId: string, userId: string) {
+  const [row] = await db
+    .select({ projectId: tasks.projectId, clientId: projects.clientId })
     .from(tasks)
+    .leftJoin(projects, eq(tasks.projectId, projects.id))
     .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
     .limit(1);
-  if (!task) {
+  if (!row) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
   }
+  if (!row.projectId) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Start a timer from a task that belongs to a project.",
+    });
+  }
+  return { projectId: row.projectId, billable: row.clientId != null };
 }
 
 export const timeEntriesRouter = createTRPCRouter({
@@ -39,8 +52,9 @@ export const timeEntriesRouter = createTRPCRouter({
     .input(z.object({ taskId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const [task] = await db
-        .select()
+        .select({ projectId: tasks.projectId, clientId: projects.clientId })
         .from(tasks)
+        .leftJoin(projects, eq(tasks.projectId, projects.id))
         .where(
           and(eq(tasks.id, input.taskId), eq(tasks.userId, ctx.userId), isNull(tasks.completedAt))
         )
@@ -52,18 +66,26 @@ export const timeEntriesRouter = createTRPCRouter({
           message: "Task not found or already completed.",
         });
       }
+      if (!task.projectId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Start a timer from a task that belongs to a project.",
+        });
+      }
 
       const startedAt = new Date();
-      const reason = "start";
 
       const [row] = await db
-        .insert(taskTimeEntries)
+        .insert(timeEntries)
         .values({
           userId: ctx.userId,
+          projectId: task.projectId,
           taskId: input.taskId,
           startedAt,
           endedAt: null,
-          reason,
+          reason: "start",
+          source: "timer",
+          billable: task.clientId != null,
         })
         .returning();
 
@@ -91,13 +113,13 @@ export const timeEntriesRouter = createTRPCRouter({
       const endedAt = new Date();
 
       const [row] = await db
-        .update(taskTimeEntries)
+        .update(timeEntries)
         .set({ endedAt, reason: input.reason })
         .where(
           and(
-            eq(taskTimeEntries.id, input.entryId),
-            eq(taskTimeEntries.userId, ctx.userId),
-            isNull(taskTimeEntries.endedAt)
+            eq(timeEntries.id, input.entryId),
+            eq(timeEntries.userId, ctx.userId),
+            isNull(timeEntries.endedAt)
           )
         )
         .returning();
@@ -118,20 +140,20 @@ export const timeEntriesRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const rows = await db
         .select({
-          id: taskTimeEntries.id,
-          startedAt: taskTimeEntries.startedAt,
-          endedAt: taskTimeEntries.endedAt,
-          reason: taskTimeEntries.reason,
+          id: timeEntries.id,
+          startedAt: timeEntries.startedAt,
+          endedAt: timeEntries.endedAt,
+          reason: timeEntries.reason,
         })
-        .from(taskTimeEntries)
+        .from(timeEntries)
         .where(
           and(
-            eq(taskTimeEntries.userId, ctx.userId),
-            eq(taskTimeEntries.taskId, input.taskId),
-            isNotNull(taskTimeEntries.endedAt)
+            eq(timeEntries.userId, ctx.userId),
+            eq(timeEntries.taskId, input.taskId),
+            isNotNull(timeEntries.endedAt)
           )
         )
-        .orderBy(desc(taskTimeEntries.startedAt))
+        .orderBy(desc(timeEntries.startedAt))
         .limit(50);
 
       return rows;
@@ -147,11 +169,11 @@ export const timeEntriesRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const rows = await db
         .select({
-          taskId: taskTimeEntries.taskId,
-          startedAt: taskTimeEntries.startedAt,
+          taskId: timeEntries.taskId,
+          startedAt: timeEntries.startedAt,
         })
-        .from(taskTimeEntries)
-        .where(eq(taskTimeEntries.userId, ctx.userId));
+        .from(timeEntries)
+        .where(eq(timeEntries.userId, ctx.userId));
 
       return rows
         .filter((row) => startedOnLocalDay(row.startedAt, input.localDate, input.tzOffsetMinutes))
@@ -161,11 +183,11 @@ export const timeEntriesRouter = createTRPCRouter({
   listAllStarted: protectedProcedure.query(async ({ ctx }) => {
     const rows = await db
       .select({
-        taskId: taskTimeEntries.taskId,
-        startedAt: taskTimeEntries.startedAt,
+        taskId: timeEntries.taskId,
+        startedAt: timeEntries.startedAt,
       })
-      .from(taskTimeEntries)
-      .where(eq(taskTimeEntries.userId, ctx.userId));
+      .from(timeEntries)
+      .where(eq(timeEntries.userId, ctx.userId));
 
     return rows;
   }),
@@ -174,16 +196,19 @@ export const timeEntriesRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({ taskId: z.string().uuid() }).and(manualWindow))
     .mutation(async ({ ctx, input }) => {
-      await assertOwnsTask(input.taskId, ctx.userId);
+      const { projectId, billable } = await resolveEntryProject(input.taskId, ctx.userId);
 
       const [row] = await db
-        .insert(taskTimeEntries)
+        .insert(timeEntries)
         .values({
           userId: ctx.userId,
+          projectId,
           taskId: input.taskId,
           startedAt: input.startedAt,
           endedAt: input.endedAt,
           reason: "manual",
+          source: "manual",
+          billable,
         })
         .returning();
 
@@ -202,13 +227,13 @@ export const timeEntriesRouter = createTRPCRouter({
     .input(z.object({ entryId: z.string().uuid() }).and(manualWindow))
     .mutation(async ({ ctx, input }) => {
       const [row] = await db
-        .update(taskTimeEntries)
+        .update(timeEntries)
         .set({ startedAt: input.startedAt, endedAt: input.endedAt, updatedAt: new Date() })
         .where(
           and(
-            eq(taskTimeEntries.id, input.entryId),
-            eq(taskTimeEntries.userId, ctx.userId),
-            isNotNull(taskTimeEntries.endedAt)
+            eq(timeEntries.id, input.entryId),
+            eq(timeEntries.userId, ctx.userId),
+            isNotNull(timeEntries.endedAt)
           )
         )
         .returning();
@@ -235,20 +260,20 @@ export const timeEntriesRouter = createTRPCRouter({
 
       const rows = await db
         .select({
-          startedAt: taskTimeEntries.startedAt,
-          endedAt: taskTimeEntries.endedAt,
+          startedAt: timeEntries.startedAt,
+          endedAt: timeEntries.endedAt,
           category: tasks.category,
           projectId: tasks.projectId,
           projectName: projects.name,
         })
-        .from(taskTimeEntries)
-        .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+        .from(timeEntries)
+        .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
         .leftJoin(projects, eq(tasks.projectId, projects.id))
         .where(
           and(
-            eq(taskTimeEntries.userId, ctx.userId),
-            gte(taskTimeEntries.startedAt, start),
-            lt(taskTimeEntries.startedAt, end)
+            eq(timeEntries.userId, ctx.userId),
+            gte(timeEntries.startedAt, start),
+            lt(timeEntries.startedAt, end)
           )
         );
 
@@ -265,9 +290,9 @@ export const timeEntriesRouter = createTRPCRouter({
     .input(z.object({ entryId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const [row] = await db
-        .delete(taskTimeEntries)
-        .where(and(eq(taskTimeEntries.id, input.entryId), eq(taskTimeEntries.userId, ctx.userId)))
-        .returning({ id: taskTimeEntries.id });
+        .delete(timeEntries)
+        .where(and(eq(timeEntries.id, input.entryId), eq(timeEntries.userId, ctx.userId)))
+        .returning({ id: timeEntries.id });
 
       if (!row) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Time entry not found." });

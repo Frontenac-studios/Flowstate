@@ -2,14 +2,7 @@ import { and, desc, eq, gte, isNotNull, lt } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import {
-  phases,
-  projects,
-  taskTimeEntries,
-  tasks,
-  weekDayPriorities,
-  weekReviews,
-} from "@/db/tables";
+import { phases, projects, timeEntries, tasks, weekDayPriorities, weekReviews } from "@/db/tables";
 import { aggregateProjectPhaseProgress } from "@/lib/projects/aggregate-project-phase-progress";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { buildBalanceDigestRows, templateBalanceDigest } from "@/lib/eow/balance-digest";
@@ -33,20 +26,20 @@ async function fetchEowPayload(userId: string, tzOffsetMinutes: number) {
     await Promise.all([
       db
         .select({
-          startedAt: taskTimeEntries.startedAt,
-          endedAt: taskTimeEntries.endedAt,
+          startedAt: timeEntries.startedAt,
+          endedAt: timeEntries.endedAt,
           category: tasks.category,
           projectId: tasks.projectId,
           projectName: projects.name,
         })
-        .from(taskTimeEntries)
-        .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+        .from(timeEntries)
+        .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
         .leftJoin(projects, eq(tasks.projectId, projects.id))
         .where(
           and(
-            eq(taskTimeEntries.userId, userId),
-            gte(taskTimeEntries.startedAt, start),
-            lt(taskTimeEntries.startedAt, end)
+            eq(timeEntries.userId, userId),
+            gte(timeEntries.startedAt, start),
+            lt(timeEntries.startedAt, end)
           )
         ),
       db

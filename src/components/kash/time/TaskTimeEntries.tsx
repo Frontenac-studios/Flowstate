@@ -142,7 +142,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
                   {clockLabel(entry.startedAt)}
                   {entry.endedAt ? `–${clockLabel(entry.endedAt)}` : ""}
                   <span className="text-ink-muted/70 ml-1.5">
-                    {REASON_LABEL[entry.reason] ?? entry.reason}
+                    {entry.reason ? (REASON_LABEL[entry.reason] ?? entry.reason) : ""}
                   </span>
                 </span>
                 <span className="tabular-nums text-ink">{formatDuration(seconds)}</span>

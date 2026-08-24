@@ -9,6 +9,8 @@ import { moneySettings } from "./money-settings";
 import { phases } from "./phases";
 import { projects } from "./projects";
 import { rates } from "./rates";
+import { timeEntries } from "./time-entries";
+import { timeTags } from "./time-tags";
 
 // Regression: the SQLite schema must mirror the Postgres `defaultRandom()` /
 // `defaultNow()` defaults so that inserts which omit `id`/`created_at`/`updated_at`
@@ -154,6 +156,42 @@ describe("sqlite schema insert-time defaults", () => {
     expect(row!.costOfLivingCents).toBeNull();
     expect(row!.createdAt).toBeInstanceOf(Date);
     expect(row!.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a time entry without explicit id/billable/source/timestamps", async () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    const [project] = await db
+      .insert(projects)
+      .values({ userId, name: "P", slug: "p", category: "business" })
+      .returning();
+
+    const [row] = await db
+      .insert(timeEntries)
+      .values({ userId, projectId: project!.id, startedAt: new Date() })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.taskId).toBeNull();
+    expect(row!.billable).toBe(false);
+    expect(row!.source).toBe("manual");
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a time tag without an explicit id or timestamps", async () => {
+    const [row] = await db
+      .insert(timeTags)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        name: "Development",
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.createdAt).toBeInstanceOf(Date);
   });
 
   it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {

@@ -21,8 +21,9 @@ import {
   taskBulkImports,
   taskOccurrenceOverrides,
   taskRecurrence,
-  taskTimeEntries,
   tasks,
+  timeEntries,
+  timeTags,
 } from "@kash/db-local/schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { and, eq } from "drizzle-orm";
@@ -343,20 +344,28 @@ async function upsertRow(
       else await db.insert(categorySettings).values(mapped as never);
       return true;
     }
-    case "task_time_entries": {
+    case "time_entries": {
       const id = mapped.id as string;
-      const [existing] = await db
-        .select()
-        .from(taskTimeEntries)
-        .where(eq(taskTimeEntries.id, id))
-        .limit(1);
+      const [existing] = await db.select().from(timeEntries).where(eq(timeEntries.id, id)).limit(1);
       if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
       if (existing)
         await db
-          .update(taskTimeEntries)
+          .update(timeEntries)
           .set(mapped as never)
-          .where(eq(taskTimeEntries.id, id));
-      else await db.insert(taskTimeEntries).values(mapped as never);
+          .where(eq(timeEntries.id, id));
+      else await db.insert(timeEntries).values(mapped as never);
+      return true;
+    }
+    case "time_tags": {
+      const id = mapped.id as string;
+      const [existing] = await db.select().from(timeTags).where(eq(timeTags.id, id)).limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(timeTags)
+          .set(mapped as never)
+          .where(eq(timeTags.id, id));
+      else await db.insert(timeTags).values(mapped as never);
       return true;
     }
     case "chat_messages": {

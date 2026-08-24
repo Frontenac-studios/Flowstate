@@ -31,7 +31,8 @@ import { taskRecurrence as pgTaskRecurrence } from "./schema/task-recurrence";
 import { tasks as pgTasks } from "./schema/tasks";
 import { weekDayPriorities as pgWeekDayPriorities } from "./schema/week-day-priorities";
 import { weekReviews as pgWeekReviews } from "./schema/week-reviews";
-import { taskTimeEntries as pgTaskTimeEntries } from "./schema/task-time-entries";
+import { timeEntries as pgTimeEntries } from "./schema/time-entries";
+import { timeTags as pgTimeTags } from "./schema/time-tags";
 import { orgMemberships as pgOrgMemberships } from "./schema/org-memberships";
 import { orgs as pgOrgs } from "./schema/orgs";
 
@@ -53,9 +54,10 @@ export const taskBulkImports = (
 export const taskBulkImportItems = (
   isSqliteMode() ? sqliteSchema.taskBulkImportItems : pgTaskBulkImportItems
 ) as typeof pgTaskBulkImportItems;
-export const taskTimeEntries = (
-  isSqliteMode() ? sqliteSchema.taskTimeEntries : pgTaskTimeEntries
-) as typeof pgTaskTimeEntries;
+export const timeEntries = (
+  isSqliteMode() ? sqliteSchema.timeEntries : pgTimeEntries
+) as typeof pgTimeEntries;
+export const timeTags = (isSqliteMode() ? sqliteSchema.timeTags : pgTimeTags) as typeof pgTimeTags;
 export const taskRecurrence = (
   isSqliteMode() ? sqliteSchema.taskRecurrence : pgTaskRecurrence
 ) as typeof pgTaskRecurrence;

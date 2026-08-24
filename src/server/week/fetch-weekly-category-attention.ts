@@ -3,7 +3,7 @@ import "server-only";
 import { and, eq, gte, isNotNull, lt } from "drizzle-orm";
 
 import { db } from "@/db";
-import { taskTimeEntries, tasks } from "@/db/tables";
+import { timeEntries, tasks } from "@/db/tables";
 import {
   addDays,
   parseISODateString,
@@ -68,17 +68,17 @@ export async function fetchWeeklyCategoryAttention(
       ),
     db
       .select({
-        startedAt: taskTimeEntries.startedAt,
-        endedAt: taskTimeEntries.endedAt,
+        startedAt: timeEntries.startedAt,
+        endedAt: timeEntries.endedAt,
         category: tasks.category,
       })
-      .from(taskTimeEntries)
-      .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+      .from(timeEntries)
+      .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
       .where(
         and(
-          eq(taskTimeEntries.userId, userId),
-          gte(taskTimeEntries.startedAt, parseISODateString(earliest)),
-          lt(taskTimeEntries.startedAt, rangeEnd)
+          eq(timeEntries.userId, userId),
+          gte(timeEntries.startedAt, parseISODateString(earliest)),
+          lt(timeEntries.startedAt, rangeEnd)
         )
       ),
   ]);

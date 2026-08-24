@@ -330,6 +330,13 @@
       "when": 1787603356775,
       "tag": "0046_sweet_wiccan",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1787612670481,
+      "tag": "0047_first_amphibian",
+      "breakpoints": true
     }
   ]
 }

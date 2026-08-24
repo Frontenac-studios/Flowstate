@@ -2,7 +2,7 @@ import { and, asc, eq, gte, isNotNull, lt } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { dayReviews, taskTimeEntries, tasks } from "@/db/tables";
+import { dayReviews, timeEntries, tasks } from "@/db/tables";
 import { aggregateFocusToday } from "@/lib/eod/aggregate-focus-today";
 import { buildTop3Status } from "@/lib/eod/build-top3-status";
 import { countCompletionsToday } from "@/lib/eod/count-completions-today";
@@ -41,16 +41,16 @@ async function fetchEodPayload(userId: string, localDate: string, tzOffsetMinute
       ),
     db
       .select({
-        taskId: taskTimeEntries.taskId,
-        startedAt: taskTimeEntries.startedAt,
-        endedAt: taskTimeEntries.endedAt,
+        taskId: timeEntries.taskId,
+        startedAt: timeEntries.startedAt,
+        endedAt: timeEntries.endedAt,
       })
-      .from(taskTimeEntries)
+      .from(timeEntries)
       .where(
         and(
-          eq(taskTimeEntries.userId, userId),
-          gte(taskTimeEntries.startedAt, start),
-          lt(taskTimeEntries.startedAt, end)
+          eq(timeEntries.userId, userId),
+          gte(timeEntries.startedAt, start),
+          lt(timeEntries.startedAt, end)
         )
       ),
     db

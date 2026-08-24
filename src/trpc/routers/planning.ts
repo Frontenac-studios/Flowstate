@@ -11,7 +11,7 @@ import {
   projects,
   protectedBlocks,
   reservedDays,
-  taskTimeEntries,
+  timeEntries,
   tasks,
 } from "@/db/tables";
 import normalizeGoalTitle from "@/lib/planning/goal-title";
@@ -64,17 +64,17 @@ async function fetchActivitySourceRows(userId: string, start: Date, end: Date) {
   const [timeRows, completedRows] = await Promise.all([
     db
       .select({
-        startedAt: taskTimeEntries.startedAt,
-        endedAt: taskTimeEntries.endedAt,
+        startedAt: timeEntries.startedAt,
+        endedAt: timeEntries.endedAt,
         category: tasks.category,
       })
-      .from(taskTimeEntries)
-      .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
+      .from(timeEntries)
+      .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
       .where(
         and(
-          eq(taskTimeEntries.userId, userId),
-          gte(taskTimeEntries.startedAt, start),
-          lt(taskTimeEntries.startedAt, end)
+          eq(timeEntries.userId, userId),
+          gte(timeEntries.startedAt, start),
+          lt(timeEntries.startedAt, end)
         )
       ),
     db

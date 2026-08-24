@@ -1,6 +1,6 @@
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE task_time_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE time_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE day_reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
@@ -24,16 +24,20 @@ CREATE POLICY "tasks_insert_own" ON tasks FOR INSERT WITH CHECK (
 CREATE POLICY "tasks_update_own" ON tasks FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "tasks_delete_own" ON tasks FOR DELETE USING (user_id = auth.uid());
 
-CREATE POLICY "task_time_entries_select_own" ON task_time_entries FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "task_time_entries_insert_own" ON task_time_entries FOR INSERT WITH CHECK (
+-- NOTE (W2a): renamed from task_time_entries. These declarations are superseded on
+-- both fresh and hosted DBs by 20260824130000_time_entries_rename_and_tags_rls.sql,
+-- which re-creates them with the correct project-scoped, task-optional INSERT check.
+-- They stay here only so a fresh bootstrap has RLS on the table before that file runs.
+CREATE POLICY "time_entries_select_own" ON time_entries FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "time_entries_insert_own" ON time_entries FOR INSERT WITH CHECK (
   user_id = auth.uid()
   AND EXISTS (
-    SELECT 1 FROM tasks t
-    WHERE t.id = task_id AND t.user_id = auth.uid()
+    SELECT 1 FROM projects p
+    WHERE p.id = project_id AND p.user_id = auth.uid()
   )
 );
-CREATE POLICY "task_time_entries_update_own" ON task_time_entries FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "task_time_entries_delete_own" ON task_time_entries FOR DELETE USING (user_id = auth.uid());
+CREATE POLICY "time_entries_update_own" ON time_entries FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "time_entries_delete_own" ON time_entries FOR DELETE USING (user_id = auth.uid());
 
 CREATE POLICY "chat_messages_select_own" ON chat_messages FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "chat_messages_insert_own" ON chat_messages FOR INSERT WITH CHECK (

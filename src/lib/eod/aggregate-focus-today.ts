@@ -21,6 +21,7 @@ export function aggregateFocusToday(params: {
   const secondsByTask = new Map<string, number>();
 
   for (const entry of entries) {
+    if (entry.taskId === null) continue; // project-only time has no task title to chart
     if (!startedOnLocalDay(entry.startedAt, localDate, tzOffsetMinutes)) continue;
 
     const end = entry.endedAt ?? now;
