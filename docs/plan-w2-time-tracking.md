@@ -34,6 +34,10 @@ detection — ship in v1, or move to v1.1?
 The phases below isolate the two cuttable slices (**W2c-idle**, **W2f-menubar**) so the
 decision can be taken now or deferred until the in-app timer has been used.
 
+**DECIDED 2026-08-24: split.** Menu-bar timer (W2f) and idle detection (W2c-idle) move to
+v1.1; the timer-running-long notification (W2d) is kept even in the split. W2b (timer core)
+is being built next off the W2a branch.
+
 **Recommendation: build the split, but keep the timer-running-long notification** (it is cheap
 and load-bearing — the forgot-to-stop error silently corrupts everything downstream). Rationale:
 you cannot judge whether a menu-bar timer is needed until the in-app timer has run for a week

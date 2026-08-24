@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyClockToDate,
   formatDuration,
+  formatElapsedClock,
   parseClockTime,
   parseDurationToSeconds,
 } from "./duration";
@@ -34,6 +35,26 @@ describe("parseDurationToSeconds", () => {
     expect(parseDurationToSeconds("0:00")).toBeNull();
     expect(parseDurationToSeconds("abc")).toBeNull();
     expect(parseDurationToSeconds("1:99")).toBeNull();
+  });
+});
+
+describe("formatElapsedClock", () => {
+  it("shows mm:ss under an hour", () => {
+    expect(formatElapsedClock(0)).toBe("00:00");
+    expect(formatElapsedClock(5)).toBe("00:05");
+    expect(formatElapsedClock(65)).toBe("01:05");
+    expect(formatElapsedClock(59 * 60 + 59)).toBe("59:59");
+  });
+
+  it("shows h:mm:ss at an hour or more", () => {
+    expect(formatElapsedClock(3600)).toBe("1:00:00");
+    expect(formatElapsedClock(3600 + 5 * 60 + 9)).toBe("1:05:09");
+    expect(formatElapsedClock(10 * 3600 + 2 * 60 + 3)).toBe("10:02:03");
+  });
+
+  it("floors fractional seconds and clamps negatives to zero", () => {
+    expect(formatElapsedClock(9.9)).toBe("00:09");
+    expect(formatElapsedClock(-5)).toBe("00:00");
   });
 });
 
