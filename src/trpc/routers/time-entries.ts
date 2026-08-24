@@ -13,6 +13,11 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 /** Manual entries can't exceed a day — guards against fat-fingered windows. */
 const MAX_ENTRY_SECONDS = 24 * 60 * 60;
 
+/** Whole seconds between two instants, floored at zero. Elapsed is always derived. */
+function elapsedSecondsSince(startedAt: Date, now: Date): number {
+  return Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000));
+}
+
 const manualWindow = z
   .object({ startedAt: z.coerce.date(), endedAt: z.coerce.date() })
   .refine((w) => w.endedAt.getTime() > w.startedAt.getTime(), {
@@ -48,44 +53,69 @@ async function resolveEntryProject(taskId: string, userId: string) {
 }
 
 export const timeEntriesRouter = createTRPCRouter({
+  /**
+   * Start a timer. Project-first: a project is enough (a client call is not a task);
+   * a task is optional and, when given, resolves the project. Enforces the
+   * single-timer invariant — any already-running entry is stopped first and named
+   * in the response, so the UI can say what it interrupted.
+   */
   start: protectedProcedure
-    .input(z.object({ taskId: z.string().uuid() }))
+    .input(
+      z
+        .object({
+          projectId: z.string().uuid().optional(),
+          taskId: z.string().uuid().optional(),
+          description: z.string().trim().max(500).optional(),
+        })
+        .refine((v) => v.projectId != null || v.taskId != null, {
+          message: "A project or a task is required to start a timer.",
+        })
+    )
     .mutation(async ({ ctx, input }) => {
-      const [task] = await db
-        .select({ projectId: tasks.projectId, clientId: projects.clientId })
-        .from(tasks)
-        .leftJoin(projects, eq(tasks.projectId, projects.id))
-        .where(
-          and(eq(tasks.id, input.taskId), eq(tasks.userId, ctx.userId), isNull(tasks.completedAt))
-        )
-        .limit(1);
-
-      if (!task) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Task not found or already completed.",
-        });
-      }
-      if (!task.projectId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Start a timer from a task that belongs to a project.",
-        });
+      // Resolve the project (required) and the billable default, either directly
+      // from projectId or through the task.
+      let projectId: string;
+      let billable: boolean;
+      if (input.projectId != null) {
+        const [project] = await db
+          .select({ id: projects.id, clientId: projects.clientId })
+          .from(projects)
+          .where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.userId)))
+          .limit(1);
+        if (!project) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+        }
+        projectId = project.id;
+        billable = project.clientId != null;
+      } else {
+        ({ projectId, billable } = await resolveEntryProject(input.taskId!, ctx.userId));
       }
 
-      const startedAt = new Date();
+      const now = new Date();
+
+      // Single-timer invariant: stop whatever is running before starting the next.
+      const [stopped] = await db
+        .update(timeEntries)
+        .set({ endedAt: now, updatedAt: now })
+        .where(and(eq(timeEntries.userId, ctx.userId), isNull(timeEntries.endedAt)))
+        .returning({
+          id: timeEntries.id,
+          projectId: timeEntries.projectId,
+          startedAt: timeEntries.startedAt,
+        });
 
       const [row] = await db
         .insert(timeEntries)
         .values({
           userId: ctx.userId,
-          projectId: task.projectId,
-          taskId: input.taskId,
-          startedAt,
+          projectId,
+          taskId: input.taskId ?? null,
+          description: input.description ?? null,
+          startedAt: now,
           endedAt: null,
-          reason: "start",
+          reason: null,
           source: "timer",
-          billable: task.clientId != null,
+          billable,
         })
         .returning();
 
@@ -96,7 +126,60 @@ export const timeEntriesRouter = createTRPCRouter({
         });
       }
 
-      return { entryId: row.id };
+      return {
+        entryId: row.id,
+        stopped: stopped
+          ? {
+              entryId: stopped.id,
+              projectId: stopped.projectId,
+              elapsedSeconds: elapsedSecondsSince(stopped.startedAt, now),
+            }
+          : null,
+      };
+    }),
+
+  /** The currently-running timer (endedAt null), with its project — or null. */
+  getRunning: protectedProcedure.query(async ({ ctx }) => {
+    const [row] = await db
+      .select({
+        entryId: timeEntries.id,
+        projectId: timeEntries.projectId,
+        projectName: projects.name,
+        taskId: timeEntries.taskId,
+        description: timeEntries.description,
+        startedAt: timeEntries.startedAt,
+        billable: timeEntries.billable,
+      })
+      .from(timeEntries)
+      .innerJoin(projects, eq(timeEntries.projectId, projects.id))
+      .where(and(eq(timeEntries.userId, ctx.userId), isNull(timeEntries.endedAt)))
+      .orderBy(desc(timeEntries.startedAt))
+      .limit(1);
+
+    return row ?? null;
+  }),
+
+  /** Stop the running timer (a specific entry, or whatever is running). */
+  stop: protectedProcedure
+    .input(z.object({ entryId: z.string().uuid().optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const running = isNull(timeEntries.endedAt);
+      const where = input?.entryId
+        ? and(eq(timeEntries.id, input.entryId), eq(timeEntries.userId, ctx.userId), running)
+        : and(eq(timeEntries.userId, ctx.userId), running);
+
+      const [row] = await db
+        .update(timeEntries)
+        .set({ endedAt: now, updatedAt: now })
+        .where(where)
+        .returning({ id: timeEntries.id, startedAt: timeEntries.startedAt });
+
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No running timer to stop." });
+      }
+
+      return { entryId: row.id, elapsedSeconds: elapsedSecondsSince(row.startedAt, now) };
     }),
 
   end: protectedProcedure

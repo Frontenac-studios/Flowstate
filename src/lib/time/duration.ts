@@ -59,6 +59,21 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * Format whole seconds as a live running clock: `mm:ss` under an hour, `h:mm:ss`
+ * at an hour or more. Used by the running-timer chip, where a ticking seconds
+ * field is expected (formatDuration is minute-resolution, for finished spans).
+ */
+export function formatElapsedClock(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  const mm = String(mins).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+/**
  * Parse a 24-hour clock string ("08:00", "8:00") into hours/minutes, or null.
  * Hours must be 0-23; minutes 0-59 (enforced by the pattern).
  */

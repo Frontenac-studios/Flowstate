@@ -45,6 +45,7 @@ import { triggerEphemeralCelebration } from "../mechanics/EphemeralCelebration";
 import { useToast } from "../ui/ToastProvider";
 import { usePlanMode } from "./PlanProvider";
 import { AddTaskPopover, type AddTaskPopoverHandle } from "./AddTaskPopover";
+import TodayTimer from "../time/TodayTimer";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
 import { BalanceBar } from "./BalanceBar";
@@ -790,7 +791,10 @@ export function DayPlanCanvas() {
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div className="flex flex-col gap-stack">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold text-ink">Today</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-ink">Today</h1>
+            <TodayTimer />
+          </div>
           <InPageSwitcher
             options={VIEW_OPTIONS}
             value={view}
