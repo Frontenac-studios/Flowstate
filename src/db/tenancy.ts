@@ -92,19 +92,26 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   task_bulk_imports: "org_shared",
   task_occurrence_overrides: "org_shared",
   task_recurrence: "org_shared",
-  task_time_entries: "org_shared",
   tasks: "org_shared",
+  // A tag is invoice structure — the shape of the work, not money. The billable
+  // flag and the amount live on `time_entries` (financial), never here.
+  time_tags: "org_shared",
 
   // ---- FINANCIAL: money a Member never reads. ----
-  // Rates, expenses, the draw settings (and later revenue, invoices) get their
-  // own tables here rather than a column on `projects` or `clients`. That is what
-  // keeps column-level security unnecessary — a Member's `SELECT *` cannot leak a
-  // rate that is not in the table they can read. `business_expenses` and
-  // `money_settings` are the Draw-panel pipe (discovery decision 2.7): laid now,
-  // read by the panel later.
+  // Rates, expenses, the draw settings, the time log (and later revenue, invoices)
+  // get their own tables here rather than a column on `projects` or `clients`. That
+  // is what keeps column-level security unnecessary — a Member's `SELECT *` cannot
+  // leak a rate that is not in the table they can read.
+  //
+  // `business_expenses` and `money_settings` are the Draw-panel pipe (discovery
+  // decision 2.7): laid now, read by the panel later. `time_entries` (renamed from
+  // task_time_entries in W2) joined when it gained `billable` and `invoiced_at`; the
+  // v1.1 split — org_shared work-facts + a financial billing sidecar — is deferred
+  // until members exist, so for now the whole row is owner-only (decision B).
   business_expenses: "financial",
   money_settings: "financial",
   rates: "financial",
+  time_entries: "financial",
 };
 
 /**

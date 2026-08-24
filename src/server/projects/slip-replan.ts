@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { syncPhaseRow } from "@/db/record-sync-mutation";
-import { phases, projects, tasks, taskTimeEntries } from "@/db/tables";
+import { phases, projects, tasks, timeEntries } from "@/db/tables";
 import { startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import {
   newProposalItemId,
@@ -135,13 +135,13 @@ export async function buildProjectSlipReplanProposal(
       .where(and(eq(tasks.projectId, projectId), eq(tasks.userId, userId))),
     db
       .select({
-        taskId: taskTimeEntries.taskId,
-        startedAt: taskTimeEntries.startedAt,
-        endedAt: taskTimeEntries.endedAt,
+        taskId: timeEntries.taskId,
+        startedAt: timeEntries.startedAt,
+        endedAt: timeEntries.endedAt,
       })
-      .from(taskTimeEntries)
-      .innerJoin(tasks, eq(taskTimeEntries.taskId, tasks.id))
-      .where(and(eq(tasks.projectId, projectId), eq(taskTimeEntries.userId, userId))),
+      .from(timeEntries)
+      .innerJoin(tasks, eq(timeEntries.taskId, tasks.id))
+      .where(and(eq(tasks.projectId, projectId), eq(timeEntries.userId, userId))),
   ]);
 
   if (!project || phaseRows.length === 0) return null;

@@ -4,7 +4,10 @@
  */
 
 export type TimeEntryRow = {
-  taskId: string;
+  // Nullable since W2: an entry may be project-only (no task). Such entries are not
+  // task-attributable, so they are skipped by aggregateSecondsByTask and counted
+  // toward the project by the caller instead.
+  taskId: string | null;
   startedAt: Date;
   endedAt: Date | null;
 };
@@ -35,6 +38,7 @@ export function aggregateSecondsByTask(
 ): Map<string, number> {
   const byTask = new Map<string, number>();
   for (const entry of entries) {
+    if (entry.taskId === null) continue; // project-only time is not task-attributable
     const seconds = entrySeconds(entry, now);
     if (seconds <= 0) continue;
     byTask.set(entry.taskId, (byTask.get(entry.taskId) ?? 0) + seconds);

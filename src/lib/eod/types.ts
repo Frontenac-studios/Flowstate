@@ -30,7 +30,9 @@ export type Top3SlotInput = {
 };
 
 export type TimeEntryFocusInput = {
-  taskId: string;
+  // Nullable since W2: project-only entries have no task and are skipped by the
+  // task-keyed focus aggregation.
+  taskId: string | null;
   startedAt: Date;
   endedAt: Date | null;
 };

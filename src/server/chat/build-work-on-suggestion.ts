@@ -3,7 +3,7 @@ import "server-only";
 import { and, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
 
 import { db } from "@/db";
-import { appSettings, taskTimeEntries, tasks } from "@/db/tables";
+import { appSettings, timeEntries, tasks } from "@/db/tables";
 import { getChatSuggestionDef } from "@/lib/chat/chat-suggestion-defs";
 import { formatWorkOnReply } from "@/lib/chat/format-work-on-reply";
 import { getLocalHour, nudgeThresholdHour, startedOnLocalDay } from "@/lib/dates/local-time";
@@ -91,11 +91,11 @@ export async function buildWorkOnSuggestion(
       ),
     db
       .select({
-        taskId: taskTimeEntries.taskId,
-        startedAt: taskTimeEntries.startedAt,
+        taskId: timeEntries.taskId,
+        startedAt: timeEntries.startedAt,
       })
-      .from(taskTimeEntries)
-      .where(eq(taskTimeEntries.userId, input.userId)),
+      .from(timeEntries)
+      .where(eq(timeEntries.userId, input.userId)),
   ]);
 
   const dayStartHour = settingsRow[0]?.dayStartHour ?? DEFAULT_DAY_START_HOUR;

@@ -147,17 +147,42 @@ CREATE TABLE IF NOT EXISTS tasks (
 CREATE INDEX IF NOT EXISTS tasks_user_id_scheduled_date_idx ON tasks (user_id, scheduled_date);
 CREATE INDEX IF NOT EXISTS tasks_user_id_updated_at_idx ON tasks (user_id, updated_at);
 
-CREATE TABLE IF NOT EXISTS task_time_entries (
+-- W2: task_time_entries was renamed to time_entries and reshaped (project-scoped,
+-- task optional, billable/source/invoiced_at). The local mirror is re-syncable and
+-- pending writes live in sync_mutations, so drop the old table and recreate fresh
+-- rather than fight SQLite's inability to drop a NOT NULL on task_id. A full re-pull
+-- repopulates it.
+DROP TABLE IF EXISTS task_time_entries;
+
+CREATE TABLE IF NOT EXISTS time_tags (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
-  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-  started_at INTEGER NOT NULL,
-  ended_at INTEGER,
-  reason TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  name TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS task_time_entries_user_id_updated_at_idx ON task_time_entries (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS time_tags_user_id_name_idx ON time_tags (user_id, name);
+
+CREATE TABLE IF NOT EXISTS time_entries (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+  description TEXT,
+  tag_id TEXT REFERENCES time_tags(id) ON DELETE SET NULL,
+  started_at INTEGER NOT NULL,
+  ended_at INTEGER,
+  billable INTEGER NOT NULL DEFAULT 0,
+  source TEXT NOT NULL DEFAULT 'manual',
+  invoiced_at INTEGER,
+  reason TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS time_entries_user_id_updated_at_idx ON time_entries (user_id, updated_at);
+CREATE INDEX IF NOT EXISTS time_entries_user_id_started_at_idx ON time_entries (user_id, started_at);
+CREATE INDEX IF NOT EXISTS time_entries_user_id_project_id_idx ON time_entries (user_id, project_id);
 
 CREATE TABLE IF NOT EXISTS task_recurrence (
   id TEXT PRIMARY KEY NOT NULL,
