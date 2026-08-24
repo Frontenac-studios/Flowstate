@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { FocusTimeChart } from "@/components/kash/eod/FocusTimeChart";
 import { Top3ReviewSummary } from "@/components/kash/eod/Top3ReviewSummary";
+import GapFill from "@/components/kash/time/GapFill";
 import { useTRPC } from "@/trpc/client";
 
 /**
@@ -48,6 +49,7 @@ export function TodayReviewPanel({
       </div>
       <Top3ReviewSummary top3Status={data.top3Status} />
       <FocusTimeChart bars={data.focusBars} overflowCount={data.focusOverflowCount} />
+      <GapFill localDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
     </section>
   );
 }

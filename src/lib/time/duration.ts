@@ -21,6 +21,12 @@ export function parseDurationToSeconds(input: string): number | null {
   const raw = input.trim().toLowerCase();
   if (raw === "") return null;
 
+  // Decimal (has a dot) = hours: "1.25" → 1h15m. Bare integers stay minutes.
+  if (/^\d+\.\d+$/.test(raw)) {
+    const hours = Number(raw);
+    return hours > 0 ? Math.round(hours * 3600) : null;
+  }
+
   // Bare integer = minutes.
   if (/^\d+$/.test(raw)) {
     const mins = Number(raw);

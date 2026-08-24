@@ -9,6 +9,13 @@ import {
 } from "./duration";
 
 describe("parseDurationToSeconds", () => {
+  it("treats a decimal as hours", () => {
+    expect(parseDurationToSeconds("1.25")).toBe(4500); // 1h15m
+    expect(parseDurationToSeconds("0.5")).toBe(1800);
+    expect(parseDurationToSeconds("2.0")).toBe(7200);
+    expect(parseDurationToSeconds("0.0")).toBeNull();
+  });
+
   it("treats a bare integer as minutes", () => {
     expect(parseDurationToSeconds("90")).toBe(5400);
     expect(parseDurationToSeconds("20")).toBe(1200);

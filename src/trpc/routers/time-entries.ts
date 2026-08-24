@@ -3,15 +3,21 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { projects, timeEntries, tasks } from "@/db/tables";
+import { appSettings, projects, timeEntries, tasks } from "@/db/tables";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
+import { computeUntrackedGaps } from "@/lib/time/compute-untracked-gaps";
+import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
 import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 import { startedOnLocalDay } from "@/lib/dates/local-time";
+import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
 /** Manual entries can't exceed a day — guards against fat-fingered windows. */
 const MAX_ENTRY_SECONDS = 24 * 60 * 60;
+
+/** A day-close gap must be at least this long to be worth reconciling. */
+const MIN_GAP_SECONDS = 15 * 60;
 
 /** Whole seconds between two instants, floored at zero. Elapsed is always derived. */
 function elapsedSecondsSince(startedAt: Date, now: Date): number {
@@ -367,6 +373,107 @@ export const timeEntriesRouter = createTRPCRouter({
         weekEnd: end,
         ...rollup,
       };
+    }),
+
+  /**
+   * Untracked spans over 15 minutes in the working day (W2c gap fill). Powers the
+   * close's "2:10–4:00 is untracked — what was that?". Computed within the user's
+   * day-start/day-end hours; a running timer counts as covered up to now, and the
+   * window never runs past now, so a day in progress proposes no future gaps.
+   */
+  listDayGaps: protectedProcedure
+    .input(
+      z.object({
+        localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        tzOffsetMinutes: z.number().int().min(-840).max(840),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { start, end } = localDayUtcBounds(input.localDate, input.tzOffsetMinutes);
+
+      const [settings] = await db
+        .select({ dayStartHour: appSettings.dayStartHour, dayEndHour: appSettings.dayEndHour })
+        .from(appSettings)
+        .where(eq(appSettings.userId, ctx.userId))
+        .limit(1);
+
+      const dayStartHour = settings?.dayStartHour ?? DEFAULT_DAY_START_HOUR;
+      const dayEndHour = settings?.dayEndHour ?? DEFAULT_DAY_END_HOUR;
+
+      const entries = await db
+        .select({ startedAt: timeEntries.startedAt, endedAt: timeEntries.endedAt })
+        .from(timeEntries)
+        .where(
+          and(
+            eq(timeEntries.userId, ctx.userId),
+            gte(timeEntries.startedAt, start),
+            lt(timeEntries.startedAt, end)
+          )
+        );
+
+      const gaps = computeUntrackedGaps({
+        entries,
+        dayStartMs: start.getTime() + dayStartHour * 60 * 60 * 1000,
+        dayEndMs: start.getTime() + dayEndHour * 60 * 60 * 1000,
+        nowMs: Date.now(),
+        minGapSeconds: MIN_GAP_SECONDS,
+      });
+
+      return gaps.map((g) => ({
+        startedAt: g.startedAt,
+        endedAt: g.endedAt,
+        durationSeconds: Math.floor((g.endedAt.getTime() - g.startedAt.getTime()) / 1000),
+      }));
+    }),
+
+  /**
+   * Assign an untracked span to a project (gap fill) — a project-first manual
+   * entry with no task. Source defaults to `manual`; the day-close passes
+   * `gap_fill` so reconciled time is distinguishable from hand-typed entries.
+   */
+  createForProject: protectedProcedure
+    .input(
+      z
+        .object({
+          projectId: z.string().uuid(),
+          description: z.string().trim().max(500).optional(),
+          source: z.enum(["manual", "gap_fill"]).optional(),
+        })
+        .and(manualWindow)
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [project] = await db
+        .select({ id: projects.id, clientId: projects.clientId })
+        .from(projects)
+        .where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.userId)))
+        .limit(1);
+      if (!project) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+      }
+
+      const [row] = await db
+        .insert(timeEntries)
+        .values({
+          userId: ctx.userId,
+          projectId: project.id,
+          taskId: null,
+          description: input.description ?? null,
+          startedAt: input.startedAt,
+          endedAt: input.endedAt,
+          reason: null,
+          source: input.source ?? "manual",
+          billable: project.clientId != null,
+        })
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create time entry.",
+        });
+      }
+
+      return { entryId: row.id };
     }),
 
   delete: protectedProcedure
