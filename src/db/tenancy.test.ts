@@ -124,10 +124,12 @@ describe("financial data placement", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("keeps `rates` — and only rates — in the financial class", () => {
-    // The first (and, in W1, only) financial table. This replaces the original
-    // "starts with no financial tables" assertion, which existed to prove the
-    // empty class was deliberate. Update the expected list as financial tables land.
-    expect(tablesInClass("financial")).toEqual(["rates"]);
+  it("keeps the financial class to money-only tables", () => {
+    // `rates` was the first; `business_expenses` and `money_settings` are the
+    // Draw-panel pipe (W1.5, discovery decision 2.7). This asserts the exact set
+    // so a new financial table is a deliberate edit here, and — just as important —
+    // so a non-money table cannot drift into the class unnoticed. `tablesInClass`
+    // returns sorted. Update the expected list as financial tables land.
+    expect(tablesInClass("financial")).toEqual(["business_expenses", "money_settings", "rates"]);
   });
 });

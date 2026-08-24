@@ -50,11 +50,11 @@ export const ORG_INFRA_TABLES = ["orgs", "org_memberships"] as const;
  * is total over the Drizzle schema, so a new table cannot be added without a
  * deliberate classification decision.
  *
- * FINANCIAL is empty today and that is the point: rates, revenue and invoices
- * get their *own* tables when they arrive, never columns on `projects` or
- * `tasks`. That single rule is what keeps column-level security permanently
- * unnecessary — a Member's `SELECT *` cannot leak a rate that does not live in
- * the table they can read.
+ * FINANCIAL holds money that a Member never reads: rates, expenses, the draw
+ * settings — and later revenue and invoices — get their *own* tables when they
+ * arrive, never columns on `projects` or `tasks`. That single rule is what keeps
+ * column-level security permanently unnecessary — a Member's `SELECT *` cannot
+ * leak a rate that does not live in the table they can read.
  */
 export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // ---- PERSONAL: artifacts about the person, not the work. ----
@@ -96,10 +96,14 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   tasks: "org_shared",
 
   // ---- FINANCIAL: money a Member never reads. ----
-  // Rates (and later revenue, invoices) get their own tables here rather than a
-  // column on `projects` or `clients`. That is what keeps column-level security
-  // unnecessary — a Member's `SELECT *` cannot leak a rate that is not in the
-  // table they can read.
+  // Rates, expenses, the draw settings (and later revenue, invoices) get their
+  // own tables here rather than a column on `projects` or `clients`. That is what
+  // keeps column-level security unnecessary — a Member's `SELECT *` cannot leak a
+  // rate that is not in the table they can read. `business_expenses` and
+  // `money_settings` are the Draw-panel pipe (discovery decision 2.7): laid now,
+  // read by the panel later.
+  business_expenses: "financial",
+  money_settings: "financial",
   rates: "financial",
 };
 
