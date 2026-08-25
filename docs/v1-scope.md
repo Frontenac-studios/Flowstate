@@ -63,6 +63,14 @@ Concretely, DONE is the following, verifiable in one sitting:
 Section 5 proposes the cut line against this list. Section 6 explains why item 8 should not
 be built at all.
 
+### 1.1 Cross-cutting design conventions
+
+- **No emoji, anywhere in the app** (owner directive, 2026-08-24). Every glyph is a
+  monochrome line icon from the app's own SVG icon set (currentColor, lucide-style) — never a
+  color emoji. This holds across all five surfaces, not just Money. (The only forced exception
+  is a published-artifact browser-tab favicon, which the hosting platform requires be an
+  emoji; it is never in-app chrome.)
+
 ---
 
 ## 2. STEP 1 — Inventory (from the code)
@@ -371,9 +379,10 @@ Rounding to 0.25h happens **only** when an invoice line is generated (W4).
 
 **Acceptance criteria**
 
-- [ ] One `/time` screen: pick a period (this week / last week / this month / last month / custom) and see total, billable, non-billable, and business-vs-personal split.
+- [ ] One `/time` screen: pick a period (this week / last week / this month / last month / custom) and see total, billable, non-billable, and **billed-vs-worked (utilization)**. _(The third tile was "business-vs-personal split"; changed to billed-vs-worked to mirror Today's cut of the business/personal ratio as a useless number — Ch.4 walk-through, 2026-08-24.)_
 - [ ] Group by client → project → task, expandable, with each level summing correctly (verified against a hand-computed fixture in a test).
 - [ ] Effective hourly rate = billable revenue ÷ **all** hours worked in the period, shown next to hours-worked-per-week. Both numbers, per MISSION.md, live here.
+- [ ] **Trends band** at the foot of Money (Ch.4 walk-through, 2026-08-24): four small time-series over ~13 weeks — **earned weekly** (billable hours × rate, _accrued_, with a faint "billed" line so the earned-minus-billed gap reads as the unbilled backlog over time), **billed vs worked** (paired weekly hours + utilization), **effective rate over time**, and **revenue by client** (stacked). The three money words stay distinct everywhere on Money: **earned** (worked × rate, accrued) / **billed** (invoiced) / **collected** (paid).
 - [ ] CSV export of the raw rows for the period.
 - [ ] Rounding rule is stated once in the code and applied everywhere (recommend: round each entry to the nearest minute, round only the invoice line to 0.25h).
 
@@ -383,8 +392,8 @@ Rounding to 0.25h happens **only** when an invoice line is generated (W4).
 
 **Acceptance criteria**
 
-- [ ] Per client per period, one action produces a draft: grouped line items (by project, or by phase where phases exist), hours, rate, amount.
-- [ ] The line-item descriptions are written from the work, not the task titles verbatim — a client-readable sentence per group. (Reuse the logic in your `/invoice` skill; this is the one place AI drafting earns its keep, under law 1.)
+- [ ] Per client per period, one action produces a draft: grouped line items, hours, rate, amount. **Grouping is AI-themed** (Ch.4 walk-through, 2026-08-24): the billable entries' descriptions are clustered into **at most 8 named themes**, each theme one line item; if the work spreads wider, the smallest themes merge into a single "Additional work" line so the cap always holds. (Supersedes the earlier "by project, or by phase" grouping.)
+- [ ] The line-item descriptions are written from the work, not the task titles verbatim — a client-readable sentence per theme. (Reuse the logic in your `/invoice` skill; this is the one place AI drafting earns its keep, under law 1.) The theme name, its summary sentence, and its hours are all editable before sending.
 - [ ] A per-client **billing threshold** (default 20h) caps the draft; hours above it are shown as **carry-forward**, with the running carried balance visible on the client.
 - [ ] Accepting a draft marks those entries `invoiced_at` so they can never be billed twice — enforced by a unique/partial index, not by convention, with a test that double-billing fails.
 - [ ] Output is **Markdown + CSV to clipboard/file**. Flowstate does not generate a PDF, does not track payment, does not send anything (law 1).
@@ -516,6 +525,10 @@ draw is in; everything after it is out.
 - [ ] **Roll-ups, not transactions** (2.2). Flowstate never ingests transaction rows; the moment it needs categorised transactions it is a budgeting app (the mission's named trap, Tier 2, §8g "never build").
 - [ ] **Running cash ledger** (2.3): business cash derived live from paid invoices − imported/entered business expenses − logged owner draws; a manual bank-balance figure is a periodic reconcile that surfaces drift, not a live feed.
 - [ ] **Business expenses**: manual entry + **CSV import** into `business_expenses` (table laid in W1). No bank feed, no accounting-tool API — ever (§8g won't-build).
+- [ ] **Categories come from the import** (Ch.4 walk-through, 2026-08-24, grounded in the owner's real Xero **Bills** export + Chart of Accounts). Mapping: `AccountCode → category` (names read from the user's Chart of Accounts — e.g. `6340 Software & Subscriptions`, `6410 Travel`, `6230 Meals`, `6160 Licenses and Fees`, `6250 Office Expense`, `6350 Supplies`, `6400 Training and Conferences`, `6440 Vehicle Expense`), `LineAmount → amount_cents`, the **date prefix inside `Description` → incurred_on** (NOT `InvoiceDate`, which is the reimbursement-batch date), merchant = `Description` before " - ". One `business_expenses` row per line; a `REIMB-*` invoice is a batch of them. An unmapped code lands in **"Uncategorized"**, never a guessed bucket.
+- [ ] **Presented as a P&L**: `Service Revenue (4100)` − operating expenses grouped by account (only non-zero, sorted) = **net profit**; then the draw allocation (tax reserve → cost-of-living floor → `Owner's Draws (3200)` = take-home), flagged when the draw falls under the floor.
+- [ ] **Recurring expenses auto-detected** (no schema change): a merchant repeating across months at a regular cadence is flagged recurring and rolled into a "fixed monthly overhead" subtotal (the software stack). Detection tolerates amount drift (plan changes) — keys on merchant + cadence, not exact amount.
+- [ ] **Expenses-by-category over time**: a small stacked chart by month, one series per account code — the spend-shape companion to the Money Trends band (W3).
 - [ ] **The panel** (Tier 1): available-to-draw = revenue − business expenses − tax reserve; business runway (cash ÷ burn); **personal runway + minimum draw** from the one held cost-of-living number. _(The optional personal-savings figure reconciled like the bank balance is the **lean** on open **Q8**, not yet decided — build the cost-of-living number as the firm requirement and gate the savings figure behind Q8.)_
 - [ ] **Owner draws** are logged as their own row type (they reduce business cash, they are not an expense).
 - [ ] Lives as a **section of Money**, per the IA decision (§8g 1.1) — no new surface, no rail entry.
