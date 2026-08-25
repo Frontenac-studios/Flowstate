@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { appSettings, clients, projects, timeEntries, tasks } from "@/db/tables";
+import { appSettings, clients, projects, timeEntries, timeTags, tasks } from "@/db/tables";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { computeUntrackedGaps } from "@/lib/time/compute-untracked-gaps";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
@@ -565,6 +565,41 @@ export const timeEntriesRouter = createTRPCRouter({
         lastWeekWorkedSeconds,
         isoWeek: weekStart.toISOString().slice(0, 10),
       };
+    }),
+
+  /**
+   * Raw entries for a period, joined out to their client / project / task / tag —
+   * the one row shape the CSV export, W3 reporting, and W4 invoices all read.
+   * Duration is left to the caller (elapsed is always derived).
+   */
+  exportRows: protectedProcedure
+    .input(z.object({ startedAt: z.coerce.date(), endedAt: z.coerce.date() }))
+    .query(async ({ ctx, input }) => {
+      return db
+        .select({
+          startedAt: timeEntries.startedAt,
+          endedAt: timeEntries.endedAt,
+          clientName: clients.name,
+          projectName: projects.name,
+          taskTitle: tasks.title,
+          tagName: timeTags.name,
+          description: timeEntries.description,
+          billable: timeEntries.billable,
+          invoicedAt: timeEntries.invoicedAt,
+        })
+        .from(timeEntries)
+        .innerJoin(projects, eq(timeEntries.projectId, projects.id))
+        .leftJoin(clients, eq(projects.clientId, clients.id))
+        .leftJoin(tasks, eq(timeEntries.taskId, tasks.id))
+        .leftJoin(timeTags, eq(timeEntries.tagId, timeTags.id))
+        .where(
+          and(
+            eq(timeEntries.userId, ctx.userId),
+            gte(timeEntries.startedAt, input.startedAt),
+            lt(timeEntries.startedAt, input.endedAt)
+          )
+        )
+        .orderBy(desc(timeEntries.startedAt));
     }),
 
   delete: protectedProcedure
