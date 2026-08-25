@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { appSettings } from "@/db/tables";
 import {
   abyssArchiveAfterDaysSchema,
+  alertPrefsSchema,
   bucketModeSchema,
   calendarAiEnabledSchema,
   DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
@@ -20,6 +21,7 @@ import {
   goalCoachAmbitionSchema,
   goalCoachNoteSchema,
   notificationPrefsSchema,
+  resolveAlertPrefs,
   top3MiddayCheckinSchema,
   workingHoursSchema,
 } from "@/lib/settings/constants";
@@ -59,6 +61,7 @@ export const settingsRouter = createTRPCRouter({
       lastUsedCategory: row.lastUsedCategory ?? null,
       notificationsEnabled: row.notificationsEnabled ?? true,
       focusDndEnabled: row.focusDndEnabled ?? true,
+      alertPrefs: resolveAlertPrefs(row.alertPrefs),
       assistanceEnabled: row.assistanceEnabled ?? true,
       abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
@@ -129,6 +132,20 @@ export const settingsRouter = createTRPCRouter({
         focusDndEnabled: input.focusDndEnabled,
       };
     }),
+  updateAlertPrefs: protectedProcedure.input(alertPrefsSchema).mutation(async ({ ctx, input }) => {
+    await getOrCreateSettings(ctx.userId);
+    const [row] = await db
+      .update(appSettings)
+      .set({ alertPrefs: input, updatedAt: new Date() })
+      .where(eq(appSettings.userId, ctx.userId))
+      .returning();
+    if (!row)
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update alert preferences.",
+      });
+    return input;
+  }),
   updateAbyssArchiveAfterDays: protectedProcedure
     .input(abyssArchiveAfterDaysSchema)
     .mutation(async ({ ctx, input }) => {

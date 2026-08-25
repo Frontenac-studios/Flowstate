@@ -21,6 +21,29 @@ export const notificationPrefsSchema = z.object({
 });
 export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 
+/**
+ * Per-type switches for the W2d threshold alerts (Law 3 — each individually
+ * switchable). Stored as one jsonb blob so a new alert type is a code change, not
+ * a migration. A missing key resolves to on, so existing users default to all-on.
+ */
+export const alertPrefsSchema = z.object({
+  longTimer: z.boolean(),
+  clientThreshold: z.boolean(),
+  projectOverEstimate: z.boolean(),
+  weeklyHours: z.boolean(),
+});
+export type AlertPrefs = z.infer<typeof alertPrefsSchema>;
+export const DEFAULT_ALERT_PREFS: AlertPrefs = {
+  longTimer: true,
+  clientThreshold: true,
+  projectOverEstimate: true,
+  weeklyHours: true,
+};
+export function resolveAlertPrefs(raw: unknown): AlertPrefs {
+  const parsed = alertPrefsSchema.partial().safeParse(raw);
+  return { ...DEFAULT_ALERT_PREFS, ...(parsed.success ? parsed.data : {}) };
+}
+
 export const abyssArchiveAfterDaysSchema = z.number().int().min(1).max(365);
 export type AbyssArchiveAfterDays = z.infer<typeof abyssArchiveAfterDaysSchema>;
 export const DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS = 90;

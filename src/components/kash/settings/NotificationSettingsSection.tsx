@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { isDesktopRuntime } from "@/lib/runtime/is-desktop";
+import { DEFAULT_ALERT_PREFS, type AlertPrefs } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
 
 function PrefToggle({
@@ -47,16 +48,20 @@ export function NotificationSettingsSection() {
 
   const { data, isLoading } = useQuery(trpc.settings.get.queryOptions());
 
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: trpc.settings.get.queryKey() });
+  };
+
   const mutation = useMutation(
-    trpc.settings.updateNotificationPrefs.mutationOptions({
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: trpc.settings.get.queryKey() });
-      },
-    })
+    trpc.settings.updateNotificationPrefs.mutationOptions({ onSuccess: invalidate })
+  );
+  const alertMutation = useMutation(
+    trpc.settings.updateAlertPrefs.mutationOptions({ onSuccess: invalidate })
   );
 
   const notificationsEnabled = data?.notificationsEnabled ?? true;
   const focusDndEnabled = data?.focusDndEnabled ?? true;
+  const alertPrefs = data?.alertPrefs ?? DEFAULT_ALERT_PREFS;
   const busy = isLoading || mutation.isPending;
 
   const save = (patch: { notificationsEnabled?: boolean; focusDndEnabled?: boolean }) => {
@@ -65,6 +70,33 @@ export function NotificationSettingsSection() {
       focusDndEnabled: patch.focusDndEnabled ?? focusDndEnabled,
     });
   };
+
+  const saveAlert = (patch: Partial<AlertPrefs>) => {
+    alertMutation.mutate({ ...alertPrefs, ...patch });
+  };
+
+  const ALERT_TOGGLES: { key: keyof AlertPrefs; label: string; description: string }[] = [
+    {
+      key: "longTimer",
+      label: "Long-running timer",
+      description: "When a timer has run past six hours — the forgot-to-stop reminder.",
+    },
+    {
+      key: "clientThreshold",
+      label: "Client ready to invoice",
+      description: "When a client passes 20 hours of unbilled time.",
+    },
+    {
+      key: "projectOverEstimate",
+      label: "Project over estimate",
+      description: "When logged time passes a project’s estimate.",
+    },
+    {
+      key: "weeklyHours",
+      label: "Weekly summary",
+      description: "A once-a-week recap of the hours you tracked.",
+    },
+  ];
 
   return (
     <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
@@ -87,6 +119,24 @@ export function NotificationSettingsSection() {
           checked={focusDndEnabled}
           onChange={(next) => save({ focusDndEnabled: next })}
         />
+      </fieldset>
+
+      <fieldset
+        className="mt-4 space-y-2"
+        disabled={isLoading || alertMutation.isPending || !notificationsEnabled}
+      >
+        <legend className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-muted">
+          Which alerts fire
+        </legend>
+        {ALERT_TOGGLES.map((toggle) => (
+          <PrefToggle
+            key={toggle.key}
+            label={toggle.label}
+            description={toggle.description}
+            checked={alertPrefs[toggle.key]}
+            onChange={(next) => saveAlert({ [toggle.key]: next })}
+          />
+        ))}
       </fieldset>
 
       {!desktop ? (

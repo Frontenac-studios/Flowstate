@@ -26,7 +26,8 @@ export default function TodayTimer() {
 
   const { data: running } = useQuery(trpc.timeEntries.getRunning.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
-  const notificationsEnabled = settings?.notificationsEnabled ?? true;
+  const longTimerEnabled =
+    (settings?.notificationsEnabled ?? true) && (settings?.alertPrefs?.longTimer ?? true);
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries(trpc.timeEntries.getRunning.pathFilter());
@@ -51,7 +52,7 @@ export default function TodayTimer() {
   // in-app, so the signal survives even where OS notifications can't fire.
   const notifiedEntryRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!running || !isLong || !notificationsEnabled) return;
+    if (!running || !isLong || !longTimerEnabled) return;
     if (notifiedEntryRef.current === running.entryId) return;
     notifiedEntryRef.current = running.entryId;
     void showNotification({
@@ -59,7 +60,7 @@ export default function TodayTimer() {
       body: `${running.projectName} — ${formatElapsedClock(elapsed)}. Did you forget to stop it?`,
       tag: `long-timer-${running.entryId}`,
     });
-  }, [running, isLong, notificationsEnabled, elapsed]);
+  }, [running, isLong, longTimerEnabled, elapsed]);
 
   if (running) {
     return (

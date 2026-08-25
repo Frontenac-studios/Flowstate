@@ -16,6 +16,7 @@ export const appSettings = sqliteTable("app_settings", {
   goalCoachNote: text("goal_coach_note"),
   goalCoachAdaptations: text("goal_coach_adaptations", { mode: "json" }),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
+  alertPrefs: text("alert_prefs", { mode: "json" }),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   calendarAiEnabled: integer("calendar_ai_enabled", { mode: "boolean" }).notNull().default(true),
   createdAt: integer("created_at", { mode: "timestamp_ms" })

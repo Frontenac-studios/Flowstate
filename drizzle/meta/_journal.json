@@ -337,6 +337,13 @@
       "when": 1787612670481,
       "tag": "0047_first_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1787617834094,
+      "tag": "0048_overconfident_paper_doll",
+      "breakpoints": true
     }
   ]
 }
