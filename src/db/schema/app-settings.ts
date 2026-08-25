@@ -1,5 +1,5 @@
 import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import type { GoalCoachAdaptations } from "@/lib/settings/constants";
+import type { AlertPrefs, GoalCoachAdaptations } from "@/lib/settings/constants";
 import { projectCategory } from "./projects";
 export const appSettings = pgTable("app_settings", {
   userId: uuid("user_id").primaryKey(),
@@ -20,6 +20,8 @@ export const appSettings = pgTable("app_settings", {
    */
   goalCoachAdaptations: jsonb("goal_coach_adaptations").$type<GoalCoachAdaptations>(),
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
+  /** Per-type switches for the W2d threshold alerts. Null = all defaults (on). */
+  alertPrefs: jsonb("alert_prefs").$type<AlertPrefs>(),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   calendarAiEnabled: boolean("calendar_ai_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),

@@ -8,8 +8,17 @@ import {
   EMPTY_NOTIFIED_STATE,
   selectThresholdAlerts,
   type NotifiedState,
+  type ThresholdAlert,
 } from "@/lib/notify/threshold-alerts";
+import { DEFAULT_ALERT_PREFS, type AlertPrefs } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
+
+/** Which per-type switch governs each alert. */
+const ALERT_PREF_KEY: Record<ThresholdAlert["type"], keyof AlertPrefs> = {
+  client_threshold: "clientThreshold",
+  project_over_estimate: "projectOverEstimate",
+  weekly_hours: "weeklyHours",
+};
 
 const STORAGE_KEY = "kash:threshold-notified";
 
@@ -51,6 +60,7 @@ export default function ThresholdNotifier() {
 
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const notificationsEnabled = settings?.notificationsEnabled ?? true;
+  const alertPrefs = settings?.alertPrefs ?? DEFAULT_ALERT_PREFS;
 
   const { data: snapshot } = useQuery({
     ...trpc.timeEntries.getThresholdAlerts.queryOptions({ tzOffsetMinutes }),
@@ -62,10 +72,13 @@ export default function ThresholdNotifier() {
     const { alerts, next } = selectThresholdAlerts(snapshot, loadNotified());
     if (alerts.length === 0) return;
     for (const alert of alerts) {
+      // Suppress a type the user switched off; its dedup state still advances, so
+      // re-enabling it notifies on the next crossing rather than replaying old ones.
+      if (!alertPrefs[ALERT_PREF_KEY[alert.type]]) continue;
       void showNotification({ title: alert.title, body: alert.body, tag: alert.key });
     }
     saveNotified(next);
-  }, [snapshot, notificationsEnabled]);
+  }, [snapshot, notificationsEnabled, alertPrefs]);
 
   return null;
 }

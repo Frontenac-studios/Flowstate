@@ -621,6 +621,11 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   },
   {
     table: "app_settings",
+    column: "alert_prefs",
+    definition: "TEXT",
+  },
+  {
+    table: "app_settings",
     column: "calendar_ai_enabled",
     definition: "INTEGER NOT NULL DEFAULT 1",
   },
