@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { appSettings, projects, timeEntries, tasks } from "@/db/tables";
+import { appSettings, clients, projects, timeEntries, tasks } from "@/db/tables";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { computeUntrackedGaps } from "@/lib/time/compute-untracked-gaps";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
@@ -474,6 +474,97 @@ export const timeEntriesRouter = createTRPCRouter({
       }
 
       return { entryId: row.id };
+    }),
+
+  /**
+   * Live inputs for the three data-driven W2d alerts (client-20h, project over
+   * estimate, weekly hours). Aggregated in JS rather than SQL so the same code path
+   * serves Postgres and the desktop SQLite mirror. The client-side notifier turns
+   * this snapshot into fire/don't-fire decisions (see selectThresholdAlerts).
+   */
+  getThresholdAlerts: protectedProcedure
+    .input(z.object({ tzOffsetMinutes: z.number().int().min(-840).max(840) }))
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const { start: weekStart } = localWeekUtcBounds(now, input.tzOffsetMinutes);
+      const lastWeekStart = new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const [entries, projectRows, clientRows, taskRows] = await Promise.all([
+        db
+          .select({
+            projectId: timeEntries.projectId,
+            startedAt: timeEntries.startedAt,
+            endedAt: timeEntries.endedAt,
+            billable: timeEntries.billable,
+            invoicedAt: timeEntries.invoicedAt,
+          })
+          .from(timeEntries)
+          .where(eq(timeEntries.userId, ctx.userId)),
+        db
+          .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+          .from(projects)
+          .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt))),
+        db
+          .select({ id: clients.id, name: clients.name })
+          .from(clients)
+          .where(eq(clients.userId, ctx.userId)),
+        db
+          .select({ projectId: tasks.projectId, estimate: tasks.timeEstimateMinutes })
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.userId, ctx.userId),
+              isNotNull(tasks.projectId),
+              isNotNull(tasks.timeEstimateMinutes)
+            )
+          ),
+      ]);
+
+      const seconds = (e: { startedAt: Date; endedAt: Date | null }) =>
+        Math.max(0, Math.floor(((e.endedAt ?? now).getTime() - e.startedAt.getTime()) / 1000));
+
+      const projectClient = new Map(projectRows.map((p) => [p.id, p.clientId]));
+      const projectName = new Map(projectRows.map((p) => [p.id, p.name]));
+      const clientName = new Map(clientRows.map((c) => [c.id, c.name]));
+
+      const billableByClient = new Map<string, number>();
+      const actualByProject = new Map<string, number>();
+      let lastWeekWorkedSeconds = 0;
+
+      for (const e of entries) {
+        const s = seconds(e);
+        actualByProject.set(e.projectId, (actualByProject.get(e.projectId) ?? 0) + s);
+        if (e.billable && e.invoicedAt == null) {
+          const clientId = projectClient.get(e.projectId);
+          if (clientId) billableByClient.set(clientId, (billableByClient.get(clientId) ?? 0) + s);
+        }
+        if (e.startedAt >= lastWeekStart && e.startedAt < weekStart) lastWeekWorkedSeconds += s;
+      }
+
+      const estimateByProject = new Map<string, number>();
+      for (const t of taskRows) {
+        if (t.projectId == null || t.estimate == null) continue;
+        estimateByProject.set(
+          t.projectId,
+          (estimateByProject.get(t.projectId) ?? 0) + t.estimate * 60
+        );
+      }
+
+      return {
+        clients: Array.from(billableByClient, ([clientId, sec]) => ({
+          clientId,
+          name: clientName.get(clientId) ?? "Client",
+          billableUnbilledSeconds: sec,
+        })),
+        projects: Array.from(actualByProject, ([projectId, actualSeconds]) => ({
+          projectId,
+          name: projectName.get(projectId) ?? "Project",
+          estimateSeconds: estimateByProject.get(projectId) ?? 0,
+          actualSeconds,
+        })).filter((p) => p.estimateSeconds > 0),
+        lastWeekWorkedSeconds,
+        isoWeek: weekStart.toISOString().slice(0, 10),
+      };
     }),
 
   delete: protectedProcedure
