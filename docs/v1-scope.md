@@ -952,11 +952,18 @@ its phase is built.
 | Filter decline-outright escape                      | +1           |
 | **Revised v1 total**                                | **~174**     |
 
-_(The doc carries a pre-existing base inconsistency — §8d reads ~166, the §8f scoreboard ~160; the
-discovery doc worked from 166 and landed at ~180. Either way the discovery net is **+14h**, and v1
-is now ~1.4–1.7 quarters.)_ To land near a quarter, the four reversible deferrals in the discovery
-doc §5 (split W2 −8h · Ledger →v1.1 −8h · tickler →v1.1 −6h · fixed-fee half of W15 →v1.1 −5h) take
-it to **~150h** — still the open **Q5**, to decide deliberately.
+**Authoritative totals live in [`docs/build-tracker.html`](./build-tracker.html) (line-by-line
+sum).** The prose figures above were coarse and mutually inconsistent (§8d ~166, §8f scoreboard
+~160, this table ~174). The tracker itemizes every unit of work — including W2 split into a–f and
+the below-cut items — and sums to:
+
+- **167 h — cut-line v1** (P-1…P5): the coherent, shippable v1. This is the number to steer by.
+- **+24 h below the cut line** (W8 Ledger, W10 Filter, Tickler) → **191 h all-in**.
+- W9 onboarding automation (12 h) is deferred to v1.1 and excluded from both.
+
+Where this doc's prose and the tracker disagree, the tracker wins. To land the **167 h cut-line**
+nearer a quarter, the reversible deferrals in the discovery doc §5 (split W2 −8h · Ledger →v1.1
+· tickler →v1.1 · fixed-fee half of W15 →v1.1) still apply — the open **Q5**, to decide deliberately.
 
 ### Still open (unchanged by this fold-in)
 
@@ -975,5 +982,5 @@ it to **~150h** — still the open **Q5**, to decide deliberately.
 | **GAPS** (v1 scope with no code)  | 21    |
 | **NEEDS KAT**                     | 11    |
 
-**Total v1 as scoped: ~174h (post-discovery, §8g). Recommended cut line: ~116h. Fits a quarter:
+**Total v1 (line-by-line, per `docs/build-tracker.html`): 167h cut-line / 191h all-in. Fits a quarter:
 only at the cut line.**
