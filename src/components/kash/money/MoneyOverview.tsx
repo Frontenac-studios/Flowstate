@@ -3,14 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
+import MoneyReport from "@/components/kash/money/MoneyReport";
 import { ArrowRight, Users } from "@/components/kash/ui/icon";
 import { useTRPC } from "@/trpc/client";
 
 /**
- * The Money surface (MISSION.md law 4c). In W1 it holds Clients; revenue, the
- * effective rate, and invoices arrive with W3/W4. This stub keeps the
- * information architecture honest — Clients lives inside Money, not in its own
- * top-level home — without pretending the rest is built.
+ * The Money surface (MISSION.md law 4c). Clients live inside Money, and W3 adds
+ * the time report — totals, effective rate, and the client → project → task
+ * breakdown. Invoices arrive with W4.
  */
 export default function MoneyOverview() {
   const trpc = useTRPC();
@@ -44,22 +44,7 @@ export default function MoneyOverview() {
         <ArrowRight size={18} className="text-ink-muted" />
       </Link>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        {[
-          { label: "Revenue", detail: "Billable revenue this month" },
-          { label: "Effective rate", detail: "Revenue ÷ all hours worked" },
-          { label: "Invoices", detail: "Drafted, sent, unpaid" },
-        ].map((tile) => (
-          <div
-            key={tile.label}
-            className="rounded-card border border-dashed border-border bg-surface p-4"
-          >
-            <p className="text-body font-medium text-ink">{tile.label}</p>
-            <p className="mt-1 text-caption text-ink-muted">{tile.detail}</p>
-            <p className="mt-3 text-caption text-ink-faint">Coming soon</p>
-          </div>
-        ))}
-      </section>
+      <MoneyReport />
     </div>
   );
 }
