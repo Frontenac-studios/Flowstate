@@ -48,17 +48,17 @@ v1 ships the day all nine of these are true, and not one feature later.
 
 Concretely, DONE is the following, verifiable in one sitting:
 
-| #   | Scope item                                   | The one-sentence proof it's done                                                                                                                                                                                          |
-| --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Project tracking                             | Every live engagement is a project with a client, a rate, and a state; you can see all of them and their health on one screen.                                                                                            |
-| 2   | Task tracking                                | Tasks belong to projects, carry an estimate, recur when they should, and land on a day.                                                                                                                                   |
-| 3   | Time tracking                                | Every minute you work is attached to a project (and usually a task), marked billable or not, with no double-entry into another timer.                                                                                     |
-| 4   | Time reporting + invoicing                   | On the 1st you press one button and get a per-client draft — grouped work summary, hours capped at the billing threshold, carry-forward stated — that you review, adjust, and hand to your invoicing tool.                |
-| 5   | Directions/Targets + Budget + Ledger + Sweep | At most 2 Directions and 3 Targets exist; today shows a live time bar against your declared tilt; every other Friday you get an unarguable spent-vs-said number; every week you rule drop/park/keep on what's gone stale. |
-| 6   | Client onboarding                            | One action turns "signed" into a project, its phases, its time-tracking setup, and a checklist of the manual steps.                                                                                                       |
-| 7   | The Filter                                   | A lead's answers to eight questions produce pursue / negotiate / decline with reasons, scored against your live Direction and Target, with logged overrides.                                                              |
-| 8   | Business tickler                             | Compliance dates fire at you and are otherwise invisible.                                                                                                                                                                 |
-| 9   | Personal category                            | Personal work is one Maintenance project with recurring tasks; it consumes budget, and it appears nowhere in the goal layer.                                                                                              |
+| #   | Scope item                                   | The one-sentence proof it's done                                                                                                                                                                                                                                            |
+| --- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Project tracking                             | Every live engagement is a project with a client, a rate, and a state; you can see all of them and their health on one screen.                                                                                                                                              |
+| 2   | Task tracking                                | Tasks belong to projects, carry an estimate, recur when they should, and land on a day.                                                                                                                                                                                     |
+| 3   | Time tracking                                | Every minute you work is attached to a project (and usually a task), marked billable or not, with no double-entry into another timer.                                                                                                                                       |
+| 4   | Time reporting + invoicing                   | When a client crosses its billing threshold (with a monthly backstop — see W4 / discovery 1.9), one button gives a per-client draft — grouped work summary, hours capped at the threshold, carry-forward stated — that you review, adjust, and hand to your invoicing tool. |
+| 5   | Directions/Targets + Budget + Ledger + Sweep | At most 2 Directions and 3 Targets exist; today shows a live time bar against your declared tilt; every other Friday you get an unarguable spent-vs-said number; every week you rule drop/park/keep on what's gone stale.                                                   |
+| 6   | Client onboarding                            | One action turns "signed" into a project, its phases, its time-tracking setup, and a checklist of the manual steps.                                                                                                                                                         |
+| 7   | The Filter                                   | A lead's answers to eight questions produce pursue / negotiate / decline with reasons, scored against your live Direction and Target, with logged overrides.                                                                                                                |
+| 8   | Business tickler                             | Compliance dates fire at you and are otherwise invisible.                                                                                                                                                                                                                   |
+| 9   | Personal category                            | Personal work is one Maintenance project with recurring tasks; it consumes budget, and it appears nowhere in the goal layer.                                                                                                                                                |
 
 Section 5 proposes the cut line against this list. Section 6 explains why item 8 should not
 be built at all.
@@ -330,6 +330,7 @@ and the timer questions of 2026-08-21 are folded in below.
 - [ ] **No `client_id` on the entry.** Client is derived through `project_id`. A second copy drifts the moment a project is reassigned.
 - [ ] `time_tags`: a **controlled list** the user manages in Settings (`Development`, `Meetings`, `Revisions`, …), because a tag is invoice structure and a typo becomes a wrong invoice line. Classified `org_shared`; free text is explicitly rejected.
 - [ ] Backfill: every existing entry takes `project_id` from its task; entries whose task has no project land on a named "Unassigned" project rather than being dropped. Verified by a query returning 0 nulls.
+- [ ] **Clockify cutover import** (discovery 3.2): Flowstate _replaces_ Clockify (no live sync, 3.1); at cutover, import **open unbilled time only** to seed each client's carry-forward, not the full history. The project→client mapping method is open **Q9** (lean: one-time manual pass at cutover) — this criterion states the _what_; Q9 settles the _how_.
 - [ ] Desktop SQLite mirror gains every new column in the same PR, and `sqlite-defaults.test.ts` passes.
 
 #### The timer
@@ -426,6 +427,7 @@ drop target milestones, drop the progress chart — a number and a bar is enough
 - [ ] The bar never blocks, warns modally, or turns red. It states, it does not nag (law 3).
 - [ ] The declared tilt also drives the Week deck's **off-target flag** (W14): a single reflective line, shown only when the week's logged time drifts from the tilt past a threshold — the weekly early-warning of the biweekly Ledger (W8), worded as a question, never a red alarm.
 - [ ] The existing task-count balance bar and `category_settings` weighting are deleted, not reskinned.
+- [ ] Where the Budget nets out booked time against capacity, it counts **only accepted, timed** calendar events (discovery 3.5) — declined and all-day events must not read as busy, or the free-hours number lies. Calendar stays read-only, as already built.
 
 ---
 
@@ -435,6 +437,7 @@ drop target milestones, drop the progress chart — a number and a bar is enough
 
 - [ ] A weekly surface lists what has gone stale, at three altitudes: tasks untouched >21d, projects with no time logged in >21d, and targets with no movement this period.
 - [ ] Each item takes exactly one of three rulings: **drop** (deleted), **park** (to Backlog, retrievable), **keep** (timestamp refreshed, won't resurface for a period).
+- [ ] **"Keep" buys a month of quiet, not a week** (discovery 1.8), and the list must **visibly shrink week over week** — a Sweep that repeats the same items every Friday trains wholesale dismissal, which is the failure mode that kills the ritual.
 - [ ] The list is finite and ends — it does not paginate forever; if there are more than ~20 items it shows the 20 stalest and says how many remain.
 - [ ] Nothing is auto-dropped. The 90-day auto-archive on Backlog is removed; a machine closing doors for you is not the mechanic.
 - [ ] Ruling on everything takes under five minutes with a keyboard.
@@ -488,6 +491,8 @@ The planning layer over projects/phases. Projects and phases were counted "SHIPP
 W1"; the _planning_ — estimates, billing type, burn, the off-track signal — was never itemised.
 Decisions 4.1–4.7 of the discovery.
 
+> **Numbering note.** The discovery doc calls this item **"W14"** ([discovery §5](./discovery-v1-journeys-and-money.md)); this document numbers it **W15**, because W14 was claimed by the Week steering deck (decided 2026-08-24, one day after the discovery). Discovery's "W14" = this doc's W15. The discovery doc has not been renumbered.
+
 **Acceptance criteria**
 
 - [ ] A plan = template → phases → **per-phase hour estimate + optional deadline**. Task-level estimate stays optional (4.1). No dependency graph — ordering expresses sequence (4.2, a DAG is a 10-person feature).
@@ -511,7 +516,7 @@ draw is in; everything after it is out.
 - [ ] **Roll-ups, not transactions** (2.2). Flowstate never ingests transaction rows; the moment it needs categorised transactions it is a budgeting app (the mission's named trap, Tier 2, §8g "never build").
 - [ ] **Running cash ledger** (2.3): business cash derived live from paid invoices − imported/entered business expenses − logged owner draws; a manual bank-balance figure is a periodic reconcile that surfaces drift, not a live feed.
 - [ ] **Business expenses**: manual entry + **CSV import** into `business_expenses` (table laid in W1). No bank feed, no accounting-tool API — ever (§8g won't-build).
-- [ ] **The panel** (Tier 1): available-to-draw = revenue − business expenses − tax reserve; business runway (cash ÷ burn); **personal runway + minimum draw** from the one held cost-of-living number (and, per Q8, an optional personal-savings figure reconciled like the bank balance).
+- [ ] **The panel** (Tier 1): available-to-draw = revenue − business expenses − tax reserve; business runway (cash ÷ burn); **personal runway + minimum draw** from the one held cost-of-living number. _(The optional personal-savings figure reconciled like the bank balance is the **lean** on open **Q8**, not yet decided — build the cost-of-living number as the firm requirement and gate the savings figure behind Q8.)_
 - [ ] **Owner draws** are logged as their own row type (they reduce business cash, they are not an expense).
 - [ ] Lives as a **section of Money**, per the IA decision (§8g 1.1) — no new surface, no rail entry.
 - [ ] Tier 0 (the tax-reserve line) already shipped in W4; this item is Tier 1 on top of it.
@@ -557,6 +562,7 @@ steps as the manual checklist.
 
 - [ ] `intake_submissions` + a **public, unauthenticated, token-scoped** route `/intake/[token]` — the first anon-accessible surface in the app, so it needs its own RLS review and rate limiting.
 - [ ] Eight questions covering Fit / Risk / Strategy exactly as enumerated in MISSION.md.
+- [ ] **"Decline outright" escape** (discovery 1.3, §8g): a junk lead is declined in one action that **skips the eight questions entirely** — logged with a reason, zero scoring. The eight questions are only for leads you are genuinely tempted by; forcing full scoring on every lead kills the habit by week two. (+1h, already in the §8g arithmetic.)
 - [ ] Submissions score against the **active** Direction and Target and return **pursue / negotiate / decline** with a written reason per axis.
 - [ ] The scoring weights live in one readable file, not scattered.
 - [ ] Overrides are always allowed and always logged with a reason; the log is visible.
@@ -924,6 +930,17 @@ the §8c Law 4c conflict — an entity at every altitude gets no rail entry of i
 - **Into v1:** W16 Draw panel (~14h), W15 project planning (~13h), Filter decline-outright (~1h).
 - **Out of v1 → v1.1:** W9 onboarding _automation_ (folder tree + starter contracts); the checklist half survives via "signed".
 - **Won't build (v2 / never):** live Gmail inbox integration; document→context ingestion; bank feed (Plaid); accounting-tool (QBO/Xero) API; **personal budgeting / categories / net worth (Tier 2)** — contradicts the mission by name; task dependency graph.
+
+### Decided but not yet homed — two orphans to place
+
+Two discovery decisions are **decided** (not deferred) yet map to no existing W-item and were not
+costed. They are recorded here so they are not lost; each **NEEDS KAT** for a home and hours before
+its phase is built.
+
+| Decision                                                                                                                                                           | Why it has no home                                                                                                                                         | Proposed placement                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **3.7 — Global hotkey capture.** One line of text into a single Backlog inbox, no decision at capture (< 2s); triaged later, the Sweep rules on stale inbox items. | Net-new capture behaviour; the discovery names it but never itemised it in its own scope ledger, so it carries **no hours** anywhere.                      | **New item W17 — Quick-capture inbox · S (~3–4h).** A global hotkey, a raw-text Backlog inbox, and its Sweep hook. Below the cut line unless capture friction is a v1 blocker.     |
+| **1.6 — "One thing to start" weighting.** Today's handed-to-you action must weight **target-linked + client-billable + deadline**, not deadline alone.             | Today is SHIPPED with no W-item; the selection rule is a behaviour change to the existing surface, and it overlaps the deferred Monday-first-look UX (Q2). | Fold into the **Q2 UX-flow session** as a firm input (it is decided, not a lean), and land the selection change with whatever Today work that session scopes. No standalone hours. |
 
 ### Revised arithmetic (on top of the §8f base)
 
