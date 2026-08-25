@@ -311,6 +311,7 @@ deletion of ~18 entries from a map rather than a rebase across 18 dropped tables
 - [ ] A project with `is_maintenance = true` requires no target and never appears in any goal-layer query — enforced in the query layer, with a test that asserts a maintenance project is absent from Target progress.
 - [ ] `/clients` list + detail: create, edit rate, archive. No delete (archive only).
 - [ ] Existing project rows all carry a client or are explicitly marked internal/personal after migration — verified by a count query returning 0 unassigned.
+- [ ] **Money-layer pipe laid now (discovery §8g / W16).** Add `business_expenses` (`financial`-class: `id, user_id, org_id, amount_cents, incurred_on, category_label, source (manual|csv), note`) and the money-settings fields (tax-reserve %, monthly cost-of-living, personal-savings figure, manual business/personal cash balances) — schema + tenancy classification + RLS only; the Draw panel (W16) consumes them later. Laid here because the reshape is already touching this ground; deferring it means a second migration.
 
 **Missing today:** all of it. **Dependencies:** none — this is the keystone; nothing else
 starts cleanly before it.
@@ -387,6 +388,8 @@ Rounding to 0.25h happens **only** when an invoice line is generated (W4).
 - [ ] Accepting a draft marks those entries `invoiced_at` so they can never be billed twice — enforced by a unique/partial index, not by convention, with a test that double-billing fails.
 - [ ] Output is **Markdown + CSV to clipboard/file**. Flowstate does not generate a PDF, does not track payment, does not send anything (law 1).
 - [ ] Un-accepting a draft is possible and reversible.
+- [ ] **Trigger is threshold-primary + a monthly backstop** (discovery Q1, §8g). The per-client draft is offered when the client crosses its 20h threshold (W2's billing-threshold notification is the prompt); a once-a-month "anything ready to bill?" sweep catches clients dribbling under 20h. Not a fixed calendar-date run — the DONE-table line "on the 1st you press one button" is superseded by this.
+- [ ] **Tier-0 tax reserve (discovery 2.5, folds in here).** From the period's billed revenue and the tax-reserve % set in W1's money settings, show a single "set aside $Y for tax" line next to the effective rate. Nearly free — it is the one draw-adjacent number only Flowstate's revenue data can produce; the rest of the Draw panel is W16.
 
 **Dependencies:** W1 (rate), W2 (billable), W3 (rollup).
 **Note:** this is where the money is. It is item 4 of nine, and it is the single feature
@@ -479,6 +482,48 @@ sourcing agent.
 
 ---
 
+### W15 — Project planning & estimate-vs-actual · **M–L (~13h)** · deps: W1, W2 · net-new (discovery §8g)
+
+The planning layer over projects/phases. Projects and phases were counted "SHIPPED, reshape in
+W1"; the _planning_ — estimates, billing type, burn, the off-track signal — was never itemised.
+Decisions 4.1–4.7 of the discovery.
+
+**Acceptance criteria**
+
+- [ ] A plan = template → phases → **per-phase hour estimate + optional deadline**. Task-level estimate stays optional (4.1). No dependency graph — ordering expresses sequence (4.2, a DAG is a 10-person feature).
+- [ ] `projects` gains **`billing_type` (`hourly | fixed_fee`)** (4.3). Fixed-fee projects carry a **fee amount + a target-rate floor** (the effective rate below which the fixed fee is losing money) (4.4). Fixed-fee planning ships in v1 — the mix is real, not speculative.
+- [ ] **The universal off-track signal = budget (hours) consumed ahead of work (phases/tasks) completed** (4.5) — computable from data already on hand, fires before either the bill (hourly) or the margin (fixed-fee) surprises you. "Running hot" is type-aware: more revenue on hourly, evaporating margin on fixed-fee.
+- [ ] Estimate-vs-actual surfaces at three altitudes, no new home (4.6): **project detail** (per-phase burn bars), **Projects board** (a health dot), and **Week** (the earliest steering read — feeds W14's off-target/health signals).
+- [ ] The **first** off-track crossing fires **one native notification** + a Week treatment (4.7); it is evidence, not a timer, so it earns the interruption under law 3. At most once per crossing; switchable off.
+- [ ] **Cut option (−5h, → v1.1):** ship hourly planning + the objective burn signal; defer the fixed-fee fee/margin-floor half until a fixed-fee project has run through the hourly view once.
+
+---
+
+### W16 — The Draw panel (personal + business money) · **L (~14h)** · deps: W1 (pipe), W3, W4 · **displaces W9 onboarding automation → v1.1**
+
+The money dashboard that answers "what can I pay myself?". Area 2 of the discovery; the
+MISSION.md "Money crosses into personal at exactly one point: the draw" section (amended
+2026-08-23) is its authority. **The draw is the boundary** — business up to and including the
+draw is in; everything after it is out.
+
+**Acceptance criteria**
+
+- [ ] **Roll-ups, not transactions** (2.2). Flowstate never ingests transaction rows; the moment it needs categorised transactions it is a budgeting app (the mission's named trap, Tier 2, §8g "never build").
+- [ ] **Running cash ledger** (2.3): business cash derived live from paid invoices − imported/entered business expenses − logged owner draws; a manual bank-balance figure is a periodic reconcile that surfaces drift, not a live feed.
+- [ ] **Business expenses**: manual entry + **CSV import** into `business_expenses` (table laid in W1). No bank feed, no accounting-tool API — ever (§8g won't-build).
+- [ ] **The panel** (Tier 1): available-to-draw = revenue − business expenses − tax reserve; business runway (cash ÷ burn); **personal runway + minimum draw** from the one held cost-of-living number (and, per Q8, an optional personal-savings figure reconciled like the bank balance).
+- [ ] **Owner draws** are logged as their own row type (they reduce business cash, they are not an expense).
+- [ ] Lives as a **section of Money**, per the IA decision (§8g 1.1) — no new surface, no rail entry.
+- [ ] Tier 0 (the tax-reserve line) already shipped in W4; this item is Tier 1 on top of it.
+
+**Why it displaces onboarding automation (Q4):** onboarding pays off only when you sign a
+client (pipeline-dependent; the checklist half works by hand meanwhile — see W9). The Draw
+panel pays off every month regardless of pipeline. Net hours ≈ 0 (both ~14h). W9's automation
+moves to v1.1; "signed" still creates client + project + phases in v1, with the folder/contract
+steps as the manual checklist.
+
+---
+
 ### W8 — The Ledger · **M (8h)** · deps: W6 · **below the cut line**
 
 **Acceptance criteria**
@@ -490,7 +535,12 @@ sourcing agent.
 
 ---
 
-### W9 — Client onboarding · **M (10h)** · deps: W1, W2 · **below the cut line**
+### W9 — Client onboarding · **M (10–14h)** · deps: W1, W2 · **→ v1.1 (displaced by W16, discovery Q4)**
+
+> **Moved to v1.1 (discovery §8g).** The full automation (local folder tree + starter contracts,
+> §8c Q6) is displaced by the Draw panel (W16). What survives in v1: "signed" creates the client +
+> project + phases (part of W1/the Filter handoff), and the manual steps are a checklist of tasks.
+> The folder/contract Level-3 automation lands in v1.1.
 
 **Acceptance criteria**
 
@@ -841,15 +891,72 @@ cost it, or ship the deck's queue without the sourced-batch row until v1.1.
 
 ---
 
+## 8g. Discovery decisions folded in — 2026-08-23
+
+Source of record: **[docs/discovery-v1-journeys-and-money.md](./discovery-v1-journeys-and-money.md)** —
+a full discovery session across four areas (UX journeys, the money layer, capture, project
+planning). This section folds its decisions into the build plan; the discovery doc keeps the
+reasoning and the journey walk-throughs. Where a decision here changes a `W`-item, that item now
+carries the criterion inline (W1, W4, W9, W15, W16).
+
+### The IA decision everything hangs on
+
+**No standalone "Clients" or "Time" surface.** A client appears at three altitudes — pipeline
+(Week), delivery (Projects), billing (Money) — so it has no altitude of its own: it is a
+**drill-in from Money**, cross-linked from Projects. Time reporting is a **section of Money**. The
+five surfaces stay (Today · Week · Projects · Money · Quarter). This is the concrete resolution of
+the §8c Law 4c conflict — an entity at every altitude gets no rail entry of its own.
+
+### Decisions → where they landed
+
+| Area     | Decision                                                                                                                                                                                                                                                                                                                                       | Landed in                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Journeys | Invoice trigger = **threshold-primary (20h/client) + monthly backstop** (Q1, answered).                                                                                                                                                                                                                                                        | W4 criterion; supersedes the "on the 1st" DONE-table line. |
+| Journeys | Filter = a panel on a Week pipeline card, with a **"decline outright"** escape that skips the eight questions.                                                                                                                                                                                                                                 | W10 (+1h escape).                                          |
+| Journeys | Sweep = a Friday section of Week; Ledger = a biweekly section of Money; both pre-answered. "Keep" buys a month of quiet.                                                                                                                                                                                                                       | W7, W8, W14.                                               |
+| Money    | **The draw is the boundary.** Business up to the draw is in; after it is out; one held cost-of-living number for personal runway.                                                                                                                                                                                                              | **MISSION.md amended** (new "the draw" section); W16.      |
+| Money    | **Roll-ups, not transactions**; running cash ledger; **Tier 1 Draw panel ships in v1**, displacing onboarding automation (Q4). Tier 2 (personal budgeting/feeds) **never built**.                                                                                                                                                              | W16; W9 → v1.1; pipe in W1; Tier-0 in W4.                  |
+| Capture  | Flowstate **replaces** Clockify (no live sync); at cutover import **open unbilled time only**. Money capture = manual roll-ups + CSV, **no bank feed / no accounting-API**. Email→tasks **paste-only**. Calendar stays read-only. Docs→context **not built**. Global hotkey = **one line of text into a single Backlog inbox**, triaged later. | W2 (import note), W16 (CSV), won't-build list below.       |
+| Planning | Plan = template → phases → **per-phase estimate + optional deadline**; **no dependency graph**; projects gain **`billing_type`**; **fixed-fee planning in v1**; off-track signal = **budget consumed ahead of work done**; surfaces on project detail / board / Week.                                                                          | **W15 (net-new, ~13h).**                                   |
+
+### Scope movement
+
+- **Into v1:** W16 Draw panel (~14h), W15 project planning (~13h), Filter decline-outright (~1h).
+- **Out of v1 → v1.1:** W9 onboarding _automation_ (folder tree + starter contracts); the checklist half survives via "signed".
+- **Won't build (v2 / never):** live Gmail inbox integration; document→context ingestion; bank feed (Plaid); accounting-tool (QBO/Xero) API; **personal budgeting / categories / net worth (Tier 2)** — contradicts the mission by name; task dependency graph.
+
+### Revised arithmetic (on top of the §8f base)
+
+|                                                     | Hours        |
+| --------------------------------------------------- | ------------ |
+| Prior fully-scoped total (§8f scoreboard)           | ~160         |
+| W16 Draw panel in / W9 automation out               | +14 − 14 = 0 |
+| W15 project planning & estimate-vs-actual (net-new) | +13          |
+| Filter decline-outright escape                      | +1           |
+| **Revised v1 total**                                | **~174**     |
+
+_(The doc carries a pre-existing base inconsistency — §8d reads ~166, the §8f scoreboard ~160; the
+discovery doc worked from 166 and landed at ~180. Either way the discovery net is **+14h**, and v1
+is now ~1.4–1.7 quarters.)_ To land near a quarter, the four reversible deferrals in the discovery
+doc §5 (split W2 −8h · Ledger →v1.1 −8h · tickler →v1.1 −6h · fixed-fee half of W15 →v1.1 −5h) take
+it to **~150h** — still the open **Q5**, to decide deliberately.
+
+### Still open (unchanged by this fold-in)
+
+- **Q2 / Q3** (Monday first-look; rhythm nudges) — being worked in a **separate UX-flow session**; leans (one next action; silent) stand as defaults.
+- **Q5–Q10** — the cut line, the fixed-fee "running hot" %, tax-reserve as one % vs per-period, personal-savings figure, Clockify import mapping, Focus-after-W2 — remain open. Q5 (cut line) is the only one that changes the ship date.
+
+---
+
 ## 9. Scoreboard
 
 | Bucket                            | Count |
 | --------------------------------- | ----- |
-| **GO** (in v1)                    | 12    |
+| **GO** (in v1)                    | 14    |
 | **PARK** (flagged off, data kept) | 4     |
 | **KILL** (deleted)                | 18    |
-| **GAPS** (v1 scope with no code)  | 19    |
+| **GAPS** (v1 scope with no code)  | 21    |
 | **NEEDS KAT**                     | 11    |
 
-**Total v1 as scoped: ~160h. Recommended cut line: ~116h. Fits a quarter: only at the cut
-line.**
+**Total v1 as scoped: ~174h (post-discovery, §8g). Recommended cut line: ~116h. Fits a quarter:
+only at the cut line.**

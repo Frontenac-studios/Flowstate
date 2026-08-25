@@ -119,12 +119,12 @@ The sorting criterion is not the size of a thing. It is **how fast you'd want to
 track** — review something faster than its feedback loop and it becomes noise; slower, and you
 find out too late to steer.
 
-| Horizon     | What it holds                                                                                                        | Review    |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | --------- |
-| **Quarter** | The bet. Directions, strategy, learning roadmap, tool spend, compliance.                                             | Quarterly |
-| **Month**   | The money and the delivery. Revenue, effective rate, invoices sent and unpaid, project health, the hire trigger.     | Monthly   |
-| **Week**    | The steering. Pipeline, outreach, features shipped, the Sweep, and _"am I still working on the right thing at all."_ | Weekly    |
-| **Day**     | The doing.                                                                                                           | —         |
+| Horizon     | What it holds                                                                                                                                                            | Review    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| **Quarter** | The bet. Directions, strategy, learning roadmap, tool spend, compliance.                                                                                                 | Quarterly |
+| **Month**   | The money and the delivery. Revenue, effective rate, invoices sent and unpaid, business expenses and tax reserve, what's safe to draw, project health, the hire trigger. | Monthly   |
+| **Week**    | The steering. Pipeline, outreach, features shipped, the Sweep, and _"am I still working on the right thing at all."_                                                     | Weekly    |
+| **Day**     | The doing.                                                                                                                                                               | —         |
 
 ### Reviewed vs. triggered
 
@@ -143,6 +143,17 @@ from the entire goal layer: no targets, no progress, no reviews, no nagging.
 
 **The rule: personal work may be held, never managed.** The day a personal goals view gets built,
 the line has been crossed.
+
+### Money crosses into personal at exactly one point: the draw
+
+A company of one has one pipe between the business and the person — the owner's draw. Flowstate
+owns the **business side of that pipe in full**: revenue in, business expenses out, tax reserved,
+and therefore _what is safe to pay yourself_. It owns **nothing on the personal side of it** — not
+what the draw is spent on, not personal categories, not a personal budget, not a personal bank
+feed. The one personal figure it may hold is a **single monthly cost-of-living number**, set by
+hand and never itemised, so it can state a personal runway and the floor under the draw. One held
+number is _held_. Categorised personal spending is _managed_, and building it is the budgeting app
+this product refuses to become.
 
 ---
 
@@ -214,7 +225,8 @@ generator that never turns off.
 client, what's gone stale, and the Sweep.
 
 **Money** is the monthly surface: revenue, effective rate, hours billed vs. worked, invoices sent
-and unpaid.
+and unpaid, business expenses and tax set-aside, and what's safe to draw. It stops at the draw —
+nothing on the personal side of it lives here.
 
 **Quarter** is the bet: Directions, Targets, the learning roadmap.
 
