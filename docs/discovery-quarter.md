@@ -303,6 +303,9 @@ MISSION names and W5 omitted. Sizes: **S** < 4h · **M** 4–12h · **L** 12–4
 
 ### Revised arithmetic (on top of §8g's ~174h)
 
+> **Superseded by §13** (2026-08-25). The second-pass decisions land v1 at **~190h** with nothing
+> deferred; the table below is the first-pass estimate that assumed a Ledger→v1.1 offset Kat later declined.
+
 |                                                   | Hours        |
 | ------------------------------------------------- | ------------ |
 | v1-scope §8g revised total                        | ~174         |
@@ -406,3 +409,56 @@ Named plainly, because the brief asked:
 3. **Compliance depending on the tickler.** Keeping the tickler in v1 to feed the compliance strip
    is a real ~6h commitment riding on this surface's completeness. If the tickler slips, the strip
    is empty and Quarter loses its foresight read — the one part of §5 with an external dependency.
+
+---
+
+## 13. Second-pass decisions — visual Q&A (2026-08-25)
+
+Eight remaining flows were walked one at a time with rendered option-mockups. These **supersede** the
+relevant earlier sections and the §8 arithmetic where they conflict.
+
+| #   | Question              | Decision                                                                                                                                                                                                                                                                                                                            | Reason                                                                                                                                                                                 |
+| --- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Target measure source | **Hybrid.** Auto-derive where Flowstate owns the data ($ booked from Money, clients-signed from pipeline, shipped from milestones); manual fallback, tagged `↻ auto` / `manual` per bet.                                                                                                                                            | Keeps the review pre-answered for the common kinds without blocking an odd target (e.g. "6 case studies").                                                                             |
+| 2   | Create / edit flow    | **One smart composer.** A single field routes number+date → a bet (then reveals kind / source / horizon / parent Direction **inline for confirmation**) else a Direction.                                                                                                                                                           | Calmest, chat-like; the inline reveal makes the routing confirmable, not silent magic. Supersedes §2/§3's "split by kind".                                                             |
+| 3   | Review entry          | **In-place banner.** The review expands in the Quarter column, like the Sweep (Week) and Ledger (Money). Trigger: last ~week of quarter, drafted silently. If ignored, the prior board persists flagged "closing overdue" — nothing auto-drops.                                                                                     | Consistent with every other review; no modes to enter/exit. Confirms §6.                                                                                                               |
+| 4   | Bet met mid-quarter   | **Celebrate + archive-on-met.** A bet that objectively hits its number is acknowledged and archived off the active board to the quarter record (shows Done in the review). **Only on met** — never on stale/unmet, which stay for the Sweep. A landed bet still counts toward the 3-for-the-quarter (winning early ≠ a fresh slot). | Auto-settling a banked win is not the machine closing a judgment-call door (what the Sweep protects); it keeps the board live.                                                         |
+| 5   | Two Directions        | **Flat "3 of 3" list, each bet chip-tagged to its Direction.**                                                                                                                                                                                                                                                                      | Keeps the per-quarter cap reading as one set; the chip already exists on every card; degrades cleanly to one Direction.                                                                |
+| 6   | Cold start            | **Guided first run.** A one-time, dismissible teach of the Direction→Target model, firing only at zero-Directions / never-completed. Not a recurring gate.                                                                                                                                                                          | The model is genuinely novel; a one-time teach earns its keep without becoming the onboarding gate the product parked.                                                                 |
+| 7   | Learning time source  | **A learning project.** Learning is a real business project (tagged learning, non-client) reusing projects / phases / the timer; Quarter reads it as the track; it appears on the Projects board.                                                                                                                                   | Zero new timer work; **shrinks the schema** — no `learning_tracks` table, just a project flag + capability/`reached_at`; milestones = phases. Supersedes §4's standalone-object model. |
+| 8   | Filter offset         | **No deferral — keep both, extend v1.** The Ledger (W8) stays in v1; the Filter (W10) is committed above the cut.                                                                                                                                                                                                                   | Kat's call: grow the plan rather than cut. And the Filter's ~10h was already inside the ~174h baseline, so committing it is a sequencing decision, not fresh hours.                    |
+
+### Consequences for the model and the schema
+
+- **No `learning_tracks` table** (reverses §4's implementation). Learning = `projects.is_learning`
+  (or a `kind`) + `capability` (title) + `why` + `reached_at`; milestones reuse project **phases**;
+  logged time is ordinary project time. It renders as its own "Learning roadmap" block on Quarter and
+  as a non-client card on the Projects board. Learning-growth cost drops **+5h → +3h**.
+- **Targets gain a `measure_source`** (`auto` | `manual`) and, for `auto`, a derivation key
+  (`money_booked` | `clients_signed` | `milestones_shipped`). The review reads `auto` measures live and
+  leaves `manual` ones as the last-entered value.
+- **A met Target archives on crossing** (`archived_at`, `state=met`) but stays counted in the quarter's
+  cap. Stale/unmet Targets never auto-archive — they route to the Sweep.
+- **A per-user first-run flag** gates the guided teach (fires once, at zero Directions).
+
+### Revised arithmetic (supersedes §8)
+
+|                                                                                   | Hours    |
+| --------------------------------------------------------------------------------- | -------- |
+| v1-scope §8g revised total                                                        | ~174     |
+| W5 grows — learning **+3** (as a project), full review **+9**, read-strips **+4** | +16      |
+| Filter above the cut (already in the ~174 baseline)                               | +0       |
+| Ledger kept in v1 (no deferral)                                                   | +0       |
+| **Revised v1 total**                                                              | **~190** |
+
+~190h ≈ **1.5–1.8 quarters**. Nothing is deferred (Kat's Q8 call). The cheapest routes back toward a
+quarter remain the §8g menu (split W2 −8h, fixed-fee half of W15 −5h, review thin instead of full −5h),
+each reversible and none taken.
+
+### Open questions resolved here
+
+§11 Q1 (Filter displacement → **no deferral**) and the seven audit holes (measure source, create flow,
+review entry, met-target behaviour, two-Direction layout, cold start, learning model) are all **decided
+above**. Still genuinely open from §11: Q3 (retired-item history view — v1.1), Q7 (applied-line metric →
+**raw counts**, decided), Q9 (`year` horizon → kept in enum, no UI). The learning-as-project choice also
+retires §12's least-sure item #2.
