@@ -1,0 +1,615 @@
+<title>Quarter Surface Wireframes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
+<style>
+  /* ---- Flowstate Kash 3.0 tokens (mirrored from src/styles/tokens.css) ---- */
+  :root{
+    --bg:#ffffff; --surface:#ffffff; --surface-2:#fafafa; --canvas:#f1f2f4;
+    --surface-selected:#f1f1f2;
+    --border:#e2e4e8; --border-subtle:#edeff2;
+    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#767e8e;
+    --accent:#16181d; --accent-hover:#000000; --on-accent:#ffffff; --accent-soft:rgba(22,24,29,0.12);
+    --critical:#b3122a;
+    --cat-biz-fill:#e5f5fc; --cat-biz-solid:#009ddc; --cat-biz-text:#0a6a93;
+    --cat-per-fill:#f4e8f4; --cat-per-solid:#973d97; --cat-per-text:#6e2c6e;
+    --reserved:#8a6d1a; --reserved-fill:#fbf3d8;
+    --shadow-surface:0 1px 2px rgba(20,28,40,0.05);
+    --shadow-overlay:0 8px 24px rgba(20,28,40,0.12);
+    --radius-card:14px; --radius-row:8px; --radius-control:5px; --radius-chip:5px; --radius-pill:9999px;
+    --font-sans:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    /* type scale */
+    --t-micro:11px; --t-caption:13px; --t-body:17px; --t-subtitle:19px; --t-title:22px; --t-h1:30px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-sans);
+    background:var(--canvas);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.4;
+    padding:40px 20px 80px;
+  }
+
+  /* ---- studio annotation chrome (sits OUTSIDE the app frame) ---- */
+  .doc{max-width:1000px;margin:0 auto;}
+  .doc-head{margin:0 auto 40px;max-width:760px;}
+  .doc-head .eyebrow{font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;}
+  .doc-head h1{font-size:var(--t-h1);font-weight:600;margin:8px 0 10px;letter-spacing:-.01em;}
+  .doc-head p{font-size:var(--t-body);color:var(--ink-muted);margin:0;max-width:62ch;}
+  .doc-head .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:var(--t-caption);color:var(--ink-muted);}
+  .doc-head .legend b{color:var(--ink);font-weight:500;}
+
+  .board{margin:0 auto 52px;max-width:920px;}
+  .board-label{display:flex;align-items:baseline;gap:12px;margin:0 4px 12px;}
+  .board-label .num{font-size:var(--t-caption);font-weight:600;color:var(--on-accent);background:var(--accent);border-radius:var(--radius-pill);width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .board-label h2{font-size:var(--t-subtitle);font-weight:600;margin:0;}
+  .board-label p{font-size:var(--t-caption);color:var(--ink-muted);margin:0;}
+
+  /* ---- the app frame: white surface, hairline, like the real shell ---- */
+  .frame{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-card);box-shadow:var(--shadow-surface);overflow:hidden;display:flex;min-height:200px;}
+  .rail{flex:0 0 200px;border-right:1px solid var(--border-subtle);background:var(--surface-2);padding:16px 12px;display:flex;flex-direction:column;gap:2px;}
+  .rail .brand{font-size:var(--t-caption);font-weight:600;color:var(--ink);padding:6px 10px 14px;letter-spacing:.02em;}
+  .rail a{display:flex;align-items:center;gap:10px;font-size:var(--t-caption);color:var(--ink-muted);text-decoration:none;padding:7px 10px;border-radius:var(--radius-row);}
+  .rail a .dot{width:14px;height:14px;border-radius:4px;border:1.5px solid currentColor;opacity:.55;}
+  .rail a.active{background:var(--surface-selected);color:var(--ink);font-weight:500;}
+  .rail a.active .dot{opacity:1;}
+
+  /* ---- page column: mirrors max-w-3xl flex-col gap-6 py-2 ---- */
+  .page{flex:1 1 auto;padding:22px 30px 34px;min-width:0;background:var(--bg);}
+  .col{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:22px;}
+
+  .phead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;}
+  .phead h1{font-size:var(--t-title);font-weight:600;margin:0;letter-spacing:-.01em;}
+  .phead .sub{font-size:var(--t-body);color:var(--ink-muted);margin-top:2px;}
+  .phead .right{text-align:right;font-size:var(--t-caption);color:var(--ink-faint);}
+
+  .section-eyebrow{font-size:var(--t-micro);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;display:flex;align-items:center;justify-content:space-between;}
+  .cap{font-size:var(--t-micro);letter-spacing:.06em;color:var(--ink-faint);font-weight:500;}
+
+  /* directions */
+  .directions{display:flex;flex-direction:column;gap:14px;}
+  .direction{border-bottom:1px solid var(--border-subtle);padding-bottom:14px;}
+  .direction .stmt{font-size:var(--t-subtitle);font-weight:500;color:var(--ink);letter-spacing:-.005em;line-height:1.35;}
+  .direction .applied{margin-top:7px;font-size:var(--t-caption);color:var(--ink-muted);display:flex;align-items:center;gap:7px;}
+  .direction .applied .filter-ico{width:13px;height:13px;color:var(--ink-faint);}
+
+  /* generic card */
+  .card{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow-surface);}
+  .card.flush{border-radius:var(--radius-row);}
+
+  /* targets */
+  .targets{display:flex;flex-direction:column;gap:10px;}
+  .target{padding:14px 16px;}
+  .target .top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .target .title{font-size:var(--t-body);font-weight:500;color:var(--ink);}
+  .target .measure{font-size:var(--t-caption);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500;}
+  .target .measure .of{color:var(--ink-faint);font-weight:400;}
+  .bar{height:6px;border-radius:var(--radius-pill);background:var(--border-subtle);margin-top:11px;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:var(--accent);border-radius:var(--radius-pill);}
+  .target .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;}
+  .tags{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .chip{font-size:var(--t-micro);font-weight:500;padding:2px 8px;border-radius:var(--radius-chip);border:1px solid var(--border);color:var(--ink-muted);background:var(--surface-2);letter-spacing:.02em;}
+  .chip.dir{background:transparent;border-color:var(--border);color:var(--ink-faint);}
+  .chip.biz{background:var(--cat-biz-fill);border-color:transparent;color:var(--cat-biz-text);}
+  .chip.horizon{border-color:var(--border);color:var(--ink-muted);}
+  .foot .movement{font-size:var(--t-caption);color:var(--ink-faint);}
+  .foot .movement.flat{color:var(--ink-faint);}
+  .shipped{display:inline-flex;align-items:center;gap:6px;font-size:var(--t-caption);color:var(--ink);font-weight:500;}
+  .checkmark{width:16px;height:16px;border-radius:var(--radius-pill);background:var(--accent);color:var(--on-accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;}
+
+  /* section header w/ counter + add */
+  .sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .sec-head .lhs{display:flex;align-items:baseline;gap:9px;}
+  .sec-head h3{font-size:var(--t-body);font-weight:600;margin:0;color:var(--ink);}
+  .counter{font-size:var(--t-caption);color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .counter.full{color:var(--ink-muted);}
+
+  /* buttons */
+  .btn{font-family:inherit;font-size:var(--t-caption);font-weight:500;border-radius:var(--radius-control);padding:7px 13px;cursor:pointer;border:1.5px solid var(--ink);background:transparent;color:var(--ink);line-height:1;}
+  .btn.ghost{border-color:transparent;color:var(--ink-muted);border-radius:var(--radius-pill);padding:6px 11px;}
+  .btn.ghost:hover{background:var(--surface-2);}
+  .btn.sm{font-size:var(--t-micro);padding:5px 10px;}
+  .btn.disabled{border-color:var(--border);color:var(--ink-faint);cursor:not-allowed;}
+  .btn.solid{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+  .btn-row{display:flex;gap:8px;}
+
+  /* learning roadmap */
+  .roadmap .cap-stmt{font-size:var(--t-body);font-weight:500;color:var(--ink);line-height:1.35;}
+  .roadmap .why{margin-top:6px;font-size:var(--t-caption);color:var(--ink-muted);}
+  .roadmap .rate{margin-top:2px;font-size:var(--t-caption);color:var(--ink);font-variant-numeric:tabular-nums;}
+  .roadmap .rate b{font-weight:600;}
+  .milestones{margin-top:13px;display:flex;flex-direction:column;gap:8px;}
+  .ms{display:flex;align-items:center;gap:10px;font-size:var(--t-caption);color:var(--ink);}
+  .ms .box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex:0 0 auto;}
+  .ms.done .box{background:var(--accent);border-color:var(--accent);color:var(--on-accent);display:inline-flex;align-items:center;justify-content:center;font-size:9px;}
+  .ms.done .lbl{color:var(--ink-muted);text-decoration:line-through;text-decoration-color:var(--border);}
+
+  /* review strip (money / compliance — reviewed here, owned elsewhere) */
+  .strip{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 16px;text-decoration:none;color:inherit;}
+  .strip:hover{background:var(--surface-2);}
+  .strip .lhs{display:flex;align-items:center;gap:12px;min-width:0;}
+  .strip .ico{width:18px;height:18px;color:var(--ink-muted);flex:0 0 auto;}
+  .strip .t{font-size:var(--t-body);font-weight:500;color:var(--ink);}
+  .strip .m{font-size:var(--t-caption);color:var(--ink-muted);}
+  .strip .val{font-size:var(--t-body);font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .strip .arrow{color:var(--ink-faint);flex:0 0 auto;}
+  .owned{font-size:var(--t-micro);color:var(--ink-faint);border:1px solid var(--border-subtle);background:var(--surface-2);border-radius:var(--radius-chip);padding:2px 7px;letter-spacing:.02em;white-space:nowrap;}
+  .compliance-list{display:flex;flex-direction:column;}
+  .compliance-list .strip + .strip{border-top:1px solid var(--border-subtle);}
+  .compliance-list .strip .m .due{color:var(--ink);font-weight:500;}
+
+  /* review banner */
+  .banner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-card);box-shadow:var(--shadow-surface);}
+  .banner .txt{font-size:var(--t-body);color:var(--ink);}
+  .banner .txt b{font-weight:600;}
+  .banner .txt .sub{display:block;font-size:var(--t-caption);color:var(--ink-muted);margin-top:2px;}
+
+  /* empty states */
+  .empty{border:1px dashed var(--border);background:var(--surface-2);border-radius:var(--radius-card);padding:20px 18px;text-align:left;}
+  .empty .t{font-size:var(--t-body);font-weight:500;color:var(--ink);}
+  .empty .b{font-size:var(--t-caption);color:var(--ink-muted);margin-top:5px;max-width:52ch;line-height:1.5;}
+  .empty .btn{margin-top:14px;}
+  .empty .slots{display:flex;gap:8px;margin-top:14px;}
+  .empty .slot{flex:1;border:1px dashed var(--border);border-radius:var(--radius-row);height:46px;display:flex;align-items:center;justify-content:center;font-size:var(--t-caption);color:var(--ink-faint);background:var(--bg);}
+
+  /* review mode rulings */
+  .ruling{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-pill);overflow:hidden;}
+  .ruling button{font-family:inherit;font-size:var(--t-micro);font-weight:500;padding:5px 11px;border:none;background:transparent;color:var(--ink-muted);cursor:pointer;border-right:1px solid var(--border);}
+  .ruling button:last-child{border-right:none;}
+  .ruling button.on{background:var(--accent);color:var(--on-accent);}
+  .ruling button.on.warn{background:var(--reserved);}
+  .outcome{font-size:var(--t-caption);font-weight:500;}
+  .outcome.met{color:var(--ink);}
+  .outcome.met .k{color:var(--cat-biz-text);}
+  .outcome.miss{color:var(--ink-muted);}
+  .draft-tag{font-size:var(--t-micro);color:var(--ink-faint);font-style:italic;letter-spacing:.01em;}
+  .review-item{padding:14px 16px;}
+  .review-item .top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .review-item + .review-item{border-top:1px solid var(--border-subtle);}
+  .review-item .measure{font-size:var(--t-caption);color:var(--ink-muted);font-variant-numeric:tabular-nums;margin-top:5px;}
+  .review-block .blk-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--border-subtle);}
+  .review-block .blk-head h3{margin:0;font-size:var(--t-caption);font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-faint);}
+
+  /* cap-enforcement modal (artboard 4) */
+  .modal-scrim{position:relative;padding:26px;background:rgba(22,24,29,0.28);}
+  .modal{max-width:440px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);overflow:hidden;}
+  .modal .mhead{padding:18px 20px 12px;}
+  .modal .mhead h3{font-size:var(--t-subtitle);font-weight:600;margin:0 0 6px;}
+  .modal .mhead p{font-size:var(--t-caption);color:var(--ink-muted);margin:0;line-height:1.5;}
+  .modal .mhead p b{color:var(--ink);font-weight:600;}
+  .retire-list{padding:6px 12px 12px;}
+  .retire-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 8px;border-radius:var(--radius-row);}
+  .retire-row:hover{background:var(--surface-2);}
+  .retire-row + .retire-row{border-top:1px solid var(--border-subtle);}
+  .retire-row .rt{font-size:var(--t-caption);color:var(--ink);font-weight:500;}
+  .retire-row .rm{font-size:var(--t-micro);color:var(--ink-faint);margin-top:2px;font-variant-numeric:tabular-nums;}
+  .modal .mfoot{padding:12px 20px 18px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-subtle);background:var(--surface-2);}
+  .modal .mfoot .note{font-size:var(--t-micro);color:var(--ink-faint);max-width:24ch;line-height:1.4;}
+
+  .note-line{font-size:var(--t-caption);color:var(--ink-muted);margin:10px 4px 0;line-height:1.5;}
+  .note-line b{color:var(--ink);font-weight:500;}
+
+  svg{display:block;}
+</style>
+
+<div class="doc">
+  <div class="doc-head">
+    <div class="eyebrow">Flowstate · Discovery</div>
+    <h1>The Quarter surface</h1>
+    <p>The bet altitude — reviewed quarterly. Directions you apply, Targets you measure (capped at three), one learning track, and calm read-strips for the money and compliance owned by other surfaces. Rendered in Flowstate’s real tokens: Figtree, flat, hairline B&amp;W, category tint only where a client colour already lives.</p>
+    <div class="legend">
+      <span><b>On screen always:</b> Directions · Targets · Learning</span>
+      <span><b>Reviewed, owned elsewhere:</b> Tool spend → Money · Compliance → tickler/Today</span>
+      <span><b>One keystroke away:</b> the quarterly review</span>
+    </div>
+  </div>
+
+  <!-- ============ ARTBOARD 1 — FULL QUARTER MID-FLIGHT ============ -->
+  <div class="board">
+    <div class="board-label">
+      <span class="num">1</span>
+      <h2>A full quarter, mid-flight</h2>
+      <p>Week 7 of Q3. Everything set, everything moving. This is the resting state.</p>
+    </div>
+    <div class="frame">
+      <nav class="rail">
+        <div class="brand">Flowstate</div>
+        <a href="#"><span class="dot"></span>Today</a>
+        <a href="#"><span class="dot"></span>Week</a>
+        <a href="#"><span class="dot"></span>Projects</a>
+        <a href="#"><span class="dot"></span>Money</a>
+        <a href="#" class="active"><span class="dot"></span>Quarter</a>
+      </nav>
+      <div class="page">
+        <div class="col">
+
+          <div class="phead">
+            <div>
+              <h1>Quarter</h1>
+              <div class="sub">Q3 2026 · Jul – Sep</div>
+            </div>
+            <div class="right">36 days left<br>review drafts Sep 24</div>
+          </div>
+
+          <!-- DIRECTIONS -->
+          <div>
+            <div class="section-eyebrow" style="margin-bottom:12px;">
+              <span>Direction</span><span class="cap">1 of 2 · applied, never measured</span>
+            </div>
+            <div class="directions">
+              <div class="direction">
+                <div class="stmt">We serve early-stage teams shipping production software. We don’t take design-only or agency-subcontract work.</div>
+                <div class="applied">
+                  <svg class="filter-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+                  Scored 14 leads this quarter · 9 declined on this basis · feeds the Filter
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TARGETS -->
+          <div>
+            <div class="sec-head" style="margin-bottom:11px;">
+              <div class="lhs"><h3>The bets</h3><span class="counter full">3 of 3</span></div>
+              <button class="btn ghost sm">＋ Add a bet</button>
+            </div>
+            <div class="targets">
+
+              <div class="card target">
+                <div class="top">
+                  <span class="title">Sign 2 new production-software clients</span>
+                  <span class="measure">1 <span class="of">of 2 signed</span></span>
+                </div>
+                <div class="bar"><i style="width:50%"></i></div>
+                <div class="foot">
+                  <div class="tags">
+                    <span class="chip dir">Early-stage software</span>
+                    <span class="chip horizon">Quarter</span>
+                  </div>
+                  <span class="movement">Great White signed · 2 in Filter</span>
+                </div>
+              </div>
+
+              <div class="card target">
+                <div class="top">
+                  <span class="title">$30k booked this quarter</span>
+                  <span class="measure">$18.4k <span class="of">of $30k</span></span>
+                </div>
+                <div class="bar"><i style="width:61%"></i></div>
+                <div class="foot">
+                  <div class="tags">
+                    <span class="chip dir">Early-stage software</span>
+                    <span class="chip horizon">Quarter</span>
+                  </div>
+                  <span class="movement">+$4.2k this month · 3 projects serving</span>
+                </div>
+              </div>
+
+              <div class="card target">
+                <div class="top">
+                  <span class="title">Flowstate v1 shipped</span>
+                  <span class="shipped"><span class="checkmark">✓</span> on track</span>
+                </div>
+                <div class="bar"><i style="width:72%"></i></div>
+                <div class="foot">
+                  <div class="tags">
+                    <span class="chip dir">Early-stage software</span>
+                    <span class="chip horizon">Quarter</span>
+                    <span class="chip">milestone</span>
+                  </div>
+                  <span class="movement flat">no movement 2 weeks</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- LEARNING ROADMAP -->
+          <div>
+            <div class="sec-head" style="margin-bottom:11px;">
+              <div class="lhs"><h3>Learning roadmap</h3><span class="counter">1 active</span></div>
+              <span class="cap">time logged as context · progress by milestone</span>
+            </div>
+            <div class="card roadmap" style="padding:15px 16px;">
+              <div class="cap-stmt">Can design & ship a Postgres-backed analytics dashboard unaided</div>
+              <div class="why">Why → the capability that unlocks the analytics work I keep turning down</div>
+              <div class="rate">14h logged this quarter · <b>2 of 4</b> milestones · no target, no quota</div>
+              <div class="milestones">
+                <div class="ms done"><span class="box">✓</span><span class="lbl">Ship one internal dashboard end-to-end</span></div>
+                <div class="ms done"><span class="box">✓</span><span class="lbl">Learn window functions + query tuning</span></div>
+                <div class="ms"><span class="box"></span><span class="lbl">Deliver a client dashboard at the target rate</span></div>
+                <div class="ms"><span class="box"></span><span class="lbl">Write it up as a case study</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- REVIEWED, OWNED ELSEWHERE -->
+          <div>
+            <div class="section-eyebrow" style="margin-bottom:11px;">
+              <span>Reviewed here · owned elsewhere</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+
+              <a class="card strip" href="#">
+                <div class="lhs">
+                  <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18M3 12h18M3 17h10"/></svg>
+                  <div>
+                    <div class="t">Tool spend</div>
+                    <div class="m">$214/mo · $642 this quarter · ▲ $38 vs Q2</div>
+                  </div>
+                </div>
+                <span class="owned">lives on Money</span>
+                <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+              </a>
+
+              <div class="card">
+                <div class="strip" style="padding-bottom:9px;cursor:default;">
+                  <div class="lhs">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+                    <div><div class="t">Compliance this quarter</div></div>
+                  </div>
+                  <span class="owned">fires on Today on the date</span>
+                </div>
+                <div class="compliance-list">
+                  <a class="strip" href="#" style="padding-top:9px;">
+                    <div class="lhs"><span style="width:18px;flex:0 0 auto;"></span><div><div class="t" style="font-weight:400;font-size:var(--t-caption);">Q3 estimated tax</div><div class="m"><span class="due">due Sep 15</span> · $4,200 reserved on Money ✓</div></div></div>
+                    <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                  </a>
+                  <a class="strip" href="#">
+                    <div class="lhs"><span style="width:18px;flex:0 0 auto;"></span><div><div class="t" style="font-weight:400;font-size:var(--t-caption);">LLC annual report</div><div class="m"><span class="due">due Aug 30</span> · not yet reserved</div></div></div>
+                    <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <p class="note-line"><b>Design intent —</b> the Direction is a sentence, never a bar; its only “progress” is the <i>applied</i> line (leads scored / declined), which is how “applied, never measured” shows up without measuring it. Tool spend & compliance are one-line read-strips with an <i>owned-elsewhere</i> tag — Quarter reviews them, Money & the tickler own them.</p>
+  </div>
+
+  <!-- ============ ARTBOARD 2 — NEAR-EMPTY START ============ -->
+  <div class="board">
+    <div class="board-label">
+      <span class="num">2</span>
+      <h2>The near-empty start of a quarter</h2>
+      <p>Day 2 of Q4. The Direction carried over from Q3; the bets and learning track are blank and invite you to close doors.</p>
+    </div>
+    <div class="frame">
+      <nav class="rail">
+        <div class="brand">Flowstate</div>
+        <a href="#"><span class="dot"></span>Today</a>
+        <a href="#"><span class="dot"></span>Week</a>
+        <a href="#"><span class="dot"></span>Projects</a>
+        <a href="#"><span class="dot"></span>Money</a>
+        <a href="#" class="active"><span class="dot"></span>Quarter</a>
+      </nav>
+      <div class="page">
+        <div class="col">
+
+          <div class="phead">
+            <div>
+              <h1>Quarter</h1>
+              <div class="sub">Q4 2026 · Oct – Dec</div>
+            </div>
+            <div class="right">fresh quarter<br>carried from Q3</div>
+          </div>
+
+          <div>
+            <div class="section-eyebrow" style="margin-bottom:12px;">
+              <span>Direction</span><span class="cap">1 of 2 · carried from Q3</span>
+            </div>
+            <div class="directions">
+              <div class="direction" style="border-bottom:none;padding-bottom:0;">
+                <div class="stmt">We serve early-stage teams shipping production software. We don’t take design-only or agency-subcontract work.</div>
+                <div class="applied">
+                  <svg class="filter-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+                  Still active · scored 0 leads yet this quarter
+                </div>
+                <div class="btn-row" style="margin-top:11px;">
+                  <button class="btn ghost sm">Edit</button>
+                  <button class="btn ghost sm">＋ Add a second direction</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="sec-head" style="margin-bottom:11px;">
+              <div class="lhs"><h3>The bets</h3><span class="counter">0 of 3</span></div>
+            </div>
+            <div class="empty">
+              <div class="t">Name this quarter’s bets</div>
+              <div class="b">Up to three measurable Targets, each behind your Direction. A number and a date — “sign 2 clients”, “$30k booked”, “v1 shipped”. Three is the cap; twelve priorities is zero priorities.</div>
+              <div class="slots">
+                <div class="slot">＋ bet 1</div>
+                <div class="slot">＋ bet 2</div>
+                <div class="slot">＋ bet 3</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="sec-head" style="margin-bottom:11px;">
+              <div class="lhs"><h3>Learning roadmap</h3><span class="counter">0 active</span></div>
+            </div>
+            <div class="empty">
+              <div class="t">Pick one capability to build this quarter</div>
+              <div class="b">One capability at a time — the thing you keep wishing you could do unaided. You log time to it like any work; progress is the milestones toward it, never an hours quota.</div>
+              <button class="btn">Set a learning track</button>
+            </div>
+          </div>
+
+          <div style="opacity:.62;">
+            <div class="section-eyebrow" style="margin-bottom:11px;"><span>Reviewed here · owned elsewhere</span></div>
+            <div class="card strip" style="cursor:default;">
+              <div class="lhs">
+                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18M3 12h18M3 17h10"/></svg>
+                <div><div class="t">Tool spend & compliance</div><div class="m">appear once the quarter has data</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <p class="note-line"><b>Design intent —</b> a new quarter isn’t a blank page: the Direction is durable and carries; only the Targets and learning track reset. Empty blocks read as an <i>invitation to close doors</i> (three slots, hard cap), not a to-do backlog. Conditional read-strips collapse to one muted line until there’s data.</p>
+  </div>
+
+  <!-- ============ ARTBOARD 3 — QUARTERLY REVIEW MID-EDIT ============ -->
+  <div class="board">
+    <div class="board-label">
+      <span class="num">3</span>
+      <h2>The quarterly review, mid-edit</h2>
+      <p>The Sweep at the top altitude. It arrives pre-answered from the data — you rule drop / park / keep on the bet itself, then it drafts the next quarter.</p>
+    </div>
+    <div class="frame">
+      <nav class="rail">
+        <div class="brand">Flowstate</div>
+        <a href="#"><span class="dot"></span>Today</a>
+        <a href="#"><span class="dot"></span>Week</a>
+        <a href="#"><span class="dot"></span>Projects</a>
+        <a href="#"><span class="dot"></span>Money</a>
+        <a href="#" class="active"><span class="dot"></span>Quarter</a>
+      </nav>
+      <div class="page">
+        <div class="col">
+
+          <div class="phead">
+            <div>
+              <h1>Close Q3</h1>
+              <div class="sub">Drafted from your log · edit and confirm</div>
+            </div>
+            <div class="right">5 min<br>of judgment</div>
+          </div>
+
+          <div class="banner">
+            <div class="txt"><b>Here’s how Q3 went.</b><span class="sub">2 bets met the mark, 1 slipped, your learning track advanced one milestone. Rule on each, then start Q4.</span></div>
+          </div>
+
+          <!-- DIRECTIONS review -->
+          <div class="card review-block">
+            <div class="blk-head"><h3>Direction — keep or retire</h3><span class="draft-tag">drafted: keep</span></div>
+            <div class="review-item">
+              <div class="top">
+                <span class="title" style="font-size:var(--t-body);font-weight:500;">We serve early-stage teams shipping production software…</span>
+                <div class="ruling"><button class="on">Keep</button><button>Retire</button></div>
+              </div>
+              <div class="measure">Applied to 14 leads, declined 9 — earning its place. Durable, carries to Q4.</div>
+            </div>
+          </div>
+
+          <!-- TARGETS review -->
+          <div class="card review-block">
+            <div class="blk-head"><h3>The bets — rule on each</h3><span class="draft-tag">drafted from progress</span></div>
+
+            <div class="review-item">
+              <div class="top">
+                <span class="title" style="font-size:var(--t-body);font-weight:500;">$30k booked this quarter</span>
+                <div class="ruling"><button class="on">Done</button><button>Carry</button><button>Drop</button></div>
+              </div>
+              <div class="measure"><span class="outcome met"><span class="k">✓ met</span></span> — $31.2k of $30k. Rolls into the effective-rate history.</div>
+            </div>
+
+            <div class="review-item">
+              <div class="top">
+                <span class="title" style="font-size:var(--t-body);font-weight:500;">Flowstate v1 shipped</span>
+                <div class="ruling"><button>Done</button><button class="on warn">Carry to Q4</button><button>Drop</button></div>
+              </div>
+              <div class="measure"><span class="outcome miss">◑ partial</span> — 72%, no movement last 3 weeks. Drafted to carry; edit the date if you re-bet it.</div>
+            </div>
+
+            <div class="review-item">
+              <div class="top">
+                <span class="title" style="font-size:var(--t-body);font-weight:500;">Sign 2 new production-software clients</span>
+                <div class="ruling"><button class="on">Done</button><button>Carry</button><button>Drop</button></div>
+              </div>
+              <div class="measure"><span class="outcome met"><span class="k">✓ met</span></span> — 2 of 2 (Great White, Hume). Both live on Projects.</div>
+            </div>
+          </div>
+
+          <!-- LEARNING review -->
+          <div class="card review-block">
+            <div class="blk-head"><h3>Learning roadmap</h3><span class="draft-tag">drafted: carry</span></div>
+            <div class="review-item">
+              <div class="top">
+                <span class="title" style="font-size:var(--t-body);font-weight:500;">Postgres-backed analytics dashboards</span>
+                <div class="ruling"><button>Reached</button><button class="on">Carry</button><button>Drop</button></div>
+              </div>
+              <div class="measure">2 of 4 milestones · 38h logged across the quarter. Capability not yet reached — carry.</div>
+            </div>
+          </div>
+
+          <!-- NEXT QUARTER DRAFT -->
+          <div class="card review-block" style="border-color:var(--border);">
+            <div class="blk-head" style="background:var(--surface-2);"><h3>Start Q4 — drafted</h3><span class="draft-tag">edit before you commit</span></div>
+            <div style="padding:14px 16px;">
+              <div class="cap" style="margin-bottom:8px;">Carried forward</div>
+              <div class="stmt" style="font-size:var(--t-body);font-weight:500;margin-bottom:4px;">Direction · Early-stage software (kept)</div>
+              <div style="font-size:var(--t-caption);color:var(--ink-muted);margin-bottom:14px;">1 bet carried (v1 shipped) · learning track carried</div>
+              <div class="cap" style="margin-bottom:8px;">Open slots — name up to 2 more bets</div>
+              <div class="empty" style="padding:0;border:none;background:transparent;">
+                <div class="slots" style="margin-top:0;">
+                  <div class="slot" style="background:var(--surface-2);border-style:solid;border-color:var(--border-subtle);color:var(--ink-muted);">v1 shipped ↩</div>
+                  <div class="slot">＋ bet 2</div>
+                  <div class="slot">＋ bet 3</div>
+                </div>
+              </div>
+              <div class="btn-row" style="margin-top:16px;justify-content:flex-end;">
+                <button class="btn ghost">Save draft</button>
+                <button class="btn solid">Open Q4</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <p class="note-line"><b>Design intent —</b> every ruling is pre-selected from the data (the <i>drafted</i> tags) so the review is five minutes of editing, not forty of recall. Same drop/park/keep verbs as the weekly Sweep, one altitude up — on Directions, Targets, and the learning track. The review’s last act is to hand you a drafted next quarter, so closing one and opening the next is a single ritual.</p>
+  </div>
+
+  <!-- ============ ARTBOARD 4 — CAP ENFORCEMENT ============ -->
+  <div class="board">
+    <div class="board-label">
+      <span class="num">4</span>
+      <h2>Adding a fourth bet — the cap, as a moment</h2>
+      <p>The cap is enforced in the mutation. In the UI it isn’t an error toast — it’s the door-closing decision made visible: to add one, retire one.</p>
+    </div>
+    <div class="frame" style="min-height:0;">
+      <div class="modal-scrim" style="flex:1;">
+        <div class="modal">
+          <div class="mhead">
+            <h3>You already have three bets</h3>
+            <p>Three per quarter is the cap — it’s the point of the surface. To add <b>“Publish 6 case studies”</b>, choose one to retire.</p>
+          </div>
+          <div class="retire-list">
+            <div class="retire-row">
+              <div><div class="rt">Sign 2 new production-software clients</div><div class="rm">1 of 2 · signed Great White</div></div>
+              <button class="btn sm ghost">Retire</button>
+            </div>
+            <div class="retire-row">
+              <div><div class="rt">$30k booked this quarter</div><div class="rm">$18.4k of $30k · 61%</div></div>
+              <button class="btn sm ghost">Retire</button>
+            </div>
+            <div class="retire-row">
+              <div><div class="rt">Flowstate v1 shipped</div><div class="rm">72% · no movement 2 weeks</div></div>
+              <button class="btn sm ghost">Retire</button>
+            </div>
+          </div>
+          <div class="mfoot">
+            <span class="note">Retiring keeps the bet in Q3’s record — it isn’t deleted.</span>
+            <button class="btn ghost">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note-line"><b>Design intent —</b> W5 specs the cap as a mutation that “fails with the message naming what must be retired.” As UX that failure becomes the whole decision: the act of adding a fourth <i>is</i> the act of closing a door on an existing one. No fourth slot ever exists to fill.</p>
+  </div>
+
+</div>
