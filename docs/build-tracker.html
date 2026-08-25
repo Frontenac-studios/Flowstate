@@ -6,16 +6,16 @@
     <title>Flowstate v1 — Build Tracker</title>
     <style>
       :root {
-        --bg: #eef0f4;
+        --bg: #edf3f2;
         --surface: #ffffff;
-        --surface-2: #f4f6f9;
-        --ink: #1a1f26;
-        --ink-2: #5a636e;
-        --ink-3: #9099a3;
-        --line: #e5e8ee;
-        --line-2: #d3d9e2;
-        --accent: #4f46e5;
-        --accent-soft: #ecebfb;
+        --surface-2: #eef5f4;
+        --ink: #16211f;
+        --ink-2: #52615d;
+        --ink-3: #8aa09b;
+        --line: #dfeae8;
+        --line-2: #cadeda;
+        --accent: #0d9488;
+        --accent-soft: #d5efeb;
         --shadow: 0 1px 3px rgba(20, 25, 40, 0.06), 0 1px 2px rgba(20, 25, 40, 0.04);
         --shadow-lg: 0 4px 16px rgba(20, 25, 40, 0.08);
         --s-todo: #7b8593;
@@ -33,65 +33,6 @@
         --s-parked: #7b8593;
         --s-parked-bg: #eef0f3;
       }
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) {
-          --bg: #0f1218;
-          --surface: #181c23;
-          --surface-2: #1f242c;
-          --ink: #e9ecf1;
-          --ink-2: #a6afba;
-          --ink-3: #6c7580;
-          --line: #262c35;
-          --line-2: #333b45;
-          --accent: #8b85f5;
-          --accent-soft: #23233f;
-          --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-          --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.45);
-          --s-todo: #99a2ad;
-          --s-todo-bg: #262c34;
-          --s-wip: #e0a544;
-          --s-wip-bg: #362a13;
-          --s-review: #6ea6ee;
-          --s-review-bg: #17273c;
-          --s-blocked: #ec8080;
-          --s-blocked-bg: #38201f;
-          --s-done: #5fbd82;
-          --s-done-bg: #163325;
-          --s-deferred: #b6a3ef;
-          --s-deferred-bg: #26213f;
-          --s-parked: #99a2ad;
-          --s-parked-bg: #262c34;
-        }
-      }
-      :root[data-theme="dark"] {
-        --bg: #0f1218;
-        --surface: #181c23;
-        --surface-2: #1f242c;
-        --ink: #e9ecf1;
-        --ink-2: #a6afba;
-        --ink-3: #6c7580;
-        --line: #262c35;
-        --line-2: #333b45;
-        --accent: #8b85f5;
-        --accent-soft: #23233f;
-        --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-        --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.45);
-        --s-todo: #99a2ad;
-        --s-todo-bg: #262c34;
-        --s-wip: #e0a544;
-        --s-wip-bg: #362a13;
-        --s-review: #6ea6ee;
-        --s-review-bg: #17273c;
-        --s-blocked: #ec8080;
-        --s-blocked-bg: #38201f;
-        --s-done: #5fbd82;
-        --s-done-bg: #163325;
-        --s-deferred: #b6a3ef;
-        --s-deferred-bg: #26213f;
-        --s-parked: #99a2ad;
-        --s-parked-bg: #262c34;
-      }
-
       * { box-sizing: border-box; }
       html { -webkit-text-size-adjust: 100%; }
       body {
@@ -198,7 +139,7 @@
       .c-item .d { color: var(--ink-2); font-size: 12.5px; margin-top: 3px; line-height: 1.45; }
       .c-deps { color: var(--ink-3); font-size: 12px; white-space: nowrap; }
       .c-est, .c-act { width: 96px; }
-      .c-status { width: 150px; }
+      .c-status { width: 188px; }
       .c-x { width: 34px; }
 
       input.num {
@@ -209,9 +150,10 @@
       input.num:focus { outline: none; border-color: var(--accent); background: var(--bg); }
 
       select.status {
-        width: 100%; border-radius: 999px; padding: 6px 12px; border: 1.5px solid;
+        width: 100%; min-width: 160px; border-radius: 999px; padding: 6px 14px; border: 1.5px solid;
         font-size: 12.5px; font-weight: 650; cursor: pointer;
         -webkit-appearance: none; appearance: none; text-align: left;
+        white-space: nowrap; text-overflow: clip;
       }
       .rm { border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 17px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
       .rm:hover { color: var(--s-blocked); background: var(--s-blocked-bg); }
@@ -255,7 +197,6 @@
           <button class="btn" id="exportBtn">Export JSON</button>
           <button class="btn" id="importBtn">Import</button>
           <button class="btn" id="downloadHtmlBtn">Save HTML</button>
-          <button class="btn" id="themeBtn" title="Toggle light / dark">◐</button>
           <input type="file" id="importFile" accept="application/json" style="display: none" />
         </div>
       </header>
@@ -582,17 +523,6 @@
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       }
-
-      const themeBtn = document.getElementById("themeBtn");
-      const savedTheme = localStorage.getItem("ftbt-theme");
-      if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
-      themeBtn.addEventListener("click", () => {
-        const cur = document.documentElement.getAttribute("data-theme");
-        const isDark = cur === "dark" || (!cur && matchMedia("(prefers-color-scheme: dark)").matches);
-        const next = isDark ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", next);
-        localStorage.setItem("ftbt-theme", next);
-      });
 
       renderAll();
       save();
