@@ -20,6 +20,7 @@ import { settingsRouter } from "./settings";
 import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
 import { timeEntriesRouter } from "./time-entries";
+import { timeTagsRouter } from "./time-tags";
 import { syncRouter } from "./sync";
 import { weekDraftRouter } from "./week-draft";
 import { weekDayPrioritiesRouter } from "./week-day-priorities";
@@ -50,6 +51,7 @@ export const appRouter = createTRPCRouter({
   taskBulkImports: taskBulkImportsRouter,
   tasks: tasksRouter,
   timeEntries: timeEntriesRouter,
+  timeTags: timeTagsRouter,
   weekDraft: weekDraftRouter,
   weekDayPriorities: weekDayPrioritiesRouter,
   weekOverCommit: weekOverCommitRouter,

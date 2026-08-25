@@ -16,6 +16,8 @@ import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
 import { NotificationsAndAssistanceSection } from "./AssistanceSettingsSection";
 import { SyncStatusPanel } from "./SyncStatusPanel";
+import { TimeExportSection } from "./TimeExportSection";
+import { TimeTagsSection } from "./TimeTagsSection";
 
 const HOUR_VALUES = Array.from({ length: 24 }, (_, h) => h);
 
@@ -283,6 +285,7 @@ export function SettingsForm() {
                 Kash disables gradient animation and uses more opaque panels instead of heavy blur.
               </p>
             </section>
+            <TimeTagsSection />
           </>
         ) : null}
 
@@ -315,7 +318,12 @@ export function SettingsForm() {
           </section>
         ) : null}
 
-        {tab === "data" ? <SyncStatusPanel /> : null}
+        {tab === "data" ? (
+          <div className="space-y-6">
+            <SyncStatusPanel />
+            <TimeExportSection />
+          </div>
+        ) : null}
       </div>
 
       <Link
