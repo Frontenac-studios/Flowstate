@@ -70,6 +70,11 @@ be built at all.
   color emoji. This holds across all five surfaces, not just Money. (The only forced exception
   is a published-artifact browser-tab favicon, which the hosting platform requires be an
   emoji; it is never in-app chrome.)
+- **Strip existing emoji, then guard it — a build task, not just a rule.** Audit the shipped
+  UI (`src/`) for emoji in copy, labels, empty states, toasts, and icon placeholders; replace
+  each with the monochrome icon set or plain text. Then add a **CI guard** (lint rule or test)
+  that fails if an emoji codepoint appears in a `src/**` UI string, so none creep back. Small —
+  a chore, foldable into the design-system foundations or the teardown (W12).
 
 ---
 
@@ -319,6 +324,7 @@ deletion of ~18 entries from a map rather than a rebase across 18 dropped tables
 - [ ] A project with `is_maintenance = true` requires no target and never appears in any goal-layer query — enforced in the query layer, with a test that asserts a maintenance project is absent from Target progress.
 - [ ] `/clients` list + detail: create, edit rate, archive. No delete (archive only).
 - [ ] Existing project rows all carry a client or are explicitly marked internal/personal after migration — verified by a count query returning 0 unassigned.
+- [ ] **Projects surface presentation (Ch.3 walk-through, 2026-08-25).** The Miller board is promoted to the Projects surface **root** — the shipped card gallery and the per-project phase→task drill fold into one Finder board. The surface carries **two lanes** behind a segmented switch: **Delivery** (the Miller board — column 0 = clients, grouped under `Active` / `Paused` state headers, with Personal / no-client its own group; drill client → project → phase → task → detail; fixed 256px columns) and **Pipeline** (`state = prospect` projects as the `Sourced → Contacted → Engaged → Proposal → Signed` funnel; advancing is an explicit side-effecting button, drag is the override). The grouping axis is **by client** (owner's choice over by-state). A rate never appears on a board card (`financial`); it shows only in project detail. The pipeline funnel lives here, not on Week (matches §8f: "no funnel stage counts on Week").
 - [ ] **Money-layer pipe laid now (discovery §8g / W16).** Add `business_expenses` (`financial`-class: `id, user_id, org_id, amount_cents, incurred_on, category_label, source (manual|csv), note`) and the money-settings fields (tax-reserve %, monthly cost-of-living, personal-savings figure, manual business/personal cash balances) — schema + tenancy classification + RLS only; the Draw panel (W16) consumes them later. Laid here because the reshape is already touching this ground; deferring it means a second migration.
 
 **Missing today:** all of it. **Dependencies:** none — this is the keystone; nothing else
