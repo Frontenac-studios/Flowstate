@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flowstate v1 — Build Tracker</title>
+    <style>
+      /* ---- Flowstate calm B&W palette, theme-aware ---- */
+      :root {
+        --bg: #f7f6f3;
+        --surface: #fffffe;
+        --surface-2: #f1efea;
+        --ink: #17150f;
+        --ink-2: #55514a;
+        --ink-3: #8b867d;
+        --line: #e2ded6;
+        --line-2: #cfc9be;
+        --accent: #17150f;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        /* status hues, muted */
+        --s-todo: #8b867d;
+        --s-todo-bg: #ece9e3;
+        --s-wip: #9a6b1e;
+        --s-wip-bg: #f6ecd6;
+        --s-review: #3a5a8c;
+        --s-review-bg: #e0e8f4;
+        --s-blocked: #9a2f2f;
+        --s-blocked-bg: #f4dede;
+        --s-done: #3f6b45;
+        --s-done-bg: #dfeee2;
+        --s-deferred: #5a4a7a;
+        --s-deferred-bg: #e8e2f2;
+        --s-parked: #6a6a6a;
+        --s-parked-bg: #e9e9e9;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #131210;
+          --surface: #1c1b18;
+          --surface-2: #232220;
+          --ink: #f3f1ea;
+          --ink-2: #b8b2a6;
+          --ink-3: #837d72;
+          --line: #2c2a27;
+          --line-2: #3a3733;
+          --accent: #f3f1ea;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+          --s-todo: #9b968c;
+          --s-todo-bg: #2a2825;
+          --s-wip: #d3a24e;
+          --s-wip-bg: #33291693;
+          --s-review: #7ea2d4;
+          --s-review-bg: #1e2a3d93;
+          --s-blocked: #d98a8a;
+          --s-blocked-bg: #3a201f93;
+          --s-done: #85c294;
+          --s-done-bg: #1d3323;
+          --s-deferred: #b3a3d6;
+          --s-deferred-bg: #2a2340;
+          --s-parked: #9a9a9a;
+          --s-parked-bg: #2a2a2a;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #131210;
+        --surface: #1c1b18;
+        --surface-2: #232220;
+        --ink: #f3f1ea;
+        --ink-2: #b8b2a6;
+        --ink-3: #837d72;
+        --line: #2c2a27;
+        --line-2: #3a3733;
+        --accent: #f3f1ea;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --s-todo: #9b968c;
+        --s-todo-bg: #2a2825;
+        --s-wip: #d3a24e;
+        --s-wip-bg: #332916;
+        --s-review: #7ea2d4;
+        --s-review-bg: #1e2a3d;
+        --s-blocked: #d98a8a;
+        --s-blocked-bg: #3a201f;
+        --s-done: #85c294;
+        --s-done-bg: #1d3323;
+        --s-deferred: #b3a3d6;
+        --s-deferred-bg: #2a2340;
+        --s-parked: #9a9a9a;
+        --s-parked-bg: #2a2a2a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 28px 22px 80px;
+      }
+
+      /* ---- header ---- */
+      header.top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+      h1 {
+        font-size: 20px;
+        letter-spacing: -0.01em;
+        margin: 0 0 2px;
+        font-weight: 650;
+      }
+      .subtitle {
+        color: var(--ink-3);
+        font-size: 12.5px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      button,
+      select,
+      input,
+      textarea {
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--ink);
+      }
+      .btn {
+        background: var(--surface);
+        border: 1px solid var(--line-2);
+        border-radius: 7px;
+        padding: 6px 11px;
+        cursor: pointer;
+        color: var(--ink-2);
+        box-shadow: var(--shadow);
+        transition:
+          background 0.12s,
+          color 0.12s,
+          border-color 0.12s;
+      }
+      .btn:hover {
+        background: var(--surface-2);
+        color: var(--ink);
+        border-color: var(--ink-3);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .btn.primary:hover {
+        opacity: 0.9;
+        color: var(--bg);
+      }
+
+      /* ---- rollup cards ---- */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin: 20px 0 8px;
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+      }
+      .stat .k {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-3);
+        margin-bottom: 4px;
+      }
+      .stat .v {
+        font-size: 22px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+      .stat .v small {
+        font-size: 13px;
+        color: var(--ink-3);
+        font-weight: 500;
+      }
+      .bar {
+        height: 6px;
+        border-radius: 4px;
+        background: var(--surface-2);
+        overflow: hidden;
+        margin-top: 9px;
+        border: 1px solid var(--line);
+      }
+      .bar > span {
+        display: block;
+        height: 100%;
+        background: var(--s-done);
+      }
+      .bar.cut > span {
+        background: var(--s-review);
+      }
+
+      /* ---- filters ---- */
+      .filters {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 18px 0 10px;
+        color: var(--ink-3);
+        font-size: 12.5px;
+      }
+      .filters select,
+      .filters input[type="search"] {
+        background: var(--surface);
+        border: 1px solid var(--line-2);
+        border-radius: 7px;
+        padding: 5px 8px;
+      }
+      .filters label {
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      /* ---- phase groups + table ---- */
+      .phase {
+        margin-top: 22px;
+      }
+      .phase h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--ink-2);
+        margin: 0 0 8px;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .phase h2 .ph-hours {
+        color: var(--ink-3);
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 12px;
+      }
+      .cutline {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 30px 0 4px;
+        color: var(--s-blocked);
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+      }
+      .cutline::before,
+      .cutline::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--s-blocked) 0 6px,
+          transparent 6px 12px
+        );
+        opacity: 0.5;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      thead th {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-3);
+        text-align: left;
+        font-weight: 600;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface-2);
+        white-space: nowrap;
+      }
+      tbody td {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: var(--surface-2);
+      }
+      tr.done td:not(.c-status) {
+        opacity: 0.62;
+      }
+      tr.deferred td:not(.c-status),
+      tr.parked td:not(.c-status) {
+        opacity: 0.5;
+      }
+
+      .c-id {
+        width: 46px;
+      }
+      .c-id .id {
+        font-weight: 650;
+        font-size: 12.5px;
+      }
+      .c-id .pr {
+        display: block;
+        font-size: 10.5px;
+        color: var(--ink-3);
+      }
+      .c-title {
+        min-width: 220px;
+      }
+      .c-title .t {
+        font-weight: 550;
+      }
+      .c-title .d {
+        color: var(--ink-3);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+      .c-deps {
+        color: var(--ink-3);
+        font-size: 11.5px;
+        white-space: nowrap;
+      }
+      .c-est,
+      .c-act {
+        width: 62px;
+        text-align: right;
+      }
+      .c-status {
+        width: 138px;
+      }
+      .c-updated {
+        width: 78px;
+        color: var(--ink-3);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      input.num {
+        width: 52px;
+        text-align: right;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        padding: 3px 5px;
+      }
+      input.num:hover {
+        border-color: var(--line-2);
+      }
+      input.num:focus {
+        outline: none;
+        border-color: var(--ink-3);
+        background: var(--bg);
+      }
+      select.status {
+        width: 100%;
+        border-radius: 999px;
+        padding: 4px 9px;
+        border: 1px solid var(--line-2);
+        font-size: 12px;
+        font-weight: 550;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+      }
+      .notes-row td {
+        padding-top: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      textarea.notes {
+        width: 100%;
+        min-height: 0;
+        height: 26px;
+        resize: vertical;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 5px 8px;
+        color: var(--ink-2);
+        font-size: 12px;
+      }
+      textarea.notes:focus {
+        outline: none;
+        border-color: var(--ink-3);
+      }
+      textarea.notes::placeholder {
+        color: var(--ink-3);
+      }
+      .rm {
+        border: none;
+        background: transparent;
+        color: var(--ink-3);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0 4px;
+      }
+      .rm:hover {
+        color: var(--s-blocked);
+      }
+
+      /* ---- daily log ---- */
+      .log {
+        margin-top: 34px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+        box-shadow: var(--shadow);
+      }
+      .log h2 {
+        font-size: 13px;
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+      .log .compose {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .log textarea {
+        flex: 1;
+        min-height: 40px;
+        resize: vertical;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        color: var(--ink);
+        font-size: 13px;
+      }
+      .log textarea:focus {
+        outline: none;
+        border-color: var(--ink-3);
+      }
+      .log .entries {
+        margin-top: 14px;
+      }
+      .log .entry {
+        padding: 8px 0;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+        display: flex;
+        gap: 12px;
+      }
+      .log .entry .date {
+        color: var(--ink-3);
+        font-size: 12px;
+        min-width: 88px;
+        flex-shrink: 0;
+      }
+      .log .entry .txt {
+        white-space: pre-wrap;
+        color: var(--ink-2);
+      }
+      .log .entry .del {
+        margin-left: auto;
+        opacity: 0;
+      }
+      .log .entry:hover .del {
+        opacity: 1;
+      }
+
+      footer.meta {
+        margin-top: 26px;
+        color: var(--ink-3);
+        font-size: 11.5px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 1px 7px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      @media (max-width: 720px) {
+        .c-deps,
+        .c-updated {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div>
+          <h1>Flowstate v1 — Build Tracker</h1>
+          <div class="subtitle">
+            Live status against <span class="mono">docs/v1-scope.md</span>. Edits
+            auto-save to this browser. Export to keep a copy or commit it.
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="addBtn">+ Item</button>
+          <button class="btn" id="exportBtn">Export JSON</button>
+          <button class="btn" id="importBtn">Import</button>
+          <button class="btn" id="downloadHtmlBtn">Save HTML</button>
+          <button class="btn" id="themeBtn" title="Toggle theme">◐</button>
+          <input
+            type="file"
+            id="importFile"
+            accept="application/json"
+            style="display: none"
+          />
+        </div>
+      </header>
+
+      <section class="stats" id="stats"></section>
+
+      <div class="filters">
+        <span>Filter</span>
+        <select id="fStatus">
+          <option value="">All statuses</option>
+          <option value="todo">Not started</option>
+          <option value="wip">In progress</option>
+          <option value="review">In review</option>
+          <option value="blocked">Blocked</option>
+          <option value="done">Done</option>
+          <option value="deferred">v1.1 / Deferred</option>
+          <option value="parked">Parked</option>
+        </select>
+        <input type="search" id="fSearch" placeholder="Search…" />
+        <label
+          ><input type="checkbox" id="fHideDone" /> hide done</label
+        >
+        <label
+          ><input type="checkbox" id="fHideDeferred" /> hide deferred</label
+        >
+        <span style="margin-left: auto" class="mono" id="count"></span>
+      </div>
+
+      <div id="board"></div>
+
+      <section class="log">
+        <h2>Daily log</h2>
+        <div class="compose">
+          <textarea
+            id="logInput"
+            placeholder="What moved today? (e.g. 'Started W4 — invoice draft data model. ~2h. Blocked on rounding rule.')"
+          ></textarea>
+          <button class="btn primary" id="logBtn">Log today</button>
+        </div>
+        <div class="entries" id="logEntries"></div>
+      </section>
+
+      <footer class="meta">
+        <span id="savedAt"></span>
+        <span
+          >Data lives in this browser (localStorage) + your exports. “Save HTML”
+          writes a standalone copy with today’s data baked in.</span
+        >
+      </footer>
+    </div>
+
+    <script>
+      // ============================================================
+      //  SEED — canonical starting state, from docs/v1-scope.md + git.
+      //  Edited copies live in localStorage; "Save HTML" re-bakes this.
+      // ============================================================
+      const SEED = /*SEED_START*/ {
+        "meta": { "version": 1, "title": "Flowstate v1 — Build Tracker" },
+        "phases": [
+          "P-1 · Land the boundary",
+          "P0 · Clear the decks",
+          "P1 · Clients + rates",
+          "P2 · Time, honestly",
+          "P3 · Get paid (money)",
+          "P4 · Direction",
+          "P5 · Mechanics that change Tuesday",
+          "Below the cut line",
+          "v1.1"
+        ],
+        "cutAfterPhase": "P5 · Mechanics that change Tuesday",
+        "items": [
+          { "id": "W0", "phase": "P-1 · Land the boundary", "title": "Land the boundary — orgs + tenancy classification", "desc": "orgs, org_memberships, org-resolving tRPC context, tenancy.ts with a failing test if a table is unclassified.", "deps": "—", "est": 2, "act": 0, "status": "done", "pr": "#262", "notes": "", "updated": "" },
+          { "id": "W12", "phase": "P0 · Clear the decks", "title": "Teardown — delete the pre-mission feature set", "desc": "Remove all KILL items: routes, routers, tables, components, tests, RLS. Forward-only migrations.", "deps": "—", "est": 12, "act": 0, "status": "done", "pr": "#264", "notes": "", "updated": "" },
+          { "id": "W13", "phase": "P0 · Clear the decks", "title": "Flags + park plumbing", "desc": "src/lib/flags.ts; Care, Chat, Focus parked off with zero UI trace.", "deps": "W12", "est": 4, "act": 0, "status": "done", "pr": "#265", "notes": "", "updated": "" },
+          { "id": "W1", "phase": "P1 · Clients + rates", "title": "Data reshape — clients, rates, category collapse", "desc": "clients + financial-class rates tables; projects gain client_id/state/is_maintenance; category → business|personal; /clients list+detail.", "deps": "W0", "est": 16, "act": 0, "status": "done", "pr": "#267", "notes": "", "updated": "" },
+          { "id": "W1.5", "phase": "P1 · Clients + rates", "title": "Lay the Draw-panel pipe", "desc": "business_expenses (financial-class) + money-settings fields (tax %, cost-of-living, savings, cash balances). Schema only; W16 consumes it.", "deps": "W1", "est": 2, "act": 0, "status": "done", "pr": "#268", "notes": "", "updated": "" },
+          { "id": "W11", "phase": "P1 · Clients + rates", "title": "Personal category", "desc": "One Maintenance project holds personal work; excluded from every goal-layer query. Folded into W1.", "deps": "W1", "est": 0, "act": 0, "status": "done", "pr": "#267", "notes": "Folded into W1.", "updated": "" },
+          { "id": "W2a", "phase": "P2 · Time, honestly", "title": "Rename task_time_entries → time_entries + reshape", "desc": "project_id NOT NULL, task_id nullable, billable, source, tag_id, invoiced_at. Backfill, mirror.", "deps": "W1", "est": 4, "act": 0, "status": "done", "pr": "#269", "notes": "", "updated": "" },
+          { "id": "W2b", "phase": "P2 · Time, honestly", "title": "Project-first timer core (Today header)", "desc": "Pick project, type description, start < 2s. One timer at a time. Start-time authoritative, survives quit/sleep/midnight.", "deps": "W2a", "est": 6, "act": 0, "status": "done", "pr": "#270", "notes": "", "updated": "" },
+          { "id": "W2c", "phase": "P2 · Time, honestly", "title": "End-of-day gap fill", "desc": "Close lists untracked spans > 15m; one-click assign to a recent project or dismiss.", "deps": "W2b", "est": 4, "act": 0, "status": "done", "pr": "#271", "notes": "", "updated": "" },
+          { "id": "W2d", "phase": "P2 · Time, honestly", "title": "Threshold notifications", "desc": "Billing threshold, long-running timer, over-estimate, weekly hours. Once per crossing, each switchable off.", "deps": "W2b", "est": 6, "act": 0, "status": "done", "pr": "#272–274", "notes": "", "updated": "" },
+          { "id": "W2e", "phase": "P2 · Time, honestly", "title": "Time-tags + CSV export", "desc": "Controlled tag list managed in Settings; CSV of raw entries for any period.", "deps": "W2a", "est": 4, "act": 0, "status": "done", "pr": "#275", "notes": "", "updated": "" },
+          { "id": "W2f", "phase": "P2 · Time, honestly", "title": "Menu-bar timer + idle detection (Tauri)", "desc": "Always-visible menu-bar timer (start/stop/switch); 10-min idle → keep/trim with trim preselected.", "deps": "W2b", "est": 6, "act": 0, "status": "todo", "pr": "", "notes": "Verify what's already shipped vs remaining.", "updated": "" },
+          { "id": "W3", "phase": "P3 · Get paid (money)", "title": "Time reporting", "desc": "/time or Money section: period picker, billable/non-billable split, client→project→task grouping, effective rate, CSV.", "deps": "W2", "est": 10, "act": 0, "status": "done", "pr": "#276", "notes": "", "updated": "" },
+          { "id": "W4", "phase": "P3 · Get paid (money)", "title": "Proposed invoices", "desc": "Per-client draft (oldest 20h first), 6–12 client-facing line items, carry-forward, invoiced_at unique index, Markdown+CSV. Threshold-primary + monthly backstop trigger. Tier-0 tax reserve line here.", "deps": "W1, W3", "est": 16, "act": 0, "status": "todo", "pr": "", "notes": "", "updated": "" },
+          { "id": "W16", "phase": "P3 · Get paid (money)", "title": "The Draw panel (personal + business money)", "desc": "Running cash ledger (paid invoices − expenses − draws), available-to-draw, tax reserve, business + personal runway, minimum draw, CSV expense import. Roll-ups, never transactions. A section of Money.", "deps": "W1.5, W3, W4", "est": 14, "act": 0, "status": "todo", "pr": "", "notes": "Displaces W9 automation → v1.1.", "updated": "" },
+          { "id": "W5", "phase": "P4 · Direction", "title": "Directions & Targets", "desc": "directions (never measured) + targets (direction FK, horizon, cap enforced in mutation). Project→target proposal. /goals shows text + bars only.", "deps": "W1", "est": 18, "act": 0, "status": "todo", "pr": "", "notes": "12h cut option available.", "updated": "" },
+          { "id": "W6", "phase": "P5 · Mechanics that change Tuesday", "title": "The Budget", "desc": "Declared tilt (e.g. 70/30); Today shows a live bar of minutes logged today, never task counts. Never blocks or nags.", "deps": "W2, W5", "est": 10, "act": 0, "status": "todo", "pr": "", "notes": "", "updated": "" },
+          { "id": "W7", "phase": "P5 · Mechanics that change Tuesday", "title": "The Sweep", "desc": "Weekly Week section: stale tasks/projects/targets, drop/park/keep, finite (20 + N more), keep buys a month, pre-answered.", "deps": "W1, W5", "est": 10, "act": 0, "status": "todo", "pr": "", "notes": "", "updated": "" },
+          { "id": "W14", "phase": "P5 · Mechanics that change Tuesday", "title": "The Week steering deck", "desc": "2×2 deck: Waiting on you / The bets / Coming up / Gone quiet + off-target banner. Assembles, doesn't duplicate. Spec done (§8f).", "deps": "W5, W6, W7", "est": 10, "act": 0, "status": "todo", "pr": "", "notes": "~8h above cut; ~2h sourced-batch row needs W10.", "updated": "" },
+          { "id": "W15", "phase": "P5 · Mechanics that change Tuesday", "title": "Project planning & estimate-vs-actual", "desc": "template→phases→per-phase estimate+deadline; billing_type (hourly|fixed_fee); off-track = budget consumed ahead of work done; burn on detail/board/Week + one notification.", "deps": "W1, W2", "est": 13, "act": 0, "status": "todo", "pr": "", "notes": "Net-new (discovery §8g). Fixed-fee half is a −5h cut option.", "updated": "" },
+          { "id": "W8", "phase": "Below the cut line", "title": "The Ledger", "desc": "Every 2nd Friday, Money section: said-vs-spent tilt over the fortnight, per client/project. Waits to be opened.", "deps": "W6", "est": 8, "act": 0, "status": "todo", "pr": "", "notes": "Below cut; Q5.", "updated": "" },
+          { "id": "W10", "phase": "Below the cut line", "title": "The Filter (self-scored, cut version)", "desc": "Eight Fit/Risk/Strategy questions → pursue/negotiate/decline vs active Direction+Target, logged overrides, decline-outright escape. Public intake link is v1.1.", "deps": "W1, W5", "est": 10, "act": 0, "status": "todo", "pr": "", "notes": "24h full / 10h cut. Below cut; Q5.", "updated": "" },
+          { "id": "Tickler", "phase": "Below the cut line", "title": "Business tickler", "desc": "Compliance dates fire on Today on the trigger date only; otherwise invisible. ~6h once Today has a due strip.", "deps": "W1", "est": 6, "act": 0, "status": "todo", "pr": "", "notes": "§8c Q7 = build. Below cut; Q5.", "updated": "" },
+          { "id": "W9", "phase": "v1.1", "title": "Client onboarding automation", "desc": "Local folder tree + starter contracts + project + phases + checklist, opened in Finder. Displaced by W16. 'Signed' still creates client+project+phases in v1.", "deps": "W1, W2", "est": 12, "act": 0, "status": "deferred", "pr": "", "notes": "→ v1.1 (discovery Q4).", "updated": "" }
+        ],
+        "log": []
+      } /*SEED_END*/;
+
+      // ============================================================
+      //  App
+      // ============================================================
+      const STORE_KEY = "flowstate-build-tracker-v1";
+      const STATUS = {
+        todo: { label: "Not started", fg: "--s-todo", bg: "--s-todo-bg", pct: 0 },
+        wip: { label: "In progress", fg: "--s-wip", bg: "--s-wip-bg", pct: 0.5 },
+        review: { label: "In review", fg: "--s-review", bg: "--s-review-bg", pct: 0.85 },
+        blocked: { label: "Blocked", fg: "--s-blocked", bg: "--s-blocked-bg", pct: 0.25 },
+        done: { label: "Done", fg: "--s-done", bg: "--s-done-bg", pct: 1 },
+        deferred: { label: "v1.1 / Deferred", fg: "--s-deferred", bg: "--s-deferred-bg", pct: 0 },
+        parked: { label: "Parked", fg: "--s-parked", bg: "--s-parked-bg", pct: 0 },
+      };
+
+      let state = load();
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return structuredClone(SEED);
+      }
+      function save() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(state));
+          document.getElementById("savedAt").textContent =
+            "Saved " + new Date().toLocaleString();
+        } catch (e) {
+          document.getElementById("savedAt").textContent =
+            "⚠ Could not save to this browser — use Export to keep your data.";
+        }
+      }
+      const today = () => new Date().toISOString().slice(0, 10);
+      const esc = (s) =>
+        (s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+      // ---- rollups ----
+      function computeStats() {
+        const items = state.items;
+        const inScope = items.filter((i) => i.status !== "deferred" && i.status !== "parked");
+        const totalEst = inScope.reduce((s, i) => s + (+i.est || 0), 0);
+        const doneEst = inScope
+          .filter((i) => i.status === "done")
+          .reduce((s, i) => s + (+i.est || 0), 0);
+        const weightedDone = inScope.reduce(
+          (s, i) => s + (+i.est || 0) * (STATUS[i.status]?.pct ?? 0),
+          0
+        );
+        const actual = items.reduce((s, i) => s + (+i.act || 0), 0);
+        const remaining = totalEst - doneEst;
+
+        // cut-line = phases up to and including cutAfterPhase
+        const cutIdx = state.phases.indexOf(state.cutAfterPhase);
+        const cutPhases = state.phases.slice(0, cutIdx + 1);
+        const cut = inScope.filter((i) => cutPhases.includes(i.phase));
+        const cutEst = cut.reduce((s, i) => s + (+i.est || 0), 0);
+        const cutDone = cut
+          .filter((i) => i.status === "done")
+          .reduce((s, i) => s + (+i.est || 0), 0);
+
+        const byStatus = {};
+        for (const k of Object.keys(STATUS)) byStatus[k] = items.filter((i) => i.status === k).length;
+
+        return {
+          totalEst, doneEst, weightedDone, actual, remaining,
+          cutEst, cutDone,
+          pct: totalEst ? Math.round((doneEst / totalEst) * 100) : 0,
+          wpct: totalEst ? Math.round((weightedDone / totalEst) * 100) : 0,
+          cutPct: cutEst ? Math.round((cutDone / cutEst) * 100) : 0,
+          count: items.length, byStatus,
+        };
+      }
+
+      function renderStats() {
+        const s = computeStats();
+        const cell = (k, v, extra = "") =>
+          `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div>${extra}</div>`;
+        document.getElementById("stats").innerHTML =
+          cell(
+            "v1 complete",
+            `${s.pct}%<small> &nbsp;(${s.wpct}% weighted)</small>`,
+            `<div class="bar"><span style="width:${s.pct}%"></span></div>`
+          ) +
+          cell(
+            "Cut-line (P-1…P5)",
+            `${s.cutPct}%`,
+            `<div class="bar cut"><span style="width:${s.cutPct}%"></span></div><div class="k" style="margin-top:6px">${s.cutDone} / ${s.cutEst} h done</div>`
+          ) +
+          cell("Hours done", `${s.doneEst}<small> / ${s.totalEst} h</small>`) +
+          cell("Hours remaining", `${s.remaining}<small> h in scope</small>`) +
+          cell("Actual logged", `${s.actual}<small> h</small>`) +
+          cell(
+            "By status",
+            `<span style="font-size:13px" class="mono">${s.byStatus.done}✓ · ${s.byStatus.wip}◐ · ${s.byStatus.todo}○ · ${s.byStatus.blocked}✕</span>`
+          );
+      }
+
+      // ---- board ----
+      function passesFilter(i) {
+        const fs = document.getElementById("fStatus").value;
+        const q = document.getElementById("fSearch").value.trim().toLowerCase();
+        const hd = document.getElementById("fHideDone").checked;
+        const hdef = document.getElementById("fHideDeferred").checked;
+        if (fs && i.status !== fs) return false;
+        if (hd && i.status === "done") return false;
+        if (hdef && (i.status === "deferred" || i.status === "parked")) return false;
+        if (q && !(`${i.id} ${i.title} ${i.desc} ${i.notes}`.toLowerCase().includes(q))) return false;
+        return true;
+      }
+
+      function statusSelect(i) {
+        const cur = STATUS[i.status] || STATUS.todo;
+        const opts = Object.entries(STATUS)
+          .map(
+            ([k, v]) => `<option value="${k}" ${k === i.status ? "selected" : ""}>${v.label}</option>`
+          )
+          .join("");
+        return `<select class="status" data-id="${i.id}" data-f="status"
+          style="color:var(${cur.fg});background-color:var(${cur.bg});border-color:var(${cur.fg})">${opts}</select>`;
+      }
+
+      function renderBoard() {
+        const board = document.getElementById("board");
+        board.innerHTML = "";
+        let shown = 0;
+        const cutIdx = state.phases.indexOf(state.cutAfterPhase);
+
+        state.phases.forEach((phase, pIdx) => {
+          const items = state.items.filter((i) => i.phase === phase && passesFilter(i));
+          const allInPhase = state.items.filter((i) => i.phase === phase);
+          if (allInPhase.length === 0) return;
+
+          const phEst = allInPhase.reduce((s, i) => s + (+i.est || 0), 0);
+          const phDone = allInPhase
+            .filter((i) => i.status === "done")
+            .reduce((s, i) => s + (+i.est || 0), 0);
+
+          const sec = document.createElement("section");
+          sec.className = "phase";
+          sec.innerHTML = `<h2>${esc(phase)} <span class="ph-hours">${phDone}/${phEst} h · ${allInPhase.length} items</span></h2>`;
+
+          if (items.length) {
+            shown += items.length;
+            const rows = items
+              .map((i) => {
+                const cls = ["done", "deferred", "parked"].includes(i.status) ? i.status : "";
+                return `
+                <tr class="${cls}" data-row="${i.id}">
+                  <td class="c-id mono"><span class="id">${esc(i.id)}</span><span class="pr">${esc(i.pr || "")}</span></td>
+                  <td class="c-title"><div class="t">${esc(i.title)}</div><div class="d">${esc(i.desc)}</div></td>
+                  <td class="c-deps mono">${esc(i.deps || "—")}</td>
+                  <td class="c-est"><input class="num mono" type="number" min="0" step="0.5" value="${i.est}" data-id="${i.id}" data-f="est" title="Estimate (h)"></td>
+                  <td class="c-act"><input class="num mono" type="number" min="0" step="0.25" value="${i.act || 0}" data-id="${i.id}" data-f="act" title="Actual logged (h)"></td>
+                  <td class="c-status">${statusSelect(i)}</td>
+                  <td class="c-updated mono">${esc(i.updated || "")}</td>
+                  <td style="width:24px"><button class="rm" data-del="${i.id}" title="Remove">×</button></td>
+                </tr>
+                <tr class="notes-row"><td></td><td colspan="7"><textarea class="notes" data-id="${i.id}" data-f="notes" placeholder="notes / blockers…">${esc(i.notes || "")}</textarea></td></tr>`;
+              })
+              .join("");
+            sec.innerHTML += `<div class="table-scroll"><table>
+              <thead><tr>
+                <th>ID</th><th>Item</th><th>Deps</th><th>Est h</th><th>Act h</th><th>Status</th><th>Updated</th><th></th>
+              </tr></thead><tbody>${rows}</tbody></table></div>`;
+          }
+          board.appendChild(sec);
+
+          // cut line divider after the designated phase
+          if (pIdx === cutIdx) {
+            const cl = document.createElement("div");
+            cl.className = "cutline";
+            cl.textContent = "cut line — ships a coherent v1 above this";
+            board.appendChild(cl);
+          }
+        });
+
+        document.getElementById("count").textContent =
+          shown + " shown / " + state.items.length + " total";
+      }
+
+      // ---- daily log ----
+      function renderLog() {
+        const el = document.getElementById("logEntries");
+        el.innerHTML = (state.log || [])
+          .map(
+            (e, idx) =>
+              `<div class="entry"><span class="date mono">${esc(e.date)}</span><span class="txt">${esc(e.text)}</span><button class="rm del" data-logdel="${idx}" title="Delete">×</button></div>`
+          )
+          .join("");
+      }
+
+      function renderAll() {
+        renderStats();
+        renderBoard();
+        renderLog();
+      }
+
+      // ---- events ----
+      document.getElementById("board").addEventListener("input", (e) => {
+        const t = e.target;
+        const id = t.dataset.id;
+        const f = t.dataset.f;
+        if (!id || !f) return;
+        const item = state.items.find((x) => x.id === id);
+        if (!item) return;
+        item[f] = f === "est" || f === "act" ? +t.value : t.value;
+        item.updated = today();
+        save();
+        if (f === "status" || f === "est" || f === "act") renderStats();
+        if (f === "status") {
+          // recolor + row emphasis without losing focus elsewhere
+          const cur = STATUS[item.status] || STATUS.todo;
+          t.style.color = `var(${cur.fg})`;
+          t.style.backgroundColor = `var(${cur.bg})`;
+          t.style.borderColor = `var(${cur.fg})`;
+          const row = document.querySelector(`tr[data-row="${id}"]`);
+          if (row) row.className = ["done", "deferred", "parked"].includes(item.status) ? item.status : "";
+          const upd = row?.querySelector(".c-updated");
+          if (upd) upd.textContent = item.updated;
+        }
+      });
+
+      document.getElementById("board").addEventListener("click", (e) => {
+        const del = e.target.dataset.del;
+        if (del) {
+          const item = state.items.find((x) => x.id === del);
+          if (confirm(`Remove ${del} — ${item?.title || ""}?`)) {
+            state.items = state.items.filter((x) => x.id !== del);
+            save();
+            renderAll();
+          }
+        }
+      });
+
+      document.getElementById("logEntries").addEventListener("click", (e) => {
+        const d = e.target.dataset.logdel;
+        if (d != null) {
+          state.log.splice(+d, 1);
+          save();
+          renderLog();
+        }
+      });
+
+      document.getElementById("logBtn").addEventListener("click", () => {
+        const inp = document.getElementById("logInput");
+        const text = inp.value.trim();
+        if (!text) return;
+        state.log = state.log || [];
+        state.log.unshift({ date: today(), text });
+        inp.value = "";
+        save();
+        renderLog();
+      });
+
+      ["fStatus", "fSearch", "fHideDone", "fHideDeferred"].forEach((id) =>
+        document.getElementById(id).addEventListener("input", renderBoard)
+      );
+
+      document.getElementById("addBtn").addEventListener("click", () => {
+        const id = prompt("Short ID (e.g. W17, or a name):", "W" + (state.items.length + 1));
+        if (!id) return;
+        const title = prompt("Title:", "") || "Untitled";
+        const phase = prompt("Phase (one of: " + state.phases.join(" / ") + "):", state.phases[0]) || state.phases[0];
+        state.items.push({
+          id, phase, title, desc: "", deps: "", est: 0, act: 0,
+          status: "todo", pr: "", notes: "", updated: today(),
+        });
+        save();
+        renderAll();
+      });
+
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        downloadFile(
+          "flowstate-build-tracker-" + today() + ".json",
+          JSON.stringify(state, null, 2),
+          "application/json"
+        );
+      });
+
+      document.getElementById("importBtn").addEventListener("click", () =>
+        document.getElementById("importFile").click()
+      );
+      document.getElementById("importFile").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            state = JSON.parse(r.result);
+            save();
+            renderAll();
+          } catch (err) {
+            alert("Could not parse that file.");
+          }
+        };
+        r.readAsText(file);
+      });
+
+      // Save a standalone HTML with current data baked into the SEED block.
+      document.getElementById("downloadHtmlBtn").addEventListener("click", () => {
+        const html = document.documentElement.outerHTML;
+        const baked = html.replace(
+          /\/\*SEED_START\*\/[\s\S]*?\/\*SEED_END\*\//,
+          "/*SEED_START*/ " + JSON.stringify(state, null, 2) + " /*SEED_END*/"
+        );
+        downloadFile("build-tracker.html", "<!doctype html>\n" + baked, "text/html");
+      });
+
+      function downloadFile(name, content, type) {
+        const blob = new Blob([content], { type });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }
+
+      // theme toggle (persisted)
+      const themeBtn = document.getElementById("themeBtn");
+      const savedTheme = localStorage.getItem("ftbt-theme");
+      if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+      themeBtn.addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme");
+        const isDark = cur === "dark" || (!cur && matchMedia("(prefers-color-scheme: dark)").matches);
+        const next = isDark ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("ftbt-theme", next);
+      });
+
+      renderAll();
+      save();
+    </script>
+  </body>
+</html>
