@@ -257,26 +257,27 @@ every hour after it is spent on a smaller app.
 
 Everything in v1 scope with no code, or materially incomplete.
 
-| Gap                                                                       | Scope item    | Today                                                                                                                                   |
-| ------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Clients** — no table, no concept                                        | 1, 3, 4, 6, 7 | Zero. Projects have no owner.                                                                                                           |
-| **Rates** — no rate anywhere                                              | 4             | Zero.                                                                                                                                   |
-| **Project-scoped time**                                                   | 3             | Time attaches to a task only. Untasked client work is untrackable.                                                                      |
-| **Billable flag**                                                         | 3, 4          | Zero.                                                                                                                                   |
-| **Time reporting**                                                        | 4             | `weeklyRollup` only: one week, by category, no client, no billable split, no export.                                                    |
-| **Billing thresholds + carry-forward**                                    | 4             | Zero. (Exists only in your `/invoice` Claude skill.)                                                                                    |
-| **Proposed invoices**                                                     | 4             | Zero.                                                                                                                                   |
-| **Directions**                                                            | 5             | Concept does not exist in code.                                                                                                         |
-| **Targets (with cap, and a direction parent)**                            | 5             | `goals` is the wrong shape; no cap enforcement anywhere.                                                                                |
-| **Project→Target link + the proposal at creation**                        | 5             | `goals.project_id` exists but points the wrong way and is never proposed.                                                               |
-| **The Budget (time-denominated tilt + live bar)**                         | 5             | The existing "balance bar" counts **tasks by life category**. Mission law 4: time is the score. Wrong denominator = rebuild, not tweak. |
-| **The Ledger (biweekly said-vs-spent)**                                   | 5             | Zero.                                                                                                                                   |
-| **The Sweep (weekly drop/park/keep at every altitude)**                   | 5             | Abyss auto-archive (90d) + task triage are adjacent; there is no weekly ruling ritual and nothing above task altitude.                  |
-| **The Toll (one sentence per project)**                                   | 5             | `commitSetup` is close but asks nothing about service-of.                                                                               |
-| **Client onboarding action**                                              | 6             | Templates exist; nothing chains project + phases + time setup + checklist.                                                              |
-| **The Filter — intake form, public link, scoring, verdict, override log** | 7             | Zero. Also needs a public unauthenticated route, which the app has never had.                                                           |
-| **Tickler**                                                               | 8             | Zero. See §6 — recommend not building it.                                                                                               |
-| **Personal = Maintenance project, excluded from goal layer**              | 9             | Enum collapse + a hard exclusion rule in the Target/Budget queries.                                                                     |
+| Gap                                                                       | Scope item    | Today                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Clients** — no table, no concept                                        | 1, 3, 4, 6, 7 | Zero. Projects have no owner.                                                                                                                                                                                                                                    |
+| **Rates** — no rate anywhere                                              | 4             | Zero.                                                                                                                                                                                                                                                            |
+| **Project-scoped time**                                                   | 3             | Time attaches to a task only. Untasked client work is untrackable.                                                                                                                                                                                               |
+| **Billable flag**                                                         | 3, 4          | Zero.                                                                                                                                                                                                                                                            |
+| **Time reporting**                                                        | 4             | `weeklyRollup` only: one week, by category, no client, no billable split, no export.                                                                                                                                                                             |
+| **Billing thresholds + carry-forward**                                    | 4             | Zero. (Exists only in your `/invoice` Claude skill.)                                                                                                                                                                                                             |
+| **Proposed invoices**                                                     | 4             | Zero.                                                                                                                                                                                                                                                            |
+| **Directions**                                                            | 5             | Concept does not exist in code.                                                                                                                                                                                                                                  |
+| **Targets (with cap, and a direction parent)**                            | 5             | `goals` is the wrong shape; no cap enforcement anywhere.                                                                                                                                                                                                         |
+| **Project→Target link + the proposal at creation**                        | 5             | `goals.project_id` exists but points the wrong way and is never proposed.                                                                                                                                                                                        |
+| **The Budget (time-denominated tilt + live bar)**                         | 5             | The existing "balance bar" counts **tasks by life category**. Mission law 4: time is the score. Wrong denominator = rebuild, not tweak.                                                                                                                          |
+| **The Ledger (biweekly said-vs-spent)**                                   | 5             | Zero.                                                                                                                                                                                                                                                            |
+| **The Sweep (weekly drop/park/keep at every altitude)**                   | 5             | Abyss auto-archive (90d) + task triage are adjacent; there is no weekly ruling ritual and nothing above task altitude.                                                                                                                                           |
+| **The Week steering deck** — the surface that assembles the steering      | 5 (+ 7)       | Week today = the built 7-day grid under a _wrong_ 3-card band ("2 overdue" alarm + "4 stale" count). The steering MISSION names — pipeline+outreach queue, Target momentum, 14-day horizon, the Sweep preview, the drift reflection — is unbuilt. See W14 / §8f. |
+| **The Toll (one sentence per project)**                                   | 5             | `commitSetup` is close but asks nothing about service-of.                                                                                                                                                                                                        |
+| **Client onboarding action**                                              | 6             | Templates exist; nothing chains project + phases + time setup + checklist.                                                                                                                                                                                       |
+| **The Filter — intake form, public link, scoring, verdict, override log** | 7             | Zero. Also needs a public unauthenticated route, which the app has never had.                                                                                                                                                                                    |
+| **Tickler**                                                               | 8             | Zero. See §6 — recommend not building it.                                                                                                                                                                                                                        |
+| **Personal = Maintenance project, excluded from goal layer**              | 9             | Enum collapse + a hard exclusion rule in the Target/Budget queries.                                                                                                                                                                                              |
 
 ---
 
@@ -403,6 +404,7 @@ most likely to pay for the quarter.
 - [ ] Every target has a direction; the FK is non-nullable. Test asserts insert-without-direction fails.
 - [ ] A project links to at most one target, or is `is_maintenance`. At project creation the app **proposes** the link ("This looks like it serves X — yes / no / different") and accepts "none / maintenance" as a first-class answer.
 - [ ] Personal and maintenance projects are absent from every target query.
+- [ ] The active targets also surface on the **Week steering deck** as "The bets" (W14): one progress bar per target over a "shipped this week" evidence line. This is a Week-side read of the same data — the canonical Quarter surface is `/goals` below.
 - [ ] A `/goals` screen shows: directions as text at the top, targets beneath with progress, and nothing else. No grid, no cells, no categories, no balance-by-life-area.
 - [ ] Old `goals` rows exported to CSV and the tables dropped.
 
@@ -419,6 +421,7 @@ drop target milestones, drop the progress chart — a number and a bar is enough
 - [ ] Today shows a live bar of **minutes actually logged today** against that tilt — never task counts (law 4).
 - [ ] Six 10-minute personal errands move the bar barely; one 3-hour personal detour moves it visibly. Verified with a fixture test on the bar's computation.
 - [ ] The bar never blocks, warns modally, or turns red. It states, it does not nag (law 3).
+- [ ] The declared tilt also drives the Week deck's **off-target flag** (W14): a single reflective line, shown only when the week's logged time drifts from the tilt past a threshold — the weekly early-warning of the biweekly Ledger (W8), worded as a question, never a red alarm.
 - [ ] The existing task-count balance bar and `category_settings` weighting are deleted, not reskinned.
 
 ---
@@ -432,6 +435,47 @@ drop target milestones, drop the progress chart — a number and a bar is enough
 - [ ] The list is finite and ends — it does not paginate forever; if there are more than ~20 items it shows the 20 stalest and says how many remain.
 - [ ] Nothing is auto-dropped. The 90-day auto-archive on Backlog is removed; a machine closing doors for you is not the mechanic.
 - [ ] Ruling on everything takes under five minutes with a keyboard.
+- [ ] The stale list also surfaces on the **Week steering deck** as the named "Gone quiet" preview, whose button opens this ritual; the same preview is embedded in the Friday review (W14).
+
+---
+
+### W14 — The Week steering deck · **M (~10h; ~8h above the cut line)** · deps: W5, W6, W7 (+ W10 below)
+
+Week is the **steering surface** (fork B: a steering deck over the kept 7-day grid). It
+**assembles, it does not duplicate** — the heavy views live on Projects (pipeline), Money (the
+Ledger), and the Sweep ritual; the deck surfaces them. Six goals were interviewed and decided
+2026-08-24 (see §8f); this item builds them. It replaces the earlier three-card band ("2
+overdue" alarm + "4 stale" count), which mis-read the brief.
+
+**Acceptance criteria**
+
+- [ ] Layout is a **2×2 block deck** above the built 7+1 grid — top-left **Waiting on you**,
+      top-right **The bets**, bottom-left **Coming up**, bottom-right **Gone quiet** — plus a
+      full-width **off-target** banner that spans the top _only_ on drift. Below the deck: the grid
+      (unchanged), the capture inbox, and the Friday-review invite.
+- [ ] **Waiting on you** (goals 1+2): one urgency-sorted queue folding pipeline **and** outreach —
+      the weekly sourced batch, follow-ups owed on contacted leads, and live-deal moves — in three
+      visually-distinct row-types. **No funnel stage counts** (those live on the Projects board).
+- [ ] **The bets** (goal 3): the cap-3 active Targets (W5), each a thin progress bar over a
+      "shipped this week" evidence line. A target that moved nothing this week states so in muted
+      grey — never crimson.
+- [ ] **Coming up** (goal 4): deliverables across every client for the next 14 days, in two calm
+      dated buckets — _this week_ / _next week_. **Overdue is excluded** (it belongs on Today).
+      Stripes stay category-coded; clients read by name label, not colour.
+- [ ] **Gone quiet** (goal 5): the W7 stale list as a named preview (items by name, every
+      altitude) that opens the W7 ritual, and the same preview embedded in the Friday review.
+- [ ] **Off-target flag** (goal 6): silent by default. A single reflective banner appears _only_
+      when the week's logged time (W6) drifts from the declared tilt past a threshold — worded as a
+      question, reserved-yellow, never crimson. The weekly early-warning of the biweekly Ledger (W8).
+- [ ] Conditional blocks (Gone quiet, off-target) are **absent** when they have nothing to show —
+      never rendered as empty cards. Each block loads on its own lane; a slow sourcing query never
+      blocks the grid or the bets. The grid pages by week; the deck always shows "now."
+
+**Cut-line split.** The above-cut portion (~8h) ships with **P5** — the bets, coming-up, gone-quiet,
+the off-target flag, and the follow-up/deal queue rows — the moment W5/W6/W7 exist. The queue's
+**sourced-batch** row (~2h) lights up with **W10 / the sourcing agent**, below the cut line; until
+then that row shows an empty-state, not a broken one. See the §8f dependency flag on the outbound
+sourcing agent.
 
 ---
 
@@ -467,6 +511,7 @@ drop target milestones, drop the progress chart — a number and a bar is enough
 - [ ] The scoring weights live in one readable file, not scattered.
 - [ ] Overrides are always allowed and always logged with a reason; the log is visible.
 - [ ] "What do I have to say no to in order to say yes?" is answered with the actual list of active projects and their committed hours — not a free-text prompt.
+- [ ] Scored leads and their aging follow-ups feed the **Week steering deck**'s "Waiting on you" queue (W14) — sourced batch, follow-ups owed, and live-deal moves as one urgency-sorted list. **Note:** the deck's follow-up/deal rows read existing lead state and ship without W10; the **sourced batch** requires the outbound _sourcing agent_ (a larger reframe of MISSION's inbound Filter, tracked in the walk-through and flagged in §8f), which W10 as specced here does **not** yet include.
 
 **Cut to M (10h):** skip the public link and the token infrastructure entirely. You fill in
 the eight answers yourself after the intro call; you get the same score and the same verdict.
@@ -532,21 +577,21 @@ MISSION.md's own rule: 20 hours of build to save 15 minutes a month = don't buil
 
 Dependency-respecting, money-first. Each phase ends with the app in a shippable state.
 
-| #       | Phase                                 | Items                   | Hours    | Why here                                                                                         |
-| ------- | ------------------------------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------ |
-| **P-1** | Land the boundary                     | W0 (PR #262)            | 2        | Already built and green. Merging first makes the teardown a map edit, not a rebase.              |
-| **P0**  | Clear the decks                       | W12 teardown, W13 flags | 16       | Every later hour is spent in a smaller app. Also the only phase that can slip without cost.      |
-| **P1**  | Clients + rates                       | W1                      | 16       | Keystone. Nothing about money works without it.                                                  |
-| **P2**  | Time, honestly                        | W2                      | 10       | You start capturing correct data immediately — even before reporting exists, the entries accrue. |
-| **P3**  | Get paid                              | W3, W4                  | 26       | **First money-positive milestone.** Ship here and Flowstate has already earned its quarter.      |
-| **P4**  | Direction                             | W5, W11                 | 18       | The priority layer, minus the mechanics.                                                         |
-| **P5**  | The two mechanics that change Tuesday | W6 Budget, W7 Sweep     | 20       | The mission's actual differentiator.                                                             |
-| —       | **Cut line**                          |                         | **108**  |                                                                                                  |
-| P6      | W8 Ledger                             |                         | 8        | Nice, not load-bearing, once the Budget is live.                                                 |
-| P7      | W9 Client onboarding                  |                         | 10       | Saves 20 min, 6× a year.                                                                         |
-| P8      | W10 Filter (cut version)              |                         | 10       | Highest-leverage _idea_; lowest-confidence _weights_.                                            |
-| P9      | W10 Filter public link                |                         | 14       | v1.1 by any reading.                                                                             |
-|         | **Total as scoped**                   |                         | **~150** |                                                                                                  |
+| #       | Phase                                          | Items                                          | Hours    | Why here                                                                                         |
+| ------- | ---------------------------------------------- | ---------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| **P-1** | Land the boundary                              | W0 (PR #262)                                   | 2        | Already built and green. Merging first makes the teardown a map edit, not a rebase.              |
+| **P0**  | Clear the decks                                | W12 teardown, W13 flags                        | 16       | Every later hour is spent in a smaller app. Also the only phase that can slip without cost.      |
+| **P1**  | Clients + rates                                | W1                                             | 16       | Keystone. Nothing about money works without it.                                                  |
+| **P2**  | Time, honestly                                 | W2                                             | 10       | You start capturing correct data immediately — even before reporting exists, the entries accrue. |
+| **P3**  | Get paid                                       | W3, W4                                         | 26       | **First money-positive milestone.** Ship here and Flowstate has already earned its quarter.      |
+| **P4**  | Direction                                      | W5, W11                                        | 18       | The priority layer, minus the mechanics.                                                         |
+| **P5**  | The two mechanics that change Tuesday          | W6 Budget, W7 Sweep, W14 Week deck (above-cut) | 28       | The mission's actual differentiator, assembled on the Week surface.                              |
+| —       | **Cut line**                                   |                                                | **116**  |                                                                                                  |
+| P6      | W8 Ledger                                      |                                                | 8        | Nice, not load-bearing, once the Budget is live.                                                 |
+| P7      | W9 Client onboarding                           |                                                | 10       | Saves 20 min, 6× a year.                                                                         |
+| P8      | W10 Filter (cut) + W14 sourced-batch queue row |                                                | 12       | Highest-leverage _idea_; lowest-confidence _weights_. Lights up the deck's sourced batch.        |
+| P9      | W10 Filter public link                         |                                                | 14       | v1.1 by any reading.                                                                             |
+|         | **Total as scoped**                            |                                                | **~160** |                                                                                                  |
 
 Item 8, the tickler, is 0 hours because it is bought.
 
@@ -759,6 +804,43 @@ Focus is either redundant (park as planned) or it becomes the timer's full-scree
 
 ---
 
+## 8f. Week steering deck — decisions made 2026-08-24
+
+MISSION.md names Week's contents twice: _"pipeline, outreach, features shipped, the Sweep, and
+'am I still working on the right thing at all'"_ and _"pipeline, what's due in the next fourteen
+days across every client, what's gone stale, and the Sweep."_ An earlier draft of the Week band
+got this wrong — an operational "2 overdue" alarm and a terse "4 stale" count, and it missed
+outreach, features-shipped, and the reflection entirely. Six steering goals were interviewed one
+at a time and decided; the result is spec item **W14** plus the cross-references in W5/W6/W7/W10.
+
+| #   | Steering goal               | **Decision**                                                                              | Where it's built               |
+| --- | --------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------ |
+| 1   | Pipeline (leads)            | **Action queue only** — no funnel counts on Week                                          | W14 "Waiting on you"           |
+| 2   | Outreach                    | **Folded into that one queue** — sourced batch + follow-ups owed + deal moves, by urgency | W14 · data from W10 / sourcing |
+| 3   | Features shipped / momentum | **Target bars + a "shipped this week" evidence line** (flat week = grey, never red)       | W14 "The bets" · W5            |
+| 4   | Due next 14 days            | **This-week / next-week buckets** (chosen over timeline / agenda / load-chart)            | W14 "Coming up"                |
+| 5   | Gone stale / the Sweep      | **Named preview → the finite ritual, AND embedded in the Friday review**                  | W14 "Gone quiet" · W7          |
+| 6   | "Am I on the right thing?"  | **Off-target flag only** — silent unless the week's time drifts from the declared tilt    | W14 banner · W6                |
+
+The through-line across all six: **verbs over metrics, names over counts, silence over noise.**
+Two of the six pieces (the Sweep preview, the reflection) render only on evidence; a calm week
+shows two standing blocks and a quiet grid. Full wireframe: the Ch.2 walk-through artifact
+(steering deck, rev3).
+
+**Cost.** W14 adds **~10h** — ~8h above the cut line (folded into P5), ~2h below (the sourced-batch
+queue row, with W10). Cut line **108 → 116h**; fully-scoped **~150 → ~160h**. This makes the §8d
+"three cheapest ways back under 130h" more pressing, not less.
+
+**Dependency flag — NEEDS KAT.** Goals 1–2 assume the **outbound sourcing agent** (the weekly
+researched batch of prospects), which is a larger reframe of MISSION's _inbound_ Filter — currently
+tracked only in the walk-through and **not costed in this document**. W10 as specced is the inbound,
+self-scored Filter. The deck's follow-up/deal queue rows work from existing lead state and ship
+above the cut line; the **sourced-batch row needs the sourcing agent built**. Decide whether the
+sourcing agent is in v1 (the walk-through's position is "core, sequenced after the money half") and
+cost it, or ship the deck's queue without the sourced-batch row until v1.1.
+
+---
+
 ## 9. Scoreboard
 
 | Bucket                            | Count |
@@ -766,8 +848,8 @@ Focus is either redundant (park as planned) or it becomes the timer's full-scree
 | **GO** (in v1)                    | 12    |
 | **PARK** (flagged off, data kept) | 4     |
 | **KILL** (deleted)                | 18    |
-| **GAPS** (v1 scope with no code)  | 18    |
-| **NEEDS KAT**                     | 10    |
+| **GAPS** (v1 scope with no code)  | 19    |
+| **NEEDS KAT**                     | 11    |
 
-**Total v1 as scoped: ~150h. Recommended cut line: ~108h. Fits a quarter: only at the cut
+**Total v1 as scoped: ~160h. Recommended cut line: ~116h. Fits a quarter: only at the cut
 line.**
