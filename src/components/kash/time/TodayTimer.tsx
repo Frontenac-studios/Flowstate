@@ -6,7 +6,9 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import Input from "@/components/kash/ui/Input";
 import Select from "@/components/kash/ui/Select";
 import { useElapsedSeconds } from "@/hooks/useElapsedSeconds";
+import { ensureNotifyPermission, showNotification } from "@/lib/notify/notify";
 import { formatElapsedClock } from "@/lib/time/duration";
+import { isLongRunningTimer } from "@/lib/time/timer-thresholds";
 import { useTRPC } from "@/trpc/client";
 
 /**
@@ -23,6 +25,8 @@ export default function TodayTimer() {
   const queryClient = useQueryClient();
 
   const { data: running } = useQuery(trpc.timeEntries.getRunning.queryOptions());
+  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
+  const notificationsEnabled = settings?.notificationsEnabled ?? true;
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries(trpc.timeEntries.getRunning.pathFilter());
@@ -39,15 +43,44 @@ export default function TodayTimer() {
 
   const startedAt = running ? new Date(running.startedAt) : null;
   const elapsed = useElapsedSeconds(startedAt);
+  const isLong = running != null && isLongRunningTimer(elapsed);
+
+  // Timer-running-long alert (W2d): the forgot-to-stop error silently corrupts
+  // every downstream number, so it earns an OS notification — fired once per entry,
+  // switchable via the master Notifications setting. The chip also turns critical
+  // in-app, so the signal survives even where OS notifications can't fire.
+  const notifiedEntryRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!running || !isLong || !notificationsEnabled) return;
+    if (notifiedEntryRef.current === running.entryId) return;
+    notifiedEntryRef.current = running.entryId;
+    void showNotification({
+      title: "Timer still running",
+      body: `${running.projectName} — ${formatElapsedClock(elapsed)}. Did you forget to stop it?`,
+      tag: `long-timer-${running.entryId}`,
+    });
+  }, [running, isLong, notificationsEnabled, elapsed]);
 
   if (running) {
     return (
-      <div className="flex items-center gap-2 rounded-pill border border-subtle bg-surface px-3 py-1 text-xs text-ink">
+      <div
+        className={`flex items-center gap-2 rounded-pill border px-3 py-1 text-xs text-ink ${
+          isLong ? "bg-critical/5 border-critical" : "border-subtle bg-surface"
+        }`}
+        title={
+          isLong
+            ? "This timer has been running a long time — did you forget to stop it?"
+            : undefined
+        }
+      >
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current text-critical" aria-hidden />
         <span className="max-w-[11rem] truncate" title={running.projectName}>
           {running.projectName}
         </span>
-        <span className="tabular-nums text-ink-muted" aria-label="elapsed">
+        <span
+          className={`tabular-nums ${isLong ? "font-medium text-critical" : "text-ink-muted"}`}
+          aria-label="elapsed"
+        >
           {formatElapsedClock(elapsed)}
         </span>
         <button
@@ -65,9 +98,11 @@ export default function TodayTimer() {
   return (
     <StartTimerPopover
       pending={startMutation.isPending}
-      onStart={(projectId, description) =>
-        startMutation.mutate({ projectId, description: description || undefined })
-      }
+      onStart={(projectId, description) => {
+        // Ask once, on a real user gesture, so the long-timer alert can reach the OS.
+        void ensureNotifyPermission();
+        startMutation.mutate({ projectId, description: description || undefined });
+      }}
     />
   );
 }
