@@ -1,39 +1,90 @@
 "use client";
 
+import { isDesktopRuntime } from "@/lib/runtime/is-desktop";
+
 /**
- * Minimal OS-notification delivery for the web build (W2d). Uses the Web
- * Notifications API, which reaches the system notification centre while the page
- * is alive — even backgrounded — so a forgotten timer can find you.
+ * OS-notification delivery (W2d), cross-platform:
+ * - Web build: the Web Notifications API, which reaches the system notification
+ *   centre while the page is alive (even backgrounded).
+ * - Desktop build: tauri-plugin-notification, invoked the same raw way the app
+ *   already calls Tauri commands (macOS WKWebView has no Web Notification API).
  *
- * The desktop app runs in a macOS WKWebView, which does NOT implement the Web
- * Notification API; native desktop delivery (tauri-plugin-notification) is a
- * follow-up. Here every call degrades to a no-op when Notification is absent or
- * permission is not granted, so callers never need to branch on the platform —
- * they pair this with an in-app visual signal for the cases it can't cover.
+ * Every call degrades to a no-op when neither backend is available or permission
+ * is not granted, so callers never branch on platform — they pair this with an
+ * in-app visual signal for the cases it can't cover.
  */
 
-export function canNotify(): boolean {
-  return typeof window !== "undefined" && "Notification" in window;
+type TauriInvoke = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
+
+function tauriInvoke(): TauriInvoke | null {
+  if (typeof window === "undefined") return null;
+  const tauri = (
+    window as Window & {
+      __TAURI__?: { invoke?: TauriInvoke; core?: { invoke?: TauriInvoke } };
+    }
+  ).__TAURI__;
+  const invoke = tauri?.core?.invoke ?? tauri?.invoke;
+  return typeof invoke === "function" ? invoke : null;
 }
 
-/** Request permission if it hasn't been decided yet. Safe to call repeatedly. */
-export async function ensureNotifyPermission(): Promise<NotificationPermission> {
-  if (!canNotify()) return "denied";
-  if (Notification.permission !== "default") return Notification.permission;
+export function canNotify(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isDesktopRuntime()) return tauriInvoke() != null;
+  return "Notification" in window;
+}
+
+/** Request permission if it hasn't been granted yet. Returns whether it is granted. */
+export async function ensureNotifyPermission(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+
+  if (isDesktopRuntime()) {
+    const invoke = tauriInvoke();
+    if (!invoke) return false;
+    try {
+      if ((await invoke("plugin:notification|is_permission_granted")) === true) return true;
+      return (await invoke("plugin:notification|request_permission")) === "granted";
+    } catch {
+      return false;
+    }
+  }
+
+  if (!("Notification" in window)) return false;
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") return false;
   try {
-    return await Notification.requestPermission();
+    return (await Notification.requestPermission()) === "granted";
   } catch {
-    return "denied";
+    return false;
   }
 }
 
 /**
- * Show a notification if allowed. `tag` collapses repeats of the same alert
- * (the OS replaces a same-tag notification rather than stacking). Returns whether
- * one was actually shown, so a caller can fall back to an in-app signal.
+ * Show a notification if allowed. `tag` collapses repeats of the same alert (the
+ * OS replaces a same-tag notification rather than stacking). Returns whether one
+ * was shown, so a caller can fall back to an in-app signal.
  */
-export function showNotification(params: { title: string; body?: string; tag?: string }): boolean {
-  if (!canNotify() || Notification.permission !== "granted") return false;
+export async function showNotification(params: {
+  title: string;
+  body?: string;
+  tag?: string;
+}): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+
+  if (isDesktopRuntime()) {
+    const invoke = tauriInvoke();
+    if (!invoke) return false;
+    try {
+      if (!(await ensureNotifyPermission())) return false;
+      await invoke("plugin:notification|notify", {
+        options: { title: params.title, body: params.body },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  if (!("Notification" in window) || Notification.permission !== "granted") return false;
   try {
     new Notification(params.title, { body: params.body, tag: params.tag });
     return true;

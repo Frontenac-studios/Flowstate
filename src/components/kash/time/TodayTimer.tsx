@@ -54,7 +54,7 @@ export default function TodayTimer() {
     if (!running || !isLong || !notificationsEnabled) return;
     if (notifiedEntryRef.current === running.entryId) return;
     notifiedEntryRef.current = running.entryId;
-    showNotification({
+    void showNotification({
       title: "Timer still running",
       body: `${running.projectName} — ${formatElapsedClock(elapsed)}. Did you forget to stop it?`,
       tag: `long-timer-${running.entryId}`,
