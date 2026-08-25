@@ -3,7 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { appSettings, clients, projects, timeEntries, timeTags, tasks } from "@/db/tables";
+import { appSettings, clients, projects, rates, timeEntries, timeTags, tasks } from "@/db/tables";
+import type { CandidateRate } from "@/lib/rates/resolve-rate";
+import { aggregateTimeReport } from "@/lib/time/aggregate-time-report";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { computeUntrackedGaps } from "@/lib/time/compute-untracked-gaps";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
@@ -565,6 +567,90 @@ export const timeEntriesRouter = createTRPCRouter({
         lastWeekWorkedSeconds,
         isoWeek: weekStart.toISOString().slice(0, 10),
       };
+    }),
+
+  /**
+   * Time report for a period (W3): totals, the business/personal split, the
+   * client → project → task tree, and the effective hourly rate. Fetches the raw
+   * inputs and hands them to the pure `aggregateTimeReport`.
+   */
+  report: protectedProcedure
+    .input(z.object({ startedAt: z.coerce.date(), endedAt: z.coerce.date() }))
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+
+      const [entryRows, projectRows, clientRows, taskRows, rateRows] = await Promise.all([
+        db
+          .select({
+            projectId: timeEntries.projectId,
+            taskId: timeEntries.taskId,
+            billable: timeEntries.billable,
+            startedAt: timeEntries.startedAt,
+            endedAt: timeEntries.endedAt,
+          })
+          .from(timeEntries)
+          .where(
+            and(
+              eq(timeEntries.userId, ctx.userId),
+              gte(timeEntries.startedAt, input.startedAt),
+              lt(timeEntries.startedAt, input.endedAt)
+            )
+          ),
+        db
+          .select({
+            id: projects.id,
+            name: projects.name,
+            clientId: projects.clientId,
+            category: projects.category,
+          })
+          .from(projects)
+          .where(eq(projects.userId, ctx.userId)),
+        db
+          .select({ id: clients.id, name: clients.name })
+          .from(clients)
+          .where(eq(clients.userId, ctx.userId)),
+        db
+          .select({ id: tasks.id, title: tasks.title })
+          .from(tasks)
+          .where(eq(tasks.userId, ctx.userId)),
+        db
+          .select({
+            clientId: rates.clientId,
+            projectId: rates.projectId,
+            amountCents: rates.amountCents,
+            effectiveFrom: rates.effectiveFrom,
+          })
+          .from(rates)
+          .where(eq(rates.userId, ctx.userId)),
+      ]);
+
+      const ratesByClient = new Map<string, CandidateRate[]>();
+      for (const rate of rateRows) {
+        const list = ratesByClient.get(rate.clientId) ?? [];
+        list.push({
+          projectId: rate.projectId,
+          amountCents: rate.amountCents,
+          effectiveFrom: rate.effectiveFrom,
+        });
+        ratesByClient.set(rate.clientId, list);
+      }
+
+      return aggregateTimeReport({
+        entries: entryRows.map((e) => ({
+          projectId: e.projectId,
+          taskId: e.taskId,
+          billable: e.billable,
+          seconds: Math.max(
+            0,
+            Math.floor(((e.endedAt ?? now).getTime() - e.startedAt.getTime()) / 1000)
+          ),
+        })),
+        projects: projectRows,
+        clients: clientRows,
+        tasks: taskRows,
+        ratesByClient,
+        asOf: now,
+      });
     }),
 
   /**
