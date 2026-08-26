@@ -73,7 +73,18 @@ export const settingsRouter = createTRPCRouter({
       goalCoachEased: goalCoachAdaptationsSchema.safeParse(row.goalCoachAdaptations).success
         ? goalCoachAdaptationsSchema.parse(row.goalCoachAdaptations).eased
         : DEFAULT_GOAL_COACH_ADAPTATIONS.eased,
+      quarterFirstRunAt: row.quarterFirstRunAt ?? null,
     };
+  }),
+
+  /** Dismiss the one-time Quarter guided first-run (W5). Idempotent. */
+  dismissQuarterFirstRun: protectedProcedure.mutation(async ({ ctx }) => {
+    await getOrCreateSettings(ctx.userId);
+    await db
+      .update(appSettings)
+      .set({ quarterFirstRunAt: new Date(), updatedAt: new Date() })
+      .where(eq(appSettings.userId, ctx.userId));
+    return { ok: true };
   }),
   updateBucketMode: protectedProcedure.input(bucketModeSchema).mutation(async ({ ctx, input }) => {
     await getOrCreateSettings(ctx.userId);

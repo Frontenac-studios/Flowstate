@@ -37,7 +37,7 @@ export const NAV_GROUP_DO_NOW: NavGroup = {
 export const NAV_GROUP_REFLECT_PLAN: NavGroup = {
   label: "Reflect & plan",
   items: [
-    { href: "/plan", label: "Plan", icon: Compass, match: ["/plan"] },
+    { href: "/plan", label: "Quarter", icon: Compass, match: ["/plan"] },
     { href: "/backlog", label: "Backlog", icon: GalleryVerticalEnd, match: ["/backlog"] },
   ],
 };
