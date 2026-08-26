@@ -19,6 +19,8 @@ export const appSettings = sqliteTable("app_settings", {
   alertPrefs: text("alert_prefs", { mode: "json" }),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   calendarAiEnabled: integer("calendar_ai_enabled", { mode: "boolean" }).notNull().default(true),
+  /** One-time Quarter first-run dismissal (W5). Mirrors Postgres. */
+  quarterFirstRunAt: integer("quarter_first_run_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => sqliteNow()),

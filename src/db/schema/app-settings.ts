@@ -24,6 +24,12 @@ export const appSettings = pgTable("app_settings", {
   alertPrefs: jsonb("alert_prefs").$type<AlertPrefs>(),
   top3MiddayCheckin: text("top3_midday_checkin").notNull().default("on"),
   calendarAiEnabled: boolean("calendar_ai_enabled").notNull().default(true),
+  /**
+   * When the one-time Quarter guided first-run (the Direction→Target teach) was
+   * dismissed. Null = never shown; set once, at zero-Directions. Not a recurring
+   * gate (W5, discovery §13 Q6).
+   */
+  quarterFirstRunAt: timestamp("quarter_first_run_at", { withTimezone: true, mode: "date" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

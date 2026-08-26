@@ -3,6 +3,8 @@ import { abyssItems as pgAbyssItems } from "./schema/abyss-items";
 import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { calendarConnections as pgCalendarConnections } from "./schema/calendar-connections";
 import { clients as pgClients } from "./schema/clients";
+import { directions as pgDirections } from "./schema/directions";
+import { targets as pgTargets } from "./schema/targets";
 import { rates as pgRates } from "./schema/rates";
 import { invoices as pgInvoices } from "./schema/invoices";
 import { invoiceLines as pgInvoiceLines } from "./schema/invoice-lines";
@@ -125,6 +127,10 @@ export const externalCalendarEvents = (
   isSqliteMode() ? sqliteSchema.externalCalendarEvents : pgExternalCalendarEvents
 ) as typeof pgExternalCalendarEvents;
 export const clients = (isSqliteMode() ? sqliteSchema.clients : pgClients) as typeof pgClients;
+export const directions = (
+  isSqliteMode() ? sqliteSchema.directions : pgDirections
+) as typeof pgDirections;
+export const targets = (isSqliteMode() ? sqliteSchema.targets : pgTargets) as typeof pgTargets;
 export const rates = (isSqliteMode() ? sqliteSchema.rates : pgRates) as typeof pgRates;
 export const invoices = (isSqliteMode() ? sqliteSchema.invoices : pgInvoices) as typeof pgInvoices;
 export const invoiceLines = (

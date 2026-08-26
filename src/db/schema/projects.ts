@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { clients } from "./clients";
+import { targets } from "./targets";
 
 /**
  * Collapsed from the pre-mission five-value life-category enum
@@ -40,6 +41,23 @@ export const projects = pgTable(
      * src/lib/projects/goal-layer.ts.
      */
     isMaintenance: boolean("is_maintenance").notNull().default(false),
+    /**
+     * The Target this project serves, or null (internal / maintenance / not yet
+     * linked). A project serves at most one Target; the link is proposed at project
+     * creation (W5). See src/db/schema/targets.ts.
+     */
+    targetId: uuid("target_id").references(() => targets.id, { onDelete: "set null" }),
+    /**
+     * The learning roadmap is a business project Quarter reads, not its own table
+     * (discovery §13 Q7). `isLearning` marks the one active capability project;
+     * `capability` is the statement, `why` the qualitative reason, `reachedAt` the
+     * terminal "capability reached" state. Milestones reuse project phases; logged
+     * time is ordinary project time. No hours quota, no effective-rate tie.
+     */
+    isLearning: boolean("is_learning").notNull().default(false),
+    capability: text("capability"),
+    why: text("why"),
+    reachedAt: timestamp("reached_at", { withTimezone: true, mode: "date" }),
     /** Soft-archive marker. Non-null hides the project from the index; data is retained. */
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),

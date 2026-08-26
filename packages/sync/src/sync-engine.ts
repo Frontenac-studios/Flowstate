@@ -5,6 +5,8 @@ import {
   chatMessages,
   clients,
   dayReviews,
+  directions,
+  targets,
   goalMilestones,
   goals,
   phases,
@@ -450,11 +452,15 @@ async function upsertRow(
       return true;
     }
     case "project_milestones":
+    case "directions":
+    case "targets":
     case "goals":
     case "goal_milestones":
     case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
+        directions,
+        targets,
         goals,
         goal_milestones: goalMilestones,
         reserved_days: reservedDays,

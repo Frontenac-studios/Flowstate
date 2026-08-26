@@ -10,6 +10,11 @@ CREATE TABLE IF NOT EXISTS projects (
   client_id TEXT,
   state TEXT NOT NULL DEFAULT 'active',
   is_maintenance INTEGER NOT NULL DEFAULT 0,
+  target_id TEXT,
+  is_learning INTEGER NOT NULL DEFAULT 0,
+  capability TEXT,
+  why TEXT,
+  reached_at INTEGER,
   archived_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
@@ -600,6 +605,41 @@ CREATE UNIQUE INDEX IF NOT EXISTS external_calendar_events_connection_calendar_e
 CREATE INDEX IF NOT EXISTS external_calendar_events_user_id_start_at_idx
   ON external_calendar_events (user_id, start_at);
 
+-- Quarter surface (W5): Directions (durable rules) and Targets (the bets).
+CREATE TABLE IF NOT EXISTS directions (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  statement TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  retired_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS directions_user_id_active_idx ON directions (user_id, active);
+
+CREATE TABLE IF NOT EXISTS targets (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  direction_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  horizon TEXT NOT NULL DEFAULT 'quarter',
+  period_start INTEGER NOT NULL,
+  period_end INTEGER NOT NULL,
+  measure_kind TEXT NOT NULL,
+  measure_source TEXT NOT NULL DEFAULT 'manual',
+  derivation_key TEXT,
+  measure_target INTEGER NOT NULL,
+  measure_current INTEGER,
+  state TEXT NOT NULL DEFAULT 'active',
+  archived_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS targets_user_id_state_idx ON targets (user_id, state);
+CREATE INDEX IF NOT EXISTS targets_direction_id_idx ON targets (direction_id);
+
 -- Tenancy. Local-only: these are NOT in SYNC_TABLES. The desktop app runs the
 -- same tRPC context code as web (under the auth bypass), so it needs to resolve
 -- an org locally; hosted resolves its own from Supabase.
@@ -685,6 +725,12 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "client_id", definition: "TEXT" },
   { table: "projects", column: "state", definition: "TEXT NOT NULL DEFAULT 'active'" },
   { table: "projects", column: "is_maintenance", definition: "INTEGER NOT NULL DEFAULT 0" },
+  { table: "projects", column: "target_id", definition: "TEXT" },
+  { table: "projects", column: "is_learning", definition: "INTEGER NOT NULL DEFAULT 0" },
+  { table: "projects", column: "capability", definition: "TEXT" },
+  { table: "projects", column: "why", definition: "TEXT" },
+  { table: "projects", column: "reached_at", definition: "INTEGER" },
+  { table: "app_settings", column: "quarter_first_run_at", definition: "INTEGER" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
   { table: "time_entries", column: "invoice_id", definition: "TEXT" },
   { table: "invoices", column: "paid_at", definition: "INTEGER" },
