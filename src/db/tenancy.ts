@@ -113,6 +113,8 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   invoices: "financial",
   invoice_lines: "financial",
   money_settings: "financial",
+  // Owner's draws (W16) — the personal-side withdrawal, revenue a Member never reads.
+  owner_draws: "financial",
   rates: "financial",
   time_entries: "financial",
 };

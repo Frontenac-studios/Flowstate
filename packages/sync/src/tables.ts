@@ -5,6 +5,7 @@ export const SYNC_TABLES = [
   "invoices",
   "invoice_lines",
   "money_settings",
+  "owner_draws",
   "rates",
   "projects",
   "project_templates",

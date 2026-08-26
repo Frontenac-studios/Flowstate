@@ -135,6 +135,7 @@ describe("financial data placement", () => {
       "invoice_lines",
       "invoices",
       "money_settings",
+      "owner_draws",
       "rates",
       "time_entries",
     ]);

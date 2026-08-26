@@ -454,6 +454,41 @@ export const invoicesRouter = createTRPCRouter({
       return { invoiceId: input.invoiceId };
     }),
 
+  /** Record that a client paid (the "collected" signal) — or undo it. */
+  markPaid: protectedProcedure
+    .input(z.object({ invoiceId: z.string().uuid(), paidAt: z.coerce.date().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [row] = await db
+        .update(invoices)
+        .set({ paidAt: input.paidAt ?? now, updatedAt: now })
+        .where(
+          and(
+            eq(invoices.id, input.invoiceId),
+            eq(invoices.userId, ctx.userId),
+            eq(invoices.status, "accepted")
+          )
+        )
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found." });
+      await syncInvoiceRow(row.id, "update", row);
+      return { invoiceId: row.id, paidAt: row.paidAt };
+    }),
+
+  markUnpaid: protectedProcedure
+    .input(z.object({ invoiceId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const [row] = await db
+        .update(invoices)
+        .set({ paidAt: null, updatedAt: now })
+        .where(and(eq(invoices.id, input.invoiceId), eq(invoices.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found." });
+      await syncInvoiceRow(row.id, "update", row);
+      return { invoiceId: row.id };
+    }),
+
   /** Invoice history, newest first, with client name. */
   list: protectedProcedure
     .input(z.object({ clientId: z.string().uuid().optional() }).optional())
@@ -472,6 +507,7 @@ export const invoicesRouter = createTRPCRouter({
           carriedSeconds: invoices.carriedSeconds,
           amountCents: invoices.amountCents,
           status: invoices.status,
+          paidAt: invoices.paidAt,
           createdAt: invoices.createdAt,
         })
         .from(invoices)
@@ -497,6 +533,7 @@ export const invoicesRouter = createTRPCRouter({
           carriedSeconds: invoices.carriedSeconds,
           amountCents: invoices.amountCents,
           status: invoices.status,
+          paidAt: invoices.paidAt,
           note: invoices.note,
           createdAt: invoices.createdAt,
         })

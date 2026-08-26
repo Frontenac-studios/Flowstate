@@ -125,6 +125,10 @@ export async function syncMoneySettingsRow(
   await recordSyncMutation({ table: "money_settings", rowId, op, payload });
 }
 
+export async function syncOwnerDrawRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
+  await recordSyncMutation({ table: "owner_draws", rowId, op, payload });
+}
+
 export async function syncProjectTemplateRow(
   rowId: string,
   op: SyncOp,

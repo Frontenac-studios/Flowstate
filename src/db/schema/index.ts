@@ -19,6 +19,7 @@ export * from "./goals";
 export * from "./invoices";
 export * from "./invoice-lines";
 export * from "./money-settings";
+export * from "./owner-draws";
 export * from "./org-memberships";
 export * from "./orgs";
 export * from "./phases";
