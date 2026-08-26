@@ -26,6 +26,7 @@ export const timeEntries = sqliteTable("time_entries", {
     .notNull()
     .$defaultFn(() => "manual"),
   invoicedAt: integer("invoiced_at", { mode: "timestamp_ms" }),
+  invoiceId: text("invoice_id"),
   reason: text("reason"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()

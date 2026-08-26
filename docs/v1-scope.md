@@ -413,22 +413,36 @@ most likely to pay for the quarter.
 
 ---
 
-### W5 — Directions & Targets · **L (18h; 12h cut)** · deps: W1
+### W5 — Directions, Targets & the Quarter surface · **L (34h; 22h cut)** · deps: W1
+
+> **Rescoped 2026-08-25 by the Quarter discovery** ([docs/discovery-quarter.md](./discovery-quarter.md),
+> esp. §13). MISSION names five things on Quarter — Directions, Targets, the learning roadmap, tool
+> spend, compliance — and the original 18h W5 built only the first two. This item now builds the whole
+> surface. Superseded criteria are struck; new ones carry a `[Q]` tag.
 
 **Acceptance criteria**
 
-- [ ] `directions`: `id, user_id, org_id, statement, active, created_at, retired_at`. Qualitative, never measured, no progress field — asserted by the absence of one.
-- [ ] `targets`: `id, user_id, direction_id (NOT NULL), title, horizon (quarter|month|week), period_start, period_end, measure_kind, measure_target, measure_current, state`.
-- [ ] **The cap is enforced in the mutation, not the UI**: creating a 3rd active direction or a 4th target in a quarter fails with the message naming what must be retired first. Test asserts the failure.
+- [ ] `directions`: `id, user_id, org_id, statement, active, created_at, retired_at`. Qualitative, never measured, no progress field — asserted by the absence of one. **Cap 1–2**; "retire", never delete.
+- [ ] `targets`: `id, user_id, org_id, direction_id (NOT NULL), title, horizon (quarter|month|week), period_start, period_end, measure_kind, measure_target, measure_current, state, archived_at`. **`[Q]` gains `measure_source` (`auto`|`manual`) + a derivation key (`money_booked`|`clients_signed`|`milestones_shipped`)** — auto measures read live, manual hold the last-entered value (discovery §13 Q1, hybrid).
+- [ ] **The cap is enforced in the mutation, not the UI**: creating a 3rd active direction or a 4th target in a quarter fails with the message naming what must be retired first. Test asserts the failure. **`[Q]` In the UI the failure is a "retire one" moment, never a toast — there is no empty 4th slot** (§13 / artboard 4).
 - [ ] Every target has a direction; the FK is non-nullable. Test asserts insert-without-direction fails.
 - [ ] A project links to at most one target, or is `is_maintenance`. At project creation the app **proposes** the link ("This looks like it serves X — yes / no / different") and accepts "none / maintenance" as a first-class answer.
 - [ ] Personal and maintenance projects are absent from every target query.
-- [ ] The active targets also surface on the **Week steering deck** as "The bets" (W14): one progress bar per target over a "shipped this week" evidence line. This is a Week-side read of the same data — the canonical Quarter surface is `/goals` below.
-- [ ] A `/goals` screen shows: directions as text at the top, targets beneath with progress, and nothing else. No grid, no cells, no categories, no balance-by-life-area.
-- [ ] Old `goals` rows exported to CSV and the tables dropped.
+- [ ] The active targets also surface on the **Week steering deck** as "The bets" (W14): one progress bar per target over a "shipped this week" evidence line. This is a Week-side read of the same data — the canonical Quarter surface is `/plan` below.
+- [ ] ~~A `/goals` screen shows directions as text and targets with progress, and nothing else.~~ **`[Q]` The Quarter surface renders at `/plan`** (rebuilt from the placeholder stub, wrapped in `SurfaceCoachLayout surface="plan"`), top-to-bottom: Directions (sentences + applied line) → the bets (flat "3 of 3" list, each chip-tagged to its Direction) → Learning roadmap → read-strips → the review banner. No grid, no cells, no categories, no balance-by-life-area, no personal-goals view — ever.
+- [ ] **`[Q]` Create/edit = one smart composer**: a single field routes number+date → a bet (revealing kind/source/horizon/parent inline for confirmation) else a Direction (§13 Q2).
+- [ ] **`[Q]` The learning roadmap is a business project Quarter reads** — a `projects.is_learning` (or `kind`) flag + `capability` (title) + `why` + `reached_at`; milestones reuse project **phases**; logged time is ordinary project time; cap 1 active. Renders as a "Learning roadmap" block on Quarter and as a non-client card on the Projects board. **No effective-rate tie, no hours quota** (§13 Q7; MISSION amendment B, §8h).
+- [ ] **`[Q]` Two read-strips: tool spend** (reads `business_expenses` → drills to Money) **and compliance this quarter** (the tickler's dated obligations + reserve status → owned by Today). Conditional — absent when empty; never editable on Quarter (§13 / discovery §5).
+- [ ] **`[Q]` The full quarterly review ritual** — an **in-place banner** in the last ~week of the quarter (no mode/takeover); pre-answered from data; drop/carry/done on each Target, keep/retire on Directions, reached/carry on the learning track; ends by drafting the next quarter (carries kept Directions + carried Targets + the learning track into open slots). If ignored, the prior board persists flagged "closing overdue" — nothing auto-drops (§13 Q3 / artboard 3).
+- [ ] **`[Q]` A met Target archives on crossing** (`archived_at`, `state=met`) off the active board to the quarter record (shows Done in the review) — **only on objective met**; stale/unmet never auto-archive, they route to the Sweep (W7). A landed bet still counts toward the 3-cap (§13 Q4).
+- [ ] **`[Q]` A one-time guided first-run** teaches the Direction→Target model at zero-Directions/never-completed; dismissible, never a recurring gate (§13 Q6).
+- [ ] Old `goals` rows migrated into the new model (the single kept goal → a Target per §8c Q4), then the `goals`/`goal_milestones` tables dropped.
 
-**Cut to 12h if needed:** drop the AI proposal at project creation (make it a plain select),
-drop target milestones, drop the progress chart — a number and a bar is enough.
+**Cut to 22h if needed:** ship the review **thin** (auto-close + carry, no drafted-next-quarter, −5h);
+drop the smart-composer routing for a plain "Direction / bet" toggle (−3h); drop the guided first-run
+for the calm-invitations empty state (−2h); make the project→target link a plain select (−2h). The
+learning project, read-strips, hybrid measure source, and the cap-as-a-moment stay — they are the
+surface's reason to exist.
 
 ---
 
@@ -550,6 +564,10 @@ steps as the manual checklist.
 
 ### W8 — The Ledger · **M (8h)** · deps: W6 · **below the cut line**
 
+> **Stays in v1 (Quarter discovery §8h, 2026-08-25).** The discovery considered deferring the Ledger to
+> v1.1 to offset the Filter moving above the cut; Kat declined — nothing is deferred. The Ledger remains
+> below the recommended cut line but inside the fully-scoped v1.
+
 **Acceptance criteria**
 
 - [ ] Every second Friday, one screen: "You said 70% business. You spent 41%." Actual minutes over the fortnight vs declared tilt.
@@ -575,7 +593,13 @@ steps as the manual checklist.
 
 ---
 
-### W10 — The Filter · **L (24h full; M/10h cut)** · deps: W1, W5 · **below the cut line**
+### W10 — The Filter · **L (24h full; M/10h cut)** · deps: W1, W5 · ~~below the cut line~~ **committed above the cut (Quarter discovery §8h, 2026-08-25)**
+
+> **Above the cut, no offset (2026-08-25).** The Quarter discovery pulls the M/10h cut Filter above
+> the cut line so a Direction's applied line ("scored N leads, declined M") is live in v1 rather than
+> dormant — the loop that makes a Direction visibly do its job. Kat declined to fund it by deferring
+> the Ledger (W8); v1 simply extends. The 10h was already inside the ~174h scoped total, so this is a
+> sequencing commitment, not new hours. Sequence **right after W5**. (Public intake link stays v1.1.)
 
 **Acceptance criteria (full)**
 
@@ -652,23 +676,28 @@ MISSION.md's own rule: 20 hours of build to save 15 minutes a month = don't buil
 
 Dependency-respecting, money-first. Each phase ends with the app in a shippable state.
 
-| #       | Phase                                          | Items                                          | Hours    | Why here                                                                                         |
-| ------- | ---------------------------------------------- | ---------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
-| **P-1** | Land the boundary                              | W0 (PR #262)                                   | 2        | Already built and green. Merging first makes the teardown a map edit, not a rebase.              |
-| **P0**  | Clear the decks                                | W12 teardown, W13 flags                        | 16       | Every later hour is spent in a smaller app. Also the only phase that can slip without cost.      |
-| **P1**  | Clients + rates                                | W1                                             | 16       | Keystone. Nothing about money works without it.                                                  |
-| **P2**  | Time, honestly                                 | W2                                             | 10       | You start capturing correct data immediately — even before reporting exists, the entries accrue. |
-| **P3**  | Get paid                                       | W3, W4                                         | 26       | **First money-positive milestone.** Ship here and Flowstate has already earned its quarter.      |
-| **P4**  | Direction                                      | W5, W11                                        | 18       | The priority layer, minus the mechanics.                                                         |
-| **P5**  | The two mechanics that change Tuesday          | W6 Budget, W7 Sweep, W14 Week deck (above-cut) | 28       | The mission's actual differentiator, assembled on the Week surface.                              |
-| —       | **Cut line**                                   |                                                | **116**  |                                                                                                  |
-| P6      | W8 Ledger                                      |                                                | 8        | Nice, not load-bearing, once the Budget is live.                                                 |
-| P7      | W9 Client onboarding                           |                                                | 10       | Saves 20 min, 6× a year.                                                                         |
-| P8      | W10 Filter (cut) + W14 sourced-batch queue row |                                                | 12       | Highest-leverage _idea_; lowest-confidence _weights_. Lights up the deck's sourced batch.        |
-| P9      | W10 Filter public link                         |                                                | 14       | v1.1 by any reading.                                                                             |
-|         | **Total as scoped**                            |                                                | **~160** |                                                                                                  |
+| #       | Phase                                          | Items                                          | Hours    | Why here                                                                                                |
+| ------- | ---------------------------------------------- | ---------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| **P-1** | Land the boundary                              | W0 (PR #262)                                   | 2        | Already built and green. Merging first makes the teardown a map edit, not a rebase.                     |
+| **P0**  | Clear the decks                                | W12 teardown, W13 flags                        | 16       | Every later hour is spent in a smaller app. Also the only phase that can slip without cost.             |
+| **P1**  | Clients + rates                                | W1                                             | 16       | Keystone. Nothing about money works without it.                                                         |
+| **P2**  | Time, honestly                                 | W2                                             | 10       | You start capturing correct data immediately — even before reporting exists, the entries accrue.        |
+| **P3**  | Get paid                                       | W3, W4                                         | 26       | **First money-positive milestone.** Ship here and Flowstate has already earned its quarter.             |
+| **P4**  | Direction + the Quarter surface                | W5, W11                                        | 34       | The whole Quarter surface (§8h); W5 grew 18h → 34h. W10 (Filter, hours in P8) sequences right after W5. |
+| **P5**  | The two mechanics that change Tuesday          | W6 Budget, W7 Sweep, W14 Week deck (above-cut) | 28       | The mission's actual differentiator, assembled on the Week surface.                                     |
+| —       | **Cut line**                                   |                                                | **116**  |                                                                                                         |
+| P6      | W8 Ledger                                      |                                                | 8        | Nice, not load-bearing, once the Budget is live.                                                        |
+| P7      | W9 Client onboarding                           |                                                | 10       | Saves 20 min, 6× a year.                                                                                |
+| P8      | W10 Filter (cut) + W14 sourced-batch queue row |                                                | 12       | Highest-leverage _idea_; lowest-confidence _weights_. Lights up the deck's sourced batch.               |
+| P9      | W10 Filter public link                         |                                                | 14       | v1.1 by any reading.                                                                                    |
+|         | **Total as scoped**                            |                                                | **~160** |                                                                                                         |
 
 Item 8, the tickler, is 0 hours because it is bought.
+
+> **This table is the §8f-era sequence (~160 base).** It predates the §8g discovery (+W15/W16) and the
+> §8h Quarter fold-in (W5 18→34h, Filter above the cut). The current scoped total is **~190h** (§8h);
+> P4 above carries the new W5 figure but the other §8g/§8h deltas are recorded in their sections, not
+> re-summed here. Treat §8h's arithmetic as authoritative.
 
 ### 7.2 Does v1 fit in a quarter of evenings and weekends?
 
@@ -971,16 +1000,92 @@ its phase is built.
 | Filter decline-outright escape                      | +1           |
 | **Revised v1 total**                                | **~174**     |
 
-_(The doc carries a pre-existing base inconsistency — §8d reads ~166, the §8f scoreboard ~160; the
-discovery doc worked from 166 and landed at ~180. Either way the discovery net is **+14h**, and v1
-is now ~1.4–1.7 quarters.)_ To land near a quarter, the four reversible deferrals in the discovery
-doc §5 (split W2 −8h · Ledger →v1.1 −8h · tickler →v1.1 −6h · fixed-fee half of W15 →v1.1 −5h) take
-it to **~150h** — still the open **Q5**, to decide deliberately.
+**Authoritative totals live in [`docs/build-tracker.html`](./build-tracker.html) (line-by-line
+sum).** The prose figures above were coarse and mutually inconsistent (§8d ~166, §8f scoreboard
+~160, this table ~174). The tracker itemizes every unit of work — including W2 split into a–f and
+the below-cut items — and sums to:
+
+- **167 h — cut-line v1** (P-1…P5): the coherent, shippable v1. This is the number to steer by.
+- **+24 h below the cut line** (W8 Ledger, W10 Filter, Tickler) → **191 h all-in**.
+- W9 onboarding automation (12 h) is deferred to v1.1 and excluded from both.
+
+Where this doc's prose and the tracker disagree, the tracker wins. To land the **167 h cut-line**
+nearer a quarter, the reversible deferrals in the discovery doc §5 (split W2 −8h · Ledger →v1.1
+· tickler →v1.1 · fixed-fee half of W15 →v1.1) still apply — the open **Q5**, to decide deliberately.
 
 ### Still open (unchanged by this fold-in)
 
 - **Q2 / Q3** (Monday first-look; rhythm nudges) — being worked in a **separate UX-flow session**; leans (one next action; silent) stand as defaults.
 - **Q5–Q10** — the cut line, the fixed-fee "running hot" %, tax-reserve as one % vs per-period, personal-savings figure, Clockify import mapping, Focus-after-W2 — remain open. Q5 (cut line) is the only one that changes the ship date.
+
+---
+
+## 8h. Quarter discovery decisions folded in — 2026-08-25
+
+Source of record: **[docs/discovery-quarter.md](./discovery-quarter.md)** — a discovery session on the
+fifth surface (Quarter = the bet altitude), with a committed visual
+([discovery-quarter-wireframes.html](./discovery-quarter-wireframes.html)). The trigger: **MISSION names
+five things on Quarter — Directions, Targets, the learning roadmap, tool spend, compliance — and W5 as
+written built only the first two.** This section folds the decisions into the plan; the discovery doc
+keeps the reasoning, the flows, and the wireframes.
+
+### Decisions → where they landed
+
+| Area                    | Decision                                                                                                                                                                                                                                    | Landed in                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Surface                 | Quarter renders at **`/plan`** (rebuilt stub), wrapped in `SurfaceCoachLayout surface="plan"`. Order: Directions → the bets → Learning → read-strips → review banner.                                                                       | W5 criteria                              |
+| Learning roadmap        | **A business project Quarter reads** (`is_learning` flag + capability/`reached_at`; milestones = phases; ordinary project time). No `learning_tracks` table, **no effective-rate tie, no hours quota**, cap 1. Shows on the Projects board. | W5; MISSION amendment B (below)          |
+| Targets — measure       | **Hybrid source**: `measure_source` (`auto`\|`manual`) + a derivation key. Auto reads live ($ from Money, clients from pipeline, shipped from milestones); manual holds the last value.                                                     | W5 criteria                              |
+| Targets — cap           | **Cap-3 as a "retire one" moment**, never a toast; no empty 4th slot.                                                                                                                                                                       | W5 criteria                              |
+| Targets — met           | **Archive-on-met** off the active board (to the quarter record) — only on objective met; stale/unmet route to the Sweep. A landed bet still counts toward the 3-cap.                                                                        | W5 criteria                              |
+| Create/edit             | **One smart composer** — number+date → a bet (fields revealed inline) else a Direction.                                                                                                                                                     | W5 criteria                              |
+| Two Directions          | **Flat "3 of 3" list**, each bet chip-tagged to its Direction.                                                                                                                                                                              | W5 criteria                              |
+| Cold start              | **One-time guided first-run** (Direction→Target teach), not a recurring gate.                                                                                                                                                               | W5 criteria                              |
+| Tool spend + compliance | **Read-strips on Quarter, owned elsewhere** (Money / the tickler); both in v1, conditional, not editable here.                                                                                                                              | W5 criteria; keeps the **tickler in v1** |
+| Quarterly review        | **Full pre-answered ritual, in-place banner** (no takeover); ends by drafting the next quarter.                                                                                                                                             | W5 criteria                              |
+| The Filter              | **Committed above the cut, no offset** (Ledger stays in v1). Makes the Direction applied-line live. Sequence right after W5.                                                                                                                | W10 note; W8 note                        |
+
+### MISSION.md amendment — applied 2026-08-25
+
+**Amendment B (learning roadmap, drop the rate tie) — APPLIED** to MISSION.md line 201. The mission's
+Learning-Roadmap line tied learning to effective rate; it now reads learning as a business investment
+measured by capability plus logged time, never scored against a rate (worded to match the
+learning-is-a-project decision). Record in [discovery-quarter.md §9](./discovery-quarter.md).
+_(Amendment A, "Law 4c → five surfaces", was found already applied in MISSION.md — a no-op.)_
+
+### Scope movement
+
+- **Into v1:** W5 grows **18h → 34h** (learning-as-project +3, full review +9, read-strips +4). The
+  Filter (W10) is committed above the cut (0 new hours — already in the scoped total). The tickler
+  stays in v1 (feeds the compliance strip).
+- **Out of v1:** nothing (Kat declined the Ledger→v1.1 offset).
+- **v1.1:** a retired-Direction / dropped-Target **history browser** (the data is kept from v1; the
+  dedicated view is later). Learning's effective-rate tie stays cut.
+- **Won't build (holds the line):** any personal-goals view on Quarter; a progress bar/metric on a
+  Direction; editing money or tickler data on Quarter; learning as a multi-track course-list; a `year`
+  horizon UI (enum kept, no surface).
+
+### Revised arithmetic (on top of §8g's ~174h)
+
+|                                                        | Hours    |
+| ------------------------------------------------------ | -------- |
+| §8g scoped total                                       | ~174     |
+| W5 grows (learning +3, full review +9, read-strips +4) | +16      |
+| Filter above the cut (already counted) / Ledger kept   | +0       |
+| **Revised v1 total**                                   | **~190** |
+
+~190h at 8–10 h/week ≈ **1.5–1.8 quarters**. **Ship posture (decided 2026-08-25): ship the full ~190h**;
+the reversible deferrals (split W2 −8h, fixed-fee half of W15 −5h, W5's own 22h cut −12h) stay available
+but none is taken — the cut line is revisited only if the calendar slips.
+
+### Confirmed 2026-08-25 (was "still open")
+
+- **MISSION amendment B — applied** (above).
+- **Archive-on-met slot rule — confirmed:** a landed bet still counts toward the 3-cap; winning early
+  does **not** free a slot. "Three bets a quarter" stays literally true.
+- **Ship posture — ~190h, cuts deferred:** ship at the full ~190h scope; the cut line (Q5) is revisited
+  only if the calendar slips. Ship target ~1.5–1.8 quarters. The reversible menu (split W2 −8h, fixed-fee
+  half of W15 −5h, W5's 22h cut −12h) stays available but none is taken.
 
 ---
 
@@ -994,5 +1099,5 @@ it to **~150h** — still the open **Q5**, to decide deliberately.
 | **GAPS** (v1 scope with no code)  | 21    |
 | **NEEDS KAT**                     | 11    |
 
-**Total v1 as scoped: ~174h (post-discovery, §8g). Recommended cut line: ~116h. Fits a quarter:
+**Total v1 (line-by-line, per `docs/build-tracker.html`): 167h cut-line / 191h all-in. Fits a quarter:
 only at the cut line.**

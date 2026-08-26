@@ -79,6 +79,44 @@ CREATE TABLE IF NOT EXISTS money_settings (
   updated_at INTEGER NOT NULL
 );
 
+-- Accepted invoices + line items (W4). Financial-class; mirrored from
+-- src/db/schema/{invoices,invoice-lines}.ts.
+CREATE TABLE IF NOT EXISTS invoices (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  client_id TEXT NOT NULL REFERENCES clients(id),
+  invoice_number INTEGER NOT NULL,
+  period_start INTEGER NOT NULL,
+  period_end INTEGER NOT NULL,
+  threshold_hours INTEGER NOT NULL,
+  rate_cents INTEGER NOT NULL,
+  billed_seconds INTEGER NOT NULL,
+  carried_seconds INTEGER NOT NULL DEFAULT 0,
+  amount_cents INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'accepted',
+  note TEXT,
+  voided_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS invoices_user_id_client_id_idx ON invoices (user_id, client_id);
+CREATE INDEX IF NOT EXISTS invoices_user_id_created_at_idx ON invoices (user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS invoice_lines (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  billed_seconds INTEGER NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS invoice_lines_invoice_id_idx ON invoice_lines (invoice_id);
+
 CREATE TABLE IF NOT EXISTS project_templates (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
@@ -635,6 +673,12 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "state", definition: "TEXT NOT NULL DEFAULT 'active'" },
   { table: "projects", column: "is_maintenance", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
+  { table: "time_entries", column: "invoice_id", definition: "TEXT" },
+  {
+    table: "clients",
+    column: "billing_threshold_hours",
+    definition: "INTEGER NOT NULL DEFAULT 20",
+  },
   { table: "goal_milestones", column: "target_date", definition: "TEXT" },
   { table: "goal_milestones", column: "completed_at", definition: "INTEGER" },
 ];

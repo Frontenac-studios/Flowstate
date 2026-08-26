@@ -1,4 +1,4 @@
-import { index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * A client is who the work is for. It is `org_shared` (see src/db/tenancy.ts): a
@@ -19,6 +19,13 @@ export const clients = pgTable(
     name: text("name").notNull(),
     /** ISO 4217 code (e.g. "USD", "GBP"). A denomination label, not an amount. */
     currency: text("currency").notNull().default("USD"),
+    /**
+     * Bill this client every N hours of completed work (W4, default 20). A billing
+     * cadence, not money — it stays here on the org_shared client, not on a
+     * financial table. The invoice draft caps at this threshold and carries the
+     * rest forward.
+     */
+    billingThresholdHours: integer("billing_threshold_hours").notNull().default(20),
     /** Mirrors `archivedAt` for cheap filtering; archive sets both. No delete. */
     status: clientStatus("status").notNull().default("active"),
     notes: text("notes"),

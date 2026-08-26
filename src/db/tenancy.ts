@@ -109,6 +109,9 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // v1.1 split — org_shared work-facts + a financial billing sidecar — is deferred
   // until members exist, so for now the whole row is owner-only (decision B).
   business_expenses: "financial",
+  // Accepted invoices and their line items (W4) — revenue a Member never reads.
+  invoices: "financial",
+  invoice_lines: "financial",
   money_settings: "financial",
   rates: "financial",
   time_entries: "financial",
