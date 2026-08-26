@@ -6,32 +6,26 @@
     <title>Flowstate v1 — Build Tracker</title>
     <style>
       :root {
-        --bg: #edf3f2;
+        --bg: #e7e8ec;
         --surface: #ffffff;
-        --surface-2: #eef5f4;
-        --ink: #16211f;
-        --ink-2: #52615d;
-        --ink-3: #8aa09b;
-        --line: #dfeae8;
-        --line-2: #cadeda;
-        --accent: #0d9488;
-        --accent-soft: #d5efeb;
-        --shadow: 0 1px 3px rgba(20, 25, 40, 0.06), 0 1px 2px rgba(20, 25, 40, 0.04);
-        --shadow-lg: 0 4px 16px rgba(20, 25, 40, 0.08);
-        --s-todo: #7b8593;
-        --s-todo-bg: #eef0f3;
-        --s-wip: #b5730b;
-        --s-wip-bg: #fbf0d8;
-        --s-review: #2f6ec4;
-        --s-review-bg: #e0ecfb;
-        --s-blocked: #c33636;
-        --s-blocked-bg: #fbe1e1;
-        --s-done: #2f8a52;
-        --s-done-bg: #dcf2e4;
-        --s-deferred: #7b5cc9;
-        --s-deferred-bg: #ede6fb;
-        --s-parked: #7b8593;
-        --s-parked-bg: #eef0f3;
+        --surface-2: #f1f2f5;
+        --ink: #1d1d1f;
+        --ink-2: #6e6e73;
+        --ink-3: #86868b;
+        --line: #ececef;
+        --line-2: #e0e2e6;
+        --accent: #007aff;
+        --accent-soft: #eef4ff;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.07);
+        /* status: deep text · tint bg · bright solid (Apple system colors) */
+        --s-todo: #6e6e73;   --s-todo-bg: #eceef0;   --s-todo-solid: #8e8e93;
+        --s-wip: #a85400;    --s-wip-bg: #ffeeda;    --s-wip-solid: #ff9500;
+        --s-review: #0058c7; --s-review-bg: #e3f0ff; --s-review-solid: #007aff;
+        --s-blocked: #d70015;--s-blocked-bg: #ffe5e3;--s-blocked-solid: #ff3b30;
+        --s-done: #248a3d;   --s-done-bg: #e3f7e8;   --s-done-solid: #34c759;
+        --s-deferred: #8944ab;--s-deferred-bg: #f4e9fb;--s-deferred-solid: #af52de;
+        --s-parked: #6e6e73; --s-parked-bg: #eceef0; --s-parked-solid: #8e8e93;
       }
       * { box-sizing: border-box; }
       html { -webkit-text-size-adjust: 100%; }
@@ -39,7 +33,7 @@
         margin: 0;
         background: var(--bg);
         color: var(--ink);
-        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
           Roboto, Helvetica, Arial, sans-serif;
         font-size: 15px;
         line-height: 1.5;
@@ -84,7 +78,7 @@
       .stat .sub { font-size: 11.5px; color: var(--ink-3); margin-top: 5px; }
       .bar { height: 7px; border-radius: 5px; background: var(--surface-2); overflow: hidden; margin-top: 11px; }
       .bar > span { display: block; height: 100%; border-radius: 5px; transition: width 0.3s ease; }
-      .bar.done > span { background: var(--s-done); }
+      .bar.done > span { background: var(--s-done-solid); }
       .bar.cut > span { background: var(--accent); }
       .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
       .chip { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
@@ -124,7 +118,7 @@
       .phase-row .ph-name { font-weight: 700; font-size: 13px; letter-spacing: -0.01em; color: var(--ink); }
       .phase-row .ph-meta { float: right; font-size: 12px; color: var(--ink-2); font-weight: 500; }
       .phase-row .ph-bar { display: inline-block; width: 90px; height: 5px; border-radius: 3px; background: var(--line-2); overflow: hidden; vertical-align: middle; margin-left: 10px; }
-      .phase-row .ph-bar > span { display: block; height: 100%; background: var(--s-done); border-radius: 3px; }
+      .phase-row .ph-bar > span { display: block; height: 100%; background: var(--s-done-solid); border-radius: 3px; }
 
       tbody td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
       tbody tr.item:hover td { background: var(--surface-2); }
@@ -150,8 +144,8 @@
       input.num:focus { outline: none; border-color: var(--accent); background: var(--bg); }
 
       select.status {
-        width: 100%; min-width: 160px; border-radius: 999px; padding: 6px 14px; border: 1.5px solid;
-        font-size: 12.5px; font-weight: 650; cursor: pointer;
+        width: 100%; min-width: 150px; border-radius: 999px; padding: 6px 13px; border: 1px solid transparent;
+        font-size: 12.5px; font-weight: 600; cursor: pointer;
         -webkit-appearance: none; appearance: none; text-align: left;
         white-space: nowrap; text-overflow: clip;
       }
@@ -159,10 +153,10 @@
       .rm:hover { color: var(--s-blocked); background: var(--s-blocked-bg); }
 
       tr.cutline-row td {
-        background: repeating-linear-gradient(135deg, var(--s-blocked-bg) 0 10px, transparent 10px 20px);
-        color: var(--s-blocked); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
-        font-weight: 700; text-align: center; padding: 9px; border-top: 1px solid var(--s-blocked);
-        border-bottom: 1px solid var(--s-blocked);
+        background: var(--surface-2);
+        color: var(--ink-2); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+        font-weight: 700; text-align: center; padding: 8px; border-top: 1px dashed var(--line-2);
+        border-bottom: 1px dashed var(--line-2);
       }
 
       /* daily log */
@@ -229,7 +223,6 @@
                 <th>Item</th>
                 <th class="c-deps">Dependencies</th>
                 <th class="r">Estimate&nbsp;(h)</th>
-                <th class="r">Actual&nbsp;(h)</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -304,13 +297,13 @@
       // ============================================================
       const STORE_KEY = "flowstate-build-tracker-v2";
       const STATUS = {
-        todo: { label: "Not started", fg: "--s-todo", bg: "--s-todo-bg", pct: 0 },
-        wip: { label: "In progress", fg: "--s-wip", bg: "--s-wip-bg", pct: 0.5 },
-        review: { label: "In review", fg: "--s-review", bg: "--s-review-bg", pct: 0.85 },
-        blocked: { label: "Blocked", fg: "--s-blocked", bg: "--s-blocked-bg", pct: 0.25 },
-        done: { label: "Done", fg: "--s-done", bg: "--s-done-bg", pct: 1 },
-        deferred: { label: "v1.1 / Deferred", fg: "--s-deferred", bg: "--s-deferred-bg", pct: 0 },
-        parked: { label: "Parked", fg: "--s-parked", bg: "--s-parked-bg", pct: 0 },
+        todo: { label: "Not started", fg: "--s-todo", bg: "--s-todo-bg", solid: "--s-todo-solid", pct: 0 },
+        wip: { label: "In progress", fg: "--s-wip", bg: "--s-wip-bg", solid: "--s-wip-solid", pct: 0.5 },
+        review: { label: "In review", fg: "--s-review", bg: "--s-review-bg", solid: "--s-review-solid", pct: 0.85 },
+        blocked: { label: "Blocked", fg: "--s-blocked", bg: "--s-blocked-bg", solid: "--s-blocked-solid", pct: 0.25 },
+        done: { label: "Done", fg: "--s-done", bg: "--s-done-bg", solid: "--s-done-solid", pct: 1 },
+        deferred: { label: "v1.1 / Deferred", fg: "--s-deferred", bg: "--s-deferred-bg", solid: "--s-deferred-solid", pct: 0 },
+        parked: { label: "Parked", fg: "--s-parked", bg: "--s-parked-bg", solid: "--s-parked-solid", pct: 0 },
       };
 
       let state = load();
@@ -341,7 +334,6 @@
         const totalEst = inScope.reduce((s, i) => s + (+i.est || 0), 0);
         const doneEst = inScope.filter((i) => i.status === "done").reduce((s, i) => s + (+i.est || 0), 0);
         const weightedDone = inScope.reduce((s, i) => s + (+i.est || 0) * (STATUS[i.status]?.pct ?? 0), 0);
-        const actual = items.reduce((s, i) => s + (+i.act || 0), 0);
         const remaining = totalEst - doneEst;
         const cutIdx = state.phases.indexOf(state.cutAfterPhase);
         const cutPhases = state.phases.slice(0, cutIdx + 1);
@@ -351,7 +343,7 @@
         const byStatus = {};
         for (const k of Object.keys(STATUS)) byStatus[k] = items.filter((i) => i.status === k).length;
         return {
-          totalEst, doneEst, weightedDone, actual, remaining, cutEst, cutDone,
+          totalEst, doneEst, weightedDone, remaining, cutEst, cutDone,
           pct: totalEst ? Math.round((doneEst / totalEst) * 100) : 0,
           wpct: totalEst ? Math.round((weightedDone / totalEst) * 100) : 0,
           cutPct: cutEst ? Math.round((cutDone / cutEst) * 100) : 0,
@@ -363,11 +355,10 @@
         const s = computeStats();
         const chip = (k) => `<span class="chip" style="color:var(${STATUS[k].fg});background:var(${STATUS[k].bg})">${s.byStatus[k]} ${STATUS[k].label.replace(" / Deferred", "")}</span>`;
         document.getElementById("stats").innerHTML =
-          `<div class="stat hero"><div class="k">v1 complete</div><div class="v">${s.pct}%<small> &nbsp;· ${s.wpct}% weighted</small></div><div class="bar done"><span style="width:${s.pct}%"></span></div></div>` +
-          `<div class="stat hero"><div class="k">Cut-line · P-1…P5</div><div class="v">${s.cutPct}%</div><div class="bar cut"><span style="width:${s.cutPct}%"></span></div><div class="sub">${s.cutDone} / ${s.cutEst} h done</div></div>` +
-          `<div class="stat"><div class="k">Hours done</div><div class="v">${s.doneEst}<small> / ${s.totalEst} h</small></div><div class="sub">in scope (excl. deferred)</div></div>` +
-          `<div class="stat"><div class="k">Hours remaining</div><div class="v">${s.remaining}<small> h</small></div><div class="sub">still to build</div></div>` +
-          `<div class="stat"><div class="k">Actual logged</div><div class="v">${s.actual}<small> h</small></div><div class="sub">your real time</div></div>` +
+          `<div class="stat hero"><div class="k">Cut-line v1 · P-1…P5</div><div class="v">${s.cutPct}%</div><div class="bar cut"><span style="width:${s.cutPct}%"></span></div><div class="sub">${s.cutDone} / ${s.cutEst} h — the shippable v1</div></div>` +
+          `<div class="stat hero"><div class="k">All-in v1</div><div class="v">${s.pct}%<small> &nbsp;· ${s.wpct}% weighted</small></div><div class="bar done"><span style="width:${s.pct}%"></span></div><div class="sub">${s.doneEst} / ${s.totalEst} h incl. below-cut</div></div>` +
+          `<div class="stat"><div class="k">Hours remaining</div><div class="v">${s.remaining}<small> h</small></div><div class="sub">of ${s.totalEst} h all-in</div></div>` +
+          `<div class="stat"><div class="k">Below cut line</div><div class="v">${s.totalEst - s.cutEst}<small> h</small></div><div class="sub">Ledger · Filter · Tickler</div></div>` +
           `<div class="stat"><div class="k">By status</div><div class="chips">${chip("done")}${chip("wip")}${chip("todo")}${chip("blocked")}</div></div>`;
       }
 
@@ -386,7 +377,7 @@
       function statusSelect(i) {
         const cur = STATUS[i.status] || STATUS.todo;
         const opts = Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === i.status ? "selected" : ""}>${v.label}</option>`).join("");
-        return `<select class="status" data-id="${i.id}" data-f="status" style="color:var(${cur.fg});background-color:var(${cur.bg});border-color:var(${cur.fg})">${opts}</select>`;
+        return `<select class="status" data-id="${i.id}" data-f="status" style="color:var(${cur.fg});background-color:var(${cur.bg})">${opts}</select>`;
       }
 
       function renderBoard() {
@@ -404,24 +395,23 @@
           const phPct = phEst ? Math.round((phDone / phEst) * 100) : 0;
 
           if (items.length) {
-            html += `<tr class="phase-row"><td colspan="7"><span class="ph-name">${esc(phase)}</span><span class="ph-meta">${phDone}/${phEst} h · ${phPct}%<span class="ph-bar"><span style="width:${phPct}%"></span></span></span></td></tr>`;
+            html += `<tr class="phase-row"><td colspan="6"><span class="ph-name">${esc(phase)}</span><span class="ph-meta">${phDone}/${phEst} h · ${phPct}%<span class="ph-bar"><span style="width:${phPct}%"></span></span></span></td></tr>`;
             shown += items.length;
             for (const i of items) {
               const cur = STATUS[i.status] || STATUS.todo;
               const cls = ["done", "deferred", "parked"].includes(i.status) ? i.status : "";
               html += `<tr class="item ${cls}" data-row="${i.id}">
-                <td class="c-id mono" style="border-left-color:var(${cur.fg})"><span class="id">${esc(i.id)}</span><span class="pr">${esc(i.pr || "")}</span></td>
+                <td class="c-id mono" style="border-left-color:var(${cur.solid})"><span class="id">${esc(i.id)}</span><span class="pr">${esc(i.pr || "")}</span></td>
                 <td class="c-item"><div class="t">${esc(i.title)}</div><div class="d">${esc(i.desc)}</div></td>
                 <td class="c-deps mono">${esc(i.deps || "—")}</td>
                 <td class="c-est r"><input class="num mono" type="number" min="0" step="0.5" value="${i.est}" data-id="${i.id}" data-f="est"></td>
-                <td class="c-act r"><input class="num mono" type="number" min="0" step="0.25" value="${i.act || 0}" data-id="${i.id}" data-f="act"></td>
                 <td class="c-status">${statusSelect(i)}</td>
                 <td class="c-x"><button class="rm" data-del="${i.id}" title="Remove">×</button></td>
               </tr>`;
             }
           }
           if (pIdx === cutIdx) {
-            html += `<tr class="cutline-row"><td colspan="7">cut line — a coherent v1 ships above this</td></tr>`;
+            html += `<tr class="cutline-row"><td colspan="6">cut line — a coherent v1 ships above this</td></tr>`;
           }
         });
 
@@ -442,21 +432,20 @@
         if (!id || !f) return;
         const item = state.items.find((x) => x.id === id);
         if (!item) return;
-        item[f] = f === "est" || f === "act" ? +t.value : t.value;
+        item[f] = f === "est" ? +t.value : t.value;
         save();
         if (f === "status") {
           const cur = STATUS[item.status] || STATUS.todo;
           t.style.color = `var(${cur.fg})`;
           t.style.backgroundColor = `var(${cur.bg})`;
-          t.style.borderColor = `var(${cur.fg})`;
           const row = document.querySelector(`tr[data-row="${id}"]`);
           if (row) {
             row.className = "item " + (["done", "deferred", "parked"].includes(item.status) ? item.status : "");
             const idCell = row.querySelector(".c-id");
-            if (idCell) idCell.style.borderLeftColor = `var(${cur.fg})`;
+            if (idCell) idCell.style.borderLeftColor = `var(${cur.solid})`;
           }
           renderStats();
-        } else if (f === "est" || f === "act") {
+        } else if (f === "est") {
           renderStats();
         }
       });
