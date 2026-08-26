@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { calendarSettingsUrl } from "@/lib/calendar/settings-redirect";
+import { FLAGS } from "@/lib/flags";
 import { getRouteUserId } from "@/server/claude/route-auth";
 import {
   deleteGoogleConnection,
@@ -15,6 +16,8 @@ function getAppOrigin(): string {
 }
 
 export async function POST() {
+  if (!FLAGS.calendar) return new NextResponse(null, { status: 404 });
+
   const userId = await getRouteUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
