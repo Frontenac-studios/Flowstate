@@ -117,6 +117,19 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
 );
 CREATE INDEX IF NOT EXISTS invoice_lines_invoice_id_idx ON invoice_lines (invoice_id);
 
+-- Owner's draws (W16). Financial-class; mirrored from src/db/schema/owner-draws.ts.
+CREATE TABLE IF NOT EXISTS owner_draws (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  drawn_on INTEGER NOT NULL,
+  note TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS owner_draws_user_id_drawn_on_idx ON owner_draws (user_id, drawn_on);
+
 CREATE TABLE IF NOT EXISTS project_templates (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
@@ -674,6 +687,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "is_maintenance", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
   { table: "time_entries", column: "invoice_id", definition: "TEXT" },
+  { table: "invoices", column: "paid_at", definition: "INTEGER" },
   {
     table: "clients",
     column: "billing_threshold_hours",

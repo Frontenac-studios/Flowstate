@@ -51,6 +51,12 @@ export const invoices = pgTable(
     status: text("status").notNull().default("accepted"),
     note: text("note"),
     voidedAt: timestamp("voided_at", { withTimezone: true, mode: "date" }),
+    /**
+     * When the client paid — the "collected" signal (W16). Null = billed but not yet
+     * collected. This is recording a fact, not sending anything (product law 1); the
+     * Draw panel's running cash ledger counts only paid invoices as business cash.
+     */
+    paidAt: timestamp("paid_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

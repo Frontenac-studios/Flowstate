@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
+import DrawPanel from "@/components/kash/money/DrawPanel";
 import InvoicesPanel from "@/components/kash/money/InvoicesPanel";
 import MoneyReport from "@/components/kash/money/MoneyReport";
 import { ArrowRight, Users } from "@/components/kash/ui/icon";
@@ -12,6 +13,7 @@ import { useTRPC } from "@/trpc/client";
  * The Money surface (MISSION.md law 4c). Clients live inside Money, and W3 adds
  * the time report — totals, effective rate, and the client → project → task
  * breakdown. W4 adds invoicing: ready-to-bill clients, drafts you sign, and history.
+ * W16 adds the Draw panel: the running cash ledger, available-to-draw, and runway.
  */
 export default function MoneyOverview() {
   const trpc = useTRPC();
@@ -48,6 +50,8 @@ export default function MoneyOverview() {
       <MoneyReport />
 
       <InvoicesPanel />
+
+      <DrawPanel />
     </div>
   );
 }

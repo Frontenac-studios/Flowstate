@@ -21,6 +21,7 @@ export const invoices = sqliteTable("invoices", {
   status: text("status").notNull().default("accepted"),
   note: text("note"),
   voidedAt: integer("voided_at", { mode: "timestamp_ms" }),
+  paidAt: integer("paid_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => sqliteNow()),
