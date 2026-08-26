@@ -10,6 +10,8 @@ import {
 } from "@/db/record-sync-mutation";
 import { businessExpenses, invoices, moneySettings, ownerDraws } from "@/db/tables";
 import { computeDrawPanel } from "@/lib/money/compute-draw-panel";
+import { aggregateExpensesByCategory } from "@/lib/money/expenses-by-category";
+import { parseXeroBills, type ParsedBillLine } from "@/lib/money/parse-xero-bills";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -237,4 +239,125 @@ export const moneyRouter = createTRPCRouter({
       },
     });
   }),
+
+  /** Month × category grid of business expenses, for the over-time chart. */
+  expensesByCategory: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        amountCents: businessExpenses.amountCents,
+        category: businessExpenses.category,
+        incurredOn: businessExpenses.incurredOn,
+      })
+      .from(businessExpenses)
+      .where(eq(businessExpenses.userId, ctx.userId));
+    return aggregateExpensesByCategory(rows, { monthsBack: 6 });
+  }),
+
+  /**
+   * Dry-run a Xero Bills CSV: parse it, then flag which lines already exist so a
+   * re-import can't double-count. No writes.
+   */
+  previewXeroBills: protectedProcedure
+    .input(z.object({ csv: z.string().min(1).max(4_000_000) }))
+    .mutation(async ({ ctx, input }) => {
+      const parsed = parseXeroBills(input.csv);
+      const existing = await loadExistingKeys(ctx.userId);
+      const mark = (line: ParsedBillLine) => ({ ...line, isDuplicate: existing.has(line.dedupKey) });
+      const expenses = parsed.expenses.map(mark);
+      const draws = parsed.draws.map(mark);
+      return {
+        expenses,
+        draws,
+        skipped: parsed.skipped,
+        warnings: parsed.warnings,
+        newExpenseCount: expenses.filter((e) => !e.isDuplicate).length,
+        newDrawCount: draws.filter((d) => !d.isDuplicate).length,
+        duplicateCount: [...expenses, ...draws].filter((l) => l.isDuplicate).length,
+        totalExpenseCents: parsed.totalExpenseCents,
+        totalDrawCents: parsed.totalDrawCents,
+      };
+    }),
+
+  /** Commit a Xero Bills CSV: insert the new (non-duplicate) expense and draw lines. */
+  importXeroBills: protectedProcedure
+    .input(z.object({ csv: z.string().min(1).max(4_000_000) }))
+    .mutation(async ({ ctx, input }) => {
+      const parsed = parseXeroBills(input.csv);
+      const existing = await loadExistingKeys(ctx.userId);
+
+      const newExpenses = parsed.expenses.filter((l) => !existing.has(l.dedupKey));
+      const newDraws = parsed.draws.filter((l) => !existing.has(l.dedupKey));
+
+      let importedExpenses = 0;
+      if (newExpenses.length > 0) {
+        const rows = await db
+          .insert(businessExpenses)
+          .values(
+            newExpenses.map((l) => ({
+              userId: ctx.userId,
+              orgId: ctx.orgId,
+              amountCents: l.amountCents,
+              description: l.merchant,
+              category: l.category,
+              incurredOn: new Date(`${l.incurredOn}T00:00:00Z`),
+              source: "csv_import",
+            }))
+          )
+          .returning();
+        for (const row of rows) await syncBusinessExpenseRow(row.id, "insert", row);
+        importedExpenses = rows.length;
+      }
+
+      let importedDraws = 0;
+      if (newDraws.length > 0) {
+        const rows = await db
+          .insert(ownerDraws)
+          .values(
+            newDraws.map((l) => ({
+              userId: ctx.userId,
+              orgId: ctx.orgId,
+              amountCents: l.amountCents,
+              drawnOn: new Date(`${l.incurredOn}T00:00:00Z`),
+              // Store the merchant so re-import dedup (date|amount|merchant) matches.
+              note: l.merchant,
+            }))
+          )
+          .returning();
+        for (const row of rows) await syncOwnerDrawRow(row.id, "insert", row);
+        importedDraws = rows.length;
+      }
+
+      return {
+        importedExpenses,
+        importedDraws,
+        skippedDuplicates: parsed.expenses.length + parsed.draws.length - importedExpenses - importedDraws,
+      };
+    }),
 });
+
+/** Natural dedup keys (date|amount|label) already in the DB, for import skip. */
+async function loadExistingKeys(userId: string): Promise<Set<string>> {
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const [expenseRows, drawRows] = await Promise.all([
+    db
+      .select({
+        amountCents: businessExpenses.amountCents,
+        description: businessExpenses.description,
+        incurredOn: businessExpenses.incurredOn,
+      })
+      .from(businessExpenses)
+      .where(eq(businessExpenses.userId, userId)),
+    db
+      .select({
+        amountCents: ownerDraws.amountCents,
+        note: ownerDraws.note,
+        drawnOn: ownerDraws.drawnOn,
+      })
+      .from(ownerDraws)
+      .where(eq(ownerDraws.userId, userId)),
+  ]);
+  const keys = new Set<string>();
+  for (const e of expenseRows) keys.add(`${iso(e.incurredOn)}|${e.amountCents}|${e.description ?? ""}`);
+  for (const d of drawRows) keys.add(`${iso(d.drawnOn)}|${d.amountCents}|${d.note ?? ""}`);
+  return keys;
+}

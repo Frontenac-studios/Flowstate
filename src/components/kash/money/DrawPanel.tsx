@@ -1,8 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
+import ExpensesByCategoryChart from "@/components/kash/money/ExpensesByCategoryChart";
+import XeroImport from "@/components/kash/money/XeroImport";
 import { Plus, Trash2, Wallet } from "@/components/kash/ui/icon";
 import { useTRPC } from "@/trpc/client";
 
@@ -39,6 +41,7 @@ export default function DrawPanel() {
   const { data: settings } = useQuery(trpc.money.getSettings.queryOptions());
   const { data: expenses } = useQuery(trpc.money.listExpenses.queryOptions());
   const { data: draws } = useQuery(trpc.money.listDraws.queryOptions());
+  const { data: byCategory } = useQuery(trpc.money.expensesByCategory.queryOptions());
 
   const invalidateAll = () =>
     Promise.all([
@@ -46,6 +49,7 @@ export default function DrawPanel() {
       queryClient.invalidateQueries({ queryKey: trpc.money.getSettings.queryKey() }),
       queryClient.invalidateQueries({ queryKey: trpc.money.listExpenses.queryKey() }),
       queryClient.invalidateQueries({ queryKey: trpc.money.listDraws.queryKey() }),
+      queryClient.invalidateQueries({ queryKey: trpc.money.expensesByCategory.queryKey() }),
     ]);
 
   const updateSettings = useMutation(
@@ -145,6 +149,8 @@ export default function DrawPanel() {
         </div>
       ) : null}
 
+      {byCategory ? <ExpensesByCategoryChart data={byCategory} /> : null}
+
       <SettingsEditor
         settings={settings}
         onSave={(patch) => updateSettings.mutate(patch)}
@@ -166,6 +172,7 @@ export default function DrawPanel() {
         onDelete={(id) => deleteExpense.mutate({ id })}
         addLabelPlaceholder="Category (e.g. Software)"
         adding={addExpense.isPending}
+        extra={<XeroImport onImported={() => void invalidateAll()} />}
       />
 
       <EntrySection
@@ -334,6 +341,7 @@ function EntrySection({
   onDelete,
   addLabelPlaceholder,
   adding,
+  extra,
 }: {
   title: string;
   rows: EntryRow[];
@@ -341,6 +349,7 @@ function EntrySection({
   onDelete: (id: string) => void;
   addLabelPlaceholder: string;
   adding: boolean;
+  extra?: ReactNode;
 }) {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(todayIso());
@@ -361,6 +370,7 @@ function EntrySection({
         <span className="ml-2 text-caption text-ink-faint">{rows.length}</span>
       </summary>
       <div className="flex flex-col gap-2 px-4 pb-4">
+        {extra}
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="number"
