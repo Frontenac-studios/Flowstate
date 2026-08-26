@@ -4,7 +4,6 @@ const PROTECTED_PREFIXES = [
   "/this-week",
   "/projects",
   "/backlog",
-  "/care",
   "/settings",
 ] as const;
 

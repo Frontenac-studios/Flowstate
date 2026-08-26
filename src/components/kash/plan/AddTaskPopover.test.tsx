@@ -5,7 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 // FLAGS reads process.env at module load, so the parked/un-parked split has to be
 // mocked rather than set. Both branches are live code: the popover ships today with
 // chat parked, and the menu returns the moment the flag is flipped back on.
-const flags = vi.hoisted(() => ({ care: false, chat: true, focus: false }));
+const flags = vi.hoisted(() => ({ chat: true, focus: false }));
 vi.mock("@/lib/flags", () => ({ FLAGS: flags }));
 
 // vi.mock is hoisted above imports, so a static import still gets the mock.

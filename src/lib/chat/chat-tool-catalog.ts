@@ -523,7 +523,6 @@ export const SURFACE_TOOL_NAMES: Record<PlanningChatSurface, readonly string[]> 
     "apply_balance_suggestions",
     ...PHASE_STRUCTURE_TOOLS,
   ],
-  care: ["query_tasks", "query_state", "draft_eod", "complete_task", ...PHASE_STRUCTURE_TOOLS],
   "morning-handoff": ["query_tasks", "query_state", "create_task", ...PHASE_STRUCTURE_TOOLS],
   // Goals coach: goal reads + the goal-proposing write + the consent-gated learning
   // adjustment. Deliberately NO task/schedule/milestone tools — the coach must not

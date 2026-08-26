@@ -1,9 +1,0 @@
-.care-breathing-orb {
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .care-breathing-orb {
-    transition: none !important;
-  }
-}

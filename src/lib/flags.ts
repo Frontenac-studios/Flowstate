@@ -2,7 +2,7 @@
  * Parked features.
  *
  * MISSION.md law 5: "A parked feature is a door left ajar. Park only what is
- * finished and harmless. Kill the rest." These three are finished and harmless,
+ * finished and harmless. Kill the rest." These two are finished and harmless,
  * and each is plausibly wanted back — so the code and the data stay, and the
  * only thing that changes is that nothing in the UI can reach them.
  *
@@ -22,14 +22,6 @@
 const on = (value: string | undefined): boolean => value === "on";
 
 export const FLAGS = {
-  /**
-   * Care / garden — self-care practices, the garden scene, reflections.
-   * Parked, not killed, at the owner's decision (docs/v1-scope.md §8a). Lost its
-   * Evidence tab in the teardown because that tab was built on Daily Wins and
-   * Evidence, both of which were killed.
-   */
-  care: on(process.env.NEXT_PUBLIC_FLAG_CARE),
-
   /**
    * The chat coach — per-page docks, the chat rail, and the Claude streaming
    * routes behind them. Product law 1 ("Flowstate drafts. You sign.") means an

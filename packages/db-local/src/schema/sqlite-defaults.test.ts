@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createSqliteDb, type SqliteDb } from "../index";
 import { businessExpenses } from "./business-expenses";
-import { careEvents } from "./care-events";
 import { clients } from "./clients";
 import { moneySettings } from "./money-settings";
 import { phases } from "./phases";
@@ -191,18 +190,6 @@ describe("sqlite schema insert-time defaults", () => {
 
     expect(row).toBeDefined();
     expect(typeof row!.id).toBe("string");
-    expect(row!.createdAt).toBeInstanceOf(Date);
-  });
-
-  it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {
-    const [row] = await db
-      .insert(careEvents)
-      .values({ userId: "11111111-1111-1111-1111-111111111111" })
-      .returning();
-
-    expect(row).toBeDefined();
-    expect(typeof row!.id).toBe("string");
-    expect(row!.occurredAt).toBeInstanceOf(Date);
     expect(row!.createdAt).toBeInstanceOf(Date);
   });
 });

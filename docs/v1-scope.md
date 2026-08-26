@@ -243,6 +243,8 @@ Product law 5: park only what is finished _and harmless_. Wellness features are 
 harmless under this mission — they are the exact gravity the mission was rewritten to
 escape. Half-built things are kills by definition.
 
+> **Care kill executed 2026-08-26.** The earlier PARK decision (§8a #2 / §8c) was reversed by the owner; `/care`, the `care` router, `care_activities`/`care_events`/`care_reflections` (+ enums), `tasks.care_activity_id`, ~18 components, and `FLAGS.care` are deleted. Forward-only drop: `drizzle/0052_kill_care.sql`. Hosted held 0 care rows (§8a), so no hosted data lost.
+
 | Item                                                                                                                                                  | Serves         | Reason                                                                                                                                                     | Data lost                                                  | Export first?                                                                                |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | **Care / garden** — `care` router (22 procs), `care_activities`, `care_events`, `care_reflections`, `care_enums`, `/care`, 21 components              | none           | MISSION.md: not a wellness app. Named cut.                                                                                                                 | Practice log + **written reflections** (personal journal). | **Yes** — one-off `scripts/export-care.cjs` → JSON. Reflections are irreplaceable.           |
@@ -781,14 +783,14 @@ the swap is clean: Filter (cut version, 10h) in, Sweep (10h) out, same total.
 
 ## 8a. Decisions made 2026-08-21 (supersede the leans in §8)
 
-| #   | Question                             | **Decision**       | Consequence                                                                                                                                                        |
-| --- | ------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | Desktop app                          | **KEEP**           | Every schema change in W1–W4 pays a SQLite mirror tax. ~+9h across the quarter. Also now mandated by MISSION.md's new "Desktop is not a wrapper" section.          |
-| 2   | Care                                 | **PARK, not kill** | 4 tables + 21 components + the `care` router stay, flagged off. Hosted holds **0 care rows**, so nothing to export. Teardown shrinks ~2h; flag plumbing grows ~1h. |
-| 3   | Chat                                 | **PARK**           | Coach docks removed from every surface; the composer's "+" must be un-hidden in the same PR or task creation breaks.                                               |
-| 4   | `protected_blocks` / `reserved_days` | **KILL**           | As specced. 38 UI references — the largest single deletion.                                                                                                        |
+| #   | Question                             | **Decision**       | Consequence                                                                                                                                                                                                                                                                                                        |
+| --- | ------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Desktop app                          | **KEEP**           | Every schema change in W1–W4 pays a SQLite mirror tax. ~+9h across the quarter. Also now mandated by MISSION.md's new "Desktop is not a wrapper" section.                                                                                                                                                          |
+| 2   | Care                                 | **PARK, not kill** | 4 tables + 21 components + the `care` router stay, flagged off. Hosted holds **0 care rows**, so nothing to export. Teardown shrinks ~2h; flag plumbing grows ~1h. **Reversed 2026-08-26: KILL — Care deleted (route, `care` router, schema/tables, ~18 components, `FLAGS.care`) per §3.3; drop migration 0052.** |
+| 3   | Chat                                 | **PARK**           | Coach docks removed from every surface; the composer's "+" must be un-hidden in the same PR or task creation breaks.                                                                                                                                                                                               |
+| 4   | `protected_blocks` / `reserved_days` | **KILL**           | As specced. 38 UI references — the largest single deletion.                                                                                                                                                                                                                                                        |
 
-Parked list is now **three**: Chat, Focus, Care. (Calendar and Desktop, once on
+Parked list is now **two**: Chat, Focus (Care killed 2026-08-26). (Calendar and Desktop, once on
 this list, are both **kept** in v1 — see Q3 below.)
 
 ### Revised estimate
@@ -858,7 +860,7 @@ the plain project timer ships in v1. **NEEDS KAT.**
 | 7 Tickler           | **Build**                                                                                                                                                | ~6h once Today has a due strip. Surfaces on Today on the trigger date only; no fifth surface.                                                                                                            |
 | 8 Invoice output    | **A now, B later**                                                                                                                                       | Markdown + CSV export and a manual sent/paid toggle in v1. In-app PDF and payment tracking explicitly back-burnered. +1h.                                                                                |
 
-Parked list is now **three**: Chat, Focus, Care. (Focus needs revisiting once the new timer
+Parked list is now **two**: Chat, Focus (Care killed 2026-08-26). (Focus needs revisiting once the new timer
 lands — see §8e.)
 
 ### Law 4c conflict

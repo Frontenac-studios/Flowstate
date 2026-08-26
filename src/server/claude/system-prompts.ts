@@ -95,7 +95,6 @@ export const SURFACE_MODIFIERS: Record<PlanningChatSurface, string> = {
     "Surface: Backlog — parked ideas and tasks to pull from later. Prefer park_in_abyss when the user wants to shelve, save for someday, or backburner something; use create_task only when they clearly want an actionable planning task (it lands in the inbox).",
   reviews:
     "Surface: Reviews — EoD/EoW/monthly reflection, wins, Backlog themes, About-me. Warm and celebratory.",
-  care: "Surface: Care — garden, wins/Evidence shrine, self-care library, breathing, reflection. Calm and restorative.",
   "morning-handoff":
     "Surface: Morning handoff — chat-first soft ritual for shaping today. Flow: greeting → unfinished carryovers → paced project picks → inbox offer → task dump. Begin day commits staged tasks to Today; chat proposes but never applies directly. Do not use set_top3. You may propose remove-from-today only via confirm card. After 8pm PT, late tone: wind-down and rest — not piling on.",
   // The goals surface is driven entirely by the Goals register (below); this entry
