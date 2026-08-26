@@ -1019,14 +1019,13 @@ keeps the reasoning, the flows, and the wireframes.
 | Quarterly review        | **Full pre-answered ritual, in-place banner** (no takeover); ends by drafting the next quarter.                                                                                                                                             | W5 criteria                              |
 | The Filter              | **Committed above the cut, no offset** (Ledger stays in v1). Makes the Direction applied-line live. Sequence right after W5.                                                                                                                | W10 note; W8 note                        |
 
-### MISSION.md amendment — pending Kat's go
+### MISSION.md amendment — applied 2026-08-25
 
-**Amendment B (learning roadmap, drop the rate tie).** The mission's Learning-Roadmap line ties learning
-to effective rate; the discovery cut that tie (learning is a business investment, measured by capability
-
-- logged time, never scored against a rate). Diff drafted in
-  [discovery-quarter.md §9](./discovery-quarter.md). **Not yet applied** — apply on Kat's word.
-  _(Amendment A, "Law 4c → five surfaces", was found already applied in MISSION.md — a no-op.)_
+**Amendment B (learning roadmap, drop the rate tie) — APPLIED** to MISSION.md line 201. The mission's
+Learning-Roadmap line tied learning to effective rate; it now reads learning as a business investment
+measured by capability plus logged time, never scored against a rate (worded to match the
+learning-is-a-project decision). Record in [discovery-quarter.md §9](./discovery-quarter.md).
+_(Amendment A, "Law 4c → five surfaces", was found already applied in MISSION.md — a no-op.)_
 
 ### Scope movement
 
@@ -1049,15 +1048,18 @@ to effective rate; the discovery cut that tie (learning is a business investment
 | Filter above the cut (already counted) / Ledger kept   | +0       |
 | **Revised v1 total**                                   | **~190** |
 
-~190h at 8–10 h/week ≈ **1.5–1.8 quarters**. The **cut line stays open (Q5)** — the same reversible
-deferrals apply (split W2 −8h, fixed-fee half of W15 −5h, and now W5's own 22h cut −12h), none taken.
+~190h at 8–10 h/week ≈ **1.5–1.8 quarters**. **Ship posture (decided 2026-08-25): ship the full ~190h**;
+the reversible deferrals (split W2 −8h, fixed-fee half of W15 −5h, W5's own 22h cut −12h) stay available
+but none is taken — the cut line is revisited only if the calendar slips.
 
-### Still open after this fold-in
+### Confirmed 2026-08-25 (was "still open")
 
-- **Apply MISSION amendment B?** (now vs at build time) — the one MISSION edit this discovery needs.
-- **Archive-on-met slot rule** — landed bets currently still count toward the 3-cap (reversible default);
-  flip only if you want an early win to free a slot.
-- **Q5 (cut line)** — now against ~190h; unchanged from §8g, still the only call that moves the ship date.
+- **MISSION amendment B — applied** (above).
+- **Archive-on-met slot rule — confirmed:** a landed bet still counts toward the 3-cap; winning early
+  does **not** free a slot. "Three bets a quarter" stays literally true.
+- **Ship posture — ~190h, cuts deferred:** ship at the full ~190h scope; the cut line (Q5) is revisited
+  only if the calendar slips. Ship target ~1.5–1.8 quarters. The reversible menu (split W2 −8h, fixed-fee
+  half of W15 −5h, W5's 22h cut −12h) stays available but none is taken.
 
 ---
 
