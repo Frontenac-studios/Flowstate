@@ -2,15 +2,19 @@ use std::fs::OpenOptions;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 mod dnd;
+mod idle;
 
 use dnd::{do_not_disturb_supported, set_do_not_disturb};
+use idle::spawn_idle_watcher;
+use serde::Deserialize;
 use tauri::{
-    menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, RunEvent, Url, WebviewUrl, WebviewWindowBuilder,
+    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    tray::{TrayIcon, TrayIconBuilder},
+    AppHandle, Emitter, Manager, RunEvent, State, Url, WebviewUrl, WebviewWindowBuilder,
+    WindowEvent,
 };
 
 const DEFAULT_PORT: u16 = 4310;
@@ -18,6 +22,32 @@ const DEFAULT_PORT: u16 = 4310;
 struct SidecarState {
     child: Mutex<Option<Child>>,
     port: u16,
+}
+
+/// A switch/start target the menu-bar timer offers (W2f). Pushed from the web.
+#[derive(Clone, Deserialize)]
+struct TrayProject {
+    id: String,
+    name: String,
+}
+
+/// The running timer as the web app sees it, pushed down for the tray to mirror.
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RunningTimer {
+    project_name: String,
+    /// Start instant in epoch ms; the shell ticks elapsed from this itself.
+    started_at_ms: i64,
+}
+
+/// Native menu-bar-timer state (W2f). The timer's truth lives in the app; this
+/// only mirrors the latest push so the tray title, tooltip, and menu can reflect
+/// it and a 1s tick can advance the clock without per-second IPC.
+#[derive(Default)]
+struct TimerTrayState {
+    tray: Mutex<Option<TrayIcon>>,
+    running: Mutex<Option<RunningTimer>>,
+    projects: Mutex<Vec<TrayProject>>,
 }
 
 fn sidecar_script_path(app: &AppHandle) -> Option<PathBuf> {
@@ -236,42 +266,174 @@ fn apply_window_vibrancy(window: &tauri::WebviewWindow) {
 #[cfg(not(target_os = "macos"))]
 fn apply_window_vibrancy(_window: &tauri::WebviewWindow) {}
 
-fn build_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let open_i = MenuItem::with_id(app, "open", "Open Kash", true, None::<&str>)?;
-    let capture_i = MenuItem::with_id(app, "capture", "Quick capture…", true, None::<&str>)?;
-    let quit_i = MenuItem::with_id(app, "quit", "Quit Kash", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open_i, &capture_i, &quit_i])?;
+fn now_ms() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
 
-    let _tray = TrayIconBuilder::new()
+/// Whole seconds as a menu-bar clock: `mm:ss` under an hour, `h:mm:ss` above.
+/// Mirrors `formatElapsedClock` on the web so both timers read the same.
+fn format_clock(total_secs: i64) -> String {
+    let total = total_secs.max(0);
+    let (h, m, s) = (total / 3600, (total % 3600) / 60, total % 60);
+    if h > 0 {
+        format!("{h}:{m:02}:{s:02}")
+    } else {
+        format!("{m:02}:{s:02}")
+    }
+}
+
+/// Refresh only the ticking parts — the menu-bar title and tooltip — from the
+/// running timer. Called every second; cheap, and never rebuilds the menu.
+fn update_tray_title(app: &AppHandle) {
+    let state = app.state::<TimerTrayState>();
+    let running = state.running.lock().unwrap().clone();
+    let guard = state.tray.lock().unwrap();
+    let Some(tray) = guard.as_ref() else { return };
+
+    match running {
+        Some(r) => {
+            let elapsed = now_ms().saturating_sub(r.started_at_ms).max(0) / 1000;
+            let clock = format_clock(elapsed);
+            let _ = tray.set_title(Some(clock.clone()));
+            let _ = tray.set_tooltip(Some(&format!("{} — {}", r.project_name, clock)));
+        }
+        None => {
+            let _ = tray.set_title(None::<&str>);
+            let _ = tray.set_tooltip(Some("Kash"));
+        }
+    }
+}
+
+/// Rebuild the tray menu from the current timer + switch targets. Running shows
+/// a project header, Stop, and a "Switch to" submenu; idle shows a "Start timer"
+/// submenu. Called on every state push (not per tick), then the title is synced.
+fn refresh_tray(app: &AppHandle) {
+    let state = app.state::<TimerTrayState>();
+    let running = state.running.lock().unwrap().clone();
+    let projects = state.projects.lock().unwrap().clone();
+
+    let mut builder = MenuBuilder::new(app);
+
+    if let Some(r) = &running {
+        if let Ok(header) = MenuItemBuilder::new(format!("◷  {}", r.project_name))
+            .id("header")
+            .enabled(false)
+            .build(app)
+        {
+            builder = builder.item(&header);
+        }
+        builder = builder.text("stop", "Stop timer");
+        if !projects.is_empty() {
+            let mut sub = SubmenuBuilder::new(app, "Switch to");
+            for p in &projects {
+                sub = sub.text(format!("switch:{}", p.id), &p.name);
+            }
+            if let Ok(sub) = sub.build() {
+                builder = builder.item(&sub);
+            }
+        }
+        builder = builder.separator();
+    } else if !projects.is_empty() {
+        let mut sub = SubmenuBuilder::new(app, "Start timer");
+        for p in &projects {
+            sub = sub.text(format!("start:{}", p.id), &p.name);
+        }
+        if let Ok(sub) = sub.build() {
+            builder = builder.item(&sub);
+        }
+        builder = builder.separator();
+    }
+
+    builder = builder
+        .text("open", "Open Kash")
+        .text("capture", "Quick capture…")
+        .separator()
+        .text("quit", "Quit Kash");
+
+    let Ok(menu) = builder.build() else { return };
+    if let Some(tray) = state.tray.lock().unwrap().as_ref() {
+        let _ = tray.set_menu(Some(menu));
+    }
+    update_tray_title(app);
+}
+
+/// Route a tray menu click. Open/capture/quit act locally; stop and switch/start
+/// are emitted to the web app, which owns the timer mutations (W2f).
+fn handle_tray_menu(app: &AppHandle, id: &str) {
+    let port = app.state::<SidecarState>().port;
+    match id {
+        "open" => {
+            let _ = open_main_window(app, port, false);
+        }
+        "capture" => {
+            let _ = open_main_window(app, port, true);
+        }
+        "quit" => app.exit(0),
+        "stop" => {
+            let _ = app.emit("tray-command", serde_json::json!({ "action": "stop" }));
+        }
+        _ => {
+            if let Some(pid) = id.strip_prefix("switch:").or_else(|| id.strip_prefix("start:")) {
+                let _ = app.emit(
+                    "tray-command",
+                    serde_json::json!({ "action": "start", "projectId": pid }),
+                );
+            }
+        }
+    }
+}
+
+/// Mirror the running timer (or null) and switch/start targets from the app into
+/// the native menu-bar timer (W2f). Called on every timer or project-list change.
+#[tauri::command]
+fn set_timer_tray(
+    app: AppHandle,
+    state: State<TimerTrayState>,
+    running: Option<RunningTimer>,
+    recent_projects: Vec<TrayProject>,
+) {
+    *state.running.lock().unwrap() = running;
+    *state.projects.lock().unwrap() = recent_projects;
+    refresh_tray(&app);
+}
+
+/// Advance the menu-bar clock once a second while a timer runs. Title-only, so it
+/// never rebuilds the menu or races the state pushes.
+fn spawn_tray_ticker(app: AppHandle) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_secs(1));
+        let running = app
+            .state::<TimerTrayState>()
+            .running
+            .lock()
+            .map(|g| g.is_some())
+            .unwrap_or(false);
+        if running {
+            update_tray_title(&app);
+        }
+    });
+}
+
+fn build_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let menu = MenuBuilder::new(app)
+        .text("open", "Open Kash")
+        .text("capture", "Quick capture…")
+        .separator()
+        .text("quit", "Quit Kash")
+        .build()?;
+
+    let tray = TrayIconBuilder::new()
         .menu(&menu)
+        .show_menu_on_left_click(true)
         .tooltip("Kash")
-        .on_menu_event(|app, event| {
-            let port = app.state::<SidecarState>().port;
-            match event.id.as_ref() {
-                "open" => {
-                    let _ = open_main_window(app, port, false);
-                }
-                "capture" => {
-                    let _ = open_main_window(app, port, true);
-                }
-                "quit" => app.exit(0),
-                _ => {}
-            }
-        })
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                let app = tray.app_handle();
-                let port = app.state::<SidecarState>().port;
-                let _ = open_main_window(app, port, false);
-            }
-        })
+        .on_menu_event(|app, event| handle_tray_menu(app, event.id.as_ref()))
         .build(app)?;
 
+    *app.state::<TimerTrayState>().tray.lock().unwrap() = Some(tray);
+    refresh_tray(app);
     Ok(())
 }
 
@@ -288,12 +450,14 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             set_do_not_disturb,
-            do_not_disturb_supported
+            do_not_disturb_supported,
+            set_timer_tray
         ])
         .manage(SidecarState {
             child: Mutex::new(None),
             port,
         })
+        .manage(TimerTrayState::default())
         .setup(move |app| {
             let handle = app.handle().clone();
 
@@ -331,13 +495,28 @@ pub fn run() {
             }
 
             build_tray(&handle)?;
+            spawn_tray_ticker(handle.clone());
+            spawn_idle_watcher(handle.clone());
             open_main_window(&handle, port, false)?;
             Ok(())
         })
         .build(tauri::generate_context!())
         .expect("error building Kash")
-        .run(|app, event| {
-            if let RunEvent::Exit = event {
+        .run(|app, event| match event {
+            // Closing the window hides it to the menu bar rather than quitting —
+            // the timer keeps running and the webview (and its tray/idle listeners)
+            // stays alive. Quit is explicit, via the tray. (W2f)
+            RunEvent::WindowEvent {
+                label,
+                event: WindowEvent::CloseRequested { api, .. },
+                ..
+            } if label == "main" => {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.hide();
+                }
+                api.prevent_close();
+            }
+            RunEvent::Exit => {
                 if let Some(state) = app.try_state::<SidecarState>() {
                     if let Ok(mut guard) = state.child.lock() {
                         if let Some(mut child) = guard.take() {
@@ -349,5 +528,6 @@ pub fn run() {
                 // launch doesn't try to kill a pid that's already gone.
                 let _ = std::fs::remove_file(sidecar_pid_path(app));
             }
+            _ => {}
         });
 }

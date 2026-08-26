@@ -17,8 +17,9 @@ import { useTRPC } from "@/trpc/client";
  * a task. Exactly one timer runs at a time (the server stops any prior on start),
  * and elapsed is derived from the start instant, so it survives sleep and reloads.
  *
- * This is the only surface that starts a timer now that Focus is parked. The
- * menu-bar timer and idle detection are v1.1 (Q5 split).
+ * This is the primary in-app surface for starting a timer now that Focus is
+ * parked. On the desktop build it's mirrored to a native menu-bar timer, and
+ * idle time is reconciled with a keep/trim prompt (both W2f, DesktopTimerBridge).
  */
 export default function TodayTimer() {
   const trpc = useTRPC();

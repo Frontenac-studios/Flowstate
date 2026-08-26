@@ -3,6 +3,7 @@ import { AppShellChatRail, AppShellFixedOverlays } from "./AppShellOverlays";
 import { LeftNavRail } from "./LeftNavRail";
 import MobileBottomNav from "./MobileBottomNav";
 import { ChatProvider } from "./chat/ChatProvider";
+import DesktopTimerBridge from "./desktop/DesktopTimerBridge";
 import { EphemeralCelebrationHost } from "./mechanics/EphemeralCelebration";
 import ToastProvider from "./ui/ToastProvider";
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ChatProvider>
       <ToastProvider>
         <EphemeralCelebrationHost />
+        <DesktopTimerBridge />
         <div className="relative min-h-screen lg:flex">
           {/* Rail sits outside the padded/centered shell so it anchors flush to
               the window's left, top, and bottom edges. */}

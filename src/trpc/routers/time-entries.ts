@@ -8,6 +8,7 @@ import type { CandidateRate } from "@/lib/rates/resolve-rate";
 import { aggregateTimeReport } from "@/lib/time/aggregate-time-report";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
 import { computeUntrackedGaps } from "@/lib/time/compute-untracked-gaps";
+import { computeIdleTrim } from "@/lib/time/idle-trim";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
 import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 import { startedOnLocalDay } from "@/lib/dates/local-time";
@@ -188,6 +189,84 @@ export const timeEntriesRouter = createTRPCRouter({
       }
 
       return { entryId: row.id, elapsedSeconds: elapsedSecondsSince(row.startedAt, now) };
+    }),
+
+  /**
+   * Resolve an idle window on the running timer (W2f). The desktop shell detects
+   * the machine sat idle past the threshold and, on return, asks "keep or trim?".
+   * `keep` counts the away time as worked (no-op). `trim` ends the running segment
+   * where idleness began and opens a fresh segment now, so the away minutes fall
+   * into the gap between two real entries — never silently subtracted. No running
+   * timer is a benign no-op (the user may have stopped it while away).
+   */
+  resolveIdle: protectedProcedure
+    .input(
+      z.object({
+        awaySeconds: z.number().int().nonnegative(),
+        action: z.enum(["keep", "trim"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+
+      const [running] = await db
+        .select({
+          id: timeEntries.id,
+          projectId: timeEntries.projectId,
+          taskId: timeEntries.taskId,
+          description: timeEntries.description,
+          billable: timeEntries.billable,
+          startedAt: timeEntries.startedAt,
+        })
+        .from(timeEntries)
+        .where(and(eq(timeEntries.userId, ctx.userId), isNull(timeEntries.endedAt)))
+        .orderBy(desc(timeEntries.startedAt))
+        .limit(1);
+
+      if (!running) return { resolved: false as const };
+      if (input.action === "keep") return { resolved: true as const, trimmed: false as const };
+
+      const trim = computeIdleTrim(running.startedAt, now, input.awaySeconds);
+
+      // Close (or drop) the segment that ran up to the idle, then resume timing.
+      if (trim.dropOriginal) {
+        await db
+          .delete(timeEntries)
+          .where(and(eq(timeEntries.id, running.id), eq(timeEntries.userId, ctx.userId)));
+      } else {
+        await db
+          .update(timeEntries)
+          .set({ endedAt: trim.closeAt, updatedAt: now })
+          .where(
+            and(
+              eq(timeEntries.id, running.id),
+              eq(timeEntries.userId, ctx.userId),
+              isNull(timeEntries.endedAt)
+            )
+          );
+      }
+
+      const [fresh] = await db
+        .insert(timeEntries)
+        .values({
+          userId: ctx.userId,
+          projectId: running.projectId,
+          taskId: running.taskId,
+          description: running.description,
+          startedAt: now,
+          endedAt: null,
+          reason: null,
+          source: "timer",
+          billable: running.billable,
+        })
+        .returning({ id: timeEntries.id });
+
+      return {
+        resolved: true as const,
+        trimmed: true as const,
+        keptSeconds: trim.keptSeconds,
+        newEntryId: fresh?.id ?? null,
+      };
     }),
 
   end: protectedProcedure
