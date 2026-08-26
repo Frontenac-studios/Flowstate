@@ -23,23 +23,6 @@ const on = (value: string | undefined): boolean => value === "on";
 
 export const FLAGS = {
   /**
-   * Google Calendar sync — the OAuth connect/callback/disconnect + cron sync
-   * routes under `api/calendar/**`, the Settings → Integrations section, and the
-   * external-event layer on Today. Parked per docs/v1-scope.md §3.2: finished and
-   * self-contained, and the one park most likely to return in v1.1, because it
-   * makes the Budget's capacity number honest.
-   *
-   * W13 shipped the park as care|chat|focus and dropped calendar; this restores
-   * it, so the parked set is now care|chat|focus|calendar (§3.2's five, less the
-   * kept Desktop app).
-   *
-   * NOTE: with this off, the api/calendar routes 404 and the Integrations tab is
-   * hidden, but Today's external-event layer (TimelinePane, read via the still-
-   * registered `calendar` tRPC router) is NOT yet gated — see docs/v1-scope.md.
-   */
-  calendar: on(process.env.NEXT_PUBLIC_FLAG_CALENDAR),
-
-  /**
    * Care / garden — self-care practices, the garden scene, reflections.
    * Parked, not killed, at the owner's decision (docs/v1-scope.md §8a). Lost its
    * Evidence tab in the teardown because that tab was built on Daily Wins and

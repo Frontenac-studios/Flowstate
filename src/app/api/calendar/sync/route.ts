@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/db";
 import { calendarConnections } from "@/db/tables";
-import { FLAGS } from "@/lib/flags";
 import { syncGoogleConnection } from "@/server/calendar/sync-google-connection";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +16,6 @@ function verifyCronSecret(request: Request): boolean {
 }
 
 export async function GET(request: Request) {
-  if (!FLAGS.calendar) return new NextResponse(null, { status: 404 });
-
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

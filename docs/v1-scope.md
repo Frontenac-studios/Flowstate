@@ -198,11 +198,17 @@ exceptions worth mining before archiving: `kash-3.0-design-tokens.md` (live desi
 
 ### 3.2 PARK — flag off, data preserved, no trace in the UI
 
-Four items. Each is finished, harmless, and plausibly wanted back.
+> **Update (2026-08-26): Google Calendar is KEEP, not parked** — per Q3 in the
+> reversible-menu decisions below, it is a live v1 feature (meeting bars on Today,
+> the Budget nets out booked time). The original "Google Calendar sync" park row
+> and any "parked Calendar" reference in this section are **superseded**; there is
+> no `FLAGS.calendar`. Parked features are the three below: Chat, Focus, Care —
+> matching `src/lib/flags.ts`.
+
+Three items. Each is finished, harmless, and plausibly wanted back.
 
 | Item                                                                                                           | Serves        | Why park not kill                                                                                                                                                                                                      | Data preserved                                    |
 | -------------------------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| **Google Calendar sync** (`calendar` router, 3 API routes, `calendar_connections`, `external_calendar_events`) | none directly | Finished and self-contained. It makes the Budget's capacity number honest, so it is the one park most likely to be un-parked in v1.1.                                                                                  | Connections + cached events.                      |
 | **Chat coach / assistant** (`chat` router, `chat_messages`, `SurfaceCoachLayout` docks, `src/server/claude/*`) | none directly | Finished, and product law 1 ("Flowstate drafts, you sign") means an assistant returns. But a coach dock on every page maps to zero of the nine scope items.                                                            | Message history.                                  |
 | **Focus mode** (`/today/focus`, `focus_blocks`)                                                                | adjacent to 3 | Finished and harmless; it is currently the only place a timer starts, so it can only be parked _after_ the project timer lands.                                                                                        | Focus blocks.                                     |
 | **Desktop app + offline sync** (`apps/desktop`, `packages/db-local`, `packages/sync`, `sync` router)           | none          | Finished and working, but it is a permanent tax: every new column must be mirrored to SQLite (see the column-drift and jsonb-bind incidents). Parking = stop building releases, keep the code. **NEEDS KAT** — see §7. | Local SQLite mirrors; hosted DB is authoritative. |
@@ -222,12 +228,11 @@ export const FLAGS = {
 Then, per item — all four steps are required, because a route that 404s but still appears
 in the command palette is not parked, it is broken:
 
-| Parked item | 1. Nav                                                                                                                | 2. Route                                                                                                        | 3. Mounts                                                                                                                     | 4. Server                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Calendar    | No nav entry today. Remove the Calendar section from `settings/page.tsx`.                                             | `src/app/api/calendar/**/route.ts` → early `return new Response(null, { status: 404 })` when `!FLAGS.calendar`. | Remove `TodayTimeline`'s external-event layer and `getDaySummary` call behind the flag.                                       | Keep the router registered (harmless, RLS-guarded); it becomes unreachable from the client.               |
-| Chat        | Remove `ChatToggleButton` from `LeftNavRail.tsx`; remove `OPEN_PALETTE_EVENT` chat entries from `CommandPalette.tsx`. | `src/app/api/claude/stream`, `/narrate` → 404 when `!FLAGS.chat`.                                               | `SurfaceCoachLayout` renders children only; delete the dock column. **Un-hide the composer's "+"** so task creation survives. | Keep `chat` router; drop `assemble-chat-context` from any non-chat call path.                             |
-| Focus       | Remove the Focus entry point from `today/` and the command palette.                                                   | `src/app/(fullbleed)/today/focus/page.tsx` → `notFound()` when `!FLAGS.focus`.                                  | Remove `useTop3Assurance`'s `listAllStarted` dependency.                                                                      | Keep `focusBlocks`.                                                                                       |
-| Desktop     | n/a                                                                                                                   | n/a                                                                                                             | n/a                                                                                                                           | Stop tagging `v*` releases; leave `release.yml` intact. Remove desktop jobs from PR/main CI if any exist. |
+| Parked item | 1. Nav                                                                                                                | 2. Route                                                                       | 3. Mounts                                                                                                                     | 4. Server                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Chat        | Remove `ChatToggleButton` from `LeftNavRail.tsx`; remove `OPEN_PALETTE_EVENT` chat entries from `CommandPalette.tsx`. | `src/app/api/claude/stream`, `/narrate` → 404 when `!FLAGS.chat`.              | `SurfaceCoachLayout` renders children only; delete the dock column. **Un-hide the composer's "+"** so task creation survives. | Keep `chat` router; drop `assemble-chat-context` from any non-chat call path.                             |
+| Focus       | Remove the Focus entry point from `today/` and the command palette.                                                   | `src/app/(fullbleed)/today/focus/page.tsx` → `notFound()` when `!FLAGS.focus`. | Remove `useTop3Assurance`'s `listAllStarted` dependency.                                                                      | Keep `focusBlocks`.                                                                                       |
+| Desktop     | n/a                                                                                                                   | n/a                                                                            | n/a                                                                                                                           | Stop tagging `v*` releases; leave `release.yml` intact. Remove desktop jobs from PR/main CI if any exist. |
 
 Remove `NAV_GROUP_REFLECT_PLAN` entirely once Care is killed and Plan is rebuilt; the nav
 for v1 is **Today · Week · Projects · Clients · Time · Goals · Backlog · Settings**.
@@ -645,8 +650,8 @@ decision system, and add the link in v1.1 once the weights have survived five re
 
 **Acceptance criteria**
 
-- [ ] `src/lib/flags.ts` exists; all four parked features default **off**; `.env.example` updated.
-- [ ] With all flags off, a full click-through of the app surfaces zero references to Calendar, Chat, Focus, or Care — including the command palette and settings.
+- [ ] `src/lib/flags.ts` exists; all three parked features (Care, Chat, Focus) default **off**; `.env.example` updated.
+- [ ] With all flags off, a full click-through of the app surfaces zero references to Chat, Focus, or Care — including the command palette and settings. (Calendar is kept, so it stays visible.)
 - [ ] Turning a flag on restores the feature intact.
 
 ---
@@ -783,7 +788,8 @@ the swap is clean: Filter (cut version, 10h) in, Sweep (10h) out, same total.
 | 3   | Chat                                 | **PARK**           | Coach docks removed from every surface; the composer's "+" must be un-hidden in the same PR or task creation breaks.                                               |
 | 4   | `protected_blocks` / `reserved_days` | **KILL**           | As specced. 38 UI references — the largest single deletion.                                                                                                        |
 
-Parked list is now **five**: Calendar, Chat, Focus, Care, and (no longer) Desktop.
+Parked list is now **three**: Chat, Focus, Care. (Calendar and Desktop, once on
+this list, are both **kept** in v1 — see Q3 below.)
 
 ### Revised estimate
 
