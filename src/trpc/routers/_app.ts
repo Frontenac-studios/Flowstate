@@ -8,6 +8,7 @@ import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
 import { clientsRouter } from "./clients";
 import { dayReviewsRouter } from "./day-reviews";
+import { directionsRouter } from "./directions";
 import { focusBlocksRouter } from "./focus-blocks";
 import { invoicesRouter } from "./invoices";
 import { meRouter } from "./me";
@@ -19,6 +20,7 @@ import { projectsRouter } from "./projects";
 import { protectedBlocksRouter } from "./protected-blocks";
 import { recurrenceRouter } from "./recurrence";
 import { settingsRouter } from "./settings";
+import { targetsRouter } from "./targets";
 import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
 import { timeEntriesRouter } from "./time-entries";
@@ -40,6 +42,7 @@ export const appRouter = createTRPCRouter({
   chat: chatRouter,
   clients: clientsRouter,
   dayReviews: dayReviewsRouter,
+  directions: directionsRouter,
   focusBlocks: focusBlocksRouter,
   invoices: invoicesRouter,
   me: meRouter,
@@ -52,6 +55,7 @@ export const appRouter = createTRPCRouter({
   recurrence: recurrenceRouter,
   settings: settingsRouter,
   sync: syncRouter,
+  targets: targetsRouter,
   taskBulkImports: taskBulkImportsRouter,
   tasks: tasksRouter,
   timeEntries: timeEntriesRouter,
