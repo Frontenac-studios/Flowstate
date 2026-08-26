@@ -80,6 +80,38 @@ describe("invoice double-bill guard (sqlite)", () => {
       .map((r) => r.id);
   }
 
+  /** Insert one accepted invoice row and return its id. */
+  function makeInvoice(): string {
+    const now = new Date();
+    const id = randomUUID();
+    db.insert(invoices)
+      .values({
+        id,
+        userId,
+        orgId: userId,
+        clientId,
+        invoiceNumber: 1,
+        periodStart: now,
+        periodEnd: now,
+        thresholdHours: 20,
+        rateCents: 4500,
+        billedSeconds: 3600,
+        amountCents: 4500,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+    return id;
+  }
+
+  /** Bare reassignment with NO `invoice_id IS NULL` guard — the convention removed. */
+  function reassign(entryId: string, invoiceId: string): void {
+    db.update(timeEntries)
+      .set({ invoiceId, invoicedAt: new Date(), updatedAt: new Date() })
+      .where(eq(timeEntries.id, entryId))
+      .run();
+  }
+
   it("stamps unbilled entries once and never a second time", () => {
     const now = new Date();
     const firstInvoice = randomUUID();
@@ -115,5 +147,52 @@ describe("invoice double-bill guard (sqlite)", () => {
       .from(timeEntries)
       .all();
     expect(rows.every((r) => r.invoiceId === firstInvoice)).toBe(true);
+  });
+
+  // The conditional UPDATE is the app-layer guard; the DB-level guard is a
+  // write-once trigger on `invoice_id`. These tests bypass the `IS NULL`
+  // convention entirely and assert the trigger itself is the backstop.
+  it("rejects re-pointing a billed entry at a different invoice (DB trigger)", () => {
+    const first = makeInvoice();
+    const second = makeInvoice();
+    const [entryId] = entryIds;
+
+    // First bill: NULL -> invoice is allowed.
+    reassign(entryId, first);
+
+    // Re-bill onto a different invoice with no IS-NULL guard: the trigger aborts.
+    expect(() => reassign(entryId, second)).toThrow(/immutable once set/);
+
+    // The entry is untouched — still on the first invoice.
+    const [row] = db
+      .select({ invoiceId: timeEntries.invoiceId })
+      .from(timeEntries)
+      .where(eq(timeEntries.id, entryId))
+      .all();
+    expect(row.invoiceId).toBe(first);
+  });
+
+  it("still allows void (invoice -> NULL) and re-billing the freed entry", () => {
+    const first = makeInvoice();
+    const second = makeInvoice();
+    const [entryId] = entryIds;
+
+    reassign(entryId, first);
+
+    // Void releases the entry: invoice -> NULL is allowed.
+    db.update(timeEntries)
+      .set({ invoiceId: null, invoicedAt: null, updatedAt: new Date() })
+      .where(eq(timeEntries.id, entryId))
+      .run();
+
+    // Now free, it can be billed onto a new invoice: NULL -> invoice is allowed.
+    expect(() => reassign(entryId, second)).not.toThrow();
+
+    const [row] = db
+      .select({ invoiceId: timeEntries.invoiceId })
+      .from(timeEntries)
+      .where(eq(timeEntries.id, entryId))
+      .all();
+    expect(row.invoiceId).toBe(second);
   });
 });
