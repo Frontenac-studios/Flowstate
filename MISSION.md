@@ -198,8 +198,13 @@ Overrides are always allowed and always logged with a reason.
 
 **The Tickler** — business compliance only. Taxes, filings, insurance, contract renewals.
 
-**The Learning Roadmap** — a quarter-horizon goal in its own right. Your effective rate rises
-when your skills do, so learning is treated as a business investment, not a hobby.
+**The Learning Roadmap** — a quarter-horizon goal in its own right: one active capability at a
+time. It is a business investment, not a hobby — but it is **not scored against your effective
+rate.** It is tracked like any work (a business project you log time to), and progress is
+milestones toward the capability, with logged time shown as context and no hours quota;
+"capability reached" is the terminal state, ruled on at the quarterly review. Tying it to a rate
+turns a capability into a number and invites the habit tracker; the mission holds it as an
+investment you make, not a metric you chase.
 
 ---
 

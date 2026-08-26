@@ -337,7 +337,11 @@ Projects as the documented exception. **No change needed.** The §8c "Law 4c con
 amendment" note is stale and should be marked resolved in `v1-scope.md` (housekeeping, not a MISSION
 edit).
 
-### Amendment B — learning roadmap: business investment, no rate score (accept)
+### Amendment B — learning roadmap: business investment, no rate score (APPLIED 2026-08-25)
+
+> **Applied to MISSION.md** (line 201) on 2026-08-25, worded to match the "learning is a business
+> project" decision (§13 Q7) rather than the earlier "own object" phrasing. The diff below is the
+> record of the change.
 
 ```diff
 --- a/MISSION.md  (## The mechanics, The Learning Roadmap)
@@ -462,3 +466,11 @@ review entry, met-target behaviour, two-Direction layout, cold start, learning m
 above**. Still genuinely open from §11: Q3 (retired-item history view — v1.1), Q7 (applied-line metric →
 **raw counts**, decided), Q9 (`year` horizon → kept in enum, no UI). The learning-as-project choice also
 retires §12's least-sure item #2.
+
+### Confirmed 2026-08-25 (final calls)
+
+- **MISSION amendment B — applied** to MISSION.md line 201 (§9).
+- **Archive-on-met slot rule — confirmed:** a landed bet still counts toward the 3-cap; winning early
+  does **not** free a slot. "Three bets a quarter" stays literally true. (No longer a reversible lean.)
+- **Ship posture — ~190h, cuts deferred:** no deferrals taken now; the cut line (v1-scope Q5) is
+  revisited only if the calendar slips. Ship target ~1.5–1.8 quarters.
