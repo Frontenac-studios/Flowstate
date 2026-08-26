@@ -26,6 +26,9 @@ export const timeEntries = sqliteTable("time_entries", {
     .notNull()
     .$defaultFn(() => "manual"),
   invoicedAt: integer("invoiced_at", { mode: "timestamp_ms" }),
+  // Write-once: a BEFORE UPDATE trigger (see runSqliteMigrations) rejects
+  // re-pointing a billed entry at a different invoice, mirroring the Postgres
+  // W4 double-bill guard. NULL<->invoice is fine; invoice->other-invoice is not.
   invoiceId: text("invoice_id"),
   reason: text("reason"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
