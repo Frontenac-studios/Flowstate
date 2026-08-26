@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { resolveCalendarOAuthRedirectUri } from "@/lib/calendar/oauth-redirect";
 import { requestOriginFromHeaders } from "@/lib/calendar/request-origin";
 import { calendarSettingsUrl } from "@/lib/calendar/settings-redirect";
+import { FLAGS } from "@/lib/flags";
 import { getRouteUserId } from "@/server/claude/route-auth";
 import { upsertGoogleConnection } from "@/server/calendar/connection-store";
 import { getGoogleCalendarEnv, isGoogleCalendarConfigured } from "@/server/calendar/env";
@@ -28,6 +29,8 @@ function settingsRedirect(req: Request, query: Record<string, string>): NextResp
 }
 
 export async function GET(req: Request) {
+  if (!FLAGS.calendar) return new NextResponse(null, { status: 404 });
+
   const sessionUserId = await getRouteUserId();
   if (!sessionUserId) {
     return settingsRedirect(req, { calendar: "error", reason: "unauthorized" });

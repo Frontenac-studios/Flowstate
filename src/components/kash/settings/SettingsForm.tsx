@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Select from "@/components/kash/ui/Select";
+import { FLAGS } from "@/lib/flags";
 import type { BucketMode } from "@/lib/settings/constants";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { useTRPC } from "@/trpc/client";
@@ -56,7 +57,10 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "about", label: "About me" },
   { id: "notifications", label: "Notifications" },
   { id: "preferences", label: "Preferences" },
-  { id: "integrations", label: "Integrations" },
+  // Integrations holds only Google Calendar sync, parked behind FLAGS.calendar
+  // (docs/v1-scope.md §3.2). Drop the whole tab when the flag is off so the park
+  // leaves no trace.
+  ...(FLAGS.calendar ? [{ id: "integrations" as const, label: "Integrations" }] : []),
   { id: "ai", label: "AI / Kash" },
   { id: "data", label: "Data & sync" },
 ];
@@ -76,7 +80,7 @@ export function SettingsForm() {
   const [tab, setTab] = useState<TabId>("preferences");
 
   useEffect(() => {
-    if (searchParams.get("calendar")) {
+    if (FLAGS.calendar && searchParams.get("calendar")) {
       setTab("integrations");
       return;
     }
