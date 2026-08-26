@@ -718,4 +718,26 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
   sqlite.exec(
     "CREATE INDEX IF NOT EXISTS projects_user_id_client_id_idx ON projects (user_id, client_id);"
   );
+
+  // W4 double-bill guard, mirroring the Postgres trigger in
+  // drizzle/0050_time_entries_invoice_id_immutable.sql. `invoice_id` is write-once:
+  // NULL -> invoice (bill) and invoice -> NULL (void releases) are allowed, but an
+  // entry already billed can never be moved to a *different* invoice. Same reason
+  // as `projects_user_id_client_id_idx` above, this runs after the ADDED_COLUMNS
+  // loop — invoice_id is added there, so a trigger referencing it inside
+  // MIGRATION_SQL would fail with "no such column" on a fresh DB.
+  sqlite.exec(
+    `CREATE TRIGGER IF NOT EXISTS time_entries_invoice_id_immutable
+       BEFORE UPDATE OF invoice_id ON time_entries
+       FOR EACH ROW
+       WHEN OLD.invoice_id IS NOT NULL
+            AND NEW.invoice_id IS NOT NULL
+            AND NEW.invoice_id <> OLD.invoice_id
+       BEGIN
+         SELECT RAISE(
+           ABORT,
+           'time_entries.invoice_id is immutable once set; void the invoice to release the entry before re-billing'
+         );
+       END;`
+  );
 }

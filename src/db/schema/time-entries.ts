@@ -51,6 +51,14 @@ export const timeEntries = pgTable(
      * appear on a draft. This single-valued link IS the double-bill guard: the
      * draft query only ever selects `invoice_id IS NULL` entries, and acceptance
      * stamps it only where still null. Voiding an invoice clears it (SET NULL).
+     *
+     * At the DB level the link is **write-once**, enforced by a trigger — not by
+     * this convention alone (docs/v1-scope.md W4 requires DB enforcement). NULL ->
+     * invoice (bill) and invoice -> NULL (void) are allowed, but re-pointing a
+     * billed entry at a *different* invoice is rejected. See the trigger and its
+     * rationale in `drizzle/0050_time_entries_invoice_id_immutable.sql` (mirrored
+     * for desktop in packages/db-local/src/migrate.ts). Drizzle can't model a
+     * trigger, so it lives in the migration, not this schema.
      */
     invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
     /**

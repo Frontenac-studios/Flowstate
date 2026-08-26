@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { resolveCalendarOAuthRedirectUri } from "@/lib/calendar/oauth-redirect";
 import { requestOriginFromHeaders } from "@/lib/calendar/request-origin";
 import { calendarSettingsUrl } from "@/lib/calendar/settings-redirect";
+import { FLAGS } from "@/lib/flags";
 import { getRouteUserId } from "@/server/claude/route-auth";
 import { getGoogleCalendarEnv, isGoogleCalendarConfigured } from "@/server/calendar/env";
 import { getGoogleAuthUrl } from "@/server/calendar/google-client";
@@ -23,6 +24,8 @@ function getAppOrigin(req: Request): string {
 }
 
 export async function GET(req: Request) {
+  if (!FLAGS.calendar) return new NextResponse(null, { status: 404 });
+
   const userId = await getRouteUserId();
   if (!userId) {
     return NextResponse.redirect(new URL("/login", getAppOrigin(req)));
