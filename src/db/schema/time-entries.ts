@@ -1,5 +1,6 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+import { invoices } from "./invoices";
 import { projects } from "./projects";
 import { tasks } from "./tasks";
 import { timeTags } from "./time-tags";
@@ -43,8 +44,15 @@ export const timeEntries = pgTable(
     billable: boolean("billable").notNull().default(false),
     /** How the row was created: `timer | manual | gap_fill`. */
     source: text("source").notNull().default("manual"),
-    /** Set when an invoice line is generated from this span; can never double-bill. */
+    /** Set when this span is billed on an invoice; can never double-bill. */
     invoicedAt: timestamp("invoiced_at", { withTimezone: true, mode: "date" }),
+    /**
+     * The invoice this span was billed on (W4). Null = never billed and free to
+     * appear on a draft. This single-valued link IS the double-bill guard: the
+     * draft query only ever selects `invoice_id IS NULL` entries, and acceptance
+     * stamps it only where still null. Voiding an invoice clears it (SET NULL).
+     */
+    invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
     /**
      * Legacy end-reason enum (`start | done | park | esc | pause | manual`), kept
      * from the task-scoped era because it is still shown in the entry list. Nullable

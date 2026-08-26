@@ -15,3 +15,8 @@ package-lock.json
 .DS_Store
 .env*
 !.env.example
+
+# Hand-authored self-contained HTML docs (build tracker, wireframes).
+# These are deliberately hand-formatted artifacts, and docs/** is already
+# paths-ignored for CI triggering; keep prettier from reflowing them.
+docs/*.html

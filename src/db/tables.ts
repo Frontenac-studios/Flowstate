@@ -4,6 +4,9 @@ import { appSettings as pgAppSettings } from "./schema/app-settings";
 import { calendarConnections as pgCalendarConnections } from "./schema/calendar-connections";
 import { clients as pgClients } from "./schema/clients";
 import { rates as pgRates } from "./schema/rates";
+import { invoices as pgInvoices } from "./schema/invoices";
+import { invoiceLines as pgInvoiceLines } from "./schema/invoice-lines";
+import { moneySettings as pgMoneySettings } from "./schema/money-settings";
 import { externalCalendarEvents as pgExternalCalendarEvents } from "./schema/external-calendar-events";
 import { careActivities as pgCareActivities } from "./schema/care-activities";
 import { careEvents as pgCareEvents } from "./schema/care-events";
@@ -121,6 +124,13 @@ export const externalCalendarEvents = (
 ) as typeof pgExternalCalendarEvents;
 export const clients = (isSqliteMode() ? sqliteSchema.clients : pgClients) as typeof pgClients;
 export const rates = (isSqliteMode() ? sqliteSchema.rates : pgRates) as typeof pgRates;
+export const invoices = (isSqliteMode() ? sqliteSchema.invoices : pgInvoices) as typeof pgInvoices;
+export const invoiceLines = (
+  isSqliteMode() ? sqliteSchema.invoiceLines : pgInvoiceLines
+) as typeof pgInvoiceLines;
+export const moneySettings = (
+  isSqliteMode() ? sqliteSchema.moneySettings : pgMoneySettings
+) as typeof pgMoneySettings;
 export const orgs = (isSqliteMode() ? sqliteSchema.orgs : pgOrgs) as typeof pgOrgs;
 export const orgMemberships = (
   isSqliteMode() ? sqliteSchema.orgMemberships : pgOrgMemberships

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
+import InvoicesPanel from "@/components/kash/money/InvoicesPanel";
 import MoneyReport from "@/components/kash/money/MoneyReport";
 import { ArrowRight, Users } from "@/components/kash/ui/icon";
 import { useTRPC } from "@/trpc/client";
@@ -10,7 +11,7 @@ import { useTRPC } from "@/trpc/client";
 /**
  * The Money surface (MISSION.md law 4c). Clients live inside Money, and W3 adds
  * the time report — totals, effective rate, and the client → project → task
- * breakdown. Invoices arrive with W4.
+ * breakdown. W4 adds invoicing: ready-to-bill clients, drafts you sign, and history.
  */
 export default function MoneyOverview() {
   const trpc = useTRPC();
@@ -22,7 +23,7 @@ export default function MoneyOverview() {
       <header>
         <h1 className="text-title font-semibold text-ink">Money</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          The monthly view: who you work for, what they pay, and — soon — what you&apos;ve billed.
+          The monthly view: who you work for, what they pay, and what you&apos;ve billed.
         </p>
       </header>
 
@@ -45,6 +46,8 @@ export default function MoneyOverview() {
       </Link>
 
       <MoneyReport />
+
+      <InvoicesPanel />
     </div>
   );
 }

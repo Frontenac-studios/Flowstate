@@ -21,6 +21,9 @@ export const clients = sqliteTable(
       .notNull()
       .$defaultFn(() => "active"),
     notes: text("notes"),
+    billingThresholdHours: integer("billing_threshold_hours")
+      .notNull()
+      .$defaultFn(() => 20),
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()

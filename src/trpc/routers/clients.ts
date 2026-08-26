@@ -105,6 +105,7 @@ export const clientsRouter = createTRPCRouter({
         name: z.string().trim().min(1).max(160),
         currency: currencySchema.optional(),
         notes: z.string().trim().max(2000).optional(),
+        billingThresholdHours: z.number().int().min(1).max(1000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -116,6 +117,7 @@ export const clientsRouter = createTRPCRouter({
           name: input.name,
           currency: input.currency ?? "USD",
           notes: input.notes ?? null,
+          billingThresholdHours: input.billingThresholdHours ?? 20,
         })
         .returning();
 
@@ -134,6 +136,7 @@ export const clientsRouter = createTRPCRouter({
         name: z.string().trim().min(1).max(160).optional(),
         currency: currencySchema.optional(),
         notes: z.string().trim().max(2000).nullable().optional(),
+        billingThresholdHours: z.number().int().min(1).max(1000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -143,6 +146,8 @@ export const clientsRouter = createTRPCRouter({
       if (input.name !== undefined) patch.name = input.name;
       if (input.currency !== undefined) patch.currency = input.currency;
       if (input.notes !== undefined) patch.notes = input.notes;
+      if (input.billingThresholdHours !== undefined)
+        patch.billingThresholdHours = input.billingThresholdHours;
 
       const [row] = await db
         .update(clients)
