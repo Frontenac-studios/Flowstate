@@ -26,6 +26,15 @@ export const projects = sqliteTable(
     isMaintenance: integer("is_maintenance", { mode: "boolean" })
       .notNull()
       .$defaultFn(() => false),
+    /** The Target this project serves, or null (W5). Mirrors Postgres. */
+    targetId: text("target_id"),
+    /** Learning-roadmap project fields (W5). Mirrors Postgres. */
+    isLearning: integer("is_learning", { mode: "boolean" })
+      .notNull()
+      .$defaultFn(() => false),
+    capability: text("capability"),
+    why: text("why"),
+    reachedAt: integer("reached_at", { mode: "timestamp_ms" }),
     // Soft-archive marker (mirrors Postgres). Non-null hides the project from the
     // index; list queries filter on `isNull(archivedAt)`, so this column must exist
     // or Drizzle emits a dangling `IS NULL` and SQLite errors.

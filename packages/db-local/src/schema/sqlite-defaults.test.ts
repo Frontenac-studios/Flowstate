@@ -5,10 +5,12 @@ import { createSqliteDb, type SqliteDb } from "../index";
 import { businessExpenses } from "./business-expenses";
 import { careEvents } from "./care-events";
 import { clients } from "./clients";
+import { directions } from "./directions";
 import { moneySettings } from "./money-settings";
 import { phases } from "./phases";
 import { projects } from "./projects";
 import { rates } from "./rates";
+import { targets } from "./targets";
 import { timeEntries } from "./time-entries";
 import { timeTags } from "./time-tags";
 
@@ -192,6 +194,57 @@ describe("sqlite schema insert-time defaults", () => {
     expect(row).toBeDefined();
     expect(typeof row!.id).toBe("string");
     expect(row!.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a direction without explicit id/active/timestamps (W5)", async () => {
+    const [row] = await db
+      .insert(directions)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        statement: "We serve early-stage teams shipping production software.",
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.active).toBe(true);
+    expect(row!.retiredAt).toBeNull();
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a target with horizon/source/state defaults from the mirror (W5)", async () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    const orgId = "22222222-2222-2222-2222-222222222222";
+    const [direction] = await db
+      .insert(directions)
+      .values({ userId, orgId, statement: "Ship production software." })
+      .returning();
+
+    const [row] = await db
+      .insert(targets)
+      .values({
+        userId,
+        orgId,
+        directionId: direction!.id,
+        title: "$40k booked this quarter",
+        periodStart: new Date("2026-07-01"),
+        periodEnd: new Date("2026-09-30"),
+        measureKind: "currency",
+        measureTarget: 4_000_000,
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.horizon).toBe("quarter");
+    expect(row!.measureSource).toBe("manual");
+    expect(row!.state).toBe("active");
+    expect(row!.measureCurrent).toBeNull();
+    expect(row!.derivationKey).toBeNull();
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
   });
 
   it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {

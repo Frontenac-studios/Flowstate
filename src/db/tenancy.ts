@@ -82,6 +82,11 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // What needs doing, for which project, by whom. Still filtered to the owning
   // user today — the class only says a Partner *could* be granted read later.
   clients: "org_shared",
+  // Quarter surface (W5): a Direction is a shared rule for the work; a Target is a
+  // shared bet. Money never lands here — an `auto` Target's current value is derived
+  // at read from the financial source, never written onto the row (see targets.ts).
+  directions: "org_shared",
+  targets: "org_shared",
   goal_milestones: "org_shared",
   goals: "org_shared",
   phases: "org_shared",
