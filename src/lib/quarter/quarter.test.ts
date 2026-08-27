@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { routeComposerInput } from "./parse-composer";
-import { daysLeftInQuarter, isQuarterClosing, quarterLabel, quarterMonthSpan, quarterOf } from "./quarter-period";
+import {
+  daysLeftInQuarter,
+  isQuarterClosing,
+  quarterLabel,
+  quarterMonthSpan,
+  quarterOf,
+} from "./quarter-period";
 
 describe("quarterOf", () => {
   it("places a date in its calendar quarter with the right bounds", () => {
@@ -42,7 +48,10 @@ describe("routeComposerInput", () => {
       measureKind: "currency",
       measureTarget: 4_000_000,
     });
-    expect(routeComposerInput("$1,500 MRR")).toMatchObject({ measureKind: "currency", measureTarget: 150_000 });
+    expect(routeComposerInput("$1,500 MRR")).toMatchObject({
+      measureKind: "currency",
+      measureTarget: 150_000,
+    });
   });
 
   it("routes a bare number to a count target", () => {

@@ -24,7 +24,8 @@ function parseCurrencyCents(text: string): number | null {
   if (!match) return null;
   const amount = Number(match[1].replace(/,/g, ""));
   if (!Number.isFinite(amount)) return null;
-  const scale = match[2]?.toLowerCase() === "k" ? 1_000 : match[2]?.toLowerCase() === "m" ? 1_000_000 : 1;
+  const scale =
+    match[2]?.toLowerCase() === "k" ? 1_000 : match[2]?.toLowerCase() === "m" ? 1_000_000 : 1;
   return Math.round(amount * scale * 100);
 }
 

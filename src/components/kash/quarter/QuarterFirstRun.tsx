@@ -31,8 +31,8 @@ export default function QuarterFirstRun({ onDismiss }: { onDismiss: () => void }
           <Compass size={18} className="mt-0.5 shrink-0 text-ink-muted" />
           <p className="text-sm text-ink-muted">
             A <strong className="font-medium text-ink">Direction</strong> is a rule for saying no —
-            written as a sentence, never measured. <em>“We serve early-stage teams shipping
-            production software.”</em>
+            written as a sentence, never measured.{" "}
+            <em>“We serve early-stage teams shipping production software.”</em>
           </p>
         </div>
         <div className="flex items-start gap-3">

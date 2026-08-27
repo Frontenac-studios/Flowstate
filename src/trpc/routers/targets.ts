@@ -90,7 +90,10 @@ export const targetsRouter = createTRPCRouter({
         .select({ amountCents: invoices.amountCents, bookedAt: invoices.createdAt })
         .from(invoices)
         .where(and(eq(invoices.userId, ctx.userId), ne(invoices.status, "void"))),
-      db.select({ signedAt: clients.createdAt }).from(clients).where(eq(clients.userId, ctx.userId)),
+      db
+        .select({ signedAt: clients.createdAt })
+        .from(clients)
+        .where(eq(clients.userId, ctx.userId)),
       db
         .select({ targetId: projects.targetId, completedAt: phases.completedAt })
         .from(phases)
@@ -269,7 +272,9 @@ export const targetsRouter = createTRPCRouter({
       const [row] = await db
         .update(targets)
         .set({ state: "met", archivedAt: now, updatedAt: now })
-        .where(and(eq(targets.id, input.id), eq(targets.userId, ctx.userId), eq(targets.state, "active")))
+        .where(
+          and(eq(targets.id, input.id), eq(targets.userId, ctx.userId), eq(targets.state, "active"))
+        )
         .returning();
       // Already archived by a concurrent read — not an error.
       if (row) await syncTargetRow(row.id, "update", row);

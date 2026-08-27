@@ -59,7 +59,9 @@ export const learningRouter = createTRPCRouter({
       );
 
     const loggedSeconds = entries.reduce(
-      (sum, e) => sum + Math.max(0, Math.floor(((e.endedAt ?? now).getTime() - e.startedAt.getTime()) / 1000)),
+      (sum, e) =>
+        sum +
+        Math.max(0, Math.floor(((e.endedAt ?? now).getTime() - e.startedAt.getTime()) / 1000)),
       0
     );
 
@@ -85,7 +87,8 @@ export const learningRouter = createTRPCRouter({
       if (await activeLearning(ctx.userId)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "You already have an active learning track. Reach or drop it before starting another.",
+          message:
+            "You already have an active learning track. Reach or drop it before starting another.",
         });
       }
 
@@ -96,7 +99,10 @@ export const learningRouter = createTRPCRouter({
         .where(and(eq(projects.userId, ctx.userId), eq(projects.slug, slug)))
         .limit(1);
       if (existing) {
-        throw new TRPCError({ code: "CONFLICT", message: "A project with this slug already exists." });
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A project with this slug already exists.",
+        });
       }
 
       const [row] = await db
@@ -114,7 +120,10 @@ export const learningRouter = createTRPCRouter({
         })
         .returning();
       if (!row) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to start learning track." });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to start learning track.",
+        });
       }
 
       await syncProjectRow(row.id, "insert", row);
