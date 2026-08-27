@@ -9,7 +9,17 @@ import { useTRPC } from "@/trpc/client";
 import { routeComposerInput } from "@/lib/quarter/parse-composer";
 
 type Direction = { id: string; statement: string };
+type Bet = {
+  id: string;
+  title: string;
+  measureKind: "currency" | "count" | "shipped";
+  measureTarget: number;
+  current: number;
+  isMet: boolean;
+};
 type MeasureKind = "currency" | "count" | "shipped";
+
+const MAX_TARGETS = 3;
 
 /**
  * The one smart composer (W5, §13 Q2). A single field routes number+date → a bet
@@ -17,11 +27,18 @@ type MeasureKind = "currency" | "count" | "shipped";
  * Direction. The reveal always lets you flip the type, so a misroute is one click
  * to fix rather than a dead end.
  */
-export default function SmartComposer({ directions }: { directions: Direction[] }) {
+export default function SmartComposer({
+  directions,
+  bets,
+}: {
+  directions: Direction[];
+  bets: Bet[];
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   const [text, setText] = useState("");
+  const [capPanel, setCapPanel] = useState(false);
   const [draft, setDraft] = useState<null | {
     type: "direction" | "target";
     measureKind: MeasureKind;
@@ -53,11 +70,15 @@ export default function SmartComposer({ directions }: { directions: Direction[] 
       onError: (e) => setError(e.message),
     })
   );
+  const retireBet = useMutation(
+    trpc.targets.retire.mutationOptions({ onSuccess: () => invalidate() })
+  );
 
   function reset() {
     setText("");
     setDraft(null);
     setError(null);
+    setCapPanel(false);
   }
 
   function parse() {
@@ -102,6 +123,12 @@ export default function SmartComposer({ directions }: { directions: Direction[] 
       setError("That measure isn't a number.");
       return;
     }
+    // Cap is a moment, not a toast: a fourth bet opens the retire-one panel
+    // instead of failing silently (§13 / artboard 4).
+    if (bets.length >= MAX_TARGETS) {
+      setCapPanel(true);
+      return;
+    }
     createTarget.mutate({
       directionId: draft.directionId,
       title: text.trim(),
@@ -141,7 +168,56 @@ export default function SmartComposer({ directions }: { directions: Direction[] 
         ) : null}
       </div>
 
-      {draft ? (
+      {capPanel ? (
+        <div className="mt-3 flex flex-col gap-3 rounded-control border border-subtle bg-surface-2 p-3">
+          <div>
+            <p className="text-sm font-medium text-ink">You already have three bets.</p>
+            <p className="mt-0.5 text-caption text-ink-muted">
+              A fourth means closing a door on one. Retire one to make room.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {bets.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center justify-between gap-3 rounded-control border border-subtle bg-surface p-2.5"
+              >
+                <span className="min-w-0 truncate text-sm text-ink">{b.title}</span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="text-caption tabular-nums text-ink-muted">
+                    {b.measureKind === "shipped"
+                      ? b.isMet
+                        ? "✓"
+                        : "in progress"
+                      : b.measureKind === "currency"
+                        ? `$${Math.round(b.current / 100).toLocaleString()} / $${Math.round(b.measureTarget / 100).toLocaleString()}`
+                        : `${b.current} / ${b.measureTarget}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      retireBet.mutate({ id: b.id });
+                      setCapPanel(false);
+                    }}
+                    className="text-caption font-medium text-ink-muted transition hover:text-critical"
+                  >
+                    Retire
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-control px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:text-ink"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : draft ? (
         <div className="mt-3 flex flex-col gap-3 rounded-control border border-subtle bg-surface-2 p-3">
           {/* Type toggle — the routing guess, confirmable. */}
           <div className="flex items-center gap-1 text-xs">
