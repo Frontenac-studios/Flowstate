@@ -56,8 +56,7 @@ function StartTrack() {
         onClick={() => setOpen(true)}
         className="w-full rounded-card border border-dashed border-subtle bg-surface p-4 text-left text-sm text-ink-muted transition hover:text-ink"
       >
-        Name a capability to build this quarter — logged as work, measured by
-        milestones, not hours.
+        Name a capability to build this quarter — logged as work, measured by milestones, not hours.
       </button>
     );
   }
@@ -89,7 +88,10 @@ function StartTrack() {
         </button>
         <button
           type="button"
-          onClick={() => capability.trim() && create.mutate({ capability: capability.trim(), why: why.trim() || undefined })}
+          onClick={() =>
+            capability.trim() &&
+            create.mutate({ capability: capability.trim(), why: why.trim() || undefined })
+          }
           disabled={create.isPending || !capability.trim()}
           className="rounded-control bg-ink px-3 py-1.5 text-xs font-medium text-surface transition hover:opacity-90 disabled:opacity-50"
         >
@@ -159,7 +161,9 @@ function ActiveTrack({ track }: { track: Track }) {
               onChange={(e) => setComplete.mutate({ id: p.id, completed: e.target.checked })}
               className="h-3.5 w-3.5 rounded border-subtle accent-ink"
             />
-            <span className={p.completedAt != null ? "text-ink-muted line-through" : ""}>{p.name}</span>
+            <span className={p.completedAt != null ? "text-ink-muted line-through" : ""}>
+              {p.name}
+            </span>
           </label>
         ))}
 

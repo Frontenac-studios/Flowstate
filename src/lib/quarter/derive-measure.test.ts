@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveTargetCurrent, isTargetMet, measureProgress, type MeasureSources } from "./derive-measure";
+import {
+  deriveTargetCurrent,
+  isTargetMet,
+  measureProgress,
+  type MeasureSources,
+} from "./derive-measure";
 
 const period = { periodStart: new Date("2026-07-01"), periodEnd: new Date("2026-10-01") };
 

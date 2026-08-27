@@ -102,7 +102,10 @@ export default function TargetCard({ bet }: { bet: BetView }) {
           ) : (
             <span className="text-body tabular-nums text-ink">
               {formatMeasure(bet.measureKind, bet.current)}
-              <span className="text-ink-muted"> / {formatMeasure(bet.measureKind, bet.measureTarget)}</span>
+              <span className="text-ink-muted">
+                {" "}
+                / {formatMeasure(bet.measureKind, bet.measureTarget)}
+              </span>
             </span>
           )}
         </div>
@@ -145,7 +148,10 @@ export default function TargetCard({ bet }: { bet: BetView }) {
         </p>
         <div className="flex items-center gap-3 opacity-0 transition group-hover:opacity-100">
           {bet.measureSource === "manual" && !isShipped ? (
-            <ManualProgress bet={bet} onLog={(current) => setCurrent.mutate({ id: bet.id, current })} />
+            <ManualProgress
+              bet={bet}
+              onLog={(current) => setCurrent.mutate({ id: bet.id, current })}
+            />
           ) : null}
           <button
             type="button"
@@ -170,7 +176,7 @@ export default function TargetCard({ bet }: { bet: BetView }) {
 
 function ManualProgress({ bet, onLog }: { bet: BetView; onLog: (current: number) => void }) {
   const [value, setValue] = useState(
-    bet.measureKind === "currency" ? String(bet.current / 100) : String(bet.current),
+    bet.measureKind === "currency" ? String(bet.current / 100) : String(bet.current)
   );
   return (
     <span className="flex items-center gap-1">
@@ -219,7 +225,7 @@ function EditForm({
   const [source, setSource] = useState<MeasureSource>(bet.measureSource);
   const [derivation, setDerivation] = useState<DerivationKey>(bet.derivationKey ?? "money_booked");
   const [targetText, setTargetText] = useState(
-    bet.measureKind === "currency" ? String(bet.measureTarget / 100) : String(bet.measureTarget),
+    bet.measureKind === "currency" ? String(bet.measureTarget / 100) : String(bet.measureTarget)
   );
 
   const submit = () => {
@@ -238,7 +244,12 @@ function EditForm({
   return (
     <div className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
       <div className="flex flex-col gap-2">
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Bet title" className="text-sm" />
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          aria-label="Bet title"
+          className="text-sm"
+        />
         <div className="flex flex-wrap items-center gap-2">
           <Select
             aria-label="Measure kind"

@@ -58,7 +58,9 @@ export default function DirectionCard({ direction }: { direction: Direction }) {
             </button>
             <button
               type="button"
-              onClick={() => draft.trim() && update.mutate({ id: direction.id, statement: draft.trim() })}
+              onClick={() =>
+                draft.trim() && update.mutate({ id: direction.id, statement: draft.trim() })
+              }
               disabled={update.isPending || !draft.trim()}
               className="rounded-control bg-ink px-3 py-1.5 text-xs font-medium text-surface transition hover:opacity-90 disabled:opacity-50"
             >
@@ -70,7 +72,9 @@ export default function DirectionCard({ direction }: { direction: Direction }) {
         <div className="group">
           <p className="text-body text-ink">{direction.statement}</p>
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-caption text-ink-muted">Not yet scored — the Filter will light this up.</p>
+            <p className="text-caption text-ink-muted">
+              Not yet scored — the Filter will light this up.
+            </p>
             <div className="flex gap-3 opacity-0 transition group-hover:opacity-100">
               <button
                 type="button"

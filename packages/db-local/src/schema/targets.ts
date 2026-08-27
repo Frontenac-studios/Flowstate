@@ -6,7 +6,11 @@ import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 export const TARGET_HORIZONS = ["year", "quarter", "month", "week"] as const;
 export const TARGET_MEASURE_KINDS = ["currency", "count", "shipped"] as const;
 export const TARGET_MEASURE_SOURCES = ["auto", "manual"] as const;
-export const TARGET_DERIVATION_KEYS = ["money_booked", "clients_signed", "milestones_shipped"] as const;
+export const TARGET_DERIVATION_KEYS = [
+  "money_booked",
+  "clients_signed",
+  "milestones_shipped",
+] as const;
 export const TARGET_STATES = ["active", "met", "carried", "dropped"] as const;
 
 export const targets = sqliteTable(
