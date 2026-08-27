@@ -1,10 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 import DirectionCard from "@/components/kash/quarter/DirectionCard";
 import QuarterFirstRun from "@/components/kash/quarter/QuarterFirstRun";
 import SmartComposer from "@/components/kash/quarter/SmartComposer";
+import TargetCard from "@/components/kash/quarter/TargetCard";
 import {
   daysLeftInQuarter,
   quarterLabel,
@@ -15,13 +17,6 @@ import { useTRPC } from "@/trpc/client";
 
 const MAX_DIRECTIONS = 2;
 const MAX_TARGETS = 3;
-
-/** "$40k", "$1.5k", "$900" — a whole-dollar measure from cents. */
-function formatCurrency(cents: number): string {
-  const dollars = cents / 100;
-  if (dollars >= 1000) return `$${(dollars / 1000).toFixed(dollars % 1000 === 0 ? 0 : 1)}k`;
-  return `$${dollars.toLocaleString()}`;
-}
 
 /**
  * The Quarter surface (W5, MISSION law 4c). W5b ships the shell, the Directions
@@ -47,6 +42,24 @@ export default function QuarterSurface() {
     })
   );
 
+  // Archive-on-met (§13 Q4): a bet that objectively crosses its number settles to
+  // `met` and archives off the active board (still counting toward the cap). Auto
+  // bets are derived at read, so the crossing is detected here and settled once.
+  const markMet = useMutation(
+    trpc.targets.markMet.mutationOptions({
+      onSuccess: () => queryClient.invalidateQueries(trpc.targets.list.pathFilter()),
+    })
+  );
+  const settledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    for (const t of targets) {
+      if (t.isMet && t.state === "active" && !settledRef.current.has(t.id)) {
+        settledRef.current.add(t.id);
+        markMet.mutate({ id: t.id });
+      }
+    }
+  }, [targets, markMet]);
+
   const showFirstRun =
     settings != null && settings.quarterFirstRunAt == null && directions.length === 0;
 
@@ -66,7 +79,7 @@ export default function QuarterSurface() {
 
       {showFirstRun ? <QuarterFirstRun onDismiss={() => dismissFirstRun.mutate()} /> : null}
 
-      <SmartComposer directions={directions} />
+      <SmartComposer directions={directions} bets={targets} />
 
       {/* Directions */}
       <section className="flex flex-col gap-2">
@@ -106,26 +119,7 @@ export default function QuarterSurface() {
             No bets yet — name one above. A bet takes a number and a date.
           </p>
         ) : (
-          targets.map((t) => (
-            <div
-              key={t.id}
-              className="flex items-center justify-between gap-4 rounded-card border border-subtle bg-surface p-4 shadow-surface"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-body text-ink">{t.title}</p>
-                <p className="mt-0.5 truncate text-caption text-ink-muted">{t.directionStatement}</p>
-              </div>
-              <span className="shrink-0 text-body tabular-nums text-ink-muted">
-                {t.measureKind === "currency"
-                  ? formatCurrency(t.measureTarget)
-                  : t.measureKind === "shipped"
-                    ? t.state === "met"
-                      ? "✓ shipped"
-                      : "not yet"
-                    : `${t.measureCurrent ?? 0} / ${t.measureTarget}`}
-              </span>
-            </div>
-          ))
+          targets.map((t) => <TargetCard key={t.id} bet={t} />)
         )}
       </section>
     </div>
