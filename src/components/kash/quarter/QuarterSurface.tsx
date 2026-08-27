@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import DirectionCard from "@/components/kash/quarter/DirectionCard";
+import LearningBlock from "@/components/kash/quarter/LearningBlock";
 import QuarterFirstRun from "@/components/kash/quarter/QuarterFirstRun";
 import SmartComposer from "@/components/kash/quarter/SmartComposer";
 import TargetCard from "@/components/kash/quarter/TargetCard";
@@ -34,6 +35,7 @@ export default function QuarterSurface() {
 
   const { data: directions = [] } = useQuery(trpc.directions.list.queryOptions());
   const { data: targets = [] } = useQuery(trpc.targets.list.queryOptions());
+  const { data: learning } = useQuery(trpc.learning.get.queryOptions());
   const { data: settings } = useQuery(trpc.settings.get.queryOptions());
 
   const dismissFirstRun = useMutation(
@@ -102,7 +104,7 @@ export default function QuarterSurface() {
         )}
       </section>
 
-      {/* The bets — minimal render (W5c builds the full board). */}
+      {/* The bets (W5c). */}
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
           <h2 className="text-caption font-semibold uppercase tracking-wide text-ink-muted">
@@ -121,6 +123,17 @@ export default function QuarterSurface() {
         ) : (
           targets.map((t) => <TargetCard key={t.id} bet={t} />)
         )}
+      </section>
+
+      {/* Learning roadmap (W5e) — one active capability, a business project Quarter reads. */}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-caption font-semibold uppercase tracking-wide text-ink-muted">
+            Learning roadmap
+          </h2>
+          {learning ? <span className="text-caption text-ink-muted">1 active</span> : null}
+        </div>
+        <LearningBlock />
       </section>
     </div>
   );
