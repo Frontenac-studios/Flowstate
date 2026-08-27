@@ -12,6 +12,7 @@ import { businessExpenses, invoices, moneySettings, ownerDraws } from "@/db/tabl
 import { computeDrawPanel } from "@/lib/money/compute-draw-panel";
 import { aggregateExpensesByCategory } from "@/lib/money/expenses-by-category";
 import { parseXeroBills, type ParsedBillLine } from "@/lib/money/parse-xero-bills";
+import { computeToolSpend } from "@/lib/quarter/tool-spend";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -84,11 +85,28 @@ export const moneyRouter = createTRPCRouter({
           .values({ userId: ctx.userId, orgId: ctx.orgId, ...patch })
           .returning();
       }
-      if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to save settings." });
+      if (!row)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to save settings." });
 
       await syncMoneySettingsRow(ctx.userId, existing ? "update" : "insert", row);
       return row;
     }),
+
+  /**
+   * Quarter-horizon recurring-spend read (W5f): this quarter's business spend, a
+   * monthly rate, and the change vs last quarter. Owned by Money; the Quarter
+   * surface renders it as a read-strip and drills back here (discovery §5).
+   */
+  toolSpendSummary: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({
+        amountCents: businessExpenses.amountCents,
+        incurredOn: businessExpenses.incurredOn,
+      })
+      .from(businessExpenses)
+      .where(eq(businessExpenses.userId, ctx.userId));
+    return computeToolSpend(rows, new Date());
+  }),
 
   listExpenses: protectedProcedure.query(async ({ ctx }) => {
     return db
@@ -120,7 +138,8 @@ export const moneyRouter = createTRPCRouter({
           source: "manual",
         })
         .returning();
-      if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add expense." });
+      if (!row)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add expense." });
       await syncBusinessExpenseRow(row.id, "insert", row);
       return row;
     }),
@@ -164,7 +183,8 @@ export const moneyRouter = createTRPCRouter({
           note: input.note ?? null,
         })
         .returning();
-      if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to log draw." });
+      if (!row)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to log draw." });
       await syncOwnerDrawRow(row.id, "insert", row);
       return row;
     }),
@@ -192,11 +212,18 @@ export const moneyRouter = createTRPCRouter({
 
     const [invoiceRows, expenseRows, drawRows, settingsRow] = await Promise.all([
       db
-        .select({ amountCents: invoices.amountCents, status: invoices.status, paidAt: invoices.paidAt })
+        .select({
+          amountCents: invoices.amountCents,
+          status: invoices.status,
+          paidAt: invoices.paidAt,
+        })
         .from(invoices)
         .where(eq(invoices.userId, ctx.userId)),
       db
-        .select({ amountCents: businessExpenses.amountCents, incurredOn: businessExpenses.incurredOn })
+        .select({
+          amountCents: businessExpenses.amountCents,
+          incurredOn: businessExpenses.incurredOn,
+        })
         .from(businessExpenses)
         .where(eq(businessExpenses.userId, ctx.userId)),
       db
@@ -262,7 +289,10 @@ export const moneyRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const parsed = parseXeroBills(input.csv);
       const existing = await loadExistingKeys(ctx.userId);
-      const mark = (line: ParsedBillLine) => ({ ...line, isDuplicate: existing.has(line.dedupKey) });
+      const mark = (line: ParsedBillLine) => ({
+        ...line,
+        isDuplicate: existing.has(line.dedupKey),
+      });
       const expenses = parsed.expenses.map(mark);
       const draws = parsed.draws.map(mark);
       return {
@@ -330,7 +360,8 @@ export const moneyRouter = createTRPCRouter({
       return {
         importedExpenses,
         importedDraws,
-        skippedDuplicates: parsed.expenses.length + parsed.draws.length - importedExpenses - importedDraws,
+        skippedDuplicates:
+          parsed.expenses.length + parsed.draws.length - importedExpenses - importedDraws,
       };
     }),
 });
@@ -357,7 +388,8 @@ async function loadExistingKeys(userId: string): Promise<Set<string>> {
       .where(eq(ownerDraws.userId, userId)),
   ]);
   const keys = new Set<string>();
-  for (const e of expenseRows) keys.add(`${iso(e.incurredOn)}|${e.amountCents}|${e.description ?? ""}`);
+  for (const e of expenseRows)
+    keys.add(`${iso(e.incurredOn)}|${e.amountCents}|${e.description ?? ""}`);
   for (const d of drawRows) keys.add(`${iso(d.drawnOn)}|${d.amountCents}|${d.note ?? ""}`);
   return keys;
 }

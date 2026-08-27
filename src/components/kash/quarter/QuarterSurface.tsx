@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import DirectionCard from "@/components/kash/quarter/DirectionCard";
 import LearningBlock from "@/components/kash/quarter/LearningBlock";
 import QuarterFirstRun from "@/components/kash/quarter/QuarterFirstRun";
+import ReadStrips from "@/components/kash/quarter/ReadStrips";
 import SmartComposer from "@/components/kash/quarter/SmartComposer";
 import TargetCard from "@/components/kash/quarter/TargetCard";
 import {
@@ -135,6 +136,9 @@ export default function QuarterSurface() {
         </div>
         <LearningBlock />
       </section>
+
+      {/* Reviewed here · owned elsewhere (W5f) — conditional; renders nothing when empty. */}
+      <ReadStrips />
     </div>
   );
 }
