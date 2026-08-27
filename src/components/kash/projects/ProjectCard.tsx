@@ -19,6 +19,7 @@ export type ProjectListItem = {
   totalWeight: number;
   timeSpentSeconds: number;
   lastActivityAt: string;
+  isLearning?: boolean;
 };
 
 const FINISHING_PERCENT = 80;
@@ -52,7 +53,14 @@ export default function ProjectCard({
           : {}),
       }}
     >
-      <h3 className="min-w-0 truncate font-medium text-ink">{project.name}</h3>
+      <div className="flex min-w-0 items-center gap-2">
+        <h3 className="min-w-0 truncate font-medium text-ink">{project.name}</h3>
+        {project.isLearning ? (
+          <span className="shrink-0 rounded-pill bg-surface-2 px-2 py-0.5 text-caption text-ink-muted">
+            Learning
+          </span>
+        ) : null}
+      </div>
 
       <div
         className="mt-3 h-1 overflow-hidden rounded-full"

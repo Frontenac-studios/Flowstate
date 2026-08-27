@@ -91,6 +91,7 @@ export const projectsRouter = createTRPCRouter({
           name: projects.name,
           slug: projects.slug,
           category: projects.category,
+          isLearning: projects.isLearning,
           updatedAt: projects.updatedAt,
         })
         .from(projects)
