@@ -37,7 +37,12 @@ export default function NewProjectForm({ showTemplateFeatures, onCreated, onCanc
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ProjectCategory | null>(null);
   const [templateId, setTemplateId] = useState<string | null>(null);
+  // What this project serves: a Target id, "none", or "maintenance" (W5c₂).
+  const [serves, setServes] = useState<string>("none");
   const [error, setError] = useState<string | null>(null);
+
+  const { data: allBets = [] } = useQuery(trpc.targets.list.queryOptions());
+  const activeBets = allBets.filter((b) => b.state === "active");
 
   const { data: templates, isLoading: templatesLoading } = useQuery({
     ...trpc.projects.listTemplates.queryOptions(),
@@ -100,13 +105,22 @@ export default function NewProjectForm({ showTemplateFeatures, onCreated, onCanc
     if (!canSubmit || category === null) return;
     setError(null);
 
+    const isMaintenance = serves === "maintenance";
+    const targetId = !isMaintenance && serves !== "none" ? serves : null;
+
     if (mode === "blank") {
-      createMutation.mutate({ name: trimmedName, category });
+      createMutation.mutate({ name: trimmedName, category, isMaintenance, targetId });
       return;
     }
 
     if (templateId === null) return;
-    createFromTemplateMutation.mutate({ templateId, name: trimmedName, category });
+    createFromTemplateMutation.mutate({
+      templateId,
+      name: trimmedName,
+      category,
+      isMaintenance,
+      targetId,
+    });
   };
 
   return (
@@ -212,6 +226,36 @@ export default function NewProjectForm({ showTemplateFeatures, onCreated, onCanc
                   aria-hidden
                 />
                 {categorySeedLabel(value)}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="mb-1 text-sm font-medium text-ink">
+          Serves a bet? <span className="text-ink-muted">(optional)</span>
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "none", label: "Not yet" },
+            ...activeBets.map((b) => ({ value: b.id, label: b.title })),
+            { value: "maintenance", label: "Maintenance" },
+          ].map(({ value, label }) => {
+            const selected = serves === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setServes(value)}
+                aria-pressed={selected}
+                className={`rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                  selected
+                    ? "border-transparent bg-ink text-surface"
+                    : "border-subtle text-ink-muted hover:text-ink"
+                }`}
+              >
+                {label}
               </button>
             );
           })}
