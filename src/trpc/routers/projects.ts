@@ -8,6 +8,7 @@ import {
   phases,
   projectTemplates,
   projects,
+  targets,
   tasks,
   timeEntries,
   weekDayPriorities,
@@ -80,6 +81,28 @@ async function getOwnedTemplate(userId: string, templateId: string) {
   }
 
   return row;
+}
+
+/**
+ * A project serves at most one Target (W5). Validate the bet is the user's own and
+ * still active before linking — met/carried/dropped bets don't take new work. A
+ * maintenance project never links (the two are mutually exclusive at the source).
+ */
+async function resolveTargetLink(
+  userId: string,
+  targetId: string | null | undefined,
+  isMaintenance: boolean
+): Promise<string | null> {
+  if (isMaintenance || targetId == null) return null;
+  const [t] = await db
+    .select({ id: targets.id })
+    .from(targets)
+    .where(and(eq(targets.id, targetId), eq(targets.userId, userId), eq(targets.state, "active")))
+    .limit(1);
+  if (!t) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "That bet isn't available to link." });
+  }
+  return targetId;
 }
 
 export const projectsRouter = createTRPCRouter({
@@ -389,10 +412,17 @@ export const projectsRouter = createTRPCRouter({
         clientId: z.string().uuid().nullable().optional(),
         state: stateSchema.optional(),
         isMaintenance: z.boolean().optional(),
+        /** The Target this project serves (W5). Ignored when isMaintenance. */
+        targetId: z.string().uuid().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const slug = (input.slug ?? slugifyProjectName(input.name)).toLowerCase();
+      const targetId = await resolveTargetLink(
+        ctx.userId,
+        input.targetId,
+        input.isMaintenance ?? false
+      );
 
       const [existing] = await db
         .select({ id: projects.id })
@@ -419,6 +449,7 @@ export const projectsRouter = createTRPCRouter({
             clientId: input.clientId ?? null,
             state: input.state ?? "active",
             isMaintenance: input.isMaintenance ?? false,
+            targetId,
           })
           .returning();
       } catch (error) {
@@ -457,12 +488,19 @@ export const projectsRouter = createTRPCRouter({
         templateId: z.string().uuid(),
         name: z.string().min(1).max(120),
         category: categorySchema,
+        isMaintenance: z.boolean().optional(),
+        targetId: z.string().uuid().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const template = await getOwnedTemplate(ctx.userId, input.templateId);
       const structure = projectTemplateStructureSchema.parse(template.structure);
       const slug = slugifyProjectName(input.name).toLowerCase();
+      const targetId = await resolveTargetLink(
+        ctx.userId,
+        input.targetId,
+        input.isMaintenance ?? false
+      );
 
       const [existing] = await db
         .select({ id: projects.id })
@@ -486,6 +524,8 @@ export const projectsRouter = createTRPCRouter({
               name: input.name.trim(),
               slug,
               category: input.category,
+              isMaintenance: input.isMaintenance ?? false,
+              targetId,
             })
             .returning();
 
