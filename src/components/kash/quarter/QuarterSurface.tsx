@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import DirectionCard from "@/components/kash/quarter/DirectionCard";
 import LearningBlock from "@/components/kash/quarter/LearningBlock";
 import QuarterFirstRun from "@/components/kash/quarter/QuarterFirstRun";
+import QuarterReview from "@/components/kash/quarter/QuarterReview";
 import ReadStrips from "@/components/kash/quarter/ReadStrips";
 import SmartComposer from "@/components/kash/quarter/SmartComposer";
 import TargetCard from "@/components/kash/quarter/TargetCard";
@@ -83,6 +84,9 @@ export default function QuarterSurface() {
       {showFirstRun ? <QuarterFirstRun onDismiss={() => dismissFirstRun.mutate()} /> : null}
 
       <SmartComposer directions={directions} bets={targets} />
+
+      {/* The quarterly review (W5g) — quiet link mid-quarter, a banner when closing. */}
+      <QuarterReview />
 
       {/* Directions */}
       <section className="flex flex-col gap-2">

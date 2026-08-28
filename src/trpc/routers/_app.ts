@@ -12,6 +12,7 @@ import { directionsRouter } from "./directions";
 import { focusBlocksRouter } from "./focus-blocks";
 import { invoicesRouter } from "./invoices";
 import { learningRouter } from "./learning";
+import { quarterReviewRouter } from "./quarter-review";
 import { meRouter } from "./me";
 import { moneyRouter } from "./money";
 import { phasesRouter } from "./phases";
@@ -47,6 +48,7 @@ export const appRouter = createTRPCRouter({
   focusBlocks: focusBlocksRouter,
   invoices: invoicesRouter,
   learning: learningRouter,
+  quarterReview: quarterReviewRouter,
   me: meRouter,
   money: moneyRouter,
   phases: phasesRouter,
