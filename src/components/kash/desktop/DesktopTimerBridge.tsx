@@ -138,7 +138,7 @@ export default function DesktopTimerBridge() {
 
   return (
     <div
-      className="fixed inset-0 z-overlay flex items-center justify-center bg-ink/20 p-4"
+      className="bg-ink/20 fixed inset-0 z-overlay flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Idle time detected"

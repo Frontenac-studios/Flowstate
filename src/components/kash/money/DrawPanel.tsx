@@ -84,7 +84,9 @@ export default function DrawPanel() {
         {panel ? (
           <p className="mt-1 text-caption text-ink-faint">
             {dollars(panel.businessCashCents)} business cash
-            {panel.taxReserveCents != null ? ` · less ${dollars(panel.taxReserveCents)} tax reserve` : ""}
+            {panel.taxReserveCents != null
+              ? ` · less ${dollars(panel.taxReserveCents)} tax reserve`
+              : ""}
           </p>
         ) : null}
         {panel?.belowMinimumDraw ? (
@@ -97,13 +99,18 @@ export default function DrawPanel() {
       {/* Cash ledger */}
       {panel ? (
         <dl className="flex flex-col gap-1.5 rounded-card border border-subtle bg-surface px-4 py-3 text-sm">
-          <LedgerRow label="Collected (paid invoices)" value={dollars(panel.collectedRevenueCents)} sign="+" />
+          <LedgerRow
+            label="Collected (paid invoices)"
+            value={dollars(panel.collectedRevenueCents)}
+            sign="+"
+          />
           <LedgerRow label="Business expenses" value={dollars(panel.expensesCents)} sign="−" />
           <LedgerRow label="Owner draws" value={dollars(panel.drawsCents)} sign="−" />
           <div className="my-1 border-t border-subtle" />
           <LedgerRow label="Business cash" value={dollars(panel.businessCashCents)} strong />
           <p className="mt-1 text-caption text-ink-faint">
-            {dollars(panel.billedUnpaidRevenueCents)} billed but not yet collected (incoming, not counted)
+            {dollars(panel.billedUnpaidRevenueCents)} billed but not yet collected (incoming, not
+            counted)
           </p>
         </dl>
       ) : null}
@@ -217,13 +224,15 @@ function LedgerRow({
   );
 }
 
-type SettingsData = {
-  taxReservePercentBps: number | null;
-  costOfLivingCents: number | null;
-  personalSavingsCents: number | null;
-  minimumDrawCents: number | null;
-  bankBalanceCents: number | null;
-} | undefined;
+type SettingsData =
+  | {
+      taxReservePercentBps: number | null;
+      costOfLivingCents: number | null;
+      personalSavingsCents: number | null;
+      minimumDrawCents: number | null;
+      bankBalanceCents: number | null;
+    }
+  | undefined;
 
 function SettingsEditor({
   settings,
@@ -265,7 +274,9 @@ function SettingsEditor({
         <SettingField
           name="taxPct"
           label="Tax reserve (%)"
-          defaultValue={settings?.taxReservePercentBps != null ? settings.taxReservePercentBps / 100 : ""}
+          defaultValue={
+            settings?.taxReservePercentBps != null ? settings.taxReservePercentBps / 100 : ""
+          }
           step="0.5"
         />
         <SettingField
@@ -276,7 +287,9 @@ function SettingsEditor({
         <SettingField
           name="savings"
           label="Personal savings ($)"
-          defaultValue={settings?.personalSavingsCents != null ? settings.personalSavingsCents / 100 : ""}
+          defaultValue={
+            settings?.personalSavingsCents != null ? settings.personalSavingsCents / 100 : ""
+          }
         />
         <SettingField
           name="minDraw"

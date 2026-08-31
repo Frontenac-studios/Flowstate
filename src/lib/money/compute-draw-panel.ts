@@ -74,8 +74,7 @@ export function computeDrawPanel(input: DrawPanelInput): DrawPanel {
 
   const availableToDrawCents = businessCashCents - (taxReserveCents ?? 0);
 
-  const businessRunwayMonths =
-    monthlyBurnCents > 0 ? businessCashCents / monthlyBurnCents : null;
+  const businessRunwayMonths = monthlyBurnCents > 0 ? businessCashCents / monthlyBurnCents : null;
 
   const personalRunwayMonths =
     settings.costOfLivingCents && settings.costOfLivingCents > 0

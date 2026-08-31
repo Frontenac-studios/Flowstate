@@ -52,7 +52,9 @@ export default function XeroImport({ onImported }: { onImported: () => void }) {
   return (
     <div className="flex flex-col gap-2 rounded-control bg-surface-2 p-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-caption text-ink-muted">Import expenses from a Xero Bills CSV export.</span>
+        <span className="text-caption text-ink-muted">
+          Import expenses from a Xero Bills CSV export.
+        </span>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -79,7 +81,9 @@ export default function XeroImport({ onImported }: { onImported: () => void }) {
           <Loader2 size={14} className="animate-spin" /> Parsing {fileName}…
         </p>
       ) : null}
-      {preview.isError ? <p className="text-caption text-critical">{preview.error.message}</p> : null}
+      {preview.isError ? (
+        <p className="text-caption text-critical">{preview.error.message}</p>
+      ) : null}
 
       {p && csv ? (
         <div className="flex flex-col gap-2">
@@ -89,7 +93,8 @@ export default function XeroImport({ onImported }: { onImported: () => void }) {
             {p.newDrawCount > 0 ? (
               <>
                 {" · "}
-                <span className="font-medium">{p.newDrawCount}</span> draws ({dollars(p.totalDrawCents)})
+                <span className="font-medium">{p.newDrawCount}</span> draws (
+                {dollars(p.totalDrawCents)})
               </>
             ) : null}
             {p.duplicateCount > 0 ? ` · ${p.duplicateCount} already imported` : ""}

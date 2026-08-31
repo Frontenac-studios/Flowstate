@@ -18,9 +18,11 @@ const RAMP = [0.92, 0.74, 0.58, 0.44, 0.32, 0.22, 0.14];
 
 function monthLabel(ym: string): string {
   const [, m] = ym.split("-");
-  return ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][
-    Number(m)
-  ] ?? ym;
+  return (
+    ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][
+      Number(m)
+    ] ?? ym
+  );
 }
 function dollars(cents: number): string {
   return `$${Math.round(cents / 100).toLocaleString()}`;
@@ -51,7 +53,12 @@ export default function ExpensesByCategoryChart({ data }: { data: ChartData }) {
         Expenses by category · last 6 months
       </p>
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Expenses by category over time">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-auto w-full"
+          role="img"
+          aria-label="Expenses by category over time"
+        >
           {data.months.map((month, mi) => {
             const x = mi * slot + (slot - barW) / 2;
             let yCursor = chartH;
