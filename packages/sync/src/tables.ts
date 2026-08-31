@@ -16,8 +16,6 @@ export const SYNC_TABLES = [
   "protected_block_templates",
   "protected_blocks",
   "week_day_priorities",
-  "goals",
-  "goal_milestones",
   "reserved_days",
   "tasks",
   "time_entries",

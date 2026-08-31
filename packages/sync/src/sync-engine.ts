@@ -7,8 +7,6 @@ import {
   dayReviews,
   directions,
   targets,
-  goalMilestones,
-  goals,
   phases,
   projectMilestones,
   projects,
@@ -454,15 +452,11 @@ async function upsertRow(
     case "project_milestones":
     case "directions":
     case "targets":
-    case "goals":
-    case "goal_milestones":
     case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
         directions,
         targets,
-        goals,
-        goal_milestones: goalMilestones,
         reserved_days: reservedDays,
       } as const;
       const sqliteTable = tableMap[table];

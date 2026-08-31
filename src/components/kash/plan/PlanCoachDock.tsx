@@ -119,8 +119,8 @@ export default function PlanCoachDock({
             onLoadOlder={() => void loadOlderMessages()}
             canEdit={!isStreaming}
             onEditUserMessage={(id, text) => void editAndResend(id, text)}
-            onApplyProposal={(messageId, enabledItemIds, editedItems, goalEdits) =>
-              void applyProposal(messageId, enabledItemIds, editedItems, goalEdits)
+            onApplyProposal={(messageId, enabledItemIds, editedItems) =>
+              void applyProposal(messageId, enabledItemIds, editedItems)
             }
             onDismissProposal={(messageId) => void dismissProposal(messageId)}
             proposalBusy={proposalBusy}

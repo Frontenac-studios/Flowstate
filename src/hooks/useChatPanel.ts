@@ -10,11 +10,7 @@ import {
 } from "@/lib/chat/chat-task-created-events";
 import type { ConfirmUndoFrame } from "@/lib/chat/confirm-undo";
 import type { CaptureContext } from "@/lib/chat/capture-context";
-import type {
-  BingoGoalItemEdit,
-  CreateTaskItemEdit,
-  ProposedAction,
-} from "@/lib/chat/proposed-actions";
+import type { CreateTaskItemEdit, ProposedAction } from "@/lib/chat/proposed-actions";
 import type { PlanningChatSurface } from "@/lib/chat/planning-surface";
 import { GLOBAL_THREAD_ID } from "@/lib/chat/threads";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
@@ -110,17 +106,6 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
   const recordPhraseSendMutation = useMutation(trpc.chat.recordPhraseSend.mutationOptions());
   const applyProposalMutation = useMutation(trpc.chat.applyProposedAction.mutationOptions());
   const dismissProposalMutation = useMutation(trpc.chat.dismissProposedAction.mutationOptions());
-
-  const invalidateGoalQueries = useCallback(() => {
-    void queryClient.invalidateQueries(trpc.planning.listGoals.pathFilter());
-    void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
-    void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
-  }, [
-    queryClient,
-    trpc.planning.listGoals,
-    trpc.planning.getYearActivity,
-    trpc.planning.getQuarterActivity,
-  ]);
 
   const invalidateTaskQueries = useCallback(() => {
     void queryClient.invalidateQueries({
@@ -362,18 +347,12 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
   }, [sendMessage]);
 
   const applyProposal = useCallback(
-    async (
-      messageId: string,
-      enabledItemIds: string[],
-      editedItems?: CreateTaskItemEdit[],
-      goalEdits?: BingoGoalItemEdit[]
-    ) => {
+    async (messageId: string, enabledItemIds: string[], editedItems?: CreateTaskItemEdit[]) => {
       try {
         const result = await applyProposalMutation.mutateAsync({
           messageId,
           enabledItemIds,
           editedItems,
-          goalEdits,
           captureContext: effectiveCaptureContext,
         });
         if (result.undoFrames?.length) {
@@ -392,7 +371,6 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
           }));
         }
         invalidateTaskQueries();
-        invalidateGoalQueries();
         await refreshMessages();
       } catch (err) {
         setStreamError(
@@ -403,7 +381,6 @@ export function useChatPanel(threadId: string, options?: UseChatPanelOptions) {
     [
       applyProposalMutation,
       effectiveCaptureContext,
-      invalidateGoalQueries,
       invalidateTaskQueries,
       planningSurface,
       pushConfirmUndo,

@@ -193,7 +193,7 @@ export async function syncCareReflectionRow(
   await recordSyncMutation({ table: "care_reflections", rowId, op, payload });
 }
 
-type PlanningSyncTable = "goals" | "goal_milestones" | "reserved_days";
+type PlanningSyncTable = "reserved_days";
 
 export async function syncPlanningRow(
   table: PlanningSyncTable,

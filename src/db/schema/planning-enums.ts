@@ -1,9 +1,5 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const goalState = pgEnum("goal_state", ["active", "done", "backburnered"]);
-
-export const obligationDesire = pgEnum("obligation_desire", ["obligation", "desire"]);
-
 /**
  * Horizon of a Target ("the bet"). `week` was added in W5 for sub-quarter bets you
  * want to know about faster than a quarterly loop; `year` is retained in the enum

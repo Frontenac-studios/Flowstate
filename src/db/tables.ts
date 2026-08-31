@@ -15,8 +15,6 @@ import { externalCalendarEvents as pgExternalCalendarEvents } from "./schema/ext
 import { careActivities as pgCareActivities } from "./schema/care-activities";
 import { careEvents as pgCareEvents } from "./schema/care-events";
 import { careReflections as pgCareReflections } from "./schema/care-reflections";
-import { goalMilestones as pgGoalMilestones } from "./schema/goal-milestones";
-import { goals as pgGoals } from "./schema/goals";
 import { reservedDays as pgReservedDays } from "./schema/reserved-days";
 import { categorySettings as pgCategorySettings } from "./schema/category-settings";
 import { chatCustomSuggestions as pgChatCustomSuggestions } from "./schema/chat-custom-suggestions";
@@ -98,10 +96,6 @@ export const protectedBlocks = (
 export const abyssItems = (
   isSqliteMode() ? sqliteSchema.abyssItems : pgAbyssItems
 ) as typeof pgAbyssItems;
-export const goals = (isSqliteMode() ? sqliteSchema.goals : pgGoals) as typeof pgGoals;
-export const goalMilestones = (
-  isSqliteMode() ? sqliteSchema.goalMilestones : pgGoalMilestones
-) as typeof pgGoalMilestones;
 export const reservedDays = (
   isSqliteMode() ? sqliteSchema.reservedDays : pgReservedDays
 ) as typeof pgReservedDays;

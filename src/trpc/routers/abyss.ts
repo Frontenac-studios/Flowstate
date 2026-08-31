@@ -6,11 +6,10 @@ import { db } from "@/db";
 import { embeddingColumn, embeddingFromDb } from "@/db/embedding-for-db";
 import {
   syncAbyssItemRow,
-  syncPlanningRow,
   syncProjectRow,
   syncTaskRow,
 } from "@/db/record-sync-mutation";
-import { abyssItems, appSettings, goals, projects, tasks } from "@/db/tables";
+import { abyssItems, appSettings, projects, tasks } from "@/db/tables";
 import { resolveArchiveThresholdDays, selectItemsToArchive } from "@/lib/abyss/archive";
 import {
   encodePromotedTarget,
@@ -33,7 +32,7 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const typeSchema = z.enum(["idea", "task"]);
 const sourceSchema = z.enum(["capture", "drop"]);
-const targetSchema = z.enum(["today", "week", "project", "goal"]);
+const targetSchema = z.enum(["today", "week", "project"]);
 
 /** A free project slug for the user, disambiguating collisions with a numeric suffix. */
 async function uniqueProjectSlug(userId: string, name: string): Promise<string> {
@@ -464,7 +463,7 @@ export const abyssRouter = createTRPCRouter({
         await syncTaskRow(task.id, "insert", task);
         promotedTaskId = task.id;
         promotedTarget = encodePromotedTarget(input.target);
-      } else if (input.target === "project") {
+      } else {
         const category = input.category ?? item.category;
         if (!category) {
           throw new TRPCError({
@@ -489,29 +488,6 @@ export const abyssRouter = createTRPCRouter({
         }
         await syncProjectRow(project.id, "insert", project);
         promotedTarget = encodePromotedTarget("project", project.id);
-      } else {
-        const category = input.category ?? item.category;
-        if (!category) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Pick a category to set this as an annual goal.",
-          });
-        }
-        const [goal] = await db
-          .insert(goals)
-          .values({
-            userId: ctx.userId,
-            title: item.title,
-            category,
-            targetHorizon: "year",
-            targetYear: now.getFullYear(),
-          })
-          .returning();
-        if (!goal) {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to spawn goal." });
-        }
-        await syncPlanningRow("goals", goal.id, "insert", goal);
-        promotedTarget = encodePromotedTarget("goal", goal.id);
       }
 
       const [updated] = await db

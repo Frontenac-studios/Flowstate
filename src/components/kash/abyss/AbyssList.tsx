@@ -62,8 +62,6 @@ function promotedLabel(target: string | null): string {
       return "this week";
     case "project":
       return "a project";
-    case "goal":
-      return "a goal";
     default:
       return "promoted";
   }

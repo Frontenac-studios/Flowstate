@@ -46,7 +46,6 @@ export function useSessionUndo() {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listRecentlyCompleted.queryKey() });
     void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
     void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
-    void queryClient.invalidateQueries(trpc.planning.listGoals.pathFilter());
     void queryClient.invalidateQueries(trpc.protectedBlocks.listForWeek.pathFilter());
     void queryClient.invalidateQueries(trpc.weekDayPriorities.listForWeek.pathFilter());
     void queryClient.invalidateQueries(trpc.projects.list.pathFilter());
@@ -59,7 +58,6 @@ export function useSessionUndo() {
     trpc.tasks.listRecentlyCompleted,
     trpc.planning.getYearActivity,
     trpc.planning.getQuarterActivity,
-    trpc.planning.listGoals,
     trpc.protectedBlocks.listForWeek,
     trpc.weekDayPriorities.listForWeek,
     trpc.projects.list,
@@ -110,9 +108,6 @@ export function useSessionUndo() {
   );
   const moveToPhaseMutation = useMutation(
     trpc.tasks.moveToPhase.mutationOptions({ onSuccess: invalidatePlan })
-  );
-  const removeGoalMutation = useMutation(
-    trpc.planning.removeGoal.mutationOptions({ onSuccess: invalidatePlan })
   );
 
   const pushComplete = useCallback((taskId: string, previousCompletedAt: Date | null) => {
@@ -216,11 +211,6 @@ export function useSessionUndo() {
             await deletePhaseMutation.mutateAsync({ id: phaseId });
           }
           return;
-        case "create_goals":
-          for (const goalId of frame.goalIds) {
-            await removeGoalMutation.mutateAsync({ id: goalId });
-          }
-          return;
         case "edit_phase":
           await updatePhaseMutation.mutateAsync({
             id: frame.phaseId,
@@ -258,7 +248,6 @@ export function useSessionUndo() {
       moveToPhaseMutation,
       pinPriorityMutation,
       pinTop3Mutation,
-      removeGoalMutation,
       removeProtectedBlockMutation,
       restoreMutation,
       scheduleMutation,
