@@ -12,7 +12,6 @@ export const categorySettings = sqliteTable(
     label: text("label"),
     color: text("color"),
     sortOrder: integer("sort_order").notNull().default(0),
-    weeklyTarget: integer("weekly_target"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),

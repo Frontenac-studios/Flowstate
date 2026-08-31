@@ -30,6 +30,13 @@ export const appSettings = pgTable("app_settings", {
    * gate (W5, discovery §13 Q6).
    */
   quarterFirstRunAt: timestamp("quarter_first_run_at", { withTimezone: true, mode: "date" }),
+  /**
+   * Declared time tilt for the quarter (W6, the Budget): the share of logged time
+   * you mean to spend on business, 0–100, personal is the remainder. Null = never
+   * declared, so the Today bar invites rather than measures. A single current value
+   * (not per-quarter history) — the Ledger (W8) owns history if it ever needs it.
+   */
+  quarterTiltBusinessPct: integer("quarter_tilt_business_pct"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

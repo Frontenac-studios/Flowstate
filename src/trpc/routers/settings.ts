@@ -21,6 +21,7 @@ import {
   goalCoachAmbitionSchema,
   goalCoachNoteSchema,
   notificationPrefsSchema,
+  quarterTiltBusinessPctSchema,
   resolveAlertPrefs,
   top3MiddayCheckinSchema,
   workingHoursSchema,
@@ -74,8 +75,30 @@ export const settingsRouter = createTRPCRouter({
         ? goalCoachAdaptationsSchema.parse(row.goalCoachAdaptations).eased
         : DEFAULT_GOAL_COACH_ADAPTATIONS.eased,
       quarterFirstRunAt: row.quarterFirstRunAt ?? null,
+      quarterTiltBusinessPct: row.quarterTiltBusinessPct ?? null,
     };
   }),
+
+  /**
+   * Declare (or redraw) the quarter time tilt (W6). Business share 0–100; personal
+   * is the remainder. This is the only writer of the tilt — the Budget bar reads it.
+   */
+  setQuarterTilt: protectedProcedure
+    .input(quarterTiltBusinessPctSchema)
+    .mutation(async ({ ctx, input }) => {
+      await getOrCreateSettings(ctx.userId);
+      const [row] = await db
+        .update(appSettings)
+        .set({ quarterTiltBusinessPct: input, updatedAt: new Date() })
+        .where(eq(appSettings.userId, ctx.userId))
+        .returning();
+      if (!row)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update quarter tilt.",
+        });
+      return { quarterTiltBusinessPct: input };
+    }),
 
   /** Dismiss the one-time Quarter guided first-run (W5). Idempotent. */
   dismissQuarterFirstRun: protectedProcedure.mutation(async ({ ctx }) => {

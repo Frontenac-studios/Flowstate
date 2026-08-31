@@ -21,6 +21,8 @@ export const appSettings = sqliteTable("app_settings", {
   calendarAiEnabled: integer("calendar_ai_enabled", { mode: "boolean" }).notNull().default(true),
   /** One-time Quarter first-run dismissal (W5). Mirrors Postgres. */
   quarterFirstRunAt: integer("quarter_first_run_at", { mode: "timestamp_ms" }),
+  /** Declared business-time tilt for the quarter (W6, the Budget). Mirrors Postgres. */
+  quarterTiltBusinessPct: integer("quarter_tilt_business_pct"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => sqliteNow()),
