@@ -68,20 +68,3 @@ export function getModelConfig():
 export function isModelConfigured(): boolean {
   return getModelConfig().configured;
 }
-
-const bingoCoachEnvSchema = z.object({
-  KASH_BINGO_COACH_ENABLED: z.string().min(1).optional(),
-});
-
-/**
- * Feature gate for the bingo-goals AI coach. Off by default; enable with
- * KASH_BINGO_COACH_ENABLED=1 (or "true"). The coach also requires a model to be
- * configured — callers should treat "enabled" as gated behind isModelConfigured().
- */
-export function isBingoCoachEnabled(): boolean {
-  const parsed = bingoCoachEnvSchema.safeParse(process.env);
-  const raw = parsed.success ? parsed.data.KASH_BINGO_COACH_ENABLED : undefined;
-  if (!raw) return false;
-  const normalized = raw.trim().toLowerCase();
-  return normalized === "1" || normalized === "true";
-}

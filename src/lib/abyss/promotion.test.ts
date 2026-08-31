@@ -16,14 +16,12 @@ describe("encodePromotedTarget", () => {
     expect(encodePromotedTarget("week")).toBe("week");
   });
 
-  it("stores project/goal with the spawned id", () => {
+  it("stores project with the spawned id", () => {
     expect(encodePromotedTarget("project", "p1")).toBe("project:p1");
-    expect(encodePromotedTarget("goal", "g1")).toBe("goal:g1");
   });
 
   it("throws when a non-task target is missing its spawned id", () => {
     expect(() => encodePromotedTarget("project")).toThrow();
-    expect(() => encodePromotedTarget("goal")).toThrow();
   });
 });
 
@@ -32,12 +30,6 @@ describe("decodePromotedTarget", () => {
     expect(decodePromotedTarget("today")).toEqual({ kind: "today" });
     expect(decodePromotedTarget("week")).toEqual({ kind: "week" });
     expect(decodePromotedTarget("project:p1")).toEqual({ kind: "project", id: "p1" });
-    expect(decodePromotedTarget("goal:g1")).toEqual({ kind: "goal", id: "g1" });
-  });
-
-  it("preserves uuids containing no extra colons", () => {
-    const id = "11111111-2222-4333-8444-555555555555";
-    expect(decodePromotedTarget(`goal:${id}`)).toEqual({ kind: "goal", id });
   });
 
   it("returns null for absent or malformed values", () => {

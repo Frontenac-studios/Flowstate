@@ -7,7 +7,6 @@ import {
   Calendar,
   Folder,
   Sun,
-  Target,
   withKashIcon,
   type LucideIcon,
 } from "@/components/kash/ui/icon";
@@ -19,7 +18,6 @@ import { useTRPC } from "@/trpc/client";
 const SunIcon = withKashIcon(Sun);
 const CalendarIcon = withKashIcon(Calendar);
 const FolderIcon = withKashIcon(Folder);
-const TargetIcon = withKashIcon(Target);
 const ABYSS_BTN_FOCUS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-abyss-accent focus-visible:ring-offset-2 focus-visible:ring-offset-abyss-surface";
 
@@ -53,13 +51,6 @@ const TARGETS: TargetOption[] = [
     label: "New project",
     hint: "a thread to grow",
     Icon: FolderIcon,
-    needsCategory: true,
-  },
-  {
-    key: "goal",
-    label: "Annual goal",
-    hint: "a goal for the year",
-    Icon: TargetIcon,
     needsCategory: true,
   },
 ];

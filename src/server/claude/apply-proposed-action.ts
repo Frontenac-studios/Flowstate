@@ -6,15 +6,13 @@ import { db } from "@/db";
 import { taskTagsColumn } from "@/db/task-tags-for-db";
 import {
   syncPhaseRow,
-  syncPlanningRow,
   syncProjectRow,
   syncProtectedBlockRow,
   syncTaskCompletion,
   syncTaskRow,
   syncWeekDayPriorityRow,
 } from "@/db/record-sync-mutation";
-import { goals, phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
-import normalizeGoalTitle from "@/lib/planning/goal-title";
+import { phases, projects, protectedBlocks, tasks, weekDayPriorities } from "@/db/tables";
 import { buildCreateTaskPlacementSummary } from "@/lib/chat/build-create-task-placement-summary";
 import type { CaptureContext } from "@/lib/chat/capture-context";
 import type { ChatCreatedTask } from "@/lib/chat/chat-task-created-events";
@@ -898,37 +896,6 @@ export async function applyProposedActionPayload(
       }
 
       if (phasesUndo.phases.length > 0) undoFrames.push(phasesUndo);
-      return { applied, titles, undoFrames, createdTasks: [] };
-    }
-
-    case "propose_bingo_goals": {
-      const titles: string[] = [];
-      const goalIds: string[] = [];
-      let applied = 0;
-
-      for (const item of action.items) {
-        // Category is required to create a goal; the confirm card blocks untagged rows,
-        // so skip defensively if one slips through.
-        if (!item.category) continue;
-
-        const [row] = await db
-          .insert(goals)
-          .values({
-            userId,
-            title: normalizeGoalTitle(item.title),
-            category: item.category,
-          })
-          .returning();
-
-        if (row) {
-          await syncPlanningRow("goals", row.id, "insert", row);
-          titles.push(row.title);
-          goalIds.push(row.id);
-          applied += 1;
-        }
-      }
-
-      if (goalIds.length > 0) undoFrames.push({ type: "create_goals", goalIds });
       return { applied, titles, undoFrames, createdTasks: [] };
     }
 

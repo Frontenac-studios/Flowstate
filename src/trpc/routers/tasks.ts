@@ -687,7 +687,6 @@ export const tasksRouter = createTRPCRouter({
         phaseId: z.string().uuid().nullable().optional(),
         priority: z.number().int().min(0).max(3).default(0),
         category: categorySchema.optional(),
-        milestoneId: z.string().uuid().nullable().optional(),
         timeEstimateMinutes: z
           .number()
           .int()
@@ -751,7 +750,6 @@ export const tasksRouter = createTRPCRouter({
           suggestedScheduledDate: input.suggestedScheduledDate ?? null,
           projectId: input.projectId ?? null,
           phaseId: input.phaseId ?? null,
-          milestoneId: input.milestoneId ?? null,
           timeEstimateMinutes: input.timeEstimateMinutes ?? null,
           priority: input.priority,
           category: resolved.category,
@@ -828,7 +826,6 @@ export const tasksRouter = createTRPCRouter({
         projectId: z.string().uuid().nullable().optional(),
         phaseId: z.string().uuid().nullable().optional(),
         category: categorySchema.optional(),
-        milestoneId: z.string().uuid().nullable().optional(),
         timeEstimateMinutes: z
           .number()
           .int()
@@ -849,7 +846,6 @@ export const tasksRouter = createTRPCRouter({
       if (input.priority !== undefined) patch.priority = input.priority;
       if (input.projectId !== undefined) patch.projectId = input.projectId;
       if (input.phaseId !== undefined) patch.phaseId = input.phaseId;
-      if (input.milestoneId !== undefined) patch.milestoneId = input.milestoneId;
       if (input.timeEstimateMinutes !== undefined) {
         patch.timeEstimateMinutes = input.timeEstimateMinutes;
       }

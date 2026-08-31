@@ -87,8 +87,6 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // at read from the financial source, never written onto the row (see targets.ts).
   directions: "org_shared",
   targets: "org_shared",
-  goal_milestones: "org_shared",
-  goals: "org_shared",
   phases: "org_shared",
   project_milestones: "org_shared",
   project_templates: "org_shared",

@@ -9,7 +9,7 @@ import { addDays, datesInIsoWeek, startOfLocalDay, toISODateString } from "@/lib
  */
 
 /** The four promotion destinations offered by the picker. */
-export type AbyssPromotionTarget = "today" | "week" | "project" | "goal";
+export type AbyssPromotionTarget = "today" | "week" | "project";
 
 /** Task-lane targets spawn a real task (and so can "come back"); the rest link a non-task. */
 export type AbyssTaskLane = "today" | "week";
@@ -29,7 +29,6 @@ export type DecodedPromotedTarget =
   | { kind: "today" }
   | { kind: "week" }
   | { kind: "project"; id: string }
-  | { kind: "goal"; id: string }
   | null;
 
 /** Parse a stored `promoted_target` back into a typed descriptor (null if absent/unknown). */
@@ -43,7 +42,6 @@ export function decodePromotedTarget(raw: string | null | undefined): DecodedPro
   const id = raw.slice(sep + 1);
   if (!id) return null;
   if (kind === "project") return { kind: "project", id };
-  if (kind === "goal") return { kind: "goal", id };
   return null;
 }
 
