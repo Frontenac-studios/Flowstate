@@ -4,11 +4,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { embeddingColumn, embeddingFromDb } from "@/db/embedding-for-db";
-import {
-  syncAbyssItemRow,
-  syncProjectRow,
-  syncTaskRow,
-} from "@/db/record-sync-mutation";
+import { syncAbyssItemRow, syncProjectRow, syncTaskRow } from "@/db/record-sync-mutation";
 import { abyssItems, appSettings, projects, tasks } from "@/db/tables";
 import { resolveArchiveThresholdDays, selectItemsToArchive } from "@/lib/abyss/archive";
 import {

@@ -3,13 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import {
-  Calendar,
-  Folder,
-  Sun,
-  withKashIcon,
-  type LucideIcon,
-} from "@/components/kash/ui/icon";
+import { Calendar, Folder, Sun, withKashIcon, type LucideIcon } from "@/components/kash/ui/icon";
 import type { AbyssPromotionTarget } from "@/lib/abyss/promotion";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { categoryLabel, PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";

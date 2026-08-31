@@ -20,7 +20,14 @@ describe("aggregateExpensesByCategory", () => {
       { monthsBack: 6, now }
     );
 
-    expect(result.months).toEqual(["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"]);
+    expect(result.months).toEqual([
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+    ]);
     const june = result.months.indexOf("2026-06");
     expect(result.monthTotals[june]).toBe(7000);
     // The 2025-12 row is outside the window entirely, so nothing counts it.

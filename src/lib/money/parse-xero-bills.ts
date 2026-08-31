@@ -106,7 +106,11 @@ export function parseXeroBills(csvText: string): XeroBillsPreview {
 
     const account = resolveAccount(accountCode);
     if (account.klass === "revenue") {
-      skipped.push({ description, accountCode, reason: "revenue line — derived from invoices, not imported" });
+      skipped.push({
+        description,
+        accountCode,
+        reason: "revenue line — derived from invoices, not imported",
+      });
       continue;
     }
     if (account.klass === "other") {
