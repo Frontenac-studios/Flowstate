@@ -49,7 +49,7 @@ import TodayTimer from "../time/TodayTimer";
 import ThresholdNotifier from "../time/ThresholdNotifier";
 import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
-import { BalanceBar } from "./BalanceBar";
+import { TimeBudgetBar } from "./TimeBudgetBar";
 import { LensControlBar } from "./LensControlBar";
 import { TimelinePane } from "./TimelinePane";
 import { TodayList } from "./TodayList";
@@ -177,8 +177,8 @@ export function DayPlanCanvas() {
     () => ({ localDate, tzOffsetMinutes }),
     [localDate, tzOffsetMinutes]
   );
-  const { data: weekPayload } = useQuery(
-    trpc.weekReviews.getPayload.queryOptions({ tzOffsetMinutes })
+  const { data: budgetToday } = useQuery(
+    trpc.budget.today.queryOptions({ localDate, tzOffsetMinutes })
   );
 
   const invalidatePlan = useCallback(() => {
@@ -866,16 +866,13 @@ export function DayPlanCanvas() {
             />
           ) : null}
 
-          {/* D11/V3: balance bar hidden until ≥2 tasks (ghost strip lives in compact Top-3). */}
-          {todayTasks.length >= 2 ? (
+          {/* W6 — the Budget: today's logged-time split against the declared tilt. */}
+          {budgetToday ? (
             <div className="flex items-center gap-3">
               <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
-                Balance
+                Budget
               </span>
-              <BalanceBar
-                tasks={todayTasks}
-                weeklyTiltCaption={weekPayload?.weeklyTiltCaption ?? null}
-              />
+              <TimeBudgetBar bar={budgetToday} />
             </div>
           ) : null}
         </section>

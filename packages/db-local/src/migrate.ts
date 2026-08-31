@@ -378,7 +378,6 @@ CREATE TABLE IF NOT EXISTS category_settings (
   label TEXT,
   color TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
-  weekly_target INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (user_id, category)
@@ -697,6 +696,7 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "why", definition: "TEXT" },
   { table: "projects", column: "reached_at", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_first_run_at", definition: "INTEGER" },
+  { table: "app_settings", column: "quarter_tilt_business_pct", definition: "INTEGER" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
   { table: "time_entries", column: "invoice_id", definition: "TEXT" },
   { table: "invoices", column: "paid_at", definition: "INTEGER" },

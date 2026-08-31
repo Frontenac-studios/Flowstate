@@ -74,3 +74,11 @@ export const DEFAULT_GOAL_COACH_ADAPTATIONS: GoalCoachAdaptations = { eased: [] 
 export const calendarAiEnabledSchema = z.boolean();
 export type CalendarAiEnabled = z.infer<typeof calendarAiEnabledSchema>;
 export const DEFAULT_CALENDAR_AI_ENABLED = true;
+
+/**
+ * The declared quarter tilt (W6, the Budget): business share of logged time as a
+ * whole percentage; personal is the remainder. Null (never declared) is the unset
+ * state and lives on the row, not here — this schema only guards a real declaration.
+ */
+export const quarterTiltBusinessPctSchema = z.number().int().min(0).max(100);
+export type QuarterTiltBusinessPct = z.infer<typeof quarterTiltBusinessPctSchema>;

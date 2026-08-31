@@ -1,9 +1,8 @@
 import { PROJECT_CATEGORIES, PROJECT_CATEGORY_META, type ProjectCategory } from "./categories";
 
 // Phase 1 (1E / Q3): the editable shape of a user's per-category settings. Labels and
-// sort order are user-overridable here; color stays with Design Tokens and weeklyTarget
-// is schema-only until Week/review, so neither is editable in Phase 1 — they ride along
-// read-only for completeness.
+// sort order are user-overridable here; color stays with Design Tokens, so it rides
+// along read-only for completeness.
 export type CategorySettingView = {
   category: ProjectCategory;
   /** Effective display label: the user's override, or the seed label fallback. */
