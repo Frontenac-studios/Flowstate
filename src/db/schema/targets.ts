@@ -48,6 +48,8 @@ export const targets = pgTable(
     state: targetState("state").notNull().default("active"),
     /** Set when the bet is objectively met; archives it off the active board. */
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
+    /** W7 — the Sweep. now + ~30d when "kept"; suppresses from the stale list until then. */
+    sweptKeptUntil: timestamp("swept_kept_until", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

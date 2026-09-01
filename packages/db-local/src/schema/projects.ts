@@ -39,6 +39,8 @@ export const projects = sqliteTable(
     // index; list queries filter on `isNull(archivedAt)`, so this column must exist
     // or Drizzle emits a dangling `IS NULL` and SQLite errors.
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
+    /** W7 — the Sweep. now + ~30d when "kept" (mirrors Postgres). */
+    sweptKeptUntil: integer("swept_kept_until", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),

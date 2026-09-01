@@ -60,6 +60,8 @@ export const projects = pgTable(
     reachedAt: timestamp("reached_at", { withTimezone: true, mode: "date" }),
     /** Soft-archive marker. Non-null hides the project from the index; data is retained. */
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
+    /** W7 — the Sweep. now + ~30d when "kept"; suppresses from the stale list until then. */
+    sweptKeptUntil: timestamp("swept_kept_until", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

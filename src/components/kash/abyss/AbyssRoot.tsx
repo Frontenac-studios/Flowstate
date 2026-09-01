@@ -8,7 +8,6 @@ import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/
 import { isMonthlyReviewDue } from "@/lib/abyss/monthly-review";
 import { readLastReviewMonth } from "@/lib/abyss/review-storage";
 import { surfaceVariantForView, type AbyssViewMode } from "@/lib/abyss/surface-variant";
-import { useAbyssDailyArchiveSweep } from "@/hooks/useAbyssDailyArchiveSweep";
 import { useTRPC } from "@/trpc/client";
 import AbyssArchivedList from "./AbyssArchivedList";
 import AbyssComposer from "./AbyssComposer";
@@ -31,10 +30,8 @@ export default function AbyssRoot() {
   const trpc = useTRPC();
   const { data, isLoading, isError, refetch } = useQuery(trpc.abyss.list.queryOptions());
   const { data: archived } = useQuery(trpc.abyss.listArchived.queryOptions());
-  const { data: settings } = useQuery(trpc.settings.get.queryOptions());
   const embedAndStore = useAbyssEmbedding();
   const embedAttempted = useRef<Set<string>>(new Set());
-  useAbyssDailyArchiveSweep();
 
   useEffect(() => {
     if (!data) return;
@@ -166,7 +163,6 @@ export default function AbyssRoot() {
           typeFilter={typeFilter}
           ageFilter={ageFilter}
           now={now}
-          archiveAfterDays={settings?.abyssArchiveAfterDays}
         />
       ) : view === "themes" ? (
         <AbyssThemes
