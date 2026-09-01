@@ -10,6 +10,7 @@ import { WeekCanvas } from "@/components/kash/plan/week/WeekCanvas";
 import { WeekHeader } from "@/components/kash/plan/week/WeekHeader";
 import { WeekReflectionPanel } from "@/components/kash/plan/week/WeekReflectionPanel";
 import { SweepPanel } from "@/components/kash/week/SweepPanel";
+import { WeekSteeringDeck } from "@/components/kash/week/WeekSteeringDeck";
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { datesInIsoWeek, parseISODateString, toISODateString } from "@/lib/dates/local-day";
@@ -29,6 +30,7 @@ export function ThisWeekSurface() {
   const weekQueryInput = useMemo(() => ({ anchorDate }), [anchorDate]);
 
   const [reflectionOpen, setReflectionOpen] = useState(false);
+  const [sweepOpen, setSweepOpen] = useState(false);
 
   const tasksQuery = useQuery(trpc.tasks.listIncomplete.queryOptions());
   const tasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data]);
@@ -74,7 +76,8 @@ export function ThisWeekSurface() {
 
         {reflectionOpen ? <WeekReflectionPanel /> : null}
 
-        <SweepPanel />
+        <WeekSteeringDeck onOpenSweep={() => setSweepOpen(true)} />
+        <SweepPanel open={sweepOpen} onClose={() => setSweepOpen(false)} />
 
         <LensProvider scope="this-week">
           <div className="flex min-h-0 flex-1 flex-col">

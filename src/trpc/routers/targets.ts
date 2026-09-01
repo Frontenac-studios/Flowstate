@@ -5,8 +5,13 @@ import { z } from "zod";
 import { db } from "@/db";
 import { syncTargetRow } from "@/db/record-sync-mutation";
 import { clients, directions, invoices, phases, projects, targets } from "@/db/tables";
-import { deriveTargetCurrent, type MeasureSources } from "@/lib/quarter/derive-measure";
+import {
+  deriveTargetCurrent,
+  measureProgress,
+  type MeasureSources,
+} from "@/lib/quarter/derive-measure";
 import { quarterOf } from "@/lib/quarter/quarter-period";
+import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -145,6 +150,117 @@ export const targetsRouter = createTRPCRouter({
       };
     });
   }),
+
+  /**
+   * W14 — the Week deck's "bets" block: the cap-3 active bets, each with its
+   * progress and a "shipped this week" signal. Auto bets get an exact weekly value
+   * (the same derivation, windowed to this local week); a manual bet has no weekly
+   * history, so "touched by hand this week" (`updatedAt`) is the honest proxy. A bet
+   * that moved nothing this week reads muted grey — never crimson.
+   */
+  betsForWeek: protectedProcedure
+    .input(z.object({ tzOffsetMinutes: z.number().int().min(-840).max(840) }))
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const q = quarterOf(now);
+      const week = localWeekUtcBounds(now, input.tzOffsetMinutes);
+
+      const [rows, invoiceRows, clientRows, phaseRows] = await Promise.all([
+        db
+          .select({
+            id: targets.id,
+            title: targets.title,
+            measureKind: targets.measureKind,
+            measureSource: targets.measureSource,
+            derivationKey: targets.derivationKey,
+            measureTarget: targets.measureTarget,
+            measureCurrent: targets.measureCurrent,
+            periodStart: targets.periodStart,
+            periodEnd: targets.periodEnd,
+            updatedAt: targets.updatedAt,
+          })
+          .from(targets)
+          .where(
+            and(
+              eq(targets.userId, ctx.userId),
+              gte(targets.periodStart, q.start),
+              lt(targets.periodStart, q.end),
+              inArray(targets.state, [...CAP_STATES])
+            )
+          )
+          .orderBy(asc(targets.createdAt)),
+        db
+          .select({ amountCents: invoices.amountCents, bookedAt: invoices.createdAt })
+          .from(invoices)
+          .where(and(eq(invoices.userId, ctx.userId), ne(invoices.status, "void"))),
+        db
+          .select({ signedAt: clients.createdAt })
+          .from(clients)
+          .where(eq(clients.userId, ctx.userId)),
+        db
+          .select({ targetId: projects.targetId, completedAt: phases.completedAt })
+          .from(phases)
+          .innerJoin(projects, eq(phases.projectId, projects.id))
+          .where(
+            and(
+              eq(phases.userId, ctx.userId),
+              isNotNull(phases.completedAt),
+              isNotNull(projects.targetId)
+            )
+          ),
+      ]);
+
+      const sources: MeasureSources = {
+        invoices: invoiceRows,
+        clients: clientRows,
+        shippedPhases: phaseRows.flatMap((p) =>
+          p.targetId && p.completedAt ? [{ targetId: p.targetId, completedAt: p.completedAt }] : []
+        ),
+      };
+
+      return rows.map((t) => {
+        const isAuto = t.measureSource === "auto" && t.derivationKey != null;
+        const current = isAuto
+          ? deriveTargetCurrent(
+              {
+                id: t.id,
+                derivationKey: t.derivationKey!,
+                periodStart: t.periodStart,
+                periodEnd: t.periodEnd,
+              },
+              sources
+            )
+          : (t.measureCurrent ?? 0);
+        // Weekly movement: re-run the derivation over this week's window for auto bets;
+        // for manual bets, a hand edit this week is the only movement signal we have.
+        const weeklyValue = isAuto
+          ? deriveTargetCurrent(
+              {
+                id: t.id,
+                derivationKey: t.derivationKey!,
+                periodStart: week.start,
+                periodEnd: week.end,
+              },
+              sources
+            )
+          : null;
+        const movedThisWeek = isAuto
+          ? weeklyValue! > 0
+          : t.updatedAt.getTime() >= week.start.getTime() &&
+            t.updatedAt.getTime() < week.end.getTime();
+        return {
+          id: t.id,
+          title: t.title,
+          measureKind: t.measureKind,
+          measureTarget: t.measureTarget,
+          current,
+          progress: measureProgress(current, t.measureTarget),
+          isMet: current >= t.measureTarget,
+          movedThisWeek,
+          weeklyValue,
+        };
+      });
+    }),
 
   create: protectedProcedure
     .input(
