@@ -60,13 +60,12 @@ function Segmented({
  *
  * Keyboard: ↑/↓ move, k keep · p park · d drop (each advances to the next), ↵ sweeps.
  */
-export function SweepPanel() {
+export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const toast = useOptionalToast();
 
   const { data: draft } = useQuery(trpc.sweep.draft.queryOptions());
-  const [open, setOpen] = useState(false);
   const [rulings, setRulings] = useState<Record<string, Ruling>>({});
   const [focus, setFocus] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -81,7 +80,7 @@ export function SweepPanel() {
         void queryClient.invalidateQueries(trpc.projects.list.pathFilter());
         void queryClient.invalidateQueries(trpc.targets.list.pathFilter());
         void queryClient.invalidateQueries(trpc.abyss.list.pathFilter());
-        setOpen(false);
+        onClose();
         toast?.toast({
           message: `Swept — ${counts.kept} kept, ${counts.parked} parked, ${counts.dropped} dropped.`,
         });
@@ -89,15 +88,14 @@ export function SweepPanel() {
     })
   );
 
+  // Fresh open: every item back to the pre-answered "keep" (rulings start empty and
+  // default to keep), focus the top, and take keyboard focus for the ritual.
   useEffect(() => {
-    if (open) panelRef.current?.focus();
-  }, [open]);
-
-  function openSweep() {
-    setRulings(Object.fromEntries(items.map((i) => [i.id, "keep" as Ruling])));
+    if (!open) return;
+    setRulings({});
     setFocus(0);
-    setOpen(true);
-  }
+    panelRef.current?.focus();
+  }, [open]);
 
   function rule(id: string, altitude: SweepAltitude, r: Ruling) {
     if (altitude === "target" && r === "park") return;
@@ -135,20 +133,8 @@ export function SweepPanel() {
     }
   }
 
-  // Nothing has gone quiet — the Sweep stays out of the way.
-  if (!draft || draft.totalStale === 0) return null;
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={openSweep}
-        className="self-start text-caption font-medium text-ink-muted transition hover:text-ink"
-      >
-        Sweep · {draft.totalStale} gone quiet →
-      </button>
-    );
-  }
+  // Controlled by the deck's "Gone quiet" cell; nothing to rule when closed or empty.
+  if (!open || !draft || draft.totalStale === 0) return null;
 
   return (
     <section
@@ -206,7 +192,7 @@ export function SweepPanel() {
       <div className="mt-1 flex justify-end gap-2">
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className="rounded-control px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:text-ink"
         >
           Cancel

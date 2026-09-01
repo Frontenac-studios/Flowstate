@@ -7,6 +7,7 @@ import { buildDayBusyIntervals } from "@/lib/calendar/build-day-busy-intervals";
 import { eventToDayMinutes } from "@/lib/calendar/event-to-day-minutes";
 import { computeBudgetBar } from "@/lib/budget/compute-budget-bar";
 import { localDayUtcBounds } from "@/lib/eod/local-day-bounds";
+import { localWeekUtcBounds } from "@/lib/time/local-week-bounds";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import { getGoogleConnection } from "@/server/calendar/connection-store";
 import type { Interval } from "@/lib/timeline/living-record";
@@ -126,5 +127,51 @@ export const budgetRouter = createTRPCRouter({
         bookedMinutes,
         capacityMinutes,
       });
+    }),
+
+  /**
+   * W14 — the same split over the current local week (Mon–Sun), for the Week deck's
+   * off-target banner. No calendar capacity here — the banner only reflects on the
+   * business/personal drift from the tilt (`deltaPct`), never on free hours.
+   */
+  thisWeek: protectedProcedure
+    .input(z.object({ tzOffsetMinutes: z.number().int().min(-840).max(840) }))
+    .query(async ({ ctx, input }) => {
+      const { start, end } = localWeekUtcBounds(new Date(), input.tzOffsetMinutes);
+
+      const [settings] = await db
+        .select({ quarterTiltBusinessPct: appSettings.quarterTiltBusinessPct })
+        .from(appSettings)
+        .where(eq(appSettings.userId, ctx.userId))
+        .limit(1);
+      const tiltBusinessPct = settings?.quarterTiltBusinessPct ?? null;
+
+      const rows = await db
+        .select({
+          startedAt: timeEntries.startedAt,
+          endedAt: timeEntries.endedAt,
+          category: projects.category,
+        })
+        .from(timeEntries)
+        .innerJoin(projects, eq(timeEntries.projectId, projects.id))
+        .where(
+          and(
+            eq(timeEntries.userId, ctx.userId),
+            gte(timeEntries.startedAt, start),
+            lt(timeEntries.startedAt, end)
+          )
+        );
+
+      const now = new Date();
+      let businessSeconds = 0;
+      let personalSeconds = 0;
+      for (const row of rows) {
+        const endMs = (row.endedAt ?? now).getTime();
+        const seconds = Math.max(0, Math.floor((endMs - row.startedAt.getTime()) / 1000));
+        if (row.category === "business") businessSeconds += seconds;
+        else personalSeconds += seconds;
+      }
+
+      return computeBudgetBar({ businessSeconds, personalSeconds, tiltBusinessPct });
     }),
 });
