@@ -4,11 +4,9 @@ import { z } from "zod";
 import { db } from "@/db";
 import { appSettings } from "@/db/tables";
 import {
-  abyssArchiveAfterDaysSchema,
   alertPrefsSchema,
   bucketModeSchema,
   calendarAiEnabledSchema,
-  DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
   DEFAULT_BUCKET_MODE,
   DEFAULT_CALENDAR_AI_ENABLED,
   DEFAULT_DAY_END_HOUR,
@@ -64,7 +62,6 @@ export const settingsRouter = createTRPCRouter({
       focusDndEnabled: row.focusDndEnabled ?? true,
       alertPrefs: resolveAlertPrefs(row.alertPrefs),
       assistanceEnabled: row.assistanceEnabled ?? true,
-      abyssArchiveAfterDays: row.abyssArchiveAfterDays ?? DEFAULT_ABYSS_ARCHIVE_AFTER_DAYS,
       top3MiddayCheckin: middayParsed.success ? middayParsed.data : DEFAULT_TOP3_MIDDAY_CHECKIN,
       calendarAiEnabled: row.calendarAiEnabled ?? DEFAULT_CALENDAR_AI_ENABLED,
       goalCoachAmbition: goalCoachAmbitionSchema.safeParse(row.goalCoachAmbition).success
@@ -180,22 +177,6 @@ export const settingsRouter = createTRPCRouter({
       });
     return input;
   }),
-  updateAbyssArchiveAfterDays: protectedProcedure
-    .input(abyssArchiveAfterDaysSchema)
-    .mutation(async ({ ctx, input }) => {
-      await getOrCreateSettings(ctx.userId);
-      const [row] = await db
-        .update(appSettings)
-        .set({ abyssArchiveAfterDays: input, updatedAt: new Date() })
-        .where(eq(appSettings.userId, ctx.userId))
-        .returning();
-      if (!row)
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update abyss archive threshold.",
-        });
-      return { abyssArchiveAfterDays: input };
-    }),
   updateTop3MiddayCheckin: protectedProcedure
     .input(top3MiddayCheckinSchema)
     .mutation(async ({ ctx, input }) => {

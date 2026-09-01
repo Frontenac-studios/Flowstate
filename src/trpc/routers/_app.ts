@@ -23,6 +23,7 @@ import { projectsRouter } from "./projects";
 import { protectedBlocksRouter } from "./protected-blocks";
 import { recurrenceRouter } from "./recurrence";
 import { settingsRouter } from "./settings";
+import { sweepRouter } from "./sweep";
 import { targetsRouter } from "./targets";
 import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
@@ -60,6 +61,7 @@ export const appRouter = createTRPCRouter({
   protectedBlocks: protectedBlocksRouter,
   recurrence: recurrenceRouter,
   settings: settingsRouter,
+  sweep: sweepRouter,
   sync: syncRouter,
   targets: targetsRouter,
   taskBulkImports: taskBulkImportsRouter,

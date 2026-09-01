@@ -39,6 +39,8 @@ export const targets = sqliteTable(
       .notNull()
       .$defaultFn(() => "active"),
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
+    /** W7 — the Sweep. now + ~30d when "kept" (mirrors Postgres). */
+    sweptKeptUntil: integer("swept_kept_until", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),

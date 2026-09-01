@@ -695,6 +695,10 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "capability", definition: "TEXT" },
   { table: "projects", column: "why", definition: "TEXT" },
   { table: "projects", column: "reached_at", definition: "INTEGER" },
+  // W7 — the Sweep: "kept until" marker on the three stale altitudes.
+  { table: "tasks", column: "swept_kept_until", definition: "INTEGER" },
+  { table: "projects", column: "swept_kept_until", definition: "INTEGER" },
+  { table: "targets", column: "swept_kept_until", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_first_run_at", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_tilt_business_pct", definition: "INTEGER" },
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },

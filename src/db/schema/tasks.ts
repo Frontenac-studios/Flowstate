@@ -54,6 +54,12 @@ export const tasks = pgTable(
     /** Estimated duration for planning capacity nudge (PM11.3). */
     timeEstimateMinutes: integer("time_estimate_minutes"),
     completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
+    /**
+     * W7 — the Sweep. Set to now + ~30d when this item is "kept" in the weekly
+     * Sweep, which suppresses it from the stale list until then ("keep buys a
+     * month, not a week"). Null = never kept.
+     */
+    sweptKeptUntil: timestamp("swept_kept_until", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

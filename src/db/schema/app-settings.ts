@@ -19,6 +19,11 @@ export const appSettings = pgTable("app_settings", {
    * Null until the first surface-and-ask agreement; never written silently.
    */
   goalCoachAdaptations: jsonb("goal_coach_adaptations").$type<GoalCoachAdaptations>(),
+  /**
+   * DEPRECATED (W7). The Backlog's 90-day auto-archive was removed — the Sweep is the
+   * mechanic now, nothing closes doors for you. Column retained (unread) to keep the
+   * migration additive; a later teardown may drop it.
+   */
   abyssArchiveAfterDays: integer("abyss_archive_after_days"),
   /** Per-type switches for the W2d threshold alerts. Null = all defaults (on). */
   alertPrefs: jsonb("alert_prefs").$type<AlertPrefs>(),

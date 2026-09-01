@@ -5,8 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { embeddingColumn, embeddingFromDb } from "@/db/embedding-for-db";
 import { syncAbyssItemRow, syncProjectRow, syncTaskRow } from "@/db/record-sync-mutation";
-import { abyssItems, appSettings, projects, tasks } from "@/db/tables";
-import { resolveArchiveThresholdDays, selectItemsToArchive } from "@/lib/abyss/archive";
+import { abyssItems, projects, tasks } from "@/db/tables";
 import {
   encodePromotedTarget,
   isTaskLaneTarget,
@@ -96,38 +95,9 @@ async function reconcileCameBack(
   return true;
 }
 
-async function getArchiveThresholdDays(userId: string): Promise<number> {
-  const [row] = await db
-    .select({ abyssArchiveAfterDays: appSettings.abyssArchiveAfterDays })
-    .from(appSettings)
-    .where(eq(appSettings.userId, userId))
-    .limit(1);
-  return resolveArchiveThresholdDays(row?.abyssArchiveAfterDays);
-}
-async function archiveStaleItems(userId: string, thresholdDays: number): Promise<void> {
-  const rows = await db
-    .select({
-      id: abyssItems.id,
-      status: abyssItems.status,
-      lastTouchedAt: abyssItems.lastTouchedAt,
-    })
-    .from(abyssItems)
-    .where(and(eq(abyssItems.userId, userId), eq(abyssItems.status, "active")));
-  for (const id of selectItemsToArchive(rows, new Date(), thresholdDays)) {
-    const now = new Date();
-    const [updated] = await db
-      .update(abyssItems)
-      .set({ status: "archived", updatedAt: now })
-      .where(and(eq(abyssItems.id, id), eq(abyssItems.userId, userId)))
-      .returning();
-    if (updated) await syncAbyssItemRow(updated.id, "update", updated);
-  }
-}
-
 export const abyssRouter = createTRPCRouter({
   /** Everything still in the deep (archived items are retrievable separately, slice 8). */
   list: protectedProcedure.query(async ({ ctx }) => {
-    await archiveStaleItems(ctx.userId, await getArchiveThresholdDays(ctx.userId));
     const query = () =>
       db
         .select()
@@ -148,12 +118,6 @@ export const abyssRouter = createTRPCRouter({
       .orderBy(desc(abyssItems.lastTouchedAt))
   ),
 
-  /** B4 — desktop daily sweep; web keeps lazy archive on list(). */
-  runArchiveSweep: protectedProcedure.mutation(async ({ ctx }) => {
-    const threshold = await getArchiveThresholdDays(ctx.userId);
-    await archiveStaleItems(ctx.userId, threshold);
-    return { ok: true as const };
-  }),
   restore: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {

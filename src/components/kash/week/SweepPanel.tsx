@@ -1,0 +1,225 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+
+import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
+import type { SweepAltitude } from "@/lib/sweep/sweep";
+import { useTRPC } from "@/trpc/client";
+
+type Ruling = "keep" | "park" | "drop";
+
+const ALTITUDE_CHIP: Record<SweepAltitude, string> = {
+  task: "Task",
+  project: "Project",
+  target: "Target",
+};
+
+function rulingOptions(altitude: SweepAltitude): { value: Ruling; label: string }[] {
+  // A target has no Backlog home, so it takes keep/drop only.
+  const base: { value: Ruling; label: string }[] = [{ value: "keep", label: "Keep" }];
+  if (altitude !== "target") base.push({ value: "park", label: "Park" });
+  base.push({ value: "drop", label: "Drop" });
+  return base;
+}
+
+function Segmented({
+  value,
+  options,
+  onChange,
+}: {
+  value: Ruling;
+  options: { value: Ruling; label: string }[];
+  onChange: (v: Ruling) => void;
+}) {
+  return (
+    <div className="inline-flex overflow-hidden rounded-pill border border-subtle">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          tabIndex={-1}
+          onClick={() => onChange(o.value)}
+          className={`px-2.5 py-1 text-caption font-medium transition ${
+            value === o.value ? "bg-ink text-surface" : "bg-surface text-ink-muted hover:text-ink"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * W7 — the Sweep, on Week. What has gone quiet at three altitudes, ruled in one
+ * keyboard pass. Mirrors the Quarter review: a quiet entry when there's something to
+ * sweep, opening an in-place panel pre-answered to **keep** (the safe no-op), so you
+ * only touch what you mean to drop or park. Keep buys a month, so the list shrinks
+ * week over week rather than nagging. Nothing is auto-dropped.
+ *
+ * Keyboard: ↑/↓ move, k keep · p park · d drop (each advances to the next), ↵ sweeps.
+ */
+export function SweepPanel() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const toast = useOptionalToast();
+
+  const { data: draft } = useQuery(trpc.sweep.draft.queryOptions());
+  const [open, setOpen] = useState(false);
+  const [rulings, setRulings] = useState<Record<string, Ruling>>({});
+  const [focus, setFocus] = useState(0);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const items = draft?.items ?? [];
+
+  const close = useMutation(
+    trpc.sweep.close.mutationOptions({
+      onSuccess: (counts) => {
+        void queryClient.invalidateQueries(trpc.sweep.draft.pathFilter());
+        void queryClient.invalidateQueries(trpc.tasks.listIncomplete.pathFilter());
+        void queryClient.invalidateQueries(trpc.projects.list.pathFilter());
+        void queryClient.invalidateQueries(trpc.targets.list.pathFilter());
+        void queryClient.invalidateQueries(trpc.abyss.list.pathFilter());
+        setOpen(false);
+        toast?.toast({
+          message: `Swept — ${counts.kept} kept, ${counts.parked} parked, ${counts.dropped} dropped.`,
+        });
+      },
+    })
+  );
+
+  useEffect(() => {
+    if (open) panelRef.current?.focus();
+  }, [open]);
+
+  function openSweep() {
+    setRulings(Object.fromEntries(items.map((i) => [i.id, "keep" as Ruling])));
+    setFocus(0);
+    setOpen(true);
+  }
+
+  function rule(id: string, altitude: SweepAltitude, r: Ruling) {
+    if (altitude === "target" && r === "park") return;
+    setRulings((prev) => ({ ...prev, [id]: r }));
+  }
+
+  function submit() {
+    close.mutate({
+      rulings: items.map((i) => ({
+        altitude: i.altitude,
+        id: i.id,
+        ruling: rulings[i.id] ?? "keep",
+      })),
+    });
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (items.length === 0) return;
+    if (e.key === "ArrowDown") {
+      setFocus((f) => Math.min(items.length - 1, f + 1));
+      e.preventDefault();
+    } else if (e.key === "ArrowUp") {
+      setFocus((f) => Math.max(0, f - 1));
+      e.preventDefault();
+    } else if (e.key === "k" || e.key === "d" || e.key === "p") {
+      const cur = items[focus];
+      if (cur) {
+        rule(cur.id, cur.altitude, e.key === "k" ? "keep" : e.key === "d" ? "drop" : "park");
+        setFocus((f) => Math.min(items.length - 1, f + 1));
+      }
+      e.preventDefault();
+    } else if (e.key === "Enter") {
+      submit();
+      e.preventDefault();
+    }
+  }
+
+  // Nothing has gone quiet — the Sweep stays out of the way.
+  if (!draft || draft.totalStale === 0) return null;
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={openSweep}
+        className="self-start text-caption font-medium text-ink-muted transition hover:text-ink"
+      >
+        Sweep · {draft.totalStale} gone quiet →
+      </button>
+    );
+  }
+
+  return (
+    <section
+      ref={panelRef}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface outline-none"
+      aria-label="The Sweep"
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-body font-medium text-ink">
+          Gone quiet — {draft.totalStale} at three altitudes
+        </h2>
+        <span className="shrink-0 text-caption text-ink-faint">
+          ↑↓ move · k keep · p park · d drop · ↵ sweep
+        </span>
+      </div>
+
+      <ul className="flex flex-col gap-1">
+        {items.map((item, idx) => {
+          const focused = idx === focus;
+          return (
+            <li
+              key={`${item.altitude}:${item.id}`}
+              onMouseEnter={() => setFocus(idx)}
+              className={`flex items-center justify-between gap-3 rounded-control px-2 py-1.5 ${
+                focused ? "bg-surface-muted ring-subtle ring-1 ring-inset" : ""
+              }`}
+            >
+              <span className="flex min-w-0 items-baseline gap-2">
+                <span className="shrink-0 rounded-pill border border-subtle px-1.5 py-0.5 text-meta text-ink-faint">
+                  {ALTITUDE_CHIP[item.altitude]}
+                </span>
+                <span className="min-w-0 truncate text-sm text-ink">{item.title}</span>
+                <span className="shrink-0 text-caption text-ink-faint">
+                  {item.staleDays}d quiet
+                </span>
+              </span>
+              <Segmented
+                value={rulings[item.id] ?? "keep"}
+                options={rulingOptions(item.altitude)}
+                onChange={(v) => rule(item.id, item.altitude, v)}
+              />
+            </li>
+          );
+        })}
+      </ul>
+
+      {draft.remaining > 0 ? (
+        <p className="text-caption text-ink-faint">
+          +{draft.remaining} more gone quiet — rule these first; the rest surface next week.
+        </p>
+      ) : null}
+
+      <div className="mt-1 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-control px-3 py-1.5 text-xs font-medium text-ink-muted transition hover:text-ink"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={close.isPending}
+          className="rounded-control bg-ink px-3 py-1.5 text-xs font-medium text-surface transition hover:opacity-90 disabled:opacity-50"
+        >
+          Sweep
+        </button>
+      </div>
+    </section>
+  );
+}
