@@ -530,7 +530,7 @@ Decisions 4.1–4.7 of the discovery.
 **Acceptance criteria**
 
 - [ ] A plan = template → phases → **per-phase hour estimate + optional deadline**. Task-level estimate stays optional (4.1). No dependency graph — ordering expresses sequence (4.2, a DAG is a 10-person feature).
-- [ ] `projects` gains **`billing_type` (`hourly | fixed_fee`)** (4.3). Fixed-fee projects carry a **fee amount + a target-rate floor** (the effective rate below which the fixed fee is losing money) (4.4). Fixed-fee planning ships in v1 — the mix is real, not speculative.
+- [ ] `projects` gains **`billing_type` (`hourly | fixed_fee`)** (4.3). Fixed-fee projects carry a **fee amount + a target-rate floor** (the effective rate below which the fixed fee is losing money) (4.4). Fixed-fee planning ships in v1 — the mix is real, not speculative. **Tenancy (added 2026-09-01, audit): `billing_type` may sit on `projects` (a work-fact), but the fee amount + target-rate floor are money — they go in a `financial`-class table (extend `rates`, or a new `project_fees`), NEVER as columns on the `org_shared` `projects` table. The money-never-a-column rule (CLAUDE.md) and `tenancy.test.ts` will fail a fee column on `projects`.**
 - [ ] **The universal off-track signal = budget (hours) consumed ahead of work (phases/tasks) completed** (4.5) — computable from data already on hand, fires before either the bill (hourly) or the margin (fixed-fee) surprises you. "Running hot" is type-aware: more revenue on hourly, evaporating margin on fixed-fee.
 - [ ] Estimate-vs-actual surfaces at three altitudes, no new home (4.6): **project detail** (per-phase burn bars), **Projects board** (a health dot), and **Week** (the earliest steering read — feeds W14's off-target/health signals).
 - [ ] The **first** off-track crossing fires **one native notification** + a Week treatment (4.7); it is evidence, not a timer, so it earns the interruption under law 3. At most once per crossing; switchable off.
@@ -615,7 +615,7 @@ steps as the manual checklist.
 - [ ] The scoring weights live in one readable file, not scattered.
 - [ ] Overrides are always allowed and always logged with a reason; the log is visible.
 - [ ] "What do I have to say no to in order to say yes?" is answered with the actual list of active projects and their committed hours — not a free-text prompt.
-- [ ] Scored leads and their aging follow-ups feed the **Week steering deck**'s "Waiting on you" queue (W14) — sourced batch, follow-ups owed, and live-deal moves as one urgency-sorted list. **Note:** the deck's follow-up/deal rows read existing lead state and ship without W10; the **sourced batch** requires the outbound _sourcing agent_ (a larger reframe of MISSION's inbound Filter, tracked in the walk-through and flagged in §8f), which W10 as specced here does **not** yet include.
+- [ ] Scored leads and their aging follow-ups feed the **Week steering deck**'s "Waiting on you" queue (W14) — sourced batch, follow-ups owed, and live-deal moves as one urgency-sorted list. **Note (corrected 2026-09-01, audit):** there is **no lead entity in v1 yet** — no `leads`/`intake_submissions` table, no `contacted`/`follow_up` state; the only "deal" is a `state='prospect'` project. So W14 currently ships **only the live-deal-moves row** (from prospect projects, in `steering.ts`/`WaitingOnYouBlock.tsx`). **Both** the sourced-batch and follow-ups-owed rows require W10's lead data layer; the sourced batch additionally needs the outbound _sourcing agent_ (§8f, uncosted, NEEDS KAT). The earlier "follow-up/deal rows ship without W10" claim was **wrong** — do not cite W14's queue as complete.
 
 **Cut to M (10h):** skip the public link and the token infrastructure entirely. You fill in
 the eight answers yourself after the intro call; you get the same score and the same verdict.
@@ -944,8 +944,9 @@ queue row, with W10). Cut line **108 → 116h**; fully-scoped **~150 → ~160h**
 **Dependency flag — NEEDS KAT.** Goals 1–2 assume the **outbound sourcing agent** (the weekly
 researched batch of prospects), which is a larger reframe of MISSION's _inbound_ Filter — currently
 tracked only in the walk-through and **not costed in this document**. W10 as specced is the inbound,
-self-scored Filter. The deck's follow-up/deal queue rows work from existing lead state and ship
-above the cut line; the **sourced-batch row needs the sourcing agent built**. Decide whether the
+self-scored Filter. **Correction (2026-09-01, audit): "the deck's queue rows work from existing lead
+state" is false — no lead entity exists yet, so the follow-ups-owed row needs W10's lead data layer
+too, not just the sourced-batch row.** The sourced-batch row needs the sourcing agent built. Decide whether the
 sourcing agent is in v1 (the walk-through's position is "core, sequenced after the money half") and
 cost it, or ship the deck's queue without the sourced-batch row until v1.1.
 
@@ -1107,3 +1108,52 @@ but none is taken — the cut line is revisited only if the calendar slips.
 
 **Total v1 (line-by-line, per `docs/build-tracker.html`): 167h cut-line / 191h all-in. Fits a quarter:
 only at the cut line.**
+
+---
+
+## 9. Audit corrections — 2026-09-01
+
+A plan-vs-code audit (against `origin/main`, not the doc's self-description) surfaced these. Inline
+fixes were applied above (W14/W10 "ships without W10" note; W15 fee-column tenancy). The rest:
+
+### Migration pipeline is the law (drizzle-kit is dead past 0051)
+
+`drizzle-kit generate/migrate` is **not used** — the journal/snapshots stop at `0051` while SQL files
+`0052`–`00NN` exist on disk untracked, so a `generate` would diff against a stale snapshot and emit
+garbage. **Every schema change follows this ritual, in order:**
+
+1. **Hand-author** `drizzle/00NN_<name>.sql` (next integer after the highest file on disk; the apply
+   script globs `*.sql` and ignores the journal).
+2. **Classify** the table in `src/db/tenancy.ts` (a test enforces totality) — `personal` when unsure.
+3. **RLS** file in `supabase/rls/` (owner-only; anon denied).
+4. **SQLite mirror** — the desktop app is kept, so every new table/column is mirrored in
+   `packages/db-local` (schema + `migrate.ts` CREATE + `ADDED_COLUMNS` + `sqlite-defaults.test`) and
+   registered in `packages/sync` (`SYNC_TABLES` + `sync-engine`). This step has been forgotten before —
+   budget it.
+5. **Apply to hosted** (Supabase project `xaujjkbgejozhcjehmul`) via the Supabase MCP `apply_migration`,
+   **one migration at a time, never the batch `apply-drizzle-migrations.cjs` path for a rename**
+   (it swallows "already exists"). Verify with `diff-hosted-schema.cjs`. The Vercel deploy runs **no**
+   migration step, so hosted must be applied **before** the merge deploys.
+
+### Still-open holes (each needs a decision or a task, not silently "done")
+
+- **The Filter → sourcing-agent reframe (§8f)** is uncosted and gates a clean W10 + two of W14's three
+  queue rows. **This is the one to decide before W10 is scoped.**
+- **Tickler scope must include a `ReadStrips.tsx` rewire** — its `if (!hasSpend) return null` guard makes
+  the compliance strip unreachable even after the tickler ships; the guard must become per-strip. Plus
+  a `tickler_items` table (full migration ritual above) and the Today due-strip.
+- **§1.1 emoji CI guard was never built** — and ~25 `src/**` files carry candidate glyphs (arrows/shapes
+  inflate that count, but it's a real cleanup). Its own task; don't mark §1.1 done until it exists.
+- **MISSION capabilities with no W-item:** the global capture hotkey (desktop pillar; orphan 3.7 →
+  proposed "W17"), the "hire trigger" Money/Month signal, and the email→tasks paste path (lived in parked
+  chat). Each needs an explicit "in v1?" call rather than sitting in an un-itemized orphan.
+- **Decided-but-unimplemented:** §1.6 "one thing to start" weighting (morning handoff still ranks by
+  deadline only, ignoring the now-available target-link + billable inputs).
+
+### Verify-before-done
+
+- W6 budget nets **non-cancelled** timed events, not strictly "accepted" (a tentative meeting reads busy).
+- The project→target link shipped as a plain select, not the "this looks like it serves X" proposal (the
+  documented −2h W5 cut — MISSION frames the proposal as the mechanic).
+- W16's Xero mapping edge-cases (`incurred_on` from the description prefix, `REIMB-*` expansion,
+  recurring-detection) deserve a fixture test before W16 is called fully verified.
