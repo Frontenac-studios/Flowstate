@@ -87,6 +87,12 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // at read from the financial source, never written onto the row (see targets.ts).
   directions: "org_shared",
   targets: "org_shared",
+  // Sourcing agent (W10): leads are research artifacts about the market, ICP config
+  // describes the work — org_shared, never personal. No money column lives on any of
+  // these (proposal money goes financial-class); a member's SELECT * leaks no rate.
+  leads: "org_shared",
+  lead_outreach: "org_shared",
+  sourcing_settings: "org_shared",
   phases: "org_shared",
   project_milestones: "org_shared",
   project_templates: "org_shared",

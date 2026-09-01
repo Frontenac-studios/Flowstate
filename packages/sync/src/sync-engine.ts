@@ -7,6 +7,9 @@ import {
   dayReviews,
   directions,
   targets,
+  leads,
+  leadOutreach,
+  sourcingSettings,
   phases,
   projectMilestones,
   projects,
@@ -114,8 +117,9 @@ async function pullRemoteChanges(params: {
 
   for (const table of SYNC_TABLES) {
     try {
-      // app_settings is a single row per user — no watermark filter, no paging.
-      if (table === "app_settings") {
+      // Single row per user (PK user_id, no id column) — no watermark filter, no
+      // paging, and the generic `.order("id")` tiebreak would fail.
+      if (table === "app_settings" || table === "sourcing_settings") {
         const { data, error } = await params.supabase
           .from(table)
           .select("*")
@@ -412,6 +416,22 @@ async function upsertRow(
       else await db.insert(appSettings).values(mapped as never);
       return true;
     }
+    case "sourcing_settings": {
+      const userId = mapped.userId as string;
+      const [existing] = await db
+        .select()
+        .from(sourcingSettings)
+        .where(eq(sourcingSettings.userId, userId))
+        .limit(1);
+      if (existing && pickNewerRow(existing, mapped as typeof existing) === "local") return false;
+      if (existing)
+        await db
+          .update(sourcingSettings)
+          .set(mapped as never)
+          .where(eq(sourcingSettings.userId, userId));
+      else await db.insert(sourcingSettings).values(mapped as never);
+      return true;
+    }
     case "task_bulk_imports": {
       const id = mapped.id as string;
       const [existing] = await db
@@ -452,11 +472,15 @@ async function upsertRow(
     case "project_milestones":
     case "directions":
     case "targets":
+    case "leads":
+    case "lead_outreach":
     case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
         directions,
         targets,
+        leads,
+        lead_outreach: leadOutreach,
         reserved_days: reservedDays,
       } as const;
       const sqliteTable = tableMap[table];
