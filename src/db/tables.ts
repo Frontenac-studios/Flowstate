@@ -5,6 +5,9 @@ import { calendarConnections as pgCalendarConnections } from "./schema/calendar-
 import { clients as pgClients } from "./schema/clients";
 import { directions as pgDirections } from "./schema/directions";
 import { targets as pgTargets } from "./schema/targets";
+import { leads as pgLeads } from "./schema/leads";
+import { sourcingSettings as pgSourcingSettings } from "./schema/sourcing-settings";
+import { leadOutreach as pgLeadOutreach } from "./schema/lead-outreach";
 import { rates as pgRates } from "./schema/rates";
 import { invoices as pgInvoices } from "./schema/invoices";
 import { invoiceLines as pgInvoiceLines } from "./schema/invoice-lines";
@@ -125,6 +128,13 @@ export const directions = (
   isSqliteMode() ? sqliteSchema.directions : pgDirections
 ) as typeof pgDirections;
 export const targets = (isSqliteMode() ? sqliteSchema.targets : pgTargets) as typeof pgTargets;
+export const leads = (isSqliteMode() ? sqliteSchema.leads : pgLeads) as typeof pgLeads;
+export const sourcingSettings = (
+  isSqliteMode() ? sqliteSchema.sourcingSettings : pgSourcingSettings
+) as typeof pgSourcingSettings;
+export const leadOutreach = (
+  isSqliteMode() ? sqliteSchema.leadOutreach : pgLeadOutreach
+) as typeof pgLeadOutreach;
 export const rates = (isSqliteMode() ? sqliteSchema.rates : pgRates) as typeof pgRates;
 export const invoices = (isSqliteMode() ? sqliteSchema.invoices : pgInvoices) as typeof pgInvoices;
 export const invoiceLines = (

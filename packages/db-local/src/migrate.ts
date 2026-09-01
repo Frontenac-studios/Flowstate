@@ -606,6 +606,57 @@ CREATE TABLE IF NOT EXISTS targets (
 CREATE INDEX IF NOT EXISTS targets_user_id_state_idx ON targets (user_id, state);
 CREATE INDEX IF NOT EXISTS targets_direction_id_idx ON targets (direction_id);
 
+-- Sourcing agent (W10): leads, ICP/voice config, and outreach drafts.
+CREATE TABLE IF NOT EXISTS leads (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  company_name TEXT NOT NULL,
+  segment TEXT,
+  source TEXT NOT NULL DEFAULT 'manual',
+  score INTEGER,
+  confidence INTEGER,
+  rank INTEGER,
+  rationale TEXT,
+  state TEXT NOT NULL DEFAULT 'new',
+  dismiss_reason TEXT,
+  snooze_until INTEGER,
+  run_id TEXT,
+  project_id TEXT,
+  direction_id TEXT,
+  notes TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS leads_user_id_state_idx ON leads (user_id, state);
+CREATE INDEX IF NOT EXISTS leads_user_id_rank_idx ON leads (user_id, rank);
+
+CREATE TABLE IF NOT EXISTS sourcing_settings (
+  user_id TEXT PRIMARY KEY NOT NULL,
+  org_id TEXT NOT NULL,
+  segments TEXT,
+  exclusions TEXT,
+  weights TEXT,
+  outreach_voice TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS lead_outreach (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  lead_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  body TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  sent_at INTEGER,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS lead_outreach_lead_id_idx ON lead_outreach (lead_id);
+
 -- Tenancy. Local-only: these are NOT in SYNC_TABLES. The desktop app runs the
 -- same tRPC context code as web (under the auth bypass), so it needs to resolve
 -- an org locally; hosted resolves its own from Supabase.

@@ -97,6 +97,26 @@ export async function syncTargetRow(rowId: string, op: SyncOp, payload: unknown)
   await recordSyncMutation({ table: "targets", rowId, op, payload });
 }
 
+export async function syncLeadRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
+  await recordSyncMutation({ table: "leads", rowId, op, payload });
+}
+
+export async function syncLeadOutreachRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "lead_outreach", rowId, op, payload });
+}
+
+export async function syncSourcingSettingsRow(
+  userId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "sourcing_settings", rowId: userId, op, payload });
+}
+
 export async function syncRateRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
   await recordSyncMutation({ table: "rates", rowId, op, payload });
 }

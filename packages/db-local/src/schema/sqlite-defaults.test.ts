@@ -6,6 +6,8 @@ import { businessExpenses } from "./business-expenses";
 import { careEvents } from "./care-events";
 import { clients } from "./clients";
 import { directions } from "./directions";
+import { leads } from "./leads";
+import { leadOutreach } from "./lead-outreach";
 import { moneySettings } from "./money-settings";
 import { phases } from "./phases";
 import { projects } from "./projects";
@@ -245,6 +247,47 @@ describe("sqlite schema insert-time defaults", () => {
     expect(row!.derivationKey).toBeNull();
     expect(row!.createdAt).toBeInstanceOf(Date);
     expect(row!.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a lead with source/state defaults from the mirror (W10)", async () => {
+    const [row] = await db
+      .insert(leads)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        companyName: "Acme Robotics",
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.source).toBe("manual");
+    expect(row!.state).toBe("new");
+    expect(row!.score).toBeNull();
+    expect(row!.confidence).toBeNull();
+    expect(row!.rationale).toBeNull();
+    expect(row!.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a lead outreach draft with status/sort defaults (W10)", async () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    const orgId = "22222222-2222-2222-2222-222222222222";
+    const [lead] = await db
+      .insert(leads)
+      .values({ userId, orgId, companyName: "Acme Robotics" })
+      .returning();
+
+    const [row] = await db
+      .insert(leadOutreach)
+      .values({ userId, orgId, leadId: lead!.id, kind: "opener", body: "Hi there —" })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.status).toBe("draft");
+    expect(row!.sortOrder).toBe(0);
+    expect(row!.sentAt).toBeNull();
+    expect(row!.createdAt).toBeInstanceOf(Date);
   });
 
   it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {
