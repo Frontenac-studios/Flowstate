@@ -6,6 +6,7 @@ import Link from "next/link";
 import DrawPanel from "@/components/kash/money/DrawPanel";
 import InvoicesPanel from "@/components/kash/money/InvoicesPanel";
 import MoneyReport from "@/components/kash/money/MoneyReport";
+import TiltLedger from "@/components/kash/money/TiltLedger";
 import { ArrowRight, Users } from "@/components/kash/ui/icon";
 import { useTRPC } from "@/trpc/client";
 
@@ -14,6 +15,7 @@ import { useTRPC } from "@/trpc/client";
  * the time report — totals, effective rate, and the client → project → task
  * breakdown. W4 adds invoicing: ready-to-bill clients, drafts you sign, and history.
  * W16 adds the Draw panel: the running cash ledger, available-to-draw, and runway.
+ * W8 adds the Ledger: the biweekly said-vs-spent read of the declared quarter tilt.
  */
 export default function MoneyOverview() {
   const trpc = useTRPC();
@@ -48,6 +50,8 @@ export default function MoneyOverview() {
       </Link>
 
       <MoneyReport />
+
+      <TiltLedger />
 
       <InvoicesPanel />
 

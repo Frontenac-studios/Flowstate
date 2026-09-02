@@ -13,6 +13,7 @@ import { invoices as pgInvoices } from "./schema/invoices";
 import { invoiceLines as pgInvoiceLines } from "./schema/invoice-lines";
 import { moneySettings as pgMoneySettings } from "./schema/money-settings";
 import { businessExpenses as pgBusinessExpenses } from "./schema/business-expenses";
+import { ledgerPeriods as pgLedgerPeriods } from "./schema/ledger-periods";
 import { ownerDraws as pgOwnerDraws } from "./schema/owner-draws";
 import { externalCalendarEvents as pgExternalCalendarEvents } from "./schema/external-calendar-events";
 import { careActivities as pgCareActivities } from "./schema/care-activities";
@@ -149,6 +150,9 @@ export const businessExpenses = (
 export const ownerDraws = (
   isSqliteMode() ? sqliteSchema.ownerDraws : pgOwnerDraws
 ) as typeof pgOwnerDraws;
+export const ledgerPeriods = (
+  isSqliteMode() ? sqliteSchema.ledgerPeriods : pgLedgerPeriods
+) as typeof pgLedgerPeriods;
 export const orgs = (isSqliteMode() ? sqliteSchema.orgs : pgOrgs) as typeof pgOrgs;
 export const orgMemberships = (
   isSqliteMode() ? sqliteSchema.orgMemberships : pgOrgMemberships

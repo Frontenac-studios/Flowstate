@@ -6,6 +6,7 @@ import { businessExpenses } from "./business-expenses";
 import { careEvents } from "./care-events";
 import { clients } from "./clients";
 import { directions } from "./directions";
+import { ledgerPeriods } from "./ledger-periods";
 import { leads } from "./leads";
 import { leadOutreach } from "./lead-outreach";
 import { moneySettings } from "./money-settings";
@@ -288,6 +289,44 @@ describe("sqlite schema insert-time defaults", () => {
     expect(row!.sortOrder).toBe(0);
     expect(row!.sentAt).toBeNull();
     expect(row!.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("seals a ledger fortnight without an explicit id or timestamps", async () => {
+    // The seal path inserts a jsonb breakdown; a plain-text mirror column would
+    // fail to bind the object (see the desktop jsonb bind gotcha).
+    const [row] = await db
+      .insert(ledgerPeriods)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        periodStart: "2026-08-14",
+        tiltBusinessPct: 70,
+        businessSeconds: 147_600,
+        personalSeconds: 212_400,
+        breakdown: [
+          {
+            kind: "client",
+            clientId: "22222222-2222-2222-2222-222222222222",
+            name: "Great White",
+            seconds: 93_600,
+            sharePct: 26,
+            projects: [
+              {
+                projectId: "33333333-3333-3333-3333-333333333333",
+                name: "GW — Build",
+                seconds: 72_000,
+                sharePct: 20,
+              },
+            ],
+          },
+        ],
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.sealedAt).toBeInstanceOf(Date);
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect((row!.breakdown as { name: string }[])[0]!.name).toBe("Great White");
   });
 
   it("logs a care event without an explicit occurredAt (semantic timestamp default)", async () => {
