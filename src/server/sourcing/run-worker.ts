@@ -414,7 +414,10 @@ async function scoreOne(
     companyNotes: inputs.companyNotes,
     researchedFacts: inputs.researchedFacts,
     segments: inputs.segments,
-    weights: settingsRow?.weights ?? DEFAULT_WEIGHTS,
+    // Merge over defaults, exactly as sourcing.scoreLead does: a settings row stored
+    // before the Fit/Need/Value rework still has fit/risk/strategy keys, and spreading
+    // it raw would interpolate "Need undefined, Value undefined" into the prompt.
+    weights: { ...DEFAULT_WEIGHTS, ...(settingsRow?.weights ?? {}) },
     exclusions: inputs.exclusions,
     directions: directionRows.map((d) => d.statement),
     wonClientNames: clientRows.map((c) => c.name),
