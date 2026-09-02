@@ -41,9 +41,7 @@ describe("computeSweep", () => {
 
     const expired = computeSweep({
       now: NOW,
-      candidates: [
-        candidate({ id: "kept", lastActivityAt: daysAgo(90), keptUntil: daysAgo(1) }),
-      ],
+      candidates: [candidate({ id: "kept", lastActivityAt: daysAgo(90), keptUntil: daysAgo(1) })],
     });
     expect(expired.items.map((i) => i.id)).toEqual(["kept"]);
   });

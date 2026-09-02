@@ -1,0 +1,32 @@
+-- Org bootstrap, made idempotent under concurrency.
+--
+-- Bootstrapping an empty database created TWO orgs for the same user, with
+-- created_at identical to the millisecond: the app fires several tRPC batches on
+-- first page load, each one ran ensureOrgForUser(), and each inserted its own
+-- org. Every request afterwards then hard-errored with AmbiguousOrgMembershipError
+-- and the install could only be rescued by deleting a row by hand.
+--
+-- The old guard was a re-check inside a transaction, which cannot work: Postgres
+-- runs READ COMMITTED, so both snapshots see no membership and both insert.
+-- Uniqueness is the only thing that settles it, so this marks the org that is
+-- somebody's implicit personal one and makes that mark unique per user.
+--
+-- Scoped deliberately: NOT a unique index on org_memberships(user_id), which
+-- would forbid the many-to-many membership the schema is built for and make
+-- AmbiguousOrgMembershipError unreachable. Nulls are distinct in Postgres, so
+-- this constrains only the auto-created personal orgs.
+--
+-- No backfill. Existing orgs stay NULL, which is correct and also the safe
+-- choice: a database already in the broken state holds two solo orgs for one
+-- user, and any backfill that guessed which is "the" personal org would fail
+-- this index and block the migration. ensureOrgForUser returns on the existing
+-- membership before it reaches the create path, so those installs never need
+-- the marker.
+--
+-- orgs is ORG_INFRA (src/db/tenancy.ts), not a classified tenant table. Additive
+-- column on an existing table, so the policies in
+-- supabase/rls/20260805120000_orgs_rls.sql already cover it; the companion file
+-- supabase/rls/20260902130000_orgs_personal_guard.sql updates handle_new_user_org
+-- to set the marker on the trigger path too.
+ALTER TABLE "orgs" ADD COLUMN IF NOT EXISTS "personal_for_user_id" uuid;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "orgs_personal_for_user_id_idx" ON "orgs" ("personal_for_user_id");
