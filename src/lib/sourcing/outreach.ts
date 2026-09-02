@@ -49,8 +49,9 @@ const LENGTH_GUIDANCE = {
  */
 export function buildOutreachPrompt(inputs: OutreachInputs): { system: string; prompt: string } {
   const { voice } = inputs;
-  // Lead with the confirmable positives; risk reasons aren't a selling point.
-  const fitReasons = [inputs.rationale?.fit, inputs.rationale?.strategy]
+  // Lead with the confirmable positives — the fit and the need they have; the
+  // value/WTP facet is your pricing read, not a selling point to put in an opener.
+  const fitReasons = [inputs.rationale?.fit, inputs.rationale?.need]
     .flatMap((f) => f?.reasons ?? [])
     .slice(0, 4);
 

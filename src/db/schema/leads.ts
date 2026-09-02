@@ -36,7 +36,7 @@ export const leads = pgTable(
     /** 0–100 "how sure" — data coverage; low = thin/unverified. */
     confidence: integer("confidence"),
     rank: integer("rank"),
-    /** Fit/Risk/Strategy breakdown + "couldn't confirm" gaps (W10c). */
+    /** Fit/Need/Value facets + a non-scored judgment brief + "couldn't confirm" gaps (W10c). */
     rationale: jsonb("rationale").$type<LeadRationale>(),
     /**
      * What the web said about this company (W10h) — the facts the score was formed

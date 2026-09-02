@@ -4,12 +4,19 @@ import { buildScoringPrompt, rankLeads, type ScoringInputs } from "./scoring";
 import { DEFAULT_WEIGHTS } from "./constants";
 
 const inputs: ScoringInputs = {
-  companyName: "Acme Robotics",
-  companyNotes: "Series A, 18 people, hiring backend engineers.",
-  segments: [{ id: "p", label: "Primary", firmographics: "seed/Series-A B2B SaaS" }],
+  companyName: "Ridgeline Distribution",
+  companyNotes:
+    "Mid-market distributor, ~$60M revenue, 180 staff, 4 DCs in Virginia; posted an Ops Analyst role.",
+  segments: [
+    {
+      id: "p",
+      label: "Primary",
+      firmographics: "Mid-market distribution & wholesale, $25M–$150M, Eastern time zone.",
+    },
+  ],
   weights: DEFAULT_WEIGHTS,
-  exclusions: ["agencies"],
-  directions: ["We serve early-stage teams shipping production software."],
+  exclusions: ["under $10M revenue"],
+  directions: ["We serve mid-market operators modernizing their back office."],
   wonClientNames: ["Great White", "Hume"],
   rateFloorCents: 4500,
 };
@@ -19,11 +26,34 @@ describe("buildScoringPrompt", () => {
     const { system, prompt } = buildScoringPrompt(inputs);
     expect(system).toContain("HARD GATE");
     expect(system).toContain("NEVER change the score");
-    expect(prompt).toContain("Acme Robotics");
-    expect(prompt).toContain("Series A, 18 people");
+    expect(prompt).toContain("Ridgeline Distribution");
+    expect(prompt).toContain("$60M revenue");
     expect(prompt).toContain("Great White, Hume");
     expect(prompt).toContain("$45/hr");
-    expect(prompt).toContain("agencies");
+    expect(prompt).toContain("under $10M revenue");
+  });
+
+  it("scores on the fact-based facets, never the human's judgment", () => {
+    const { system } = buildScoringPrompt(inputs);
+    expect(system).toContain("Fit =");
+    expect(system).toContain("Need =");
+    expect(system).toContain("Value =");
+    // Fact-based rule + judgment is surfaced, not scored.
+    expect(system).toContain("never move the score");
+    // The old judgment-laden axes must be gone.
+    expect(system).not.toContain("Risk =");
+    expect(system).not.toContain("Strategy =");
+  });
+
+  it("interpolates the tunable won-similarity / explicit split (was hard-coded)", () => {
+    const even = buildScoringPrompt(inputs).system;
+    expect(even).toContain("50% similarity to the won clients");
+    const tilted = buildScoringPrompt({
+      ...inputs,
+      weights: { ...DEFAULT_WEIGHTS, wonSimilarity: 70, explicit: 30 },
+    }).system;
+    expect(tilted).toContain("70% similarity to the won clients");
+    expect(tilted).toContain("30% the explicit criteria");
   });
 
   it("degrades cleanly when nothing is configured", () => {

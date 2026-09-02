@@ -16,9 +16,9 @@ function inputs(overrides: Partial<OutreachInputs> = {}): OutreachInputs {
     companyName: "Northwind Studios",
     companyNotes: "Mid-size design agency expanding into product.",
     rationale: {
-      fit: { score: 80, reasons: ["Design agency in target band"] },
-      strategy: { score: 70, reasons: ["Case-study potential"] },
-      risk: { score: 40, reasons: ["Budget unclear"] },
+      fit: { score: 80, reasons: ["Mid-market distributor in target band"] },
+      need: { score: 70, reasons: ["Hiring an ops analyst"] },
+      value: { score: 40, reasons: ["WTP inferred below rate"] },
     },
     voice: VOICE,
     directions: ["Product strategy for services firms"],
@@ -40,11 +40,11 @@ describe("buildOutreachPrompt", () => {
     expect(system).toMatch(/never.*sent/i);
   });
 
-  it("leads with the fit/strategy reasons, not the risk reasons", () => {
+  it("leads with the fit/need reasons, not the value (WTP) read", () => {
     const { prompt } = buildOutreachPrompt(inputs());
-    expect(prompt).toContain("Design agency in target band");
-    expect(prompt).toContain("Case-study potential");
-    expect(prompt).not.toContain("Budget unclear");
+    expect(prompt).toContain("Mid-market distributor in target band");
+    expect(prompt).toContain("Hiring an ops analyst");
+    expect(prompt).not.toContain("WTP inferred below rate");
   });
 
   it("cites a comparable client only when the voice opts in", () => {

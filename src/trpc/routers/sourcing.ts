@@ -96,8 +96,8 @@ const weightsSchema = z.object({
   wonSimilarity: z.number().int().min(0).max(100),
   explicit: z.number().int().min(0).max(100),
   fit: z.number().int().min(0).max(100),
-  risk: z.number().int().min(0).max(100),
-  strategy: z.number().int().min(0).max(100),
+  need: z.number().int().min(0).max(100),
+  value: z.number().int().min(0).max(100),
 });
 
 const voiceSchema = z.object({
@@ -384,7 +384,9 @@ export const sourcingRouter = createTRPCRouter({
         companyNotes: lead.notes ?? "",
         researchedFacts: lead.research ? renderFactsForScoring(lead.research) : null,
         segments: settingsRow?.segments ?? [],
-        weights: settingsRow?.weights ?? DEFAULT_WEIGHTS,
+        // Merge over defaults so a stored row from before the Fit/Need/Value rework
+        // (which had fit/risk/strategy keys) still yields every weight the prompt reads.
+        weights: { ...DEFAULT_WEIGHTS, ...(settingsRow?.weights ?? {}) },
         exclusions: settingsRow?.exclusions ?? [],
         directions: directionRows.map((d) => d.statement),
         wonClientNames: clientRows.map((c) => c.name),

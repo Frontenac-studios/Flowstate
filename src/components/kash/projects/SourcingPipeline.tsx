@@ -35,7 +35,7 @@ const DISMISS_OPTIONS: { value: string; label: string }[] = [
   { value: "not_interested", label: "Not interested" },
 ];
 
-const FACETS = ["fit", "risk", "strategy"] as const;
+const FACETS = ["fit", "need", "value"] as const;
 
 /** "$40,000" / "40000" / "40k" → cents. Null when there's no number in there. */
 function parseAmountToCents(text: string): number | null {
@@ -56,9 +56,9 @@ function parseAmountToCents(text: string): number | null {
  * where projects live.
  *
  * The board is grouped by stage rather than laid out in columns because a card
- * carries real substance — the score rationale, the gaps, the outreach drafts — and
- * none of that survives a 256px column. Stages read down the page, each with its
- * count; a deal moves with the ‹ › controls on its card.
+ * carries real substance — the Fit/Need/Value rationale, the judgment brief, the
+ * gaps, the outreach drafts — and none of that survives a 256px column. Stages read
+ * down the page, each with its count; a deal moves with the ‹ › controls on its card.
  *
  * Money on this surface comes from a separate query (`listProposals`, financial) and
  * is joined to the cards by project id — the lead rows themselves carry no amount.
@@ -303,6 +303,12 @@ export default function SourcingPipeline() {
                           </div>
                         );
                       })}
+                      {rationale.judgment && rationale.judgment.length ? (
+                        <p className="mt-1 text-caption text-ink-muted">
+                          <span className="text-ink">For your call:</span>{" "}
+                          {rationale.judgment.join(" · ")}
+                        </p>
+                      ) : null}
                       {rationale.gaps && rationale.gaps.length ? (
                         <p className="mt-1 text-caption text-ink-muted">
                           Couldn&apos;t confirm: {rationale.gaps.join("; ")}

@@ -14,13 +14,19 @@ export type ScoreFacet = {
 };
 
 /**
- * Why a lead scored the way it did. Only Fit/Risk/Strategy move the 0–100 score;
+ * Why a lead scored the way it did. Only the fact-based facets Fit/Need/Value move the
+ * 0–100 score; `judgment` notes are surfaced for the human to weigh but never scored;
  * `gaps` are the "couldn't confirm X" notes that lower *confidence*, never score.
  */
 export type LeadRationale = {
   fit?: ScoreFacet;
-  risk?: ScoreFacet;
-  strategy?: ScoreFacet;
+  need?: ScoreFacet;
+  value?: ScoreFacet;
+  /**
+   * Judgments the agent surfaces but must NEVER score — do-I-want-them, strategic /
+   * case-study value, capability fit. A brief you read; the call stays yours.
+   */
+  judgment?: string[];
   /** Data the agent couldn't confirm — lowers confidence, names the gap. */
   gaps?: string[];
 };
@@ -39,11 +45,17 @@ export type LeadRationale = {
  */
 export type EnrichmentMode = "off" | "web";
 
-/** One ICP profile. Firmographics are free-form so the agent can match loosely. */
+/**
+ * One ICP profile. Firmographics are free-form today so the agent can match loosely;
+ * the fact-based rework reads region / revenue band / market tier out of this text.
+ * TODO(W10): promote firmographics to structured fields (industries, revenue band,
+ * headcount, regions, market tiers, ownership) so scoring is a real parametric match
+ * and the region gate is enforced structurally — a follow-up (touches the ICP config UI).
+ */
 export type SourcingSegment = {
   id: string;
   label: string;
-  /** Free-text firmographics: industry, size/stage band, geography, etc. */
+  /** Free-text firmographics: industry, revenue/size band, region, market tier, etc. */
   firmographics: string;
   /** Gap-filling for this segment. Undefined = "off" (the default costs nothing). */
   enrichment?: EnrichmentMode;
@@ -54,10 +66,10 @@ export type SourcingWeights = {
   /** Won-client similarity vs explicit criteria (each 0–100, sum 100). */
   wonSimilarity: number;
   explicit: number;
-  /** Within the explicit half, Fit/Risk/Strategy split (0–100, sum 100). */
+  /** Within the explicit half, the fact-based Fit/Need/Value split (0–100, sum 100). */
   fit: number;
-  risk: number;
-  strategy: number;
+  need: number;
+  value: number;
 };
 
 /** The single editable outreach-voice profile the drafter mirrors (W10e). */
