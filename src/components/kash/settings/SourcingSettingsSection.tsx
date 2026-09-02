@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Checkbox from "@/components/kash/ui/Checkbox";
@@ -11,7 +11,12 @@ import Textarea from "@/components/kash/ui/Textarea";
 import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import { DEFAULT_VOICE, DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
 import { DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE, MIN_BATCH_SIZE } from "@/lib/sourcing/run";
-import type { OutreachVoice, SourcingSegment, SourcingWeights } from "@/lib/sourcing/types";
+import type {
+  EnrichmentMode,
+  OutreachVoice,
+  SourcingSegment,
+  SourcingWeights,
+} from "@/lib/sourcing/types";
 import { useTRPC } from "@/trpc/client";
 
 const MAX_SEGMENTS = 3;
@@ -29,6 +34,10 @@ export default function SourcingSettingsSection() {
 
   const { data: settings } = useQuery(trpc.sourcing.getSettings.queryOptions());
   const { data: seed } = useQuery(trpc.sourcing.getSeedSuggestion.queryOptions());
+  // Which segments the agent keeps failing to learn enough about — the evidence a
+  // paid data vendor would be answering, shown next to the switch that would buy one.
+  const { data: health = [] } = useQuery(trpc.sourcing.confidenceHealth.queryOptions());
+  const healthBySegment = useMemo(() => new Map(health.map((h) => [h.segmentId, h])), [health]);
 
   const [segments, setSegments] = useState<SourcingSegment[]>([]);
   const [exclusionsText, setExclusionsText] = useState("");
@@ -142,6 +151,36 @@ export default function SourcingSettingsSection() {
               rows={3}
               className="text-sm"
             />
+
+            {/* W10j — gap-filling, per segment, with the evidence for it alongside. */}
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 text-caption text-ink-muted">
+                Gap-filling
+                <Select
+                  aria-label={`Gap-filling for ${seg.label}`}
+                  value={seg.enrichment ?? "off"}
+                  onChange={(e) =>
+                    updateSegment(seg.id, { enrichment: e.target.value as EnrichmentMode })
+                  }
+                  className="py-1 text-sm"
+                >
+                  <option value="off">Off</option>
+                  <option value="web">One extra web search (~8¢)</option>
+                </Select>
+              </label>
+              {healthBySegment.get(seg.id)?.chronicallyLow ? (
+                <span className="text-caption text-ink">
+                  Averaging {healthBySegment.get(seg.id)!.meanConfidence}% confidence over{" "}
+                  {healthBySegment.get(seg.id)!.scored} prospects — this segment is the one worth
+                  gap-filling.
+                </span>
+              ) : healthBySegment.get(seg.id) ? (
+                <span className="text-caption text-ink-faint">
+                  {healthBySegment.get(seg.id)!.meanConfidence}% mean confidence over{" "}
+                  {healthBySegment.get(seg.id)!.scored} prospects.
+                </span>
+              ) : null}
+            </div>
           </div>
         ))}
         {segments.length < MAX_SEGMENTS ? (

@@ -14,6 +14,7 @@ import {
   sourcingSettings,
 } from "@/db/tables";
 import { DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
+import { shouldEnrich } from "@/lib/sourcing/enrichment";
 import { dedupeDiscovered, renderFactsForScoring, WEB_MAX_RESULTS } from "@/lib/sourcing/research";
 import {
   addSpend,
@@ -26,6 +27,7 @@ import {
   usdToSpend,
   type Spend,
 } from "@/lib/sourcing/run";
+import { enrichLead } from "@/server/sourcing/enrich-lead";
 import { researchCompany } from "@/server/sourcing/research-company";
 import { scoreCompany } from "@/server/sourcing/score-company";
 import { getWebResearchAdapter } from "@/server/sourcing/web-research";
@@ -293,10 +295,34 @@ export async function tickUser(params: {
         exclusions: settings?.exclusions ?? [],
       });
 
+      // W10j — one gap-fill pass, but only for a segment that asked for it and only
+      // on a company the score came back unsure about. It runs AFTER scoring because
+      // the confidence figure is what decides whether it is worth the money.
+      let finalFacts = facts;
+      const segment = (settings?.segments ?? []).find((s) => s.id === lead.segment);
+      if (
+        shouldEnrich({
+          mode: segment?.enrichment,
+          confidence: scored?.confidence ?? null,
+          gaps: facts.unverified,
+        })
+      ) {
+        const enriched = await enrichLead({
+          companyName: lead.companyName,
+          facts,
+          mode: segment?.enrichment,
+        });
+        finalFacts = enriched.facts;
+        if (enriched.costUsd > 0) {
+          runSpend = addSpend(runSpend, usdToSpend(enriched.costUsd));
+          await recordSpend({ userId, orgId }, run.id, usdToSpend(enriched.costUsd), 2);
+        }
+      }
+
       const [row] = await db
         .update(leads)
         .set({
-          research: facts,
+          research: finalFacts,
           researchedAt: new Date(),
           researchProvider: provider,
           score: scored?.score ?? null,

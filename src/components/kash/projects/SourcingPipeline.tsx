@@ -88,6 +88,20 @@ export default function SourcingPipeline() {
       onError: (e: { message: string }) => toast?.toast({ message: e.message, variant: "error" }),
     })
   );
+  const enrich = useMutation(
+    trpc.sourcing.enrichLead.mutationOptions({
+      onSuccess: (r: { resolved: number }) => {
+        invalidate();
+        toast?.toast({
+          message:
+            r.resolved > 0
+              ? `Closed ${r.resolved} gap${r.resolved === 1 ? "" : "s"}.`
+              : "Nothing new could be confirmed.",
+        });
+      },
+      onError: (e: { message: string }) => toast?.toast({ message: e.message, variant: "error" }),
+    })
+  );
   const research = useMutation(
     trpc.sourcing.researchLead.mutationOptions({
       onSuccess: invalidate,
@@ -344,6 +358,20 @@ export default function SourcingPipeline() {
                           ? "Re-research"
                           : "Research"}
                     </Button>
+                    {researched && researched.unverified.length > 0 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => enrich.mutate({ leadId: lead.id })}
+                        disabled={enrich.isPending}
+                        className="text-sm"
+                        title="One more search, aimed at what couldn't be confirmed. About 8¢."
+                      >
+                        {enrich.isPending && enrich.variables?.leadId === lead.id
+                          ? "Filling gaps…"
+                          : `Fill ${researched.unverified.length} gap${researched.unverified.length === 1 ? "" : "s"}`}
+                      </Button>
+                    ) : null}
                     {back ? (
                       <Button
                         type="button"
