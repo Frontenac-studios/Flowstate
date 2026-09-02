@@ -137,6 +137,7 @@ describe("financial data placement", () => {
       "ledger_periods",
       "money_settings",
       "owner_draws",
+      "project_fees",
       "rates",
       "time_entries",
     ]);

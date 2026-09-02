@@ -19,6 +19,7 @@ export * from "./day-reviews";
 export * from "./focus-blocks";
 export * from "./invoices";
 export * from "./invoice-lines";
+export * from "./project-fees";
 export * from "./money-settings";
 export * from "./owner-draws";
 export * from "./org-memberships";

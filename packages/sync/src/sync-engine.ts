@@ -12,6 +12,7 @@ import {
   sourcingSettings,
   phases,
   projectMilestones,
+  projectFees,
   projects,
   projectTemplates,
   rates,
@@ -474,6 +475,7 @@ async function upsertRow(
     case "targets":
     case "leads":
     case "lead_outreach":
+    case "project_fees":
     case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
@@ -481,6 +483,7 @@ async function upsertRow(
         targets,
         leads,
         lead_outreach: leadOutreach,
+        project_fees: projectFees,
         reserved_days: reservedDays,
       } as const;
       const sqliteTable = tableMap[table];

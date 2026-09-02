@@ -157,6 +157,14 @@ export async function syncOwnerDrawRow(rowId: string, op: SyncOp, payload: unkno
   await recordSyncMutation({ table: "owner_draws", rowId, op, payload });
 }
 
+export async function syncProjectFeeRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "project_fees", rowId, op, payload });
+}
+
 export async function syncProjectTemplateRow(
   rowId: string,
   op: SyncOp,

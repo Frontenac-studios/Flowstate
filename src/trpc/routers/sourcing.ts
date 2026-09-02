@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -6,7 +6,7 @@ import { db } from "@/db";
 import {
   syncLeadOutreachRow,
   syncLeadRow,
-  syncProjectRow,
+  syncProjectFeeRow,
   syncSourcingSettingsRow,
 } from "@/db/record-sync-mutation";
 import {
@@ -14,23 +14,44 @@ import {
   directions,
   leadOutreach,
   leads,
-  projects,
+  projectFees,
   rates,
   sourcingSettings,
   targets,
 } from "@/db/tables";
 import { isModelConfigured } from "@/lib/env";
-import { slugifyProjectName } from "@/lib/projects/slugify";
 import { DEFAULT_VOICE, DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
+import {
+  CLOSED_STAGES,
+  OPEN_STAGES,
+  PIPELINE_STAGES,
+  isClosedStage,
+  stagePromotes,
+  stageTakesProposal,
+  type PipelineStage,
+} from "@/lib/sourcing/pipeline";
 import { rankLeads } from "@/lib/sourcing/scoring";
 import { buildIcpSeed } from "@/lib/sourcing/seed";
 import { draftOutreach } from "@/server/sourcing/draft-outreach";
+import {
+  archiveProject,
+  ensureProspectProject,
+  signProject,
+  unarchiveProject,
+  unsignProject,
+} from "@/server/sourcing/pipeline-effects";
 import { scoreCompany } from "@/server/sourcing/score-company";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
-/** Leads visible on the triage board — everything not settled or set aside. */
-const TRIAGE_STATES = ["new", "contacted", "engaged", "proposal"] as const;
+/**
+ * The board shows open deals only. The stage vocabulary itself lives in
+ * src/lib/sourcing/pipeline.ts — this router never hard-codes the funnel.
+ */
+const BOARD_STATES = OPEN_STAGES;
+
+/** Every stage a deal can be moved to by hand: the funnel, plus the two losses. */
+const SETTABLE_STAGES = [...PIPELINE_STAGES, "declined", "lost"] as const;
 
 /** One-tap dismiss reasons (walk-through: bad-timing snoozes rather than excludes). */
 const DISMISS_REASONS = [
@@ -213,7 +234,7 @@ export const sourcingRouter = createTRPCRouter({
     const rows = await db
       .select()
       .from(leads)
-      .where(and(eq(leads.userId, ctx.userId), inArray(leads.state, [...TRIAGE_STATES])));
+      .where(and(eq(leads.userId, ctx.userId), inArray(leads.state, [...BOARD_STATES])));
     const ranked = rankLeads(
       rows.map((r) => ({ id: r.id, score: r.score, confidence: r.confidence }))
     );
@@ -317,11 +338,22 @@ export const sourcingRouter = createTRPCRouter({
     }),
 
   /**
-   * Promote a lead to the pipeline — creates a `state='prospect'` project and links
-   * it (the fuller pipeline board/stages is W10f). Strongest positive ICP signal.
+   * Move a deal along the pipeline (W10f) — the one mutation the board's stage
+   * controls call, forward or back. The stage vocabulary and the promotion rule
+   * both come from src/lib/sourcing/pipeline.ts.
+   *
+   * The side effects are what make this more than a state write:
+   *  - reaching `contacted` (or anything deeper) earns the lead its prospect
+   *    project, created on demand and idempotently;
+   *  - `signed` turns that project into active work with a client attached;
+   *  - `declined`/`lost` stamp `closedAt` and archive the prospect off the board,
+   *    keeping the row as evidence;
+   *  - moving a closed deal back to an open stage undoes all of that — the project
+   *    comes back, un-signed and un-linked from the client (the client row itself
+   *    is never deleted).
    */
-  promoteLead: protectedProcedure
-    .input(z.object({ leadId: z.string().uuid() }))
+  setStage: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid(), stage: z.enum(SETTABLE_STAGES) }))
     .mutation(async ({ ctx, input }) => {
       const [lead] = await db
         .select()
@@ -329,49 +361,166 @@ export const sourcingRouter = createTRPCRouter({
         .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
         .limit(1);
       if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
-      if (lead.projectId) {
-        throw new TRPCError({ code: "CONFLICT", message: "This lead is already promoted." });
+      if (lead.state === input.stage) return lead;
+
+      const wasClosed = isClosedStage(lead.state);
+      const nowClosed = isClosedStage(input.stage);
+      const now = new Date();
+
+      // Promotion first: everything downstream needs the project to exist.
+      let projectId = lead.projectId;
+      if (!nowClosed || input.stage === "signed") {
+        const stage = input.stage as PipelineStage;
+        if (stagePromotes(stage)) {
+          const ensured = await ensureProspectProject(ctx, {
+            id: lead.id,
+            companyName: lead.companyName,
+            projectId: lead.projectId,
+          });
+          projectId = ensured.projectId;
+        }
       }
 
-      // Unique slug (append a short suffix if the base is taken).
-      const base = slugifyProjectName(lead.companyName).toLowerCase() || "prospect";
-      const taken = new Set(
-        (
-          await db
-            .select({ slug: projects.slug })
-            .from(projects)
-            .where(eq(projects.userId, ctx.userId))
-        ).map((p) => p.slug)
-      );
-      let slug = base;
-      while (taken.has(slug)) slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
-
-      const [project] = await db
-        .insert(projects)
-        .values({
-          userId: ctx.userId,
-          name: lead.companyName,
-          slug,
-          category: "business",
-          state: "prospect",
-        })
-        .returning();
-      if (!project) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create project.",
-        });
+      if (input.stage === "signed" && projectId) {
+        await signProject(ctx, projectId, lead.companyName);
+      } else if (nowClosed && projectId) {
+        // declined / lost — off the board, retained.
+        await archiveProject(ctx, projectId);
+      } else if (wasClosed && projectId) {
+        // Reopening: undo whichever close it was.
+        if (lead.state === "signed") await unsignProject(ctx, projectId);
+        else await unarchiveProject(ctx, projectId);
       }
-      await syncProjectRow(project.id, "insert", project);
 
-      const [updated] = await db
+      const [row] = await db
         .update(leads)
-        .set({ state: "promoted", projectId: project.id, updatedAt: new Date() })
+        .set({
+          state: input.stage,
+          projectId,
+          closedAt: nowClosed ? (lead.closedAt ?? now) : null,
+          // A deal that moves is no longer snoozed or dismissed.
+          snoozeUntil: null,
+          dismissReason: null,
+          updatedAt: now,
+        })
         .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
         .returning();
-      if (updated) await syncLeadRow(updated.id, "update", updated);
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      await syncLeadRow(row.id, "update", row);
+      return row;
+    }),
 
-      return { leadId: lead.id, projectId: project.id, slug };
+  /** Closed deals, most recent first — the board's collapsed "what happened" list. */
+  listClosed: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(100).default(20) }).optional())
+    .query(async ({ ctx, input }) => {
+      return db
+        .select({
+          id: leads.id,
+          companyName: leads.companyName,
+          state: leads.state,
+          score: leads.score,
+          projectId: leads.projectId,
+          closedAt: leads.closedAt,
+        })
+        .from(leads)
+        .where(and(eq(leads.userId, ctx.userId), inArray(leads.state, [...CLOSED_STAGES])))
+        .orderBy(desc(leads.closedAt))
+        .limit(input?.limit ?? 20);
+    }),
+
+  /**
+   * The proposal figures for the user's deals, keyed by project.
+   *
+   * A SEPARATE read from `listLeads` on purpose: this is `financial`-class money and
+   * that one returns `org_shared` rows. Keeping the money on its own procedure is
+   * what lets role enforcement, when it lands, gate this and only this — rather than
+   * having to strip fields out of a shared payload.
+   */
+  listProposals: protectedProcedure.query(async ({ ctx }) => {
+    return db
+      .select({
+        projectId: projectFees.projectId,
+        proposalAmountCents: projectFees.proposalAmountCents,
+        proposedAt: projectFees.proposedAt,
+      })
+      .from(projectFees)
+      .where(eq(projectFees.userId, ctx.userId));
+  }),
+
+  /**
+   * Record what a deal was quoted at. The amount lands in `project_fees`
+   * (financial-class), never on the lead — so a Member reading `leads` sees the
+   * company and the score, and no dollar figure at all.
+   *
+   * Requires a promoted project, which the Proposal stage guarantees. Passing null
+   * clears the figure.
+   */
+  setProposalAmount: protectedProcedure
+    .input(
+      z.object({
+        leadId: z.string().uuid(),
+        amountCents: z.number().int().min(0).max(1_000_000_00).nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [lead] = await db
+        .select({ id: leads.id, state: leads.state, projectId: leads.projectId })
+        .from(leads)
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      if (!lead.projectId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Move the deal to Proposal before recording an amount.",
+        });
+      }
+      if (!isClosedStage(lead.state) && !stageTakesProposal(lead.state as PipelineStage)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Move the deal to Proposal before recording an amount.",
+        });
+      }
+
+      const now = new Date();
+      const [existing] = await db
+        .select({ id: projectFees.id })
+        .from(projectFees)
+        .where(and(eq(projectFees.userId, ctx.userId), eq(projectFees.projectId, lead.projectId)))
+        .limit(1);
+
+      let row;
+      if (existing) {
+        [row] = await db
+          .update(projectFees)
+          .set({
+            proposalAmountCents: input.amountCents,
+            proposedAt: input.amountCents === null ? null : now,
+            updatedAt: now,
+          })
+          .where(and(eq(projectFees.id, existing.id), eq(projectFees.userId, ctx.userId)))
+          .returning();
+      } else {
+        [row] = await db
+          .insert(projectFees)
+          .values({
+            userId: ctx.userId,
+            orgId: ctx.orgId,
+            projectId: lead.projectId,
+            proposalAmountCents: input.amountCents,
+            proposedAt: input.amountCents === null ? null : now,
+          })
+          .returning();
+      }
+      if (!row) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to save the proposal amount.",
+        });
+      }
+      await syncProjectFeeRow(row.id, existing ? "update" : "insert", row);
+      return row;
     }),
 
   /** The drafted opener + follow-ups for one lead, in send order. */

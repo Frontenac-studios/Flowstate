@@ -13,8 +13,8 @@ import type { LeadRationale } from "@/lib/sourcing/types";
  * `projectId`. This reconciles "a lead is a prospect project" with the churn.
  *
  * MONEY-NEVER-A-COLUMN: no proposal amount / rate figure lives here — the row is
- * `org_shared`. Proposal money goes in a `financial`-class home when the pipeline
- * models it (W10f), never on this row.
+ * `org_shared`. The pipeline's proposal amount lives in `project_fees`
+ * (`financial`, keyed by the promoted project), never on this row.
  *
  * `directionId` records which active Direction the lead was scored against, so the
  * Quarter "applied line" can count leads scored/declined per Direction (W10g) — a
@@ -41,6 +41,12 @@ export const leads = pgTable(
     /** One-tap reason captured on dismiss (wrong industry / too small / …). */
     dismissReason: text("dismiss_reason"),
     snoozeUntil: timestamp("snooze_until", { withTimezone: true, mode: "date" }),
+    /**
+     * When the deal reached a terminal stage (signed / declined / lost). Null while
+     * it is open. This is what makes "deals closed this quarter" a read rather than
+     * an inference from `updatedAt`, which any later edit would move.
+     */
+    closedAt: timestamp("closed_at", { withTimezone: true, mode: "date" }),
     /** The weekly agent batch this came from (W10i); no FK until sourcing_runs exists. */
     runId: uuid("run_id"),
     /** Set on promote — the prospect project this lead became. */

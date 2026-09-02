@@ -4,18 +4,33 @@ import { pgEnum } from "drizzle-orm/pg-core";
 export const leadSource = pgEnum("lead_source", ["sourced", "manual", "intake"]);
 
 /**
- * A lead's lifecycle. `new` → the agent/manual entry; `promoted` links it to a
- * `state='prospect'` project (that's when it becomes pipeline); `dismissed`/`snoozed`
- * come from triage. Contacted→engaged→proposal track outreach before promotion.
+ * A lead's lifecycle — and, from W10f, its **pipeline stage**. The five open stages
+ * `new`(Sourced) → `contacted` → `engaged` → `proposal` → `signed` are the funnel;
+ * the ordering lives in src/lib/sourcing/pipeline.ts, which is the single authority
+ * on what "forward" means.
+ *
+ * Promotion is no longer a state: a lead that reaches `contacted` or beyond gets a
+ * `state='prospect'` project and carries its id in `projectId` (that boolean is the
+ * fact, so it can't drift out of step with the stage). `promoted` is retained only
+ * because Postgres cannot drop an enum value — migration 0059 moved every existing
+ * `promoted` row to `contacted`, and nothing writes it any more.
+ *
+ * Three terminal states close a deal, and the state IS the close reason: `signed`
+ * (won), `declined` (they said no), `lost` (went dark / lost it). `dismissed` and
+ * `snoozed` stay distinct — those are triage verbs, used before the deal was ever
+ * real, and carry `dismissReason` instead.
  */
 export const leadState = pgEnum("lead_state", [
   "new",
   "contacted",
   "engaged",
   "proposal",
+  "signed",
   "promoted",
   "dismissed",
   "snoozed",
+  "declined",
+  "lost",
 ]);
 
 /** An outreach draft is either the first opener or an aging-clock follow-up. */

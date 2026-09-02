@@ -640,11 +640,26 @@ CREATE TABLE IF NOT EXISTS leads (
   project_id TEXT,
   direction_id TEXT,
   notes TEXT,
+  closed_at INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS leads_user_id_state_idx ON leads (user_id, state);
 CREATE INDEX IF NOT EXISTS leads_user_id_rank_idx ON leads (user_id, rank);
+
+CREATE TABLE IF NOT EXISTS project_fees (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  proposal_amount_cents INTEGER,
+  proposed_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS project_fees_user_id_project_id_idx
+  ON project_fees (user_id, project_id);
+CREATE INDEX IF NOT EXISTS project_fees_project_id_idx ON project_fees (project_id);
 
 CREATE TABLE IF NOT EXISTS sourcing_settings (
   user_id TEXT PRIMARY KEY NOT NULL,
@@ -701,6 +716,8 @@ CREATE INDEX IF NOT EXISTS org_memberships_user_id_idx
 // columns) in sync without a versioned-migration table. All identifiers below are
 // hardcoded constants, never user input.
 const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: string }> = [
+  // W10f — a lead's terminal-stage timestamp, on a mirror that predates the pipeline.
+  { table: "leads", column: "closed_at", definition: "INTEGER" },
   { table: "tasks", column: "category", definition: "TEXT" },
   { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },

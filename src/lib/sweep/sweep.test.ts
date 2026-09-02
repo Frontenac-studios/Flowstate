@@ -41,9 +41,7 @@ describe("computeSweep", () => {
 
     const expired = computeSweep({
       now: NOW,
-      candidates: [
-        candidate({ id: "kept", lastActivityAt: daysAgo(90), keptUntil: daysAgo(1) }),
-      ],
+      candidates: [candidate({ id: "kept", lastActivityAt: daysAgo(90), keptUntil: daysAgo(1) })],
     });
     expect(expired.items.map((i) => i.id)).toEqual(["kept"]);
   });
@@ -98,5 +96,53 @@ describe("computeSweep", () => {
     expect(draft.totalStale).toBe(0);
     expect(draft.remaining).toBe(0);
     expect(draft.countsByAltitude).toEqual({ task: 0, project: 0, target: 0 });
+  });
+});
+
+describe("deals (W10f)", () => {
+  const now = new Date("2026-09-02T12:00:00Z");
+  const longAgo = new Date("2026-07-01T12:00:00Z");
+
+  it("carries the deal flag through to the stale item", () => {
+    const draft = computeSweep({
+      candidates: [
+        {
+          altitude: "project",
+          id: "p1",
+          title: "Northwind",
+          lastActivityAt: longAgo,
+          keptUntil: null,
+          isDeal: true,
+        },
+        {
+          altitude: "project",
+          id: "p2",
+          title: "Ordinary work",
+          lastActivityAt: longAgo,
+          keptUntil: null,
+        },
+      ],
+      now,
+    });
+    expect(draft.items.find((i) => i.id === "p1")!.isDeal).toBe(true);
+    expect(draft.items.find((i) => i.id === "p2")!.isDeal).toBeUndefined();
+  });
+
+  it("still suppresses a kept deal", () => {
+    const draft = computeSweep({
+      candidates: [
+        {
+          altitude: "project",
+          id: "p1",
+          title: "Northwind",
+          lastActivityAt: longAgo,
+          keptUntil: new Date("2026-09-20T12:00:00Z"),
+          isDeal: true,
+        },
+      ],
+      now,
+    });
+    expect(draft.items).toEqual([]);
+    expect(draft.totalStale).toBe(0);
   });
 });
