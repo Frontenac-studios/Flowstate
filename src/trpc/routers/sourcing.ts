@@ -1,13 +1,20 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncSourcingSettingsRow } from "@/db/record-sync-mutation";
-import { clients, directions, rates, sourcingSettings, targets } from "@/db/tables";
+import { syncLeadRow, syncSourcingSettingsRow } from "@/db/record-sync-mutation";
+import { clients, directions, leads, rates, sourcingSettings, targets } from "@/db/tables";
+import { isModelConfigured } from "@/lib/env";
+import { DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
+import { rankLeads } from "@/lib/sourcing/scoring";
 import { buildIcpSeed } from "@/lib/sourcing/seed";
+import { scoreCompany } from "@/server/sourcing/score-company";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
+
+/** Leads visible on the triage board — everything not settled or set aside. */
+const TRIAGE_STATES = ["new", "contacted", "engaged", "proposal"] as const;
 
 const segmentSchema = z.object({
   id: z.string().min(1).max(64),
@@ -121,5 +128,118 @@ export const sourcingRouter = createTRPCRouter({
 
       await syncSourcingSettingsRow(ctx.userId, existing ? "update" : "insert", row);
       return row;
+    }),
+
+  /** Add a prospect by hand (web-sourced batch is W10i). Links the active Direction. */
+  addLead: protectedProcedure
+    .input(
+      z.object({
+        companyName: z.string().trim().min(1).max(200),
+        notes: z.string().trim().max(4000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [activeDir] = await db
+        .select({ id: directions.id })
+        .from(directions)
+        .where(and(eq(directions.userId, ctx.userId), isNull(directions.retiredAt)))
+        .limit(1);
+
+      const [row] = await db
+        .insert(leads)
+        .values({
+          userId: ctx.userId,
+          orgId: ctx.orgId,
+          companyName: input.companyName,
+          notes: input.notes ?? null,
+          source: "manual",
+          directionId: activeDir?.id ?? null,
+        })
+        .returning();
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add lead." });
+      }
+      await syncLeadRow(row.id, "insert", row);
+      return row;
+    }),
+
+  /** The triage board — unsettled leads, confidence-adjusted rank computed at read. */
+  listLeads: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select()
+      .from(leads)
+      .where(and(eq(leads.userId, ctx.userId), inArray(leads.state, [...TRIAGE_STATES])));
+    const ranked = rankLeads(
+      rows.map((r) => ({ id: r.id, score: r.score, confidence: r.confidence }))
+    );
+    const byId = new Map(ranked.map((r) => [r.id, r]));
+    return rows
+      .map((r) => ({
+        ...r,
+        rank: byId.get(r.id)?.rank ?? 0,
+        highPotentialUnverified: byId.get(r.id)?.highPotentialUnverified ?? false,
+      }))
+      .sort((a, b) => a.rank - b.rank);
+  }),
+
+  /** Score one lead against the ICP (W10c). Needs OPENROUTER_API_KEY. */
+  scoreLead: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!isModelConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "The scoring model isn't configured (OPENROUTER_API_KEY).",
+        });
+      }
+
+      const [lead] = await db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+
+      const [settingsRow] = await db
+        .select()
+        .from(sourcingSettings)
+        .where(eq(sourcingSettings.userId, ctx.userId))
+        .limit(1);
+      const [directionRows, clientRows, rateRows] = await Promise.all([
+        db
+          .select({ statement: directions.statement })
+          .from(directions)
+          .where(and(eq(directions.userId, ctx.userId), isNull(directions.retiredAt))),
+        db.select({ name: clients.name }).from(clients).where(eq(clients.userId, ctx.userId)),
+        db
+          .select({ amountCents: rates.amountCents })
+          .from(rates)
+          .where(eq(rates.userId, ctx.userId)),
+      ]);
+
+      const result = await scoreCompany({
+        companyName: lead.companyName,
+        companyNotes: lead.notes ?? "",
+        segments: settingsRow?.segments ?? [],
+        weights: settingsRow?.weights ?? DEFAULT_WEIGHTS,
+        exclusions: settingsRow?.exclusions ?? [],
+        directions: directionRows.map((d) => d.statement),
+        wonClientNames: clientRows.map((c) => c.name),
+        rateFloorCents: rateRows.length ? Math.min(...rateRows.map((r) => r.amountCents)) : null,
+      });
+
+      const [scored] = await db
+        .update(leads)
+        .set({
+          score: result.score,
+          confidence: result.confidence,
+          rationale: result.rationale,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
+        .returning();
+      if (scored) await syncLeadRow(scored.id, "update", scored);
+
+      return { lead: scored, ...result };
     }),
 });
