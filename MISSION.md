@@ -177,24 +177,32 @@ because monthly is long enough to lose a month to the wrong thing.
 is named after. The same three buckets apply at every altitude — tasks, projects, features, and
 the goals themselves.
 
-**The Filter** — the highest-leverage feature in the product. When a lead comes in, an intake
-link goes out (eight questions, two minutes of their time). The answers get scored against your
-active Direction and Target, and you get **pursue / negotiate / decline**, with reasons, before
+**The Filter** — the highest-leverage feature in the product, and it runs _outbound_. Inbound web
+leads barely exist for this work, so the Filter doesn't wait — it's a ranking brain driving a
+**sourcing agent**. Each week it researches mid-market companies in your time zone against your ICP,
+scores them, and hands you ~five, each with a drafted way in. The occasional inbound referral enters
+the same funnel through a two-minute intake link. Either way you get a ranked verdict — before
 you've spent an hour on a call. Being in or out fast is a system.
 
-The filter asks what you ask when you're thinking clearly, plus what you skip when you're
-excited or the pipeline looks thin:
+The scoring holds one rule: **the agent gathers facts and scores them against parameters you set —
+it never makes the judgment call.** Each prospect gets two numbers — a **score** (how well the facts
+fit) and a **confidence** (how much was confirmed vs inferred) — plus a plain-English brief. The
+questions sort by who can answer them:
 
-- _Fit_ — How long will it take? Will they pay my rate? Is it in my target industry? How similar
-  is it to work I've done? Do I want to work with these people?
-- _Risk_ — Have they bought this kind of work before? What happened with their last contractor?
-  Am I talking to the person who signs? Did they name a budget or dodge it? Will they pay a
-  deposit? Can I write what "done" looks like in one sentence?
-- _Strategy_ — Does this produce a case study or referral in my target industry, and would I be
-  allowed to talk about it? Does it build a capability on my learning roadmap, or a dead-end
-  skill? **What do I have to say no to in order to say yes?**
+- _Facts the agent scores_ — Industry and offering. Revenue band, size, and location. Market tier
+  and maturity. Signals they need the work (manual reporting, an ops hire, a new site). Where a
+  number isn't public — willingness-to-pay, revenue — it is _inferred from comparable companies_,
+  tagged as an estimate, and it lowers confidence rather than faking certainty.
+- _Facts a person answers_ (the intake form, or you) — Budget and timeline. Who signs. What they've
+  bought before and how it went. What "done" looks like. These aren't the agent's to guess, so on
+  the inbound path the prospect answers them, and they arrive as their claims, tagged self-reported.
+- _Judgments only you make_ — Do I want to work with these people? Is there a case study or a
+  capability in it? And, at the moment you commit, **what do I have to say no to in order to say
+  yes?** — surfaced as your current load against your capacity, with candidates to drop.
 
-Overrides are always allowed and always logged with a reason.
+The agent **drafts** the outreach; you send it (Law 1). Overrides are always allowed and always
+logged with a reason. Dead leads are kept, not deleted — deciding what to stop is the whole point,
+so a declined or lost lead is evidence, not clutter.
 
 **The Tickler** — business compliance only. Taxes, filings, insurance, contract renewals.
 
@@ -372,7 +380,7 @@ Built outside billable hours. Ships when these work, and not one feature later.
    and the Sweep
 6. Client onboarding automation — one action creates the folders, starter contracts, the
    project, and its time-tracking setup
-7. The Filter and its intake link
+7. The Filter — the outbound sourcing agent, plus the inbound intake link
 8. Business tickler for compliance
 9. Personal category (Maintenance projects and recurring tasks) — no goal layer
 
