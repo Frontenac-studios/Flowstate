@@ -3,9 +3,18 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncLeadRow, syncSourcingSettingsRow } from "@/db/record-sync-mutation";
-import { clients, directions, leads, rates, sourcingSettings, targets } from "@/db/tables";
+import { syncLeadRow, syncProjectRow, syncSourcingSettingsRow } from "@/db/record-sync-mutation";
+import {
+  clients,
+  directions,
+  leads,
+  projects,
+  rates,
+  sourcingSettings,
+  targets,
+} from "@/db/tables";
 import { isModelConfigured } from "@/lib/env";
+import { slugifyProjectName } from "@/lib/projects/slugify";
 import { DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
 import { rankLeads } from "@/lib/sourcing/scoring";
 import { buildIcpSeed } from "@/lib/sourcing/seed";
@@ -15,6 +24,16 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 
 /** Leads visible on the triage board — everything not settled or set aside. */
 const TRIAGE_STATES = ["new", "contacted", "engaged", "proposal"] as const;
+
+/** One-tap dismiss reasons (walk-through: bad-timing snoozes rather than excludes). */
+const DISMISS_REASONS = [
+  "wrong_industry",
+  "too_small",
+  "too_big",
+  "bad_timing",
+  "already_know",
+  "not_interested",
+] as const;
 
 const segmentSchema = z.object({
   id: z.string().min(1).max(64),
@@ -139,6 +158,22 @@ export const sourcingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Dedup: don't re-surface a company already a lead or a client (case-insensitive).
+      const key = input.companyName.trim().toLowerCase();
+      const [existingLeads, existingClients] = await Promise.all([
+        db.select({ name: leads.companyName }).from(leads).where(eq(leads.userId, ctx.userId)),
+        db.select({ name: clients.name }).from(clients).where(eq(clients.userId, ctx.userId)),
+      ]);
+      const dup = [...existingLeads, ...existingClients].some(
+        (r) => r.name.trim().toLowerCase() === key
+      );
+      if (dup) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${input.companyName} is already a lead or client.`,
+        });
+      }
+
       const [activeDir] = await db
         .select({ id: directions.id })
         .from(directions)
@@ -241,5 +276,91 @@ export const sourcingRouter = createTRPCRouter({
       if (scored) await syncLeadRow(scored.id, "update", scored);
 
       return { lead: scored, ...result };
+    }),
+
+  /** Dismiss a lead with a one-tap reason (kept as Filter-learning evidence). */
+  dismissLead: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid(), reason: z.enum(DISMISS_REASONS) }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(leads)
+        .set({ state: "dismissed", dismissReason: input.reason, updatedAt: new Date() })
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      await syncLeadRow(row.id, "update", row);
+      return row;
+    }),
+
+  /** Snooze a lead off the board until a date (bad-timing dismissals land here). */
+  snoozeLead: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid(), until: z.coerce.date() }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(leads)
+        .set({ state: "snoozed", snoozeUntil: input.until, updatedAt: new Date() })
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      await syncLeadRow(row.id, "update", row);
+      return row;
+    }),
+
+  /**
+   * Promote a lead to the pipeline — creates a `state='prospect'` project and links
+   * it (the fuller pipeline board/stages is W10f). Strongest positive ICP signal.
+   */
+  promoteLead: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [lead] = await db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      if (lead.projectId) {
+        throw new TRPCError({ code: "CONFLICT", message: "This lead is already promoted." });
+      }
+
+      // Unique slug (append a short suffix if the base is taken).
+      const base = slugifyProjectName(lead.companyName).toLowerCase() || "prospect";
+      const taken = new Set(
+        (
+          await db
+            .select({ slug: projects.slug })
+            .from(projects)
+            .where(eq(projects.userId, ctx.userId))
+        ).map((p) => p.slug)
+      );
+      let slug = base;
+      while (taken.has(slug)) slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+
+      const [project] = await db
+        .insert(projects)
+        .values({
+          userId: ctx.userId,
+          name: lead.companyName,
+          slug,
+          category: "business",
+          state: "prospect",
+        })
+        .returning();
+      if (!project) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create project.",
+        });
+      }
+      await syncProjectRow(project.id, "insert", project);
+
+      const [updated] = await db
+        .update(leads)
+        .set({ state: "promoted", projectId: project.id, updatedAt: new Date() })
+        .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
+        .returning();
+      if (updated) await syncLeadRow(updated.id, "update", updated);
+
+      return { leadId: lead.id, projectId: project.id, slug };
     }),
 });
