@@ -82,3 +82,37 @@ describe("rankLeads", () => {
     expect(ranked.map((r) => r.id)).toEqual(["y", "x", "z"]);
   });
 });
+
+describe("rankLeads — rollover decay (W10i)", () => {
+  it("leaves ranking untouched when no age is given", () => {
+    const ranked = rankLeads([
+      { id: "a", score: 80, confidence: 80 },
+      { id: "b", score: 60, confidence: 80 },
+    ]);
+    expect(ranked.map((r) => r.id)).toEqual(["a", "b"]);
+  });
+
+  it("lets a fresh prospect overtake a stale higher-scoring one", () => {
+    const ranked = rankLeads([
+      { id: "stale", score: 80, confidence: 90, ageDays: 200 },
+      { id: "fresh", score: 62, confidence: 90, ageDays: 0 },
+    ]);
+    expect(ranked[0].id).toBe("fresh");
+  });
+
+  it("does not decay inside the grace period", () => {
+    const ranked = rankLeads([
+      { id: "recent", score: 70, confidence: 90, ageDays: 14 },
+      { id: "newer", score: 69, confidence: 90, ageDays: 0 },
+    ]);
+    expect(ranked[0].id).toBe("recent");
+  });
+
+  it("still ranks a decayed lead above an unscored one — it fades, never drops off", () => {
+    const ranked = rankLeads([
+      { id: "unscored", score: null, confidence: null },
+      { id: "ancient", score: 40, confidence: 40, ageDays: 900 },
+    ]);
+    expect(ranked.map((r) => r.id)).toEqual(["ancient", "unscored"]);
+  });
+});

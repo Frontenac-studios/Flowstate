@@ -7,6 +7,8 @@ export const SYNC_TABLES = [
   "leads",
   "lead_outreach",
   "sourcing_settings",
+  "sourcing_runs",
+  "sourcing_run_costs",
   "invoices",
   "invoice_lines",
   "money_settings",

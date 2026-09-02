@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { rolloverDecay } from "./run";
 import type { SourcingSegment, SourcingWeights } from "./types";
 
 /**
@@ -82,7 +83,17 @@ export function buildScoringPrompt(inputs: ScoringInputs): { system: string; pro
   return { system, prompt };
 }
 
-export type RankableLead = { id: string; score: number | null; confidence: number | null };
+export type RankableLead = {
+  id: string;
+  score: number | null;
+  confidence: number | null;
+  /**
+   * W10i rollover: how long this prospect has sat untriaged. A prospect nobody got to
+   * keeps its score but slowly loses priority, so a stale board can't out-rank what
+   * the agent found this morning. Omit it and nothing decays.
+   */
+  ageDays?: number;
+};
 
 export type RankedLead = {
   id: string;
@@ -98,12 +109,17 @@ const LOW_CONFIDENCE = 50;
 /**
  * Rank leads confidence-adjusted so verified prospects float up, without burying a
  * high-score/low-confidence gem (it still ranks on a blend and gets a callout).
- * `adjusted = score * (0.5 + 0.5 * confidence/100)` — confidence scales, never erases.
+ * `adjusted = score * (0.5 + 0.5 * confidence/100) * rolloverDecay(ageDays)` —
+ * confidence scales, never erases; age slips a stale prospect down, never off.
  * Pure; unscored leads (null score) sink to the bottom, order stable by id.
  */
 export function rankLeads(leads: ReadonlyArray<RankableLead>): RankedLead[] {
   const adjusted = (l: RankableLead) =>
-    l.score == null ? -1 : l.score * (0.5 + 0.5 * ((l.confidence ?? 0) / 100));
+    l.score == null
+      ? -1
+      : l.score *
+        (0.5 + 0.5 * ((l.confidence ?? 0) / 100)) *
+        (l.ageDays == null ? 1 : rolloverDecay(l.ageDays));
 
   return [...leads]
     .sort((a, b) => {

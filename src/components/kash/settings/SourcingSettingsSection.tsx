@@ -10,6 +10,7 @@ import Select from "@/components/kash/ui/Select";
 import Textarea from "@/components/kash/ui/Textarea";
 import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import { DEFAULT_VOICE, DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
+import { DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE, MIN_BATCH_SIZE } from "@/lib/sourcing/run";
 import type { OutreachVoice, SourcingSegment, SourcingWeights } from "@/lib/sourcing/types";
 import { useTRPC } from "@/trpc/client";
 
@@ -33,11 +34,17 @@ export default function SourcingSettingsSection() {
   const [exclusionsText, setExclusionsText] = useState("");
   const [weights, setWeights] = useState<SourcingWeights>(DEFAULT_WEIGHTS);
   const [voice, setVoice] = useState<OutreachVoice>(DEFAULT_VOICE);
+  const [weeklyRunEnabled, setWeeklyRunEnabled] = useState(false);
+  const [batchSize, setBatchSize] = useState(DEFAULT_BATCH_SIZE);
   const [hydrated, setHydrated] = useState(false);
 
   // Hydrate once: from saved config if present, else prefill from the seed suggestion.
   useEffect(() => {
     if (hydrated || settings === undefined) return;
+    // The run switch and batch size hydrate whether or not an ICP is configured —
+    // they are not part of "have you set up your ICP yet".
+    setWeeklyRunEnabled(settings.weeklyRunEnabled);
+    setBatchSize(settings.weeklyRunBatchSize);
     if (settings.configured && settings.segments) {
       setSegments(settings.segments);
       setExclusionsText((settings.exclusions ?? []).join("\n"));
@@ -82,6 +89,8 @@ export default function SourcingSettingsSection() {
         .filter(Boolean),
       weights,
       outreachVoice: voice,
+      weeklyRunEnabled,
+      weeklyRunBatchSize: batchSize,
     });
   }
 
@@ -190,6 +199,41 @@ export default function SourcingSettingsSection() {
             </label>
           ))}
         </div>
+      </section>
+
+      {/* The weekly run — the only control here that spends money on its own. */}
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium text-ink">Weekly sourcing</h3>
+        <label className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            checked={weeklyRunEnabled}
+            onChange={(e) => setWeeklyRunEnabled(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span className="text-sm text-ink">
+            Source new prospects every Tuesday
+            <span className="mt-0.5 block text-caption text-ink-muted">
+              The agent searches the web against your ICP, then researches and scores what it finds
+              — unattended, and it costs about 35¢ a prospect. Off by default. You can always run a
+              batch by hand from the Pipeline board instead.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-ink-muted">
+          Prospects per run
+          <input
+            type="number"
+            min={MIN_BATCH_SIZE}
+            max={MAX_BATCH_SIZE}
+            value={batchSize}
+            onChange={(e) =>
+              setBatchSize(Number.parseInt(e.target.value, 10) || DEFAULT_BATCH_SIZE)
+            }
+            className="w-16 rounded-control border border-subtle bg-surface px-2 py-1 text-sm text-ink"
+          />
+        </label>
       </section>
 
       {/* Outreach voice */}

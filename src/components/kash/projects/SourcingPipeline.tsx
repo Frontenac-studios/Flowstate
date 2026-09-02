@@ -24,6 +24,7 @@ import { useTRPC } from "@/trpc/client";
 
 import LeadOutreachPanel from "./LeadOutreachPanel";
 import LeadResearchBlock from "./LeadResearchBlock";
+import SourcingRunStrip from "./SourcingRunStrip";
 
 const DISMISS_OPTIONS: { value: string; label: string }[] = [
   { value: "wrong_industry", label: "Wrong industry" },
@@ -169,6 +170,9 @@ export default function SourcingPipeline() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* What the weekly agent is doing, and what it has spent. */}
+      <SourcingRunStrip />
+
       {/* Add a prospect by hand */}
       <div className="flex flex-col gap-2 rounded-card border border-subtle bg-surface p-3">
         <div className="flex items-center gap-2">
@@ -332,7 +336,7 @@ export default function SourcingPipeline() {
                       onClick={() => research.mutate({ leadId: lead.id })}
                       disabled={research.isPending}
                       className="text-sm"
-                      title="Reads the open web. Costs a few cents per run."
+                      title="Reads the open web. About 8¢."
                     >
                       {research.isPending && research.variables?.leadId === lead.id
                         ? "Researching…"
