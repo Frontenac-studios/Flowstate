@@ -30,7 +30,7 @@ export async function researchCompany(inputs: {
   companyName: string;
   companyNotes: string;
   segments: SourcingSegment[];
-}): Promise<{ facts: CompanyFacts; provider: string }> {
+}): Promise<{ facts: CompanyFacts; provider: string; costUsd: number }> {
   const adapter = getWebResearchAdapter();
   if (!adapter) {
     throw new Error("Web research isn't configured (OPENROUTER_API_KEY).");
@@ -49,7 +49,7 @@ export async function researchCompany(inputs: {
     sources: research.sources,
   });
 
-  const { object } = await generateObject({
+  const { object, providerMetadata } = await generateObject({
     model: requireModel("structured"),
     schema: companyFactsSchema,
     system,
@@ -64,5 +64,15 @@ export async function researchCompany(inputs: {
     sources: mergeSources(research.sources, object.sources),
   });
 
-  return { facts, provider: research.provider };
+  // Both calls are billed; the ceiling is enforced against their sum.
+  const distillMeta = providerMetadata as
+    | { openrouter?: { usage?: { cost?: number } } }
+    | undefined;
+  const distillCost = distillMeta?.openrouter?.usage?.cost;
+
+  return {
+    facts,
+    provider: research.provider,
+    costUsd: research.costUsd + (typeof distillCost === "number" ? distillCost : 0),
+  };
 }

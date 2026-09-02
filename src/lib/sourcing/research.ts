@@ -243,3 +243,75 @@ export function factsAreEmpty(facts: CompanyFacts): boolean {
     facts.techStack.length === 0
   );
 }
+
+/**
+ * The discovery prompt (W10i) — the step that finds NAMES. Research answers "what
+ * about this company?"; discovery answers "which companies?", which is the harder
+ * half and the one that makes the weekly run autonomous.
+ *
+ * Two instructions carry most of the weight. **Real companies only**: a plausible
+ * invented name wastes a research call and, worse, teaches the board nothing. And
+ * **no repeats**: the known list is every name already on the board, won, or
+ * dismissed — re-surfacing one is how an agent feels broken even when it is working.
+ */
+export function buildDiscoveryPrompt(inputs: {
+  segments: SourcingSegment[];
+  exclusions: string[];
+  knownNames: string[];
+  count: number;
+}): { system: string; prompt: string } {
+  const system = [
+    "You find real companies on the open web that match a consultant's ideal-client profile.",
+    "Every company you name must be one you actually found in the search results, with a real web presence. Never invent a plausible-sounding company, and never pad the list to reach the requested count — returning three real names beats five with two inventions.",
+    "Prefer companies showing a current reason to buy — hiring for the work, a recent raise, a public launch, a visible gap — over well-known names with no such signal.",
+    "For each, give the company name exactly as it writes it, and one line on why it surfaced.",
+  ].join("\n");
+
+  const known = inputs.knownNames.length ? inputs.knownNames.join(", ") : "(nothing yet)";
+
+  const prompt = [
+    `# Ideal client profile\n${
+      inputs.segments.map((s) => `- ${s.label}: ${s.firmographics}`).join("\n") ||
+      "(no segments configured)"
+    }`,
+    `# Never suggest (exclusions)\n${inputs.exclusions.join("; ") || "(none)"}`,
+    `# Already known — do NOT return any of these\n${known}`,
+    `# Task\nFind up to ${inputs.count} companies matching the profile.`,
+  ].join("\n\n");
+
+  return { system, prompt };
+}
+
+export const discoveryResultSchema = z.object({
+  companies: z.array(
+    z.object({
+      name: z.string(),
+      note: z.string(),
+    })
+  ),
+});
+
+/**
+ * Drop anything already known, anything blank, and any duplicate within the batch.
+ * Case- and whitespace-insensitive, because "Northwind Traders" and "northwind
+ * traders " are the same company and only one of them should cost a research call.
+ */
+export function dedupeDiscovered(
+  companies: { name: string; note: string }[],
+  knownNames: string[],
+  limit: number
+): { name: string; note: string }[] {
+  const known = new Set(knownNames.map((n) => n.trim().toLowerCase()));
+  const out: { name: string; note: string }[] = [];
+
+  for (const company of companies) {
+    const name = company.name.trim();
+    const key = name.toLowerCase();
+    if (!name || known.has(key)) continue;
+    known.add(key);
+    out.push({ name, note: company.note.trim() });
+    if (out.length >= limit) break;
+  }
+
+  return out;
+}

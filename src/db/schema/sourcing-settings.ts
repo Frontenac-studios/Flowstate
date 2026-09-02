@@ -1,4 +1,4 @@
-import { jsonb, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import type { OutreachVoice, SourcingSegment, SourcingWeights } from "@/lib/sourcing/types";
 
@@ -20,6 +20,14 @@ export const sourcingSettings = pgTable("sourcing_settings", {
   /** Score weighting (won-similarity vs explicit; Fit/Risk/Strategy split). */
   weights: jsonb("weights").$type<SourcingWeights>(),
   outreachVoice: jsonb("outreach_voice").$type<OutreachVoice>(),
+  /**
+   * The weekly run is OPT-IN and defaults off (W10i). It spends real money on model
+   * calls, unattended, on a schedule — so it does not start because a branch merged;
+   * it starts because someone switched it on.
+   */
+  weeklyRunEnabled: boolean("weekly_run_enabled").notNull().default(false),
+  /** Prospects per run, clamped to the plan's 3–10 band. Null = the default of 5. */
+  weeklyRunBatchSize: integer("weekly_run_batch_size"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
 });

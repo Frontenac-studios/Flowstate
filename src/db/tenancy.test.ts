@@ -99,7 +99,11 @@ describe("financial data placement", () => {
   // (USD/GBP), not an amount — a Member seeing "this client bills in GBP" leaks
   // nothing, and `clients.currency` (org_shared) is required by the W1 spec. The
   // guard is about amounts (rate, revenue, price, salary) and billable state.
-  const MONEY_COLUMN = /(^|_)(rate|rates|revenue|invoice|price|salary|billable)(_|$)/;
+  // `amount`, `cost` and `spend` were added with W10i: the agent's own spend is money
+  // just as much as a client rate is, and the original pattern would have waved a
+  // `cost_cents` column onto an org_shared table without complaint.
+  const MONEY_COLUMN =
+    /(^|_)(rate|rates|revenue|invoice|price|salary|billable|amount|cost|spend)(_|$)/;
 
   const tenantTables = (Object.values(schema) as unknown[])
     .filter(isPgTable)
@@ -139,6 +143,7 @@ describe("financial data placement", () => {
       "owner_draws",
       "project_fees",
       "rates",
+      "sourcing_run_costs",
       "time_entries",
     ]);
   });

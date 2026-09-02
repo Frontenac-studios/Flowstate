@@ -13,6 +13,8 @@ export * from "./directions";
 export * from "./lead-outreach";
 export * from "./leads";
 export * from "./ledger-periods";
+export * from "./sourcing-run-costs";
+export * from "./sourcing-runs";
 export * from "./sourcing-settings";
 export * from "./external-calendar-events";
 export * from "./day-reviews";

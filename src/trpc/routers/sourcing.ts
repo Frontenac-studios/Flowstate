@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -7,6 +7,7 @@ import {
   syncLeadOutreachRow,
   syncLeadRow,
   syncProjectFeeRow,
+  syncSourcingRunRow,
   syncSourcingSettingsRow,
 } from "@/db/record-sync-mutation";
 import {
@@ -16,6 +17,8 @@ import {
   leads,
   projectFees,
   rates,
+  sourcingRunCosts,
+  sourcingRuns,
   sourcingSettings,
   targets,
 } from "@/db/tables";
@@ -31,6 +34,16 @@ import {
   type PipelineStage,
 } from "@/lib/sourcing/pipeline";
 import { renderFactsForScoring } from "@/lib/sourcing/research";
+import {
+  ageInDays,
+  checkBudget,
+  clampBatchSize,
+  isoWeekKey,
+  monthlyCeilingCents,
+  spendToCents,
+  MAX_BATCH_SIZE,
+  MIN_BATCH_SIZE,
+} from "@/lib/sourcing/run";
 import { rankLeads } from "@/lib/sourcing/scoring";
 import { buildIcpSeed } from "@/lib/sourcing/seed";
 import { draftOutreach } from "@/server/sourcing/draft-outreach";
@@ -108,6 +121,8 @@ export const sourcingRouter = createTRPCRouter({
       exclusions: row?.exclusions ?? null,
       weights: row?.weights ?? null,
       outreachVoice: row?.outreachVoice ?? null,
+      weeklyRunEnabled: row?.weeklyRunEnabled ?? false,
+      weeklyRunBatchSize: clampBatchSize(row?.weeklyRunBatchSize),
       configured: row != null && row.segments != null,
     };
   }),
@@ -144,6 +159,8 @@ export const sourcingRouter = createTRPCRouter({
         exclusions: z.array(z.string().trim().max(200)).max(50).optional(),
         weights: weightsSchema.optional(),
         outreachVoice: voiceSchema.optional(),
+        weeklyRunEnabled: z.boolean().optional(),
+        weeklyRunBatchSize: z.number().int().min(MIN_BATCH_SIZE).max(MAX_BATCH_SIZE).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -152,6 +169,10 @@ export const sourcingRouter = createTRPCRouter({
       if (input.exclusions !== undefined) patch.exclusions = input.exclusions;
       if (input.weights !== undefined) patch.weights = input.weights;
       if (input.outreachVoice !== undefined) patch.outreachVoice = input.outreachVoice;
+      if (input.weeklyRunEnabled !== undefined) patch.weeklyRunEnabled = input.weeklyRunEnabled;
+      if (input.weeklyRunBatchSize !== undefined) {
+        patch.weeklyRunBatchSize = clampBatchSize(input.weeklyRunBatchSize);
+      }
 
       const [existing] = await db
         .select({ userId: sourcingSettings.userId })
@@ -238,8 +259,16 @@ export const sourcingRouter = createTRPCRouter({
       .select()
       .from(leads)
       .where(and(eq(leads.userId, ctx.userId), inArray(leads.state, [...BOARD_STATES])));
+    // Untriaged prospects roll over between runs but lose priority as they age
+    // (W10i) — the board self-sorts towards what is actually fresh.
+    const now = new Date();
     const ranked = rankLeads(
-      rows.map((r) => ({ id: r.id, score: r.score, confidence: r.confidence }))
+      rows.map((r) => ({
+        id: r.id,
+        score: r.score,
+        confidence: r.confidence,
+        ageDays: ageInDays(r.createdAt, now),
+      }))
     );
     const byId = new Map(ranked.map((r) => [r.id, r]));
     return rows
@@ -586,6 +615,131 @@ export const sourcingRouter = createTRPCRouter({
       await syncProjectFeeRow(row.id, existing ? "update" : "insert", row);
       return row;
     }),
+
+  /**
+   * The weekly run's state for the Pipeline board: the latest run, and what the agent
+   * has spent in the last 30 days against its ceiling.
+   *
+   * The spend is read from `sourcing_run_costs` (financial-class) and returned only
+   * here, never folded into `listLeads` — the same separation as the proposal amount.
+   */
+  runStatus: protectedProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const [latest] = await db
+      .select()
+      .from(sourcingRuns)
+      .where(eq(sourcingRuns.userId, ctx.userId))
+      .orderBy(desc(sourcingRuns.createdAt))
+      .limit(1);
+
+    const costRows = await db
+      .select({
+        amountCents: sourcingRunCosts.amountCents,
+        amountMicros: sourcingRunCosts.amountMicros,
+      })
+      .from(sourcingRunCosts)
+      .where(
+        and(
+          eq(sourcingRunCosts.userId, ctx.userId),
+          gte(sourcingRunCosts.createdAt, new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000))
+        )
+      );
+
+    const spentCents = costRows.reduce(
+      (total, row) => total + spendToCents({ cents: row.amountCents, micros: row.amountMicros }),
+      0
+    );
+    const ceilingCents = monthlyCeilingCents(process.env);
+
+    return {
+      latest: latest ?? null,
+      spentCents,
+      ceilingCents,
+      atCeiling: !checkBudget({ spentLast30DaysCents: spentCents, ceilingCents }).allowed,
+    };
+  }),
+
+  /**
+   * "Source now" — start a batch by hand, outside the Tuesday schedule.
+   *
+   * It only CREATES the run; the same worker that serves the cron does the work on
+   * its next tick. One engine, one set of budget checks, one place a bug can live —
+   * a manual path that researched inline would be a second implementation of the
+   * expensive part.
+   *
+   * The ceiling applies here too. Being at the keyboard doesn't make the money
+   * different.
+   */
+  startRun: protectedProcedure.mutation(async ({ ctx }) => {
+    if (!isWebResearchConfigured()) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Web research isn't configured (OPENROUTER_API_KEY).",
+      });
+    }
+
+    const now = new Date();
+    const [inFlight] = await db
+      .select({ id: sourcingRuns.id })
+      .from(sourcingRuns)
+      .where(
+        and(
+          eq(sourcingRuns.userId, ctx.userId),
+          inArray(sourcingRuns.status, ["discovering", "researching"])
+        )
+      )
+      .limit(1);
+    if (inFlight) {
+      throw new TRPCError({ code: "CONFLICT", message: "A run is already in progress." });
+    }
+
+    const costRows = await db
+      .select({
+        amountCents: sourcingRunCosts.amountCents,
+        amountMicros: sourcingRunCosts.amountMicros,
+      })
+      .from(sourcingRunCosts)
+      .where(
+        and(
+          eq(sourcingRunCosts.userId, ctx.userId),
+          gte(sourcingRunCosts.createdAt, new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000))
+        )
+      );
+    const spentCents = costRows.reduce(
+      (total, row) => total + spendToCents({ cents: row.amountCents, micros: row.amountMicros }),
+      0
+    );
+    const ceilingCents = monthlyCeilingCents(process.env);
+    if (!checkBudget({ spentLast30DaysCents: spentCents, ceilingCents }).allowed) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: `The 30-day research ceiling has been reached (${spentCents.toFixed(1)}¢ of ${ceilingCents}¢).`,
+      });
+    }
+
+    const [settingsRow] = await db
+      .select({ batchSize: sourcingSettings.weeklyRunBatchSize })
+      .from(sourcingSettings)
+      .where(eq(sourcingSettings.userId, ctx.userId))
+      .limit(1);
+
+    const [row] = await db
+      .insert(sourcingRuns)
+      .values({
+        userId: ctx.userId,
+        orgId: ctx.orgId,
+        trigger: "manual",
+        status: "discovering",
+        weekKey: isoWeekKey(now),
+        batchSize: clampBatchSize(settingsRow?.batchSize),
+      })
+      .returning();
+    if (!row) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to start the run." });
+    }
+    await syncSourcingRunRow(row.id, "insert", row);
+    return row;
+  }),
 
   /** The drafted opener + follow-ups for one lead, in send order. */
   listOutreach: protectedProcedure

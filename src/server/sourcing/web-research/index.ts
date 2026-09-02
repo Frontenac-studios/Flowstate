@@ -6,6 +6,9 @@ import { openRouterWebAdapter } from "./openrouter-web";
 import type { WebResearchAdapter } from "./types";
 
 export type {
+  DiscoveredCompany,
+  DiscoveryRequest,
+  DiscoveryResponse,
   ResearchRequest,
   ResearchResponse,
   ResearchSource,

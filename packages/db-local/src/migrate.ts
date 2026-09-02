@@ -664,6 +664,41 @@ CREATE UNIQUE INDEX IF NOT EXISTS project_fees_user_id_project_id_idx
   ON project_fees (user_id, project_id);
 CREATE INDEX IF NOT EXISTS project_fees_project_id_idx ON project_fees (project_id);
 
+CREATE TABLE IF NOT EXISTS sourcing_runs (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  trigger TEXT NOT NULL DEFAULT 'cron',
+  status TEXT NOT NULL DEFAULT 'discovering',
+  week_key TEXT NOT NULL,
+  batch_size INTEGER NOT NULL,
+  discovered INTEGER NOT NULL DEFAULT 0,
+  processed INTEGER NOT NULL DEFAULT 0,
+  finished_at INTEGER,
+  error TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sourcing_runs_user_id_created_at_idx
+  ON sourcing_runs (user_id, created_at);
+CREATE INDEX IF NOT EXISTS sourcing_runs_user_id_week_key_idx
+  ON sourcing_runs (user_id, week_key);
+
+CREATE TABLE IF NOT EXISTS sourcing_run_costs (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  run_id TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL DEFAULT 0,
+  amount_micros INTEGER NOT NULL DEFAULT 0,
+  calls INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sourcing_run_costs_user_id_created_at_idx
+  ON sourcing_run_costs (user_id, created_at);
+CREATE INDEX IF NOT EXISTS sourcing_run_costs_run_id_idx
+  ON sourcing_run_costs (run_id);
+
 CREATE TABLE IF NOT EXISTS sourcing_settings (
   user_id TEXT PRIMARY KEY NOT NULL,
   org_id TEXT NOT NULL,
@@ -671,6 +706,8 @@ CREATE TABLE IF NOT EXISTS sourcing_settings (
   exclusions TEXT,
   weights TEXT,
   outreach_voice TEXT,
+  weekly_run_enabled INTEGER NOT NULL DEFAULT 0,
+  weekly_run_batch_size INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
@@ -726,6 +763,13 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "leads", column: "research", definition: "TEXT" },
   { table: "leads", column: "researched_at", definition: "INTEGER" },
   { table: "leads", column: "research_provider", definition: "TEXT" },
+  // W10i — the weekly run's opt-in switch and batch size.
+  {
+    table: "sourcing_settings",
+    column: "weekly_run_enabled",
+    definition: "INTEGER NOT NULL DEFAULT 0",
+  },
+  { table: "sourcing_settings", column: "weekly_run_batch_size", definition: "INTEGER" },
   { table: "tasks", column: "category", definition: "TEXT" },
   { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },

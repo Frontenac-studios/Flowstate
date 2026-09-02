@@ -16,6 +16,8 @@ export * from "./lead-outreach";
 export * from "./leads";
 export * from "./ledger-periods";
 export * from "./sourcing-enums";
+export * from "./sourcing-run-costs";
+export * from "./sourcing-runs";
 export * from "./sourcing-settings";
 export * from "./day-reviews";
 export * from "./external-calendar-events";

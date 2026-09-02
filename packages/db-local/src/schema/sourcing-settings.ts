@@ -10,6 +10,8 @@ export const sourcingSettings = sqliteTable("sourcing_settings", {
   exclusions: text("exclusions", { mode: "json" }),
   weights: text("weights", { mode: "json" }),
   outreachVoice: text("outreach_voice", { mode: "json" }),
+  weeklyRunEnabled: integer("weekly_run_enabled", { mode: "boolean" }).notNull().default(false),
+  weeklyRunBatchSize: integer("weekly_run_batch_size"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => sqliteNow()),

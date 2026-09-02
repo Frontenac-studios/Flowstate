@@ -93,6 +93,9 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   leads: "org_shared",
   lead_outreach: "org_shared",
   sourcing_settings: "org_shared",
+  // A run's counts and status are work facts; what it SPENT is not, and lives in
+  // sourcing_run_costs (financial) — the same split as leads / project_fees.
+  sourcing_runs: "org_shared",
   phases: "org_shared",
   project_milestones: "org_shared",
   project_templates: "org_shared",
@@ -131,6 +134,9 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // fee + rate floor. It exists precisely so those figures never become columns on
   // the org_shared `projects` / `leads` rows a Member can read.
   project_fees: "financial",
+  // What the sourcing agent spent on model calls (W10i). Real billed amounts, and
+  // the ledger the 30-day ceiling is enforced against.
+  sourcing_run_costs: "financial",
   rates: "financial",
   time_entries: "financial",
 };
