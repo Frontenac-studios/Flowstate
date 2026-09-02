@@ -134,6 +134,7 @@ describe("financial data placement", () => {
       "business_expenses",
       "invoice_lines",
       "invoices",
+      "ledger_periods",
       "money_settings",
       "owner_draws",
       "rates",

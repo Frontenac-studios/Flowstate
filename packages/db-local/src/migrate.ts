@@ -123,6 +123,21 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
 CREATE INDEX IF NOT EXISTS invoice_lines_invoice_id_idx ON invoice_lines (invoice_id);
 
 -- Owner's draws (W16). Financial-class; mirrored from src/db/schema/owner-draws.ts.
+CREATE TABLE IF NOT EXISTS ledger_periods (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  period_start TEXT NOT NULL,
+  tilt_business_pct INTEGER,
+  business_seconds INTEGER NOT NULL,
+  personal_seconds INTEGER NOT NULL,
+  breakdown TEXT NOT NULL,
+  sealed_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ledger_periods_user_id_period_start_idx
+  ON ledger_periods (user_id, period_start);
+
 CREATE TABLE IF NOT EXISTS owner_draws (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

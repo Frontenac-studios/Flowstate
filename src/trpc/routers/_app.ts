@@ -13,6 +13,7 @@ import { directionsRouter } from "./directions";
 import { focusBlocksRouter } from "./focus-blocks";
 import { invoicesRouter } from "./invoices";
 import { learningRouter } from "./learning";
+import { ledgerRouter } from "./ledger";
 import { quarterReviewRouter } from "./quarter-review";
 import { meRouter } from "./me";
 import { moneyRouter } from "./money";
@@ -52,6 +53,7 @@ export const appRouter = createTRPCRouter({
   focusBlocks: focusBlocksRouter,
   invoices: invoicesRouter,
   learning: learningRouter,
+  ledger: ledgerRouter,
   quarterReview: quarterReviewRouter,
   me: meRouter,
   money: moneyRouter,
