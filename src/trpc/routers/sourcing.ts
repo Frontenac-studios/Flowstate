@@ -1,12 +1,18 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncLeadRow, syncProjectRow, syncSourcingSettingsRow } from "@/db/record-sync-mutation";
+import {
+  syncLeadOutreachRow,
+  syncLeadRow,
+  syncProjectRow,
+  syncSourcingSettingsRow,
+} from "@/db/record-sync-mutation";
 import {
   clients,
   directions,
+  leadOutreach,
   leads,
   projects,
   rates,
@@ -15,9 +21,10 @@ import {
 } from "@/db/tables";
 import { isModelConfigured } from "@/lib/env";
 import { slugifyProjectName } from "@/lib/projects/slugify";
-import { DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
+import { DEFAULT_VOICE, DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
 import { rankLeads } from "@/lib/sourcing/scoring";
 import { buildIcpSeed } from "@/lib/sourcing/seed";
+import { draftOutreach } from "@/server/sourcing/draft-outreach";
 import { scoreCompany } from "@/server/sourcing/score-company";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -34,6 +41,9 @@ const DISMISS_REASONS = [
   "already_know",
   "not_interested",
 ] as const;
+
+/** Opener + this many aging-clock follow-ups per draft run. */
+const FOLLOW_UP_COUNT = 2;
 
 const segmentSchema = z.object({
   id: z.string().min(1).max(64),
@@ -362,5 +372,144 @@ export const sourcingRouter = createTRPCRouter({
       if (updated) await syncLeadRow(updated.id, "update", updated);
 
       return { leadId: lead.id, projectId: project.id, slug };
+    }),
+
+  /** The drafted opener + follow-ups for one lead, in send order. */
+  listOutreach: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      return db
+        .select()
+        .from(leadOutreach)
+        .where(and(eq(leadOutreach.leadId, input.leadId), eq(leadOutreach.userId, ctx.userId)))
+        .orderBy(asc(leadOutreach.sortOrder));
+    }),
+
+  /**
+   * Draft the opener + follow-ups for a lead (W10e). Mirrors the voice profile and
+   * leads with the real fit reasons. Regenerating replaces the UNSENT drafts and
+   * leaves anything already marked sent untouched. Needs OPENROUTER_API_KEY.
+   */
+  draftOutreach: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!isModelConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "The drafting model isn't configured (OPENROUTER_API_KEY).",
+        });
+      }
+
+      const [lead] = await db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+
+      const [settingsRow] = await db
+        .select()
+        .from(sourcingSettings)
+        .where(eq(sourcingSettings.userId, ctx.userId))
+        .limit(1);
+      const [directionRows, clientRows] = await Promise.all([
+        db
+          .select({ statement: directions.statement })
+          .from(directions)
+          .where(and(eq(directions.userId, ctx.userId), isNull(directions.retiredAt))),
+        db.select({ name: clients.name }).from(clients).where(eq(clients.userId, ctx.userId)),
+      ]);
+
+      const result = await draftOutreach({
+        companyName: lead.companyName,
+        companyNotes: lead.notes ?? "",
+        rationale: lead.rationale ?? null,
+        voice: settingsRow?.outreachVoice ?? DEFAULT_VOICE,
+        directions: directionRows.map((d) => d.statement),
+        wonClientNames: clientRows.map((c) => c.name),
+        followUpCount: FOLLOW_UP_COUNT,
+      });
+
+      // Clear the old unsent drafts before writing the new run; keep any sent.
+      const existing = await db
+        .select({ id: leadOutreach.id, status: leadOutreach.status })
+        .from(leadOutreach)
+        .where(and(eq(leadOutreach.leadId, lead.id), eq(leadOutreach.userId, ctx.userId)));
+      const staleIds = existing.filter((r) => r.status === "draft").map((r) => r.id);
+      if (staleIds.length) {
+        await db
+          .delete(leadOutreach)
+          .where(and(inArray(leadOutreach.id, staleIds), eq(leadOutreach.userId, ctx.userId)));
+        for (const id of staleIds) await syncLeadOutreachRow(id, "delete", { id });
+      }
+
+      const messages = [
+        { kind: "opener" as const, body: result.opener },
+        ...result.followUps.map((body) => ({ kind: "follow_up" as const, body })),
+      ];
+      const drafted = [];
+      for (let i = 0; i < messages.length; i++) {
+        const [row] = await db
+          .insert(leadOutreach)
+          .values({
+            userId: ctx.userId,
+            orgId: ctx.orgId,
+            leadId: lead.id,
+            kind: messages[i].kind,
+            body: messages[i].body,
+            sortOrder: i,
+          })
+          .returning();
+        if (row) {
+          await syncLeadOutreachRow(row.id, "insert", row);
+          drafted.push(row);
+        }
+      }
+      return drafted;
+    }),
+
+  /** Edit a draft before sending — Flowstate drafts, you shape it (Law 1). */
+  updateOutreachBody: protectedProcedure
+    .input(z.object({ id: z.string().uuid(), body: z.string().trim().min(1).max(2000) }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(leadOutreach)
+        .set({ body: input.body, updatedAt: new Date() })
+        .where(and(eq(leadOutreach.id, input.id), eq(leadOutreach.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found." });
+      await syncLeadOutreachRow(row.id, "update", row);
+      return row;
+    }),
+
+  /**
+   * Mark a draft sent (you copy/open-in-mail and send it yourself — Law 1). The first
+   * send on a lead advances it new → contacted.
+   */
+  markOutreachSent: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(leadOutreach)
+        .set({ status: "sent", sentAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(leadOutreach.id, input.id), eq(leadOutreach.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found." });
+      await syncLeadOutreachRow(row.id, "update", row);
+
+      const [lead] = await db
+        .select({ id: leads.id, state: leads.state })
+        .from(leads)
+        .where(and(eq(leads.id, row.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (lead?.state === "new") {
+        const [advanced] = await db
+          .update(leads)
+          .set({ state: "contacted", updatedAt: new Date() })
+          .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
+          .returning();
+        if (advanced) await syncLeadRow(advanced.id, "update", advanced);
+      }
+      return row;
     }),
 });

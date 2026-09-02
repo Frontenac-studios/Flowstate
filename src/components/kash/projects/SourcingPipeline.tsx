@@ -9,6 +9,8 @@ import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import type { LeadRationale } from "@/lib/sourcing/types";
 import { useTRPC } from "@/trpc/client";
 
+import LeadOutreachPanel from "./LeadOutreachPanel";
+
 const DISMISS_OPTIONS: { value: string; label: string }[] = [
   { value: "wrong_industry", label: "Wrong industry" },
   { value: "too_small", label: "Too small" },
@@ -67,6 +69,7 @@ export default function SourcingPipeline() {
   const [company, setCompany] = useState("");
   const [notes, setNotes] = useState("");
   const [dismissOpenFor, setDismissOpenFor] = useState<string | null>(null);
+  const [outreachOpenFor, setOutreachOpenFor] = useState<string | null>(null);
 
   function submitAdd() {
     if (!company.trim()) return;
@@ -190,6 +193,14 @@ export default function SourcingPipeline() {
                 >
                   Promote
                 </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOutreachOpenFor(outreachOpenFor === lead.id ? null : lead.id)}
+                  className="text-sm"
+                >
+                  {outreachOpenFor === lead.id ? "Hide outreach" : "Outreach"}
+                </Button>
                 <div className="relative">
                   <button
                     type="button"
@@ -214,6 +225,8 @@ export default function SourcingPipeline() {
                   ) : null}
                 </div>
               </div>
+
+              {outreachOpenFor === lead.id ? <LeadOutreachPanel leadId={lead.id} /> : null}
             </div>
           );
         })
