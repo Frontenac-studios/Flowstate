@@ -212,8 +212,9 @@ export default function SourcingSettingsSection() {
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-medium text-ink">Scoring weights</h3>
         <p className="text-caption text-ink-muted">
-          Score = won-similarity vs explicit criteria; the explicit half splits across Fit / Risk /
-          Strategy.
+          Score = won-similarity vs explicit criteria; the explicit half splits across Fit (fit) /
+          Need (buying signals) / Value (willingness-to-pay). The agent scores facts — it never
+          judges.
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {(
@@ -221,8 +222,8 @@ export default function SourcingSettingsSection() {
               ["wonSimilarity", "Won-similarity"],
               ["explicit", "Explicit"],
               ["fit", "Fit"],
-              ["risk", "Risk"],
-              ["strategy", "Strategy"],
+              ["need", "Need"],
+              ["value", "Value"],
             ] as [keyof SourcingWeights, string][]
           ).map(([key, label]) => (
             <label key={key} className="flex flex-col gap-1 text-caption text-ink-muted">
