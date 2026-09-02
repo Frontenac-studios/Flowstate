@@ -693,6 +693,7 @@ CREATE INDEX IF NOT EXISTS lead_outreach_lead_id_idx ON lead_outreach (lead_id);
 CREATE TABLE IF NOT EXISTS orgs (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
+  personal_for_user_id TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
@@ -792,6 +793,9 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
     column: "billing_threshold_hours",
     definition: "INTEGER NOT NULL DEFAULT 20",
   },
+  // Marks the org auto-created for a user who had none; unique, so concurrent
+  // first-requests can't each create one. Index built after the loop below.
+  { table: "orgs", column: "personal_for_user_id", definition: "TEXT" },
 ];
 
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {
@@ -814,6 +818,15 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
   // (created before the column) makes the index reference a missing column.
   sqlite.exec(
     "CREATE INDEX IF NOT EXISTS projects_user_id_client_id_idx ON projects (user_id, client_id);"
+  );
+
+  // The org-bootstrap guard, mirroring drizzle/0059. Same reason as the index
+  // above: `personal_for_user_id` is added by the ADDED_COLUMNS loop, so a local
+  // DB created before it would fail on "no such column" inside MIGRATION_SQL.
+  // Existing rows are all NULL and NULLs are distinct, so this never conflicts —
+  // including on a local DB already holding the two orgs this fixes.
+  sqlite.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS orgs_personal_for_user_id_idx ON orgs (personal_for_user_id);"
   );
 
   // W4 double-bill guard, mirroring the Postgres trigger in

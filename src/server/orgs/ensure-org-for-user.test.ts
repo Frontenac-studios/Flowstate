@@ -48,6 +48,47 @@ describe("ensureOrgForUser", () => {
     expect(await db.select().from(orgMemberships)).toHaveLength(1);
   });
 
+  // Regression: bootstrapping an empty database created TWO orgs for the same
+  // user, created_at identical to the millisecond, because the app fires several
+  // tRPC batches on first page load and each one ran this bootstrap. Every
+  // request afterwards then threw AmbiguousOrgMembershipError and the install was
+  // unusable until a row was deleted by hand.
+  //
+  // better-sqlite3 is synchronous underneath, but the Drizzle builders are
+  // awaited, so these calls interleave at exactly the points the real race
+  // interleaves at: all six read "no membership" before any of them writes. What
+  // stops them is the unique index on `orgs.personal_for_user_id`, not a
+  // transaction — which is the whole point, since the old transaction was a no-op
+  // here and a READ COMMITTED snapshot in Postgres.
+  it("creates exactly one org when the bootstrap runs concurrently", async () => {
+    const contexts = await Promise.all(
+      Array.from({ length: 6 }, () => ensureOrgForUser(db, userId))
+    );
+
+    expect(await db.select().from(orgs)).toHaveLength(1);
+    expect(await db.select().from(orgMemberships)).toHaveLength(1);
+
+    // Every caller must agree on the org, not just the database on the count —
+    // one racer walking away with a different id is the same bug wearing a
+    // different hat.
+    expect(new Set(contexts.map((context) => context.orgId)).size).toBe(1);
+    for (const context of contexts) {
+      expect(context.role).toBe("owner");
+    }
+  });
+
+  it("keeps concurrent bootstraps for different users apart", async () => {
+    const otherUserId = randomUUID();
+
+    const [mine, theirs] = await Promise.all([
+      ensureOrgForUser(db, userId),
+      ensureOrgForUser(db, otherUserId),
+    ]);
+
+    expect(mine.orgId).not.toBe(theirs.orgId);
+    expect(await db.select().from(orgs)).toHaveLength(2);
+  });
+
   it("keeps users in separate orgs", async () => {
     const mine = await ensureOrgForUser(db, userId);
     const theirs = await ensureOrgForUser(db, randomUUID());
