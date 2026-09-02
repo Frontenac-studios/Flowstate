@@ -25,6 +25,7 @@ import { recurrenceRouter } from "./recurrence";
 import { settingsRouter } from "./settings";
 import { steeringRouter } from "./steering";
 import { sweepRouter } from "./sweep";
+import { sourcingRouter } from "./sourcing";
 import { targetsRouter } from "./targets";
 import { taskBulkImportsRouter } from "./task-bulk-imports";
 import { tasksRouter } from "./tasks";
@@ -65,6 +66,7 @@ export const appRouter = createTRPCRouter({
   steering: steeringRouter,
   sweep: sweepRouter,
   sync: syncRouter,
+  sourcing: sourcingRouter,
   targets: targetsRouter,
   taskBulkImports: taskBulkImportsRouter,
   tasks: tasksRouter,

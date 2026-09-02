@@ -15,7 +15,9 @@ import { CalendarSyncSection } from "./CalendarSyncSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
 import { NotificationsAndAssistanceSection } from "./AssistanceSettingsSection";
+import SourcingSettingsSection from "./SourcingSettingsSection";
 import { SyncStatusPanel } from "./SyncStatusPanel";
+import { FLAGS } from "@/lib/flags";
 import { TimeExportSection } from "./TimeExportSection";
 import { TimeTagsSection } from "./TimeTagsSection";
 
@@ -48,6 +50,7 @@ type TabId =
   | "preferences"
   | "integrations"
   | "ai"
+  | "sourcing"
   | "data";
 
 const TABS: { id: TabId; label: string }[] = [
@@ -58,6 +61,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "preferences", label: "Preferences" },
   { id: "integrations", label: "Integrations" },
   { id: "ai", label: "AI / Kash" },
+  // Sourcing (W10) is only reachable when the feature flag is on — dark otherwise.
+  ...(FLAGS.sourcing ? [{ id: "sourcing" as const, label: "Sourcing" }] : []),
   { id: "data", label: "Data & sync" },
 ];
 
@@ -178,6 +183,7 @@ export function SettingsForm() {
         {tab === "categories" ? <CategorySettingsSection /> : null}
 
         {tab === "notifications" ? <NotificationsAndAssistanceSection /> : null}
+        {tab === "sourcing" ? <SourcingSettingsSection /> : null}
 
         {tab === "preferences" ? (
           <>
