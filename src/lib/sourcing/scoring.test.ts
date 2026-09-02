@@ -37,7 +37,27 @@ describe("buildScoringPrompt", () => {
       companyNotes: "",
     });
     expect(prompt).toContain("(none set)");
-    expect(prompt).toContain("(no additional info provided)");
+    expect(prompt).toContain("(nothing noted)");
+  });
+
+  it("separates what the owner says from what the web found (W10h)", () => {
+    const { system, prompt } = buildScoringPrompt({
+      ...inputs,
+      companyNotes: "Met them at a conference; the CTO is technical.",
+      researchedFacts: "Industry: Logistics\nSignals: Hiring two backend engineers",
+    });
+    expect(prompt).toContain("## What the owner says");
+    expect(prompt).toContain("Met them at a conference");
+    expect(prompt).toContain("## What web research found");
+    expect(prompt).toContain("Hiring two backend engineers");
+    // The owner is first-hand and wins a conflict — the rubric has to say so.
+    expect(system).toMatch(/owner says is first-hand and wins any conflict/i);
+  });
+
+  it("tells the model an unresearched company is gaps, not a clean slate", () => {
+    const { prompt } = buildScoringPrompt({ ...inputs, researchedFacts: null });
+    expect(prompt).toContain("not researched");
+    expect(prompt).toContain("gap");
   });
 });
 

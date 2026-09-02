@@ -18,10 +18,12 @@ import {
   stageTakesProposal,
   type PipelineStage,
 } from "@/lib/sourcing/pipeline";
+import type { CompanyFacts } from "@/lib/sourcing/research";
 import type { LeadRationale } from "@/lib/sourcing/types";
 import { useTRPC } from "@/trpc/client";
 
 import LeadOutreachPanel from "./LeadOutreachPanel";
+import LeadResearchBlock from "./LeadResearchBlock";
 
 const DISMISS_OPTIONS: { value: string; label: string }[] = [
   { value: "wrong_industry", label: "Wrong industry" },
@@ -81,6 +83,12 @@ export default function SourcingPipeline() {
 
   const score = useMutation(
     trpc.sourcing.scoreLead.mutationOptions({
+      onSuccess: invalidate,
+      onError: (e: { message: string }) => toast?.toast({ message: e.message, variant: "error" }),
+    })
+  );
+  const research = useMutation(
+    trpc.sourcing.researchLead.mutationOptions({
       onSuccess: invalidate,
       onError: (e: { message: string }) => toast?.toast({ message: e.message, variant: "error" }),
     })
@@ -201,6 +209,7 @@ export default function SourcingPipeline() {
           ) : (
             column.leads.map((lead) => {
               const rationale = (lead.rationale ?? null) as LeadRationale | null;
+              const researched = (lead.research ?? null) as CompanyFacts | null;
               const scored = lead.score != null;
               const stage = lead.state as PipelineStage;
               const forward = nextStage(stage);
@@ -284,6 +293,10 @@ export default function SourcingPipeline() {
                     </div>
                   ) : null}
 
+                  {researched ? (
+                    <LeadResearchBlock facts={researched} researchedAt={lead.researchedAt} />
+                  ) : null}
+
                   {/* The quoted figure — financial-class, joined in by project id. */}
                   {stageTakesProposal(stage) ? (
                     <div className="flex items-center gap-2 border-t border-subtle pt-2">
@@ -313,6 +326,20 @@ export default function SourcingPipeline() {
                   ) : null}
 
                   <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => research.mutate({ leadId: lead.id })}
+                      disabled={research.isPending}
+                      className="text-sm"
+                      title="Reads the open web. Costs a few cents per run."
+                    >
+                      {research.isPending && research.variables?.leadId === lead.id
+                        ? "Researching…"
+                        : researched
+                          ? "Re-research"
+                          : "Research"}
+                    </Button>
                     {back ? (
                       <Button
                         type="button"
