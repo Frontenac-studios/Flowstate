@@ -12,6 +12,8 @@ import { hasTemplateFeatures } from "@/lib/projects/template-milestone";
 import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher } from "../InPageSwitcher";
+import SourcingPipeline from "./SourcingPipeline";
+import { FLAGS } from "@/lib/flags";
 import CompletedProjectsSection from "./CompletedProjectsSection";
 import LooseTasksCard from "./LooseTasksCard";
 import MultiProjectCalendarView from "./MultiProjectCalendarView";
@@ -22,7 +24,7 @@ import { useProjectFoldTransitions } from "./useProjectFoldTransitions";
 
 import "./projects-motion.css";
 
-type IndexViewMode = "gallery" | "calendar";
+type IndexViewMode = "gallery" | "calendar" | "pipeline";
 
 export default function ProjectsIndex() {
   const trpc = useTRPC();
@@ -73,11 +75,13 @@ export default function ProjectsIndex() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold text-ink">Projects</h1>
-          {hasProjects ? (
+          {hasProjects || FLAGS.sourcing ? (
             <InPageSwitcher
               options={[
                 { value: "gallery", label: "Gallery" },
                 { value: "calendar", label: "Calendar" },
+                // Pipeline (W10) — the sourcing triage board; dark unless flagged on.
+                ...(FLAGS.sourcing ? [{ value: "pipeline" as const, label: "Pipeline" }] : []),
               ]}
               value={indexView}
               onChange={setIndexView}
@@ -97,7 +101,9 @@ export default function ProjectsIndex() {
         onCreated={handleCreated}
       />
 
-      {indexView === "calendar" ? (
+      {indexView === "pipeline" ? (
+        <SourcingPipeline />
+      ) : indexView === "calendar" ? (
         <MultiProjectCalendarView />
       ) : isError ? (
         <QueryErrorNotice
