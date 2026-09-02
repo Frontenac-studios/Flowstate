@@ -85,3 +85,59 @@ describe("sqlite project_milestones", () => {
     expect(rows[0]!.completedAt).toBeNull();
   });
 });
+
+// Guards the org-bootstrap fix (drizzle/0059) on the desktop mirror. The unique
+// index is what makes `ensureOrgForUser` idempotent under concurrency, and it has
+// to survive being added to a local DB that predates the column — including one
+// already holding the two orgs the fix exists to prevent.
+describe("sqlite orgs.personal_for_user_id", () => {
+  it("adds the column and its unique index to a db created before either existed", () => {
+    const sqlite = new Database(":memory:");
+    // The old orgs shape, as created by earlier versions.
+    sqlite
+      .prepare(
+        `CREATE TABLE orgs (
+          id TEXT PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )`
+      )
+      .run();
+    // The broken state this fixes: one user, two orgs, created_at to the
+    // millisecond apart. Migrating must not choke on it — every existing row is
+    // left NULL, and NULLs are distinct under a unique index.
+    const now = Date.now();
+    for (const id of ["org-one", "org-two"]) {
+      sqlite
+        .prepare("INSERT INTO orgs (id, name, created_at, updated_at) VALUES (?, 'Personal', ?, ?)")
+        .run(id, now, now);
+    }
+
+    const columns = () =>
+      (sqlite.prepare("PRAGMA table_info(orgs)").all() as Array<{ name: string }>).map(
+        (c) => c.name
+      );
+    expect(columns()).not.toContain("personal_for_user_id");
+
+    runSqliteMigrations(sqlite);
+
+    expect(columns()).toContain("personal_for_user_id");
+    const indexes = (
+      sqlite.prepare("PRAGMA index_list(orgs)").all() as Array<{ name: string; unique: number }>
+    ).filter((i) => i.name === "orgs_personal_for_user_id_idx");
+    expect(indexes).toHaveLength(1);
+    expect(indexes[0]!.unique).toBe(1);
+
+    // The index actually bites: a second personal org for the same user is refused.
+    const claim = (id: string) =>
+      sqlite
+        .prepare(
+          "INSERT INTO orgs (id, name, personal_for_user_id, created_at, updated_at) VALUES (?, 'Personal', ?, ?, ?)"
+        )
+        .run(id, USER, now, now);
+
+    claim("org-three");
+    expect(() => claim("org-four")).toThrow(/UNIQUE constraint failed/);
+  });
+});
