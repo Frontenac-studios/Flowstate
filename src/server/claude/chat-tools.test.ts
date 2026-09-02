@@ -40,7 +40,6 @@ describe("toolsForSurface", () => {
       "loose-tasks",
       "backlog",
       "reviews",
-      "care",
       "morning-handoff",
     ] as const) {
       const names = toolsForSurface("planning", surface).map((t) => t.name);
@@ -51,15 +50,7 @@ describe("toolsForSurface", () => {
   });
 
   it("covers all planning surfaces", () => {
-    for (const surface of [
-      "today",
-      "week",
-      "plan",
-      "projects",
-      "backlog",
-      "reviews",
-      "care",
-    ] as const)
+    for (const surface of ["today", "week", "plan", "projects", "backlog", "reviews"] as const)
       expect(toolsForSurface("planning", surface).map((t) => t.name)).toEqual(
         SURFACE_TOOL_NAMES[surface]
       );

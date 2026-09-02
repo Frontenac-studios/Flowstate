@@ -173,6 +173,5 @@ describe("planningSurfaceFromPathname", () => {
     expect(planningSurfaceFromPathname("/plan")).toBe("plan");
     expect(planningSurfaceFromPathname("/projects/foo")).toBe("projects");
     expect(planningSurfaceFromPathname("/backlog")).toBe("backlog");
-    expect(planningSurfaceFromPathname("/care")).toBe("care");
   });
 });

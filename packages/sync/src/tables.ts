@@ -33,9 +33,6 @@ export const SYNC_TABLES = [
   "category_settings",
   "task_bulk_imports",
   "task_bulk_import_items",
-  "care_activities",
-  "care_events",
-  "care_reflections",
 ] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];
