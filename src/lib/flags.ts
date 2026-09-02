@@ -49,6 +49,15 @@ export const FLAGS = {
    * mode. Revisit once the W2 timer has been used for a week (§8e).
    */
   focus: on(process.env.NEXT_PUBLIC_FLAG_FOCUS),
+
+  /**
+   * The outbound sourcing agent (W10). Unlike the three above, this is **in
+   * development, not parked-but-finished** — it ships across many PRs, so the flag
+   * keeps the half-built surface (ICP config, prospect triage, the weekly run) dark
+   * in production until the feature is whole. Un-park by flipping it on for local
+   * work; flip on in prod only when W10 is complete. See docs/plan-w10-sourcing.md.
+   */
+  sourcing: on(process.env.NEXT_PUBLIC_FLAG_SOURCING),
 } as const;
 
 export type FeatureFlag = keyof typeof FLAGS;
