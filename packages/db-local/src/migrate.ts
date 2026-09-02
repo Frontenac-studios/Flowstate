@@ -633,6 +633,9 @@ CREATE TABLE IF NOT EXISTS leads (
   confidence INTEGER,
   rank INTEGER,
   rationale TEXT,
+  research TEXT,
+  researched_at INTEGER,
+  research_provider TEXT,
   state TEXT NOT NULL DEFAULT 'new',
   dismiss_reason TEXT,
   snooze_until INTEGER,
@@ -719,6 +722,10 @@ CREATE INDEX IF NOT EXISTS org_memberships_user_id_idx
 const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: string }> = [
   // W10f — a lead's terminal-stage timestamp, on a mirror that predates the pipeline.
   { table: "leads", column: "closed_at", definition: "INTEGER" },
+  // W10h — the researched company facts, their timestamp and their provenance.
+  { table: "leads", column: "research", definition: "TEXT" },
+  { table: "leads", column: "researched_at", definition: "INTEGER" },
+  { table: "leads", column: "research_provider", definition: "TEXT" },
   { table: "tasks", column: "category", definition: "TEXT" },
   { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },

@@ -3,6 +3,7 @@ import { index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-o
 import { directions } from "./directions";
 import { projects } from "./projects";
 import { leadSource, leadState } from "./sourcing-enums";
+import type { CompanyFacts } from "@/lib/sourcing/research";
 import type { LeadRationale } from "@/lib/sourcing/types";
 
 /**
@@ -37,6 +38,17 @@ export const leads = pgTable(
     rank: integer("rank"),
     /** Fit/Risk/Strategy breakdown + "couldn't confirm" gaps (W10c). */
     rationale: jsonb("rationale").$type<LeadRationale>(),
+    /**
+     * What the web said about this company (W10h) — the facts the score was formed
+     * against, stored so they can be re-read, audited against the sources, and above
+     * all NOT re-bought: every research call costs money per search result.
+     *
+     * Facts, never money: a proposal figure would go to `project_fees`, not here.
+     */
+    research: jsonb("research").$type<CompanyFacts>(),
+    researchedAt: timestamp("researched_at", { withTimezone: true, mode: "date" }),
+    /** Which adapter produced `research` — provenance for a row outliving its vendor. */
+    researchProvider: text("research_provider"),
     state: leadState("state").notNull().default("new"),
     /** One-tap reason captured on dismiss (wrong industry / too small / …). */
     dismissReason: text("dismiss_reason"),

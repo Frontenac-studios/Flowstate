@@ -38,6 +38,10 @@ export const leads = sqliteTable(
     state: text("state", { enum: LEAD_STATES })
       .notNull()
       .$defaultFn(() => "new"),
+    // jsonb in Postgres → JSON-mode text in the mirror (W10h company research).
+    research: text("research", { mode: "json" }),
+    researchedAt: integer("researched_at", { mode: "timestamp_ms" }),
+    researchProvider: text("research_provider"),
     dismissReason: text("dismiss_reason"),
     snoozeUntil: integer("snooze_until", { mode: "timestamp_ms" }),
     closedAt: integer("closed_at", { mode: "timestamp_ms" }),

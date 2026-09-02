@@ -31,8 +31,14 @@ export type ScoreResult = z.infer<typeof scoreResultSchema>;
 
 export type ScoringInputs = {
   companyName: string;
-  /** Whatever facts the user pasted / the agent gathered (web research is W10h). */
+  /** Whatever the OWNER typed about this company. */
   companyNotes: string;
+  /**
+   * What the web said, rendered by `renderFactsForScoring` (W10h). Kept separate from
+   * `companyNotes` so the prompt can rank them: the owner knows things the web does
+   * not, so on a conflict the owner's note wins.
+   */
+  researchedFacts?: string | null;
   segments: SourcingSegment[];
   weights: SourcingWeights;
   exclusions: string[];
@@ -59,6 +65,7 @@ export function buildScoringPrompt(inputs: ScoringInputs): { system: string; pro
     "Fit = target industry / work type / size-stage band / rate plausibility. Risk = bought this kind of work before / budget signal / clear scope. Strategy = case-study potential / builds a roadmap capability.",
     "The Direction is a HARD GATE: a prospect that violates it scores low on Fit regardless of everything else.",
     "Be terse and concrete in reasons; do not invent facts not present in the company info.",
+    "Two kinds of company info may be given. What the OWNER says is first-hand and wins any conflict; what the WEB RESEARCH says is second-hand — trust it, but treat anything it lists as unconfirmed as a gap, not a fact.",
   ].join("\n");
 
   const prompt = [
@@ -67,7 +74,9 @@ export function buildScoringPrompt(inputs: ScoringInputs): { system: string; pro
     `# Rate floor\n${inputs.rateFloorCents != null ? `$${Math.round(inputs.rateFloorCents / 100)}/hr` : "(unset)"}`,
     `# ICP segments\n${inputs.segments.map((s) => `- ${s.label}: ${s.firmographics}`).join("\n") || "(none)"}`,
     `# Exclusions (never pursue)\n${inputs.exclusions.join("; ") || "(none)"}`,
-    `# Company to score\n${inputs.companyName}\n${inputs.companyNotes || "(no additional info provided)"}`,
+    `# Company to score\n${inputs.companyName}`,
+    `## What the owner says\n${inputs.companyNotes || "(nothing noted)"}`,
+    `## What web research found\n${inputs.researchedFacts || "(not researched — treat every scoring factor it would have covered as a gap)"}`,
   ].join("\n\n");
 
   return { system, prompt };

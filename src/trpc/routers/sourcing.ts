@@ -30,6 +30,7 @@ import {
   stageTakesProposal,
   type PipelineStage,
 } from "@/lib/sourcing/pipeline";
+import { renderFactsForScoring } from "@/lib/sourcing/research";
 import { rankLeads } from "@/lib/sourcing/scoring";
 import { buildIcpSeed } from "@/lib/sourcing/seed";
 import { draftOutreach } from "@/server/sourcing/draft-outreach";
@@ -40,7 +41,9 @@ import {
   unarchiveProject,
   unsignProject,
 } from "@/server/sourcing/pipeline-effects";
+import { researchCompany } from "@/server/sourcing/research-company";
 import { scoreCompany } from "@/server/sourcing/score-company";
+import { isWebResearchConfigured } from "@/server/sourcing/web-research";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -248,7 +251,67 @@ export const sourcingRouter = createTRPCRouter({
       .sort((a, b) => a.rank - b.rank);
   }),
 
-  /** Score one lead against the ICP (W10c). Needs OPENROUTER_API_KEY. */
+  /**
+   * Research a company on the open web (W10h) and store what it found.
+   *
+   * **This call costs money** — the web plugin bills per search result — so the facts
+   * are persisted on the lead and reused. Re-running is an explicit act (the Research
+   * button on an already-researched card), never something a re-render or a re-score
+   * triggers behind the user's back.
+   */
+  researchLead: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!isWebResearchConfigured()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Web research isn't configured (OPENROUTER_API_KEY).",
+        });
+      }
+
+      const [lead] = await db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+
+      const [settingsRow] = await db
+        .select()
+        .from(sourcingSettings)
+        .where(eq(sourcingSettings.userId, ctx.userId))
+        .limit(1);
+
+      const { facts, provider } = await researchCompany({
+        companyName: lead.companyName,
+        companyNotes: lead.notes ?? "",
+        segments: settingsRow?.segments ?? [],
+      });
+
+      const [row] = await db
+        .update(leads)
+        .set({
+          research: facts,
+          researchedAt: new Date(),
+          researchProvider: provider,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      await syncLeadRow(row.id, "update", row);
+
+      return { lead: row, facts };
+    }),
+
+  /**
+   * Score one lead against the ICP (W10c). Needs OPENROUTER_API_KEY.
+   *
+   * Reads whatever research is already stored on the lead (W10h) but never buys more:
+   * scoring an unresearched company is allowed and simply scores thin, with the
+   * missing factors named as gaps and the confidence low — which is exactly the
+   * signal the triage board's "high potential · unverified" pill is built on.
+   */
   scoreLead: protectedProcedure
     .input(z.object({ leadId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -286,6 +349,7 @@ export const sourcingRouter = createTRPCRouter({
       const result = await scoreCompany({
         companyName: lead.companyName,
         companyNotes: lead.notes ?? "",
+        researchedFacts: lead.research ? renderFactsForScoring(lead.research) : null,
         segments: settingsRow?.segments ?? [],
         weights: settingsRow?.weights ?? DEFAULT_WEIGHTS,
         exclusions: settingsRow?.exclusions ?? [],
