@@ -33,6 +33,7 @@ import {
   stageTakesProposal,
   type PipelineStage,
 } from "@/lib/sourcing/pipeline";
+import { segmentConfidenceHealth } from "@/lib/sourcing/enrichment";
 import { renderFactsForScoring } from "@/lib/sourcing/research";
 import {
   ageInDays,
@@ -54,6 +55,7 @@ import {
   unarchiveProject,
   unsignProject,
 } from "@/server/sourcing/pipeline-effects";
+import { enrichLead } from "@/server/sourcing/enrich-lead";
 import { researchCompany } from "@/server/sourcing/research-company";
 import { scoreCompany } from "@/server/sourcing/score-company";
 import { isWebResearchConfigured } from "@/server/sourcing/web-research";
@@ -86,6 +88,8 @@ const segmentSchema = z.object({
   id: z.string().min(1).max(64),
   label: z.string().trim().min(1).max(80),
   firmographics: z.string().trim().max(2000),
+  /** W10j gap-filling for this segment. Absent = off, which costs nothing. */
+  enrichment: z.enum(["off", "web"]).optional(),
 });
 
 const weightsSchema = z.object({
@@ -401,6 +405,82 @@ export const sourcingRouter = createTRPCRouter({
 
       return { lead: scored, ...result };
     }),
+
+  /**
+   * Run a gap-fill pass over a lead's research (W10j) — a second, targeted search at
+   * the facts the first pass couldn't confirm.
+   *
+   * Requires the lead's segment to have enrichment on. That gate is the plan's rule:
+   * you turn gap-filling on for a segment whose confidence is chronically low, not
+   * for everything. Enrichment may only FILL what research left null, never overwrite
+   * it, so re-running is safe and boring.
+   */
+  enrichLead: protectedProcedure
+    .input(z.object({ leadId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [lead] = await db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.id, input.leadId), eq(leads.userId, ctx.userId)))
+        .limit(1);
+      if (!lead) throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found." });
+      if (!lead.research) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Research this company first — enrichment closes gaps, it doesn't open them.",
+        });
+      }
+
+      const [settingsRow] = await db
+        .select({ segments: sourcingSettings.segments })
+        .from(sourcingSettings)
+        .where(eq(sourcingSettings.userId, ctx.userId))
+        .limit(1);
+      const segment = (settingsRow?.segments ?? []).find((s) => s.id === lead.segment);
+
+      if (segment?.enrichment !== "web") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Turn on gap-filling for this segment in Settings first.",
+        });
+      }
+
+      const result = await enrichLead({
+        companyName: lead.companyName,
+        facts: lead.research,
+        mode: segment.enrichment,
+      });
+
+      if (result.provider === null) {
+        return { lead, resolved: 0, provider: null };
+      }
+
+      const [row] = await db
+        .update(leads)
+        .set({ research: result.facts, updatedAt: new Date() })
+        .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
+        .returning();
+      if (row) await syncLeadRow(row.id, "update", row);
+
+      return { lead: row ?? lead, resolved: result.resolved, provider: result.provider };
+    }),
+
+  /**
+   * Mean confidence per ICP segment — the evidence for whether a segment would
+   * benefit from a paid data vendor (W10j).
+   *
+   * Confidence, not score: a low-scoring segment means the ICP is aimed at the wrong
+   * market, and buying data would only describe the wrong companies more precisely.
+   * A low-CONFIDENCE segment means the agent keeps failing to find enough out, which
+   * is the thing data actually fixes.
+   */
+  confidenceHealth: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await db
+      .select({ segment: leads.segment, confidence: leads.confidence })
+      .from(leads)
+      .where(eq(leads.userId, ctx.userId));
+    return segmentConfidenceHealth(rows);
+  }),
 
   /** Dismiss a lead with a one-tap reason (kept as Filter-learning evidence). */
   dismissLead: protectedProcedure

@@ -25,12 +25,28 @@ export type LeadRationale = {
   gaps?: string[];
 };
 
+/**
+ * How hard the agent tries to close a company's data gaps (W10j).
+ *
+ * `off` — take what the research pass found and let the gaps stand.
+ * `web` — spend one extra targeted search on the specific facts that came back
+ *   unconfirmed. The only mode v1 ships.
+ *
+ * A paid data vendor would arrive as a third mode here and nowhere else — that is
+ * the whole point of the enum being on the SEGMENT rather than global. You would
+ * turn a vendor on for the one segment whose confidence is chronically low, not for
+ * all your sourcing at once.
+ */
+export type EnrichmentMode = "off" | "web";
+
 /** One ICP profile. Firmographics are free-form so the agent can match loosely. */
 export type SourcingSegment = {
   id: string;
   label: string;
   /** Free-text firmographics: industry, size/stage band, geography, etc. */
   firmographics: string;
+  /** Gap-filling for this segment. Undefined = "off" (the default costs nothing). */
+  enrichment?: EnrichmentMode;
 };
 
 /** The weighting the scoring brain applies. Tunable in the weights panel (W10b). */
