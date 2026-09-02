@@ -14,6 +14,7 @@ export const SYNC_TABLES = [
   "owner_draws",
   "rates",
   "projects",
+  "project_fees",
   "project_templates",
   "phases",
   "project_milestones",

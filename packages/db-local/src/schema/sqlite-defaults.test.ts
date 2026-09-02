@@ -11,6 +11,7 @@ import { leads } from "./leads";
 import { leadOutreach } from "./lead-outreach";
 import { moneySettings } from "./money-settings";
 import { phases } from "./phases";
+import { projectFees } from "./project-fees";
 import { projects } from "./projects";
 import { rates } from "./rates";
 import { targets } from "./targets";
@@ -339,5 +340,23 @@ describe("sqlite schema insert-time defaults", () => {
     expect(typeof row!.id).toBe("string");
     expect(row!.occurredAt).toBeInstanceOf(Date);
     expect(row!.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("creates a project fee without an explicit id or timestamps", async () => {
+    const [row] = await db
+      .insert(projectFees)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        projectId: "33333333-3333-3333-3333-333333333333",
+        proposalAmountCents: 4_000_000,
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.proposalAmountCents).toBe(4_000_000);
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
   });
 });

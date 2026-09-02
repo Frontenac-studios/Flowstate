@@ -9,9 +9,12 @@ export const LEAD_STATES = [
   "contacted",
   "engaged",
   "proposal",
+  "signed",
   "promoted",
   "dismissed",
   "snoozed",
+  "declined",
+  "lost",
 ] as const;
 
 export const leads = sqliteTable(
@@ -37,6 +40,7 @@ export const leads = sqliteTable(
       .$defaultFn(() => "new"),
     dismissReason: text("dismiss_reason"),
     snoozeUntil: integer("snooze_until", { mode: "timestamp_ms" }),
+    closedAt: integer("closed_at", { mode: "timestamp_ms" }),
     runId: text("run_id"),
     projectId: text("project_id"),
     directionId: text("direction_id"),

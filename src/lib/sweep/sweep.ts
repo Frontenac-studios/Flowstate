@@ -25,6 +25,13 @@ export type SweepCandidate = {
   lastActivityAt: Date;
   /** When a prior "keep" expires; null = never kept. Future value suppresses the item. */
   keptUntil: Date | null;
+  /**
+   * W10f — this project is a live deal (a promoted prospect with an open lead). A
+   * quiet deal is not the same thing as a quiet project: dropping it asks whether it
+   * was **lost** (record it, keep the evidence) or should be **deleted** (it was
+   * never real). The panel offers that choice only when this is true.
+   */
+  isDeal?: boolean;
 };
 
 export type StaleItem = {
@@ -34,6 +41,8 @@ export type StaleItem = {
   lastActivityAt: Date;
   /** Whole days since last activity, as of `now`. */
   staleDays: number;
+  /** A promoted prospect with an open lead — see SweepCandidate.isDeal. */
+  isDeal?: boolean;
 };
 
 export type SweepDraft = {
@@ -81,6 +90,7 @@ export function computeSweep(params: {
       title: candidate.title,
       lastActivityAt: candidate.lastActivityAt,
       staleDays,
+      ...(candidate.isDeal ? { isDeal: true } : {}),
     });
   }
 

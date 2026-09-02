@@ -1,16 +1,29 @@
-import { and, eq, gt, isNull, lte } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { abyssItems, projects, targets, tasks, timeEntries } from "@/db/tables";
+import {
+  abyssItems,
+  leadOutreach,
+  leads,
+  projectFees,
+  projects,
+  targets,
+  tasks,
+  timeEntries,
+} from "@/db/tables";
 import {
   syncAbyssItemRow,
+  syncLeadOutreachRow,
+  syncLeadRow,
+  syncProjectFeeRow,
   syncProjectRow,
   syncTargetRow,
   syncTaskRow,
 } from "@/db/record-sync-mutation";
 import { computeSweep, SWEEP_KEEP_DAYS, type SweepCandidate } from "@/lib/sweep/sweep";
+import { archiveProject } from "@/server/sourcing/pipeline-effects";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -69,8 +82,9 @@ export const sweepRouter = createTRPCRouter({
       .from(tasks)
       .where(and(eq(tasks.userId, ctx.userId), isNull(tasks.completedAt)));
 
-    // Projects: active, on the board, not the personal Maintenance project. "No time
-    // logged" measures from the last entry, or from creation when none exists.
+    // Projects: active work AND live deals (W10f prospects), on the board, not the
+    // personal Maintenance project. "No time logged" measures from the last entry,
+    // or from creation when none exists.
     const projectRows = await db
       .select({
         id: projects.id,
@@ -82,11 +96,23 @@ export const sweepRouter = createTRPCRouter({
       .where(
         and(
           eq(projects.userId, ctx.userId),
-          eq(projects.state, "active"),
+          inArray(projects.state, ["active", "prospect"]),
           isNull(projects.archivedAt),
           eq(projects.isMaintenance, false)
         )
       );
+
+    // Which of those projects are live deals, and when the deal last moved. A deal's
+    // staleness clock is the LEAD's — stage moves, scoring and outreach all touch the
+    // lead, and most of them never touch the project row at all.
+    const openLeadRows = await db
+      .select({ projectId: leads.projectId, updatedAt: leads.updatedAt })
+      .from(leads)
+      .where(and(eq(leads.userId, ctx.userId), isNull(leads.closedAt)));
+    const dealActivityByProject = new Map<string, Date>();
+    for (const lead of openLeadRows) {
+      if (lead.projectId) dealActivityByProject.set(lead.projectId, lead.updatedAt);
+    }
 
     // Targets: active MANUAL bets in their current period. Auto bets carry no stored
     // movement history (money is derived at read), so they are out of the Sweep.
@@ -117,13 +143,17 @@ export const sweepRouter = createTRPCRouter({
         lastActivityAt: latest(t.updatedAt, lastLoggedByTask.get(t.id) ?? null, t.updatedAt),
         keptUntil: t.sweptKeptUntil,
       })),
-      ...projectRows.map((p) => ({
-        altitude: "project" as const,
-        id: p.id,
-        title: p.name,
-        lastActivityAt: lastLoggedByProject.get(p.id) ?? p.createdAt,
-        keptUntil: p.sweptKeptUntil,
-      })),
+      ...projectRows.map((p) => {
+        const dealActivity = dealActivityByProject.get(p.id) ?? null;
+        return {
+          altitude: "project" as const,
+          id: p.id,
+          title: p.name,
+          lastActivityAt: latest(lastLoggedByProject.get(p.id) ?? null, dealActivity, p.createdAt),
+          keptUntil: p.sweptKeptUntil,
+          isDeal: dealActivity !== null,
+        };
+      }),
       ...targetRows.map((t) => ({
         altitude: "target" as const,
         id: t.id,
@@ -149,7 +179,10 @@ export const sweepRouter = createTRPCRouter({
             z.object({
               altitude: z.enum(["task", "project", "target"]),
               id: z.string().uuid(),
-              ruling: z.enum(["drop", "park", "keep"]),
+              // `lost` and `delete` are the two halves of dropping a DEAL (W10f) —
+              // a quiet prospect is either a loss worth recording or a row that
+              // should never have existed. Both are project-altitude only.
+              ruling: z.enum(["drop", "park", "keep", "lost", "delete"]),
             })
           )
           .max(200),
@@ -158,7 +191,18 @@ export const sweepRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const now = new Date();
       const keptUntil = new Date(now.getTime() + SWEEP_KEEP_DAYS * DAY_MS);
-      const counts = { dropped: 0, parked: 0, kept: 0 };
+      const counts = { dropped: 0, parked: 0, kept: 0, lost: 0, deleted: 0 };
+
+      if (
+        input.rulings.some(
+          (r) => r.altitude !== "project" && (r.ruling === "lost" || r.ruling === "delete")
+        )
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only a deal can be marked lost or deleted.",
+        });
+      }
 
       for (const r of input.rulings) {
         if (r.altitude === "task") {
@@ -204,6 +248,74 @@ export const sweepRouter = createTRPCRouter({
             await db.delete(tasks).where(and(eq(tasks.id, r.id), eq(tasks.userId, ctx.userId)));
             await syncTaskRow(r.id, "delete", { id: r.id, userId: ctx.userId });
             counts.parked += 1;
+          }
+        } else if (r.altitude === "project" && (r.ruling === "lost" || r.ruling === "delete")) {
+          // A quiet deal. Both paths need the lead behind the prospect project.
+          const [lead] = await db
+            .select({ id: leads.id })
+            .from(leads)
+            .where(
+              and(eq(leads.userId, ctx.userId), eq(leads.projectId, r.id), isNull(leads.closedAt))
+            )
+            .limit(1);
+
+          if (r.ruling === "lost") {
+            // Record the loss: the lead closes, the project archives off the board,
+            // and the score, notes and outreach stay readable as Filter evidence.
+            if (lead) {
+              const [closed] = await db
+                .update(leads)
+                .set({ state: "lost", closedAt: now, updatedAt: now })
+                .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)))
+                .returning();
+              if (closed) await syncLeadRow(closed.id, "update", closed);
+            }
+            await archiveProject({ userId: ctx.userId, orgId: ctx.orgId }, r.id);
+            counts.lost += 1;
+          } else {
+            // It was never real. Delete the prospect, its lead, and everything hanging
+            // off them.
+            //
+            // The children are deleted EXPLICITLY rather than left to the Postgres FK
+            // cascade, for two reasons: the SQLite mirror carries no foreign keys (so
+            // a cascade would simply not happen on desktop), and a cascade produces no
+            // sync-mutation rows — the deletes would never reach the other copy, and
+            // the two would drift apart silently.
+            const feeRows = await db
+              .delete(projectFees)
+              .where(and(eq(projectFees.projectId, r.id), eq(projectFees.userId, ctx.userId)))
+              .returning({ id: projectFees.id });
+            for (const fee of feeRows) {
+              await syncProjectFeeRow(fee.id, "delete", { id: fee.id, userId: ctx.userId });
+            }
+
+            if (lead) {
+              const outreachRows = await db
+                .delete(leadOutreach)
+                .where(and(eq(leadOutreach.leadId, lead.id), eq(leadOutreach.userId, ctx.userId)))
+                .returning({ id: leadOutreach.id });
+              for (const draft of outreachRows) {
+                await syncLeadOutreachRow(draft.id, "delete", {
+                  id: draft.id,
+                  userId: ctx.userId,
+                });
+              }
+            }
+
+            const deletedProjects = await db
+              .delete(projects)
+              .where(and(eq(projects.id, r.id), eq(projects.userId, ctx.userId)))
+              .returning({ id: projects.id });
+            if (deletedProjects.length > 0) {
+              await syncProjectRow(r.id, "delete", { id: r.id, userId: ctx.userId });
+            }
+            if (lead) {
+              await db
+                .delete(leads)
+                .where(and(eq(leads.id, lead.id), eq(leads.userId, ctx.userId)));
+              await syncLeadRow(lead.id, "delete", { id: lead.id, userId: ctx.userId });
+            }
+            counts.deleted += 1;
           }
         } else if (r.altitude === "project") {
           const patch =

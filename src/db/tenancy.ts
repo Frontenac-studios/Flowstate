@@ -127,6 +127,10 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   ledger_periods: "financial",
   // Owner's draws (W16) — the personal-side withdrawal, revenue a Member never reads.
   owner_draws: "financial",
+  // The project money sidecar (W10f): the proposal amount, and from W15 the fixed
+  // fee + rate floor. It exists precisely so those figures never become columns on
+  // the org_shared `projects` / `leads` rows a Member can read.
+  project_fees: "financial",
   rates: "financial",
   time_entries: "financial",
 };

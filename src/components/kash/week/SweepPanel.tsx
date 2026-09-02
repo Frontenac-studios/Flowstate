@@ -7,7 +7,7 @@ import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import type { SweepAltitude } from "@/lib/sweep/sweep";
 import { useTRPC } from "@/trpc/client";
 
-type Ruling = "keep" | "park" | "drop";
+type Ruling = "keep" | "park" | "drop" | "lost" | "delete";
 
 const ALTITUDE_CHIP: Record<SweepAltitude, string> = {
   task: "Task",
@@ -15,7 +15,19 @@ const ALTITUDE_CHIP: Record<SweepAltitude, string> = {
   target: "Target",
 };
 
-function rulingOptions(altitude: SweepAltitude): { value: Ruling; label: string }[] {
+function rulingOptions(
+  altitude: SweepAltitude,
+  isDeal: boolean
+): { value: Ruling; label: string }[] {
+  // A quiet DEAL (W10f) isn't dropped — it either went away (record the loss, keep
+  // the evidence) or was never real (delete it). Parking a deal means nothing.
+  if (isDeal) {
+    return [
+      { value: "keep", label: "Keep" },
+      { value: "lost", label: "Lost" },
+      { value: "delete", label: "Delete" },
+    ];
+  }
   // A target has no Backlog home, so it takes keep/drop only.
   const base: { value: Ruling; label: string }[] = [{ value: "keep", label: "Keep" }];
   if (altitude !== "target") base.push({ value: "park", label: "Park" });
@@ -80,10 +92,17 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
         void queryClient.invalidateQueries(trpc.projects.list.pathFilter());
         void queryClient.invalidateQueries(trpc.targets.list.pathFilter());
         void queryClient.invalidateQueries(trpc.abyss.list.pathFilter());
+        void queryClient.invalidateQueries(trpc.sourcing.listLeads.pathFilter());
+        void queryClient.invalidateQueries(trpc.sourcing.listClosed.pathFilter());
         onClose();
-        toast?.toast({
-          message: `Swept — ${counts.kept} kept, ${counts.parked} parked, ${counts.dropped} dropped.`,
-        });
+        const parts = [
+          `${counts.kept} kept`,
+          `${counts.parked} parked`,
+          `${counts.dropped} dropped`,
+        ];
+        if (counts.lost > 0) parts.push(`${counts.lost} lost`);
+        if (counts.deleted > 0) parts.push(`${counts.deleted} deleted`);
+        toast?.toast({ message: `Swept — ${parts.join(", ")}.` });
       },
     })
   );
@@ -97,8 +116,11 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
     panelRef.current?.focus();
   }, [open]);
 
-  function rule(id: string, altitude: SweepAltitude, r: Ruling) {
+  function rule(id: string, altitude: SweepAltitude, isDeal: boolean, r: Ruling) {
     if (altitude === "target" && r === "park") return;
+    // The two rulings are mutually exclusive by item type, in both directions.
+    if (isDeal && (r === "drop" || r === "park")) return;
+    if (!isDeal && (r === "lost" || r === "delete")) return;
     setRulings((prev) => ({ ...prev, [id]: r }));
   }
 
@@ -120,10 +142,25 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
     } else if (e.key === "ArrowUp") {
       setFocus((f) => Math.max(0, f - 1));
       e.preventDefault();
-    } else if (e.key === "k" || e.key === "d" || e.key === "p") {
+    } else if (e.key === "k" || e.key === "d" || e.key === "p" || e.key === "l" || e.key === "x") {
       const cur = items[focus];
       if (cur) {
-        rule(cur.id, cur.altitude, e.key === "k" ? "keep" : e.key === "d" ? "drop" : "park");
+        const isDeal = cur.isDeal === true;
+        const ruling: Ruling =
+          e.key === "k"
+            ? "keep"
+            : e.key === "l"
+              ? "lost"
+              : e.key === "x"
+                ? "delete"
+                : e.key === "d"
+                  ? // On a deal, "drop" is ambiguous by design — d marks it lost, the
+                    // outcome that keeps the evidence. x is the destructive one.
+                    isDeal
+                    ? "lost"
+                    : "drop"
+                  : "park";
+        rule(cur.id, cur.altitude, isDeal, ruling);
         setFocus((f) => Math.min(items.length - 1, f + 1));
       }
       e.preventDefault();
@@ -149,7 +186,7 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
           Gone quiet — {draft.totalStale} at three altitudes
         </h2>
         <span className="shrink-0 text-caption text-ink-faint">
-          ↑↓ move · k keep · p park · d drop · ↵ sweep
+          ↑↓ move · k keep · p park · d drop · x delete a deal · ↵ sweep
         </span>
       </div>
 
@@ -166,7 +203,7 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
             >
               <span className="flex min-w-0 items-baseline gap-2">
                 <span className="shrink-0 rounded-pill border border-subtle px-1.5 py-0.5 text-meta text-ink-faint">
-                  {ALTITUDE_CHIP[item.altitude]}
+                  {item.isDeal ? "Deal" : ALTITUDE_CHIP[item.altitude]}
                 </span>
                 <span className="min-w-0 truncate text-sm text-ink">{item.title}</span>
                 <span className="shrink-0 text-caption text-ink-faint">
@@ -175,8 +212,8 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
               </span>
               <Segmented
                 value={rulings[item.id] ?? "keep"}
-                options={rulingOptions(item.altitude)}
-                onChange={(v) => rule(item.id, item.altitude, v)}
+                options={rulingOptions(item.altitude, item.isDeal === true)}
+                onChange={(v) => rule(item.id, item.altitude, item.isDeal === true, v)}
               />
             </li>
           );
