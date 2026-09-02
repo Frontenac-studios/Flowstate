@@ -1,8 +1,8 @@
-import { and, asc, eq, gte, isNotNull, isNull, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { clients, projectMilestones, projects, tasks } from "@/db/tables";
+import { clients, leadOutreach, leads, projectMilestones, projects, tasks } from "@/db/tables";
 import {
   addDays,
   endOfIsoWeekSunday,
@@ -10,6 +10,7 @@ import {
   toISODateString,
 } from "@/lib/dates/local-day";
 import { bucketComingUp, type ComingUpItem } from "@/lib/week/bucket-coming-up";
+import { buildWaitingOnYou } from "@/lib/week/waiting-on-you";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -106,27 +107,79 @@ export const steeringRouter = createTRPCRouter({
     }),
 
   /**
-   * "Waiting on you" (v1): live deals in flight = prospect-state projects, by client.
-   * The sourced-batch and follow-up rows light up with W10 (the sourcing agent); this
-   * is the one row-type that has data today — no leads schema invented here.
+   * "Waiting on you": one urgency-sorted queue folding the pipeline and the outreach
+   * (v1-scope §W14) — the sourced batch to triage, follow-ups the aging clock says
+   * you owe, and live deals needing a move. Three row types, no funnel stage counts:
+   * those live on the Projects board, and Week asks "what needs me".
+   *
+   * The rows are assembled by the pure `buildWaitingOnYou`; this does the reads.
+   * Prospect projects with no lead behind them (added by hand, before the sourcing
+   * agent existed) are carried through so nothing that used to show up vanishes.
    */
   waitingOnYou: protectedProcedure.query(async ({ ctx }) => {
-    return db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        category: projects.category,
-        clientName: clients.name,
-      })
-      .from(projects)
-      .leftJoin(clients, eq(projects.clientId, clients.id))
-      .where(
-        and(
-          eq(projects.userId, ctx.userId),
-          eq(projects.state, "prospect"),
-          isNull(projects.archivedAt)
+    const [leadRows, sentRows, prospectRows] = await Promise.all([
+      db
+        .select({
+          id: leads.id,
+          companyName: leads.companyName,
+          state: leads.state,
+          projectId: leads.projectId,
+        })
+        .from(leads)
+        .where(
+          and(
+            eq(leads.userId, ctx.userId),
+            inArray(leads.state, ["new", "contacted", "engaged", "proposal"])
+          )
+        ),
+      // The aging clock reads what you actually SENT, not what was drafted — a draft
+      // sitting unsent is not contact, and the follow-up is owed all the same.
+      db
+        .select({ leadId: leadOutreach.leadId, sentAt: leadOutreach.sentAt })
+        .from(leadOutreach)
+        .where(and(eq(leadOutreach.userId, ctx.userId), isNotNull(leadOutreach.sentAt))),
+      db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          clientName: clients.name,
+        })
+        .from(projects)
+        .leftJoin(clients, eq(projects.clientId, clients.id))
+        .where(
+          and(
+            eq(projects.userId, ctx.userId),
+            eq(projects.state, "prospect"),
+            isNull(projects.archivedAt)
+          )
         )
-      )
-      .orderBy(asc(projects.createdAt));
+        .orderBy(asc(projects.createdAt)),
+    ]);
+
+    const lastSentByLead = new Map<string, Date>();
+    for (const row of sentRows) {
+      if (!row.sentAt) continue;
+      const current = lastSentByLead.get(row.leadId);
+      if (!current || row.sentAt.getTime() > current.getTime()) {
+        lastSentByLead.set(row.leadId, row.sentAt);
+      }
+    }
+
+    // A prospect project that a lead already speaks for would otherwise appear twice.
+    const claimedProjectIds = new Set(
+      leadRows.map((l) => l.projectId).filter((id): id is string => id !== null)
+    );
+
+    return buildWaitingOnYou({
+      leads: leadRows.map((l) => ({
+        id: l.id,
+        companyName: l.companyName,
+        state: l.state,
+        projectId: l.projectId,
+        lastSentAt: lastSentByLead.get(l.id) ?? null,
+      })),
+      orphanProjects: prospectRows.filter((p) => !claimedProjectIds.has(p.id)),
+      now: new Date(),
+    });
   }),
 });
