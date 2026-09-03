@@ -219,7 +219,7 @@ export function CalendarSyncSection() {
   const lastSyncedLabel = formatLastSynced(syncStatus?.lastSyncedAt ?? connection?.lastSyncedAt);
 
   return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+    <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-ink">Google Calendar</h2>

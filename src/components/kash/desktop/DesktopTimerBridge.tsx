@@ -147,7 +147,7 @@ export default function DesktopTimerBridge() {
         if (e.key === "Escape") resolveIdle("keep");
       }}
     >
-      <div className="w-full max-w-sm rounded-card border border-subtle bg-surface p-5 shadow-surface">
+      <div className="w-full max-w-sm rounded-card border border-border bg-surface p-5 shadow-surface">
         <h2 className="text-body font-medium text-ink">You were away</h2>
         <p className="mt-1 text-sm text-ink-muted">
           You were away {awayPhrase(idlePrompt.awaySeconds)} — keep that time on the timer, or trim

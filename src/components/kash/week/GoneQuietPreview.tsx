@@ -34,7 +34,7 @@ export function GoneQuietPreview({
     <button
       type="button"
       onClick={onOpenSweep}
-      className="flex w-full flex-col gap-1.5 rounded-card border border-subtle bg-surface p-3 text-left shadow-surface transition hover:border-ink-faint"
+      className="flex w-full flex-col gap-1.5 rounded-card border border-border bg-surface p-3 text-left shadow-surface transition hover:border-ink-faint"
       aria-label={`Gone quiet: ${draft.totalStale} items. Open the Sweep.`}
     >
       <span className="flex items-baseline justify-between gap-2">

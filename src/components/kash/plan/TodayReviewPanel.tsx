@@ -28,7 +28,7 @@ export function TodayReviewPanel({
   if (isLoading || !data) {
     return (
       <section
-        className="rounded-card border border-subtle bg-surface px-5 py-4 shadow-surface"
+        className="rounded-card border border-border bg-surface px-5 py-4 shadow-surface"
         aria-label="End-of-day review"
       >
         <p className="text-sm text-ink-muted">Loading today’s review…</p>
@@ -38,7 +38,7 @@ export function TodayReviewPanel({
 
   return (
     <section
-      className="flex flex-col gap-5 rounded-card border border-subtle bg-surface px-5 py-4 shadow-surface"
+      className="flex flex-col gap-5 rounded-card border border-border bg-surface px-5 py-4 shadow-surface"
       aria-label="End-of-day review"
     >
       <div className="flex items-baseline justify-between gap-2">

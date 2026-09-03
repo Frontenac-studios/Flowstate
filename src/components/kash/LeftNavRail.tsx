@@ -280,8 +280,8 @@ export function LeftNavRail() {
           expanded ? "w-nav-rail-expanded" : "w-nav-rail"
         } ${
           overlaying
-            ? "rounded-r-card border-r border-subtle bg-surface shadow-overlay"
-            : "border-r border-subtle bg-surface"
+            ? "rounded-r-card border-r border-border bg-surface shadow-overlay"
+            : "border-r border-border bg-surface"
         }`}
       >
         {/* Identity strip doubles as the Tauri drag surface now that the top

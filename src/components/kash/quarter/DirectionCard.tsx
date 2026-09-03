@@ -35,7 +35,7 @@ export default function DirectionCard({ direction }: { direction: Direction }) {
   );
 
   return (
-    <div className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <div className="rounded-card border border-border bg-surface p-4 shadow-surface">
       {editing ? (
         <div className="flex flex-col gap-2">
           <textarea

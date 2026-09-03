@@ -53,7 +53,7 @@ export default function CategorySettingsSection() {
   const busy = isLoading || reorderMutation.isPending;
 
   return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+    <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
       <h2 className="text-sm font-semibold text-ink">Categories</h2>
       <p className="mt-1 text-sm text-ink-muted">
         Rename your life areas and set the order they appear in. Colors come from the theme.
