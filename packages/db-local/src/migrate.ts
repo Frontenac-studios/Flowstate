@@ -474,52 +474,6 @@ CREATE TABLE IF NOT EXISTS abyss_items (
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_status_idx ON abyss_items (user_id, status);
 CREATE INDEX IF NOT EXISTS abyss_items_user_id_last_touched_at_idx ON abyss_items (user_id, last_touched_at);
 
-CREATE TABLE IF NOT EXISTS care_activities (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  title TEXT NOT NULL,
-  theme TEXT NOT NULL,
-  kind TEXT,
-  cadence TEXT,
-  note TEXT,
-  source TEXT NOT NULL,
-  catalog_key TEXT,
-  lifts_me INTEGER NOT NULL DEFAULT 0,
-  archived_at INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS care_activities_user_id_updated_at_idx ON care_activities (user_id, updated_at);
-
-CREATE TABLE IF NOT EXISTS care_events (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  activity_id TEXT REFERENCES care_activities(id) ON DELETE SET NULL,
-  source TEXT NOT NULL DEFAULT 'practice',
-  meta TEXT,
-  occurred_at INTEGER NOT NULL,
-  duration_minutes INTEGER,
-  created_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS care_events_user_id_occurred_at_idx ON care_events (user_id, occurred_at);
-CREATE INDEX IF NOT EXISTS care_events_activity_id_idx ON care_events (activity_id);
-
-CREATE TABLE IF NOT EXISTS care_reflections (
-  id TEXT PRIMARY KEY NOT NULL,
-  user_id TEXT NOT NULL,
-  reflection_date TEXT NOT NULL,
-  scope TEXT NOT NULL DEFAULT 'daily',
-  prompt_text TEXT NOT NULL,
-  body_text TEXT NOT NULL DEFAULT '',
-  mood INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS care_reflections_user_date_scope_uidx
-  ON care_reflections (user_id, reflection_date, scope);
-CREATE INDEX IF NOT EXISTS care_reflections_user_id_updated_at_idx
-  ON care_reflections (user_id, updated_at);
-
 CREATE TABLE IF NOT EXISTS sync_mutations (
   id TEXT PRIMARY KEY NOT NULL,
   table_name TEXT NOT NULL,
@@ -773,10 +727,8 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "tasks", column: "category", definition: "TEXT" },
   { table: "tasks", column: "category_unresolved", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "tasks", column: "time_estimate_minutes", definition: "INTEGER" },
-  { table: "tasks", column: "care_activity_id", definition: "TEXT" },
   { table: "tasks", column: "tags", definition: "TEXT" },
   { table: "tasks", column: "suggested_scheduled_date", definition: "TEXT" },
-  { table: "care_activities", column: "lifts_me", definition: "INTEGER NOT NULL DEFAULT 0" },
   { table: "app_settings", column: "last_used_category", definition: "TEXT" },
   {
     table: "app_settings",

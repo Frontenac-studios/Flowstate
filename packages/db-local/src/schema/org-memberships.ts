@@ -3,7 +3,7 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
 
 // Value tuple duplicated from the Postgres `org_role` enum — this package can't
-// import the Next app's schema (same pattern as PROJECT_CATEGORIES / CARE_THEMES).
+// import the Next app's schema (same pattern as PROJECT_CATEGORIES).
 export const ORG_ROLES = ["owner", "partner", "member"] as const;
 
 /** SQLite mirror of the Postgres `org_memberships`. Local-only; not synced. */

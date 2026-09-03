@@ -1,12 +1,10 @@
-import { and, asc, eq, gte, isNull, isNotNull, lt } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { syncDirectionRow } from "@/db/record-sync-mutation";
-import { directions, leads } from "@/db/tables";
-
-import { quarterOf } from "@/lib/quarter/quarter-period";
+import { directions } from "@/db/tables";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -26,56 +24,13 @@ async function getOwnedDirection(userId: string, id: string) {
 }
 
 export const directionsRouter = createTRPCRouter({
-  /**
-   * Active directions, oldest first (the first you set reads first), each carrying
-   * its **applied line** for the current quarter (W10g).
-   *
-   * "Applied, never measured": the counts are of the Filter's USE of the Direction —
-   * how many leads it scored against this rule, and how many it let you decline on
-   * that basis — never a measure of the Direction itself. Raw counts, no rate
-   * (discovery-quarter.md §11 Q7: a rate implies a target, and a Direction has none).
-   *
-   * `declined` counts leads YOU dismissed at triage, not deals the other side
-   * declined — the fast no is the thing this Direction is doing for you.
-   *
-   * Derived at read, never stored: the count is a fact about the leads table, and a
-   * copy on the direction row could only ever disagree with it.
-   */
+  /** Active directions, oldest first (the first you set reads first). */
   list: protectedProcedure.query(async ({ ctx }) => {
-    const quarter = quarterOf(new Date());
-
-    const [rows, leadRows] = await Promise.all([
-      db
-        .select()
-        .from(directions)
-        .where(and(eq(directions.userId, ctx.userId), isNull(directions.retiredAt)))
-        .orderBy(asc(directions.createdAt)),
-      db
-        .select({ directionId: leads.directionId, state: leads.state, score: leads.score })
-        .from(leads)
-        .where(
-          and(
-            eq(leads.userId, ctx.userId),
-            isNotNull(leads.directionId),
-            gte(leads.createdAt, quarter.start),
-            lt(leads.createdAt, quarter.end)
-          )
-        ),
-    ]);
-
-    const applied = new Map<string, { scored: number; declined: number }>();
-    for (const lead of leadRows) {
-      if (!lead.directionId) continue;
-      const entry = applied.get(lead.directionId) ?? { scored: 0, declined: 0 };
-      if (lead.score !== null) entry.scored += 1;
-      if (lead.state === "dismissed") entry.declined += 1;
-      applied.set(lead.directionId, entry);
-    }
-
-    return rows.map((row) => ({
-      ...row,
-      applied: applied.get(row.id) ?? { scored: 0, declined: 0 },
-    }));
+    return db
+      .select()
+      .from(directions)
+      .where(and(eq(directions.userId, ctx.userId), isNull(directions.retiredAt)))
+      .orderBy(asc(directions.createdAt));
   }),
 
   create: protectedProcedure

@@ -19,9 +19,6 @@ import { ledgerPeriods as pgLedgerPeriods } from "./schema/ledger-periods";
 import { projectFees as pgProjectFees } from "./schema/project-fees";
 import { ownerDraws as pgOwnerDraws } from "./schema/owner-draws";
 import { externalCalendarEvents as pgExternalCalendarEvents } from "./schema/external-calendar-events";
-import { careActivities as pgCareActivities } from "./schema/care-activities";
-import { careEvents as pgCareEvents } from "./schema/care-events";
-import { careReflections as pgCareReflections } from "./schema/care-reflections";
 import { reservedDays as pgReservedDays } from "./schema/reserved-days";
 import { categorySettings as pgCategorySettings } from "./schema/category-settings";
 import { chatCustomSuggestions as pgChatCustomSuggestions } from "./schema/chat-custom-suggestions";
@@ -106,15 +103,6 @@ export const abyssItems = (
 export const reservedDays = (
   isSqliteMode() ? sqliteSchema.reservedDays : pgReservedDays
 ) as typeof pgReservedDays;
-export const careActivities = (
-  isSqliteMode() ? sqliteSchema.careActivities : pgCareActivities
-) as typeof pgCareActivities;
-export const careEvents = (
-  isSqliteMode() ? sqliteSchema.careEvents : pgCareEvents
-) as typeof pgCareEvents;
-export const careReflections = (
-  isSqliteMode() ? sqliteSchema.careReflections : pgCareReflections
-) as typeof pgCareReflections;
 export const weekDayPriorities = (
   isSqliteMode() ? sqliteSchema.weekDayPriorities : pgWeekDayPriorities
 ) as typeof pgWeekDayPriorities;

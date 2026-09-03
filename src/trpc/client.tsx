@@ -13,7 +13,7 @@ import type { AppRouter } from "./routers/_app";
 
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 
-/** Inferred input/output shapes for any procedure — e.g. RouterOutputs["care"]["listActivities"]. */
+/** Inferred input/output shapes for any procedure — e.g. RouterOutputs["tasks"]["list"]. */
 export type RouterInputs = inferRouterInputs<AppRouter>;
 export type RouterOutputs = inferRouterOutputs<AppRouter>;
 

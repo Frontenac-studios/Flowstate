@@ -1,6 +1,5 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { careActivities } from "./care-activities";
 import { phases } from "./phases";
 import { PROJECT_CATEGORIES, projects } from "./projects";
 import { sqliteNow, sqliteRowId } from "../sqlite-defaults";
@@ -14,9 +13,6 @@ export const tasks = sqliteTable(
     userId: text("user_id").notNull(),
     projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
     phaseId: text("phase_id").references(() => phases.id, { onDelete: "set null" }),
-    careActivityId: text("care_activity_id").references(() => careActivities.id, {
-      onDelete: "set null",
-    }),
     title: text("title").notNull(),
     priority: integer("priority").notNull().default(0),
     sortOrder: integer("sort_order").notNull().default(0),

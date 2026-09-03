@@ -30,7 +30,7 @@ type Props<T extends string> = {
  * raised purely via `--active-raised-border` — strictly flat, no shadow.
  * Presentational and fully controlled — callers own the value and its
  * persistence — so it can back Today's Day/Week, the Projects view/zoom toggles,
- * and the Plan/Care sub-view switchers without bespoke markup each time.
+ * and the Plan sub-view switchers without bespoke markup each time.
  */
 export function InPageSwitcher<T extends string>({
   options,

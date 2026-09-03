@@ -62,12 +62,4 @@ export const COACH_SURFACE_CONFIG: Record<CoachDockSurface, CoachSurfaceConfig> 
     emptyBody:
       "Tell me how it went — what landed, what slipped — and I'll help you carry the right things forward.",
   },
-  care: {
-    title: "Care coach",
-    subtitle: "Check in with yourself.",
-    placeholder: "Tell the coach how you're doing…",
-    emptyTitle: "How are you, really?",
-    emptyBody:
-      "Tell me how you're feeling and what you need — no tasks, just a moment to check in.",
-  },
 };

@@ -28,7 +28,6 @@ export const COACH_DOCK_SURFACES = [
   "loose-tasks",
   "backlog",
   "reviews",
-  "care",
 ] as const;
 export type CoachDockSurface = (typeof COACH_DOCK_SURFACES)[number];
 
@@ -40,7 +39,7 @@ export function coachThreadId(surface: CoachDockSurface): string {
 export const threadIdSchema = z.union([
   z.literal(GLOBAL_THREAD_ID),
   z.literal(PLAN_COACH_THREAD_ID),
-  z.string().regex(/^coach:(today|week|projects|loose-tasks|backlog|reviews|care)$/),
+  z.string().regex(/^coach:(today|week|projects|loose-tasks|backlog|reviews)$/),
   z.string().regex(/^focus:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
 ]);
 
