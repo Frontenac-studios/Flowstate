@@ -16,10 +16,10 @@ import { projects } from "./projects";
  * Proposal stage; `proposedAt` is when. Both stay null for work that never went
  * through a proposal.
  *
- * **W15 extends this table** rather than adding its own: the fixed-fee amount and
- * the target-rate floor (docs/v1-scope.md §W15, tenancy note 2026-09-01) are the
- * same kind of fact and belong in the same row. `rates` was the alternative home
- * and doesn't fit — a rate requires a `clientId`, and a prospect has no client yet.
+ * **W15 extended this table** rather than adding its own (as W10f promised): the
+ * fixed-fee amount and the target-rate floor are the same kind of fact and belong in
+ * the same row. `rates` was the alternative home and doesn't fit — a rate requires a
+ * `clientId`, and a prospect has no client yet.
  *
  * All money is integer cents, never floats.
  */
@@ -37,6 +37,19 @@ export const projectFees = pgTable(
     proposalAmountCents: integer("proposal_amount_cents"),
     /** When the proposal figure was recorded (not when it was sent — Law 1). */
     proposedAt: timestamp("proposed_at", { withTimezone: true, mode: "date" }),
+    /**
+     * W15 — the agreed fixed fee, in cents. Only meaningful when the project's
+     * `billingType` is `fixed_fee`.
+     */
+    feeAmountCents: integer("fee_amount_cents"),
+    /**
+     * The effective hourly rate below which this fixed fee is losing money, in cents
+     * (discovery 4.4). Stored rather than derived from the client rate: the floor is
+     * a judgement about THIS engagement — what you were willing to accept to win it —
+     * and a project can rationally sit below your standard rate and still be worth
+     * doing. Deriving it would erase that decision.
+     */
+    targetRateFloorCents: integer("target_rate_floor_cents"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

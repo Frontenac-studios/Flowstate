@@ -24,6 +24,13 @@ export const projectCategory = pgEnum("project_category", ["business", "personal
 /** Where a project sits in its lifecycle. Distinct from the soft-archive marker. */
 export const projectState = pgEnum("project_state", ["prospect", "active", "paused", "done"]);
 
+/**
+ * How the work is sold (W15, discovery 4.3). A work-fact, not money — which is why
+ * it may live here: it says how to READ the burn, not what anything is worth. The fee
+ * amount and the target-rate floor are money and live in `project_fees` (financial).
+ */
+export const projectBillingType = pgEnum("project_billing_type", ["hourly", "fixed_fee"]);
+
 export const projects = pgTable(
   "projects",
   {
@@ -62,6 +69,11 @@ export const projects = pgTable(
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
     /** W7 — the Sweep. now + ~30d when "kept"; suppresses from the stale list until then. */
     sweptKeptUntil: timestamp("swept_kept_until", { withTimezone: true, mode: "date" }),
+    /**
+     * W15 — how this work is sold. Hourly burn means "running hot" earns more revenue;
+     * fixed-fee burn means the margin is evaporating. Same signal, opposite meaning.
+     */
+    billingType: projectBillingType("billing_type").notNull().default("hourly"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },

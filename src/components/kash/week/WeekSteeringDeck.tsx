@@ -8,6 +8,7 @@ import { BetsBlock } from "./BetsBlock";
 import { ComingUpBlock } from "./ComingUpBlock";
 import { GoneQuietPreview } from "./GoneQuietPreview";
 import { OffTargetBanner } from "./OffTargetBanner";
+import { RunningHotBlock } from "./RunningHotBlock";
 import { WaitingOnYouBlock } from "./WaitingOnYouBlock";
 
 /**
@@ -42,6 +43,13 @@ export function WeekSteeringDeck({ onOpenSweep }: { onOpenSweep: () => void }) {
         <ComingUpBlock localDate={localDate} />
         <GoneQuietCell onOpenSweep={onOpenSweep} />
       </div>
+      {/*
+        W15 — running hot. Below the 2×2 rather than inside it: the deck's four cells
+        are always present, and this one renders nothing at all when no project is
+        overrunning. A fifth permanent cell that is usually empty would cost the deck
+        its shape to say "everything is fine".
+      */}
+      <RunningHotBlock />
     </div>
   );
 }

@@ -63,22 +63,76 @@ describe("selectThresholdAlerts", () => {
     expect(selectThresholdAlerts(snap, EMPTY_NOTIFIED_STATE).alerts).toEqual([]);
   });
 
-  it("fires an over-estimate alert only when actual exceeds a real estimate", () => {
-    const over = {
+  it("fires when the budget runs ahead of the work, not merely past the estimate (W15)", () => {
+    // 70% of the budget spent on 30% of the work — the leading signal, while there is
+    // still something to be done about it.
+    const hot = {
       ...base,
       projects: [
-        { projectId: "p1", name: "Launch", estimateSeconds: 10 * H, actualSeconds: 12 * H },
+        {
+          projectId: "p1",
+          name: "Launch",
+          estimateSeconds: 10 * H,
+          actualSeconds: 7 * H,
+          completedPct: 30,
+          billingType: "hourly" as const,
+        },
       ],
     };
-    expect(selectThresholdAlerts(over, EMPTY_NOTIFIED_STATE).alerts.map((a) => a.type)).toEqual([
+    expect(selectThresholdAlerts(hot, EMPTY_NOTIFIED_STATE).alerts.map((a) => a.type)).toEqual([
       "project_over_estimate",
     ]);
 
+    // Over the estimate, but the work is over too — that is a big job, not a sick one,
+    // and the old lagging rule would have alerted on it.
+    const overButDone = {
+      ...base,
+      projects: [
+        {
+          projectId: "p1",
+          name: "Launch",
+          estimateSeconds: 10 * H,
+          actualSeconds: 12 * H,
+          completedPct: 100,
+          billingType: "hourly" as const,
+        },
+      ],
+    };
+    expect(selectThresholdAlerts(overButDone, EMPTY_NOTIFIED_STATE).alerts).toEqual([]);
+
     const noEstimate = {
       ...base,
-      projects: [{ projectId: "p2", name: "Ad hoc", estimateSeconds: 0, actualSeconds: 40 * H }],
+      projects: [
+        {
+          projectId: "p2",
+          name: "Ad hoc",
+          estimateSeconds: 0,
+          actualSeconds: 40 * H,
+          completedPct: 0,
+          billingType: "hourly" as const,
+        },
+      ],
     };
     expect(selectThresholdAlerts(noEstimate, EMPTY_NOTIFIED_STATE).alerts).toEqual([]);
+  });
+
+  it("frames a fixed-fee overrun as margin rather than billable time", () => {
+    const fixed = {
+      ...base,
+      projects: [
+        {
+          projectId: "p1",
+          name: "Rebuild",
+          estimateSeconds: 10 * H,
+          actualSeconds: 8 * H,
+          completedPct: 40,
+          billingType: "fixed_fee" as const,
+        },
+      ],
+    };
+    const alert = selectThresholdAlerts(fixed, EMPTY_NOTIFIED_STATE).alerts[0]!;
+    expect(alert.title).toContain("Rebuild");
+    expect(alert.body).toContain("margin");
   });
 
   it("fires the weekly summary once per ISO week, only with hours logged", () => {

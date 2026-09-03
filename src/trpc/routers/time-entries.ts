@@ -3,7 +3,16 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { appSettings, clients, projects, rates, timeEntries, timeTags, tasks } from "@/db/tables";
+import {
+  appSettings,
+  clients,
+  phases,
+  projects,
+  rates,
+  timeEntries,
+  timeTags,
+  tasks,
+} from "@/db/tables";
 import type { CandidateRate } from "@/lib/rates/resolve-rate";
 import { aggregateTimeReport } from "@/lib/time/aggregate-time-report";
 import { aggregateWeek } from "@/lib/time/aggregate-week";
@@ -570,42 +579,59 @@ export const timeEntriesRouter = createTRPCRouter({
       const { start: weekStart } = localWeekUtcBounds(now, input.tzOffsetMinutes);
       const lastWeekStart = new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      const [entries, projectRows, clientRows, taskRows] = await Promise.all([
-        db
-          .select({
-            projectId: timeEntries.projectId,
-            startedAt: timeEntries.startedAt,
-            endedAt: timeEntries.endedAt,
-            billable: timeEntries.billable,
-            invoicedAt: timeEntries.invoicedAt,
-          })
-          .from(timeEntries)
-          .where(eq(timeEntries.userId, ctx.userId)),
-        db
-          .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
-          .from(projects)
-          .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt))),
-        db
-          .select({ id: clients.id, name: clients.name })
-          .from(clients)
-          .where(eq(clients.userId, ctx.userId)),
-        db
-          .select({ projectId: tasks.projectId, estimate: tasks.timeEstimateMinutes })
-          .from(tasks)
-          .where(
-            and(
-              eq(tasks.userId, ctx.userId),
-              isNotNull(tasks.projectId),
-              isNotNull(tasks.timeEstimateMinutes)
-            )
-          ),
-      ]);
+      const [entries, projectRows, clientRows, taskRows, phaseEstimateRows, completionRows] =
+        await Promise.all([
+          db
+            .select({
+              projectId: timeEntries.projectId,
+              startedAt: timeEntries.startedAt,
+              endedAt: timeEntries.endedAt,
+              billable: timeEntries.billable,
+              invoicedAt: timeEntries.invoicedAt,
+            })
+            .from(timeEntries)
+            .where(eq(timeEntries.userId, ctx.userId)),
+          db
+            .select({
+              id: projects.id,
+              name: projects.name,
+              clientId: projects.clientId,
+              billingType: projects.billingType,
+            })
+            .from(projects)
+            .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt))),
+          db
+            .select({ id: clients.id, name: clients.name })
+            .from(clients)
+            .where(eq(clients.userId, ctx.userId)),
+          db
+            .select({ projectId: tasks.projectId, estimate: tasks.timeEstimateMinutes })
+            .from(tasks)
+            .where(
+              and(
+                eq(tasks.userId, ctx.userId),
+                isNotNull(tasks.projectId),
+                isNotNull(tasks.timeEstimateMinutes)
+              )
+            ),
+          // W15 — the plan's own unit of estimate, and the completion the burn is
+          // judged against.
+          db
+            .select({ projectId: phases.projectId, estimateHours: phases.estimateHours })
+            .from(phases)
+            .where(and(eq(phases.userId, ctx.userId), isNotNull(phases.estimateHours))),
+          db
+            .select({ projectId: tasks.projectId, completedAt: tasks.completedAt })
+            .from(tasks)
+            .where(and(eq(tasks.userId, ctx.userId), isNotNull(tasks.projectId))),
+        ]);
 
       const seconds = (e: { startedAt: Date; endedAt: Date | null }) =>
         Math.max(0, Math.floor(((e.endedAt ?? now).getTime() - e.startedAt.getTime()) / 1000));
 
       const projectClient = new Map(projectRows.map((p) => [p.id, p.clientId]));
       const projectName = new Map(projectRows.map((p) => [p.id, p.name]));
+      const projectBillingType = new Map(projectRows.map((p) => [p.id, p.billingType]));
       const clientName = new Map(clientRows.map((c) => [c.id, c.name]));
 
       const billableByClient = new Map<string, number>();
@@ -622,6 +648,18 @@ export const timeEntriesRouter = createTRPCRouter({
         if (e.startedAt >= lastWeekStart && e.startedAt < weekStart) lastWeekWorkedSeconds += s;
       }
 
+      // W15 — phase estimates are the plan's unit and win where they exist; the older
+      // task-level estimates remain the fallback so a project planned before W15
+      // keeps its alert instead of silently losing it.
+      const phaseEstimateByProject = new Map<string, number>();
+      for (const ph of phaseEstimateRows) {
+        if (ph.estimateHours == null) continue;
+        phaseEstimateByProject.set(
+          ph.projectId,
+          (phaseEstimateByProject.get(ph.projectId) ?? 0) + ph.estimateHours * 3600
+        );
+      }
+
       const estimateByProject = new Map<string, number>();
       for (const t of taskRows) {
         if (t.projectId == null || t.estimate == null) continue;
@@ -629,6 +667,18 @@ export const timeEntriesRouter = createTRPCRouter({
           t.projectId,
           (estimateByProject.get(t.projectId) ?? 0) + t.estimate * 60
         );
+      }
+      for (const [projectId, seconds] of Array.from(phaseEstimateByProject)) {
+        estimateByProject.set(projectId, seconds);
+      }
+
+      const completionByProject = new Map<string, { done: number; total: number }>();
+      for (const t of completionRows) {
+        if (t.projectId == null) continue;
+        const acc = completionByProject.get(t.projectId) ?? { done: 0, total: 0 };
+        acc.total += 1;
+        if (t.completedAt !== null) acc.done += 1;
+        completionByProject.set(t.projectId, acc);
       }
 
       return {
@@ -642,6 +692,11 @@ export const timeEntriesRouter = createTRPCRouter({
           name: projectName.get(projectId) ?? "Project",
           estimateSeconds: estimateByProject.get(projectId) ?? 0,
           actualSeconds,
+          completedPct: (() => {
+            const acc = completionByProject.get(projectId);
+            return acc && acc.total > 0 ? (acc.done / acc.total) * 100 : 0;
+          })(),
+          billingType: projectBillingType.get(projectId) ?? ("hourly" as const),
         })).filter((p) => p.estimateSeconds > 0),
         lastWeekWorkedSeconds,
         isoWeek: weekStart.toISOString().slice(0, 10),

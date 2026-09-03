@@ -41,6 +41,12 @@ export default function ProjectsIndex() {
   const { data: estimateSampleCount = 0 } = useQuery(
     trpc.projects.estimateSampleCount.queryOptions()
   );
+  // W15 — which projects are running hot, for the board's health dot.
+  const { data: burnReads = [] } = useQuery(trpc.projects.burn.queryOptions({}));
+  const hotProjectIds = useMemo(
+    () => new Set(burnReads.filter((r) => r.burn.total.state === "hot").map((r) => r.projectId)),
+    [burnReads]
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [indexView, setIndexView] = useState<IndexViewMode>("gallery");
@@ -147,7 +153,7 @@ export default function ProjectsIndex() {
                 showTemplateFeatures={showTemplateFeatures}
               >
                 <ProjectCard
-                  project={project}
+                  project={{ ...project, burnHot: hotProjectIds.has(project.id) }}
                   folding={foldingId === project.id}
                   estimateSampleCount={estimateSampleCount}
                 />

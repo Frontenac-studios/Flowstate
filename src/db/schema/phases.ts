@@ -24,6 +24,15 @@ export const phases = pgTable(
     description: text("description"),
     startDate: date("start_date", { mode: "string" }),
     endDate: date("end_date", { mode: "string" }),
+    /**
+     * W15 — the plan's unit of estimate (discovery 4.1). Hours, not minutes: a phase
+     * estimated to the minute is a false precision nobody can hold, and the burn
+     * signal only needs to know roughly how big the phase was meant to be.
+     *
+     * The optional deadline the plan calls for is the existing `endDate` — a second
+     * date column would just be a thing to disagree with it.
+     */
+    estimateHours: integer("estimate_hours"),
     sortOrder: integer("sort_order").notNull().default(0),
     completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),

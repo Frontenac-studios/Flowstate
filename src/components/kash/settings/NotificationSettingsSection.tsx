@@ -88,8 +88,9 @@ export function NotificationSettingsSection() {
     },
     {
       key: "projectOverEstimate",
-      label: "Project over estimate",
-      description: "When logged time passes a project’s estimate.",
+      label: "Project running hot",
+      description:
+        "When a project’s budget runs ahead of the work done — early enough to re-scope, not after the overrun.",
     },
     {
       key: "weeklyHours",
