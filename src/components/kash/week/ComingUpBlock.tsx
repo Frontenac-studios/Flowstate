@@ -51,7 +51,7 @@ export function ComingUpBlock({ localDate }: { localDate: string }) {
   const empty = thisWeek.length === 0 && nextWeek.length === 0;
 
   return (
-    <section className="flex flex-col gap-2 rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4 shadow-surface">
       <h3 className="text-caption font-semibold uppercase tracking-wide text-ink-muted">
         Coming up
       </h3>

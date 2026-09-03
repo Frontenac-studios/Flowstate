@@ -106,7 +106,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
   return (
     <div
       ref={mergeRefs(ref, setNodeRef)}
-      className={`group/column flex min-w-0 flex-col rounded-card border border-subtle shadow-surface ${
+      className={`group/column flex min-w-0 flex-col rounded-card border border-border shadow-surface ${
         fillHeight ? "h-full max-h-full overflow-hidden" : ""
       } ${isToday ? "bg-surface" : "bg-active-surface"} ${
         isOver ? "outline-dashed outline-1 outline-[var(--accent)]" : ""

@@ -661,7 +661,7 @@ export function TimelinePane({
 
     return (
       <section
-        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card border border-subtle bg-surface py-3 shadow-surface ${className ?? ""}`}
+        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card border border-border bg-surface py-3 shadow-surface ${className ?? ""}`}
         aria-label="Today timeline mini-map"
       >
         <button
@@ -714,7 +714,7 @@ export function TimelinePane({
 
   return (
     <section
-      className={`flex min-w-[16rem] flex-1 flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface ${className ?? ""}`}
+      className={`flex min-w-[16rem] flex-1 flex-col rounded-card border border-border bg-surface p-4 shadow-surface ${className ?? ""}`}
       aria-label="Today timeline"
     >
       <header className="mb-3 flex items-center gap-2">

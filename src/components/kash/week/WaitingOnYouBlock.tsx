@@ -15,7 +15,7 @@ export function WaitingOnYouBlock() {
   const { data: deals = [] } = useQuery(trpc.steering.waitingOnYou.queryOptions());
 
   return (
-    <section className="flex flex-col gap-2 rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4 shadow-surface">
       <h3 className="text-caption font-semibold uppercase tracking-wide text-ink-muted">
         Waiting on you
       </h3>

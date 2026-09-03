@@ -86,7 +86,7 @@ export function WeekReflectionPanel() {
 
   return (
     <section
-      className="flex shrink-0 flex-col gap-4 rounded-card border border-subtle bg-surface p-5 shadow-surface"
+      className="flex shrink-0 flex-col gap-4 rounded-card border border-border bg-surface p-5 shadow-surface"
       aria-label="Weekly reflection"
     >
       <div className="flex items-center justify-between gap-3">
