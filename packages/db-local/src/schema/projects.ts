@@ -41,6 +41,9 @@ export const projects = sqliteTable(
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
     /** W7 — the Sweep. now + ~30d when "kept" (mirrors Postgres). */
     sweptKeptUntil: integer("swept_kept_until", { mode: "timestamp_ms" }),
+    billingType: text("billing_type", { enum: ["hourly", "fixed_fee"] })
+      .notNull()
+      .$defaultFn(() => "hourly"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),

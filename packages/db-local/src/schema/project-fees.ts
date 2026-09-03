@@ -14,6 +14,8 @@ export const projectFees = sqliteTable(
     projectId: text("project_id").notNull(),
     proposalAmountCents: integer("proposal_amount_cents"),
     proposedAt: integer("proposed_at", { mode: "timestamp_ms" }),
+    feeAmountCents: integer("fee_amount_cents"),
+    targetRateFloorCents: integer("target_rate_floor_cents"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),

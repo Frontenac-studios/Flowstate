@@ -13,11 +13,24 @@ import { formatDuration } from "@/lib/time/duration";
  * between. The weekly summary fires at most once per ISO week.
  */
 
+import { computeBurn, describeBurn } from "@/lib/projects/burn";
+
 export const CLIENT_BILLABLE_THRESHOLD_SECONDS = 20 * 60 * 60; // 20h
 
 export type ThresholdSnapshot = {
   clients: { clientId: string; name: string; billableUnbilledSeconds: number }[];
-  projects: { projectId: string; name: string; estimateSeconds: number; actualSeconds: number }[];
+  projects: {
+    projectId: string;
+    name: string;
+    estimateSeconds: number;
+    actualSeconds: number;
+    /**
+     * W15 — how much of the work is finished, so the alert can compare budget spent
+     * against work done rather than against the estimate alone.
+     */
+    completedPct: number;
+    billingType: "hourly" | "fixed_fee";
+  }[];
   lastWeekWorkedSeconds: number;
   /** Current ISO week key (e.g. "2026-W34"), the weekly-summary dedup key. */
   isoWeek: string;
@@ -63,19 +76,35 @@ export function selectThresholdAlerts(
     });
   }
 
-  const projectsOverEstimate = snapshot.projects
-    .filter((p) => p.estimateSeconds > 0 && p.actualSeconds > p.estimateSeconds)
-    .map((p) => p.projectId);
+  // W15 — the project alert is now a LEADING signal. It used to fire when logged time
+  // passed the estimate, which is true only after the overrun has already happened;
+  // it now fires when the budget runs far enough ahead of the WORK that there is
+  // still time to do something about it (discovery 4.5).
+  const isHot = (project: ThresholdSnapshot["projects"][number]) =>
+    computeBurn({
+      estimateHours: project.estimateSeconds > 0 ? project.estimateSeconds / 3600 : null,
+      actualSeconds: project.actualSeconds,
+      completedPct: project.completedPct,
+    }).state === "hot";
+
+  const projectsOverEstimate = snapshot.projects.filter(isHot).map((p) => p.projectId);
   for (const project of snapshot.projects) {
-    if (project.estimateSeconds <= 0 || project.actualSeconds <= project.estimateSeconds) continue;
+    if (!isHot(project)) continue;
     if (notified.projectsOverEstimate.includes(project.projectId)) continue;
+    const burn = computeBurn({
+      estimateHours: project.estimateSeconds > 0 ? project.estimateSeconds / 3600 : null,
+      actualSeconds: project.actualSeconds,
+      completedPct: project.completedPct,
+    });
     alerts.push({
       type: "project_over_estimate",
       key: `project-over-estimate-${project.projectId}`,
-      title: "Project over estimate",
-      body: `${project.name}: ${formatDuration(project.actualSeconds)} logged against a ${formatDuration(
-        project.estimateSeconds
-      )} estimate.`,
+      title: `${project.name} is running hot`,
+      body:
+        describeBurn(burn, project.billingType) ??
+        `${formatDuration(project.actualSeconds)} logged against a ${formatDuration(
+          project.estimateSeconds
+        )} estimate.`,
     });
   }
 

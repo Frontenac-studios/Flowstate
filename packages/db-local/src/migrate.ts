@@ -717,6 +717,12 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "leads", column: "research", definition: "TEXT" },
   { table: "leads", column: "researched_at", definition: "INTEGER" },
   { table: "leads", column: "research_provider", definition: "TEXT" },
+  // W15 — planning: billing type, the per-phase estimate, the fixed-fee figures and
+  // the off-track alert switch.
+  { table: "projects", column: "billing_type", definition: "TEXT NOT NULL DEFAULT 'hourly'" },
+  { table: "phases", column: "estimate_hours", definition: "INTEGER" },
+  { table: "project_fees", column: "fee_amount_cents", definition: "INTEGER" },
+  { table: "project_fees", column: "target_rate_floor_cents", definition: "INTEGER" },
   // W10i — the weekly run's opt-in switch and batch size.
   {
     table: "sourcing_settings",

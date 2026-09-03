@@ -75,6 +75,7 @@ export const phasesRouter = createTRPCRouter({
           description: phases.description,
           startDate: phases.startDate,
           endDate: phases.endDate,
+          estimateHours: phases.estimateHours,
           sortOrder: phases.sortOrder,
           completedAt: phases.completedAt,
         })
@@ -234,5 +235,28 @@ export const phasesRouter = createTRPCRouter({
 
       await syncPhaseRow(input.id, "delete", { id: input.id, userId: ctx.userId });
       return { id: input.id };
+    }),
+
+  /**
+   * W15 — the per-phase hour estimate, the unit the whole plan is built on
+   * (discovery 4.1). Null clears it, which returns the phase to "unplanned" rather
+   * than to zero: a phase with no estimate is unmeasured, not free.
+   */
+  setEstimate: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        estimateHours: z.number().int().min(0).max(10_000).nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(phases)
+        .set({ estimateHours: input.estimateHours, updatedAt: new Date() })
+        .where(and(eq(phases.id, input.id), eq(phases.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Phase not found." });
+      await syncPhaseRow(row.id, "update", row);
+      return row;
     }),
 });

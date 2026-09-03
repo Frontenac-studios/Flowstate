@@ -20,6 +20,8 @@ export type ProjectListItem = {
   timeSpentSeconds: number;
   lastActivityAt: string;
   isLearning?: boolean;
+  /** W15 — the board altitude of the burn signal: a dot, and only when it's hot. */
+  burnHot?: boolean;
 };
 
 const FINISHING_PERCENT = 80;
@@ -59,6 +61,18 @@ export default function ProjectCard({
           <span className="shrink-0 rounded-pill bg-surface-2 px-2 py-0.5 text-caption text-ink-muted">
             Learning
           </span>
+        ) : null}
+        {/*
+          W15 — a dot, not a bar. The board's job is to say WHICH project wants a
+          look; the numbers behind it live one click away on project detail, and a
+          second progress bar up here would compete with the one already below.
+        */}
+        {project.burnHot ? (
+          <span
+            className="ml-auto h-2 w-2 shrink-0 rounded-full bg-critical"
+            title="Budget is running ahead of the work"
+            aria-label="Running hot"
+          />
         ) : null}
       </div>
 

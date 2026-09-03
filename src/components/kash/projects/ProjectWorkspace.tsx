@@ -12,6 +12,7 @@ import { useTRPC } from "@/trpc/client";
 
 import CalendarBoardView from "./CalendarBoardView";
 import MillerColumnsView from "./MillerColumnsView";
+import PhaseBurnBars from "./PhaseBurnBars";
 import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
 import ProjectSetupWizard from "./ProjectSetupWizard";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
@@ -158,6 +159,13 @@ export default function ProjectWorkspace({
           />
         </div>
       )}
+
+      {/*
+        W15 — estimate vs actual, the deepest of the three altitudes. Outside the
+        view switch: the plan is a property of the project, not of how you happen to
+        be looking at its tasks today.
+      */}
+      <PhaseBurnBars projectId={initialProject.id} />
 
       {/*
         Only mount once the queries the wizard seeds from have resolved. It seeds

@@ -3,9 +3,14 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { syncProjectRow, syncProjectTemplateRow } from "@/db/record-sync-mutation";
+import {
+  syncProjectFeeRow,
+  syncProjectRow,
+  syncProjectTemplateRow,
+} from "@/db/record-sync-mutation";
 import {
   phases,
+  projectFees,
   projectTemplates,
   projects,
   targets,
@@ -40,6 +45,8 @@ import {
   applyProjectSlipReplanProposal,
   buildProjectSlipReplanProposal,
 } from "@/server/projects/slip-replan";
+
+import { computeBurnForProjects } from "@/server/projects/compute-project-burn";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -115,6 +122,7 @@ export const projectsRouter = createTRPCRouter({
           slug: projects.slug,
           category: projects.category,
           isLearning: projects.isLearning,
+          billingType: projects.billingType,
           updatedAt: projects.updatedAt,
         })
         .from(projects)
@@ -784,5 +792,114 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "No enabled phase updates." });
       }
       return applyProjectSlipReplanProposal(ctx.userId, filtered);
+    }),
+
+  /**
+   * W15 — estimate vs actual for the whole board, or one project.
+   *
+   * Derived at read from the estimate, the time log and task completion; nothing is
+   * stored, so the three numbers underneath can never drift out of step with a cached
+   * fourth. The money half arrives in its own `fee` field for the fixed-fee case.
+   */
+  burn: protectedProcedure
+    .input(z.object({ projectId: z.string().uuid().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return computeBurnForProjects(ctx.userId, input?.projectId ? [input.projectId] : undefined);
+    }),
+
+  /** How the work is sold. A work-fact, so it lives on the project itself. */
+  setBillingType: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string().uuid(),
+        billingType: z.enum(["hourly", "fixed_fee"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await db
+        .update(projects)
+        .set({ billingType: input.billingType, updatedAt: new Date() })
+        .where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.userId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+      await syncProjectRow(row.id, "update", row);
+      return row;
+    }),
+
+  /**
+   * The fixed fee and the rate floor beneath it (W15). Both are money, so they land
+   * in `project_fees` (financial-class) — never on the org_shared project row.
+   *
+   * The floor is a judgement about THIS engagement, not a copy of your standard rate:
+   * a project can sit below your usual number and still be worth taking, and deriving
+   * the floor would erase that decision.
+   */
+  setFee: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string().uuid(),
+        feeAmountCents: z.number().int().min(0).max(100_000_000).nullable(),
+        targetRateFloorCents: z.number().int().min(0).max(1_000_000).nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [owned] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.userId)))
+        .limit(1);
+      if (!owned) throw new TRPCError({ code: "NOT_FOUND", message: "Project not found." });
+
+      const now = new Date();
+      const [existing] = await db
+        .select({ id: projectFees.id })
+        .from(projectFees)
+        .where(and(eq(projectFees.userId, ctx.userId), eq(projectFees.projectId, input.projectId)))
+        .limit(1);
+
+      let row;
+      if (existing) {
+        [row] = await db
+          .update(projectFees)
+          .set({
+            feeAmountCents: input.feeAmountCents,
+            targetRateFloorCents: input.targetRateFloorCents,
+            updatedAt: now,
+          })
+          .where(and(eq(projectFees.id, existing.id), eq(projectFees.userId, ctx.userId)))
+          .returning();
+      } else {
+        [row] = await db
+          .insert(projectFees)
+          .values({
+            userId: ctx.userId,
+            orgId: ctx.orgId,
+            projectId: input.projectId,
+            feeAmountCents: input.feeAmountCents,
+            targetRateFloorCents: input.targetRateFloorCents,
+          })
+          .returning();
+      }
+      if (!row) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to save the fee." });
+      }
+      await syncProjectFeeRow(row.id, existing ? "update" : "insert", row);
+      return row;
+    }),
+
+  /** The stored fee figures for one project. Separate read — it is financial-class. */
+  getFee: protectedProcedure
+    .input(z.object({ projectId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [row] = await db
+        .select({
+          feeAmountCents: projectFees.feeAmountCents,
+          targetRateFloorCents: projectFees.targetRateFloorCents,
+          proposalAmountCents: projectFees.proposalAmountCents,
+        })
+        .from(projectFees)
+        .where(and(eq(projectFees.userId, ctx.userId), eq(projectFees.projectId, input.projectId)))
+        .limit(1);
+      return row ?? null;
     }),
 });

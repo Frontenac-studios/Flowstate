@@ -20,6 +20,7 @@ export const phases = sqliteTable(
     description: text("description"),
     startDate: text("start_date"),
     endDate: text("end_date"),
+    estimateHours: integer("estimate_hours"),
     sortOrder: integer("sort_order").notNull().default(0),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
