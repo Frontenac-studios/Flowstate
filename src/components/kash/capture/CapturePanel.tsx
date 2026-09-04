@@ -5,9 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   hideCapturePanel,
+  openInMainWindow,
   resizeCapturePanel,
   subscribeCaptureOpened,
 } from "@/lib/desktop/capture-bridge";
+import { SearchResultRow } from "@/components/kash/search/SearchResultRow";
+import { useDebounced } from "@/lib/search/use-debounced";
 import { getParseChips } from "@/components/kash/plan/ParsePreviewChips";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { parseQuickInputLines, type ParseResult } from "@/lib/parser/parse-quick-input";
@@ -18,6 +21,12 @@ import { useTRPC } from "@/trpc/client";
 type CaptureTarget = "backlog" | "today";
 
 const TARGET_KEY = "kash:capture-target";
+
+/** How many existing items the panel offers before it stops competing with the field. */
+const PANEL_RESULT_LIMIT = 4;
+
+/** One character matches most of the database; two is where results start meaning something. */
+const MIN_QUERY_LENGTH = 2;
 
 function readTarget(): CaptureTarget {
   if (typeof window === "undefined") return "backlog";
@@ -85,6 +94,23 @@ export function CapturePanel() {
     return projects.find((p) => p.slug.toLowerCase() === key)?.id ?? null;
   }, [parse, projects]);
 
+  // Search the words the user actually typed, not the composer syntax around
+  // them: "invoice ; gw ; friday" is a search for "invoice".
+  const searchTerm = useDebounced((parse?.title ?? value).trim());
+  const { data: results = [] } = useQuery({
+    ...trpc.search.query.queryOptions({
+      q: searchTerm,
+      limit: PANEL_RESULT_LIMIT,
+      kinds: ["task", "backlog"],
+    }),
+    enabled: searchTerm.length >= MIN_QUERY_LENGTH,
+  });
+
+  // -1 is the create row. Arrow keys walk down into the results from there, so
+  // typing and pressing Enter always creates unless you deliberately move.
+  const [selected, setSelected] = useState(-1);
+  useEffect(() => setSelected(-1), [searchTerm]);
+
   const abyssCreate = useMutation(trpc.abyss.create.mutationOptions());
   const taskCreate = useMutation(trpc.tasks.create.mutationOptions());
   const saving = abyssCreate.isPending || taskCreate.isPending;
@@ -93,6 +119,7 @@ export function CapturePanel() {
     setValue("");
     setError(null);
     setCaptured([]);
+    setSelected(-1);
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
@@ -169,14 +196,41 @@ export function CapturePanel() {
     [value, saving, parse, target, projectId, abyssCreate, taskCreate, dismiss]
   );
 
+  /**
+   * The one place capture is allowed to bring the app forward: you found the
+   * thing you were about to write down again, and asked to go to it.
+   */
+  const openResult = useCallback(
+    (href: string) => {
+      openInMainWindow(href);
+      reset();
+    },
+    [reset]
+  );
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
       dismiss();
       return;
     }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSelected((current) => Math.min(current + 1, results.length - 1));
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSelected((current) => Math.max(current - 1, -1));
+      return;
+    }
     if (event.key === "Enter") {
       event.preventDefault();
+      const picked = selected >= 0 ? results[selected] : undefined;
+      if (picked) {
+        openResult(picked.href);
+        return;
+      }
       void save(event.shiftKey);
     }
   };
@@ -228,6 +282,22 @@ export function CapturePanel() {
         </div>
       </div>
 
+      {results.length > 0 ? (
+        <div className="border-t border-border py-1" role="listbox" aria-label="Existing items">
+          <p className="px-3 pb-1 text-[10px] uppercase tracking-wide text-ink-faint">
+            Already captured
+          </p>
+          {results.map((result, index) => (
+            <SearchResultRow
+              key={`${result.kind}-${result.id}`}
+              result={result}
+              selected={index === selected}
+              onSelect={() => openResult(result.href)}
+            />
+          ))}
+        </div>
+      ) : null}
+
       {chips.length > 0 || dropped.length > 0 || captured.length > 0 || error ? (
         <div className="flex flex-col gap-1.5 border-t border-border px-3 py-2">
           {chips.length > 0 ? (
@@ -261,8 +331,9 @@ export function CapturePanel() {
       ) : null}
 
       <div className="flex items-center gap-3 border-t border-border bg-surface-2 px-3 py-1.5 text-[11px] text-ink-faint">
-        <span>⏎ save</span>
+        <span>{selected >= 0 ? "⏎ open" : "⏎ save"}</span>
         <span>⇧⏎ save and keep going</span>
+        {results.length > 0 ? <span>↑↓ existing</span> : null}
         <span>esc close</span>
       </div>
     </div>

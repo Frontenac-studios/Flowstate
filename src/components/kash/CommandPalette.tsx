@@ -1,11 +1,16 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Input from "@/components/kash/ui/Input";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
+import { SearchResultRow } from "@/components/kash/search/SearchResultRow";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
+import { useDebounced } from "@/lib/search/use-debounced";
+import { useTRPC } from "@/trpc/client";
+import type { SearchResult } from "@/trpc/routers/search";
 
 import {
   DECIDE_EVENT,
@@ -27,8 +32,22 @@ type Command = {
   run: () => void;
 };
 
+/**
+ * The palette holds two kinds of row (W17f). Commands are a fixed list the user
+ * learns; results are whatever they own. They share one keyboard loop, so they
+ * share one type — and commands stay pinned above results, because a command is
+ * a thing you meant to do and a result is a thing you went looking for.
+ */
+type Row = { kind: "command"; command: Command } | { kind: "result"; result: SearchResult };
+
+/** Below this, a query matches so much of the database that the list is noise. */
+const MIN_QUERY_LENGTH = 2;
+
+const RESULT_LIMIT = 8;
+
 export function CommandPalette() {
   const router = useRouter();
+  const trpc = useTRPC();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
@@ -91,16 +110,30 @@ export function CommandPalette() {
     [router]
   );
 
-  const filtered = useMemo(() => {
+  const filteredCommands = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return commands;
     return commands.filter((c) => `${c.label} ${c.keywords ?? ""}`.toLowerCase().includes(q));
   }, [commands, query]);
 
-  // Keep selection within bounds as the filtered list changes.
+  const searchTerm = useDebounced(query.trim());
+  const { data: results = [] } = useQuery({
+    ...trpc.search.query.queryOptions({ q: searchTerm, limit: RESULT_LIMIT }),
+    enabled: open && searchTerm.length >= MIN_QUERY_LENGTH,
+  });
+
+  const rows = useMemo<Row[]>(
+    () => [
+      ...filteredCommands.map((command) => ({ kind: "command" as const, command })),
+      ...results.map((result) => ({ kind: "result" as const, result })),
+    ],
+    [filteredCommands, results]
+  );
+
+  // Keep selection within bounds as the list changes.
   useEffect(() => {
-    setSelected((s) => (s >= filtered.length ? 0 : s));
-  }, [filtered.length]);
+    setSelected((s) => (s >= rows.length ? 0 : s));
+  }, [rows.length]);
 
   // Global ⌘K toggle + external open event.
   useEffect(() => {
@@ -129,10 +162,14 @@ export function CommandPalette() {
 
   if (!open) return null;
 
-  const run = (cmd: Command | undefined) => {
-    if (!cmd) return;
+  const run = (row: Row | undefined) => {
+    if (!row) return;
     close();
-    cmd.run();
+    if (row.kind === "command") {
+      row.command.run();
+      return;
+    }
+    router.push(row.result.href);
   };
 
   return (
@@ -162,38 +199,54 @@ export function CommandPalette() {
               close();
             } else if (e.key === "ArrowDown") {
               e.preventDefault();
-              setSelected((s) => Math.min(filtered.length - 1, s + 1));
+              setSelected((s) => Math.min(rows.length - 1, s + 1));
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
               setSelected((s) => Math.max(0, s - 1));
             } else if (e.key === "Enter") {
               e.preventDefault();
-              run(filtered[selected]);
+              run(rows[selected]);
             }
           }}
-          placeholder="Search commands…"
+          placeholder="Search tasks, projects, clients, or a command…"
           className="w-full"
-          aria-label="Search commands"
+          aria-label="Search tasks, projects, clients, or a command"
         />
         <ul className="mt-2 max-h-72 overflow-y-auto" role="listbox">
-          {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-ink-muted">No commands</li>
+          {rows.length === 0 ? (
+            <li className="px-3 py-2 text-sm text-ink-muted">
+              {query.trim().length >= MIN_QUERY_LENGTH ? "Nothing by that name" : "No commands"}
+            </li>
           ) : (
-            filtered.map((cmd, i) => (
-              <li key={cmd.id} role="option" aria-selected={i === selected}>
-                <button
-                  type="button"
+            rows.map((row, i) =>
+              row.kind === "command" ? (
+                <li key={row.command.id} role="option" aria-selected={i === selected}>
+                  <button
+                    type="button"
+                    onMouseEnter={() => setSelected(i)}
+                    onClick={() => run(row)}
+                    className={`flex w-full items-center justify-between rounded-chip px-3 py-2 text-left text-sm transition ${ROW_FOCUS} ${
+                      i === selected ? "bg-[var(--accent-soft)] text-ink" : "text-ink"
+                    }`}
+                  >
+                    <span>{row.command.label}</span>
+                    {row.command.hint ? <KeyCap>{row.command.hint}</KeyCap> : null}
+                  </button>
+                </li>
+              ) : (
+                <li
+                  key={`${row.result.kind}-${row.result.id}`}
                   onMouseEnter={() => setSelected(i)}
-                  onClick={() => run(cmd)}
-                  className={`flex w-full items-center justify-between rounded-chip px-3 py-2 text-left text-sm transition ${ROW_FOCUS} ${
-                    i === selected ? "bg-[var(--accent-soft)] text-ink" : "text-ink"
-                  }`}
+                  className="rounded-chip"
                 >
-                  <span>{cmd.label}</span>
-                  {cmd.hint ? <KeyCap>{cmd.hint}</KeyCap> : null}
-                </button>
-              </li>
-            ))
+                  <SearchResultRow
+                    result={row.result}
+                    selected={i === selected}
+                    onSelect={() => run(row)}
+                  />
+                </li>
+              )
+            )
           )}
         </ul>
       </div>

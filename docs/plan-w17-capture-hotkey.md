@@ -207,3 +207,43 @@ and `node_modules` is a symlink to a macOS install:
 
 **Deliberately not built here:** search inside the panel (W17e–f). The panel has no results rows
 yet, so ⏎ always creates.
+
+---
+
+## 9. Search build log — 2026-09-03
+
+**Landed**: W17e and W17f, on the same branch, rebased onto local `main` (`18c7d49`, which is one
+unpushed commit ahead of `origin/main`).
+
+**Two things the recon changed:**
+
+- **Tasks have no notes column.** The "task notes" search scope can only mean Backlog item notes
+  and client notes, which is what shipped. If task-level notes are wanted, that is a schema change
+  and its own item.
+- **The Backlog filter already existed.** `AbyssFloatingBar` has a search input and
+  `filterItems` in `src/lib/abyss/grouping.ts` already matches title _and_ note. Nothing was built
+  there; the fourth call site was already done.
+
+**Shipped:**
+
+- `src/lib/search/rank-results.ts` — pure ranking with 9 tests. Bands: exact title, title prefix,
+  word prefix, title contains, body contains, with completed rows demoted a full band so they stay
+  findable but never outrank live work. Ties break recency, then title, so the list doesn't
+  reshuffle between keystrokes.
+- `search.query` — one procedure over task titles, Backlog titles and notes, project names, client
+  names and notes. `lower(x) LIKE lower(y)` rather than `ILIKE`, because the desktop build runs
+  these same queries against SQLite. `%` and `_` are escaped, so a query containing them doesn't
+  match everything.
+- Capture panel: matching tasks and Backlog items under the field, ↑↓ to move, ⏎ on a highlighted
+  row opens it in the main window instead of creating a duplicate.
+- ⌘K palette: commands and data rows in one keyboard loop, commands pinned above results.
+- Project detail: a task finder that filters the board's already-loaded tasks and, on pick, selects
+  the phase path so the Miller columns walk down and reveal it (`phasePathForTask`, 5 tests).
+
+**Known gap:** result hrefs carry `?focus=<id>`, and nothing reads that parameter yet. Selecting a
+task from the palette lands you on the right page but does not highlight the row. That is a small
+follow-up in Today and the project board, not a redesign.
+
+**Still unverified from this session**, same reasons as §8: `cargo check`, `eslint`, `vitest`, and
+the app. `tsc --noEmit` is clean. The 14 new unit tests have never been executed — run
+`npm run test` on the Mac before trusting the ranking.

@@ -22,6 +22,7 @@ import { projectMilestonesRouter } from "./project-milestones";
 import { projectsRouter } from "./projects";
 import { protectedBlocksRouter } from "./protected-blocks";
 import { recurrenceRouter } from "./recurrence";
+import { searchRouter } from "./search";
 import { settingsRouter } from "./settings";
 import { steeringRouter } from "./steering";
 import { sweepRouter } from "./sweep";
@@ -62,6 +63,7 @@ export const appRouter = createTRPCRouter({
   projects: projectsRouter,
   protectedBlocks: protectedBlocksRouter,
   recurrence: recurrenceRouter,
+  search: searchRouter,
   settings: settingsRouter,
   steering: steeringRouter,
   sweep: sweepRouter,

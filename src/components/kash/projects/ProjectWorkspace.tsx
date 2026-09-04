@@ -18,6 +18,8 @@ import PhaseBurnBars from "./PhaseBurnBars";
 import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
 import ProjectSetupWizard from "./ProjectSetupWizard";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
+import { ProjectTaskFinder } from "./ProjectTaskFinder";
+import { phasePathForTask } from "@/lib/projects/phase-path";
 import { ProjectSlipReplanCard } from "./ProjectSlipReplanCard";
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import type { ProjectDetail, ProjectViewMode } from "./types";
@@ -138,22 +140,33 @@ export default function ProjectWorkspace({
           <PlanOutline projectId={initialProject.id} category={project.category} tree={tree} />
         </div>
       ) : viewMode === "columns" ? (
-        <MillerColumnsView
-          tree={tree}
-          projectId={initialProject.id}
-          projectSlug={project.slug}
-          category={project.category}
-          phases={phasesQuery.data ?? []}
-          tasks={tasksQuery.data ?? []}
-          selectedPath={selectedPath}
-          onSelectPath={setSelectedPath}
-          milestones={milestonesQuery.data ?? []}
-          estimateSampleCount={estimateSampleCount}
-          onOpenSetup={() => {
-            setSetupMode("edit");
-            setWizardOpen(true);
-          }}
-        />
+        <>
+          <ProjectTaskFinder
+            tasks={tasksQuery.data ?? []}
+            phaseName={(phaseId) =>
+              phasesQuery.data?.find((phase) => phase.id === phaseId)?.name ?? null
+            }
+            onReveal={(task) =>
+              setSelectedPath(phasePathForTask(phasesQuery.data ?? [], task.phaseId))
+            }
+          />
+          <MillerColumnsView
+            tree={tree}
+            projectId={initialProject.id}
+            projectSlug={project.slug}
+            category={project.category}
+            phases={phasesQuery.data ?? []}
+            tasks={tasksQuery.data ?? []}
+            selectedPath={selectedPath}
+            onSelectPath={setSelectedPath}
+            milestones={milestonesQuery.data ?? []}
+            estimateSampleCount={estimateSampleCount}
+            onOpenSetup={() => {
+              setSetupMode("edit");
+              setWizardOpen(true);
+            }}
+          />
+        </>
       ) : (
         // Calendar is natural-height; under the fill layout give it the remaining
         // space with its own vertical scroll so a tall timeline never clips.
