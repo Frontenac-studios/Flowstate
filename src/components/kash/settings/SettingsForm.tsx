@@ -12,6 +12,7 @@ import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/con
 import { useTRPC } from "@/trpc/client";
 
 import { CalendarSyncSection } from "./CalendarSyncSection";
+import { CaptureShortcutSection } from "./CaptureShortcutSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
 import { NotificationsAndAssistanceSection } from "./AssistanceSettingsSection";
@@ -187,6 +188,7 @@ export function SettingsForm() {
 
         {tab === "preferences" ? (
           <>
+            <CaptureShortcutSection />
             <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
               <h2 className="text-sm font-semibold text-ink">Day view bucket style</h2>
               <p className="mt-1 text-sm text-ink-muted">

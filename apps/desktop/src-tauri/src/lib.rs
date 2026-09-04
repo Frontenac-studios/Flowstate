@@ -9,6 +9,9 @@ mod idle;
 
 use dnd::{do_not_disturb_supported, set_do_not_disturb};
 use idle::spawn_idle_watcher;
+use std::str::FromStr;
+use tauri_plugin_autostart::ManagerExt as AutostartManagerExt;
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState as KeyState};
 use serde::Deserialize;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
@@ -18,6 +21,36 @@ use tauri::{
 };
 
 const DEFAULT_PORT: u16 = 4310;
+
+/// W17 — the global capture shortcut. Registered with macOS, not with the web
+/// app, so it fires from any front app. Rebindable from Settings; the chosen
+/// chord is persisted next to the SQLite db so the shell can register it at
+/// launch, before the web app is up to tell it anything.
+const DEFAULT_CAPTURE_SHORTCUT: &str = "CmdOrCtrl+Shift+K";
+
+/// Panel geometry. Width is fixed; the webview grows the window as results and
+/// the captured-list appear (`resize_capture_panel`).
+const CAPTURE_WIDTH: f64 = 560.0;
+const CAPTURE_HEIGHT: f64 = 64.0;
+/// The card can be shorter than the window's opening height once it settles.
+const CAPTURE_MIN_HEIGHT: f64 = 44.0;
+/// Vertical placement as a fraction of the monitor height. Spotlight sits high;
+/// dead-centre reads as a modal, which is what this is not.
+const CAPTURE_TOP_FRACTION: f64 = 0.26;
+
+/// W17 — capture-panel + shortcut state.
+///
+/// `error` is the whole reason this struct exists: `register` fails when another
+/// app already owns the chord, and a hotkey that silently does nothing is worse
+/// than no hotkey. The failure is held here and read by Settings.
+#[derive(Default)]
+struct CaptureState {
+    shortcut: Mutex<Option<String>>,
+    error: Mutex<Option<String>>,
+    /// The panel webview is navigated to `/capture` once, then shown and hidden.
+    /// Re-navigating on every open would cost a full webview boot per keypress.
+    loaded: Mutex<bool>,
+}
 
 struct SidecarState {
     child: Mutex<Option<Child>>,
@@ -437,6 +470,194 @@ fn build_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Where the chosen shortcut is persisted, so a rebind survives a relaunch.
+fn capture_shortcut_path(app: &AppHandle) -> PathBuf {
+    data_dir(app).join("capture-shortcut.txt")
+}
+
+fn read_stored_shortcut(app: &AppHandle) -> String {
+    std::fs::read_to_string(capture_shortcut_path(app))
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| DEFAULT_CAPTURE_SHORTCUT.to_string())
+}
+
+fn capture_url(port: u16) -> String {
+    format!("http://127.0.0.1:{port}/capture")
+}
+
+/// Place the panel high-centre on whichever monitor the cursor is on, so it
+/// appears where the user is already looking rather than on the main display.
+fn position_capture_panel(app: &AppHandle, win: &tauri::WebviewWindow) {
+    let cursor = app.cursor_position().ok();
+    let monitor = match cursor {
+        Some(pos) => app.monitor_from_point(pos.x, pos.y).ok().flatten(),
+        None => None,
+    }
+    .or_else(|| win.current_monitor().ok().flatten())
+    .or_else(|| app.primary_monitor().ok().flatten());
+
+    let Some(monitor) = monitor else { return };
+    let scale = monitor.scale_factor();
+    let size = monitor.size().to_logical::<f64>(scale);
+    let origin = monitor.position().to_logical::<f64>(scale);
+    let width = win
+        .outer_size()
+        .map(|s| s.to_logical::<f64>(scale).width)
+        .unwrap_or(CAPTURE_WIDTH);
+
+    let x = origin.x + (size.width - width) / 2.0;
+    let y = origin.y + size.height * CAPTURE_TOP_FRACTION;
+    let _ = win.set_position(tauri::LogicalPosition::new(x, y));
+}
+
+/// Show the capture panel (W17). Creates the webview on first use, then only
+/// shows/positions/focuses it — the window is hidden on close, never destroyed.
+fn open_capture_panel(app: &AppHandle) -> Result<(), String> {
+    let port = app.state::<SidecarState>().port;
+    let Some(win) = app.get_webview_window("capture") else {
+        return Err("capture window missing from tauri.conf.json".into());
+    };
+
+    let state = app.state::<CaptureState>();
+    let mut loaded = state.loaded.lock().unwrap();
+    if !*loaded {
+        let url = capture_url(port);
+        win.eval(&format!("window.location.replace('{url}');"))
+            .map_err(|e| e.to_string())?;
+        *loaded = true;
+    }
+    drop(loaded);
+
+    position_capture_panel(app, &win);
+    win.show().map_err(|e| e.to_string())?;
+    win.set_focus().map_err(|e| e.to_string())?;
+    // The panel is already mounted on the second and later opens, so nothing
+    // remounts to clear the field. The web side listens for this and resets.
+    let _ = win.emit("capture-opened", ());
+    Ok(())
+}
+
+/// Hide the panel and hand focus back to whatever the user was in. macOS gives
+/// focus to the previously active app once no visible window claims it.
+fn hide_capture_panel_window(app: &AppHandle) {
+    if let Some(win) = app.get_webview_window("capture") {
+        let _ = win.hide();
+    }
+}
+
+/// ⌘⇧K toggles: open when hidden, dismiss when the panel is already up.
+fn toggle_capture_panel(app: &AppHandle) {
+    let visible = app
+        .get_webview_window("capture")
+        .and_then(|w| w.is_visible().ok())
+        .unwrap_or(false);
+    if visible {
+        hide_capture_panel_window(app);
+    } else if let Err(err) = open_capture_panel(app) {
+        eprintln!("Capture panel failed to open: {err}");
+    }
+}
+
+/// Register `chord` as the capture shortcut, replacing whatever is registered.
+/// Returns the human-readable failure rather than panicking: another app owning
+/// the chord is a normal outcome, not a crash.
+fn apply_capture_shortcut(app: &AppHandle, chord: &str) -> Result<(), String> {
+    let shortcut = Shortcut::from_str(chord).map_err(|_| format!("{chord} isn't a valid shortcut"))?;
+    let _ = app.global_shortcut().unregister_all();
+    app.global_shortcut()
+        .register(shortcut)
+        .map_err(|_| format!("{chord} is already taken by another app"))?;
+    Ok(())
+}
+
+/// Read by Settings so the desktop section can show the live chord, any
+/// registration failure, and whether launch-at-login is on.
+#[tauri::command]
+fn capture_shortcut_status(app: AppHandle) -> serde_json::Value {
+    let state = app.state::<CaptureState>();
+    let shortcut = state
+        .shortcut
+        .lock()
+        .unwrap()
+        .clone()
+        .unwrap_or_else(|| DEFAULT_CAPTURE_SHORTCUT.to_string());
+    let error = state.error.lock().unwrap().clone();
+    let autostart = app.autolaunch().is_enabled().unwrap_or(false);
+    serde_json::json!({ "shortcut": shortcut, "error": error, "autostart": autostart })
+}
+
+/// Rebind the capture shortcut. On failure the previous chord is restored, so a
+/// rejected rebind leaves the user with a working hotkey rather than none.
+#[tauri::command]
+fn set_capture_shortcut(app: AppHandle, shortcut: String) -> Result<(), String> {
+    let chord = shortcut.trim().to_string();
+    let previous = read_stored_shortcut(&app);
+
+    if let Err(err) = apply_capture_shortcut(&app, &chord) {
+        let _ = apply_capture_shortcut(&app, &previous);
+        *app.state::<CaptureState>().error.lock().unwrap() = Some(err.clone());
+        return Err(err);
+    }
+
+    let state = app.state::<CaptureState>();
+    *state.shortcut.lock().unwrap() = Some(chord.clone());
+    *state.error.lock().unwrap() = None;
+    let _ = std::fs::write(capture_shortcut_path(&app), &chord);
+    Ok(())
+}
+
+/// Launch at login. The hotkey's twin: a shortcut for an app that isn't running
+/// does nothing, which is how a capture tool loses trust.
+#[tauri::command]
+fn set_autostart(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let manager = app.autolaunch();
+    if enabled {
+        manager.enable().map_err(|e| e.to_string())
+    } else {
+        manager.disable().map_err(|e| e.to_string())
+    }
+}
+
+/// Dismiss the panel from the web side (Esc, or a completed save).
+#[tauri::command]
+fn hide_capture_panel(app: AppHandle) {
+    hide_capture_panel_window(&app);
+}
+
+/// Grow or shrink the panel as results and the captured list appear. Width is
+/// fixed; only the height follows the content.
+#[tauri::command]
+fn resize_capture_panel(app: AppHandle, height: f64) {
+    if let Some(win) = app.get_webview_window("capture") {
+        let clamped = height.clamp(CAPTURE_MIN_HEIGHT, 520.0);
+        let _ = win.set_size(tauri::LogicalSize::new(CAPTURE_WIDTH, clamped));
+    }
+}
+
+/// Open something in the main window from the panel — "I found the task, take
+/// me to it". This is the one path where capture is *allowed* to bring the app
+/// forward, because the user asked to go there.
+#[tauri::command]
+fn open_in_main(app: AppHandle, path: String) -> Result<(), String> {
+    if !path.starts_with('/') || path.starts_with("//") {
+        return Err("path must be app-relative".into());
+    }
+    let port = app.state::<SidecarState>().port;
+    hide_capture_panel_window(&app);
+
+    let url = format!("http://127.0.0.1:{port}{path}");
+    let Some(win) = app.get_webview_window("main") else {
+        return open_main_window(&app, port, false);
+    };
+    win.eval(&format!("window.location.replace('{url}');"))
+        .map_err(|e| e.to_string())?;
+    win.show().map_err(|e| e.to_string())?;
+    win.set_focus().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let port = if cfg!(debug_assertions) {
@@ -448,16 +669,38 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None::<Vec<&str>>,
+        ))
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    // Fires on press *and* release; acting on both would open
+                    // and immediately close the panel.
+                    if event.state() == KeyState::Pressed {
+                        toggle_capture_panel(app);
+                    }
+                })
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             set_do_not_disturb,
             do_not_disturb_supported,
-            set_timer_tray
+            set_timer_tray,
+            capture_shortcut_status,
+            set_capture_shortcut,
+            set_autostart,
+            hide_capture_panel,
+            resize_capture_panel,
+            open_in_main
         ])
         .manage(SidecarState {
             child: Mutex::new(None),
             port,
         })
         .manage(TimerTrayState::default())
+        .manage(CaptureState::default())
         .setup(move |app| {
             let handle = app.handle().clone();
 
@@ -497,6 +740,22 @@ pub fn run() {
             build_tray(&handle)?;
             spawn_tray_ticker(handle.clone());
             spawn_idle_watcher(handle.clone());
+
+            // W17 — register the capture shortcut. A failure here is recorded
+            // and surfaced in Settings rather than aborting startup: the app is
+            // still useful without a hotkey, and a crash-on-conflict would make
+            // another app's keybinding able to stop Kash from launching.
+            let chord = read_stored_shortcut(&handle);
+            let capture = handle.state::<CaptureState>();
+            *capture.shortcut.lock().unwrap() = Some(chord.clone());
+            match apply_capture_shortcut(&handle, &chord) {
+                Ok(()) => *capture.error.lock().unwrap() = None,
+                Err(err) => {
+                    eprintln!("Capture shortcut not registered: {err}");
+                    *capture.error.lock().unwrap() = Some(err);
+                }
+            }
+
             open_main_window(&handle, port, false)?;
             Ok(())
         })
@@ -506,6 +765,28 @@ pub fn run() {
             // Closing the window hides it to the menu bar rather than quitting —
             // the timer keeps running and the webview (and its tray/idle listeners)
             // stays alive. Quit is explicit, via the tray. (W2f)
+            // The panel dismisses on blur — clicking back into your other app
+            // is the same gesture as pressing Esc, and a capture bar that
+            // lingers over someone else's window is clutter.
+            RunEvent::WindowEvent {
+                label,
+                event: WindowEvent::Focused(false),
+                ..
+            } if label == "capture" => {
+                if let Some(win) = app.get_webview_window("capture") {
+                    let _ = win.hide();
+                }
+            }
+            RunEvent::WindowEvent {
+                label,
+                event: WindowEvent::CloseRequested { api, .. },
+                ..
+            } if label == "capture" => {
+                if let Some(win) = app.get_webview_window("capture") {
+                    let _ = win.hide();
+                }
+                api.prevent_close();
+            }
             RunEvent::WindowEvent {
                 label,
                 event: WindowEvent::CloseRequested { api, .. },

@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kash 3.2 — global capture hotkey, option comparison</title>
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap"
+/>
+<style>
+  :root {
+    --canvas: #f7f7f8;
+    --outer: #eceef2;
+    --surface: #ffffff;
+    --border: #ececec;
+    --border-strong: #e937;
+    --border-strong: #e3e3e8;
+    --ink: #16181d;
+    --ink-muted: #6b7280;
+    --ink-faint: #9aa0ac;
+    --pro: #009ddc;
+    --per: #973d97;
+    --adu: #f6821f;
+    --bm: #61bb47;
+    --rel: #e03a3e;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--outer);
+    color: var(--ink);
+    font-family: Figtree, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 30px 20px 72px;
+  }
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  header.page h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  header.page p {
+    margin: 0;
+    color: var(--ink-muted);
+    max-width: 66ch;
+  }
+  .lab {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+
+  /* ---------- explainer ---------- */
+  .explain {
+    margin: 24px 0 30px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 22px 24px 24px;
+  }
+  .explain h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 6px 0 8px;
+  }
+  .explain p {
+    margin: 0 0 12px;
+    max-width: 70ch;
+    color: #33363d;
+  }
+  .explain p:last-of-type {
+    margin-bottom: 0;
+  }
+  .seq {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 18px 0 4px;
+  }
+  .seq div {
+    background: var(--surface);
+    padding: 13px 14px;
+  }
+  .seq .n {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--pro);
+    font-weight: 600;
+  }
+  .seq b {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    margin: 3px 0 2px;
+  }
+  .seq span.t {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    line-height: 1.45;
+  }
+  kbd {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: #f2f3f5;
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: #33363d;
+    white-space: nowrap;
+  }
+
+  /* ---------- tabs ---------- */
+  nav.tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  nav.tabs button {
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 15px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: #fff;
+    color: var(--ink-muted);
+    cursor: pointer;
+  }
+  nav.tabs button:hover {
+    border-color: #cfd2d9;
+  }
+  nav.tabs button:focus-visible {
+    outline: 2px solid var(--pro);
+    outline-offset: 2px;
+  }
+  nav.tabs button.on {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+    font-weight: 500;
+  }
+  .pane {
+    display: none;
+  }
+  .pane.on {
+    display: block;
+  }
+
+  /* ---------- option layout ---------- */
+  .opt {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .opt {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .stage {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .stage > .lab {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  /* the simulated mac screen */
+  .screen {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 9px;
+    overflow: hidden;
+    background: linear-gradient(150deg, #2f4858 0%, #33658a 46%, #86bbd8 100%);
+    border: 1px solid #c9ccd3;
+  }
+  .menubar {
+    height: 20px;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 9px;
+    font-size: 9.5px;
+    color: #2a2d33;
+  }
+  .menubar .sp {
+    flex: 1;
+  }
+  .menubar .timer {
+    font-family: var(--mono);
+    font-size: 9px;
+    background: #16181d;
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  /* backdrop "other app" */
+  .backdrop {
+    position: absolute;
+    inset: 34px 40px 26px 34px;
+    background: #fff;
+    border-radius: 7px;
+    box-shadow: 0 12px 30px rgba(16, 20, 28, 0.28);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .backdrop .bar {
+    height: 22px;
+    background: #f4f5f7;
+    border-bottom: 1px solid #e7e8ec;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #dcdde1;
+  }
+  .backdrop .who {
+    margin-left: 6px;
+    font-size: 9px;
+    color: #9aa0ac;
+  }
+  .backdrop .body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .ln {
+    height: 6px;
+    border-radius: 3px;
+    background: #eef0f3;
+  }
+  .ln.s {
+    width: 42%;
+  }
+  .ln.m {
+    width: 68%;
+  }
+  .ln.l {
+    width: 88%;
+  }
+  .dim .backdrop {
+    filter: saturate(0.6) brightness(0.97);
+  }
+
+  /* option A panel */
+  .panel {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 30%;
+    width: 54%;
+    background: rgba(252, 252, 253, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow:
+      0 22px 44px rgba(10, 14, 22, 0.35),
+      0 2px 6px rgba(10, 14, 22, 0.2);
+    overflow: hidden;
+  }
+  .panel .field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+  }
+  .panel .caret {
+    width: 1.5px;
+    height: 13px;
+    background: var(--pro);
+  }
+  .panel .txt {
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .panel .ph {
+    font-size: 12px;
+    color: #a8adb8;
+  }
+  .panel .hintrow {
+    border-top: 1px solid #ececee;
+    padding: 5px 11px;
+    display: flex;
+    gap: 10px;
+    font-size: 9.5px;
+    color: #9aa0ac;
+    background: #fafafb;
+  }
+  .panel .res {
+    border-top: 1px solid #ececee;
+    padding: 6px 11px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+  }
+  .panel .res.sel {
+    background: #eef7fc;
+  }
+  .panel .res .meta {
+    margin-left: auto;
+    font-size: 9.5px;
+    color: #9aa0ac;
+  }
+  .swatch {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    flex: none;
+  }
+  .chip {
+    font-size: 9.5px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    background: #eef0f3;
+    color: #5a6070;
+  }
+
+  /* option B: full kash window */
+  .kashwin {
+    position: absolute;
+    inset: 30px 22px 16px 22px;
+    background: var(--canvas);
+    border-radius: 8px;
+    box-shadow: 0 18px 42px rgba(10, 14, 22, 0.4);
+    overflow: hidden;
+    display: flex;
+  }
+  .kashwin .rail {
+    width: 16%;
+    background: #f1f2f4;
+    border-right: 1px solid #e6e7eb;
+    padding: 20px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .kashwin .rail i {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e2e7;
+  }
+  .kashwin .main {
+    flex: 1;
+    padding: 22px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .kashwin .composer {
+    border: 1.5px solid var(--pro);
+    background: #fff;
+    border-radius: 6px;
+    padding: 7px 9px;
+    font-size: 11px;
+    color: #a8adb8;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .kashwin .task {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 8px;
+  }
+
+  /* option C: popover from tray */
+  .popover {
+    position: absolute;
+    top: 24px;
+    right: 8%;
+    width: 40%;
+    background: rgba(252, 252, 253, 0.97);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 9px;
+    box-shadow: 0 18px 34px rgba(10, 14, 22, 0.32);
+    overflow: hidden;
+  }
+  .popover:before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    right: 26%;
+    width: 9px;
+    height: 9px;
+    background: #fcfcfd;
+    border-left: 1px solid rgba(0, 0, 0, 0.09);
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+    transform: rotate(45deg);
+  }
+
+  .caption {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin: 10px 2px 0;
+  }
+
+  /* right column */
+  .side h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 2px;
+  }
+  .side .tag {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+  }
+  .facts {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .facts .row {
+    display: flex;
+    gap: 10px;
+    padding: 9px 13px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .facts .row:last-child {
+    border-bottom: 0;
+  }
+  .facts .k {
+    width: 74px;
+    flex: none;
+    color: var(--ink-faint);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    padding-top: 1px;
+  }
+  .facts .v {
+    color: #33363d;
+  }
+  .stripe {
+    height: 3px;
+  }
+  .steps {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: s;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .steps li {
+    counter-increment: s;
+    position: relative;
+    padding-left: 21px;
+    font-size: 12.5px;
+    color: #33363d;
+  }
+  .steps li:before {
+    content: counter(s);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #eef0f3;
+    color: #5a6070;
+    font-size: 9.5px;
+    font-family: var(--mono);
+    display: grid;
+    place-items: center;
+  }
+
+  /* search pane */
+  .searchgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .mockcard {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .mockcard h4 {
+    font-size: 13.5px;
+    font-weight: 600;
+    margin: 8px 0 3px;
+  }
+  .mockcard p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+  .frameStage {
+    background: #eef0f3;
+    border-radius: 9px;
+    padding: 16px;
+    display: grid;
+    place-items: center;
+    min-height: 148px;
+  }
+  .flat {
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    box-shadow: 0 6px 18px rgba(16, 20, 28, 0.08);
+    overflow: hidden;
+  }
+  .flat .field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .flat .res {
+    border-top: 1px solid #f0f0f2;
+    padding: 7px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .flat .res.sel {
+    background: #eef7fc;
+  }
+  .flat .res .meta {
+    margin-left: auto;
+    font-size: 10.5px;
+    color: #9aa0ac;
+  }
+  .flat .foot {
+    border-top: 1px solid #f0f0f2;
+    background: #fafafb;
+    padding: 6px 12px;
+    font-size: 10.5px;
+    color: #9aa0ac;
+    display: flex;
+    gap: 12px;
+  }
+  .where {
+    margin-top: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .where .hd,
+  .where .r {
+    display: grid;
+    grid-template-columns: 150px 1fr 92px;
+    gap: 12px;
+    padding: 10px 15px;
+    font-size: 12.5px;
+    align-items: baseline;
+  }
+  .where .hd {
+    background: #fafafb;
+    border-bottom: 1px solid var(--border);
+    font-size: 10.5px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  .where .r {
+    border-bottom: 1px solid var(--border);
+  }
+  .where .r:last-child {
+    border-bottom: 0;
+  }
+  .where .r b {
+    font-weight: 600;
+  }
+  .where .r span.no {
+    color: var(--ink-faint);
+  }
+  .pill {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
+  .pill.in {
+    background: #e8f5ee;
+    color: #1f7a4d;
+  }
+  .pill.out {
+    background: #f1f2f4;
+    color: #7b8190;
+  }
+  .note {
+    margin-top: 20px;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    max-width: 72ch;
+  }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="page">
+    <span class="lab">Flowstate · W17 · desktop pillar 2</span>
+    <h1>Global capture: what the key press does</h1>
+    <p>
+      Three ways to answer one question — when you hit the hotkey while you are in Gmail, what
+      appears? Same shortcut, same data, same tRPC call underneath. Only the surface differs.
+    </p>
+  </header>
+
+  <section class="explain">
+    <span class="lab">First, the mechanic</span>
+    <h2>A global shortcut is registered with macOS, not with the app</h2>
+    <p>
+      Every shortcut Flowstate has today is a <code>keydown</code> listener inside the web page.
+      <kbd>⌘⇧A</kbd> opens quick-capture <em>only</em> when a Flowstate window is the front app —
+      press it in Gmail and Gmail gets the keystroke. That is the whole gap: not that capture is
+      missing, but that it is unreachable from where you actually are when you think of the thing.
+    </p>
+    <p>
+      A global shortcut is different in kind. The Rust shell asks macOS to reserve
+      <kbd>⌘⇧K</kbd> system-wide. The OS then intercepts that combination before any app sees it and
+      wakes Flowstate instead. Three consequences worth knowing:
+      the reservation is <b>exclusive</b> (if another app already holds the combo, registration
+      fails quietly, which is why a rebind field in Settings matters);
+      it only works while Flowstate is <b>running</b>, which is why launch-at-login is this
+      feature's twin;
+      and macOS will ask you to grant the app permission the first time.
+    </p>
+    <div class="seq">
+      <div>
+        <span class="n">01</span><b>You're in Gmail</b
+        ><span class="t">A client asks for the March invoice. Flowstate is hidden.</span>
+      </div>
+      <div>
+        <span class="n">02</span><b>Press ⌘⇧K</b
+        ><span class="t">macOS intercepts it and hands it to the Flowstate shell.</span>
+      </div>
+      <div>
+        <span class="n">03</span><b>Something appears</b
+        ><span class="t">This is the only part the three options disagree about.</span>
+      </div>
+      <div>
+        <span class="n">04</span><b>Type, Enter, gone</b
+        ><span class="t">The line is saved and you are back where you were.</span>
+      </div>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="on" data-p="a" role="tab" aria-selected="true">A · Floating panel</button>
+    <button data-p="b" role="tab" aria-selected="false">B · Main window</button>
+    <button data-p="c" role="tab" aria-selected="false">C · Menu-bar popover</button>
+    <button data-p="s" role="tab" aria-selected="false">Search surfaces</button>
+  </nav>
+
+  <!-- ===================== A ===================== -->
+  <section class="pane on" id="p-a">
+    <div class="opt">
+      <div class="stage">
+        <span class="lab">Same screen, 1440 × 900 · panel shown at true relative size</span>
+        <div class="screen dim">
+          <div class="menubar">
+            <span style="font-weight: 600">Gmail</span><span>File</span><span>Edit</span>
+            <span class="sp"></span><span class="timer">◷ 1:24 Great White</span><span>9:41</span>
+          </div>
+          <div class="backdrop">
+            <div class="bar">
+              <i class="dot"></i><i class="dot"></i><i class="dot"></i
+              ><span class="who">Re: March invoice — Dani Lozano</span>
+            </div>
+            <div class="body">
+              <div class="ln l"></div>
+              <div class="ln m"></div>
+              <div class="ln l"></div>
+              <div class="ln s"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="field">
+              <span class="txt">Send Dani the March invoice</span><span class="caret"></span>
+            </div>
+            <div class="hintrow">
+              <span>⏎ Save to Backlog</span><span>⇥ more</span><span>esc cancel</span>
+            </div>
+          </div>
+        </div>
+        <p class="caption">
+          Flowstate never comes forward. The bar floats above Gmail, takes the keystrokes, and
+          disappears. Gmail keeps its window position and your scroll.
+        </p>
+      </div>
+      <div class="side">
+        <h3>A · Floating panel</h3>
+        <div class="tag">A second, borderless Tauri window at a new <code>/capture</code> route.</div>
+        <div class="facts">
+          <div class="stripe" style="background: var(--bm)"></div>
+          <div class="row">
+            <span class="k">Feels like</span><span class="v">Spotlight. Appears over your work, not instead of it.</span>
+          </div>
+          <div class="row">
+            <span class="k">Time to done</span><span class="v">~2 seconds, no context switch.</span>
+          </div>
+          <div class="row">
+            <span class="k">Build</span><span class="v">Global-shortcut plugin, a second window + capability scope, the <code>/capture</code> route, focus-return on save.</span>
+          </div>
+          <div class="row">
+            <span class="k">Watch for</span><span class="v">The new webview has to share the logged-in session with the main one. Verify before anything else is built.</span>
+          </div>
+        </div>
+        <ol class="steps">
+          <li>Panel fades in centered, cursor already in the field.</li>
+          <li>You type one line. Matching existing tasks appear below it.</li>
+          <li>Enter saves; the panel vanishes and macOS returns focus to Gmail.</li>
+          <li>A 2-second toast confirms where it landed.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== B ===================== -->
+  <section class="pane" id="p-b">
+    <div class="opt">
+      <div class="stage">
+        <span class="lab">Same screen · the whole app comes forward</span>
+        <div class="screen">
+          <div class="menubar">
+            <span style="font-weight: 600">Flowstate</span><span>File</span><span>Edit</span>
+            <span class="sp"></span><span class="timer">◷ 1:24 Great White</span><span>9:41</span>
+          </div>
+          <div class="kashwin">
+            <div class="rail">
+              <i style="width: 70%"></i><i style="width: 55%"></i><i style="width: 62%"></i
+              ><i style="width: 48%"></i><i style="width: 58%"></i>
+            </div>
+            <div class="main">
+              <div class="composer">
+                <span class="caret" style="height: 11px"></span><span>Send Dani the March invoice</span>
+              </div>
+              <div class="task">
+                <span class="swatch" style="background: var(--pro)"></span
+                ><span class="ln m" style="height: 5px"></span>
+              </div>
+              <div class="task">
+                <span class="swatch" style="background: var(--adu)"></span
+                ><span class="ln s" style="height: 5px"></span>
+              </div>
+              <div class="task">
+                <span class="swatch" style="background: var(--per)"></span
+                ><span class="ln m" style="height: 5px"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption">
+          Gmail is gone. You are in Today with the composer focused — which is also an invitation to
+          stay and start rearranging your day.
+        </p>
+      </div>
+      <div class="side">
+        <h3>B · Main window + composer</h3>
+        <div class="tag">Reuses the tray's existing "Quick capture…" path exactly.</div>
+        <div class="facts">
+          <div class="stripe" style="background: var(--adu)"></div>
+          <div class="row">
+            <span class="k">Feels like</span><span class="v">Switching apps to write something down.</span>
+          </div>
+          <div class="row">
+            <span class="k">Time to done</span><span class="v">~2s to type, then ⌘⇥ back and find your place again.</span>
+          </div>
+          <div class="row">
+            <span class="k">Build</span><span class="v">Roughly an hour. Register the shortcut, call the <code>open_main_window(port, focus_composer: true)</code> that already exists.</span>
+          </div>
+          <div class="row">
+            <span class="k">Watch for</span><span class="v">Mission asks for capture "without switching windows." This is the option that doesn't clear that bar.</span>
+          </div>
+        </div>
+        <ol class="steps">
+          <li>The 1280 × 860 window appears over everything.</li>
+          <li>It navigates to Today with the composer focused.</li>
+          <li>Enter saves the task onto Today's list.</li>
+          <li>You are still in Flowstate. Getting back to Gmail is on you.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== C ===================== -->
+  <section class="pane" id="p-c">
+    <div class="opt">
+      <div class="stage">
+        <span class="lab">Same screen · anchored under the tray icon</span>
+        <div class="screen dim">
+          <div class="menubar">
+            <span style="font-weight: 600">Gmail</span><span>File</span><span>Edit</span>
+            <span class="sp"></span><span class="timer">◷ 1:24 Great White</span><span>9:41</span>
+          </div>
+          <div class="backdrop">
+            <div class="bar">
+              <i class="dot"></i><i class="dot"></i><i class="dot"></i
+              ><span class="who">Re: March invoice — Dani Lozano</span>
+            </div>
+            <div class="body">
+              <div class="ln l"></div>
+              <div class="ln m"></div>
+              <div class="ln l"></div>
+              <div class="ln s"></div>
+            </div>
+          </div>
+          <div class="popover">
+            <div class="field">
+              <span class="txt">Send Dani the March invoice</span><span class="caret"></span>
+            </div>
+            <div class="hintrow"><span>⏎ Backlog</span><span>esc cancel</span></div>
+          </div>
+        </div>
+        <p class="caption">
+          Same non-disruption as A, but your eyes and the cursor travel to the top-right corner
+          instead of to the middle of the screen you were already looking at.
+        </p>
+      </div>
+      <div class="side">
+        <h3>C · Menu-bar popover</h3>
+        <div class="tag">Panel anchored to the tray icon that already runs the timer.</div>
+        <div class="facts">
+          <div class="stripe" style="background: var(--pro)"></div>
+          <div class="row">
+            <span class="k">Feels like</span><span class="v">A menu-bar utility. Native, tidy, slightly further away.</span>
+          </div>
+          <div class="row">
+            <span class="k">Time to done</span><span class="v">~2 seconds, plus the eye travel.</span>
+          </div>
+          <div class="row">
+            <span class="k">Build</span><span class="v">Everything in A, plus positioning math against the tray icon's screen coordinates.</span>
+          </div>
+          <div class="row">
+            <span class="k">Watch for</span><span class="v">Multi-monitor and a hidden menu bar both break the anchor. It also shares a home with the timer menu, so the corner starts doing two jobs.</span>
+          </div>
+        </div>
+        <ol class="steps">
+          <li>Popover drops from the tray icon with a pointer arrow.</li>
+          <li>Same field, same typing, same Enter.</li>
+          <li>Closes on save or on click-away, focus returns to Gmail.</li>
+          <li>Clicking the tray icon opens the same panel.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SEARCH ===================== -->
+  <section class="pane" id="p-s">
+    <div class="searchgrid">
+      <div class="mockcard">
+        <div class="frameStage">
+          <div class="flat">
+            <div class="field">
+              <span style="color: var(--ink)">invoice great</span
+              ><span class="caret" style="height: 14px"></span>
+            </div>
+            <div class="res sel">
+              <span class="swatch" style="background: var(--pro)"></span
+              ><span>Send GW the March invoice</span><span class="meta">Great White · Fri</span>
+            </div>
+            <div class="res">
+              <span class="swatch" style="background: var(--pro)"></span
+              ><span>Reconcile GW invoice #114 in Xero</span><span class="meta">Backlog</span>
+            </div>
+            <div class="res">
+              <span style="color: var(--ink-faint)">＋</span
+              ><span>Create “invoice great” in Backlog</span><span class="meta">⏎</span>
+            </div>
+            <div class="foot"><span>↑↓ move</span><span>⏎ open or create</span><span>esc</span></div>
+          </div>
+        </div>
+        <h4>Find-or-create, inside the capture panel</h4>
+        <p>
+          Typing searches before it creates. You see you already wrote it down, so you don't file a
+          second copy — the thing that quietly makes a capture inbox untrustworthy.
+        </p>
+      </div>
+
+      <div class="mockcard">
+        <div class="frameStage">
+          <div class="flat">
+            <div class="field">
+              <span style="color: var(--ink)">dani</span
+              ><span class="caret" style="height: 14px"></span>
+            </div>
+            <div class="res sel">
+              <span class="chip">Task</span><span>Send Dani the scope note</span
+              ><span class="meta">Hume</span>
+            </div>
+            <div class="res">
+              <span class="chip">Client</span><span>Dani Lozano</span><span class="meta">Hume</span>
+            </div>
+            <div class="res">
+              <span class="chip">Go to</span><span>This Week</span><span class="meta">⌘2</span>
+            </div>
+            <div class="foot"><span>Tasks, projects, clients, then commands</span></div>
+          </div>
+        </div>
+        <h4>⌘K palette, with data in it</h4>
+        <p>
+          The palette already has an input and a keyboard loop; today it filters eight hardcoded
+          strings. Results become typed rows, and selecting one navigates and highlights.
+        </p>
+      </div>
+    </div>
+
+    <div class="where">
+      <div class="hd"><span>Surface</span><span>What search means there</span><span>In this build</span></div>
+      <div class="r">
+        <b>Capture panel</b><span>Find-or-create over open tasks and Backlog items.</span
+        ><span class="pill in">Yes</span>
+      </div>
+      <div class="r">
+        <b>⌘K palette</b><span>Global find: tasks, projects, clients, plus today's commands.</span
+        ><span class="pill in">Yes</span>
+      </div>
+      <div class="r">
+        <b>Backlog</b><span>In-place filter over the pile you retrieve from.</span
+        ><span class="pill in">Yes</span>
+      </div>
+      <div class="r">
+        <b>Project detail</b><span>Filter within one project's phases and tasks.</span
+        ><span class="pill in">Yes</span>
+      </div>
+      <div class="r">
+        <b>Today / This Week</b
+        ><span class="no">Curated views. If you can't see it, it isn't there — that's the answer, not a search box.</span
+        ><span class="pill out">No</span>
+      </div>
+      <div class="r">
+        <b>The Sweep</b
+        ><span class="no">A ruling queue. Searching it is browsing instead of deciding.</span
+        ><span class="pill out">No</span>
+      </div>
+      <div class="r">
+        <b>Tray timer menu</b
+        ><span class="no">"Start a timer on task X" — real, but it belongs to the timer, not to search.</span
+        ><span class="pill out">Later</span>
+      </div>
+    </div>
+
+    <p class="note">
+      One search backend serves all four: a single procedure over task titles, notes and project
+      names, called from four places. The differences are presentation and scope filters, not
+      queries.
+    </p>
+  </section>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll("nav.tabs button");
+  tabs.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabs.forEach((b) => {
+        b.classList.toggle("on", b === btn);
+        b.setAttribute("aria-selected", b === btn ? "true" : "false");
+      });
+      document.querySelectorAll(".pane").forEach((p) => {
+        p.classList.toggle("on", p.id === "p-" + btn.dataset.p);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
