@@ -17,6 +17,12 @@ export type PlanOutlineRow = {
   id: string;
   /** 0 for a root phase or a loose task; +1 per level of nesting. */
   depth: number;
+  /**
+   * The phase this row sits inside: a phase's parent phase, or a task's phase.
+   * Null for a root phase and for a loose task. Carried on the row so the indent
+   * logic can resolve a new parent without walking the tree again.
+   */
+  parentPhaseId: string | null;
   title: string;
   completed: boolean;
   /** Phase end date, or a task's scheduled date. `YYYY-MM-DD`, or null. */
@@ -82,11 +88,12 @@ export function flattenPlanOutline<P extends OutlinePhase, T extends OutlineTask
 }: FlattenPlanOutlineParams<P, T>): PlanOutlineRow[] {
   const rows: PlanOutlineRow[] = [];
 
-  const pushTask = (task: T, depth: number) => {
+  const pushTask = (task: T, depth: number, parentPhaseId: string | null) => {
     rows.push({
       kind: "task",
       id: task.id,
       depth,
+      parentPhaseId,
       title: task.title,
       completed: task.completedAt != null,
       due: task.scheduledDate ?? null,
@@ -106,6 +113,7 @@ export function flattenPlanOutline<P extends OutlinePhase, T extends OutlineTask
       kind: "phase",
       id: node.phase.id,
       depth,
+      parentPhaseId: node.phase.parentPhaseId,
       title: node.phase.name,
       completed: node.phase.completedAt != null,
       due: node.phase.endDate ?? null,
@@ -114,7 +122,7 @@ export function flattenPlanOutline<P extends OutlinePhase, T extends OutlineTask
       hot: hotPhaseIds?.has(node.phase.id) ?? false,
     });
 
-    for (const task of node.tasks) pushTask(task, depth + 1);
+    for (const task of node.tasks) pushTask(task, depth + 1, node.phase.id);
     for (const child of node.children) walk(child, depth + 1);
   };
 
@@ -123,7 +131,7 @@ export function flattenPlanOutline<P extends OutlinePhase, T extends OutlineTask
   }
 
   // Tasks attached straight to the project, with no phase above them.
-  for (const task of tree.looseTasks) pushTask(task, 0);
+  for (const task of tree.looseTasks) pushTask(task, 0, null);
 
   return rows;
 }

@@ -147,10 +147,54 @@ export const phasesRouter = createTRPCRouter({
         startDate: isoDateSchema.nullable().optional(),
         endDate: isoDateSchema.nullable().optional(),
         sortOrder: z.number().int().optional(),
+        /**
+         * Reparent this phase (Kash 3.2 Plan mode: Tab / Shift+Tab). Null moves it
+         * to the project root. The new parent must be in the same project and must
+         * not sit inside this phase's own subtree.
+         */
+        parentPhaseId: z.string().uuid().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await getOwnedPhase(ctx.userId, input.id);
+      const current = await getOwnedPhase(ctx.userId, input.id);
+
+      if (input.parentPhaseId !== undefined && input.parentPhaseId !== null) {
+        if (input.parentPhaseId === input.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A phase can't be its own parent.",
+          });
+        }
+
+        const parent = await getOwnedPhase(ctx.userId, input.parentPhaseId);
+        if (parent.projectId !== current.projectId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Parent phase belongs to a different project.",
+          });
+        }
+
+        // Walking up from the proposed parent must never reach this phase, or the
+        // tree would close into a ring and every reader that recurses would hang.
+        const projectPhases = await db
+          .select({ id: phases.id, parentPhaseId: phases.parentPhaseId })
+          .from(phases)
+          .where(and(eq(phases.userId, ctx.userId), eq(phases.projectId, current.projectId)));
+        const parentById = new Map(projectPhases.map((row) => [row.id, row.parentPhaseId]));
+
+        let cursor: string | null = input.parentPhaseId;
+        let guard = projectPhases.length + 1;
+        while (cursor !== null && guard > 0) {
+          if (cursor === input.id) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "A phase can't move inside itself.",
+            });
+          }
+          cursor = parentById.get(cursor) ?? null;
+          guard -= 1;
+        }
+      }
 
       if (input.startDate != null && input.endDate != null && input.endDate < input.startDate) {
         throw new TRPCError({
@@ -165,6 +209,7 @@ export const phasesRouter = createTRPCRouter({
       if (input.startDate !== undefined) patch.startDate = input.startDate;
       if (input.endDate !== undefined) patch.endDate = input.endDate;
       if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
+      if (input.parentPhaseId !== undefined) patch.parentPhaseId = input.parentPhaseId;
 
       const [row] = await db
         .update(phases)

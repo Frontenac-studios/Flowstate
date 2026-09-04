@@ -48,6 +48,9 @@ import { clearWeekDayPrioritiesForTask } from "./week-day-priorities";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
+/** `YYYY-MM-DD`, the shape `tasks.scheduled_date` is stored in. */
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD).");
+
 const localCalendarInputSchema = z.object({
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   tzOffsetMinutes: z.number().int().min(-840).max(840),
@@ -823,6 +826,12 @@ export const tasksRouter = createTRPCRouter({
         id: z.string().uuid(),
         title: z.string().min(1).max(500).optional(),
         priority: z.number().int().min(0).max(3).optional(),
+        /**
+         * The day this task is due. Unlike `scheduleToDate`, which guards to the
+         * current ISO week because it backs dragging on Today and Week, planning
+         * legitimately sets dates months out — so this one takes any date.
+         */
+        scheduledDate: isoDateSchema.nullable().optional(),
         projectId: z.string().uuid().nullable().optional(),
         phaseId: z.string().uuid().nullable().optional(),
         category: categorySchema.optional(),
@@ -843,6 +852,7 @@ export const tasksRouter = createTRPCRouter({
         updatedAt: new Date(),
       };
       if (input.title !== undefined) patch.title = input.title.trim();
+      if (input.scheduledDate !== undefined) patch.scheduledDate = input.scheduledDate;
       if (input.priority !== undefined) patch.priority = input.priority;
       if (input.projectId !== undefined) patch.projectId = input.projectId;
       if (input.phaseId !== undefined) patch.phaseId = input.phaseId;
