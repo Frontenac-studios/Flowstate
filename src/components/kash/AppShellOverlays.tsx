@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
-import { OPEN_ABYSS_CAPTURE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
+import {
+  OPEN_ABYSS_CAPTURE_EVENT,
+  OPEN_NEW_PROJECT_EVENT,
+  OPEN_PALETTE_EVENT,
+} from "./chrome-events";
 import { useChat } from "./chat/ChatProvider";
 import { FLAGS } from "@/lib/flags";
 
@@ -13,10 +17,15 @@ const CommandPalette = dynamic(() =>
   import("./CommandPalette").then((m) => ({ default: m.CommandPalette }))
 );
 const AbyssQuickCapture = dynamic(() => import("./abyss/AbyssQuickCapture"));
+const NewProjectOverlay = dynamic(() => import("./projects/NewProjectOverlay"));
 const ChatRail = dynamic(() => import("./chat/ChatRail").then((m) => ({ default: m.ChatRail })));
 
 const overlayImports = () =>
-  Promise.all([import("./CommandPalette"), import("./abyss/AbyssQuickCapture")]);
+  Promise.all([
+    import("./CommandPalette"),
+    import("./abyss/AbyssQuickCapture"),
+    import("./projects/NewProjectOverlay"),
+  ]);
 
 function scheduleIdle(callback: () => void): number {
   if (typeof window.requestIdleCallback === "function") {
@@ -36,6 +45,7 @@ function cancelIdle(id: number): void {
 type PendingOverlay = {
   palette: boolean;
   abyss: boolean;
+  newProject: boolean;
 };
 
 /**
@@ -59,7 +69,7 @@ export function AppShellChatRail() {
 export function AppShellFixedOverlays() {
   const [mounted, setMounted] = useState(false);
   const mountedRef = useRef(false);
-  const pendingRef = useRef<PendingOverlay>({ palette: false, abyss: false });
+  const pendingRef = useRef<PendingOverlay>({ palette: false, abyss: false, newProject: false });
 
   useEffect(() => {
     mountedRef.current = mounted;
@@ -71,10 +81,11 @@ export function AppShellFixedOverlays() {
 
   useEffect(() => {
     if (!mounted) return;
-    const { palette, abyss } = pendingRef.current;
-    pendingRef.current = { palette: false, abyss: false };
+    const { palette, abyss, newProject } = pendingRef.current;
+    pendingRef.current = { palette: false, abyss: false, newProject: false };
     if (palette) window.dispatchEvent(new CustomEvent(OPEN_PALETTE_EVENT));
     if (abyss) window.dispatchEvent(new CustomEvent(OPEN_ABYSS_CAPTURE_EVENT));
+    if (newProject) window.dispatchEvent(new CustomEvent(OPEN_NEW_PROJECT_EVENT));
   }, [mounted]);
 
   useEffect(() => {
@@ -95,18 +106,42 @@ export function AppShellFixedOverlays() {
       pendingRef.current.abyss = true;
       preload();
     };
+    const onOpenNewProject = () => {
+      if (mountedRef.current) return;
+      pendingRef.current.newProject = true;
+      preload();
+    };
     window.addEventListener(OPEN_PALETTE_EVENT, onOpenPalette);
     window.addEventListener(OPEN_ABYSS_CAPTURE_EVENT, onOpenAbyss);
+    window.addEventListener(OPEN_NEW_PROJECT_EVENT, onOpenNewProject);
     return () => {
       window.removeEventListener(OPEN_PALETTE_EVENT, onOpenPalette);
       window.removeEventListener(OPEN_ABYSS_CAPTURE_EVENT, onOpenAbyss);
+      window.removeEventListener(OPEN_NEW_PROJECT_EVENT, onOpenNewProject);
     };
   }, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (mountedRef.current) return;
       const meta = e.metaKey || e.ctrlKey;
+
+      // `n` opens the create-project dialog from anywhere (Kash 3.2, decision 1A).
+      // Bare letter shortcut, so it is gated hard: no modifiers, never while the
+      // caret is in a field, and never while another overlay owns the screen.
+      if (!meta && !e.altKey && e.key.toLowerCase() === "n") {
+        if (isEditableTarget(e.target)) return;
+        if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+        e.preventDefault();
+        if (mountedRef.current) {
+          window.dispatchEvent(new CustomEvent(OPEN_NEW_PROJECT_EVENT));
+          return;
+        }
+        pendingRef.current.newProject = true;
+        preload();
+        return;
+      }
+
+      if (mountedRef.current) return;
       if (!meta) return;
 
       if (e.key.toLowerCase() === "k") {
@@ -135,6 +170,7 @@ export function AppShellFixedOverlays() {
     <>
       <CommandPalette />
       <AbyssQuickCapture />
+      <NewProjectOverlay />
     </>
   );
 }

@@ -69,9 +69,7 @@ export default function TaskTagsEditor({ tags, disabled = false, onChange }: Pro
           ))}
         </div>
       ) : (
-        <p className="text-xs text-ink-muted">
-          No tags yet — add one below or capture with `;tag`.
-        </p>
+        <p className="text-xs text-ink-muted">No tags yet — add one below.</p>
       )}
 
       <Input

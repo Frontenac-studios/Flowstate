@@ -7,17 +7,11 @@ import NewProjectForm from "@/components/kash/projects/NewProjectForm";
 
 type Props = {
   open: boolean;
-  showTemplateFeatures: boolean;
   onClose: () => void;
-  onCreated: (result: { id: string; fromTemplate: boolean }) => void;
+  onCreated: (result: { id: string }) => void;
 };
 
-export default function NewProjectDialog({
-  open,
-  showTemplateFeatures,
-  onClose,
-  onCreated,
-}: Props) {
+export default function NewProjectDialog({ open, onClose, onCreated }: Props) {
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
@@ -39,28 +33,24 @@ export default function NewProjectDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-4"
+      className="fixed inset-0 z-modal flex items-start justify-center px-4 pt-[18vh]"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-black/20" aria-hidden />
+      <div className="absolute inset-0" style={{ background: "var(--backdrop)" }} aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-project-dialog-title"
-        className="relative z-base w-full max-w-lg rounded-card border border-border bg-surface p-6 shadow-overlay"
+        className="relative z-base w-full max-w-md rounded-card border border-border bg-surface p-5 shadow-overlay"
       >
-        <h2 id="new-project-dialog-title" className="text-title font-semibold text-ink">
+        <h2 id="new-project-dialog-title" className="text-subtitle font-medium text-ink">
           New project
         </h2>
-        <div className="mt-4">
-          <NewProjectForm
-            showTemplateFeatures={showTemplateFeatures}
-            onCreated={onCreated}
-            onCancel={onClose}
-          />
+        <div className="mt-3">
+          <NewProjectForm onCreated={onCreated} onCancel={onClose} />
         </div>
       </div>
     </div>,

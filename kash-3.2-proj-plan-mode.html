@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kash 3.2 — Plan mode and project meta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff; --surface-2:#fafafa; --border:#ececec;
+    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#767e8e;
+    --cat-business:#009ddc; --cat-personal:#973d97;
+    --status-critical:#b3122a;
+    --r-card:8px; --r-row:5px; --r-control:5px; --r-chip:5px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#f6f6f7;color:var(--ink);
+    font-family:Figtree,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:13px;line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased}
+  .page{max-width:1180px;margin:0 auto;padding:40px 28px 96px}
+  .doc-meta{font-size:11px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase}
+  .doc-h1{font-size:20px;font-weight:500;letter-spacing:-.01em;margin:0 0 6px}
+  .doc-sub{font-size:13px;color:var(--ink-muted);margin:0 0 6px;max-width:80ch}
+  .sec{margin-top:56px}
+  .sec-num{font-size:11px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+  .sec-h{font-size:17px;font-weight:500;margin:0 0 8px}
+  .sec-p{font-size:13px;color:var(--ink-muted);max-width:80ch;margin:0 0 24px}
+  strong{font-weight:500}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:3px;padding:1px 4px}
+
+  .m{background:#fff;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+  .m-hr{height:1px;background:var(--border)}
+  .m-cap{font-size:11px;color:var(--ink-faint)}
+  .m-meta{font-size:12px;color:var(--ink-muted)}
+  .m-title{font-size:17px;font-weight:500;margin:0}
+  .m-label{font-size:11px;color:var(--ink-faint);display:block;margin-bottom:5px}
+  .m-chip{font-size:11px;border:1px solid var(--border);border-radius:var(--r-chip);padding:2px 8px;color:var(--ink-muted);background:#fff;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .m-chip.on{border-color:var(--ink);color:var(--ink)}
+  .m-btn{font-size:12px;border:1px solid var(--ink);border-radius:var(--r-control);padding:5px 12px;background:#fff;color:var(--ink);display:inline-block}
+  .m-btn.quiet{border-color:var(--border);color:var(--ink-muted)}
+  .m-input{border:1px solid var(--border);border-radius:var(--r-control);padding:6px 8px;font-size:13px;background:#fff}
+  .m-input.focus{border-color:var(--ink);border-width:2px;padding:5px 7px}
+  .row{display:flex;align-items:center;gap:8px}
+  .dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex:none}
+  .dot.biz{background:var(--cat-business)} .dot.per{background:var(--cat-personal)}
+  .kbd{font-family:ui-monospace,Menlo,monospace;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;color:var(--ink-faint);background:#fff}
+
+  /* ---- outline ---- */
+  .ol-head{display:flex;align-items:center;gap:0;padding:6px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+  .ol-head span{font-size:11px;color:var(--ink-faint);letter-spacing:.05em;text-transform:uppercase}
+  .ol-r{display:flex;align-items:center;min-height:30px;padding:0 12px;border-bottom:1px solid #f4f4f4;gap:0}
+  .ol-r:last-child{border-bottom:0}
+  .ol-name{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
+  .ol-r.phase .ol-name{font-weight:500}
+  .ol-r.task .ol-name{padding-left:22px;color:var(--ink-muted)}
+  .ol-r.sub .ol-name{padding-left:44px;color:var(--ink-muted)}
+  .c-due{width:64px;text-align:right;font-size:12px;color:var(--ink-muted);flex:none}
+  .c-est{width:48px;text-align:right;font-size:12px;color:var(--ink-muted);flex:none}
+  .c-log{width:52px;text-align:right;font-size:12px;color:var(--ink-faint);flex:none}
+  .c-log.hot{color:var(--status-critical)}
+  .c-due.empty,.c-est.empty,.c-log.empty{color:#c9ccd2}
+  .pri{font-size:11px;color:var(--status-critical);flex:none;width:16px}
+  .pri.mid{color:var(--ink-muted)}
+  .ol-r.editing{background:var(--surface-2)}
+  .caret{width:1px;height:14px;background:var(--ink);display:inline-block}
+
+  /* ---- option cards ---- */
+  .opt-grid{display:grid;gap:20px}
+  .opt-grid.two{grid-template-columns:1fr 1fr}
+  .opt-grid.four{grid-template-columns:1fr 1fr}
+  @media (max-width:940px){.opt-grid.two,.opt-grid.four{grid-template-columns:1fr}}
+  .opt{background:#fff;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column}
+  .opt.pick{border-color:var(--ink)}
+  .opt-head{padding:14px 16px 12px;border-bottom:1px solid var(--border)}
+  .opt-tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:3px}
+  .opt.pick .opt-tag{color:var(--ink)}
+  .opt-name{font-size:15px;font-weight:500;margin:0 0 4px}
+  .opt-line{font-size:12px;color:var(--ink-muted);margin:0}
+  .opt-stage{padding:20px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px}
+  .opt-body{padding:14px 16px}
+  .opt-body h4{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 6px;font-weight:400}
+  .opt-body h4:not(:first-child){margin-top:14px}
+  .opt-body ul{margin:0;padding-left:16px}
+  .opt-body li{font-size:12px;color:var(--ink-muted);margin-bottom:3px}
+  .cost{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .cost span{font-size:11px;border:1px solid var(--border);border-radius:var(--r-chip);padding:2px 7px;color:var(--ink-muted)}
+  .cost span.hot{color:var(--status-critical);border-color:#f0d3d8}
+  .cost span.win{color:var(--ink);border-color:#d8d8d8}
+
+  .note{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--ink-faint);margin-top:8px}
+  .note b{font-weight:500;color:var(--ink);flex:none}
+  .note.warn b{color:var(--status-critical)}
+  .rec{background:#fff;border:1px solid var(--ink);border-radius:var(--r-card);padding:18px 20px;margin-top:24px}
+  .rec h3{font-size:15px;font-weight:500;margin:0 0 8px}
+  .rec p{font-size:13px;color:var(--ink-muted);margin:0 0 10px;max-width:82ch}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-meta">Kash 3.2 · design options · part two</div>
+  <h1 class="doc-h1">Plan mode, and where project-level editing lives</h1>
+  <p class="doc-sub">Decided: create in place on the index (plus a command palette entry), Plan mode as a second view of the same data, columns for due date / estimate / logged, priority stays an inline indicator, composer syntax kept as a paste path but demoted.</p>
+
+  <!-- ===== PLAN MODE ===== -->
+  <section class="sec">
+    <div class="sec-num">Part one</div>
+    <h2 class="sec-h">Plan mode, drawn</h2>
+    <p class="sec-p">Same project, same data, second view. The tree is built with Tab and Shift+Tab instead of <code>;;;</code> and <code>Parent//+ Child</code>. Three right-hand columns; estimate and logged roll up to the phase row so a phase tells you its own story without opening the burn panel.</p>
+
+    <div class="m">
+      <div class="row" style="justify-content:space-between;padding:12px 14px">
+        <div class="row" style="gap:8px">
+          <h3 class="m-title">Great White Q4 reporting</h3>
+          <span class="m-chip"><span class="dot biz"></span>Great White</span>
+          <span class="m-chip">Active</span>
+        </div>
+        <div class="row" style="gap:4px">
+          <span class="m-chip">Board</span>
+          <span class="m-chip on">Plan</span>
+          <span class="m-chip">Calendar</span>
+        </div>
+      </div>
+      <div class="m-hr"></div>
+
+      <div class="ol-head">
+        <span style="flex:1">Phase and tasks</span>
+        <span class="c-due">Due</span>
+        <span class="c-est">Est</span>
+        <span class="c-log">Logged</span>
+      </div>
+
+      <div class="ol-r phase">
+        <span class="pri"></span>
+        <span class="ol-name"><span class="dot biz"></span>Data model rebuild</span>
+        <span class="c-due">Sep 19</span><span class="c-est">12h</span><span class="c-log hot">14h</span>
+      </div>
+      <div class="ol-r task">
+        <span class="pri">!!</span>
+        <span class="ol-name">Audit the current schema</span>
+        <span class="c-due">Sep 5</span><span class="c-est">3h</span><span class="c-log">4h</span>
+      </div>
+      <div class="ol-r task">
+        <span class="pri">!</span>
+        <span class="ol-name">Draft the migration plan</span>
+        <span class="c-due">Sep 9</span><span class="c-est">4h</span><span class="c-log">2h</span>
+      </div>
+      <div class="ol-r sub">
+        <span class="pri"></span>
+        <span class="ol-name" style="font-weight:500;color:var(--ink)">Cutover</span>
+        <span class="c-due">Sep 19</span><span class="c-est">5h</span><span class="c-log">8h</span>
+      </div>
+      <div class="ol-r sub" style="padding-left:0">
+        <span class="pri"></span>
+        <span class="ol-name" style="padding-left:66px">Dry run against staging</span>
+        <span class="c-due">Sep 17</span><span class="c-est">5h</span><span class="c-log">8h</span>
+      </div>
+
+      <div class="ol-r phase">
+        <span class="pri"></span>
+        <span class="ol-name"><span class="dot biz"></span>Reporting layer</span>
+        <span class="c-due empty">set end</span><span class="c-est">6h</span><span class="c-log empty">—</span>
+      </div>
+      <div class="ol-r task">
+        <span class="pri"></span>
+        <span class="ol-name">Rebuild the weekly rollup query</span>
+        <span class="c-due">Sep 24</span><span class="c-est">6h</span><span class="c-log empty">—</span>
+      </div>
+      <div class="ol-r task editing">
+        <span class="pri"></span>
+        <span class="ol-name"><span class="m-input focus" style="flex:1;padding:2px 6px;font-size:12px;display:flex;align-items:center;gap:5px"><span style="color:var(--ink-faint)">new task</span><span class="caret"></span></span></span>
+        <span class="c-due empty">—</span><span class="c-est empty">—</span><span class="c-log empty">—</span>
+      </div>
+
+      <div class="m-hr"></div>
+      <div class="row" style="gap:12px;padding:8px 14px;background:var(--surface-2);flex-wrap:wrap">
+        <span class="m-cap"><span class="kbd">tab</span> indent</span>
+        <span class="m-cap"><span class="kbd">⇧tab</span> outdent</span>
+        <span class="m-cap"><span class="kbd">↵</span> new row</span>
+        <span class="m-cap"><span class="kbd">⌘↵</span> open detail</span>
+        <span class="m-cap" style="margin-left:auto">Saved</span>
+      </div>
+    </div>
+
+    <div class="note"><b>Indent is the grammar.</b><span>A row at the top level is a phase. Indent it and it becomes a task. Indent a phase under a phase and you get the sub-phase the schema already supports. Nothing to memorize, nothing hidden behind a chip.</span></div>
+    <div class="note"><b>Estimate and logged roll up.</b><span>Data model rebuild shows 12h estimated against 14h logged, in crimson, without opening the burn panel. That is the burn signal you built in W15, moved to where you would actually see it.</span></div>
+    <div class="note"><b>Due on a phase is its end date.</b><span>One date per phase row, not a start and an end. Start is inherited: today for the first phase, the previous phase's end for the rest. You said dates start today with no end, so the empty state reads "set end" rather than showing a fabricated one.</span></div>
+    <div class="note warn"><b>The one risk.</b><span>Three numeric columns on every row is dense by this design system's standards. If it reads busy in build, logged is the one to hide until it is nonzero.</span></div>
+  </section>
+
+  <!-- ===== PROJECT META ===== -->
+  <section class="sec">
+    <div class="sec-num">Part two</div>
+    <h2 class="sec-h">Where rename, client, state and billing live</h2>
+    <p class="sec-p">Four things with no good home today. Rename costs five steps. Client is never asked. Project state — prospect, active, paused, done — exists in the schema with no control anywhere in the app. Billing type is buried in the burn panel. Here is each option in practice.</p>
+
+    <div class="opt-grid four">
+
+      <!-- 1 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="opt-tag">Option 1</span>
+          <h3 class="opt-name">Inline on the board header</h3>
+          <p class="opt-line">Click the title to rename. Chips for the rest.</p>
+        </div>
+        <div class="opt-stage">
+          <div class="m" style="width:100%">
+            <div style="padding:12px 14px">
+              <div class="row" style="gap:8px;margin-bottom:7px">
+                <span class="m-input focus" style="font-size:17px;font-weight:500;padding:2px 7px;display:inline-flex;align-items:center;gap:5px">Great White Q4 reporting<span class="caret" style="height:18px"></span></span>
+              </div>
+              <div class="row" style="gap:5px;flex-wrap:wrap">
+                <span class="m-chip"><span class="dot biz"></span>Great White</span>
+                <span class="m-chip on">Active</span>
+                <span class="m-chip">Hourly</span>
+                <span class="m-cap" style="margin-left:4px">18h logged</span>
+              </div>
+            </div>
+            <div class="m-hr"></div>
+            <div style="padding:8px 14px;background:var(--surface-2)">
+              <div class="m-cap" style="margin-bottom:5px">State</div>
+              <div class="row" style="gap:4px;flex-wrap:wrap">
+                <span class="m-chip">Prospect</span><span class="m-chip on">Active</span>
+                <span class="m-chip">Paused</span><span class="m-chip">Done</span>
+              </div>
+            </div>
+          </div>
+          <div class="m-cap" style="text-align:center">Each chip opens a small popover in place</div>
+        </div>
+        <div class="opt-body">
+          <h4>In practice</h4>
+          <ul>
+            <li>Rename goes from 7 interactions to 2. Click, type.</li>
+            <li>State becomes visible at a glance on every project, which is the point of having the field.</li>
+            <li>Everything is on the surface you are already looking at, every day.</li>
+          </ul>
+          <h4>Trade</h4>
+          <ul>
+            <li>Four controls in the working header. This design system is aggressive about keeping the doing surface quiet.</li>
+            <li>Billing type sitting next to the project name reads like the project is about money.</li>
+          </ul>
+          <div class="cost"><span class="win">fastest rename</span><span class="win">state visible</span><span class="hot">busiest header</span></div>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="opt-tag">Option 2</span>
+          <h3 class="opt-name">Details strip in Plan mode</h3>
+          <p class="opt-line">All four above the outline. Board stays clean.</p>
+        </div>
+        <div class="opt-stage">
+          <div class="m" style="width:100%">
+            <div class="row" style="justify-content:space-between;padding:10px 14px">
+              <span class="m-meta" style="color:var(--ink-faint)">Board</span>
+              <div class="row" style="gap:4px"><span class="m-chip">Board</span><span class="m-chip on">Plan</span></div>
+            </div>
+            <div class="m-hr"></div>
+            <div style="padding:12px 14px;background:#fff">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div><span class="m-label">Name</span><div class="m-input" style="font-size:13px">Great White Q4 reporting</div></div>
+                <div><span class="m-label">Client</span><div class="m-input row" style="font-size:13px;gap:6px"><span class="dot biz"></span>Great White</div></div>
+                <div><span class="m-label">State</span><div class="row" style="gap:4px"><span class="m-chip">Prospect</span><span class="m-chip on">Active</span><span class="m-chip">Paused</span></div></div>
+                <div><span class="m-label">Billing</span><div class="row" style="gap:4px"><span class="m-chip on">Hourly</span><span class="m-chip">Fixed fee</span></div></div>
+              </div>
+            </div>
+            <div class="m-hr"></div>
+            <div class="ol-head"><span style="flex:1">Phase and tasks</span><span class="c-due">Due</span><span class="c-est">Est</span></div>
+            <div class="ol-r phase"><span class="pri"></span><span class="ol-name"><span class="dot biz"></span>Data model rebuild</span><span class="c-due">Sep 19</span><span class="c-est">12h</span></div>
+            <div class="ol-r task"><span class="pri"></span><span class="ol-name">Audit the current schema</span><span class="c-due">Sep 5</span><span class="c-est">3h</span></div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <h4>In practice</h4>
+          <ul>
+            <li>Project-level editing sits where project-level thinking happens, next to the phases it affects.</li>
+            <li>The working board keeps a bare header — title, client badge, view switcher, and nothing else.</li>
+            <li>One place to learn. Everything about the project is in one block, not scattered across popovers.</li>
+          </ul>
+          <h4>Trade</h4>
+          <ul>
+            <li>Renaming means switching views first. It's two clicks instead of one, for the single most common edit.</li>
+            <li>The strip eats vertical space above the outline every time you plan.</li>
+          </ul>
+          <div class="cost"><span class="win">quiet board</span><span class="win">one place</span><span class="hot">rename needs a view switch</span></div>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="opt pick">
+        <div class="opt-head">
+          <span class="opt-tag">Option 3 · recommended</span>
+          <h3 class="opt-name">Split by how often you touch it</h3>
+          <p class="opt-line">Rename and state inline. Client and billing in Plan.</p>
+        </div>
+        <div class="opt-stage">
+          <div class="m" style="width:100%">
+            <div style="padding:11px 14px">
+              <div class="row" style="gap:8px">
+                <span class="m-input focus" style="font-size:17px;font-weight:500;padding:2px 7px;display:inline-flex;align-items:center;gap:5px">Great White Q4 reporting<span class="caret" style="height:18px"></span></span>
+                <span class="m-chip on" style="margin-left:auto">Active</span>
+              </div>
+              <div class="row" style="gap:7px;margin-top:6px">
+                <span class="m-cap"><span class="dot biz" style="margin-right:4px"></span>Great White</span>
+                <span class="m-cap">18h logged</span>
+                <span class="m-cap">62% done</span>
+              </div>
+            </div>
+            <div class="m-hr"></div>
+            <div class="row" style="justify-content:space-between;padding:8px 14px;background:var(--surface-2)">
+              <span class="m-cap">client and billing live in Plan</span>
+              <div class="row" style="gap:4px"><span class="m-chip">Board</span><span class="m-chip">Plan</span></div>
+            </div>
+          </div>
+          <div class="m-cap" style="text-align:center">Two editable controls on the header. Two facts, read-only.</div>
+        </div>
+        <div class="opt-body">
+          <h4>In practice</h4>
+          <ul>
+            <li>Rename is one click on the title, because you do it often and it should cost nothing.</li>
+            <li>State is a single chip on the right, because it changes rarely but you want to see it constantly — pausing a project is a decision, and an invisible one is a lie.</li>
+            <li>Client and billing move into Plan mode's strip. You set them roughly once per project, and they belong next to money and scope, not next to the name.</li>
+            <li>The client name and hours stay on the header as plain text, not controls — visible without being editable.</li>
+          </ul>
+          <h4>Trade</h4>
+          <ul>
+            <li>Two locations to remember instead of one. Mitigated by the rule being legible: if it's a fact you change weekly it's on the header, otherwise it's in Plan.</li>
+          </ul>
+          <div class="cost"><span class="win">1-click rename</span><span class="win">state always visible</span><span class="win">quiet header</span></div>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="opt">
+        <div class="opt-head">
+          <span class="opt-tag">Option 4</span>
+          <h3 class="opt-name">Slide-over from the overflow menu</h3>
+          <p class="opt-line">Today's model, with the wizard replaced.</p>
+        </div>
+        <div class="opt-stage">
+          <div class="m" style="width:100%;display:flex">
+            <div style="flex:1;padding:12px;opacity:.35">
+              <div class="m-meta" style="font-weight:500;margin-bottom:8px">Great White Q4 reporting</div>
+              <div class="m-cap">board behind</div>
+            </div>
+            <div style="width:190px;border-left:1px solid var(--border);padding:12px;background:#fff">
+              <div class="row" style="justify-content:space-between;margin-bottom:10px">
+                <span class="m-meta" style="font-weight:500">Project</span><span class="m-cap">saved</span>
+              </div>
+              <span class="m-label">Name</span>
+              <div class="m-input" style="font-size:12px;margin-bottom:9px">Great White Q4…</div>
+              <span class="m-label">Client</span>
+              <div class="m-input row" style="font-size:12px;gap:5px;margin-bottom:9px"><span class="dot biz"></span>Great White</div>
+              <span class="m-label">State</span>
+              <div class="row" style="gap:4px;margin-bottom:9px"><span class="m-chip on">Active</span><span class="m-chip">Paused</span></div>
+              <span class="m-label">Billing</span>
+              <div class="row" style="gap:4px"><span class="m-chip on">Hourly</span></div>
+            </div>
+          </div>
+          <div class="m-cap" style="text-align:center">Opened from ⋯ · autosaves · Esc to close</div>
+        </div>
+        <div class="opt-body">
+          <h4>In practice</h4>
+          <ul>
+            <li>Smallest change to what exists. The overflow menu keeps its job, the wizard just becomes an autosaving panel.</li>
+            <li>Nothing is added to the board header at all.</li>
+          </ul>
+          <h4>Trade</h4>
+          <ul>
+            <li>Rename is still three interactions and still hidden behind a ⋯ menu, which is the specific complaint that started this.</li>
+            <li>State stays invisible until you open the panel, so it stays unused.</li>
+            <li>It is a better wizard, not an absence of one.</li>
+          </ul>
+          <div class="cost"><span class="win">smallest build</span><span class="hot">rename still hidden</span><span class="hot">state still invisible</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="rec">
+      <h3>Why option 3</h3>
+      <p>The useful rule for placing a control is how often it is touched against how often it needs to be seen. Rename is touched often — it goes where your hand already is. Project state is touched rarely but needs to be seen constantly, which makes it a visible chip rather than a buried field; a paused project that still looks active on the board is exactly the kind of quiet inaccuracy the mission is built against. Client and billing are set once and consulted rarely, so they earn a place in Plan mode and nowhere else.</p>
+      <p>Option 1 fails only on volume — four controls is enough to make the working header feel like a settings bar. Option 4 fails on the original complaint: it keeps rename behind a menu.</p>
+    </div>
+  </section>
+
+  <!-- ===== COMPOSER ===== -->
+  <section class="sec">
+    <div class="sec-num">Part three</div>
+    <h2 class="sec-h">The composer, demoted but fixed</h2>
+    <p class="sec-p">It stays, because it is how a pasted plan from Claude or from notes arrives. It stops being the way you hand-type a task, because the outline is better at that. Four bugs get fixed on the way.</p>
+
+    <div class="opt-grid two">
+      <div class="opt">
+        <div class="opt-head"><span class="opt-tag">Now</span><h3 class="opt-name">What it looks like today</h3></div>
+        <div class="opt-stage">
+          <div class="m" style="width:100%">
+            <div style="padding:10px 12px">
+              <div class="row" style="gap:5px;margin-bottom:7px">
+                <span class="m-chip">task</span><span class="m-chip">due</span><span class="m-chip">priority</span><span class="m-chip">parent dir</span>
+              </div>
+              <div class="m-input" style="font-size:12px;color:var(--ink-faint)">add phases and tasks — one per line</div>
+              <div class="m-cap" style="margin-top:6px">↵ to add · ⇧↵ for new line</div>
+              <div class="m-cap" style="margin-top:4px;color:var(--status-critical)">syntax chip says “add ⌘↵” · imports page says “press ⌘↵”</div>
+            </div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <h4>Broken</h4>
+          <ul>
+            <li>Three surfaces teach two different submit keys.</li>
+            <li>The tags editor says to use <code>;tag</code>, which the project parser reads as a due date and rejects.</li>
+            <li>Unqualified lines file into the last phase you drilled into, which is never named — and which changes when you resize the window.</li>
+            <li>The <code>;;;</code> phase prefix appears in exactly one chip you have to click to see.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="opt pick">
+        <div class="opt-head"><span class="opt-tag">Proposed</span><h3 class="opt-name">Paste path, honest about itself</h3></div>
+        <div class="opt-stage">
+          <div class="m" style="width:100%">
+            <div style="padding:10px 12px">
+              <div class="row" style="justify-content:space-between;margin-bottom:7px">
+                <span class="m-cap">Paste a plan</span>
+                <span class="m-chip">adding to · Reporting layer</span>
+              </div>
+              <div class="m-input" style="font-size:12px;line-height:1.7">
+                Rebuild the rollup query ; sep 24 ; !!<br>
+                <span style="color:var(--ink-faint)">Backfill last two quarters ; sep 26</span>
+              </div>
+              <div class="row" style="gap:5px;margin-top:8px;flex-wrap:wrap">
+                <span class="m-chip">Sep 24</span><span class="m-chip">!!</span>
+                <span class="m-chip">Sep 26</span>
+              </div>
+              <div class="m-cap" style="margin-top:7px">title ; due ; priority ; phase — trailing parts optional</div>
+            </div>
+            <div class="m-hr"></div>
+            <div class="row" style="justify-content:space-between;padding:8px 12px;background:var(--surface-2)">
+              <span class="m-cap">2 lines, both valid</span>
+              <span class="m-cap"><span class="kbd">⌘↵</span> add</span>
+            </div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <h4>Changes</h4>
+          <ul>
+            <li>One submit key everywhere: ⌘↵. Plain Enter makes a new line, which is what a multi-line box should do.</li>
+            <li>The destination phase is stated on the box — "adding to · Reporting layer" — so a bare line has a visible home.</li>
+            <li>The grammar is printed under the field in words, not encoded in four chips you have to decode.</li>
+            <li>The <code>;tag</code> hint in the tags editor is corrected or the parser learns tags. Either way they stop contradicting.</li>
+            <li>Invalid lines stay in the box with the error attached to the line, not in a status message below the preview.</li>
+          </ul>
+          <div class="cost"><span class="win">paste still works</span><span class="win">4 bugs closed</span><span>flowstate-tasks skill unaffected</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

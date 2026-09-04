@@ -266,9 +266,27 @@ export default function NewItemRow({
   const singleLineParse = parsedLines.length === 1 ? parsedLines[0]?.parse : null;
   const isBusy = pending || submitting;
 
+  // Where a line with no phase path will land. This is `defaultPhaseId` — the last
+  // phase drilled into on the board — and it was previously invisible, so a bare
+  // line went somewhere the composer never named. Worse, the drilled path is pruned
+  // by viewport width, so resizing the window silently changed the destination.
+  const destinationPhaseName = useMemo(
+    () => (defaultPhaseId ? (phases.find((p) => p.id === defaultPhaseId)?.name ?? null) : null),
+    [defaultPhaseId, phases]
+  );
+
   return (
     <div className="mt-1 flex flex-col">
-      {assist && !cursorOnPlusParentDirLine ? <ProjectPropertyBar assist={assist} visible /> : null}
+      <div className="mb-1 flex items-center justify-between gap-2">
+        {assist && !cursorOnPlusParentDirLine ? (
+          <ProjectPropertyBar assist={assist} visible />
+        ) : (
+          <span />
+        )}
+        <span className="shrink-0 rounded-chip border border-subtle px-2 py-0.5 text-caption text-ink-muted">
+          {destinationPhaseName ? `adding to · ${destinationPhaseName}` : "adding to · the project"}
+        </span>
+      </div>
 
       <ComposerTextarea
         ref={textareaRef}
@@ -281,11 +299,11 @@ export default function NewItemRow({
         }}
         onCursorChange={setCursor}
         ghostSuffix={cursorOnPlusParentDirLine ? null : (assist?.suggestionSuffix ?? null)}
-        placeholder="add phases and tasks — one per line"
+        placeholder="paste or type tasks — one per line"
         disabled={isBusy}
         onFocus={() => onFocusChange?.(true)}
         onBlur={() => onFocusChange?.(false)}
-        submitOnEnter
+        submitOnMetaEnter
         onSubmit={() => void submitTasks()}
         onKeyDown={(e) => {
           if (e.key === "Tab" && !e.shiftKey && acceptSuggestion()) {
@@ -294,9 +312,12 @@ export default function NewItemRow({
         }}
       />
 
-      <p className="mt-1.5 text-xs text-ink-muted">
-        ↵ to add · ⇧↵ for new line
+      <p className="mt-1.5 text-caption text-ink-faint">
+        title ; due ; priority ; phase — trailing parts optional
         {!cursorOnPlusParentDirLine && assist?.suggestionSuffix ? " · ⇥ accept suggestion" : null}
+      </p>
+      <p className="mt-0.5 text-caption text-ink-faint">
+        ⌘↵ to add · ↵ for a new line
         {isBusy ? " · Adding…" : null}
       </p>
 

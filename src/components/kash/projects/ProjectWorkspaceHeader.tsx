@@ -26,6 +26,7 @@ type Props = {
 
 const VIEW_MODES: { value: ProjectViewMode; label: string }[] = [
   { value: "columns", label: "Columns" },
+  { value: "plan", label: "Plan" },
   { value: "calendar", label: "Calendar" },
 ];
 

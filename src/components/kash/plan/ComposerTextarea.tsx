@@ -35,6 +35,8 @@ type Props = {
    * a paste inserts newlines through onChange, never firing this Enter handler.
    */
   submitOnEnter?: boolean;
+  /** Submit on ⌘↵ / Ctrl+↵, leaving plain Enter to insert a newline. */
+  submitOnMetaEnter?: boolean;
   onSubmit?: () => void;
 };
 
@@ -52,6 +54,7 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
     placeholder,
     rows = 2,
     submitOnEnter = false,
+    submitOnMetaEnter = false,
     onSubmit,
   }: Props,
   ref: Ref<ComposerTextareaHandle>
@@ -76,6 +79,21 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Kash 3.2: a multi-line box submits on ⌘↵ and makes a newline on Enter, which
+      // is what every other multi-line editor does. `submitOnMetaEnter` opts into
+      // that; `submitOnEnter` keeps the D4 policy for the single-line quick captures.
+      if (
+        submitOnMetaEnter &&
+        e.key === "Enter" &&
+        (e.metaKey || e.ctrlKey) &&
+        !e.nativeEvent.isComposing &&
+        onSubmit
+      ) {
+        e.preventDefault();
+        onSubmit();
+        return;
+      }
+
       // Shared Enter policy (D4). Shift+Enter always falls through to a newline.
       // The isComposing guard keeps an IME candidate-confirming Enter from submitting.
       if (
@@ -91,7 +109,7 @@ export const ComposerTextarea = forwardRef(function ComposerTextarea(
       }
       onKeyDown?.(e);
     },
-    [submitOnEnter, onSubmit, onKeyDown]
+    [submitOnEnter, submitOnMetaEnter, onSubmit, onKeyDown]
   );
 
   useImperativeHandle(ref, () => ({
