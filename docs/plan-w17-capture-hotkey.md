@@ -167,3 +167,43 @@ PRs and the half-built panel should not be reachable in a build. Flip on when W1
   keep both until the panel has been used for a week, then delete the loser.
 - Launch-at-login is this feature's twin and is still unscoped. A hotkey for an app that is
   not running does nothing.
+
+---
+
+## 8. Build log — 2026-09-03
+
+**Landed (commit `feat(capture): the global capture hotkey`)**: W17b, W17c, W17d, W17g and the
+autostart fold-in. Branch `feat/w17-capture-hotkey`, worktree `../flowstate-w17`, cut from
+`origin/main` rather than the dirty `feat/projects-3.2-flow` tree, which touches
+`CommandPalette.tsx`, `AppShellOverlays.tsx`, `QuickInput.tsx` and six settings components — every
+file W17f will need. Rebase W17f onto that branch after it merges, or expect the conflicts.
+
+**W17a, the session-sharing spike, was folded into the build rather than run first.** Tauri v2 on
+macOS gives every webview in the app the same WKWebsiteDataStore unless one is configured
+explicitly, and the panel loads the same `127.0.0.1:<port>` origin as the main window, so the
+Supabase cookie should carry. If `/capture` bounces to `/login` on first run, that assumption was
+wrong and §3's fallback applies: a frameless always-on-top _main_ window in panel mode.
+
+**Not verified from the build session** — the container is Linux, the app is a macOS Tauri build,
+and `node_modules` is a symlink to a macOS install:
+
+- `cargo check` — never run. The Rust is written against Tauri 2 APIs from documentation.
+- `Cargo.lock` — not updated. The first `npm run tauri dev` resolves the two new crates.
+- `eslint`, `vitest` — both need platform-native binaries (rolldown, esbuild).
+- The app itself.
+
+`tsc --noEmit` passed clean, which covers the TypeScript half.
+
+**Manual verification, in this order:**
+
+1. `npm run tauri dev`, and watch the Rust compile. The two new crates download on this run.
+2. `/capture` renders the bar rather than bouncing to `/login` — this is W17a's answer.
+3. ⌘⇧K from another app shows the bar without Kash coming forward.
+4. Esc returns focus to that app, with its scroll position intact.
+5. A plain line saves to Backlog; ⇧⏎ saves and keeps the panel open.
+6. `; gw ; friday ; !!` parses to project, date and priority with the Today toggle on.
+7. Settings → Preferences shows the chord, rebinds it, and reports a taken chord honestly.
+8. Quit Kash, press ⌘⇧K, confirm nothing happens — then turn on launch at login.
+
+**Deliberately not built here:** search inside the panel (W17e–f). The panel has no results rows
+yet, so ⏎ always creates.

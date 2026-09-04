@@ -489,14 +489,27 @@ fn capture_url(port: u16) -> String {
 
 /// Place the panel high-centre on whichever monitor the cursor is on, so it
 /// appears where the user is already looking rather than on the main display.
+///
+/// The monitor is found by hit-testing the cursor against `available_monitors`
+/// rather than asking for the monitor at a point: same answer, and it only uses
+/// APIs this Tauri version is known to have.
 fn position_capture_panel(app: &AppHandle, win: &tauri::WebviewWindow) {
     let cursor = app.cursor_position().ok();
-    let monitor = match cursor {
-        Some(pos) => app.monitor_from_point(pos.x, pos.y).ok().flatten(),
-        None => None,
-    }
-    .or_else(|| win.current_monitor().ok().flatten())
-    .or_else(|| app.primary_monitor().ok().flatten());
+    let monitors = app.available_monitors().unwrap_or_default();
+
+    let monitor = cursor
+        .and_then(|pos| {
+            monitors.into_iter().find(|m| {
+                let origin = m.position();
+                let size = m.size();
+                pos.x >= origin.x as f64
+                    && pos.y >= origin.y as f64
+                    && pos.x < origin.x as f64 + size.width as f64
+                    && pos.y < origin.y as f64 + size.height as f64
+            })
+        })
+        .or_else(|| win.current_monitor().ok().flatten())
+        .or_else(|| app.primary_monitor().ok().flatten());
 
     let Some(monitor) = monitor else { return };
     let scale = monitor.scale_factor();
