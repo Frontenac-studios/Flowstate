@@ -46,6 +46,29 @@ jobs:
       - run: npm run test:run
       - run: npm run build
 
+  # PR regression guards: block a stale-based branch from silently reverting newer
+  # work (see #328 → #334). PR-only — there is no base/head diff on a push to main.
+  # Cheap: no npm ci, no build; pure git + Node, ~30s on the shared Linux runner.
+  guards:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so merge-base / three-dot diffs against the base resolve.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: PR regression guards
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # Passed via env (not interpolated into the shell) so the body can't inject.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: npm run check:pr-guards
+
   rust:
     runs-on: ubuntu-latest
     timeout-minutes: 15
