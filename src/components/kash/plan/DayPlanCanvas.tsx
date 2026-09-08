@@ -843,7 +843,7 @@ export function DayPlanCanvas() {
         ) : null}
 
         <section
-          className="flex flex-col gap-stack rounded-card border border-subtle bg-surface px-card-x py-card-y shadow-surface"
+          className="flex flex-col gap-stack rounded-card border border-border bg-surface px-card-x py-card-y shadow-surface"
           aria-label="Today summary"
         >
           <Top3Slots

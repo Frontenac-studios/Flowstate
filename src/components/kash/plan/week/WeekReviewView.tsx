@@ -69,7 +69,7 @@ export function WeekReviewView() {
             {pastReviews.map((review) => (
               <li
                 key={review.weekStart}
-                className="rounded-card border border-subtle bg-surface p-4 shadow-surface"
+                className="rounded-card border border-border bg-surface p-4 shadow-surface"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="text-sm font-medium text-ink">

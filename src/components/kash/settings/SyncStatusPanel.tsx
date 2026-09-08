@@ -8,7 +8,7 @@ export function SyncStatusPanel() {
 
   if (displayState === "hidden") {
     return (
-      <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+      <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
         <h2 className="text-sm font-semibold text-ink">Data & sync</h2>
         <p className="mt-2 text-sm text-ink-muted">
           Offline sync status and manual sync are available in the Kash desktop app. The web app
@@ -19,7 +19,7 @@ export function SyncStatusPanel() {
   }
 
   return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+    <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
       <h2 className="text-sm font-semibold text-ink">Data & sync</h2>
       <p className="mt-2 text-sm text-ink-muted">{message}</p>
       {pendingCount > 0 ? (

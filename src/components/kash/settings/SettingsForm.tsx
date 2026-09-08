@@ -130,7 +130,7 @@ export function SettingsForm() {
 
       <nav
         aria-label="Settings sections"
-        className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4"
+        className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface"
       >
         <div
           role="tablist"
@@ -167,7 +167,7 @@ export function SettingsForm() {
         className="space-y-6"
       >
         {tab === "account" ? (
-          <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+          <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
             <h2 className="text-sm font-semibold text-ink">Account</h2>
             <p className="mt-1 text-sm text-ink-muted">
               Profile and account management arrive with a later release. For now you can sign out.
@@ -187,7 +187,7 @@ export function SettingsForm() {
 
         {tab === "preferences" ? (
           <>
-            <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+            <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
               <h2 className="text-sm font-semibold text-ink">Day view bucket style</h2>
               <p className="mt-1 text-sm text-ink-muted">
                 Week view always uses Mon–Sun columns and an inbox, regardless of this setting.
@@ -230,7 +230,7 @@ export function SettingsForm() {
 
             <DefaultWeekSection />
 
-            <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+            <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
               <h2 className="text-sm font-semibold text-ink">Working hours</h2>
               <p className="mt-1 text-sm text-ink-muted">
                 Sets the time range shown on the Today timeline.
@@ -279,7 +279,7 @@ export function SettingsForm() {
               ) : null}
             </section>
 
-            <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+            <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
               <h2 className="text-sm font-semibold text-ink">Accessibility</h2>
               <p className="mt-2 text-sm text-ink-muted">
                 Kash follows your system preferences for motion and transparency. On macOS, adjust
@@ -309,7 +309,7 @@ export function SettingsForm() {
         ) : null}
 
         {tab === "ai" ? (
-          <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+          <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
             <h2 className="text-sm font-semibold text-ink">AI companion</h2>
             <p className="mt-2 text-sm text-ink-muted">
               Kash uses OpenRouter for chat and focus narration. In v1 the API key is set by your

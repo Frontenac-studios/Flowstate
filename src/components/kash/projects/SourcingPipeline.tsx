@@ -424,7 +424,7 @@ export default function SourcingPipeline() {
                           Dismiss
                         </button>
                         {dismissOpenFor === lead.id ? (
-                          <div className="absolute z-20 mt-1 flex w-48 flex-col rounded-card border border-subtle bg-surface p-1 shadow-surface">
+                          <div className="absolute z-20 mt-1 flex w-48 flex-col rounded-card border border-border bg-surface p-1 shadow-surface">
                             {DISMISS_OPTIONS.map((o) => (
                               <button
                                 key={o.value}

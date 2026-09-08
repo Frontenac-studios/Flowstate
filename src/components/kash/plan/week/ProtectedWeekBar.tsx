@@ -74,7 +74,7 @@ export default function ProtectedWeekBar({ anchorDate, compact = false }: Props)
 
   return (
     <section
-      className="mt-4 rounded-card border border-subtle bg-surface px-3 py-3 text-sm shadow-surface"
+      className="mt-4 rounded-card border border-border bg-surface px-3 py-3 text-sm shadow-surface"
       aria-label="Protected time planning"
     >
       <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1">

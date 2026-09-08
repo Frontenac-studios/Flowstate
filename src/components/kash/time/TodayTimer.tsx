@@ -178,7 +178,7 @@ function StartTimerPopover({
           id={menuId}
           role="dialog"
           aria-label="Start a timer"
-          className="absolute right-0 z-20 mt-1 flex w-64 flex-col gap-2 rounded-card border border-subtle bg-surface p-3 shadow-surface"
+          className="absolute right-0 z-20 mt-1 flex w-64 flex-col gap-2 rounded-card border border-border bg-surface p-3 shadow-surface"
         >
           {sorted.length === 0 ? (
             <p className="text-xs text-ink-muted">

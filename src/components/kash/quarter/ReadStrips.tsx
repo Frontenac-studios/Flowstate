@@ -44,7 +44,7 @@ export default function ReadStrips() {
       </h2>
       <Link
         href="/money"
-        className="flex items-center justify-between gap-4 rounded-card border border-subtle bg-surface p-4 shadow-surface transition hover:bg-surface-2"
+        className="flex items-center justify-between gap-4 rounded-card border border-border bg-surface p-4 shadow-surface transition hover:bg-surface-2"
       >
         <div className="min-w-0">
           <p className="text-body text-ink">Tool spend</p>

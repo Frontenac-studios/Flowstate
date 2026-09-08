@@ -32,7 +32,7 @@ type Props = {
 };
 
 const DOCK_BASE_CLASS =
-  "flex min-h-[22rem] w-full flex-col rounded-card border border-subtle bg-surface shadow-surface lg:w-80 lg:shrink-0";
+  "flex min-h-[22rem] w-full flex-col rounded-card border border-border bg-surface shadow-surface lg:w-80 lg:shrink-0";
 const DOCK_HEIGHT_CLASS: Record<"sticky" | "fill", string> = {
   sticky:
     "lg:top-shell lg:sticky lg:h-[calc(100dvh_-_var(--shell-sticky-top)_-_var(--shell-pad-y))]",

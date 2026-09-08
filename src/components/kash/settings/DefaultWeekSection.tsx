@@ -131,7 +131,7 @@ export default function DefaultWeekSection() {
   );
 
   return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+    <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
       <h2 className="text-sm font-semibold text-ink">Default week</h2>
       <p className="mt-1 text-sm text-ink-muted">
         Recurring protected time blocks proposed each week during planning — never applied

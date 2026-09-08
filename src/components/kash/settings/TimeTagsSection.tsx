@@ -48,7 +48,7 @@ export function TimeTagsSection() {
   };
 
   return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+    <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
       <h2 className="text-sm font-semibold text-ink">Time tags</h2>
       <p className="mt-1 text-sm text-ink-muted">
         A short, controlled list used to group time on invoices — a tag is invoice structure, so it

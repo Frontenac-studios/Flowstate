@@ -153,7 +153,7 @@ export default function QuarterReview() {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-surface">
       <h2 className="text-body font-medium text-ink">Close {quarterLabel(q)}</h2>
 
       {directions.length > 0 ? (

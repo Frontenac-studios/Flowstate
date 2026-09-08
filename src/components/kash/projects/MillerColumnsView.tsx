@@ -620,7 +620,7 @@ export default function MillerColumnsView({
 
           {composerOpen ? (
             <div
-              className="shrink-0 rounded-card border border-subtle bg-surface p-4 shadow-surface"
+              className="shrink-0 rounded-card border border-border bg-surface p-4 shadow-surface"
               data-miller-composer
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
@@ -649,7 +649,7 @@ export default function MillerColumnsView({
           {/* Option D: the priority filter + columns share one bounded card — a
               toolbar header atop a bordered body so they read as one board (mirrors
               the Milestones panel's card tokens above). */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-card border border-subtle bg-surface shadow-surface">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-card border border-border bg-surface shadow-surface">
             {!isBlank ? (
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-subtle bg-surface-2 px-3 py-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">

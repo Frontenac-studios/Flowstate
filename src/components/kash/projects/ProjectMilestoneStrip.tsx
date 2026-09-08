@@ -88,7 +88,7 @@ export default function ProjectMilestoneStrip({
   };
 
   return (
-    <div className="rounded-card border border-subtle bg-surface px-3 py-2 shadow-surface">
+    <div className="rounded-card border border-border bg-surface px-3 py-2 shadow-surface">
       <div className="flex items-start gap-2">
         <button
           type="button"

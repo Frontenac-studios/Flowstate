@@ -84,7 +84,7 @@ export function WeekInbox({
   return (
     <section
       ref={setNodeRef}
-      className={`flex flex-col rounded-card border border-subtle bg-surface p-4 shadow-surface ${
+      className={`flex flex-col rounded-card border border-border bg-surface p-4 shadow-surface ${
         fill ? (showTasks ? "min-h-0 flex-[1]" : "shrink-0") : "mt-4"
       } ${isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""}`}
       style={fill ? undefined : { height: showTasks ? heightPx : undefined }}

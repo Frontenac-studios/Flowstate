@@ -67,7 +67,7 @@ export function TimeExportSection() {
   };
 
   return (
-    <section className="rounded-[var(--radius-row)] border border-subtle bg-surface p-4">
+    <section className="rounded-[var(--radius-row)] border border-border bg-surface p-4 shadow-surface">
       <h2 className="text-sm font-semibold text-ink">Export time</h2>
       <p className="mt-1 text-sm text-ink-muted">
         Download raw time entries for a period as CSV — date, client, project, task, tag, duration,

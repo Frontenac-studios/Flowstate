@@ -221,7 +221,7 @@ export default function InvoicesPanel() {
       )}
 
       {ready && ready.length === 0 && !draft ? (
-        <p className="rounded-card border border-dashed border-border bg-surface p-5 text-sm text-ink-muted">
+        <p className="rounded-card border border-border bg-surface p-5 text-sm text-ink-muted shadow-surface">
           Nothing to bill yet — billable time shows up here as it accrues.
         </p>
       ) : null}

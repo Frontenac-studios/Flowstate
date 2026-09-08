@@ -132,7 +132,7 @@ export default function PhaseBurnBars({ projectId }: { projectId: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-surface">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-body font-medium text-ink">Plan vs actual</h2>
         <span className="text-caption text-ink-muted">

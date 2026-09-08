@@ -396,7 +396,7 @@ export const QuickInput = forwardRef<QuickInputHandle, Props>(function QuickInpu
   const showPropertyBar = focused || value.trim().length > 0;
 
   return (
-    <section className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <section className="rounded-card border border-border bg-surface p-4 shadow-surface">
       <label htmlFor="kash-quick-input" className="sr-only">
         Add tasks
       </label>

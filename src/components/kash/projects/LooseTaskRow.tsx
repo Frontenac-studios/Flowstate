@@ -125,7 +125,7 @@ export default function LooseTaskRow({ task, projects }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative touch-pan-y overflow-hidden rounded-card border border-subtle bg-surface shadow-surface"
+      className="relative touch-pan-y overflow-hidden rounded-card border border-border bg-surface shadow-surface"
     >
       {/* Complete-tone hint revealed under the row as it flings right (D1). */}
       {flingOffset > 0 ? (

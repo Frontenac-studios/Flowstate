@@ -8,7 +8,7 @@ export default function LoginPage() {
       <main className="relative z-sticky flex min-h-screen items-center justify-center px-6 py-16">
         <Suspense
           fallback={
-            <div className="rounded-card border border-subtle bg-surface p-6 shadow-surface">
+            <div className="rounded-card border border-border bg-surface p-6 shadow-surface">
               Loading…
             </div>
           }

@@ -95,7 +95,7 @@ export default function MoneyReport() {
       {isLoading || !report || !totals ? (
         <p className="text-sm text-ink-muted">Loading report…</p>
       ) : totals.totalSeconds === 0 ? (
-        <p className="rounded-card border border-dashed border-border bg-surface p-5 text-sm text-ink-muted">
+        <p className="rounded-card border border-border bg-surface p-5 text-sm text-ink-muted shadow-surface">
           No time tracked in this period.
         </p>
       ) : (

@@ -141,7 +141,7 @@ export default function SmartComposer({
   const noDirections = directions.length === 0;
 
   return (
-    <section className="rounded-card border border-subtle bg-surface p-4 shadow-surface">
+    <section className="rounded-card border border-border bg-surface p-4 shadow-surface">
       <div className="flex gap-2">
         <Input
           value={text}

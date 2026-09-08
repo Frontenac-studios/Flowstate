@@ -178,7 +178,7 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
       ref={panelRef}
       tabIndex={0}
       onKeyDown={onKeyDown}
-      className="flex flex-col gap-3 rounded-card border border-subtle bg-surface p-4 shadow-surface outline-none"
+      className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 shadow-surface outline-none"
       aria-label="The Sweep"
     >
       <div className="flex items-baseline justify-between gap-3">

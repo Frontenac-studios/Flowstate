@@ -10,7 +10,7 @@ import { Compass, Target, X } from "@/components/kash/ui/icon";
  */
 export default function QuarterFirstRun({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <section className="relative rounded-card border border-subtle bg-surface-2 p-5 shadow-surface">
+    <section className="relative rounded-card border border-border bg-surface-2 p-5 shadow-surface">
       <button
         type="button"
         onClick={onDismiss}
