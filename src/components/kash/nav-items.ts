@@ -1,13 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 
 import {
-  Calendar,
-  Compass,
-  Folder,
-  GalleryVerticalEnd,
-  SlidersHorizontal,
-  Sun,
-  Wallet,
+  Archive,
+  CalendarDays,
+  CircleDollarSign,
+  Coffee,
+  Cog,
+  Layers,
+  TrendingUp,
 } from "@/components/kash/ui/icon";
 
 export type NavItem = {
@@ -25,20 +25,20 @@ export type NavGroup = {
 export const NAV_GROUP_DO_NOW: NavGroup = {
   label: "Do now",
   items: [
-    { href: "/today", label: "Today", icon: Sun, match: ["/today"] },
-    { href: "/this-week", label: "Week", icon: Calendar, match: ["/this-week"] },
-    { href: "/projects", label: "Projects", icon: Folder, match: ["/projects"] },
+    { href: "/today", label: "Today", icon: Coffee, match: ["/today"] },
+    { href: "/this-week", label: "Week", icon: CalendarDays, match: ["/this-week"] },
+    { href: "/projects", label: "Projects", icon: Layers, match: ["/projects"] },
     // Money is a MISSION.md law-4c surface; Clients lives inside it, so /clients
     // highlights Money too. Revenue/invoices arrive with W3/W4.
-    { href: "/money", label: "Money", icon: Wallet, match: ["/money", "/clients"] },
+    { href: "/money", label: "Money", icon: CircleDollarSign, match: ["/money", "/clients"] },
   ],
 };
 
 export const NAV_GROUP_REFLECT_PLAN: NavGroup = {
   label: "Reflect & plan",
   items: [
-    { href: "/plan", label: "Quarter", icon: Compass, match: ["/plan"] },
-    { href: "/backlog", label: "Backlog", icon: GalleryVerticalEnd, match: ["/backlog"] },
+    { href: "/plan", label: "Quarter", icon: TrendingUp, match: ["/plan"] },
+    { href: "/backlog", label: "Backlog", icon: Archive, match: ["/backlog"] },
   ],
 };
 
@@ -47,7 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [NAV_GROUP_DO_NOW, NAV_GROUP_REFLECT_PLAN]
 export const SETTINGS_ITEM: NavItem = {
   href: "/settings",
   label: "Settings",
-  icon: SlidersHorizontal,
+  icon: Cog,
   match: ["/settings"],
 };
 
