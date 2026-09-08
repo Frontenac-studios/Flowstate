@@ -59,7 +59,7 @@ export default function ClientsIndex() {
       ) : isLoading ? (
         <p className="text-sm text-ink-muted">Loading clients…</p>
       ) : (clients?.length ?? 0) === 0 ? (
-        <div className="rounded-card border border-dashed border-border bg-surface p-8 text-center">
+        <div className="rounded-card border border-border bg-surface p-8 text-center shadow-surface">
           <p className="text-body text-ink">No clients yet.</p>
           <p className="mt-1 text-sm text-ink-muted">
             Add the first client to start attaching rates and billable time.
