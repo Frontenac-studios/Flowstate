@@ -3,16 +3,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { FLAGS } from "@/lib/flags";
+import { formatAppliedLine, type AppliedCounts } from "@/lib/quarter/applied-line";
 import { useTRPC } from "@/trpc/client";
 
-type Direction = { id: string; statement: string };
+type Direction = { id: string; statement: string; applied?: AppliedCounts };
 
 /**
  * One Direction on the Quarter surface (W5, §2). A sentence, editable in place,
  * with only the "applied line" beneath it — never a progress bar, because the
- * absence of a measure is the whole point. The applied line reads the Filter's
- * use of this Direction; until the Filter ships (W10) it says so plainly rather
- * than showing a fake zero.
+ * absence of a measure is the whole point.
+ *
+ * The applied line (W10g) reads the Filter's USE of this Direction: leads scored
+ * against it, and leads it let you decline. With the sourcing agent still dark
+ * (FLAGS.sourcing off) there is no Filter to report on, so the line keeps saying so
+ * plainly rather than reporting a zero the user has no way to move.
  */
 export default function DirectionCard({ direction }: { direction: Direction }) {
   const trpc = useTRPC();
@@ -73,7 +78,9 @@ export default function DirectionCard({ direction }: { direction: Direction }) {
           <p className="text-body text-ink">{direction.statement}</p>
           <div className="mt-2 flex items-center justify-between">
             <p className="text-caption text-ink-muted">
-              Not yet scored — the Filter will light this up.
+              {FLAGS.sourcing && direction.applied
+                ? formatAppliedLine(direction.applied)
+                : "Not yet scored — the Filter will light this up."}
             </p>
             <div className="flex gap-3 opacity-0 transition group-hover:opacity-100">
               <button
