@@ -28,6 +28,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
+    "check:pr-guards": "node scripts/pr-guards.cjs",
     "db:e2e-setup": "node scripts/apply-drizzle-migrations.cjs && node scripts/apply-supabase-migrations.cjs",
     "db:check": "node scripts/check-database.cjs",
     "db:diff-hosted": "node scripts/diff-hosted-schema.cjs",
