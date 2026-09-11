@@ -1,8 +1,8 @@
 import "server-only";
 
-import { generateText } from "ai";
+import { APICallError, generateText } from "ai";
 
-import { isModelConfigured } from "@/lib/env";
+import { isModelConfigured, resolveModel } from "@/lib/env";
 
 import { requireModel } from "../claude/client";
 
@@ -126,6 +126,16 @@ export async function draftInvoiceLineItems(params: {
     lineBlock,
   ].join("\n");
 
+  // Falling back is deliberate — a draft must always render — but it must never be
+  // silent. A missing production key hid behind this fallback for weeks, and every
+  // invoice quietly shipped seed labels instead of drafted wording. So each path
+  // below still returns the fallback, and each one now says so in the server log.
+  //
+  // What is logged is the SHAPE of the failure, never its content: the prompt and
+  // the reply both carry the client's work descriptions, and an AI SDK
+  // APICallError holds the entire request body in `requestBodyValues`. So the error
+  // object is never passed to the logger (CLAUDE.md: never log sensitive input).
+  const context = { model: resolveModel("structured"), lines: lines.length };
   try {
     const { text } = await generateText({
       model: requireModel("structured"),
@@ -134,8 +144,22 @@ export async function draftInvoiceLineItems(params: {
       system,
       messages: [{ role: "user", content: userPayload }],
     });
-    return parseWording(text, lines) ?? fallback;
-  } catch {
+    const drafted = parseWording(text, lines);
+    if (!drafted) {
+      console.warn("[invoice.draftLineItems] model reply unusable, using seed labels", {
+        ...context,
+        replyChars: text.length,
+      });
+      return fallback;
+    }
+    return drafted;
+  } catch (error) {
+    console.error("[invoice.draftLineItems] model call failed, using seed labels", {
+      ...context,
+      status: APICallError.isInstance(error) ? error.statusCode : undefined,
+      cause: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return fallback;
   }
 }
