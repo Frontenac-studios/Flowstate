@@ -5,6 +5,10 @@ const PROTECTED_PREFIXES = [
   "/projects",
   "/backlog",
   "/settings",
+  // W17 — the capture panel is a real app surface in its own window, so an
+  // unauthenticated hit has to bounce like any other rather than render a bar
+  // that silently drops what you type.
+  "/capture",
 ] as const;
 
 export function isProtectedPath(pathname: string): boolean {

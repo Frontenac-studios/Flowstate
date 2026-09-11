@@ -167,3 +167,83 @@ PRs and the half-built panel should not be reachable in a build. Flip on when W1
   keep both until the panel has been used for a week, then delete the loser.
 - Launch-at-login is this feature's twin and is still unscoped. A hotkey for an app that is
   not running does nothing.
+
+---
+
+## 8. Build log — 2026-09-03
+
+**Landed (commit `feat(capture): the global capture hotkey`)**: W17b, W17c, W17d, W17g and the
+autostart fold-in. Branch `feat/w17-capture-hotkey`, worktree `../flowstate-w17`, cut from
+`origin/main` rather than the dirty `feat/projects-3.2-flow` tree, which touches
+`CommandPalette.tsx`, `AppShellOverlays.tsx`, `QuickInput.tsx` and six settings components — every
+file W17f will need. Rebase W17f onto that branch after it merges, or expect the conflicts.
+
+**W17a, the session-sharing spike, was folded into the build rather than run first.** Tauri v2 on
+macOS gives every webview in the app the same WKWebsiteDataStore unless one is configured
+explicitly, and the panel loads the same `127.0.0.1:<port>` origin as the main window, so the
+Supabase cookie should carry. If `/capture` bounces to `/login` on first run, that assumption was
+wrong and §3's fallback applies: a frameless always-on-top _main_ window in panel mode.
+
+**Not verified from the build session** — the container is Linux, the app is a macOS Tauri build,
+and `node_modules` is a symlink to a macOS install:
+
+- `cargo check` — never run. The Rust is written against Tauri 2 APIs from documentation.
+- `Cargo.lock` — not updated. The first `npm run tauri dev` resolves the two new crates.
+- `eslint`, `vitest` — both need platform-native binaries (rolldown, esbuild).
+- The app itself.
+
+`tsc --noEmit` passed clean, which covers the TypeScript half.
+
+**Manual verification, in this order:**
+
+1. `npm run tauri dev`, and watch the Rust compile. The two new crates download on this run.
+2. `/capture` renders the bar rather than bouncing to `/login` — this is W17a's answer.
+3. ⌘⇧K from another app shows the bar without Kash coming forward.
+4. Esc returns focus to that app, with its scroll position intact.
+5. A plain line saves to Backlog; ⇧⏎ saves and keeps the panel open.
+6. `; gw ; friday ; !!` parses to project, date and priority with the Today toggle on.
+7. Settings → Preferences shows the chord, rebinds it, and reports a taken chord honestly.
+8. Quit Kash, press ⌘⇧K, confirm nothing happens — then turn on launch at login.
+
+**Deliberately not built here:** search inside the panel (W17e–f). The panel has no results rows
+yet, so ⏎ always creates.
+
+---
+
+## 9. Search build log — 2026-09-03
+
+**Landed**: W17e and W17f, on the same branch, rebased onto local `main` (`18c7d49`, which is one
+unpushed commit ahead of `origin/main`).
+
+**Two things the recon changed:**
+
+- **Tasks have no notes column.** The "task notes" search scope can only mean Backlog item notes
+  and client notes, which is what shipped. If task-level notes are wanted, that is a schema change
+  and its own item.
+- **The Backlog filter already existed.** `AbyssFloatingBar` has a search input and
+  `filterItems` in `src/lib/abyss/grouping.ts` already matches title _and_ note. Nothing was built
+  there; the fourth call site was already done.
+
+**Shipped:**
+
+- `src/lib/search/rank-results.ts` — pure ranking with 9 tests. Bands: exact title, title prefix,
+  word prefix, title contains, body contains, with completed rows demoted a full band so they stay
+  findable but never outrank live work. Ties break recency, then title, so the list doesn't
+  reshuffle between keystrokes.
+- `search.query` — one procedure over task titles, Backlog titles and notes, project names, client
+  names and notes. `lower(x) LIKE lower(y)` rather than `ILIKE`, because the desktop build runs
+  these same queries against SQLite. `%` and `_` are escaped, so a query containing them doesn't
+  match everything.
+- Capture panel: matching tasks and Backlog items under the field, ↑↓ to move, ⏎ on a highlighted
+  row opens it in the main window instead of creating a duplicate.
+- ⌘K palette: commands and data rows in one keyboard loop, commands pinned above results.
+- Project detail: a task finder that filters the board's already-loaded tasks and, on pick, selects
+  the phase path so the Miller columns walk down and reveal it (`phasePathForTask`, 5 tests).
+
+**Known gap:** result hrefs carry `?focus=<id>`, and nothing reads that parameter yet. Selecting a
+task from the palette lands you on the right page but does not highlight the row. That is a small
+follow-up in Today and the project board, not a redesign.
+
+**Still unverified from this session**, same reasons as §8: `cargo check`, `eslint`, `vitest`, and
+the app. `tsc --noEmit` is clean. The 14 new unit tests have never been executed — run
+`npm run test` on the Mac before trusting the ranking.

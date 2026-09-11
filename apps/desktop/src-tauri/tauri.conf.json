@@ -25,6 +25,21 @@
         "transparent": true,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true
+      },
+      {
+        "label": "capture",
+        "create": false,
+        "title": "Kash capture",
+        "width": 560,
+        "height": 64,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "shadow": true,
+        "focus": true
       }
     ],
     "security": {

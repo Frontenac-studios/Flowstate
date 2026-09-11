@@ -50,6 +50,15 @@ export const FLAGS = {
    * work; flip on in prod only when W10 is complete. See docs/plan-w10-sourcing.md.
    */
   sourcing: on(process.env.NEXT_PUBLIC_FLAG_SOURCING),
+
+  /**
+   * W17 — the global capture panel (⌘⇧K) and the `/capture` route behind it.
+   * Like sourcing, this is **in development, not parked-but-finished**: the
+   * panel ships across several PRs and a half-built capture bar must not be
+   * reachable in a build. Flip on when the capture half is whole.
+   * See docs/plan-w17-capture-hotkey.md.
+   */
+  capturePanel: on(process.env.NEXT_PUBLIC_FLAG_CAPTURE_PANEL),
 } as const;
 
 export type FeatureFlag = keyof typeof FLAGS;
