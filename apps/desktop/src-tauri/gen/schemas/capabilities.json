@@ -1,4 +1,17 @@
 {
+  "capture": {
+    "identifier": "capture",
+    "description": "The W17 global capture panel. Narrower than the main window: it needs events and its own visibility, nothing else.",
+    "local": true,
+    "windows": ["capture"],
+    "permissions": [
+      "core:default",
+      "core:event:default",
+      "core:window:allow-hide",
+      "core:window:allow-show",
+      "core:window:allow-set-focus"
+    ]
+  },
   "default": {
     "identifier": "default",
     "description": "Default Kash desktop capabilities",
@@ -6,6 +19,7 @@
     "windows": ["main"],
     "permissions": [
       "core:default",
+      "core:event:default",
       "core:window:allow-show",
       "core:window:allow-set-focus",
       "core:webview:allow-internal-toggle-devtools",
