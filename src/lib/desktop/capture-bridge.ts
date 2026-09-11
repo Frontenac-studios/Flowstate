@@ -57,6 +57,23 @@ export async function readCaptureShortcutStatus(): Promise<CaptureShortcutStatus
 }
 
 /**
+ * Ask the shell to register the stored capture shortcut. The shell never takes
+ * a system-wide chord on its own — it waits for this, so the hotkey exists only
+ * in builds where the capture flag is on. Safe to call on every load; a failure
+ * (the chord is taken) is recorded by the shell and shown in Settings.
+ */
+export async function enableCaptureShortcut(): Promise<void> {
+  const invoke = tauriInvoke();
+  if (!invoke) return;
+  try {
+    await invoke("enable_capture_shortcut");
+  } catch {
+    // Taken by another app, or an older shell without the command. Settings
+    // reads the recorded failure from `capture_shortcut_status`.
+  }
+}
+
+/**
  * Rebind the capture shortcut. Rejects with the shell's message when the chord
  * is taken, and the previous binding is left working.
  */

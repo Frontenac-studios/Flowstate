@@ -29,9 +29,9 @@ const DEFAULT_PORT: u16 = 4310;
 const DEFAULT_CAPTURE_SHORTCUT: &str = "CmdOrCtrl+Shift+K";
 
 /// Panel geometry. Width is fixed; the webview grows the window as results and
-/// the captured-list appear (`resize_capture_panel`).
+/// the captured-list appear (`resize_capture_panel`). The opening height and the
+/// window chrome live on the `capture` entry in tauri.conf.json.
 const CAPTURE_WIDTH: f64 = 560.0;
-const CAPTURE_HEIGHT: f64 = 64.0;
 /// The card can be shorter than the window's opening height once it settles.
 const CAPTURE_MIN_HEIGHT: f64 = 44.0;
 /// Vertical placement as a fraction of the monitor height. Spotlight sits high;
@@ -47,9 +47,6 @@ const CAPTURE_TOP_FRACTION: f64 = 0.26;
 struct CaptureState {
     shortcut: Mutex<Option<String>>,
     error: Mutex<Option<String>>,
-    /// The panel webview is navigated to `/capture` once, then shown and hidden.
-    /// Re-navigating on every open would cost a full webview boot per keypress.
-    loaded: Mutex<bool>,
 }
 
 struct SidecarState {
@@ -528,20 +525,10 @@ fn position_capture_panel(app: &AppHandle, win: &tauri::WebviewWindow) {
 /// Show the capture panel (W17). Creates the webview on first use, then only
 /// shows/positions/focuses it — the window is hidden on close, never destroyed.
 fn open_capture_panel(app: &AppHandle) -> Result<(), String> {
-    let port = app.state::<SidecarState>().port;
-    let Some(win) = app.get_webview_window("capture") else {
-        return Err("capture window missing from tauri.conf.json".into());
+    let win = match app.get_webview_window("capture") {
+        Some(win) => win,
+        None => build_capture_panel(app)?,
     };
-
-    let state = app.state::<CaptureState>();
-    let mut loaded = state.loaded.lock().unwrap();
-    if !*loaded {
-        let url = capture_url(port);
-        win.eval(&format!("window.location.replace('{url}');"))
-            .map_err(|e| e.to_string())?;
-        *loaded = true;
-    }
-    drop(loaded);
 
     position_capture_panel(app, &win);
     win.show().map_err(|e| e.to_string())?;
@@ -550,6 +537,28 @@ fn open_capture_panel(app: &AppHandle) -> Result<(), String> {
     // remounts to clear the field. The web side listens for this and resets.
     let _ = win.emit("capture-opened", ());
     Ok(())
+}
+
+/// Build the panel webview from its tauri.conf.json entry, pointed straight at
+/// `/capture`. The entry is `"create": false` because a window Tauri creates at
+/// startup loads the app root: in dev that is a second, hidden copy of the whole
+/// app, whose timer bridge would answer every tray command and idle prompt a
+/// second time. Built once, on first open, then only shown and hidden.
+fn build_capture_panel(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
+    let port = app.state::<SidecarState>().port;
+    let url = Url::parse(&capture_url(port)).map_err(|e| e.to_string())?;
+    let mut config = app
+        .config()
+        .app
+        .windows
+        .iter()
+        .find(|w| w.label == "capture")
+        .cloned()
+        .ok_or("capture window missing from tauri.conf.json")?;
+    config.url = WebviewUrl::External(url);
+    WebviewWindowBuilder::from_config(app, &config)
+        .and_then(|builder| builder.build())
+        .map_err(|e| e.to_string())
 }
 
 /// Hide the panel and hand focus back to whatever the user was in. macOS gives
@@ -599,6 +608,36 @@ fn capture_shortcut_status(app: AppHandle) -> serde_json::Value {
     let error = state.error.lock().unwrap().clone();
     let autostart = app.autolaunch().is_enabled().unwrap_or(false);
     serde_json::json!({ "shortcut": shortcut, "error": error, "autostart": autostart })
+}
+
+/// Register the stored capture shortcut. Called by the web app on load when the
+/// capture flag is on, so it runs on every page load — a chord that is already
+/// registered is left alone. A failure is recorded and surfaced in Settings
+/// rather than returned as fatal: another app owning the chord is a normal
+/// outcome, and Kash is still useful without the hotkey.
+#[tauri::command]
+fn enable_capture_shortcut(app: AppHandle) -> Result<(), String> {
+    let chord = read_stored_shortcut(&app);
+    let already = Shortcut::from_str(&chord)
+        .map(|s| app.global_shortcut().is_registered(s))
+        .unwrap_or(false);
+    if already {
+        return Ok(());
+    }
+
+    let state = app.state::<CaptureState>();
+    *state.shortcut.lock().unwrap() = Some(chord.clone());
+    match apply_capture_shortcut(&app, &chord) {
+        Ok(()) => {
+            *state.error.lock().unwrap() = None;
+            Ok(())
+        }
+        Err(err) => {
+            eprintln!("Capture shortcut not registered: {err}");
+            *state.error.lock().unwrap() = Some(err.clone());
+            Err(err)
+        }
+    }
 }
 
 /// Rebind the capture shortcut. On failure the previous chord is restored, so a
@@ -702,6 +741,7 @@ pub fn run() {
             do_not_disturb_supported,
             set_timer_tray,
             capture_shortcut_status,
+            enable_capture_shortcut,
             set_capture_shortcut,
             set_autostart,
             hide_capture_panel,
@@ -754,20 +794,12 @@ pub fn run() {
             spawn_tray_ticker(handle.clone());
             spawn_idle_watcher(handle.clone());
 
-            // W17 — register the capture shortcut. A failure here is recorded
-            // and surfaced in Settings rather than aborting startup: the app is
-            // still useful without a hotkey, and a crash-on-conflict would make
-            // another app's keybinding able to stop Kash from launching.
+            // W17 — load the stored chord but leave it unregistered. The web app
+            // turns it on through `enable_capture_shortcut` when
+            // FLAGS.capturePanel is on; the flag lives in the web build, and a
+            // system-wide hotkey is not something to take while the feature is dark.
             let chord = read_stored_shortcut(&handle);
-            let capture = handle.state::<CaptureState>();
-            *capture.shortcut.lock().unwrap() = Some(chord.clone());
-            match apply_capture_shortcut(&handle, &chord) {
-                Ok(()) => *capture.error.lock().unwrap() = None,
-                Err(err) => {
-                    eprintln!("Capture shortcut not registered: {err}");
-                    *capture.error.lock().unwrap() = Some(err);
-                }
-            }
+            *handle.state::<CaptureState>().shortcut.lock().unwrap() = Some(chord);
 
             open_main_window(&handle, port, false)?;
             Ok(())
