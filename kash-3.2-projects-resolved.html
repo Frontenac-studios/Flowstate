@@ -1,448 +1,1198 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kash 3.2 — Projects, resolved</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#fff; --surface-2:#fafafa; --border:#ececec;
-    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#767e8e;
-    --cat-business:#009ddc; --cat-personal:#973d97;
-    --status-critical:#b3122a;
-    --r-card:8px; --r-row:5px; --r-control:5px; --r-chip:5px;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:#f6f6f7;color:var(--ink);
-    font-family:Figtree,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    font-size:13px;line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased}
-  .page{max-width:1120px;margin:0 auto;padding:40px 28px 120px}
-  .doc-meta{font-size:11px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase}
-  .doc-h1{font-size:20px;font-weight:500;letter-spacing:-.01em;margin:0 0 6px}
-  .doc-sub{font-size:13px;color:var(--ink-muted);margin:0 0 6px;max-width:82ch}
-  .picks{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
-  .picks span{font-size:11px;border:1px solid var(--ink);border-radius:var(--r-chip);padding:2px 9px;background:#fff}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kash 3.2 — Projects, resolved</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #767e8e;
+        --cat-business: #009ddc;
+        --cat-personal: #973d97;
+        --status-critical: #b3122a;
+        --r-card: 8px;
+        --r-row: 5px;
+        --r-control: 5px;
+        --r-chip: 5px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f6f6f7;
+        color: var(--ink);
+        font-family:
+          Figtree,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+      }
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 28px 120px;
+      }
+      .doc-meta {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .doc-h1 {
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0 0 6px;
+      }
+      .doc-sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin: 0 0 6px;
+        max-width: 82ch;
+      }
+      .picks {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .picks span {
+        font-size: 11px;
+        border: 1px solid var(--ink);
+        border-radius: var(--r-chip);
+        padding: 2px 9px;
+        background: #fff;
+      }
 
-  .sec{margin-top:56px}
-  .sec-num{font-size:11px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
-  .sec-h{font-size:17px;font-weight:500;margin:0 0 8px}
-  .sec-p{font-size:13px;color:var(--ink-muted);max-width:84ch;margin:0 0 20px}
-  .sec-p b{font-weight:500;color:var(--ink)}
-  code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:3px;padding:1px 4px}
+      .sec {
+        margin-top: 56px;
+      }
+      .sec-num {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .sec-h {
+        font-size: 17px;
+        font-weight: 500;
+        margin: 0 0 8px;
+      }
+      .sec-p {
+        font-size: 13px;
+        color: var(--ink-muted);
+        max-width: 84ch;
+        margin: 0 0 20px;
+      }
+      .sec-p b {
+        font-weight: 500;
+        color: var(--ink);
+      }
+      code {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 1px 4px;
+      }
 
-  .m{background:#fff;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
-  .m-modal{box-shadow:0 8px 28px rgba(22,24,29,.10)}
-  .m-hr{height:1px;background:var(--border)}
-  .m-cap{font-size:11px;color:var(--ink-faint)}
-  .m-meta{font-size:12px;color:var(--ink-muted)}
-  .m-title{font-size:15px;font-weight:500;margin:0}
-  .m-h1{font-size:17px;font-weight:500;margin:0}
-  .m-label{font-size:11px;color:var(--ink-faint);display:block;margin-bottom:5px}
-  .m-chip{font-size:11px;border:1px solid var(--border);border-radius:var(--r-chip);padding:2px 8px;color:var(--ink-muted);background:#fff;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-  .m-chip.on{border-color:var(--ink);color:var(--ink)}
-  .m-chip.crit{border-color:#f0d3d8;color:var(--status-critical)}
-  .m-btn{font-size:12px;border:1px solid var(--ink);border-radius:var(--r-control);padding:5px 12px;background:#fff;color:var(--ink);display:inline-block}
-  .m-btn.quiet{border-color:var(--border);color:var(--ink-muted)}
-  .m-input{border:1px solid var(--border);border-radius:var(--r-control);padding:6px 8px;font-size:13px;background:#fff}
-  .m-input.focus{border-color:var(--ink);border-width:2px;padding:5px 7px}
-  .row{display:flex;align-items:center;gap:8px}
-  .dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex:none}
-  .dot.biz{background:var(--cat-business)} .dot.per{background:var(--cat-personal)}
-  .kbd{font-family:ui-monospace,Menlo,monospace;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;color:var(--ink-faint);background:#fff}
-  .caret{width:1px;height:14px;background:var(--ink);display:inline-block}
-  .lrow{display:flex;align-items:center;gap:8px;padding:7px 10px;min-height:30px;border-bottom:1px solid var(--border)}
-  .lrow:last-child{border-bottom:0}
-  .stripe-biz{border-left:3px solid var(--cat-business)}
-  .stripe-per{border-left:3px solid var(--cat-personal)}
-  .bar{height:2px;background:#eee;position:relative;border-radius:2px;overflow:hidden}
-  .bar i{position:absolute;left:0;top:0;height:2px;background:var(--ink)}
-  .bar i.crit{background:var(--status-critical)}
-  .ol-head{display:flex;align-items:center;padding:6px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
-  .ol-head span{font-size:11px;color:var(--ink-faint);letter-spacing:.05em;text-transform:uppercase}
-  .ol-r{display:flex;align-items:center;min-height:29px;padding:0 12px;border-bottom:1px solid #f4f4f4}
-  .ol-r:last-child{border-bottom:0}
-  .ol-name{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
-  .ol-r.phase .ol-name{font-weight:500}
-  .ol-r.task .ol-name{padding-left:22px;color:var(--ink-muted)}
-  .ol-r.sub .ol-name{padding-left:44px;color:var(--ink)}
-  .c-due{width:60px;text-align:right;font-size:12px;color:var(--ink-muted);flex:none}
-  .c-est{width:44px;text-align:right;font-size:12px;color:var(--ink-muted);flex:none}
-  .c-log{width:48px;text-align:right;font-size:12px;color:var(--ink-faint);flex:none}
-  .c-log.hot{color:var(--status-critical)}
-  .empty{color:#c9ccd2 !important}
-  .pri{font-size:11px;color:var(--status-critical);flex:none;width:16px}
+      .m {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        overflow: hidden;
+      }
+      .m-modal {
+        box-shadow: 0 8px 28px rgba(22, 24, 29, 0.1);
+      }
+      .m-hr {
+        height: 1px;
+        background: var(--border);
+      }
+      .m-cap {
+        font-size: 11px;
+        color: var(--ink-faint);
+      }
+      .m-meta {
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+      .m-title {
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .m-h1 {
+        font-size: 17px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .m-label {
+        font-size: 11px;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 5px;
+      }
+      .m-chip {
+        font-size: 11px;
+        border: 1px solid var(--border);
+        border-radius: var(--r-chip);
+        padding: 2px 8px;
+        color: var(--ink-muted);
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .m-chip.on {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      .m-chip.crit {
+        border-color: #f0d3d8;
+        color: var(--status-critical);
+      }
+      .m-btn {
+        font-size: 12px;
+        border: 1px solid var(--ink);
+        border-radius: var(--r-control);
+        padding: 5px 12px;
+        background: #fff;
+        color: var(--ink);
+        display: inline-block;
+      }
+      .m-btn.quiet {
+        border-color: var(--border);
+        color: var(--ink-muted);
+      }
+      .m-input {
+        border: 1px solid var(--border);
+        border-radius: var(--r-control);
+        padding: 6px 8px;
+        font-size: 13px;
+        background: #fff;
+      }
+      .m-input.focus {
+        border-color: var(--ink);
+        border-width: 2px;
+        padding: 5px 7px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        display: inline-block;
+        flex: none;
+      }
+      .dot.biz {
+        background: var(--cat-business);
+      }
+      .dot.per {
+        background: var(--cat-personal);
+      }
+      .kbd {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 10px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 1px 4px;
+        color: var(--ink-faint);
+        background: #fff;
+      }
+      .caret {
+        width: 1px;
+        height: 14px;
+        background: var(--ink);
+        display: inline-block;
+      }
+      .lrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        min-height: 30px;
+        border-bottom: 1px solid var(--border);
+      }
+      .lrow:last-child {
+        border-bottom: 0;
+      }
+      .stripe-biz {
+        border-left: 3px solid var(--cat-business);
+      }
+      .stripe-per {
+        border-left: 3px solid var(--cat-personal);
+      }
+      .bar {
+        height: 2px;
+        background: #eee;
+        position: relative;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .bar i {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 2px;
+        background: var(--ink);
+      }
+      .bar i.crit {
+        background: var(--status-critical);
+      }
+      .ol-head {
+        display: flex;
+        align-items: center;
+        padding: 6px 12px;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+      }
+      .ol-head span {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .ol-r {
+        display: flex;
+        align-items: center;
+        min-height: 29px;
+        padding: 0 12px;
+        border-bottom: 1px solid #f4f4f4;
+      }
+      .ol-r:last-child {
+        border-bottom: 0;
+      }
+      .ol-name {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+      }
+      .ol-r.phase .ol-name {
+        font-weight: 500;
+      }
+      .ol-r.task .ol-name {
+        padding-left: 22px;
+        color: var(--ink-muted);
+      }
+      .ol-r.sub .ol-name {
+        padding-left: 44px;
+        color: var(--ink);
+      }
+      .c-due {
+        width: 60px;
+        text-align: right;
+        font-size: 12px;
+        color: var(--ink-muted);
+        flex: none;
+      }
+      .c-est {
+        width: 44px;
+        text-align: right;
+        font-size: 12px;
+        color: var(--ink-muted);
+        flex: none;
+      }
+      .c-log {
+        width: 48px;
+        text-align: right;
+        font-size: 12px;
+        color: var(--ink-faint);
+        flex: none;
+      }
+      .c-log.hot {
+        color: var(--status-critical);
+      }
+      .empty {
+        color: #c9ccd2 !important;
+      }
+      .pri {
+        font-size: 11px;
+        color: var(--status-critical);
+        flex: none;
+        width: 16px;
+      }
 
-  .note{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--ink-faint);margin-top:9px}
-  .note b{font-weight:500;color:var(--ink);flex:none}
-  .note.warn b{color:var(--status-critical)}
-  .grid{display:grid;gap:18px}
-  .g2{grid-template-columns:1fr 1fr}
-  @media(max-width:900px){.g2{grid-template-columns:1fr}}
-  .opt{background:#fff;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column}
-  .opt-head{padding:12px 14px 10px;border-bottom:1px solid var(--border)}
-  .opt-tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:3px}
-  .opt-name{font-size:14px;font-weight:500;margin:0 0 3px}
-  .opt-line{font-size:12px;color:var(--ink-muted);margin:0}
-  .opt-stage{padding:18px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px}
-  .opt-body{padding:12px 14px}
-  .opt-body ul{margin:0;padding-left:15px}
-  .opt-body li{font-size:12px;color:var(--ink-muted);margin-bottom:3px}
-  .opt-body li.t{color:var(--status-critical)}
-  .opt-body li.t::marker{color:var(--status-critical)}
-  .take{margin-top:20px;background:#fff;border:1px solid var(--border);border-left:3px solid var(--ink);border-radius:var(--r-card);padding:12px 16px}
-  .take b{font-weight:500;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:4px}
-  .take p{margin:0 0 8px;font-size:13px;color:var(--ink-muted);max-width:88ch}
-  .take p:last-child{margin-bottom:0}
-  .conflict{border-left-color:var(--status-critical)}
-  .conflict b{color:var(--status-critical)}
-  ol.seq{margin:0;padding-left:18px}
-  ol.seq li{font-size:13px;color:var(--ink-muted);margin-bottom:7px}
-  ol.seq li b{font-weight:500;color:var(--ink)}
-</style>
-</head>
-<body>
-<div class="page">
-
-  <div class="doc-meta">Kash 3.2 · resolved</div>
-  <h1 class="doc-h1">The project flow, assembled</h1>
-  <p class="doc-sub">Your picks, drawn as the screens they add up to, in the order you'd meet them. One conflict your combination creates is at the end, unresolved and drawn both ways.</p>
-  <div class="picks">
-    <span>1A command create</span><span>2D plan mode</span><span>3B meta in plan</span><span>4A composer demoted</span>
-    <span>5B + 5D status band</span><span>6B index as status</span><span>7B + 7C on today</span><span>8 two pens, one queue</span>
-  </div>
-
-  <!-- 1 -->
-  <section class="sec">
-    <div class="sec-num">Screen one</div>
-    <h2 class="sec-h">Create — press N, anywhere</h2>
-    <p class="sec-p">One field, one keystroke. The client chips auto-match on what you type and can be ignored entirely; picking one sets <code>clientId</code> and derives category in the same move. Reachable from Today, Week, the Projects index — capture never requires navigating first.</p>
-    <div class="m m-modal" style="max-width:400px">
-      <div style="padding:13px 15px 11px">
-        <span class="m-label">New project</span>
-        <div class="m-input focus row" style="gap:5px"><span>Great White Q4 reporting</span><span class="caret"></span></div>
+      .note {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 9px;
+      }
+      .note b {
+        font-weight: 500;
+        color: var(--ink);
+        flex: none;
+      }
+      .note.warn b {
+        color: var(--status-critical);
+      }
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+      .g2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 900px) {
+        .g2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .opt {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .opt-head {
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .opt-tag {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 3px;
+      }
+      .opt-name {
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0 0 3px;
+      }
+      .opt-line {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin: 0;
+      }
+      .opt-stage {
+        padding: 18px 14px;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 9px;
+      }
+      .opt-body {
+        padding: 12px 14px;
+      }
+      .opt-body ul {
+        margin: 0;
+        padding-left: 15px;
+      }
+      .opt-body li {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin-bottom: 3px;
+      }
+      .opt-body li.t {
+        color: var(--status-critical);
+      }
+      .opt-body li.t::marker {
+        color: var(--status-critical);
+      }
+      .take {
+        margin-top: 20px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--ink);
+        border-radius: var(--r-card);
+        padding: 12px 16px;
+      }
+      .take b {
+        font-weight: 500;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .take p {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: var(--ink-muted);
+        max-width: 88ch;
+      }
+      .take p:last-child {
+        margin-bottom: 0;
+      }
+      .conflict {
+        border-left-color: var(--status-critical);
+      }
+      .conflict b {
+        color: var(--status-critical);
+      }
+      ol.seq {
+        margin: 0;
+        padding-left: 18px;
+      }
+      ol.seq li {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 7px;
+      }
+      ol.seq li b {
+        font-weight: 500;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="doc-meta">Kash 3.2 · resolved</div>
+      <h1 class="doc-h1">The project flow, assembled</h1>
+      <p class="doc-sub">
+        Your picks, drawn as the screens they add up to, in the order you'd meet them. One conflict
+        your combination creates is at the end, unresolved and drawn both ways.
+      </p>
+      <div class="picks">
+        <span>1A command create</span><span>2D plan mode</span><span>3B meta in plan</span
+        ><span>4A composer demoted</span> <span>5B + 5D status band</span
+        ><span>6B index as status</span><span>7B + 7C on today</span
+        ><span>8 two pens, one queue</span>
       </div>
-      <div style="padding:0 15px 11px">
-        <div class="row" style="gap:4px;flex-wrap:wrap">
-          <span class="m-chip on"><span class="dot biz"></span>Great White</span>
-          <span class="m-chip">Hume</span><span class="m-chip">Suncoast</span><span class="m-chip">Just me</span>
-        </div>
-        <div class="m-cap" style="margin-top:6px">matched from the name · tab to change</div>
-      </div>
-      <div class="m-hr"></div>
-      <div class="row" style="justify-content:space-between;padding:9px 15px">
-        <span class="m-cap"><span class="kbd">esc</span> cancel</span>
-        <span class="m-cap"><span class="kbd">↵</span> create and open</span>
-      </div>
-    </div>
-    <div class="note"><b>Build note</b><span>The command palette already dispatches custom events for actions (<code>CommandPalette.tsx:76</code> does exactly this for Abyss capture), so the trigger is roughly four lines plus the dialog. The "New project" button on the index opens the same dialog.</span></div>
-    <div class="note"><b>Retired here</b><span>The category chips, the "Serves a bet?" row, the route to <code>?setup=new</code>, and the auto-opening wizard.</span></div>
-  </section>
 
-  <!-- 2 -->
-  <section class="sec">
-    <div class="sec-num">Screen two</div>
-    <h2 class="sec-h">The project page — Board</h2>
-    <p class="sec-p">Header carries the name, the state chip, and the client as plain text. Below it, one status band answering both questions you picked: <b>how much is left</b> and <b>am I over</b>. They merge into a single strip rather than stacking two blocks — 5B and 5D are two readings of the same band, not two bands.</p>
-    <div class="m">
-      <div class="row" style="justify-content:space-between;padding:12px 14px">
-        <div class="row" style="gap:8px">
-          <h3 class="m-h1">Great White Q4 reporting</h3>
-          <span class="m-chip on">Active</span>
-        </div>
-        <div class="row" style="gap:4px"><span class="m-chip on">Board</span><span class="m-chip">Plan</span><span class="m-chip">Calendar</span></div>
-      </div>
-      <div class="row" style="gap:9px;padding:0 14px 11px">
-        <span class="m-cap"><span class="dot biz" style="margin-right:4px"></span>Great White</span>
-      </div>
-      <div class="m-hr"></div>
-      <div style="padding:12px 14px;background:var(--surface-2)">
-        <div class="row" style="justify-content:space-between;margin-bottom:7px">
-          <div class="row" style="gap:9px;align-items:baseline">
-            <span style="font-size:15px;font-weight:500">62% done</span>
-            <span class="m-meta">18 of 29 tasks</span>
+      <!-- 1 -->
+      <section class="sec">
+        <div class="sec-num">Screen one</div>
+        <h2 class="sec-h">Create — press N, anywhere</h2>
+        <p class="sec-p">
+          One field, one keystroke. The client chips auto-match on what you type and can be ignored
+          entirely; picking one sets <code>clientId</code> and derives category in the same move.
+          Reachable from Today, Week, the Projects index — capture never requires navigating first.
+        </p>
+        <div class="m m-modal" style="max-width: 400px">
+          <div style="padding: 13px 15px 11px">
+            <span class="m-label">New project</span>
+            <div class="m-input focus row" style="gap: 5px">
+              <span>Great White Q4 reporting</span><span class="caret"></span>
+            </div>
           </div>
-          <div class="row" style="gap:9px;align-items:baseline">
-            <span style="font-size:15px;font-weight:500;color:var(--status-critical)">18h of 24h</span>
-            <span class="m-meta">6h of room left</span>
+          <div style="padding: 0 15px 11px">
+            <div class="row" style="gap: 4px; flex-wrap: wrap">
+              <span class="m-chip on"><span class="dot biz"></span>Great White</span>
+              <span class="m-chip">Hume</span><span class="m-chip">Suncoast</span
+              ><span class="m-chip">Just me</span>
+            </div>
+            <div class="m-cap" style="margin-top: 6px">matched from the name · tab to change</div>
+          </div>
+          <div class="m-hr"></div>
+          <div class="row" style="justify-content: space-between; padding: 9px 15px">
+            <span class="m-cap"><span class="kbd">esc</span> cancel</span>
+            <span class="m-cap"><span class="kbd">↵</span> create and open</span>
           </div>
         </div>
-        <div class="bar" style="margin-bottom:6px"><i style="width:62%"></i></div>
-        <div class="bar"><i class="crit" style="width:75%"></i></div>
-        <div class="row" style="justify-content:space-between;margin-top:7px">
-          <span class="m-cap">work done</span>
-          <span class="m-cap">budget consumed · hourly at $45</span>
+        <div class="note">
+          <b>Build note</b
+          ><span
+            >The command palette already dispatches custom events for actions (<code
+              >CommandPalette.tsx:76</code
+            >
+            does exactly this for Abyss capture), so the trigger is roughly four lines plus the
+            dialog. The "New project" button on the index opens the same dialog.</span
+          >
         </div>
-      </div>
-      <div class="m-hr"></div>
-      <div class="row" style="gap:1px;background:var(--border);align-items:stretch">
-        <div style="background:#fff;flex:1;padding:9px 11px">
-          <div class="row" style="justify-content:space-between;margin-bottom:7px"><span class="m-meta" style="font-weight:500;color:var(--ink)">Phases</span><span class="m-cap">3</span></div>
-          <div class="lrow stripe-biz" style="padding-left:8px;border:0"><span style="flex:1">Data model rebuild</span><span class="m-cap">8/8</span></div>
-          <div class="lrow stripe-biz" style="padding-left:8px;border:0;background:var(--surface-2)"><span style="flex:1">Reporting layer</span><span class="m-cap">6/12</span></div>
-          <div class="lrow stripe-biz" style="padding-left:8px;border:0"><span style="flex:1">Cutover</span><span class="m-cap">4/9</span></div>
+        <div class="note">
+          <b>Retired here</b
+          ><span
+            >The category chips, the "Serves a bet?" row, the route to <code>?setup=new</code>, and
+            the auto-opening wizard.</span
+          >
         </div>
-        <div style="background:#fff;flex:1;padding:9px 11px">
-          <div class="row" style="justify-content:space-between;margin-bottom:7px"><span class="m-meta" style="font-weight:500;color:var(--ink)">Reporting layer</span><span class="m-cap">6 open</span></div>
-          <div class="lrow" style="border:0"><span class="pri">!!</span><span style="flex:1">Rebuild the rollup query</span><span class="m-cap">Sep 24</span></div>
-          <div class="lrow" style="border:0"><span class="pri">!</span><span style="flex:1">Backfill two quarters</span><span class="m-cap">Sep 26</span></div>
-          <div class="lrow" style="border:0"><span class="pri"></span><span style="flex:1">Sanity-check the totals</span><span class="m-cap empty">—</span></div>
-        </div>
-        <div style="background:#fff;flex:.9;padding:9px 11px">
-          <div class="m-cap" style="margin-bottom:7px">select a task</div>
-        </div>
-      </div>
-    </div>
-    <div class="note"><b>Two bars, one band.</b><span>Top bar is work done, bottom is budget consumed. Reading them together is the actual signal: 62% of the work against 75% of the budget means you are behind the money, and that is legible at a glance without a third number explaining it.</span></div>
-    <div class="note"><b>The band goes quiet when it can.</b><span>No estimate on the project means no second bar and no crimson — it reads "18h logged" and nothing else. Nothing invents a number it doesn't have.</span></div>
-  </section>
+      </section>
 
-  <!-- 3 -->
-  <section class="sec">
-    <div class="sec-num">Screen three</div>
-    <h2 class="sec-h">The project page — Plan</h2>
-    <p class="sec-p">Same data, second view. The details strip (your 3B pick) holds name, client, state and billing. Below it the outline, where <b>indent is the grammar</b>: top level is a phase, indent and it becomes a task, indent a phase under a phase and you get the sub-phase the schema already supports.</p>
-    <div class="m">
-      <div class="row" style="justify-content:space-between;padding:11px 14px">
-        <span class="m-meta" style="color:var(--ink-faint)">Great White Q4 reporting</span>
-        <div class="row" style="gap:4px"><span class="m-chip">Board</span><span class="m-chip on">Plan</span><span class="m-chip">Calendar</span></div>
-      </div>
-      <div class="m-hr"></div>
-      <div style="padding:13px 14px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px 16px">
-          <div><span class="m-label">Name</span><div class="m-input focus row" style="font-size:13px;gap:5px">Great White Q4 reporting<span class="caret"></span></div></div>
-          <div><span class="m-label">Client</span><div class="m-input row" style="font-size:13px;gap:6px"><span class="dot biz"></span>Great White</div></div>
-          <div><span class="m-label">State</span><div class="row" style="gap:4px"><span class="m-chip">Prospect</span><span class="m-chip on">Active</span><span class="m-chip">Paused</span><span class="m-chip">Done</span></div></div>
-          <div><span class="m-label">Billing</span><div class="row" style="gap:4px"><span class="m-chip on">Hourly</span><span class="m-chip">Fixed fee</span><span class="m-cap" style="margin-left:4px">$45/hr</span></div></div>
-        </div>
-      </div>
-      <div class="m-hr"></div>
-      <div class="ol-head"><span style="flex:1">Phase and tasks</span><span class="c-due">Due</span><span class="c-est">Est</span><span class="c-log">Logged</span></div>
-      <div class="ol-r phase"><span class="pri"></span><span class="ol-name"><span class="dot biz"></span>Data model rebuild</span><span class="c-due">Sep 19</span><span class="c-est">12h</span><span class="c-log hot">14h</span></div>
-      <div class="ol-r task"><span class="pri">!!</span><span class="ol-name">Audit the current schema</span><span class="c-due">Sep 5</span><span class="c-est">3h</span><span class="c-log">4h</span></div>
-      <div class="ol-r task"><span class="pri">!</span><span class="ol-name">Draft the migration plan</span><span class="c-due">Sep 9</span><span class="c-est">4h</span><span class="c-log">2h</span></div>
-      <div class="ol-r sub"><span class="pri"></span><span class="ol-name" style="font-weight:500">Cutover</span><span class="c-due">Oct 3</span><span class="c-est">5h</span><span class="c-log">8h</span></div>
-      <div class="ol-r phase"><span class="pri"></span><span class="ol-name"><span class="dot biz"></span>Reporting layer</span><span class="c-due empty">set end</span><span class="c-est">6h</span><span class="c-log empty">—</span></div>
-      <div class="ol-r task"><span class="pri"></span><span class="ol-name">Rebuild the rollup query</span><span class="c-due">Sep 24</span><span class="c-est">6h</span><span class="c-log empty">—</span></div>
-      <div class="ol-r task" style="background:var(--surface-2)"><span class="pri"></span><span class="ol-name"><span class="m-input focus row" style="flex:1;padding:2px 6px;font-size:12px;gap:5px"><span style="color:var(--ink-faint)">new task</span><span class="caret" style="height:12px"></span></span></span><span class="c-due empty">—</span><span class="c-est empty">—</span><span class="c-log empty">—</span></div>
-      <div class="m-hr"></div>
-      <div class="row" style="gap:12px;padding:8px 14px;background:var(--surface-2);flex-wrap:wrap">
-        <span class="m-cap"><span class="kbd">tab</span> indent</span><span class="m-cap"><span class="kbd">⇧tab</span> outdent</span>
-        <span class="m-cap"><span class="kbd">↵</span> new row</span><span class="m-cap"><span class="kbd">⌘↵</span> open detail</span>
-        <span class="m-cap" style="margin-left:auto">Saved</span>
-      </div>
-    </div>
-    <div class="note"><b>One date per phase: its end.</b><span>Start is inherited — today for the first phase, the previous phase's end after that. An undated phase says "set end" rather than showing a fabricated date.</span></div>
-    <div class="note"><b>Estimate and logged roll up.</b><span>Data model rebuild reads 12h against 14h, in crimson, on the row itself. The burn signal stops living below the fold and stops being edited through a 10px-wide input.</span></div>
-    <div class="note warn"><b>Consequence of 3B</b><span>Renaming now costs three interactions — open project, switch to Plan, edit the field — rather than the one it would cost on the header. Better than today's seven, worse than the alternative you passed on. Flagging it once; if it annoys you in use, moving just the name back to the H1 is a small change later.</span></div>
-  </section>
-
-  <!-- 4 -->
-  <section class="sec">
-    <div class="sec-num">Screen four</div>
-    <h2 class="sec-h">The composer, demoted and fixed</h2>
-    <p class="sec-p">It survives as the paste path — which is what your <code>flowstate-tasks</code> skill produces — and stops being how you hand-type a task, because the outline is better at that. Four bugs close on the way.</p>
-    <div class="m" style="max-width:480px">
-      <div style="padding:11px 13px">
-        <div class="row" style="justify-content:space-between;margin-bottom:8px">
-          <span class="m-cap">Paste a plan</span>
-          <span class="m-chip">adding to · Reporting layer</span>
-        </div>
-        <div class="m-input" style="font-size:12px;line-height:1.75">
-          Rebuild the rollup query ; sep 24 ; !!<br>
-          Backfill two quarters ; sep 26<br>
-          <span style="color:var(--ink-faint)">Sanity-check the totals</span>
-        </div>
-        <div class="row" style="gap:5px;margin-top:8px;flex-wrap:wrap">
-          <span class="m-chip">Sep 24</span><span class="m-chip">!!</span><span class="m-chip">Sep 26</span>
-        </div>
-        <div class="m-cap" style="margin-top:8px">title ; due ; priority ; phase — trailing parts optional</div>
-      </div>
-      <div class="m-hr"></div>
-      <div class="row" style="justify-content:space-between;padding:8px 13px;background:var(--surface-2)">
-        <span class="m-cap">3 lines, all valid</span><span class="m-cap"><span class="kbd">⌘↵</span> add</span>
-      </div>
-    </div>
-    <div class="note"><b>Fixed</b><span>One submit key everywhere — ⌘↵. Plain Enter makes a new line, as a multi-line box should. Today three surfaces teach two different keys.</span></div>
-    <div class="note"><b>Fixed</b><span>The destination phase is printed on the box, so a bare line has a visible home. Today it files into the last phase you drilled into, which is never named and which changes when you resize the window.</span></div>
-    <div class="note"><b>Fixed</b><span>The grammar is written in words under the field instead of encoded in four chips you have to decode.</span></div>
-    <div class="note"><b>Fixed</b><span>The <code>;tag</code> hint in the tags editor stops contradicting the parser, which reads it as a due date and rejects it.</span></div>
-  </section>
-
-  <!-- 5 -->
-  <section class="sec">
-    <div class="sec-num">Screen five</div>
-    <h2 class="sec-h">Projects index as a status view</h2>
-    <p class="sec-p">Overview at the Projects altitude only — you come here <b>in order to</b> compare projects, which is what makes the numbers legitimate here and not on Today. Every figure is already computed; this is layout, not new backend.</p>
-    <div class="m">
-      <div class="row" style="justify-content:space-between;padding:11px 13px">
-        <span class="m-title">Projects</span>
-        <div class="row" style="gap:5px"><span class="m-chip on">Active</span><span class="m-chip">Paused</span><span class="m-chip">Done</span><span class="m-btn quiet" style="font-size:11px;padding:3px 10px">New project</span></div>
-      </div>
-      <div class="m-hr"></div>
-      <div class="ol-head">
-        <span style="flex:1">Project</span><span style="width:64px;text-align:right">Done</span>
-        <span style="width:76px;text-align:right">Budget</span><span style="width:60px;text-align:right">Next</span><span style="width:56px;text-align:right">State</span>
-      </div>
-      <div class="lrow stripe-biz" style="padding-left:9px">
-        <span style="flex:1">Great White Q4 reporting</span>
-        <span class="m-cap" style="width:64px;text-align:right">62%</span>
-        <span class="m-cap" style="width:76px;text-align:right;color:var(--status-critical)">18h of 24h</span>
-        <span class="m-cap" style="width:60px;text-align:right">Sep 5</span>
-        <span class="m-cap" style="width:56px;text-align:right">Active</span>
-      </div>
-      <div class="lrow stripe-biz" style="padding-left:9px">
-        <span style="flex:1">Hume onboarding</span>
-        <span class="m-cap" style="width:64px;text-align:right">41%</span>
-        <span class="m-cap" style="width:76px;text-align:right">9h of 20h</span>
-        <span class="m-cap" style="width:60px;text-align:right">Sep 8</span>
-        <span class="m-cap" style="width:56px;text-align:right">Active</span>
-      </div>
-      <div class="lrow stripe-biz" style="padding-left:9px">
-        <span style="flex:1">Suncoast discovery</span>
-        <span class="m-cap" style="width:64px;text-align:right">18%</span>
-        <span class="m-cap" style="width:76px;text-align:right">2h of 6h</span>
-        <span class="m-cap empty" style="width:60px;text-align:right">—</span>
-        <span class="m-cap" style="width:56px;text-align:right">Prospect</span>
-      </div>
-      <div class="lrow stripe-per" style="padding-left:9px">
-        <span style="flex:1">Maintenance</span>
-        <span class="m-cap empty" style="width:64px;text-align:right">—</span>
-        <span class="m-cap" style="width:76px;text-align:right">4h</span>
-        <span class="m-cap empty" style="width:60px;text-align:right">—</span>
-        <span class="m-cap" style="width:56px;text-align:right">Active</span>
-      </div>
-    </div>
-    <div class="note"><b>State earns its column.</b><span>This is the first place in the app where project state is visible at all — it has existed in the schema with no control and no display anywhere. A prospect sitting in your active list looking identical to live client work is exactly the kind of quiet inaccuracy the mission is built against.</span></div>
-    <div class="note"><b>Maintenance reads correctly as mostly blank.</b><span>No estimate, no next date, no percent. Personal upkeep consumes budget and has no goal layer, so the row shows hours and nothing else.</span></div>
-  </section>
-
-  <!-- 6 -->
-  <section class="sec">
-    <div class="sec-num">Screen six</div>
-    <h2 class="sec-h">Today — belonging always, health only when wrong</h2>
-    <p class="sec-p">Two signals that don't conflict. <b>7C is belonging</b>: every task carries its project, always, and never alarms. <b>7B is health</b>: one line, only when a threshold is crossed, gone when it isn't.</p>
-    <div class="grid g2">
-      <div class="m">
-        <div class="row" style="justify-content:space-between;padding:11px 13px"><span class="m-title">Today</span><span class="m-cap">Thu Sep 3</span></div>
-        <div class="m-hr"></div>
-        <div style="padding:8px 13px;background:var(--surface-2)">
-          <span class="m-cap" style="color:var(--status-critical)">Great White passed its estimate · 18h of 24h</span>
-        </div>
-        <div class="m-hr"></div>
-        <div class="lrow stripe-biz" style="padding-left:9px"><span class="pri">!!</span><span style="flex:1">Audit the current schema</span><span class="m-cap">Great White</span></div>
-        <div class="lrow stripe-biz" style="padding-left:9px"><span class="pri">!</span><span style="flex:1">Draft the migration plan</span><span class="m-cap">Great White</span></div>
-        <div class="lrow stripe-biz" style="padding-left:9px"><span class="pri"></span><span style="flex:1">Send Hume the intake form</span><span class="m-cap">Hume</span></div>
-        <div class="lrow stripe-per" style="padding-left:9px"><span class="pri"></span><span style="flex:1">Renew the domain</span><span class="m-cap">Maintenance</span></div>
-        <div class="m-hr"></div>
-        <div class="row" style="justify-content:space-between;padding:8px 13px"><span class="m-cap">Needs triage · 3</span><span class="m-cap">⌃I</span></div>
-      </div>
-      <div class="m">
-        <div class="row" style="justify-content:space-between;padding:11px 13px"><span class="m-title">Today</span><span class="m-cap">a healthy day</span></div>
-        <div class="m-hr"></div>
-        <div class="lrow stripe-biz" style="padding-left:9px"><span class="pri">!!</span><span style="flex:1">Audit the current schema</span><span class="m-cap">Great White</span></div>
-        <div class="lrow stripe-biz" style="padding-left:9px"><span class="pri">!</span><span style="flex:1">Draft the migration plan</span><span class="m-cap">Great White</span></div>
-        <div class="lrow stripe-biz" style="padding-left:9px"><span class="pri"></span><span style="flex:1">Send Hume the intake form</span><span class="m-cap">Hume</span></div>
-        <div class="lrow stripe-per" style="padding-left:9px"><span class="pri"></span><span style="flex:1">Renew the domain</span><span class="m-cap">Maintenance</span></div>
-        <div class="m-hr"></div>
-        <div class="row" style="justify-content:space-between;padding:8px 13px"><span class="m-cap">Needs triage · 0</span><span class="m-cap">⌃I</span></div>
-      </div>
-    </div>
-    <div class="note"><b>The health line is absent, not empty.</b><span>That is what separates it from a badge. A badge is present at zero; this doesn't exist unless there is something to do about it.</span></div>
-    <div class="note"><b>Three rows saying Great White is its own message.</b><span>Belonging labels make an unbalanced day self-evident without any number telling you it's unbalanced.</span></div>
-    <div class="note"><b>The triage strip counts down to zero.</b><span>Per decision 8 it stops being a place things can rest and becomes a queue that routes into Later or the Abyss. A count that can reach zero is the whole difference.</span></div>
-  </section>
-
-  <!-- CONFLICT -->
-  <section class="sec">
-    <div class="sec-num">One thing your picks left open</div>
-    <h2 class="sec-h">What "62% done" is counting</h2>
-    <p class="sec-p">5D and 6B both put a percent on screen, and today that percent is <b>completed tasks divided by total tasks</b>. MISSION rejects that denominator by name: the Budget is time-denominated precisely because "task count punishes quick wins and rewards busywork." You picked both anyway, which is a reasonable thing to want — you do want to know how much is left. So the question isn't whether to show it, it's what to divide by.</p>
-
-    <div class="grid g2">
-      <div class="opt">
-        <div class="opt-head"><span class="opt-tag">Option i</span><h3 class="opt-name">Count tasks</h3><p class="opt-line">What's built today.</p></div>
-        <div class="opt-stage">
-          <div class="m" style="width:100%">
-            <div style="padding:12px 13px">
-              <div class="row" style="gap:9px;align-items:baseline;margin-bottom:7px">
-                <span style="font-size:15px;font-weight:500">62% done</span><span class="m-meta">18 of 29 tasks</span>
+      <!-- 2 -->
+      <section class="sec">
+        <div class="sec-num">Screen two</div>
+        <h2 class="sec-h">The project page — Board</h2>
+        <p class="sec-p">
+          Header carries the name, the state chip, and the client as plain text. Below it, one
+          status band answering both questions you picked: <b>how much is left</b> and
+          <b>am I over</b>. They merge into a single strip rather than stacking two blocks — 5B and
+          5D are two readings of the same band, not two bands.
+        </p>
+        <div class="m">
+          <div class="row" style="justify-content: space-between; padding: 12px 14px">
+            <div class="row" style="gap: 8px">
+              <h3 class="m-h1">Great White Q4 reporting</h3>
+              <span class="m-chip on">Active</span>
+            </div>
+            <div class="row" style="gap: 4px">
+              <span class="m-chip on">Board</span><span class="m-chip">Plan</span
+              ><span class="m-chip">Calendar</span>
+            </div>
+          </div>
+          <div class="row" style="gap: 9px; padding: 0 14px 11px">
+            <span class="m-cap"
+              ><span class="dot biz" style="margin-right: 4px"></span>Great White</span
+            >
+          </div>
+          <div class="m-hr"></div>
+          <div style="padding: 12px 14px; background: var(--surface-2)">
+            <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+              <div class="row" style="gap: 9px; align-items: baseline">
+                <span style="font-size: 15px; font-weight: 500">62% done</span>
+                <span class="m-meta">18 of 29 tasks</span>
               </div>
-              <div class="bar"><i style="width:62%"></i></div>
+              <div class="row" style="gap: 9px; align-items: baseline">
+                <span style="font-size: 15px; font-weight: 500; color: var(--status-critical)"
+                  >18h of 24h</span
+                >
+                <span class="m-meta">6h of room left</span>
+              </div>
+            </div>
+            <div class="bar" style="margin-bottom: 6px"><i style="width: 62%"></i></div>
+            <div class="bar"><i class="crit" style="width: 75%"></i></div>
+            <div class="row" style="justify-content: space-between; margin-top: 7px">
+              <span class="m-cap">work done</span>
+              <span class="m-cap">budget consumed · hourly at $45</span>
+            </div>
+          </div>
+          <div class="m-hr"></div>
+          <div class="row" style="gap: 1px; background: var(--border); align-items: stretch">
+            <div style="background: #fff; flex: 1; padding: 9px 11px">
+              <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+                <span class="m-meta" style="font-weight: 500; color: var(--ink)">Phases</span
+                ><span class="m-cap">3</span>
+              </div>
+              <div class="lrow stripe-biz" style="padding-left: 8px; border: 0">
+                <span style="flex: 1">Data model rebuild</span><span class="m-cap">8/8</span>
+              </div>
+              <div
+                class="lrow stripe-biz"
+                style="padding-left: 8px; border: 0; background: var(--surface-2)"
+              >
+                <span style="flex: 1">Reporting layer</span><span class="m-cap">6/12</span>
+              </div>
+              <div class="lrow stripe-biz" style="padding-left: 8px; border: 0">
+                <span style="flex: 1">Cutover</span><span class="m-cap">4/9</span>
+              </div>
+            </div>
+            <div style="background: #fff; flex: 1; padding: 9px 11px">
+              <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+                <span class="m-meta" style="font-weight: 500; color: var(--ink)"
+                  >Reporting layer</span
+                ><span class="m-cap">6 open</span>
+              </div>
+              <div class="lrow" style="border: 0">
+                <span class="pri">!!</span><span style="flex: 1">Rebuild the rollup query</span
+                ><span class="m-cap">Sep 24</span>
+              </div>
+              <div class="lrow" style="border: 0">
+                <span class="pri">!</span><span style="flex: 1">Backfill two quarters</span
+                ><span class="m-cap">Sep 26</span>
+              </div>
+              <div class="lrow" style="border: 0">
+                <span class="pri"></span><span style="flex: 1">Sanity-check the totals</span
+                ><span class="m-cap empty">—</span>
+              </div>
+            </div>
+            <div style="background: #fff; flex: 0.9; padding: 9px 11px">
+              <div class="m-cap" style="margin-bottom: 7px">select a task</div>
+            </div>
+          </div>
+        </div>
+        <div class="note">
+          <b>Two bars, one band.</b
+          ><span
+            >Top bar is work done, bottom is budget consumed. Reading them together is the actual
+            signal: 62% of the work against 75% of the budget means you are behind the money, and
+            that is legible at a glance without a third number explaining it.</span
+          >
+        </div>
+        <div class="note">
+          <b>The band goes quiet when it can.</b
+          ><span
+            >No estimate on the project means no second bar and no crimson — it reads "18h logged"
+            and nothing else. Nothing invents a number it doesn't have.</span
+          >
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="sec">
+        <div class="sec-num">Screen three</div>
+        <h2 class="sec-h">The project page — Plan</h2>
+        <p class="sec-p">
+          Same data, second view. The details strip (your 3B pick) holds name, client, state and
+          billing. Below it the outline, where <b>indent is the grammar</b>: top level is a phase,
+          indent and it becomes a task, indent a phase under a phase and you get the sub-phase the
+          schema already supports.
+        </p>
+        <div class="m">
+          <div class="row" style="justify-content: space-between; padding: 11px 14px">
+            <span class="m-meta" style="color: var(--ink-faint)">Great White Q4 reporting</span>
+            <div class="row" style="gap: 4px">
+              <span class="m-chip">Board</span><span class="m-chip on">Plan</span
+              ><span class="m-chip">Calendar</span>
+            </div>
+          </div>
+          <div class="m-hr"></div>
+          <div style="padding: 13px 14px">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 11px 16px">
+              <div>
+                <span class="m-label">Name</span>
+                <div class="m-input focus row" style="font-size: 13px; gap: 5px">
+                  Great White Q4 reporting<span class="caret"></span>
+                </div>
+              </div>
+              <div>
+                <span class="m-label">Client</span>
+                <div class="m-input row" style="font-size: 13px; gap: 6px">
+                  <span class="dot biz"></span>Great White
+                </div>
+              </div>
+              <div>
+                <span class="m-label">State</span>
+                <div class="row" style="gap: 4px">
+                  <span class="m-chip">Prospect</span><span class="m-chip on">Active</span
+                  ><span class="m-chip">Paused</span><span class="m-chip">Done</span>
+                </div>
+              </div>
+              <div>
+                <span class="m-label">Billing</span>
+                <div class="row" style="gap: 4px">
+                  <span class="m-chip on">Hourly</span><span class="m-chip">Fixed fee</span
+                  ><span class="m-cap" style="margin-left: 4px">$45/hr</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="m-hr"></div>
+          <div class="ol-head">
+            <span style="flex: 1">Phase and tasks</span><span class="c-due">Due</span
+            ><span class="c-est">Est</span><span class="c-log">Logged</span>
+          </div>
+          <div class="ol-r phase">
+            <span class="pri"></span
+            ><span class="ol-name"><span class="dot biz"></span>Data model rebuild</span
+            ><span class="c-due">Sep 19</span><span class="c-est">12h</span
+            ><span class="c-log hot">14h</span>
+          </div>
+          <div class="ol-r task">
+            <span class="pri">!!</span><span class="ol-name">Audit the current schema</span
+            ><span class="c-due">Sep 5</span><span class="c-est">3h</span
+            ><span class="c-log">4h</span>
+          </div>
+          <div class="ol-r task">
+            <span class="pri">!</span><span class="ol-name">Draft the migration plan</span
+            ><span class="c-due">Sep 9</span><span class="c-est">4h</span
+            ><span class="c-log">2h</span>
+          </div>
+          <div class="ol-r sub">
+            <span class="pri"></span><span class="ol-name" style="font-weight: 500">Cutover</span
+            ><span class="c-due">Oct 3</span><span class="c-est">5h</span
+            ><span class="c-log">8h</span>
+          </div>
+          <div class="ol-r phase">
+            <span class="pri"></span
+            ><span class="ol-name"><span class="dot biz"></span>Reporting layer</span
+            ><span class="c-due empty">set end</span><span class="c-est">6h</span
+            ><span class="c-log empty">—</span>
+          </div>
+          <div class="ol-r task">
+            <span class="pri"></span><span class="ol-name">Rebuild the rollup query</span
+            ><span class="c-due">Sep 24</span><span class="c-est">6h</span
+            ><span class="c-log empty">—</span>
+          </div>
+          <div class="ol-r task" style="background: var(--surface-2)">
+            <span class="pri"></span
+            ><span class="ol-name"
+              ><span
+                class="m-input focus row"
+                style="flex: 1; padding: 2px 6px; font-size: 12px; gap: 5px"
+                ><span style="color: var(--ink-faint)">new task</span
+                ><span class="caret" style="height: 12px"></span></span></span
+            ><span class="c-due empty">—</span><span class="c-est empty">—</span
+            ><span class="c-log empty">—</span>
+          </div>
+          <div class="m-hr"></div>
+          <div
+            class="row"
+            style="gap: 12px; padding: 8px 14px; background: var(--surface-2); flex-wrap: wrap"
+          >
+            <span class="m-cap"><span class="kbd">tab</span> indent</span
+            ><span class="m-cap"><span class="kbd">⇧tab</span> outdent</span>
+            <span class="m-cap"><span class="kbd">↵</span> new row</span
+            ><span class="m-cap"><span class="kbd">⌘↵</span> open detail</span>
+            <span class="m-cap" style="margin-left: auto">Saved</span>
+          </div>
+        </div>
+        <div class="note">
+          <b>One date per phase: its end.</b
+          ><span
+            >Start is inherited — today for the first phase, the previous phase's end after that. An
+            undated phase says "set end" rather than showing a fabricated date.</span
+          >
+        </div>
+        <div class="note">
+          <b>Estimate and logged roll up.</b
+          ><span
+            >Data model rebuild reads 12h against 14h, in crimson, on the row itself. The burn
+            signal stops living below the fold and stops being edited through a 10px-wide
+            input.</span
+          >
+        </div>
+        <div class="note warn">
+          <b>Consequence of 3B</b
+          ><span
+            >Renaming now costs three interactions — open project, switch to Plan, edit the field —
+            rather than the one it would cost on the header. Better than today's seven, worse than
+            the alternative you passed on. Flagging it once; if it annoys you in use, moving just
+            the name back to the H1 is a small change later.</span
+          >
+        </div>
+      </section>
+
+      <!-- 4 -->
+      <section class="sec">
+        <div class="sec-num">Screen four</div>
+        <h2 class="sec-h">The composer, demoted and fixed</h2>
+        <p class="sec-p">
+          It survives as the paste path — which is what your <code>flowstate-tasks</code> skill
+          produces — and stops being how you hand-type a task, because the outline is better at
+          that. Four bugs close on the way.
+        </p>
+        <div class="m" style="max-width: 480px">
+          <div style="padding: 11px 13px">
+            <div class="row" style="justify-content: space-between; margin-bottom: 8px">
+              <span class="m-cap">Paste a plan</span>
+              <span class="m-chip">adding to · Reporting layer</span>
+            </div>
+            <div class="m-input" style="font-size: 12px; line-height: 1.75">
+              Rebuild the rollup query ; sep 24 ; !!<br />
+              Backfill two quarters ; sep 26<br />
+              <span style="color: var(--ink-faint)">Sanity-check the totals</span>
+            </div>
+            <div class="row" style="gap: 5px; margin-top: 8px; flex-wrap: wrap">
+              <span class="m-chip">Sep 24</span><span class="m-chip">!!</span
+              ><span class="m-chip">Sep 26</span>
+            </div>
+            <div class="m-cap" style="margin-top: 8px">
+              title ; due ; priority ; phase — trailing parts optional
+            </div>
+          </div>
+          <div class="m-hr"></div>
+          <div
+            class="row"
+            style="justify-content: space-between; padding: 8px 13px; background: var(--surface-2)"
+          >
+            <span class="m-cap">3 lines, all valid</span
+            ><span class="m-cap"><span class="kbd">⌘↵</span> add</span>
+          </div>
+        </div>
+        <div class="note">
+          <b>Fixed</b
+          ><span
+            >One submit key everywhere — ⌘↵. Plain Enter makes a new line, as a multi-line box
+            should. Today three surfaces teach two different keys.</span
+          >
+        </div>
+        <div class="note">
+          <b>Fixed</b
+          ><span
+            >The destination phase is printed on the box, so a bare line has a visible home. Today
+            it files into the last phase you drilled into, which is never named and which changes
+            when you resize the window.</span
+          >
+        </div>
+        <div class="note">
+          <b>Fixed</b
+          ><span
+            >The grammar is written in words under the field instead of encoded in four chips you
+            have to decode.</span
+          >
+        </div>
+        <div class="note">
+          <b>Fixed</b
+          ><span
+            >The <code>;tag</code> hint in the tags editor stops contradicting the parser, which
+            reads it as a due date and rejects it.</span
+          >
+        </div>
+      </section>
+
+      <!-- 5 -->
+      <section class="sec">
+        <div class="sec-num">Screen five</div>
+        <h2 class="sec-h">Projects index as a status view</h2>
+        <p class="sec-p">
+          Overview at the Projects altitude only — you come here <b>in order to</b> compare
+          projects, which is what makes the numbers legitimate here and not on Today. Every figure
+          is already computed; this is layout, not new backend.
+        </p>
+        <div class="m">
+          <div class="row" style="justify-content: space-between; padding: 11px 13px">
+            <span class="m-title">Projects</span>
+            <div class="row" style="gap: 5px">
+              <span class="m-chip on">Active</span><span class="m-chip">Paused</span
+              ><span class="m-chip">Done</span
+              ><span class="m-btn quiet" style="font-size: 11px; padding: 3px 10px"
+                >New project</span
+              >
+            </div>
+          </div>
+          <div class="m-hr"></div>
+          <div class="ol-head">
+            <span style="flex: 1">Project</span
+            ><span style="width: 64px; text-align: right">Done</span>
+            <span style="width: 76px; text-align: right">Budget</span
+            ><span style="width: 60px; text-align: right">Next</span
+            ><span style="width: 56px; text-align: right">State</span>
+          </div>
+          <div class="lrow stripe-biz" style="padding-left: 9px">
+            <span style="flex: 1">Great White Q4 reporting</span>
+            <span class="m-cap" style="width: 64px; text-align: right">62%</span>
+            <span
+              class="m-cap"
+              style="width: 76px; text-align: right; color: var(--status-critical)"
+              >18h of 24h</span
+            >
+            <span class="m-cap" style="width: 60px; text-align: right">Sep 5</span>
+            <span class="m-cap" style="width: 56px; text-align: right">Active</span>
+          </div>
+          <div class="lrow stripe-biz" style="padding-left: 9px">
+            <span style="flex: 1">Hume onboarding</span>
+            <span class="m-cap" style="width: 64px; text-align: right">41%</span>
+            <span class="m-cap" style="width: 76px; text-align: right">9h of 20h</span>
+            <span class="m-cap" style="width: 60px; text-align: right">Sep 8</span>
+            <span class="m-cap" style="width: 56px; text-align: right">Active</span>
+          </div>
+          <div class="lrow stripe-biz" style="padding-left: 9px">
+            <span style="flex: 1">Suncoast discovery</span>
+            <span class="m-cap" style="width: 64px; text-align: right">18%</span>
+            <span class="m-cap" style="width: 76px; text-align: right">2h of 6h</span>
+            <span class="m-cap empty" style="width: 60px; text-align: right">—</span>
+            <span class="m-cap" style="width: 56px; text-align: right">Prospect</span>
+          </div>
+          <div class="lrow stripe-per" style="padding-left: 9px">
+            <span style="flex: 1">Maintenance</span>
+            <span class="m-cap empty" style="width: 64px; text-align: right">—</span>
+            <span class="m-cap" style="width: 76px; text-align: right">4h</span>
+            <span class="m-cap empty" style="width: 60px; text-align: right">—</span>
+            <span class="m-cap" style="width: 56px; text-align: right">Active</span>
+          </div>
+        </div>
+        <div class="note">
+          <b>State earns its column.</b
+          ><span
+            >This is the first place in the app where project state is visible at all — it has
+            existed in the schema with no control and no display anywhere. A prospect sitting in
+            your active list looking identical to live client work is exactly the kind of quiet
+            inaccuracy the mission is built against.</span
+          >
+        </div>
+        <div class="note">
+          <b>Maintenance reads correctly as mostly blank.</b
+          ><span
+            >No estimate, no next date, no percent. Personal upkeep consumes budget and has no goal
+            layer, so the row shows hours and nothing else.</span
+          >
+        </div>
+      </section>
+
+      <!-- 6 -->
+      <section class="sec">
+        <div class="sec-num">Screen six</div>
+        <h2 class="sec-h">Today — belonging always, health only when wrong</h2>
+        <p class="sec-p">
+          Two signals that don't conflict. <b>7C is belonging</b>: every task carries its project,
+          always, and never alarms. <b>7B is health</b>: one line, only when a threshold is crossed,
+          gone when it isn't.
+        </p>
+        <div class="g2 grid">
+          <div class="m">
+            <div class="row" style="justify-content: space-between; padding: 11px 13px">
+              <span class="m-title">Today</span><span class="m-cap">Thu Sep 3</span>
             </div>
             <div class="m-hr"></div>
-            <div style="padding:9px 13px;background:var(--surface-2)">
-              <div class="m-cap" style="margin-bottom:5px">what moves it</div>
-              <div class="m-cap">"Renew the domain" — 5 minutes — moves it 3.4%</div>
-              <div class="m-cap">"Rebuild the rollup query" — 6 hours — moves it 3.4%</div>
-            </div>
-          </div>
-        </div>
-        <div class="opt-body"><ul>
-          <li>Already computed, already shipped, nothing to build.</li>
-          <li>Always available, even with no estimates anywhere.</li>
-          <li class="t">A five-minute task and a six-hour task move the bar identically.</li>
-          <li class="t">Clearing small things feels like progress on the thing that's actually late.</li>
-          <li class="t">Contradicts the denominator the Budget exists to establish.</li>
-        </ul></div>
-      </div>
-
-      <div class="opt">
-        <div class="opt-head"><span class="opt-tag">Option ii</span><h3 class="opt-name">Weight by estimated hours</h3><p class="opt-line">Same bar, honest denominator.</p></div>
-        <div class="opt-stage">
-          <div class="m" style="width:100%">
-            <div style="padding:12px 13px">
-              <div class="row" style="gap:9px;align-items:baseline;margin-bottom:7px">
-                <span style="font-size:15px;font-weight:500">41% done</span><span class="m-meta">10h of 24h estimated</span>
-              </div>
-              <div class="bar"><i style="width:41%"></i></div>
+            <div style="padding: 8px 13px; background: var(--surface-2)">
+              <span class="m-cap" style="color: var(--status-critical)"
+                >Great White passed its estimate · 18h of 24h</span
+              >
             </div>
             <div class="m-hr"></div>
-            <div style="padding:9px 13px;background:var(--surface-2)">
-              <div class="m-cap" style="margin-bottom:5px">what moves it</div>
-              <div class="m-cap">"Renew the domain" — 5 minutes — moves it 0.3%</div>
-              <div class="m-cap">"Rebuild the rollup query" — 6 hours — moves it 25%</div>
+            <div class="lrow stripe-biz" style="padding-left: 9px">
+              <span class="pri">!!</span><span style="flex: 1">Audit the current schema</span
+              ><span class="m-cap">Great White</span>
+            </div>
+            <div class="lrow stripe-biz" style="padding-left: 9px">
+              <span class="pri">!</span><span style="flex: 1">Draft the migration plan</span
+              ><span class="m-cap">Great White</span>
+            </div>
+            <div class="lrow stripe-biz" style="padding-left: 9px">
+              <span class="pri"></span><span style="flex: 1">Send Hume the intake form</span
+              ><span class="m-cap">Hume</span>
+            </div>
+            <div class="lrow stripe-per" style="padding-left: 9px">
+              <span class="pri"></span><span style="flex: 1">Renew the domain</span
+              ><span class="m-cap">Maintenance</span>
+            </div>
+            <div class="m-hr"></div>
+            <div class="row" style="justify-content: space-between; padding: 8px 13px">
+              <span class="m-cap">Needs triage · 3</span><span class="m-cap">⌃I</span>
+            </div>
+          </div>
+          <div class="m">
+            <div class="row" style="justify-content: space-between; padding: 11px 13px">
+              <span class="m-title">Today</span><span class="m-cap">a healthy day</span>
+            </div>
+            <div class="m-hr"></div>
+            <div class="lrow stripe-biz" style="padding-left: 9px">
+              <span class="pri">!!</span><span style="flex: 1">Audit the current schema</span
+              ><span class="m-cap">Great White</span>
+            </div>
+            <div class="lrow stripe-biz" style="padding-left: 9px">
+              <span class="pri">!</span><span style="flex: 1">Draft the migration plan</span
+              ><span class="m-cap">Great White</span>
+            </div>
+            <div class="lrow stripe-biz" style="padding-left: 9px">
+              <span class="pri"></span><span style="flex: 1">Send Hume the intake form</span
+              ><span class="m-cap">Hume</span>
+            </div>
+            <div class="lrow stripe-per" style="padding-left: 9px">
+              <span class="pri"></span><span style="flex: 1">Renew the domain</span
+              ><span class="m-cap">Maintenance</span>
+            </div>
+            <div class="m-hr"></div>
+            <div class="row" style="justify-content: space-between; padding: 8px 13px">
+              <span class="m-cap">Needs triage · 0</span><span class="m-cap">⌃I</span>
             </div>
           </div>
         </div>
-        <div class="opt-body"><ul>
-          <li>Sum the estimates of finished tasks, divide by the total estimate. The bar now means the same thing the Budget means.</li>
-          <li>Sits directly above the budget bar on the same band, in the same unit — the two become comparable rather than two unrelated percentages.</li>
-          <li>Same 62%-vs-41% gap is itself information: it says the work you've cleared was the cheap half.</li>
-          <li class="t">Needs estimates. With none, it falls back to task count and says so ("18 of 29 tasks, no estimates yet").</li>
-          <li class="t">A real change to the aggregation, not just a label — roughly a day.</li>
-        </ul></div>
-      </div>
-    </div>
+        <div class="note">
+          <b>The health line is absent, not empty.</b
+          ><span
+            >That is what separates it from a badge. A badge is present at zero; this doesn't exist
+            unless there is something to do about it.</span
+          >
+        </div>
+        <div class="note">
+          <b>Three rows saying Great White is its own message.</b
+          ><span
+            >Belonging labels make an unbalanced day self-evident without any number telling you
+            it's unbalanced.</span
+          >
+        </div>
+        <div class="note">
+          <b>The triage strip counts down to zero.</b
+          ><span
+            >Per decision 8 it stops being a place things can rest and becomes a queue that routes
+            into Later or the Abyss. A count that can reach zero is the whole difference.</span
+          >
+        </div>
+      </section>
 
-    <div class="take conflict"><b>Why I'm raising it rather than deciding it</b>
-      <p>The gap in the mockups is the argument. The same project is 62% done by task count and 41% done by hours, and the second number is the one that tells you the truth about what Thursday looks like. On a status band whose whole purpose is "how much is left against how much budget is gone," two bars in two different units invite a comparison that doesn't hold.</p>
-      <p>The counterargument is real too: option ii is only as good as your estimates, and you don't currently estimate everything. Which is why the fallback matters — when a project has no estimates, it says so instead of pretending.</p>
-    </div>
-  </section>
+      <!-- CONFLICT -->
+      <section class="sec">
+        <div class="sec-num">One thing your picks left open</div>
+        <h2 class="sec-h">What "62% done" is counting</h2>
+        <p class="sec-p">
+          5D and 6B both put a percent on screen, and today that percent is
+          <b>completed tasks divided by total tasks</b>. MISSION rejects that denominator by name:
+          the Budget is time-denominated precisely because "task count punishes quick wins and
+          rewards busywork." You picked both anyway, which is a reasonable thing to want — you do
+          want to know how much is left. So the question isn't whether to show it, it's what to
+          divide by.
+        </p>
 
-  <!-- SEQUENCE -->
-  <section class="sec">
-    <div class="sec-num">Build order</div>
-    <h2 class="sec-h">What to ship, in what order</h2>
-    <p class="sec-p">Ordered so nothing is broken in between, and so the biggest build is de-risked before it's committed to.</p>
-    <div class="m" style="padding:18px 22px">
-      <ol class="seq">
-        <li><b>Create dialog (1A) and the palette entry.</b> Two evenings. Leave the wizard reachable from ⋯ but stop it auto-opening. Nothing else changes yet.</li>
-        <li><b>Projects index as a status view (6B).</b> Layout over data that already exists. Ships the first visible win, and gives project state a display before it has an editor.</li>
-        <li><b>Plan mode, read-only (2D).</b> The outline as a view: board data flattened, dates and hours in columns. Confirm the two views agree before betting the planning flow on it.</li>
-        <li><b>Plan mode, editable, plus the details strip (2D + 3B).</b> Tab, Shift+Tab, Enter, inline dates and estimates. State gets its control here. <b>Delete the wizard the day this lands.</b></li>
-        <li><b>The status band (5B + 5D)</b> on the project page, in whichever denominator you land on above.</li>
-        <li><b>Composer fixes (4A).</b> One submit key, printed destination phase, grammar in words, the <code>;tag</code> contradiction resolved. Small, and can slot in anywhere after step 4.</li>
-        <li><b>Today signals (7B + 7C).</b> Belonging labels first — trivial. The health line after the burn thresholds are settled by step 5.</li>
-        <li><b>Triage strip becomes a queue (8).</b> Routes to Later or the Abyss, count reaches zero.</li>
-      </ol>
-    </div>
-    <div class="note"><b>Cut on the way through</b><span>Milestones step and table, the wizard's Tasks textarea, "Serves a bet?" at creation, the 10-project template gate, and the dead <code>--cat-relationships-solid</code> / <code>--cat-adulting-solid</code> references left over from the five-category collapse.</span></div>
-  </section>
+        <div class="g2 grid">
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option i</span>
+              <h3 class="opt-name">Count tasks</h3>
+              <p class="opt-line">What's built today.</p>
+            </div>
+            <div class="opt-stage">
+              <div class="m" style="width: 100%">
+                <div style="padding: 12px 13px">
+                  <div class="row" style="gap: 9px; align-items: baseline; margin-bottom: 7px">
+                    <span style="font-size: 15px; font-weight: 500">62% done</span
+                    ><span class="m-meta">18 of 29 tasks</span>
+                  </div>
+                  <div class="bar"><i style="width: 62%"></i></div>
+                </div>
+                <div class="m-hr"></div>
+                <div style="padding: 9px 13px; background: var(--surface-2)">
+                  <div class="m-cap" style="margin-bottom: 5px">what moves it</div>
+                  <div class="m-cap">"Renew the domain" — 5 minutes — moves it 3.4%</div>
+                  <div class="m-cap">"Rebuild the rollup query" — 6 hours — moves it 3.4%</div>
+                </div>
+              </div>
+            </div>
+            <div class="opt-body">
+              <ul>
+                <li>Already computed, already shipped, nothing to build.</li>
+                <li>Always available, even with no estimates anywhere.</li>
+                <li class="t">A five-minute task and a six-hour task move the bar identically.</li>
+                <li class="t">
+                  Clearing small things feels like progress on the thing that's actually late.
+                </li>
+                <li class="t">Contradicts the denominator the Budget exists to establish.</li>
+              </ul>
+            </div>
+          </div>
 
-</div>
-</body>
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option ii</span>
+              <h3 class="opt-name">Weight by estimated hours</h3>
+              <p class="opt-line">Same bar, honest denominator.</p>
+            </div>
+            <div class="opt-stage">
+              <div class="m" style="width: 100%">
+                <div style="padding: 12px 13px">
+                  <div class="row" style="gap: 9px; align-items: baseline; margin-bottom: 7px">
+                    <span style="font-size: 15px; font-weight: 500">41% done</span
+                    ><span class="m-meta">10h of 24h estimated</span>
+                  </div>
+                  <div class="bar"><i style="width: 41%"></i></div>
+                </div>
+                <div class="m-hr"></div>
+                <div style="padding: 9px 13px; background: var(--surface-2)">
+                  <div class="m-cap" style="margin-bottom: 5px">what moves it</div>
+                  <div class="m-cap">"Renew the domain" — 5 minutes — moves it 0.3%</div>
+                  <div class="m-cap">"Rebuild the rollup query" — 6 hours — moves it 25%</div>
+                </div>
+              </div>
+            </div>
+            <div class="opt-body">
+              <ul>
+                <li>
+                  Sum the estimates of finished tasks, divide by the total estimate. The bar now
+                  means the same thing the Budget means.
+                </li>
+                <li>
+                  Sits directly above the budget bar on the same band, in the same unit — the two
+                  become comparable rather than two unrelated percentages.
+                </li>
+                <li>
+                  Same 62%-vs-41% gap is itself information: it says the work you've cleared was the
+                  cheap half.
+                </li>
+                <li class="t">
+                  Needs estimates. With none, it falls back to task count and says so ("18 of 29
+                  tasks, no estimates yet").
+                </li>
+                <li class="t">
+                  A real change to the aggregation, not just a label — roughly a day.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="take conflict">
+          <b>Why I'm raising it rather than deciding it</b>
+          <p>
+            The gap in the mockups is the argument. The same project is 62% done by task count and
+            41% done by hours, and the second number is the one that tells you the truth about what
+            Thursday looks like. On a status band whose whole purpose is "how much is left against
+            how much budget is gone," two bars in two different units invite a comparison that
+            doesn't hold.
+          </p>
+          <p>
+            The counterargument is real too: option ii is only as good as your estimates, and you
+            don't currently estimate everything. Which is why the fallback matters — when a project
+            has no estimates, it says so instead of pretending.
+          </p>
+        </div>
+      </section>
+
+      <!-- SEQUENCE -->
+      <section class="sec">
+        <div class="sec-num">Build order</div>
+        <h2 class="sec-h">What to ship, in what order</h2>
+        <p class="sec-p">
+          Ordered so nothing is broken in between, and so the biggest build is de-risked before it's
+          committed to.
+        </p>
+        <div class="m" style="padding: 18px 22px">
+          <ol class="seq">
+            <li>
+              <b>Create dialog (1A) and the palette entry.</b> Two evenings. Leave the wizard
+              reachable from ⋯ but stop it auto-opening. Nothing else changes yet.
+            </li>
+            <li>
+              <b>Projects index as a status view (6B).</b> Layout over data that already exists.
+              Ships the first visible win, and gives project state a display before it has an
+              editor.
+            </li>
+            <li>
+              <b>Plan mode, read-only (2D).</b> The outline as a view: board data flattened, dates
+              and hours in columns. Confirm the two views agree before betting the planning flow on
+              it.
+            </li>
+            <li>
+              <b>Plan mode, editable, plus the details strip (2D + 3B).</b> Tab, Shift+Tab, Enter,
+              inline dates and estimates. State gets its control here.
+              <b>Delete the wizard the day this lands.</b>
+            </li>
+            <li>
+              <b>The status band (5B + 5D)</b> on the project page, in whichever denominator you
+              land on above.
+            </li>
+            <li>
+              <b>Composer fixes (4A).</b> One submit key, printed destination phase, grammar in
+              words, the <code>;tag</code> contradiction resolved. Small, and can slot in anywhere
+              after step 4.
+            </li>
+            <li>
+              <b>Today signals (7B + 7C).</b> Belonging labels first — trivial. The health line
+              after the burn thresholds are settled by step 5.
+            </li>
+            <li>
+              <b>Triage strip becomes a queue (8).</b> Routes to Later or the Abyss, count reaches
+              zero.
+            </li>
+          </ol>
+        </div>
+        <div class="note">
+          <b>Cut on the way through</b
+          ><span
+            >Milestones step and table, the wizard's Tasks textarea, "Serves a bet?" at creation,
+            the 10-project template gate, and the dead <code>--cat-relationships-solid</code> /
+            <code>--cat-adulting-solid</code> references left over from the five-category
+            collapse.</span
+          >
+        </div>
+      </section>
+    </div>
+  </body>
 </html>

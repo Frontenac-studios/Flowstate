@@ -1,573 +1,1224 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kash 3.2 — Project creation options</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#ffffff; --surface:#ffffff; --surface-2:#fafafa; --border:#ececec;
-    --ink:#16181d; --ink-muted:#6b7280; --ink-faint:#767e8e;
-    --cat-business:#009ddc; --cat-personal:#973d97;
-    --status-critical:#b3122a; --status-warn:#fcb827;
-    --r-card:8px; --r-row:5px; --r-control:5px; --r-chip:5px;
-    --s1:2px; --s2:4px; --s3:8px; --s4:12px; --s5:16px; --s6:20px; --s7:24px; --s8:32px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; background:#f6f6f7; color:var(--ink);
-    font-family:Figtree,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    font-size:13px; line-height:1.5; font-weight:400;
-    -webkit-font-smoothing:antialiased;
-  }
-  .page{max-width:1180px; margin:0 auto; padding:40px 28px 96px}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kash 3.2 — Project creation options</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --surface-2: #fafafa;
+        --border: #ececec;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #767e8e;
+        --cat-business: #009ddc;
+        --cat-personal: #973d97;
+        --status-critical: #b3122a;
+        --status-warn: #fcb827;
+        --r-card: 8px;
+        --r-row: 5px;
+        --r-control: 5px;
+        --r-chip: 5px;
+        --s1: 2px;
+        --s2: 4px;
+        --s3: 8px;
+        --s4: 12px;
+        --s5: 16px;
+        --s6: 20px;
+        --s7: 24px;
+        --s8: 32px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f6f6f7;
+        color: var(--ink);
+        font-family:
+          Figtree,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+      }
+      .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 40px 28px 96px;
+      }
 
-  /* ---------- doc typography ---------- */
-  .doc-h1{font-size:20px; font-weight:500; letter-spacing:-0.01em; margin:0 0 6px}
-  .doc-sub{font-size:13px; color:var(--ink-muted); margin:0 0 6px; max-width:78ch}
-  .doc-meta{font-size:11px; color:var(--ink-faint); letter-spacing:0.04em; text-transform:uppercase}
-  .sec{margin-top:56px}
-  .sec-num{font-size:11px; color:var(--ink-faint); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px}
-  .sec-h{font-size:17px; font-weight:500; margin:0 0 8px}
-  .sec-p{font-size:13px; color:var(--ink-muted); max-width:80ch; margin:0 0 24px}
-  .rule{height:1px; background:var(--border); border:0; margin:0}
-  strong{font-weight:500}
-  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:3px; padding:1px 4px}
+      /* ---------- doc typography ---------- */
+      .doc-h1 {
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0 0 6px;
+      }
+      .doc-sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin: 0 0 6px;
+        max-width: 78ch;
+      }
+      .doc-meta {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .sec {
+        margin-top: 56px;
+      }
+      .sec-num {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .sec-h {
+        font-size: 17px;
+        font-weight: 500;
+        margin: 0 0 8px;
+      }
+      .sec-p {
+        font-size: 13px;
+        color: var(--ink-muted);
+        max-width: 80ch;
+        margin: 0 0 24px;
+      }
+      .rule {
+        height: 1px;
+        background: var(--border);
+        border: 0;
+        margin: 0;
+      }
+      strong {
+        font-weight: 500;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 1px 4px;
+      }
 
-  /* ---------- option scaffolding ---------- */
-  .opt-grid{display:grid; gap:20px}
-  .opt-grid.three{grid-template-columns:repeat(3,1fr)}
-  .opt-grid.two{grid-template-columns:repeat(2,1fr)}
-  @media (max-width:1000px){.opt-grid.three,.opt-grid.two{grid-template-columns:1fr}}
+      /* ---------- option scaffolding ---------- */
+      .opt-grid {
+        display: grid;
+        gap: 20px;
+      }
+      .opt-grid.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .opt-grid.two {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (max-width: 1000px) {
+        .opt-grid.three,
+        .opt-grid.two {
+          grid-template-columns: 1fr;
+        }
+      }
 
-  .opt{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); overflow:hidden; display:flex; flex-direction:column}
-  .opt-head{padding:14px 16px 12px; border-bottom:1px solid var(--border)}
-  .opt-tag{font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); display:block; margin-bottom:3px}
-  .opt-name{font-size:15px; font-weight:500; margin:0 0 4px}
-  .opt-line{font-size:12px; color:var(--ink-muted); margin:0}
-  .opt-stage{padding:20px 16px; background:var(--surface-2); border-bottom:1px solid var(--border); flex:1; display:flex; flex-direction:column; justify-content:center; gap:10px}
-  .opt-body{padding:14px 16px}
-  .opt-body h4{font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 6px; font-weight:400}
-  .opt-body h4:not(:first-child){margin-top:14px}
-  .opt-body ul{margin:0; padding-left:16px}
-  .opt-body li{font-size:12px; color:var(--ink-muted); margin-bottom:3px}
-  .opt-body li.good::marker{color:var(--ink)}
-  .cost{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px}
-  .cost span{font-size:11px; border:1px solid var(--border); border-radius:var(--r-chip); padding:2px 7px; color:var(--ink-muted); background:var(--surface)}
-  .cost span.hot{color:var(--status-critical); border-color:#f0d3d8}
-  .cost span.win{color:var(--ink); border-color:#d8d8d8}
+      .opt {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .opt-head {
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .opt-tag {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 3px;
+      }
+      .opt-name {
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0 0 4px;
+      }
+      .opt-line {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin: 0;
+      }
+      .opt-stage {
+        padding: 20px 16px;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+      }
+      .opt-body {
+        padding: 14px 16px;
+      }
+      .opt-body h4 {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin: 0 0 6px;
+        font-weight: 400;
+      }
+      .opt-body h4:not(:first-child) {
+        margin-top: 14px;
+      }
+      .opt-body ul {
+        margin: 0;
+        padding-left: 16px;
+      }
+      .opt-body li {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin-bottom: 3px;
+      }
+      .opt-body li.good::marker {
+        color: var(--ink);
+      }
+      .cost {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .cost span {
+        font-size: 11px;
+        border: 1px solid var(--border);
+        border-radius: var(--r-chip);
+        padding: 2px 7px;
+        color: var(--ink-muted);
+        background: var(--surface);
+      }
+      .cost span.hot {
+        color: var(--status-critical);
+        border-color: #f0d3d8;
+      }
+      .cost span.win {
+        color: var(--ink);
+        border-color: #d8d8d8;
+      }
 
-  /* ---------- app mockup primitives (to spec) ---------- */
-  .m{background:#fff; border:1px solid var(--border); border-radius:var(--r-card); font-size:13px; overflow:hidden}
-  .m-modal{box-shadow:0 8px 28px rgba(22,24,29,.10)}
-  .m-pad{padding:14px}
-  .m-label{font-size:11px; color:var(--ink-faint); display:block; margin-bottom:5px}
-  .m-input{border:1px solid var(--border); border-radius:var(--r-control); padding:7px 9px; font-size:13px; color:var(--ink); background:#fff}
-  .m-input.ghost{color:var(--ink-faint)}
-  .m-input.focus{border-color:var(--ink); border-width:2px; padding:6px 8px}
-  .m-row{display:flex; align-items:center; gap:8px}
-  .m-btn{font-size:12px; border:1px solid var(--ink); border-radius:var(--r-control); padding:5px 12px; background:#fff; color:var(--ink); display:inline-block}
-  .m-btn.quiet{border-color:var(--border); color:var(--ink-muted)}
-  .m-chip{font-size:11px; border:1px solid var(--border); border-radius:var(--r-chip); padding:2px 8px; color:var(--ink-muted); background:#fff; display:inline-flex; align-items:center; gap:5px}
-  .m-chip.on{border-color:var(--ink); color:var(--ink)}
-  .m-title{font-size:15px; font-weight:500; margin:0}
-  .m-meta{font-size:12px; color:var(--ink-muted)}
-  .m-cap{font-size:11px; color:var(--ink-faint)}
-  .m-hr{height:1px; background:var(--border); margin:0}
-  .stripe-biz{border-left:3px solid var(--cat-business)}
-  .stripe-per{border-left:3px solid var(--cat-personal)}
-  .dot{width:5px; height:5px; border-radius:50%; display:inline-block}
-  .dot.biz{background:var(--cat-business)}
-  .dot.per{background:var(--cat-personal)}
-  .kbd{font-family:ui-monospace,Menlo,monospace; font-size:10px; border:1px solid var(--border); border-radius:3px; padding:1px 4px; color:var(--ink-faint); background:#fff}
-  .m-listrow{display:flex; align-items:center; gap:8px; padding:7px 10px; min-height:30px; border-bottom:1px solid var(--border)}
-  .m-listrow:last-child{border-bottom:0}
-  .m-progress{height:1px; background:var(--border); position:relative}
-  .m-progress i{position:absolute; left:0; top:0; height:1px; background:var(--ink)}
+      /* ---------- app mockup primitives (to spec) ---------- */
+      .m {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        font-size: 13px;
+        overflow: hidden;
+      }
+      .m-modal {
+        box-shadow: 0 8px 28px rgba(22, 24, 29, 0.1);
+      }
+      .m-pad {
+        padding: 14px;
+      }
+      .m-label {
+        font-size: 11px;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 5px;
+      }
+      .m-input {
+        border: 1px solid var(--border);
+        border-radius: var(--r-control);
+        padding: 7px 9px;
+        font-size: 13px;
+        color: var(--ink);
+        background: #fff;
+      }
+      .m-input.ghost {
+        color: var(--ink-faint);
+      }
+      .m-input.focus {
+        border-color: var(--ink);
+        border-width: 2px;
+        padding: 6px 8px;
+      }
+      .m-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .m-btn {
+        font-size: 12px;
+        border: 1px solid var(--ink);
+        border-radius: var(--r-control);
+        padding: 5px 12px;
+        background: #fff;
+        color: var(--ink);
+        display: inline-block;
+      }
+      .m-btn.quiet {
+        border-color: var(--border);
+        color: var(--ink-muted);
+      }
+      .m-chip {
+        font-size: 11px;
+        border: 1px solid var(--border);
+        border-radius: var(--r-chip);
+        padding: 2px 8px;
+        color: var(--ink-muted);
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .m-chip.on {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      .m-title {
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .m-meta {
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+      .m-cap {
+        font-size: 11px;
+        color: var(--ink-faint);
+      }
+      .m-hr {
+        height: 1px;
+        background: var(--border);
+        margin: 0;
+      }
+      .stripe-biz {
+        border-left: 3px solid var(--cat-business);
+      }
+      .stripe-per {
+        border-left: 3px solid var(--cat-personal);
+      }
+      .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot.biz {
+        background: var(--cat-business);
+      }
+      .dot.per {
+        background: var(--cat-personal);
+      }
+      .kbd {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 10px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 1px 4px;
+        color: var(--ink-faint);
+        background: #fff;
+      }
+      .m-listrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        min-height: 30px;
+        border-bottom: 1px solid var(--border);
+      }
+      .m-listrow:last-child {
+        border-bottom: 0;
+      }
+      .m-progress {
+        height: 1px;
+        background: var(--border);
+        position: relative;
+      }
+      .m-progress i {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 1px;
+        background: var(--ink);
+      }
 
-  /* annotation */
-  .note{display:flex; gap:8px; align-items:flex-start; font-size:11px; color:var(--ink-faint); margin-top:8px}
-  .note b{font-weight:500; color:var(--status-critical); font-size:11px; flex:none}
-  .note.plain b{color:var(--ink)}
+      /* annotation */
+      .note {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 8px;
+      }
+      .note b {
+        font-weight: 500;
+        color: var(--status-critical);
+        font-size: 11px;
+        flex: none;
+      }
+      .note.plain b {
+        color: var(--ink);
+      }
 
-  /* flow diagram */
-  .flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap}
-  .step{flex:1; min-width:130px; background:#fff; border:1px solid var(--border); border-radius:var(--r-card); padding:12px; position:relative}
-  .step + .step{margin-left:22px}
-  .step + .step::before{content:""; position:absolute; left:-16px; top:50%; width:10px; height:1px; background:#c9c9c9}
-  .step + .step::after{content:""; position:absolute; left:-8px; top:calc(50% - 3px); border:3px solid transparent; border-left-color:#c9c9c9}
-  .step-k{font-size:11px; color:var(--ink-faint); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px}
-  .step-t{font-size:13px; font-weight:500; margin-bottom:4px}
-  .step-d{font-size:11px; color:var(--ink-muted)}
-  .step.bad{border-color:#f0d3d8}
-  .step.bad .step-k{color:var(--status-critical)}
+      /* flow diagram */
+      .flow {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        flex-wrap: wrap;
+      }
+      .step {
+        flex: 1;
+        min-width: 130px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        padding: 12px;
+        position: relative;
+      }
+      .step + .step {
+        margin-left: 22px;
+      }
+      .step + .step::before {
+        content: "";
+        position: absolute;
+        left: -16px;
+        top: 50%;
+        width: 10px;
+        height: 1px;
+        background: #c9c9c9;
+      }
+      .step + .step::after {
+        content: "";
+        position: absolute;
+        left: -8px;
+        top: calc(50% - 3px);
+        border: 3px solid transparent;
+        border-left-color: #c9c9c9;
+      }
+      .step-k {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .step-t {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .step-d {
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+      .step.bad {
+        border-color: #f0d3d8;
+      }
+      .step.bad .step-k {
+        color: var(--status-critical);
+      }
 
-  table.cmp{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--border); border-radius:var(--r-card); overflow:hidden; font-size:12px}
-  table.cmp th{text-align:left; font-weight:500; font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-2)}
-  table.cmp td{padding:9px 12px; border-bottom:1px solid var(--border); color:var(--ink-muted); vertical-align:top}
-  table.cmp tr:last-child td{border-bottom:0}
-  table.cmp td:first-child{color:var(--ink); font-weight:500; white-space:nowrap}
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--r-card);
+        overflow: hidden;
+        font-size: 12px;
+      }
+      table.cmp th {
+        text-align: left;
+        font-weight: 500;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-2);
+      }
+      table.cmp td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        color: var(--ink-muted);
+        vertical-align: top;
+      }
+      table.cmp tr:last-child td {
+        border-bottom: 0;
+      }
+      table.cmp td:first-child {
+        color: var(--ink);
+        font-weight: 500;
+        white-space: nowrap;
+      }
 
-  .rec{background:#fff; border:1px solid var(--ink); border-radius:var(--r-card); padding:18px 20px}
-  .rec h3{font-size:15px; font-weight:500; margin:0 0 8px}
-  .rec p{font-size:13px; color:var(--ink-muted); margin:0 0 10px; max-width:80ch}
-  .rec ol{margin:0; padding-left:18px}
-  .rec li{font-size:13px; color:var(--ink-muted); margin-bottom:5px}
-</style>
-</head>
-<body>
-<div class="page">
+      .rec {
+        background: #fff;
+        border: 1px solid var(--ink);
+        border-radius: var(--r-card);
+        padding: 18px 20px;
+      }
+      .rec h3 {
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0 0 8px;
+      }
+      .rec p {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin: 0 0 10px;
+        max-width: 80ch;
+      }
+      .rec ol {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .rec li {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="doc-meta">Kash 3.2 · design options</div>
+      <h1 class="doc-h1">Project creation — three ways in, two ways to plan</h1>
+      <p class="doc-sub">
+        Decided so far: creation is container-first, one line to start. Ask for the client and
+        derive the category. Personal is one Maintenance bucket plus the occasional real project.
+        Dates start today with no end. The setup wizard is being retired.
+      </p>
+      <p class="doc-sub">
+        Every mockup below is drawn to the 3.0 token spec — Figtree at two weights, 11/12/13/15/17
+        type, hairline borders, outline buttons, 3px category stripe, crimson reserved for status.
+      </p>
 
-  <div class="doc-meta">Kash 3.2 · design options</div>
-  <h1 class="doc-h1">Project creation — three ways in, two ways to plan</h1>
-  <p class="doc-sub">Decided so far: creation is container-first, one line to start. Ask for the client and derive the category. Personal is one Maintenance bucket plus the occasional real project. Dates start today with no end. The setup wizard is being retired.</p>
-  <p class="doc-sub">Every mockup below is drawn to the 3.0 token spec — Figtree at two weights, 11/12/13/15/17 type, hairline borders, outline buttons, 3px category stripe, crimson reserved for status.</p>
+      <!-- ============ BASELINE ============ -->
+      <section class="sec">
+        <div class="sec-num">Baseline</div>
+        <h2 class="sec-h">What happens today</h2>
+        <p class="sec-p">
+          Six surfaces between "I want a project" and "I have a project I can use." Two of them are
+          modals and one is a route change. The wizard's last two steps go dead if you skip the
+          first.
+        </p>
 
-  <!-- ============ BASELINE ============ -->
-  <section class="sec">
-    <div class="sec-num">Baseline</div>
-    <h2 class="sec-h">What happens today</h2>
-    <p class="sec-p">Six surfaces between "I want a project" and "I have a project I can use." Two of them are modals and one is a route change. The wizard's last two steps go dead if you skip the first.</p>
-
-    <div class="flow">
-      <div class="step">
-        <div class="step-k">Click</div>
-        <div class="step-t">New project</div>
-        <div class="step-d">Projects index header</div>
-      </div>
-      <div class="step bad">
-        <div class="step-k">Modal 1</div>
-        <div class="step-t">Name · Category · Bet</div>
-        <div class="step-d">Category required, two chips. "Serves a bet" shows Not yet / Maintenance and nothing else if no Targets exist.</div>
-      </div>
-      <div class="step bad">
-        <div class="step-k">Navigate</div>
-        <div class="step-t">/projects/[id]?setup=new</div>
-        <div class="step-d">Param stripped on mount, so Esc is a one-way door</div>
-      </div>
-      <div class="step bad">
-        <div class="step-k">Modal 2</div>
-        <div class="step-t">Wizard, 4 steps</div>
-        <div class="step-d">Phases · Dates · Milestones · Tasks. Back/Next only, no step jumping.</div>
-      </div>
-      <div class="step">
-        <div class="step-k">Land</div>
-        <div class="step-t">The board</div>
-        <div class="step-d">Where the good composer lives</div>
-      </div>
-    </div>
-
-    <div class="note"><b>1</b><span>Category is asked in modal 1, again in the wizard's Basics step, and silently overwritten if you pick a template.</span></div>
-    <div class="note"><b>2</b><span>Template path skips the wizard entirely — so the one flow that arrives with zero dates is the one never offered a date step.</span></div>
-    <div class="note"><b>3</b><span>Dates and Tasks steps render "Add a phase first" with no way to add a phase from inside them.</span></div>
-    <div class="note"><b>4</b><span>The wizard's Tasks step is a plain textarea. The board composer it hands off to parses dates, priorities and nested phase paths. The weaker tool is the one presented first.</span></div>
-  </section>
-
-  <!-- ============ THE CREATE MOMENT ============ -->
-  <section class="sec">
-    <div class="sec-num">Part one</div>
-    <h2 class="sec-h">The create moment</h2>
-    <p class="sec-p">All three options do the same thing: a project exists after one line and one keystroke. They differ in where that line lives, which changes how much the act costs you in attention.</p>
-
-    <div class="opt-grid three">
-
-      <!-- OPTION A -->
-      <div class="opt">
-        <div class="opt-head">
-          <span class="opt-tag">Option A</span>
-          <h3 class="opt-name">Command create</h3>
-          <p class="opt-line">Press N anywhere. One field. Enter.</p>
-        </div>
-        <div class="opt-stage">
-          <div class="m m-modal" style="max-width:330px;margin:0 auto;width:100%">
-            <div class="m-pad" style="padding-bottom:10px">
-              <span class="m-label">New project</span>
-              <div class="m-input focus" style="display:flex;align-items:center;gap:6px">
-                <span>Great White Q4 reporting</span>
-                <span style="width:1px;height:14px;background:var(--ink);display:inline-block"></span>
-              </div>
-            </div>
-            <div class="m-pad" style="padding-top:0;padding-bottom:10px">
-              <div class="m-row" style="gap:5px;flex-wrap:wrap">
-                <span class="m-chip on"><span class="dot biz"></span>Great White</span>
-                <span class="m-chip">Hume</span>
-                <span class="m-chip">Suncoast</span>
-                <span class="m-chip">Just me</span>
-              </div>
-              <div class="m-cap" style="margin-top:7px">Matched from the name. Tab to change.</div>
-            </div>
-            <div class="m-hr"></div>
-            <div class="m-pad m-row" style="justify-content:space-between;padding:9px 14px">
-              <span class="m-cap"><span class="kbd">esc</span> cancel</span>
-              <span class="m-cap"><span class="kbd">enter</span> create and open</span>
+        <div class="flow">
+          <div class="step">
+            <div class="step-k">Click</div>
+            <div class="step-t">New project</div>
+            <div class="step-d">Projects index header</div>
+          </div>
+          <div class="step bad">
+            <div class="step-k">Modal 1</div>
+            <div class="step-t">Name · Category · Bet</div>
+            <div class="step-d">
+              Category required, two chips. "Serves a bet" shows Not yet / Maintenance and nothing
+              else if no Targets exist.
             </div>
           </div>
-        </div>
-        <div class="opt-body">
-          <h4>What happens</h4>
-          <ul>
-            <li>Type name, Enter. Project exists, board opens focused on the composer.</li>
-            <li>The client chip row auto-matches on the name you typed and can be ignored entirely.</li>
-            <li>Reachable from Today, Week, anywhere — capture doesn't require navigating to Projects first.</li>
-          </ul>
-          <h4>Trade</h4>
-          <ul>
-            <li>Still a modal, so still an overlay moment.</li>
-            <li>Keyboard-first; the shortcut needs teaching once.</li>
-          </ul>
-          <div class="cost">
-            <span class="win">1 field</span><span class="win">1 keystroke</span><span>0 route changes</span>
+          <div class="step bad">
+            <div class="step-k">Navigate</div>
+            <div class="step-t">/projects/[id]?setup=new</div>
+            <div class="step-d">Param stripped on mount, so Esc is a one-way door</div>
           </div>
-        </div>
-      </div>
-
-      <!-- OPTION B -->
-      <div class="opt">
-        <div class="opt-head">
-          <span class="opt-tag">Option B</span>
-          <h3 class="opt-name">Create in place</h3>
-          <p class="opt-line">A new row appears in the list. Type into it.</p>
-        </div>
-        <div class="opt-stage">
-          <div class="m" style="max-width:340px;margin:0 auto;width:100%">
-            <div class="m-pad m-row" style="justify-content:space-between;padding:10px 12px">
-              <span class="m-title">Projects</span>
-              <span class="m-cap">7 active</span>
-            </div>
-            <div class="m-hr"></div>
-            <div class="m-listrow stripe-biz" style="background:var(--surface-2);padding-left:9px">
-              <div class="m-input focus" style="flex:1;padding:4px 7px;font-size:13px;display:flex;align-items:center;gap:5px">
-                <span>Great White Q4 reporting</span>
-                <span style="width:1px;height:13px;background:var(--ink);display:inline-block"></span>
-              </div>
-              <span class="m-chip on" style="flex:none"><span class="dot biz"></span>GW</span>
-            </div>
-            <div class="m-listrow stripe-biz" style="padding-left:9px">
-              <span style="flex:1">Hume onboarding</span>
-              <span class="m-cap">62%</span>
-            </div>
-            <div class="m-listrow stripe-biz" style="padding-left:9px">
-              <span style="flex:1">Suncoast discovery</span>
-              <span class="m-cap">18%</span>
-            </div>
-            <div class="m-listrow stripe-per" style="padding-left:9px">
-              <span style="flex:1">Maintenance</span>
-              <span class="m-cap">—</span>
+          <div class="step bad">
+            <div class="step-k">Modal 2</div>
+            <div class="step-t">Wizard, 4 steps</div>
+            <div class="step-d">
+              Phases · Dates · Milestones · Tasks. Back/Next only, no step jumping.
             </div>
           </div>
-          <div class="m-cap" style="text-align:center">Enter commits and opens · Esc removes the row</div>
-        </div>
-        <div class="opt-body">
-          <h4>What happens</h4>
-          <ul>
-            <li>No overlay at all. The project is visible in its final context from the first character.</li>
-            <li>You can see what you already have while naming the new one, which prevents the near-duplicate project.</li>
-            <li>Enter opens the board; Shift+Enter commits and stays in the list to add another.</li>
-          </ul>
-          <h4>Trade</h4>
-          <ul>
-            <li>Only reachable from the Projects index, so capture from Today means a navigation.</li>
-            <li>Client assignment has to be a compact chip or a follow-up.</li>
-          </ul>
-          <div class="cost">
-            <span class="win">1 field</span><span class="win">0 modals</span><span class="hot">index-only</span>
+          <div class="step">
+            <div class="step-k">Land</div>
+            <div class="step-t">The board</div>
+            <div class="step-d">Where the good composer lives</div>
           </div>
         </div>
-      </div>
 
-      <!-- OPTION C -->
-      <div class="opt">
-        <div class="opt-head">
-          <span class="opt-tag">Option C</span>
-          <h3 class="opt-name">One line, expandable</h3>
-          <p class="opt-line">Name only. A chevron for when you want to plan.</p>
+        <div class="note">
+          <b>1</b
+          ><span
+            >Category is asked in modal 1, again in the wizard's Basics step, and silently
+            overwritten if you pick a template.</span
+          >
         </div>
-        <div class="opt-stage">
-          <div class="m m-modal" style="max-width:330px;margin:0 auto;width:100%">
-            <div class="m-pad" style="padding-bottom:10px">
-              <span class="m-label">New project</span>
-              <div class="m-input focus" style="display:flex;align-items:center;gap:6px">
-                <span>Great White Q4 reporting</span>
-                <span style="width:1px;height:14px;background:var(--ink);display:inline-block"></span>
-              </div>
-            </div>
-            <div class="m-hr"></div>
-            <div class="m-pad" style="padding:10px 14px">
-              <div class="m-row" style="justify-content:space-between">
-                <span class="m-meta">Set it up now</span>
-                <span class="m-cap">client · start · phases</span>
-              </div>
-            </div>
-            <div class="m-hr"></div>
-            <div class="m-pad" style="background:var(--surface-2);padding:12px 14px">
-              <span class="m-label">Client</span>
-              <div class="m-row" style="gap:5px;flex-wrap:wrap;margin-bottom:10px">
-                <span class="m-chip on"><span class="dot biz"></span>Great White</span>
-                <span class="m-chip">Just me</span>
-              </div>
-              <span class="m-label">First phases</span>
-              <div class="m-input" style="background:#fff;font-size:12px;line-height:1.7">
-                Data model rebuild<br>
-                <span style="color:var(--ink-faint)">Reporting layer</span><br>
-                <span style="color:var(--ink-faint)">one per line</span>
-              </div>
-              <div class="m-cap" style="margin-top:7px">Starts today. End dates fill in as tasks land.</div>
-            </div>
-            <div class="m-hr"></div>
-            <div class="m-pad m-row" style="justify-content:flex-end;gap:8px;padding:9px 14px">
-              <span class="m-btn quiet">Cancel</span>
-              <span class="m-btn">Create</span>
-            </div>
-          </div>
+        <div class="note">
+          <b>2</b
+          ><span
+            >Template path skips the wizard entirely — so the one flow that arrives with zero dates
+            is the one never offered a date step.</span
+          >
         </div>
-        <div class="opt-body">
-          <h4>What happens</h4>
-          <ul>
-            <li>Collapsed, it is a one-field dialog: type, Enter, done.</li>
-            <li>Expanded, it is the entire retired wizard compressed into one scrollable panel with no steps and no Next.</li>
-            <li>The expansion state is remembered, so the mode you use becomes the mode you get.</li>
-          </ul>
-          <h4>Trade</h4>
-          <ul>
-            <li>Two behaviours in one component; easy to let the expanded half creep back into a wizard.</li>
-            <li>The chevron is a discoverability bet — if it's too quiet, planning gets lost.</li>
-          </ul>
-          <div class="cost">
-            <span class="win">1 field collapsed</span><span class="win">0 route changes</span><span>1 modal</span>
-          </div>
+        <div class="note">
+          <b>3</b
+          ><span
+            >Dates and Tasks steps render "Add a phase first" with no way to add a phase from inside
+            them.</span
+          >
         </div>
-      </div>
+        <div class="note">
+          <b>4</b
+          ><span
+            >The wizard's Tasks step is a plain textarea. The board composer it hands off to parses
+            dates, priorities and nested phase paths. The weaker tool is the one presented
+            first.</span
+          >
+        </div>
+      </section>
 
-    </div>
+      <!-- ============ THE CREATE MOMENT ============ -->
+      <section class="sec">
+        <div class="sec-num">Part one</div>
+        <h2 class="sec-h">The create moment</h2>
+        <p class="sec-p">
+          All three options do the same thing: a project exists after one line and one keystroke.
+          They differ in where that line lives, which changes how much the act costs you in
+          attention.
+        </p>
 
-    <div class="note plain" style="margin-top:20px"><b>Note</b><span>A and C are not exclusive. A is a location for the trigger; C is a shape for the panel. The real fork is B (no overlay, index-bound) against A+C (overlay, reachable from everywhere).</span></div>
-  </section>
-
-  <!-- ============ THE PLAN MOMENT ============ -->
-  <section class="sec">
-    <div class="sec-num">Part two</div>
-    <h2 class="sec-h">The plan moment</h2>
-    <p class="sec-p">You said the true shape is container-first: the project exists, then structure accretes. That means planning is not a thing that happens at creation — it's a mode you enter later, sometimes days later, and it needs its own front door. Two ways to build it.</p>
-
-    <div class="opt-grid two">
-
-      <!-- OPTION D -->
-      <div class="opt">
-        <div class="opt-head">
-          <span class="opt-tag">Option D</span>
-          <h3 class="opt-name">Plan mode on the board</h3>
-          <p class="opt-line">Same surface, different density. No new screen.</p>
-        </div>
-        <div class="opt-stage">
-          <div class="m" style="width:100%">
-            <div class="m-pad m-row" style="justify-content:space-between;padding:10px 12px">
-              <div class="m-row" style="gap:7px">
-                <span class="m-title">Great White Q4 reporting</span>
-                <span class="m-chip"><span class="dot biz"></span>Great White</span>
-              </div>
-              <div class="m-row" style="gap:4px">
-                <span class="m-chip">Board</span>
-                <span class="m-chip on">Plan</span>
-                <span class="m-chip">Calendar</span>
-              </div>
+        <div class="opt-grid three">
+          <!-- OPTION A -->
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option A</span>
+              <h3 class="opt-name">Command create</h3>
+              <p class="opt-line">Press N anywhere. One field. Enter.</p>
             </div>
-            <div class="m-hr"></div>
-            <div style="padding:12px;background:#fff">
-              <div class="m-row" style="gap:8px;padding:5px 0">
-                <span class="dot biz" style="margin-left:2px"></span>
-                <span style="flex:1;font-weight:500">Data model rebuild</span>
-                <span class="m-cap">Sep 3</span><span class="m-cap">→</span><span class="m-cap">Sep 19</span>
-                <span class="m-cap" style="width:34px;text-align:right">12h</span>
-              </div>
-              <div class="m-row" style="gap:8px;padding:5px 0 5px 22px">
-                <span style="flex:1;color:var(--ink-muted)">Audit the current schema</span>
-                <span class="m-cap">Sep 5</span><span class="m-cap"></span><span class="m-cap"></span>
-                <span class="m-cap" style="width:34px;text-align:right">3h</span>
-              </div>
-              <div class="m-row" style="gap:8px;padding:5px 0 5px 22px">
-                <span style="flex:1;color:var(--ink-muted)">Draft the migration plan</span>
-                <span class="m-cap">Sep 9</span><span class="m-cap"></span><span class="m-cap"></span>
-                <span class="m-cap" style="width:34px;text-align:right">4h</span>
-              </div>
-              <div class="m-row" style="gap:8px;padding:5px 0">
-                <span class="dot biz" style="margin-left:2px"></span>
-                <span style="flex:1;font-weight:500">Reporting layer</span>
-                <span class="m-cap">Sep 22</span><span class="m-cap">→</span><span class="m-cap">—</span>
-                <span class="m-cap" style="width:34px;text-align:right">—</span>
-              </div>
-              <div class="m-row" style="gap:8px;padding:5px 0 5px 22px">
-                <span class="m-input focus" style="flex:1;padding:3px 6px;font-size:12px;color:var(--ink-faint)">new task, Tab to indent</span>
-              </div>
-            </div>
-            <div class="m-hr"></div>
-            <div class="m-pad m-row" style="gap:10px;padding:8px 12px;background:var(--surface-2)">
-              <span class="m-cap"><span class="kbd">tab</span> indent</span>
-              <span class="m-cap"><span class="kbd">⇧tab</span> outdent</span>
-              <span class="m-cap"><span class="kbd">↵</span> new line</span>
-              <span class="m-cap"><span class="kbd">⌘↵</span> save and close</span>
-            </div>
-          </div>
-        </div>
-        <div class="opt-body">
-          <h4>What happens</h4>
-          <ul>
-            <li>The Miller columns flatten into one editable outline. Tab and Shift+Tab move things between phase and task — the tree is built by typing, not by syntax.</li>
-            <li>Dates and estimates live in fixed right-hand columns, so setting them is never a separate step or a separate screen.</li>
-            <li>It replaces the wizard's Phases, Dates and Tasks steps with one surface, and it works identically on day 1 and day 40.</li>
-          </ul>
-          <h4>Trade</h4>
-          <ul>
-            <li>Real build: an outliner with keyboard tree editing is the most expensive thing in this document.</li>
-            <li>The board and the outline must agree perfectly or the toggle becomes a trust problem.</li>
-          </ul>
-          <div class="cost">
-            <span class="win">kills the wizard</span><span class="win">no invisible syntax</span><span class="hot">largest build</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- OPTION E -->
-      <div class="opt">
-        <div class="opt-head">
-          <span class="opt-tag">Option E</span>
-          <h3 class="opt-name">Planning sheet</h3>
-          <p class="opt-line">A panel over the board. Saves as you type.</p>
-        </div>
-        <div class="opt-stage">
-          <div class="m" style="width:100%;position:relative">
-            <div class="m-pad m-row" style="justify-content:space-between;padding:10px 12px;opacity:.4">
-              <span class="m-title">Great White Q4 reporting</span>
-              <span class="m-cap">board behind</span>
-            </div>
-            <div class="m-hr" style="opacity:.4"></div>
-            <div style="display:flex">
-              <div style="flex:.8;padding:12px;opacity:.35">
-                <div class="m-cap" style="margin-bottom:6px">Data model rebuild</div>
-                <div class="m-listrow" style="border:1px solid var(--border);border-radius:var(--r-row);margin-bottom:5px">Audit schema</div>
-                <div class="m-listrow" style="border:1px solid var(--border);border-radius:var(--r-row)">Draft migration</div>
-              </div>
-              <div style="flex:1.2;border-left:1px solid var(--border);background:#fff;padding:12px">
-                <div class="m-row" style="justify-content:space-between;margin-bottom:10px">
-                  <span class="m-meta" style="font-weight:500">Plan</span>
-                  <span class="m-cap">saved</span>
+            <div class="opt-stage">
+              <div class="m m-modal" style="max-width: 330px; margin: 0 auto; width: 100%">
+                <div class="m-pad" style="padding-bottom: 10px">
+                  <span class="m-label">New project</span>
+                  <div class="m-input focus" style="display: flex; align-items: center; gap: 6px">
+                    <span>Great White Q4 reporting</span>
+                    <span
+                      style="
+                        width: 1px;
+                        height: 14px;
+                        background: var(--ink);
+                        display: inline-block;
+                      "
+                    ></span>
+                  </div>
                 </div>
-                <span class="m-label">Phases</span>
-                <div class="m-row" style="gap:6px;margin-bottom:5px">
-                  <span class="m-input" style="flex:1;padding:5px 7px;font-size:12px">Data model rebuild</span>
-                  <span class="m-input" style="width:56px;padding:5px 6px;font-size:11px;color:var(--ink-muted)">Sep 19</span>
+                <div class="m-pad" style="padding-top: 0; padding-bottom: 10px">
+                  <div class="m-row" style="gap: 5px; flex-wrap: wrap">
+                    <span class="m-chip on"><span class="dot biz"></span>Great White</span>
+                    <span class="m-chip">Hume</span>
+                    <span class="m-chip">Suncoast</span>
+                    <span class="m-chip">Just me</span>
+                  </div>
+                  <div class="m-cap" style="margin-top: 7px">
+                    Matched from the name. Tab to change.
+                  </div>
                 </div>
-                <div class="m-row" style="gap:6px;margin-bottom:5px">
-                  <span class="m-input" style="flex:1;padding:5px 7px;font-size:12px">Reporting layer</span>
-                  <span class="m-input" style="width:56px;padding:5px 6px;font-size:11px;color:var(--ink-faint)">end</span>
+                <div class="m-hr"></div>
+                <div class="m-pad m-row" style="justify-content: space-between; padding: 9px 14px">
+                  <span class="m-cap"><span class="kbd">esc</span> cancel</span>
+                  <span class="m-cap"><span class="kbd">enter</span> create and open</span>
                 </div>
-                <div class="m-row" style="gap:6px;margin-bottom:10px">
-                  <span class="m-input focus" style="flex:1;padding:4px 6px;font-size:12px;color:var(--ink-faint)">add a phase</span>
+              </div>
+            </div>
+            <div class="opt-body">
+              <h4>What happens</h4>
+              <ul>
+                <li>Type name, Enter. Project exists, board opens focused on the composer.</li>
+                <li>
+                  The client chip row auto-matches on the name you typed and can be ignored
+                  entirely.
+                </li>
+                <li>
+                  Reachable from Today, Week, anywhere — capture doesn't require navigating to
+                  Projects first.
+                </li>
+              </ul>
+              <h4>Trade</h4>
+              <ul>
+                <li>Still a modal, so still an overlay moment.</li>
+                <li>Keyboard-first; the shortcut needs teaching once.</li>
+              </ul>
+              <div class="cost">
+                <span class="win">1 field</span><span class="win">1 keystroke</span
+                ><span>0 route changes</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- OPTION B -->
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option B</span>
+              <h3 class="opt-name">Create in place</h3>
+              <p class="opt-line">A new row appears in the list. Type into it.</p>
+            </div>
+            <div class="opt-stage">
+              <div class="m" style="max-width: 340px; margin: 0 auto; width: 100%">
+                <div class="m-pad m-row" style="justify-content: space-between; padding: 10px 12px">
+                  <span class="m-title">Projects</span>
+                  <span class="m-cap">7 active</span>
                 </div>
-                <span class="m-label">Starts</span>
-                <div class="m-input" style="font-size:12px;margin-bottom:10px;width:92px">Today</div>
-                <span class="m-label">Toll</span>
-                <div class="m-input" style="font-size:12px;color:var(--ink-faint);line-height:1.5">what is this in service of?</div>
+                <div class="m-hr"></div>
+                <div
+                  class="m-listrow stripe-biz"
+                  style="background: var(--surface-2); padding-left: 9px"
+                >
+                  <div
+                    class="m-input focus"
+                    style="
+                      flex: 1;
+                      padding: 4px 7px;
+                      font-size: 13px;
+                      display: flex;
+                      align-items: center;
+                      gap: 5px;
+                    "
+                  >
+                    <span>Great White Q4 reporting</span>
+                    <span
+                      style="
+                        width: 1px;
+                        height: 13px;
+                        background: var(--ink);
+                        display: inline-block;
+                      "
+                    ></span>
+                  </div>
+                  <span class="m-chip on" style="flex: none"><span class="dot biz"></span>GW</span>
+                </div>
+                <div class="m-listrow stripe-biz" style="padding-left: 9px">
+                  <span style="flex: 1">Hume onboarding</span>
+                  <span class="m-cap">62%</span>
+                </div>
+                <div class="m-listrow stripe-biz" style="padding-left: 9px">
+                  <span style="flex: 1">Suncoast discovery</span>
+                  <span class="m-cap">18%</span>
+                </div>
+                <div class="m-listrow stripe-per" style="padding-left: 9px">
+                  <span style="flex: 1">Maintenance</span>
+                  <span class="m-cap">—</span>
+                </div>
+              </div>
+              <div class="m-cap" style="text-align: center">
+                Enter commits and opens · Esc removes the row
+              </div>
+            </div>
+            <div class="opt-body">
+              <h4>What happens</h4>
+              <ul>
+                <li>
+                  No overlay at all. The project is visible in its final context from the first
+                  character.
+                </li>
+                <li>
+                  You can see what you already have while naming the new one, which prevents the
+                  near-duplicate project.
+                </li>
+                <li>
+                  Enter opens the board; Shift+Enter commits and stays in the list to add another.
+                </li>
+              </ul>
+              <h4>Trade</h4>
+              <ul>
+                <li>
+                  Only reachable from the Projects index, so capture from Today means a navigation.
+                </li>
+                <li>Client assignment has to be a compact chip or a follow-up.</li>
+              </ul>
+              <div class="cost">
+                <span class="win">1 field</span><span class="win">0 modals</span
+                ><span class="hot">index-only</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- OPTION C -->
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option C</span>
+              <h3 class="opt-name">One line, expandable</h3>
+              <p class="opt-line">Name only. A chevron for when you want to plan.</p>
+            </div>
+            <div class="opt-stage">
+              <div class="m m-modal" style="max-width: 330px; margin: 0 auto; width: 100%">
+                <div class="m-pad" style="padding-bottom: 10px">
+                  <span class="m-label">New project</span>
+                  <div class="m-input focus" style="display: flex; align-items: center; gap: 6px">
+                    <span>Great White Q4 reporting</span>
+                    <span
+                      style="
+                        width: 1px;
+                        height: 14px;
+                        background: var(--ink);
+                        display: inline-block;
+                      "
+                    ></span>
+                  </div>
+                </div>
+                <div class="m-hr"></div>
+                <div class="m-pad" style="padding: 10px 14px">
+                  <div class="m-row" style="justify-content: space-between">
+                    <span class="m-meta">Set it up now</span>
+                    <span class="m-cap">client · start · phases</span>
+                  </div>
+                </div>
+                <div class="m-hr"></div>
+                <div class="m-pad" style="background: var(--surface-2); padding: 12px 14px">
+                  <span class="m-label">Client</span>
+                  <div class="m-row" style="gap: 5px; flex-wrap: wrap; margin-bottom: 10px">
+                    <span class="m-chip on"><span class="dot biz"></span>Great White</span>
+                    <span class="m-chip">Just me</span>
+                  </div>
+                  <span class="m-label">First phases</span>
+                  <div class="m-input" style="background: #fff; font-size: 12px; line-height: 1.7">
+                    Data model rebuild<br />
+                    <span style="color: var(--ink-faint)">Reporting layer</span><br />
+                    <span style="color: var(--ink-faint)">one per line</span>
+                  </div>
+                  <div class="m-cap" style="margin-top: 7px">
+                    Starts today. End dates fill in as tasks land.
+                  </div>
+                </div>
+                <div class="m-hr"></div>
+                <div
+                  class="m-pad m-row"
+                  style="justify-content: flex-end; gap: 8px; padding: 9px 14px"
+                >
+                  <span class="m-btn quiet">Cancel</span>
+                  <span class="m-btn">Create</span>
+                </div>
+              </div>
+            </div>
+            <div class="opt-body">
+              <h4>What happens</h4>
+              <ul>
+                <li>Collapsed, it is a one-field dialog: type, Enter, done.</li>
+                <li>
+                  Expanded, it is the entire retired wizard compressed into one scrollable panel
+                  with no steps and no Next.
+                </li>
+                <li>
+                  The expansion state is remembered, so the mode you use becomes the mode you get.
+                </li>
+              </ul>
+              <h4>Trade</h4>
+              <ul>
+                <li>
+                  Two behaviours in one component; easy to let the expanded half creep back into a
+                  wizard.
+                </li>
+                <li>
+                  The chevron is a discoverability bet — if it's too quiet, planning gets lost.
+                </li>
+              </ul>
+              <div class="cost">
+                <span class="win">1 field collapsed</span><span class="win">0 route changes</span
+                ><span>1 modal</span>
               </div>
             </div>
           </div>
         </div>
-        <div class="opt-body">
-          <h4>What happens</h4>
-          <ul>
-            <li>Opens from the board header, from the empty state, and from the Sweep. Board stays visible behind it, so you never lose your place.</li>
-            <li>Autosaves field by field — there is no Save button and no all-or-nothing commit, which is what makes it safe to open for thirty seconds.</li>
-            <li>Natural home for the project-level things that have nowhere to live today: rename, client, state, billing type, the Toll.</li>
-          </ul>
-          <h4>Trade</h4>
-          <ul>
-            <li>Still a second surface. It's a much better wizard, but it's a descendant of the wizard.</li>
-            <li>Two places edit phase dates unless the board's inline editing is removed.</li>
-          </ul>
-          <div class="cost">
-            <span class="win">small build</span><span class="win">autosave</span><span>second surface</span>
+
+        <div class="note plain" style="margin-top: 20px">
+          <b>Note</b
+          ><span
+            >A and C are not exclusive. A is a location for the trigger; C is a shape for the panel.
+            The real fork is B (no overlay, index-bound) against A+C (overlay, reachable from
+            everywhere).</span
+          >
+        </div>
+      </section>
+
+      <!-- ============ THE PLAN MOMENT ============ -->
+      <section class="sec">
+        <div class="sec-num">Part two</div>
+        <h2 class="sec-h">The plan moment</h2>
+        <p class="sec-p">
+          You said the true shape is container-first: the project exists, then structure accretes.
+          That means planning is not a thing that happens at creation — it's a mode you enter later,
+          sometimes days later, and it needs its own front door. Two ways to build it.
+        </p>
+
+        <div class="opt-grid two">
+          <!-- OPTION D -->
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option D</span>
+              <h3 class="opt-name">Plan mode on the board</h3>
+              <p class="opt-line">Same surface, different density. No new screen.</p>
+            </div>
+            <div class="opt-stage">
+              <div class="m" style="width: 100%">
+                <div class="m-pad m-row" style="justify-content: space-between; padding: 10px 12px">
+                  <div class="m-row" style="gap: 7px">
+                    <span class="m-title">Great White Q4 reporting</span>
+                    <span class="m-chip"><span class="dot biz"></span>Great White</span>
+                  </div>
+                  <div class="m-row" style="gap: 4px">
+                    <span class="m-chip">Board</span>
+                    <span class="m-chip on">Plan</span>
+                    <span class="m-chip">Calendar</span>
+                  </div>
+                </div>
+                <div class="m-hr"></div>
+                <div style="padding: 12px; background: #fff">
+                  <div class="m-row" style="gap: 8px; padding: 5px 0">
+                    <span class="dot biz" style="margin-left: 2px"></span>
+                    <span style="flex: 1; font-weight: 500">Data model rebuild</span>
+                    <span class="m-cap">Sep 3</span><span class="m-cap">→</span
+                    ><span class="m-cap">Sep 19</span>
+                    <span class="m-cap" style="width: 34px; text-align: right">12h</span>
+                  </div>
+                  <div class="m-row" style="gap: 8px; padding: 5px 0 5px 22px">
+                    <span style="flex: 1; color: var(--ink-muted)">Audit the current schema</span>
+                    <span class="m-cap">Sep 5</span><span class="m-cap"></span
+                    ><span class="m-cap"></span>
+                    <span class="m-cap" style="width: 34px; text-align: right">3h</span>
+                  </div>
+                  <div class="m-row" style="gap: 8px; padding: 5px 0 5px 22px">
+                    <span style="flex: 1; color: var(--ink-muted)">Draft the migration plan</span>
+                    <span class="m-cap">Sep 9</span><span class="m-cap"></span
+                    ><span class="m-cap"></span>
+                    <span class="m-cap" style="width: 34px; text-align: right">4h</span>
+                  </div>
+                  <div class="m-row" style="gap: 8px; padding: 5px 0">
+                    <span class="dot biz" style="margin-left: 2px"></span>
+                    <span style="flex: 1; font-weight: 500">Reporting layer</span>
+                    <span class="m-cap">Sep 22</span><span class="m-cap">→</span
+                    ><span class="m-cap">—</span>
+                    <span class="m-cap" style="width: 34px; text-align: right">—</span>
+                  </div>
+                  <div class="m-row" style="gap: 8px; padding: 5px 0 5px 22px">
+                    <span
+                      class="m-input focus"
+                      style="flex: 1; padding: 3px 6px; font-size: 12px; color: var(--ink-faint)"
+                      >new task, Tab to indent</span
+                    >
+                  </div>
+                </div>
+                <div class="m-hr"></div>
+                <div
+                  class="m-pad m-row"
+                  style="gap: 10px; padding: 8px 12px; background: var(--surface-2)"
+                >
+                  <span class="m-cap"><span class="kbd">tab</span> indent</span>
+                  <span class="m-cap"><span class="kbd">⇧tab</span> outdent</span>
+                  <span class="m-cap"><span class="kbd">↵</span> new line</span>
+                  <span class="m-cap"><span class="kbd">⌘↵</span> save and close</span>
+                </div>
+              </div>
+            </div>
+            <div class="opt-body">
+              <h4>What happens</h4>
+              <ul>
+                <li>
+                  The Miller columns flatten into one editable outline. Tab and Shift+Tab move
+                  things between phase and task — the tree is built by typing, not by syntax.
+                </li>
+                <li>
+                  Dates and estimates live in fixed right-hand columns, so setting them is never a
+                  separate step or a separate screen.
+                </li>
+                <li>
+                  It replaces the wizard's Phases, Dates and Tasks steps with one surface, and it
+                  works identically on day 1 and day 40.
+                </li>
+              </ul>
+              <h4>Trade</h4>
+              <ul>
+                <li>
+                  Real build: an outliner with keyboard tree editing is the most expensive thing in
+                  this document.
+                </li>
+                <li>
+                  The board and the outline must agree perfectly or the toggle becomes a trust
+                  problem.
+                </li>
+              </ul>
+              <div class="cost">
+                <span class="win">kills the wizard</span><span class="win">no invisible syntax</span
+                ><span class="hot">largest build</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- OPTION E -->
+          <div class="opt">
+            <div class="opt-head">
+              <span class="opt-tag">Option E</span>
+              <h3 class="opt-name">Planning sheet</h3>
+              <p class="opt-line">A panel over the board. Saves as you type.</p>
+            </div>
+            <div class="opt-stage">
+              <div class="m" style="width: 100%; position: relative">
+                <div
+                  class="m-pad m-row"
+                  style="justify-content: space-between; padding: 10px 12px; opacity: 0.4"
+                >
+                  <span class="m-title">Great White Q4 reporting</span>
+                  <span class="m-cap">board behind</span>
+                </div>
+                <div class="m-hr" style="opacity: 0.4"></div>
+                <div style="display: flex">
+                  <div style="flex: 0.8; padding: 12px; opacity: 0.35">
+                    <div class="m-cap" style="margin-bottom: 6px">Data model rebuild</div>
+                    <div
+                      class="m-listrow"
+                      style="
+                        border: 1px solid var(--border);
+                        border-radius: var(--r-row);
+                        margin-bottom: 5px;
+                      "
+                    >
+                      Audit schema
+                    </div>
+                    <div
+                      class="m-listrow"
+                      style="border: 1px solid var(--border); border-radius: var(--r-row)"
+                    >
+                      Draft migration
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex: 1.2;
+                      border-left: 1px solid var(--border);
+                      background: #fff;
+                      padding: 12px;
+                    "
+                  >
+                    <div class="m-row" style="justify-content: space-between; margin-bottom: 10px">
+                      <span class="m-meta" style="font-weight: 500">Plan</span>
+                      <span class="m-cap">saved</span>
+                    </div>
+                    <span class="m-label">Phases</span>
+                    <div class="m-row" style="gap: 6px; margin-bottom: 5px">
+                      <span class="m-input" style="flex: 1; padding: 5px 7px; font-size: 12px"
+                        >Data model rebuild</span
+                      >
+                      <span
+                        class="m-input"
+                        style="
+                          width: 56px;
+                          padding: 5px 6px;
+                          font-size: 11px;
+                          color: var(--ink-muted);
+                        "
+                        >Sep 19</span
+                      >
+                    </div>
+                    <div class="m-row" style="gap: 6px; margin-bottom: 5px">
+                      <span class="m-input" style="flex: 1; padding: 5px 7px; font-size: 12px"
+                        >Reporting layer</span
+                      >
+                      <span
+                        class="m-input"
+                        style="
+                          width: 56px;
+                          padding: 5px 6px;
+                          font-size: 11px;
+                          color: var(--ink-faint);
+                        "
+                        >end</span
+                      >
+                    </div>
+                    <div class="m-row" style="gap: 6px; margin-bottom: 10px">
+                      <span
+                        class="m-input focus"
+                        style="flex: 1; padding: 4px 6px; font-size: 12px; color: var(--ink-faint)"
+                        >add a phase</span
+                      >
+                    </div>
+                    <span class="m-label">Starts</span>
+                    <div class="m-input" style="font-size: 12px; margin-bottom: 10px; width: 92px">
+                      Today
+                    </div>
+                    <span class="m-label">Toll</span>
+                    <div
+                      class="m-input"
+                      style="font-size: 12px; color: var(--ink-faint); line-height: 1.5"
+                    >
+                      what is this in service of?
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="opt-body">
+              <h4>What happens</h4>
+              <ul>
+                <li>
+                  Opens from the board header, from the empty state, and from the Sweep. Board stays
+                  visible behind it, so you never lose your place.
+                </li>
+                <li>
+                  Autosaves field by field — there is no Save button and no all-or-nothing commit,
+                  which is what makes it safe to open for thirty seconds.
+                </li>
+                <li>
+                  Natural home for the project-level things that have nowhere to live today: rename,
+                  client, state, billing type, the Toll.
+                </li>
+              </ul>
+              <h4>Trade</h4>
+              <ul>
+                <li>
+                  Still a second surface. It's a much better wizard, but it's a descendant of the
+                  wizard.
+                </li>
+                <li>Two places edit phase dates unless the board's inline editing is removed.</li>
+              </ul>
+              <div class="cost">
+                <span class="win">small build</span><span class="win">autosave</span
+                ><span>second surface</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
+      <!-- ============ COMPARISON ============ -->
+      <section class="sec">
+        <div class="sec-num">Part three</div>
+        <h2 class="sec-h">Side by side</h2>
+        <p class="sec-p">
+          Counting from intent to a usable project, and from intent to a planned one.
+        </p>
+
+        <table class="cmp">
+          <tr>
+            <th>Path</th>
+            <th>Steps to exist</th>
+            <th>Steps to plan</th>
+            <th>Surfaces</th>
+            <th>What it fixes</th>
+          </tr>
+          <tr>
+            <td>Today</td>
+            <td>Name, category, submit, wait for route, escape the wizard — 5</td>
+            <td>4 wizard steps, Back/Next only</td>
+            <td>2 modals, 1 route</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>A + D</td>
+            <td>Type, Enter — 2</td>
+            <td>Toggle to Plan, type an outline</td>
+            <td>1 modal, 0 routes</td>
+            <td>
+              Kills the wizard and the invisible composer syntax in one move. Planning and doing
+              share a surface.
+            </td>
+          </tr>
+          <tr>
+            <td>A + E</td>
+            <td>Type, Enter — 2</td>
+            <td>Open the sheet, fill what you know</td>
+            <td>1 modal, 1 panel</td>
+            <td>
+              Kills the wizard, gives rename and client a home, autosaves. Composer syntax survives.
+            </td>
+          </tr>
+          <tr>
+            <td>B + D</td>
+            <td>Click, type, Enter — 3, zero overlays</td>
+            <td>Toggle to Plan, type an outline</td>
+            <td>0 modals</td>
+            <td>The calmest of the set. Costs you quick capture from Today.</td>
+          </tr>
+          <tr>
+            <td>C + E</td>
+            <td>Type, Enter — 2</td>
+            <td>Expand at creation, or open the sheet later</td>
+            <td>1 modal, 1 panel</td>
+            <td>
+              Lowest build. One component serves both the 10-second add and the 10-minute session.
+            </td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ============ RECOMMENDATION ============ -->
+      <section class="sec">
+        <div class="sec-num">Recommendation</div>
+        <h2 class="sec-h">A + D, built in that order</h2>
+        <div class="rec">
+          <h3>Why this pair</h3>
+          <p>
+            Your two answers are in tension: container-first says make creation nearly free, but 1-2
+            phases with a start date says you do want structure early. A + D resolves it by
+            separating the moments rather than compromising both — creation costs one line, and
+            planning is a mode on the surface you were already looking at, available forever rather
+            than only in the first ten seconds after creation.
+          </p>
+          <p>
+            Option D is also the only one that retires the composer's invisible grammar. Right now
+            the tree is built by typing <code>;;;</code> and <code>Parent//+ Child</code>,
+            documented in one chip you have to click, taught wrongly in three places, and filed into
+            a phase the composer never names. An outline where Tab means indent teaches itself.
+          </p>
+          <h3 style="margin-top: 14px">Sequence</h3>
+          <ol>
+            <li>
+              Ship A alone. Two evenings. The wizard stays reachable from the overflow menu but
+              stops auto-opening, so nothing breaks while D is built.
+            </li>
+            <li>
+              Build D as a read-only outline first — the board's data, flattened, with dates in
+              columns. Prove the two views agree before making it editable.
+            </li>
+            <li>
+              Turn on editing: Tab, Shift+Tab, Enter, inline dates. Delete the wizard the day this
+              lands.
+            </li>
+            <li>
+              Fold the orphans into D's header — rename, client, project state, billing type. All
+              four currently have no home or a five-step one.
+            </li>
+          </ol>
+          <h3 style="margin-top: 14px">What I'd cut regardless of which option you pick</h3>
+          <ol>
+            <li>
+              The Milestones step. Separate table, separate strip, and you don't fill it in. Phase
+              end dates already carry the meaning.
+            </li>
+            <li>The wizard's Tasks textarea. Strictly weaker than the composer it hands off to.</li>
+            <li>
+              The "Serves a bet?" chips at creation. Move to the planning surface, where Targets are
+              actually in view.
+            </li>
+            <li>
+              The template mode switch at 10+ projects. It appears without explanation at an
+              arbitrary threshold, and it silently overwrites the category you just chose.
+            </li>
+          </ol>
+        </div>
+      </section>
     </div>
-  </section>
-
-  <!-- ============ COMPARISON ============ -->
-  <section class="sec">
-    <div class="sec-num">Part three</div>
-    <h2 class="sec-h">Side by side</h2>
-    <p class="sec-p">Counting from intent to a usable project, and from intent to a planned one.</p>
-
-    <table class="cmp">
-      <tr>
-        <th>Path</th><th>Steps to exist</th><th>Steps to plan</th><th>Surfaces</th><th>What it fixes</th>
-      </tr>
-      <tr>
-        <td>Today</td>
-        <td>Name, category, submit, wait for route, escape the wizard — 5</td>
-        <td>4 wizard steps, Back/Next only</td>
-        <td>2 modals, 1 route</td>
-        <td>—</td>
-      </tr>
-      <tr>
-        <td>A + D</td>
-        <td>Type, Enter — 2</td>
-        <td>Toggle to Plan, type an outline</td>
-        <td>1 modal, 0 routes</td>
-        <td>Kills the wizard and the invisible composer syntax in one move. Planning and doing share a surface.</td>
-      </tr>
-      <tr>
-        <td>A + E</td>
-        <td>Type, Enter — 2</td>
-        <td>Open the sheet, fill what you know</td>
-        <td>1 modal, 1 panel</td>
-        <td>Kills the wizard, gives rename and client a home, autosaves. Composer syntax survives.</td>
-      </tr>
-      <tr>
-        <td>B + D</td>
-        <td>Click, type, Enter — 3, zero overlays</td>
-        <td>Toggle to Plan, type an outline</td>
-        <td>0 modals</td>
-        <td>The calmest of the set. Costs you quick capture from Today.</td>
-      </tr>
-      <tr>
-        <td>C + E</td>
-        <td>Type, Enter — 2</td>
-        <td>Expand at creation, or open the sheet later</td>
-        <td>1 modal, 1 panel</td>
-        <td>Lowest build. One component serves both the 10-second add and the 10-minute session.</td>
-      </tr>
-    </table>
-  </section>
-
-  <!-- ============ RECOMMENDATION ============ -->
-  <section class="sec">
-    <div class="sec-num">Recommendation</div>
-    <h2 class="sec-h">A + D, built in that order</h2>
-    <div class="rec">
-      <h3>Why this pair</h3>
-      <p>Your two answers are in tension: container-first says make creation nearly free, but 1-2 phases with a start date says you do want structure early. A + D resolves it by separating the moments rather than compromising both — creation costs one line, and planning is a mode on the surface you were already looking at, available forever rather than only in the first ten seconds after creation.</p>
-      <p>Option D is also the only one that retires the composer's invisible grammar. Right now the tree is built by typing <code>;;;</code> and <code>Parent//+ Child</code>, documented in one chip you have to click, taught wrongly in three places, and filed into a phase the composer never names. An outline where Tab means indent teaches itself.</p>
-      <h3 style="margin-top:14px">Sequence</h3>
-      <ol>
-        <li>Ship A alone. Two evenings. The wizard stays reachable from the overflow menu but stops auto-opening, so nothing breaks while D is built.</li>
-        <li>Build D as a read-only outline first — the board's data, flattened, with dates in columns. Prove the two views agree before making it editable.</li>
-        <li>Turn on editing: Tab, Shift+Tab, Enter, inline dates. Delete the wizard the day this lands.</li>
-        <li>Fold the orphans into D's header — rename, client, project state, billing type. All four currently have no home or a five-step one.</li>
-      </ol>
-      <h3 style="margin-top:14px">What I'd cut regardless of which option you pick</h3>
-      <ol>
-        <li>The Milestones step. Separate table, separate strip, and you don't fill it in. Phase end dates already carry the meaning.</li>
-        <li>The wizard's Tasks textarea. Strictly weaker than the composer it hands off to.</li>
-        <li>The "Serves a bet?" chips at creation. Move to the planning surface, where Targets are actually in view.</li>
-        <li>The template mode switch at 10+ projects. It appears without explanation at an arbitrary threshold, and it silently overwrites the category you just chose.</li>
-      </ol>
-    </div>
-  </section>
-
-</div>
-</body>
+  </body>
 </html>

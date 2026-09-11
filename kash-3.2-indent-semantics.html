@@ -1,150 +1,404 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kash 3.2 — Indent semantics</title>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{--border:#ececec;--ink:#16181d;--ink-muted:#6b7280;--ink-faint:#767e8e;
-    --cat:#009ddc;--crit:#b3122a;--surface-2:#fafafa;--r:8px}
-  *{box-sizing:border-box}
-  body{margin:0;background:#f6f6f7;color:var(--ink);font-family:Figtree,-apple-system,sans-serif;font-size:13px;line-height:1.5}
-  .page{max-width:1060px;margin:0 auto;padding:36px 26px 90px}
-  .meta{font-size:11px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase}
-  h1{font-size:20px;font-weight:500;margin:6px 0 8px}
-  .sub{font-size:13px;color:var(--ink-muted);max-width:82ch;margin:0 0 4px}
-  code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:3px;padding:1px 4px}
-  .kbd{font-family:ui-monospace,Menlo,monospace;font-size:10px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;color:var(--ink-faint);background:#fff}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kash 3.2 — Indent semantics</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --border: #ececec;
+        --ink: #16181d;
+        --ink-muted: #6b7280;
+        --ink-faint: #767e8e;
+        --cat: #009ddc;
+        --crit: #b3122a;
+        --surface-2: #fafafa;
+        --r: 8px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f6f6f7;
+        color: var(--ink);
+        font-family:
+          Figtree,
+          -apple-system,
+          sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .page {
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 36px 26px 90px;
+      }
+      .meta {
+        font-size: 11px;
+        color: var(--ink-faint);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 500;
+        margin: 6px 0 8px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--ink-muted);
+        max-width: 82ch;
+        margin: 0 0 4px;
+      }
+      code {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 1px 4px;
+      }
+      .kbd {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 10px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 1px 4px;
+        color: var(--ink-faint);
+        background: #fff;
+      }
 
-  .grid{display:grid;gap:18px;grid-template-columns:1fr 1fr 1fr;margin-top:28px}
-  @media(max-width:980px){.grid{grid-template-columns:1fr}}
-  .opt{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
-  .opt.pick{border-color:var(--ink)}
-  .oh{padding:13px 15px 11px;border-bottom:1px solid var(--border)}
-  .tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:3px}
-  .opt.pick .tag{color:var(--ink)}
-  .on{font-size:14px;font-weight:500;margin:0 0 3px}
-  .ol{font-size:12px;color:var(--ink-muted);margin:0}
-  .stage{padding:14px 15px;background:var(--surface-2);border-bottom:1px solid var(--border);flex:1}
-  .ob{padding:12px 15px}
-  .ob ul{margin:0;padding-left:15px}
-  .ob li{font-size:12px;color:var(--ink-muted);margin-bottom:4px}
-  .ob li.bad{color:var(--crit)} .ob li.bad::marker{color:var(--crit)}
+      .grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1fr 1fr 1fr;
+        margin-top: 28px;
+      }
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .opt {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .opt.pick {
+        border-color: var(--ink);
+      }
+      .oh {
+        padding: 13px 15px 11px;
+        border-bottom: 1px solid var(--border);
+      }
+      .tag {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 3px;
+      }
+      .opt.pick .tag {
+        color: var(--ink);
+      }
+      .on {
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0 0 3px;
+      }
+      .ol {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin: 0;
+      }
+      .stage {
+        padding: 14px 15px;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+        flex: 1;
+      }
+      .ob {
+        padding: 12px 15px;
+      }
+      .ob ul {
+        margin: 0;
+        padding-left: 15px;
+      }
+      .ob li {
+        font-size: 12px;
+        color: var(--ink-muted);
+        margin-bottom: 4px;
+      }
+      .ob li.bad {
+        color: var(--crit);
+      }
+      .ob li.bad::marker {
+        color: var(--crit);
+      }
 
-  .box{background:#fff;border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-bottom:9px}
-  .cap{font-size:11px;color:var(--ink-faint);padding:5px 9px;background:#fff;border-bottom:1px solid var(--border)}
-  .r{display:flex;align-items:center;gap:7px;padding:4px 9px;border-bottom:1px solid #f4f4f4;font-size:12px}
-  .r:last-child{border-bottom:0}
-  .r.ph{font-weight:500}
-  .r.tk{color:var(--ink-muted)}
-  .r.sel{background:#f2f4f7}
-  .dot{width:5px;height:5px;border-radius:50%;background:var(--cat);flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
-  .arrow{text-align:center;font-size:11px;color:var(--ink-faint);margin:4px 0 7px}
-  .lost{font-size:11px;color:var(--crit);padding:5px 9px;background:#fff;border-top:1px solid var(--border)}
-  .keep{font-size:11px;color:var(--ink-faint);padding:5px 9px;background:#fff;border-top:1px solid var(--border)}
-  .take{margin-top:24px;background:#fff;border:1px solid var(--border);border-left:3px solid var(--ink);border-radius:var(--r);padding:14px 18px}
-  .take b{font-weight:500;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:5px}
-  .take p{margin:0 0 8px;font-size:13px;color:var(--ink-muted);max-width:88ch}
-  .take p:last-child{margin:0}
-</style>
-</head>
-<body>
-<div class="page">
-  <div class="meta">Kash 3.2 · step 4 · one decision</div>
-  <h1>What Tab and Shift+Tab actually do</h1>
-  <p class="sub">In every model, <span class="kbd">tab</span> and <span class="kbd">⇧tab</span> move a row in and out one level. They differ on whether a row can change <em>kind</em> — task into phase, or phase into task.</p>
-  <p class="sub">This matters because the two are not the same object. A task carries completion, logged time entries, tags, priority and recurrence. A phase carries a date range, an estimate, and children. There is no conversion operation on the server, so changing kind means creating one row and deleting the other, and whatever the old row carried has nowhere to land.</p>
+      .box {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 9px;
+      }
+      .cap {
+        font-size: 11px;
+        color: var(--ink-faint);
+        padding: 5px 9px;
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+      }
+      .r {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 9px;
+        border-bottom: 1px solid #f4f4f4;
+        font-size: 12px;
+      }
+      .r:last-child {
+        border-bottom: 0;
+      }
+      .r.ph {
+        font-weight: 500;
+      }
+      .r.tk {
+        color: var(--ink-muted);
+      }
+      .r.sel {
+        background: #f2f4f7;
+      }
+      .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--cat);
+        flex: none;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+      }
+      .arrow {
+        text-align: center;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin: 4px 0 7px;
+      }
+      .lost {
+        font-size: 11px;
+        color: var(--crit);
+        padding: 5px 9px;
+        background: #fff;
+        border-top: 1px solid var(--border);
+      }
+      .keep {
+        font-size: 11px;
+        color: var(--ink-faint);
+        padding: 5px 9px;
+        background: #fff;
+        border-top: 1px solid var(--border);
+      }
+      .take {
+        margin-top: 24px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--ink);
+        border-radius: var(--r);
+        padding: 14px 18px;
+      }
+      .take b {
+        font-weight: 500;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 5px;
+      }
+      .take p {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: var(--ink-muted);
+        max-width: 88ch;
+      }
+      .take p:last-child {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="meta">Kash 3.2 · step 4 · one decision</div>
+      <h1>What Tab and Shift+Tab actually do</h1>
+      <p class="sub">
+        In every model, <span class="kbd">tab</span> and <span class="kbd">⇧tab</span> move a row in
+        and out one level. They differ on whether a row can change <em>kind</em> — task into phase,
+        or phase into task.
+      </p>
+      <p class="sub">
+        This matters because the two are not the same object. A task carries completion, logged time
+        entries, tags, priority and recurrence. A phase carries a date range, an estimate, and
+        children. There is no conversion operation on the server, so changing kind means creating
+        one row and deleting the other, and whatever the old row carried has nowhere to land.
+      </p>
 
-  <div class="grid">
-
-    <!-- A -->
-    <div class="opt pick">
-      <div class="oh"><span class="tag">Option A · recommended</span><h3 class="on">Move only, never convert</h3><p class="ol">Indent reparents. Kind is fixed at creation.</p></div>
-      <div class="stage">
-        <div class="box">
-          <div class="cap">⇧tab on "Audit the schema"</div>
-          <div class="r ph"><span class="dot"></span>Data model rebuild</div>
-          <div class="r tk sel" style="padding-left:31px">Audit the schema</div>
-          <div class="r ph"><span class="dot"></span>Reporting layer</div>
+      <div class="grid">
+        <!-- A -->
+        <div class="opt pick">
+          <div class="oh">
+            <span class="tag">Option A · recommended</span>
+            <h3 class="on">Move only, never convert</h3>
+            <p class="ol">Indent reparents. Kind is fixed at creation.</p>
+          </div>
+          <div class="stage">
+            <div class="box">
+              <div class="cap">⇧tab on "Audit the schema"</div>
+              <div class="r ph"><span class="dot"></span>Data model rebuild</div>
+              <div class="r tk sel" style="padding-left: 31px">Audit the schema</div>
+              <div class="r ph"><span class="dot"></span>Reporting layer</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="box">
+              <div class="r ph"><span class="dot"></span>Data model rebuild</div>
+              <div class="r ph"><span class="dot"></span>Reporting layer</div>
+              <div class="r tk sel">Audit the schema</div>
+              <div class="keep">still a task, now unfiled on the project · 4h logged intact</div>
+            </div>
+          </div>
+          <div class="ob">
+            <ul>
+              <li>
+                A task outdented past the top level becomes a loose task on the project, which is a
+                real state the schema already has.
+              </li>
+              <li>A phase indented becomes a sub-phase of the row above it.</li>
+              <li>
+                Nothing is ever created or destroyed by a keystroke, so nothing can be lost by one.
+              </li>
+              <li>
+                Making a task into a phase is still possible, as an explicit action on the row that
+                says what it will do.
+              </li>
+              <li class="bad">
+                Departs from the deck, which said indenting a top-level row turns it into a task.
+              </li>
+            </ul>
+          </div>
         </div>
-        <div class="arrow">↓</div>
-        <div class="box">
-          <div class="r ph"><span class="dot"></span>Data model rebuild</div>
-          <div class="r ph"><span class="dot"></span>Reporting layer</div>
-          <div class="r tk sel">Audit the schema</div>
-          <div class="keep">still a task, now unfiled on the project · 4h logged intact</div>
+
+        <!-- B -->
+        <div class="opt">
+          <div class="oh">
+            <span class="tag">Option B</span>
+            <h3 class="on">Convert when it is safe</h3>
+            <p class="ol">Kind changes only on an empty row.</p>
+          </div>
+          <div class="stage">
+            <div class="box">
+              <div class="cap">⇧tab on an untouched task</div>
+              <div class="r ph"><span class="dot"></span>Data model rebuild</div>
+              <div class="r tk sel" style="padding-left: 31px">Cutover</div>
+              <div class="keep">no time, no tags, not done</div>
+            </div>
+            <div class="arrow">↓ becomes a phase</div>
+            <div class="box">
+              <div class="r ph"><span class="dot"></span>Data model rebuild</div>
+              <div class="r ph sel"><span class="dot"></span>Cutover</div>
+              <div class="keep">safe: there was nothing to drop</div>
+            </div>
+            <div class="box">
+              <div class="cap">⇧tab on a task with 4h logged</div>
+              <div class="r tk sel" style="padding-left: 31px">Audit the schema</div>
+              <div class="keep">refuses, and says why</div>
+            </div>
+          </div>
+          <div class="ob">
+            <ul>
+              <li>
+                Matches the deck's promise most of the time, since a row you just typed is usually
+                empty.
+              </li>
+              <li>Never silently drops anything.</li>
+              <li class="bad">
+                The same keystroke does two different things depending on invisible state. You learn
+                the rule by being refused.
+              </li>
+              <li class="bad">
+                More logic to get right, and the refusal case needs its own message.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- C -->
+        <div class="opt">
+          <div class="oh">
+            <span class="tag">Option C</span>
+            <h3 class="on">Convert, confirm when lossy</h3>
+            <p class="ol">The deck's promise, with a guard.</p>
+          </div>
+          <div class="stage">
+            <div class="box">
+              <div class="cap">⇧tab on a task with 4h logged</div>
+              <div class="r tk sel" style="padding-left: 31px">Audit the schema</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="box">
+              <div class="cap">Turn this task into a phase?</div>
+              <div class="lost">
+                4h of logged time and 2 tags will be dropped. This can't be undone.
+              </div>
+              <div class="r" style="gap: 6px">
+                <span class="kbd">esc</span> cancel
+                <span style="margin-left: auto" class="kbd">↵</span> convert
+              </div>
+            </div>
+          </div>
+          <div class="ob">
+            <ul>
+              <li>The interaction is uniform: indent always means what the deck said.</li>
+              <li>You are never surprised, because you are asked.</li>
+              <li class="bad">
+                A confirm dialog on a keystroke is a contradiction. Tab is meant to be fast; a modal
+                in its path makes restructuring feel dangerous.
+              </li>
+              <li class="bad">
+                Really does destroy time entries, which feed the burn signal, the Ledger and your
+                invoices.
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
-      <div class="ob"><ul>
-        <li>A task outdented past the top level becomes a loose task on the project, which is a real state the schema already has.</li>
-        <li>A phase indented becomes a sub-phase of the row above it.</li>
-        <li>Nothing is ever created or destroyed by a keystroke, so nothing can be lost by one.</li>
-        <li>Making a task into a phase is still possible, as an explicit action on the row that says what it will do.</li>
-        <li class="bad">Departs from the deck, which said indenting a top-level row turns it into a task.</li>
-      </ul></div>
-    </div>
 
-    <!-- B -->
-    <div class="opt">
-      <div class="oh"><span class="tag">Option B</span><h3 class="on">Convert when it is safe</h3><p class="ol">Kind changes only on an empty row.</p></div>
-      <div class="stage">
-        <div class="box">
-          <div class="cap">⇧tab on an untouched task</div>
-          <div class="r ph"><span class="dot"></span>Data model rebuild</div>
-          <div class="r tk sel" style="padding-left:31px">Cutover</div>
-          <div class="keep">no time, no tags, not done</div>
-        </div>
-        <div class="arrow">↓ becomes a phase</div>
-        <div class="box">
-          <div class="r ph"><span class="dot"></span>Data model rebuild</div>
-          <div class="r ph sel"><span class="dot"></span>Cutover</div>
-          <div class="keep">safe: there was nothing to drop</div>
-        </div>
-        <div class="box">
-          <div class="cap">⇧tab on a task with 4h logged</div>
-          <div class="r tk sel" style="padding-left:31px">Audit the schema</div>
-          <div class="keep">refuses, and says why</div>
-        </div>
+      <div class="take">
+        <b>Where I land</b>
+        <p>
+          Option A. The deck's rule read well on paper because it treated phases and tasks as one
+          thing at different depths. In the schema they are two tables with different cargo, and a
+          keystroke that quietly converts between them puts logged time — the thing your invoices
+          are built from — one stray Shift+Tab away from gone.
+        </p>
+        <p>
+          A keeps what actually made the outline good: no syntax, structure by position, one
+          keystroke to reorganise. It gives up only the ability to change a row's kind by accident,
+          and offers an explicit action for the rare time you meant it.
+        </p>
+        <p>
+          Worth noticing that this is the schema telling you something. Phases and tasks feel like
+          one hierarchy while you are planning, and they are not. If they ever should be, that is a
+          data-model decision, not a keybinding.
+        </p>
       </div>
-      <div class="ob"><ul>
-        <li>Matches the deck's promise most of the time, since a row you just typed is usually empty.</li>
-        <li>Never silently drops anything.</li>
-        <li class="bad">The same keystroke does two different things depending on invisible state. You learn the rule by being refused.</li>
-        <li class="bad">More logic to get right, and the refusal case needs its own message.</li>
-      </ul></div>
     </div>
-
-    <!-- C -->
-    <div class="opt">
-      <div class="oh"><span class="tag">Option C</span><h3 class="on">Convert, confirm when lossy</h3><p class="ol">The deck's promise, with a guard.</p></div>
-      <div class="stage">
-        <div class="box">
-          <div class="cap">⇧tab on a task with 4h logged</div>
-          <div class="r tk sel" style="padding-left:31px">Audit the schema</div>
-        </div>
-        <div class="arrow">↓</div>
-        <div class="box">
-          <div class="cap">Turn this task into a phase?</div>
-          <div class="lost">4h of logged time and 2 tags will be dropped. This can't be undone.</div>
-          <div class="r" style="gap:6px"><span class="kbd">esc</span> cancel <span style="margin-left:auto" class="kbd">↵</span> convert</div>
-        </div>
-      </div>
-      <div class="ob"><ul>
-        <li>The interaction is uniform: indent always means what the deck said.</li>
-        <li>You are never surprised, because you are asked.</li>
-        <li class="bad">A confirm dialog on a keystroke is a contradiction. Tab is meant to be fast; a modal in its path makes restructuring feel dangerous.</li>
-        <li class="bad">Really does destroy time entries, which feed the burn signal, the Ledger and your invoices.</li>
-      </ul></div>
-    </div>
-  </div>
-
-  <div class="take">
-    <b>Where I land</b>
-    <p>Option A. The deck's rule read well on paper because it treated phases and tasks as one thing at different depths. In the schema they are two tables with different cargo, and a keystroke that quietly converts between them puts logged time — the thing your invoices are built from — one stray Shift+Tab away from gone.</p>
-    <p>A keeps what actually made the outline good: no syntax, structure by position, one keystroke to reorganise. It gives up only the ability to change a row's kind by accident, and offers an explicit action for the rare time you meant it.</p>
-    <p>Worth noticing that this is the schema telling you something. Phases and tasks feel like one hierarchy while you are planning, and they are not. If they ever should be, that is a data-model decision, not a keybinding.</p>
-  </div>
-</div>
-</body>
+  </body>
 </html>
