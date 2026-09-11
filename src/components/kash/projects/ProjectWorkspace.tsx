@@ -12,6 +12,8 @@ import { useTRPC } from "@/trpc/client";
 
 import CalendarBoardView from "./CalendarBoardView";
 import MillerColumnsView from "./MillerColumnsView";
+import PlanOutline from "./PlanOutline";
+import ProjectDetailsStrip from "./ProjectDetailsStrip";
 import PhaseBurnBars from "./PhaseBurnBars";
 import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
 import ProjectSetupWizard from "./ProjectSetupWizard";
@@ -60,12 +62,15 @@ export default function ProjectWorkspace({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Auto-launch the setup wizard right after blank project creation (?setup=new), then
-  // strip the param so a refresh doesn't reopen it.
+  // Kash 3.2: creation no longer hands off to the wizard. `?setup=new` used to
+  // auto-open a four-step modal the moment a project was created — two modals and a
+  // route change for one intent — and the param was stripped on mount, so Escaping
+  // it was a one-way door. Structure is now added on the board itself.
+  //
+  // The param is still swallowed rather than ignored so an old bookmark or an
+  // in-flight link doesn't land on a URL that means nothing.
   useEffect(() => {
     if (searchParams.get("setup") === "new") {
-      setWizardOpen(true);
-      setSetupMode("new-blank");
       router.replace(pathname);
     }
   }, [searchParams, router, pathname]);
@@ -124,6 +129,14 @@ export default function ProjectWorkspace({
             void milestonesQuery.refetch();
           }}
         />
+      ) : viewMode === "plan" ? (
+        // Plan mode (Kash 3.2, 2D + 3B): the same tree the Columns view renders, laid
+        // out whole, with the project-level facts above it. Natural height with its
+        // own scroll, so a long outline never clips under the fill layout.
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+          <ProjectDetailsStrip project={project} />
+          <PlanOutline projectId={initialProject.id} category={project.category} tree={tree} />
+        </div>
       ) : viewMode === "columns" ? (
         <MillerColumnsView
           tree={tree}

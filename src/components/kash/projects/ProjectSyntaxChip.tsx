@@ -2,8 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-const SYNTAX_HINT =
-  "Parent//+ Child nests a sub-directory · ;;; + Phase creates directories only · one task per line · add ⌘↵";
+const SYNTAX_HINT = [
+  "One task per line: title ; due ; priority ; phase. Everything after the title is optional.",
+  "Due takes today, tomorrow, a weekday, or 2026-09-24. Priority is !, !! or !!!.",
+  "Phase takes a path like Reporting // Cutover. A + before a name creates it.",
+  "Start a line with ;;; to create phases and no task.",
+  "⌘↵ adds. Enter makes a new line.",
+].join("\n\n");
 
 type Props = {
   showOnFocus?: boolean;
@@ -52,7 +57,7 @@ export default function ProjectSyntaxChip({ showOnFocus = false, focused = false
         <div
           id={hintId}
           role="tooltip"
-          className="absolute bottom-full left-0 z-overlay mb-1 w-72 rounded-card border border-subtle bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-overlay"
+          className="absolute bottom-full left-0 z-overlay mb-1 w-80 whitespace-pre-line rounded-card border border-subtle bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-overlay"
         >
           {SYNTAX_HINT}
         </div>

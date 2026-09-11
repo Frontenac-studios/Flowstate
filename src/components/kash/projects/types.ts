@@ -9,4 +9,4 @@ export type ProjectPhase = RouterOutputs["phases"]["listByProject"][number];
 export type ProjectTask = RouterOutputs["tasks"]["listByProject"][number];
 export type ProjectMilestone = RouterOutputs["projectMilestones"]["listByProject"][number];
 
-export type ProjectViewMode = "columns" | "calendar";
+export type ProjectViewMode = "columns" | "plan" | "calendar";

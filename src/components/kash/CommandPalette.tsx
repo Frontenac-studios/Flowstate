@@ -7,7 +7,12 @@ import Input from "@/components/kash/ui/Input";
 import { KeyCap } from "@/components/kash/ui/KeyCap";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 
-import { DECIDE_EVENT, OPEN_ABYSS_CAPTURE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
+import {
+  DECIDE_EVENT,
+  OPEN_ABYSS_CAPTURE_EVENT,
+  OPEN_NEW_PROJECT_EVENT,
+  OPEN_PALETTE_EVENT,
+} from "./chrome-events";
 
 export { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
 
@@ -46,6 +51,13 @@ export function CommandPalette() {
         run: () => router.push("/this-week"),
       },
       { id: "go-projects", label: "Go to Projects", run: () => router.push("/projects") },
+      {
+        id: "new-project",
+        label: "New project",
+        hint: "n",
+        keywords: "create add project client engagement",
+        run: () => window.dispatchEvent(new CustomEvent(OPEN_NEW_PROJECT_EVENT)),
+      },
       {
         id: "go-plan",
         label: "Go to Plan",

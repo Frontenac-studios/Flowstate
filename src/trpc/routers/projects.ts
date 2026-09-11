@@ -123,6 +123,10 @@ export const projectsRouter = createTRPCRouter({
           category: projects.category,
           isLearning: projects.isLearning,
           billingType: projects.billingType,
+          // W15/3.2: the Projects index is a status view, so lifecycle and client
+          // come back with the list. `state` had no reader anywhere before this.
+          state: projects.state,
+          clientId: projects.clientId,
           updatedAt: projects.updatedAt,
         })
         .from(projects)
@@ -133,6 +137,7 @@ export const projectsRouter = createTRPCRouter({
           projectId: tasks.projectId,
           completedAt: tasks.completedAt,
           isTop3: tasks.isTop3,
+          scheduledDate: tasks.scheduledDate,
           updatedAt: tasks.updatedAt,
         })
         .from(tasks)
@@ -211,10 +216,18 @@ export const projectsRouter = createTRPCRouter({
         pinnedTaskIds
       );
       const completedCount = projectTasks.filter((task) => task.completedAt !== null).length;
+      // The soonest date still owed on this project. Dates are stored as `YYYY-MM-DD`
+      // strings, so a lexical min is a chronological min — no parsing, no timezone.
+      const nextDueDate =
+        projectTasks
+          .filter((task) => task.completedAt === null && task.scheduledDate !== null)
+          .map((task) => task.scheduledDate as string)
+          .sort()[0] ?? null;
       return {
         ...project,
         taskCount: projectTasks.length,
         completedCount,
+        nextDueDate,
         percent: progress.percent,
         completedWeight: progress.completedWeight,
         totalWeight: progress.totalWeight,
@@ -303,11 +316,16 @@ export const projectsRouter = createTRPCRouter({
       ]);
 
       const byTaskSeconds = aggregateSecondsByTask(timeRows);
-      return rollupProjectPhaseTime({
-        tasks: taskRows,
-        phases: phaseRows,
-        byTaskSeconds,
-      });
+      return {
+        ...rollupProjectPhaseTime({
+          tasks: taskRows,
+          phases: phaseRows,
+          byTaskSeconds,
+        }),
+        // Plan mode's Logged column renders on task rows as well as phase rows, and
+        // the phase rollup alone cannot answer "which task ate the afternoon".
+        byTaskId: Object.fromEntries(byTaskSeconds),
+      };
     }),
 
   multiProjectCalendar: protectedProcedure.query(async ({ ctx }) => {

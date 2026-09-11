@@ -1,66 +1,67 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
-import { InPageSwitcher } from "@/components/kash/InPageSwitcher";
-import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
-import {
-  categoryFillVar,
-  categorySeedLabel,
-  categorySolidVar,
-  categoryTextVar,
-} from "@/lib/projects/category-tokens";
-import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
+import { matchClientFromName } from "@/lib/projects/match-client-from-name";
+import { categorySolidVar } from "@/lib/projects/category-tokens";
 import { useTRPC } from "@/trpc/client";
 
 type Props = {
-  showTemplateFeatures: boolean;
-  onCreated: (result: { id: string; fromTemplate: boolean }) => void;
+  onCreated: (result: { id: string }) => void;
   onCancel: () => void;
 };
 
-type CreationMode = "blank" | "template";
+/** "Just me" — internal or personal work, which has no client. */
+const JUST_ME = "__just_me__";
 
-const CREATION_MODES: { value: CreationMode; label: string }[] = [
-  { value: "blank", label: "Blank" },
-  { value: "template", label: "From template" },
-];
-
-export default function NewProjectForm({ showTemplateFeatures, onCreated, onCancel }: Props) {
+/**
+ * Creation is one line (Kash 3.2, decision 1A).
+ *
+ * The only required field is the name. Everything the old form asked for is either
+ * derived or deferred:
+ *
+ * - **Category** is derived from who the work is for. Picking a client means
+ *   business; "Just me" means personal. Asking "business or personal?" was asking
+ *   the user to translate a concrete fact into an abstract one, and the answer was
+ *   then overwritten anyway when a template was chosen.
+ * - **clientId** is captured here for the first time. It has existed on `projects`
+ *   since W1 and was never asked for at creation, so client work arrived unlinked.
+ * - **"Serves a bet?"** moved to the planning surface, where Targets are in view.
+ *   At creation it rendered as two unexplained chips whenever no Target existed.
+ * - **Templates** moved out with the 10-project gate.
+ *
+ * The client selection follows the typed name until the user touches it, so the
+ * common path really is: type, Enter.
+ */
+export default function NewProjectForm({ onCreated, onCancel }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const [mode, setMode] = useState<CreationMode>("blank");
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<ProjectCategory | null>(null);
-  const [templateId, setTemplateId] = useState<string | null>(null);
-  // What this project serves: a Target id, "none", or "maintenance" (W5c₂).
-  const [serves, setServes] = useState<string>("none");
+  /** null = follow the name. A string = the user chose, so stop guessing. */
+  const [clientChoice, setClientChoice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: allBets = [] } = useQuery(trpc.targets.list.queryOptions());
-  const activeBets = allBets.filter((b) => b.state === "active");
+  const { data: clients = [] } = useQuery(trpc.clients.list.queryOptions({}));
 
-  const { data: templates, isLoading: templatesLoading } = useQuery({
-    ...trpc.projects.listTemplates.queryOptions(),
-    enabled: showTemplateFeatures && mode === "template",
-  });
-  const { data: estimateSampleCount = 0 } = useQuery({
-    ...trpc.projects.estimateSampleCount.queryOptions(),
-    enabled: showTemplateFeatures && mode === "template",
-  });
+  const suggestedClientId = useMemo(
+    () => matchClientFromName(name, clients)?.id ?? null,
+    [name, clients]
+  );
 
-  const handleCreated = (project: { id: string }, fromTemplate: boolean) => {
-    void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
-    onCreated({ id: project.id, fromTemplate });
-  };
+  // What is actually selected right now: the user's choice if they made one,
+  // otherwise whatever the name suggests, otherwise nothing.
+  const selected = clientChoice ?? suggestedClientId;
 
   const createMutation = useMutation(
     trpc.projects.create.mutationOptions({
-      onSuccess: (project) => handleCreated(project, false),
+      onSuccess: (project) => {
+        void queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
+        onCreated({ id: project.id });
+      },
       onError: (err) => {
         console.error("[NewProjectForm] projects.create failed", err);
         setError(
@@ -72,205 +73,91 @@ export default function NewProjectForm({ showTemplateFeatures, onCreated, onCanc
     })
   );
 
-  const createFromTemplateMutation = useMutation(
-    trpc.projects.createFromTemplate.mutationOptions({
-      onSuccess: (project) => handleCreated(project, true),
-      onError: (err) => {
-        console.error("[NewProjectForm] projects.createFromTemplate failed", err);
-        setError(
-          err.data?.code === "CONFLICT"
-            ? "A project with that name already exists."
-            : "Couldn't create the project. Please try again."
-        );
-      },
-    })
-  );
-
-  const selectedTemplate = templates?.find((template) => template.id === templateId) ?? null;
-  const pending = createMutation.isPending || createFromTemplateMutation.isPending;
-
-  useEffect(() => {
-    if (mode !== "template" || !selectedTemplate || category !== null) return;
-    setCategory(selectedTemplate.category);
-  }, [mode, selectedTemplate, category]);
-
   const trimmedName = name.trim();
-  const canSubmitBlank = trimmedName.length > 0 && category !== null && !pending;
-  const canSubmitTemplate =
-    trimmedName.length > 0 && category !== null && templateId !== null && !pending;
-  const canSubmit = mode === "blank" ? canSubmitBlank : canSubmitTemplate;
+  const pending = createMutation.isPending;
+  const canSubmit = trimmedName.length > 0 && !pending;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!canSubmit || category === null) return;
+    if (!canSubmit) return;
     setError(null);
 
-    const isMaintenance = serves === "maintenance";
-    const targetId = !isMaintenance && serves !== "none" ? serves : null;
-
-    if (mode === "blank") {
-      createMutation.mutate({ name: trimmedName, category, isMaintenance, targetId });
-      return;
-    }
-
-    if (templateId === null) return;
-    createFromTemplateMutation.mutate({
-      templateId,
+    const clientId = selected && selected !== JUST_ME ? selected : null;
+    createMutation.mutate({
       name: trimmedName,
-      category,
-      isMaintenance,
-      targetId,
+      // Work for a client is business; work for yourself is personal. Nothing else
+      // sets the category at creation.
+      category: clientId ? "business" : "personal",
+      clientId,
     });
   };
 
+  const chips: { value: string; label: string; business: boolean }[] = [
+    ...clients.map((client) => ({ value: client.id, label: client.name, business: true })),
+    { value: JUST_ME, label: "Just me", business: false },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {showTemplateFeatures ? (
-        <InPageSwitcher
-          options={CREATION_MODES}
-          value={mode}
-          onChange={setMode}
-          ariaLabel="New project mode"
-        />
-      ) : null}
-
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="new-project-name" className="text-sm font-medium text-ink">
+        <label htmlFor="new-project-name" className="text-caption text-ink-faint">
           Name
         </label>
         <Input
           id="new-project-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Q3 Marketing Refresh"
+          placeholder="e.g. Great White Q4 reporting"
           maxLength={120}
           autoFocus
+          className="w-full"
         />
       </div>
 
-      {showTemplateFeatures && mode === "template" ? (
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1 text-sm font-medium text-ink">Template</legend>
-          {templatesLoading ? (
-            <p className="text-sm text-ink-muted">Loading templates…</p>
-          ) : (templates?.length ?? 0) === 0 ? (
-            <p className="text-sm text-ink-muted">
-              No templates yet. Save one from a project&apos;s menu.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <p className="mb-1 flex items-center gap-2 text-caption text-ink-muted">
-                Duration estimates
-                <EstimateConfidenceHint sampleCount={estimateSampleCount} />
-              </p>
-              {templates?.map((template) => {
-                const selected = templateId === template.id;
-                return (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => {
-                      setTemplateId(template.id);
-                      setCategory(template.category);
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="sr-only">Who is this for?</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {chips.map(({ value, label, business }) => {
+            const isSelected = selected === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setClientChoice(isSelected ? JUST_ME : value)}
+                aria-pressed={isSelected}
+                className={`flex items-center gap-1.5 rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                  isSelected ? "border-ink text-ink" : "border-subtle text-ink-muted hover:text-ink"
+                }`}
+              >
+                {business ? (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      backgroundColor: categorySolidVar("business"),
+                      boxShadow: "0 0 0 1px var(--mark-ring)",
                     }}
-                    aria-pressed={selected}
-                    className={`rounded-control border px-3 py-2 text-left text-sm transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
-                      selected
-                        ? "border-ink bg-surface-2 text-ink"
-                        : "border-subtle text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    <span className="font-medium text-ink">{template.name}</span>
-                    <span className="mt-0.5 block text-caption text-ink-muted">
-                      {template.phaseCount} phases · {template.taskCount} tasks
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </fieldset>
-      ) : null}
-
-      <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1 text-sm font-medium text-ink">
-          Category <span className="text-ink-muted">(required)</span>
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {PROJECT_CATEGORIES.map((value) => {
-            const selected = category === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setCategory(value)}
-                aria-pressed={selected}
-                className={`flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
-                  selected ? "border-transparent" : "border-subtle text-ink-muted hover:text-ink"
-                }`}
-                style={
-                  selected
-                    ? {
-                        backgroundColor: categoryFillVar(value),
-                        color: categoryTextVar(value),
-                      }
-                    : undefined
-                }
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: categorySolidVar(value),
-                    boxShadow: "0 0 0 1px var(--mark-ring)",
-                  }}
-                  aria-hidden
-                />
-                {categorySeedLabel(value)}
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1 text-sm font-medium text-ink">
-          Serves a bet? <span className="text-ink-muted">(optional)</span>
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { value: "none", label: "Not yet" },
-            ...activeBets.map((b) => ({ value: b.id, label: b.title })),
-            { value: "maintenance", label: "Maintenance" },
-          ].map(({ value, label }) => {
-            const selected = serves === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setServes(value)}
-                aria-pressed={selected}
-                className={`rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
-                  selected
-                    ? "border-transparent bg-ink text-surface"
-                    : "border-subtle text-ink-muted hover:text-ink"
-                }`}
-              >
+                    aria-hidden
+                  />
+                ) : null}
                 {label}
               </button>
             );
           })}
         </div>
+        {clientChoice === null && suggestedClientId ? (
+          <p className="text-caption text-ink-faint">Matched from the name</p>
+        ) : null}
       </fieldset>
 
       {error ? (
-        <p role="alert" className="text-sm text-critical">
+        <p role="alert" className="text-body text-critical">
           {error}
         </p>
       ) : null}
 
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={!canSubmit}>
-          {pending ? "Creating…" : "Create project"}
+          {pending ? "Creating…" : "Create and open"}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel

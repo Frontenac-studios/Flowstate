@@ -6,3 +6,5 @@ export const DECIDE_EVENT = "kash:decide";
 export const CHAT_SEND_EVENT = "kash:chat-send";
 /** Fired by chrome to open Abyss quick-capture (mirrors OPEN_PALETTE_EVENT). */
 export const OPEN_ABYSS_CAPTURE_EVENT = "kash:open-abyss-capture";
+/** Fired by chrome (Projects header, palette, `n`) to open the create-project dialog. */
+export const OPEN_NEW_PROJECT_EVENT = "kash:open-new-project";
