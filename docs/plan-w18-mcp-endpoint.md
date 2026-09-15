@@ -1,7 +1,7 @@
 # W18 — The MCP endpoint: plan in Claude, confirm in Claude, write to Flowstate
 
-Status: **planned, not started.** Written 2026-09-06, rewritten 2026-09-08 after the
-decisions in §1. Recon in §2 is against `origin/main` at 2026-09-08.
+Status: **W18a–c built** (W18a merged #337; W18b–c on `feat/w18bc-mcp-read`, 2026-09-15).
+W18d–g not started. Build log in §12. Recon in §2 is against `origin/main` at 2026-09-08.
 
 ## 0. What this is for
 
@@ -225,3 +225,35 @@ Claude that can write to it.
 - **A tool per tRPC procedure.** The router has hundreds.
 - **Streaming or long-running tools.** Every call returns in one response.
 - **File upload into Flowstate.** Claude reads the document. The app never sees it.
+
+## 12. Build log — W18b–c (2026-09-15)
+
+**Shipped:** `mcp_tokens` (personal; migration 0063 + RLS + SQLite mirror + sync), Settings →
+Integrations → Claude (mint, copy-once, ready-made Claude Desktop config, revoke), and
+`/api/mcp` serving the five read tools over `createCaller`. The W18a spike token is gone.
+
+**Calls made while building (flag any you'd make differently):**
+
+- **No auth header → 404; a bearer that fails → 401.** The spike's "404 until an env var is
+  set" gate made sense for a throwaway with one shared secret. With per-device tokens there is
+  nothing to switch on, so the route is live once merged; a probe with no credentials still
+  learns nothing, while a client with a wrong token gets an error it can act on.
+- **`mcp_tokens` is synced.** On desktop, Settings writes to SQLite and the hosted endpoint
+  reads Postgres, so without sync a token minted in Kash would never work against the web URL.
+  The endpoint's `last_used_at` touch deliberately does **not** bump `updated_at`, so a stream
+  of "used again" writes can't outrank an unpushed revoke in last-write-wins.
+- **`last_used_at` landed here, not in W18g** — throttled to one write per token per five
+  minutes, and it never fails a request. W18g keeps rate limiting and the audit line.
+- **Tools take a project name or id.** Exact name, then a fragment matching exactly one
+  project; ambiguity returns the candidates. Saves Claude a `list_projects` round trip on
+  nearly every question.
+- **Ten live tokens per user**, expiry optional (30 / 90 / 365 days or none), scopes minted as
+  `["read"]` only until the write tools exist.
+
+**Verified:** 5 router tests (plaintext once, hash never returned, revoke, cross-user refusal,
+cap), 12 endpoint tests against in-memory SQLite (404/401 matrix incl. revoked + expired, all
+five tools, cross-user isolation), shape + token unit tests. Manually on a scratch SQLite dev
+server: minted in the UI, called over HTTP and through `npx mcp-remote@0.13.5` (the bridge
+Claude Desktop runs), saw "last used" update, revoked in the UI, confirmed the token 401s.
+
+**Not verified:** Claude Desktop itself, and the hosted path (needs 0063 + RLS applied first).
