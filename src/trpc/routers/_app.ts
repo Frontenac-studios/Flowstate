@@ -7,6 +7,7 @@ import { calendarRouter } from "./calendar";
 import { categorySettingsRouter } from "./category-settings";
 import { chatRouter } from "./chat";
 import { clientsRouter } from "./clients";
+import { mcpTokensRouter } from "./mcp-tokens";
 import { dayReviewsRouter } from "./day-reviews";
 import { directionsRouter } from "./directions";
 import { focusBlocksRouter } from "./focus-blocks";
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   categorySettings: categorySettingsRouter,
   chat: chatRouter,
   clients: clientsRouter,
+  mcpTokens: mcpTokensRouter,
   dayReviews: dayReviewsRouter,
   directions: directionsRouter,
   focusBlocks: focusBlocksRouter,

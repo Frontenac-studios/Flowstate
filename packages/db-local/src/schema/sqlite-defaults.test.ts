@@ -6,6 +6,7 @@ import { businessExpenses } from "./business-expenses";
 import { clients } from "./clients";
 import { directions } from "./directions";
 import { ledgerPeriods } from "./ledger-periods";
+import { mcpTokens } from "./mcp-tokens";
 import { leads } from "./leads";
 import { leadOutreach } from "./lead-outreach";
 import { moneySettings } from "./money-settings";
@@ -343,6 +344,27 @@ describe("sqlite schema insert-time defaults", () => {
     expect(row).toBeDefined();
     expect(typeof row!.id).toBe("string");
     expect(row!.proposalAmountCents).toBe(4_000_000);
+    expect(row!.createdAt).toBeInstanceOf(Date);
+    expect(row!.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it("creates an MCP token without an explicit id or timestamps", async () => {
+    const [row] = await db
+      .insert(mcpTokens)
+      .values({
+        userId: "11111111-1111-1111-1111-111111111111",
+        orgId: "22222222-2222-2222-2222-222222222222",
+        name: "Claude Desktop, MacBook",
+        tokenHash: "a".repeat(64),
+        tokenPrefix: "AbCd1234",
+        scopes: ["read"],
+      })
+      .returning();
+
+    expect(row).toBeDefined();
+    expect(typeof row!.id).toBe("string");
+    expect(row!.scopes).toEqual(["read"]);
+    expect(row!.revokedAt).toBeNull();
     expect(row!.createdAt).toBeInstanceOf(Date);
     expect(row!.updatedAt).toBeInstanceOf(Date);
   });

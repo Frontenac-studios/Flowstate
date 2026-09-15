@@ -60,6 +60,10 @@ export function mapRemoteRow(
     "learned_at",
     "effective_from",
     "swept_kept_until",
+    // mcp_tokens (W18b)
+    "last_used_at",
+    "expires_at",
+    "revoked_at",
   ];
 
   for (const key of dateFields) {
