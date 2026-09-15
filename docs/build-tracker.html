@@ -252,7 +252,7 @@
       //  SEED — canonical starting state, from docs/v1-scope.md + git.
       // ============================================================
       const SEED = /*SEED_START*/ {
-        "meta": { "version": 2, "title": "Flowstate v1 — Build Tracker" },
+        "meta": { "version": 3, "title": "Flowstate v1 — Build Tracker" },
         "phases": [
           "P-1 · Land the boundary",
           "P0 · Clear the decks",
@@ -261,6 +261,7 @@
           "P3 · Get paid (money)",
           "P4 · Direction",
           "P5 · Mechanics that change Tuesday",
+          "P6 · Desktop & Claude",
           "Below the cut line",
           "v1.1"
         ],
@@ -285,9 +286,13 @@
           { "id": "W6", "phase": "P5 · Mechanics that change Tuesday", "title": "The Budget", "desc": "Declared tilt (e.g. 70/30); Today shows a live bar of minutes logged today, never task counts. Never blocks or nags.", "deps": "W2, W5", "est": 10, "act": 0, "status": "done", "pr": "#308" },
           { "id": "W7", "phase": "P5 · Mechanics that change Tuesday", "title": "The Sweep", "desc": "Weekly Week section: stale tasks/projects/targets, drop/park/keep, finite (20 + N more), keep buys a month, pre-answered.", "deps": "W1, W5", "est": 10, "act": 0, "status": "done", "pr": "#309" },
           { "id": "W14", "phase": "P5 · Mechanics that change Tuesday", "title": "The Week steering deck", "desc": "2×2 deck: Waiting on you / The bets / Coming up / Gone quiet + off-target banner. Assembles, doesn't duplicate. Spec done (§8f).", "deps": "W5, W6, W7", "est": 10, "act": 0, "status": "done", "pr": "#310" },
-          { "id": "W15", "phase": "P5 · Mechanics that change Tuesday", "title": "Project planning & estimate-vs-actual", "desc": "template→phases→per-phase estimate+deadline; billing_type (hourly|fixed_fee); off-track = budget consumed ahead of work done; burn on detail/board/Week + one notification.", "deps": "W1, W2", "est": 13, "act": 0, "status": "todo", "pr": "" },
-          { "id": "W8", "phase": "Below the cut line", "title": "The Ledger", "desc": "Every 2nd Friday, Money section: said-vs-spent tilt over the fortnight, per client/project. Waits to be opened. Kept in v1 (discovery-quarter §13 Q8 — Filter extends v1 rather than displacing the Ledger).", "deps": "W6", "est": 8, "act": 0, "status": "todo", "pr": "" },
-          { "id": "W10", "phase": "P4 · Direction", "title": "The Filter (self-scored, cut version)", "desc": "Eight Fit/Risk/Strategy questions → pursue/negotiate/decline vs active Direction+Target, logged overrides, decline-outright escape. Public intake link is v1.1. Pulled above the cut (discovery-quarter) so the Direction applied-line is live in v1; sequence right after W5.", "deps": "W1, W5", "est": 10, "act": 0, "status": "todo", "pr": "" },
+          { "id": "W15", "phase": "P5 · Mechanics that change Tuesday", "title": "Project planning & estimate-vs-actual", "desc": "template→phases→per-phase estimate+deadline; billing_type (hourly|fixed_fee); off-track = budget consumed ahead of work done; burn on detail/board/Week + one notification.", "deps": "W1, W2", "est": 13, "act": 0, "status": "done", "pr": "#329" },
+          { "id": "W8", "phase": "Below the cut line", "title": "The Ledger", "desc": "Every 2nd Friday, Money section: said-vs-spent tilt over the fortnight, per client/project. Waits to be opened. Kept in v1 (discovery-quarter §13 Q8 — Filter extends v1 rather than displacing the Ledger).", "deps": "W6", "est": 8, "act": 0, "status": "done", "pr": "#317" },
+          { "id": "W10", "phase": "P4 · Direction", "title": "The outbound sourcing agent", "desc": "Reframed from the self-scored Filter (§8f): ICP config, Fit/Need/Value scoring, triage board, outreach drafting, deal pipeline (proposal money in project_fees), Week queue + Direction applied-line seams, web research, the weekly resumable agent run, enrichment adapter. Behind FLAGS.sourcing — built, dark in prod, untested on real data.", "deps": "W1, W5", "est": 85, "act": 0, "status": "done", "pr": "W10a–j + #325" },
+          { "id": "W17", "phase": "P6 · Desktop & Claude", "title": "Global capture hotkey + task search", "desc": "⌘⇧K floating capture panel from any app (parser + chips, ⏎ / ⇧⏎, rebind in Settings, launch at login) + one search.query over tasks, Backlog, projects, clients (panel results, ⌘K data rows, project task finder). Behind FLAGS.capturePanel. Physical hotkey check still open (plan §8).", "deps": "—", "est": 20, "act": 0, "status": "done", "pr": "#338" },
+          { "id": "W18a", "phase": "P6 · Desktop & Claude", "title": "MCP transport spike", "desc": "POST /api/mcp — stateless Streamable HTTP, bearer auth, one data-free ping tool. 404 until MCP_SPIKE_TOKEN is set. Claude Desktop connect test still open.", "deps": "—", "est": 2, "act": 0, "status": "done", "pr": "#337" },
+          { "id": "W18b–c", "phase": "P6 · Desktop & Claude", "title": "MCP tokens + the five read tools", "desc": "mcp_tokens (personal) + Settings mint/revoke; /api/mcp verifies per-device hashed tokens and serves list_projects, get_project, list_clients, list_tasks, get_burn over createCaller. Claude can read Flowstate.", "deps": "W18a", "est": 10, "act": 0, "status": "wip", "pr": "" },
+          { "id": "W18d–g", "phase": "P6 · Desktop & Claude", "title": "MCP ingest — draft, apply, amend", "desc": "plan_drafts + draft_plan (with diff for existing projects), apply_plan (one undoable task_bulk_imports batch, fees via project_fees, idempotent on draft_id), amend-existing, rate limits + audit line.", "deps": "W18b–c", "est": 23, "act": 0, "status": "todo", "pr": "" },
           { "id": "Tickler", "phase": "Below the cut line", "title": "Business tickler", "desc": "Compliance dates fire on Today on the trigger date only; otherwise invisible. ~6h once Today has a due strip.", "deps": "W1", "est": 6, "act": 0, "status": "todo", "pr": "" },
           { "id": "W9", "phase": "v1.1", "title": "Client onboarding automation", "desc": "Local folder tree + starter contracts + project + phases + checklist, opened in Finder. Displaced by W16. 'Signed' still creates client+project+phases in v1.", "deps": "W1, W2", "est": 12, "act": 0, "status": "deferred", "pr": "" }
         ],
@@ -308,10 +313,20 @@
 
       let state = load();
 
+      // A newer seed (meta.version bumped when the plan moves) replaces the stored
+      // rows and phases, keeping the daily log and any rows added in this browser.
+      function upgrade(stored) {
+        if ((stored?.meta?.version ?? 0) >= SEED.meta.version) return stored;
+        const seeded = new Set(SEED.items.map((i) => i.id));
+        const next = structuredClone(SEED);
+        next.items.push(...(stored.items ?? []).filter((i) => !seeded.has(i.id)));
+        next.log = stored.log ?? [];
+        return next;
+      }
       function load() {
         try {
           const raw = localStorage.getItem(STORE_KEY);
-          if (raw) return JSON.parse(raw);
+          if (raw) return upgrade(JSON.parse(raw));
           const old = localStorage.getItem("flowstate-build-tracker-v1");
           if (old) return JSON.parse(old);
         } catch (e) {}

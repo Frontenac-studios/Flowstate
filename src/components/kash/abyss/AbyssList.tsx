@@ -128,6 +128,7 @@ function Row({ item, now, allTags }: { item: AbyssListItem; now: Date; allTags: 
 
   return (
     <div
+      data-backlog-item={item.id}
       className={`group/row relative flex items-start gap-2.5 rounded-r-row border-l-[length:var(--stripe-width)] py-2 pl-2.5 pr-2 transition-colors hover:bg-abyss-surface ${
         dimming ? "opacity-60" : ""
       } ${exitClass ?? ""}`}

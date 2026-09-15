@@ -19,6 +19,7 @@ import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
 import ProjectSetupWizard from "./ProjectSetupWizard";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
 import { ProjectTaskFinder } from "./ProjectTaskFinder";
+import { useFocusParam } from "@/hooks/useFocusParam";
 import { phasePathForTask } from "@/lib/projects/phase-path";
 import { ProjectSlipReplanCard } from "./ProjectSlipReplanCard";
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
@@ -76,6 +77,9 @@ export default function ProjectWorkspace({
       router.replace(pathname);
     }
   }, [searchParams, router, pathname]);
+
+  // `?focus=<taskId>`: the board reveals and pulses the task, then drops the param.
+  const { focusId: focusTaskId, clearFocus: clearFocusParam } = useFocusParam();
 
   const tree = useMemo(
     () => buildPhaseTree(phasesQuery.data ?? [], tasksQuery.data ?? []),
@@ -159,6 +163,8 @@ export default function ProjectWorkspace({
             tasks={tasksQuery.data ?? []}
             selectedPath={selectedPath}
             onSelectPath={setSelectedPath}
+            focusTaskId={focusTaskId}
+            onFocusHandled={clearFocusParam}
             milestones={milestonesQuery.data ?? []}
             estimateSampleCount={estimateSampleCount}
             onOpenSetup={() => {

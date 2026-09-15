@@ -70,6 +70,13 @@ type Props = {
   milestones: ProjectMilestone[];
   estimateSampleCount?: number;
   onOpenSetup?: () => void;
+  /**
+   * A task to reveal and pulse once — the `?focus=` a search result links to.
+   * `onFocusHandled` fires after it has been shown (or found missing), so the
+   * caller can drop the param and a refetch doesn't pulse it again.
+   */
+  focusTaskId?: string | null;
+  onFocusHandled?: () => void;
 };
 
 function orderItems(phases: Node[], tasks: ProjectTask[]): ColumnItem[] {
@@ -96,6 +103,8 @@ export default function MillerColumnsView({
   milestones,
   estimateSampleCount = 0,
   onOpenSetup,
+  focusTaskId = null,
+  onFocusHandled,
 }: Props) {
   const trpc = useTRPC();
   const { data: pinnedTaskIds = [] } = useQuery(
@@ -257,16 +266,14 @@ export default function MillerColumnsView({
     [parentByPhaseId]
   );
 
-  useEffect(() => {
-    const unsubscribe = onChatTasksCreated((detail) => {
-      const mine = detail.tasks.filter((task) => task.projectId === projectId);
-      if (mine.length === 0) return;
+  // Pulse these tasks for ~2s and reveal the column holding the first
+  // phase-scoped one; loose tasks (phaseId null) already live in the
+  // always-visible level-0 column.
+  const revealAndPulse = useCallback(
+    (targets: { id: string; phaseId: string | null }[]) => {
+      setHighlightTaskIds(new Set(targets.map((task) => task.id)));
 
-      setHighlightTaskIds(new Set(mine.map((task) => task.id)));
-
-      // Reveal the column containing the first phase-scoped create; loose creates
-      // (phaseId null) already live in the always-visible level-0 column.
-      const withPhase = mine.find((task) => task.phaseId != null);
+      const withPhase = targets.find((task) => task.phaseId != null);
       if (withPhase?.phaseId) {
         const chain = phasePathTo(withPhase.phaseId);
         if (chain.length > 0) {
@@ -276,12 +283,53 @@ export default function MillerColumnsView({
 
       if (highlightClearRef.current) clearTimeout(highlightClearRef.current);
       highlightClearRef.current = setTimeout(() => setHighlightTaskIds(new Set()), 2000);
+    },
+    [phasePathTo, tree, targetVisibleColumns, onSelectPath]
+  );
+
+  useEffect(() => {
+    const unsubscribe = onChatTasksCreated((detail) => {
+      const mine = detail.tasks.filter((task) => task.projectId === projectId);
+      if (mine.length > 0) revealAndPulse(mine);
     });
     return () => {
       unsubscribe();
       if (highlightClearRef.current) clearTimeout(highlightClearRef.current);
     };
-  }, [projectId, phasePathTo, tree, targetVisibleColumns, onSelectPath]);
+  }, [projectId, revealAndPulse]);
+
+  // `?focus=<taskId>` from a search result: reveal it, pulse it, scroll it into
+  // view once the revealed column has rendered, then hand the param back. Once
+  // per id, so a refetch while the param is still in the URL doesn't pulse again.
+  const handledFocusRef = useRef<string | null>(null);
+  const focusScrollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!focusTaskId || handledFocusRef.current === focusTaskId) return;
+    const task = tasks.find((candidate) => candidate.id === focusTaskId);
+    if (!task) {
+      // Tasks not loaded yet: wait for the next render. Loaded and absent (a
+      // deleted task, a stale link): nothing to show, so let it go.
+      if (tasks.length > 0) {
+        handledFocusRef.current = focusTaskId;
+        onFocusHandled?.();
+      }
+      return;
+    }
+    handledFocusRef.current = focusTaskId;
+    revealAndPulse([task]);
+    focusScrollRef.current = setTimeout(() => {
+      document
+        .querySelector(`[data-miller-task="${focusTaskId}"]`)
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      onFocusHandled?.();
+    }, 50);
+  }, [focusTaskId, tasks, revealAndPulse, onFocusHandled]);
+  useEffect(
+    () => () => {
+      if (focusScrollRef.current) clearTimeout(focusScrollRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     setFocus((f) => {
