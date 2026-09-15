@@ -9,4 +9,8 @@ export const sentrySharedOptions = {
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1 : 0.1,
   enableLogs: true,
   sendDefaultPii: true,
+  // Next.js uses thrown exceptions for control flow: notFound() throws
+  // NEXT_NOT_FOUND and redirect() throws NEXT_REDIRECT. These are expected
+  // route behaviour, not errors — drop them so they don't drown real issues.
+  ignoreErrors: ["NEXT_NOT_FOUND", "NEXT_REDIRECT"],
 } satisfies Partial<BrowserOptions & NodeOptions & EdgeOptions>;
