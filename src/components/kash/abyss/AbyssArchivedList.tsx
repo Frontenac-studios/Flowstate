@@ -30,6 +30,7 @@ export default function AbyssArchivedList() {
       {data.map((row) => (
         <li
           key={row.id}
+          data-backlog-item={row.id}
           className="flex items-start gap-2 rounded-row border border-abyss-border px-3 py-2"
         >
           <span className="min-w-0 flex-1 break-words text-body text-abyss-ink">{row.title}</span>

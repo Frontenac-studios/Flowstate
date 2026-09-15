@@ -105,6 +105,7 @@ export default function MillerTaskRow({
     <li
       ref={setRefs}
       data-miller-item
+      data-miller-task={task.id}
       style={{ transform: CSS.Translate.toString(transform) }}
       className={`relative flex shrink-0 items-start gap-2 overflow-hidden rounded-card transition ${
         isBlocked ? "border border-dashed border-ink-faint" : ""

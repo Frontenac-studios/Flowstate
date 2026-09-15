@@ -8,6 +8,7 @@ import type { AbyssAgeFilter, AbyssGroupMode, AbyssItemType } from "@/lib/abyss/
 import { isMonthlyReviewDue } from "@/lib/abyss/monthly-review";
 import { readLastReviewMonth } from "@/lib/abyss/review-storage";
 import { surfaceVariantForView, type AbyssViewMode } from "@/lib/abyss/surface-variant";
+import { useFocusParam } from "@/hooks/useFocusParam";
 import { useTRPC } from "@/trpc/client";
 import AbyssArchivedList from "./AbyssArchivedList";
 import AbyssComposer from "./AbyssComposer";
@@ -48,6 +49,30 @@ export default function AbyssRoot() {
 
   const [view, setView] = useState<AbyssViewMode>("list");
   const [showArchive, setShowArchive] = useState(false);
+
+  // `?focus=<itemId>` from a search result: open the archive if that's where the
+  // item lives, then scroll to the row and pulse it once it has rendered.
+  const { focusId, clearFocus } = useFocusParam();
+  const [pendingFocus, setPendingFocus] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focusId || !data || !archived) return;
+    if (archived.some((row) => row.id === focusId)) setShowArchive(true);
+    setPendingFocus(focusId);
+    clearFocus();
+  }, [focusId, data, archived, clearFocus]);
+  useEffect(() => {
+    if (!pendingFocus) return;
+    const frame = requestAnimationFrame(() => {
+      const row = document.querySelector<HTMLElement>(`[data-backlog-item="${pendingFocus}"]`);
+      row?.scrollIntoView({ block: "center" });
+      row?.classList.add("kash-section-pulse");
+      row?.addEventListener("animationend", () => row.classList.remove("kash-section-pulse"), {
+        once: true,
+      });
+      setPendingFocus(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pendingFocus, showArchive]);
   const [showMonthlyReview, setShowMonthlyReview] = useState(false);
   const [groupMode, setGroupMode] = useState<AbyssGroupMode>("category");
   const [typeFilter, setTypeFilter] = useState<AbyssItemType[]>([]);

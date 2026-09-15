@@ -18,6 +18,7 @@ import { MOTION_TOKEN, readMotionDurationMs } from "@/lib/animate/motion-tokens"
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import { useTop3Assurance } from "@/hooks/useTop3Assurance";
 import { useSessionUndo } from "@/hooks/useSessionUndo";
+import { useFocusParam } from "@/hooks/useFocusParam";
 import { useTaskSelection } from "@/hooks/useTaskSelection";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
@@ -305,6 +306,16 @@ export function DayPlanCanvas() {
     select: selectTask,
     clear: clearSelection,
   } = useTaskSelection(todayTaskIds);
+
+  // `?focus=<taskId>` from a search result: select the row, which the effect
+  // below scrolls into view. A task that isn't on Today (scheduled elsewhere,
+  // done) has no row to show, so the param is just dropped once tasks load.
+  const { focusId, clearFocus } = useFocusParam();
+  useEffect(() => {
+    if (!focusId || isLoading) return;
+    if (todayTaskIds.includes(focusId)) selectTask(focusId);
+    clearFocus();
+  }, [focusId, isLoading, todayTaskIds, selectTask, clearFocus]);
 
   const taskTitleById = useMemo(
     () => Object.fromEntries(tasks.map((t) => [t.id, t.title])),
