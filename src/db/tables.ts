@@ -8,6 +8,7 @@ import { targets as pgTargets } from "./schema/targets";
 import { leads as pgLeads } from "./schema/leads";
 import { sourcingRunCosts as pgSourcingRunCosts } from "./schema/sourcing-run-costs";
 import { sourcingRuns as pgSourcingRuns } from "./schema/sourcing-runs";
+import { mcpTokens as pgMcpTokens } from "./schema/mcp-tokens";
 import { sourcingSettings as pgSourcingSettings } from "./schema/sourcing-settings";
 import { leadOutreach as pgLeadOutreach } from "./schema/lead-outreach";
 import { rates as pgRates } from "./schema/rates";
@@ -121,6 +122,9 @@ export const directions = (
 ) as typeof pgDirections;
 export const targets = (isSqliteMode() ? sqliteSchema.targets : pgTargets) as typeof pgTargets;
 export const leads = (isSqliteMode() ? sqliteSchema.leads : pgLeads) as typeof pgLeads;
+export const mcpTokens = (
+  isSqliteMode() ? sqliteSchema.mcpTokens : pgMcpTokens
+) as typeof pgMcpTokens;
 export const sourcingRuns = (
   isSqliteMode() ? sqliteSchema.sourcingRuns : pgSourcingRuns
 ) as typeof pgSourcingRuns;

@@ -681,6 +681,23 @@ CREATE TABLE IF NOT EXISTS lead_outreach (
 );
 CREATE INDEX IF NOT EXISTS lead_outreach_lead_id_idx ON lead_outreach (lead_id);
 
+CREATE TABLE IF NOT EXISTS mcp_tokens (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  token_hash TEXT NOT NULL,
+  token_prefix TEXT NOT NULL,
+  scopes TEXT NOT NULL,
+  last_used_at INTEGER,
+  expires_at INTEGER,
+  revoked_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS mcp_tokens_token_hash_idx ON mcp_tokens (token_hash);
+CREATE INDEX IF NOT EXISTS mcp_tokens_user_id_idx ON mcp_tokens (user_id);
+
 -- Tenancy. Local-only: these are NOT in SYNC_TABLES. The desktop app runs the
 -- same tRPC context code as web (under the auth bypass), so it needs to resolve
 -- an org locally; hosted resolves its own from Supabase.

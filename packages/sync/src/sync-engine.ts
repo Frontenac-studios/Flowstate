@@ -11,6 +11,7 @@ import {
   leadOutreach,
   sourcingRunCosts,
   sourcingRuns,
+  mcpTokens,
   sourcingSettings,
   phases,
   projectMilestones,
@@ -480,6 +481,7 @@ async function upsertRow(
     case "project_fees":
     case "sourcing_runs":
     case "sourcing_run_costs":
+    case "mcp_tokens":
     case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
@@ -489,6 +491,7 @@ async function upsertRow(
         lead_outreach: leadOutreach,
         project_fees: projectFees,
         sourcing_runs: sourcingRuns,
+        mcp_tokens: mcpTokens,
         sourcing_run_costs: sourcingRunCosts,
         reserved_days: reservedDays,
       } as const;

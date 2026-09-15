@@ -12,6 +12,7 @@ import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/con
 import { useTRPC } from "@/trpc/client";
 
 import { CalendarSyncSection } from "./CalendarSyncSection";
+import ClaudeConnectionSection from "./ClaudeConnectionSection";
 import { CaptureShortcutSection } from "./CaptureShortcutSection";
 import CategorySettingsSection from "./CategorySettingsSection";
 import DefaultWeekSection from "./DefaultWeekSection";
@@ -307,6 +308,7 @@ export function SettingsForm() {
               </p>
             </div>
             <CalendarSyncSection />
+            <ClaudeConnectionSection />
           </section>
         ) : null}
 

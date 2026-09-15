@@ -165,6 +165,10 @@ export async function syncSourcingRunRow(
   await recordSyncMutation({ table: "sourcing_runs", rowId, op, payload });
 }
 
+export async function syncMcpTokenRow(rowId: string, op: SyncOp, payload: unknown): Promise<void> {
+  await recordSyncMutation({ table: "mcp_tokens", rowId, op, payload });
+}
+
 export async function syncSourcingRunCostRow(
   rowId: string,
   op: SyncOp,

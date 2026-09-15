@@ -35,6 +35,7 @@ export const SYNC_TABLES = [
   "category_settings",
   "task_bulk_imports",
   "task_bulk_import_items",
+  "mcp_tokens",
 ] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];

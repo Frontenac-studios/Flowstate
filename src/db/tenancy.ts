@@ -74,6 +74,8 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   reserved_days: "personal",
   week_day_priorities: "personal",
   week_reviews: "personal",
+  // MCP endpoint (W18b): a personal access token is one person's credential.
+  mcp_tokens: "personal",
 
   // ---- ORG_SHARED: artifacts about the work itself. ----
   // What needs doing, for which project, by whom. Still filtered to the owning
