@@ -22,6 +22,17 @@ const ALERT_PREF_KEY: Record<ThresholdAlert["type"], keyof AlertPrefs> = {
 
 const STORAGE_KEY = "kash:threshold-notified";
 
+/**
+ * How often the snapshot is re-read while Today is open and visible.
+ *
+ * These three alerts are hour-scale — a client crossing 20 billable hours, a
+ * project running past its estimate, a weekly hours summary — so the freshness
+ * requirement is minutes, not seconds. Anything sooner is pure load: the
+ * procedure table-scans every time entry, task, phase and project for the user
+ * on each call.
+ */
+const SNAPSHOT_POLL_MS = 5 * 60 * 1000;
+
 function loadNotified(): NotifiedState {
   if (typeof window === "undefined") return EMPTY_NOTIFIED_STATE;
   try {
@@ -64,7 +75,24 @@ export default function ThresholdNotifier() {
 
   const { data: snapshot } = useQuery({
     ...trpc.timeEntries.getThresholdAlerts.queryOptions({ tzOffsetMinutes }),
+    // A deliberate, bounded cadence — this query used to be the single noisiest
+    // route in production. Every path is capped:
+    //   staleTime      — mount/focus/reconnect refetch at most once per period.
+    //   refetchInterval + refetchIntervalInBackground:false
+    //                  — one tick per period while the tab is visible, nothing
+    //                    at all while it is hidden.
+    //   retry/retryOnMount:false
+    //                  — a failed snapshot has no cached data, so it counts as
+    //                    permanently stale and would otherwise re-fire on every
+    //                    mount and every focus. The next tick is the retry.
+    // Timer start/stop invalidates this key (TodayTimer), so a crossing that
+    // happens as you stop the clock still surfaces immediately.
+    staleTime: SNAPSHOT_POLL_MS,
+    refetchInterval: SNAPSHOT_POLL_MS,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
+    retry: false,
+    retryOnMount: false,
   });
 
   useEffect(() => {
