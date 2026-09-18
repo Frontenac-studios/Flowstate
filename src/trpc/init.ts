@@ -7,6 +7,8 @@ import { getVerifiedUser } from "@/lib/auth/verify-jwt";
 import { createClient } from "@/lib/supabase/server";
 import { type OrgRole, ensureOrgForUser } from "@/server/orgs/ensure-org-for-user";
 
+import { clientSafeMessage } from "./redact-error";
+
 export const createTRPCContext = async ({ headers }: { headers: Headers }) => {
   void headers;
   const supabase = createClient();
@@ -39,6 +41,9 @@ export const createTRPCContext = async ({ headers }: { headers: Headers }) => {
 
 const t = initTRPC.context<Awaited<ReturnType<typeof createTRPCContext>>>().create({
   transformer: superjson,
+  errorFormatter({ shape }) {
+    return { ...shape, message: clientSafeMessage(shape.data.code, shape.message) };
+  },
 });
 
 export const createTRPCRouter = t.router;
