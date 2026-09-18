@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import {
   isOnboardingCompleted,
-  isOnboardingStarted,
+  isOnboardingResumable,
   markOnboardingCompleted,
   markOnboardingStarted,
 } from "@/lib/onboarding/onboarding-storage";
@@ -112,8 +112,10 @@ export function OnboardingRunner() {
   useEffect(() => {
     if (completed || eligible !== null) return;
     if (!tasksFetched || !top3Fetched) return;
-    // Resume mid-flow after refresh; otherwise existing users with work skip.
-    if (isOnboardingStarted()) {
+    // Resume mid-flow after a refresh, but only inside the resume window: a run
+    // abandoned days ago must not outrank the work this user has since done, or
+    // first-run setup is forced on them forever.
+    if (isOnboardingResumable()) {
       markOnboardingStarted();
       setEligible(true);
       return;
