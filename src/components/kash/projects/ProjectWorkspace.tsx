@@ -16,7 +16,6 @@ import PlanOutline from "./PlanOutline";
 import ProjectDetailsStrip from "./ProjectDetailsStrip";
 import PhaseBurnBars from "./PhaseBurnBars";
 import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
-import ProjectSetupWizard from "./ProjectSetupWizard";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
 import { ProjectTaskFinder } from "./ProjectTaskFinder";
 import { useFocusParam } from "@/hooks/useFocusParam";
@@ -58,8 +57,6 @@ export default function ProjectWorkspace({
 
   const [viewMode, setViewMode] = useState<ProjectViewMode>("columns");
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [setupMode, setSetupMode] = useState<"edit" | "new-blank">("edit");
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -92,9 +89,8 @@ export default function ProjectWorkspace({
     return isProjectComplete({ taskCount: tasks.length, completedCount });
   }, [tasksQuery.data]);
 
-  // milestonesQuery belongs here too: ProjectSetupWizard seeds its drafts from
-  // `milestones` once on open, so opening before this resolves seeds every draft
-  // without an id and each Save inserts a fresh duplicate set.
+  // milestonesQuery stays in the loading gate: the milestone strip reads it, and
+  // rendering the board before it resolves flashes an empty strip on every visit.
   const isLoading = phasesQuery.isLoading || tasksQuery.isLoading || milestonesQuery.isLoading;
   const isError = phasesQuery.isError || tasksQuery.isError || milestonesQuery.isError;
 
@@ -115,10 +111,6 @@ export default function ProjectWorkspace({
           timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
           estimateSampleCount={estimateSampleCount}
           showTemplateFeatures={showTemplateFeatures}
-          onOpenSetup={() => {
-            setSetupMode("edit");
-            setWizardOpen(true);
-          }}
         />
       </ProjectTemplateSuggestSlot>
 
@@ -167,10 +159,6 @@ export default function ProjectWorkspace({
             onFocusHandled={clearFocusParam}
             milestones={milestonesQuery.data ?? []}
             estimateSampleCount={estimateSampleCount}
-            onOpenSetup={() => {
-              setSetupMode("edit");
-              setWizardOpen(true);
-            }}
           />
         </>
       ) : (
@@ -198,24 +186,6 @@ export default function ProjectWorkspace({
         be looking at its tasks today.
       */}
       <PhaseBurnBars projectId={initialProject.id} />
-
-      {/*
-        Only mount once the queries the wizard seeds from have resolved. It seeds
-        its drafts once on open, so mounting early would seed ids-less drafts and
-        every Save would insert duplicates. Several entry points (header, milestone
-        strip, board) can set wizardOpen, so gate here rather than per-trigger.
-      */}
-      <ProjectSetupWizard
-        open={wizardOpen && !isLoading}
-        project={project}
-        phases={phasesQuery.data ?? []}
-        milestones={milestonesQuery.data ?? []}
-        setupMode={setupMode}
-        onClose={() => {
-          setWizardOpen(false);
-          setSetupMode("edit");
-        }}
-      />
     </div>
   );
 }

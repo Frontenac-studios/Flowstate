@@ -21,7 +21,6 @@ type Props = {
   timeSpentSeconds?: number;
   estimateSampleCount?: number;
   showTemplateFeatures?: boolean;
-  onOpenSetup?: () => void;
 };
 
 const VIEW_MODES: { value: ProjectViewMode; label: string }[] = [
@@ -38,7 +37,6 @@ export default function ProjectWorkspaceHeader({
   timeSpentSeconds = 0,
   estimateSampleCount = 0,
   showTemplateFeatures = true,
-  onOpenSetup,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
@@ -89,7 +87,6 @@ export default function ProjectWorkspaceHeader({
               project={project}
               showTemplateFeatures={showTemplateFeatures}
               onClose={() => setMenuOpen(false)}
-              onOpenSetup={onOpenSetup}
             />
           ) : null}
         </div>

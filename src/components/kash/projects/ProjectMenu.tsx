@@ -14,18 +14,12 @@ type Props = {
   project: { id: string; name: string };
   showTemplateFeatures?: boolean;
   onClose: () => void;
-  onOpenSetup?: () => void;
 };
 
 const MENU_BTN_FOCUS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
 
-export default function ProjectMenu({
-  project,
-  showTemplateFeatures = true,
-  onClose,
-  onOpenSetup,
-}: Props) {
+export default function ProjectMenu({ project, showTemplateFeatures = true, onClose }: Props) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -81,19 +75,6 @@ export default function ProjectMenu({
         aria-label={`Actions for ${project.name}`}
         className="absolute right-0 top-full z-overlay mt-1 w-52 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
       >
-        {onOpenSetup ? (
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onOpenSetup();
-              onClose();
-            }}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 ${MENU_BTN_FOCUS}`}
-          >
-            Set up / edit structure
-          </button>
-        ) : null}
         <Link
           href={`/projects/${project.id}/imports`}
           role="menuitem"
