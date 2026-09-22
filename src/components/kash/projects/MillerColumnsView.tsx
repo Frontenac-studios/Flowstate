@@ -12,7 +12,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
-import Button from "@/components/kash/ui/Button";
 import { useCompletionToast } from "@/hooks/useCompletionToast";
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
@@ -69,7 +68,6 @@ type Props = {
   onSelectPath: (path: string[]) => void;
   milestones: ProjectMilestone[];
   estimateSampleCount?: number;
-  onOpenSetup?: () => void;
   /**
    * A task to reveal and pulse once — the `?focus=` a search result links to.
    * `onFocusHandled` fires after it has been shown (or found missing), so the
@@ -102,7 +100,6 @@ export default function MillerColumnsView({
   onSelectPath,
   milestones,
   estimateSampleCount = 0,
-  onOpenSetup,
   focusTaskId = null,
   onFocusHandled,
 }: Props) {
@@ -736,15 +733,8 @@ export default function MillerColumnsView({
                     isBlank && col.level === 0 ? (
                       <ColoredEmptyInvitation
                         title="Add your first phase"
-                        hint="Tap + above to type them in — one per line. Start a line with ;;; to add a phase."
+                        hint="Tap + above to type them in, or switch to Plan to lay the whole project out at once."
                         className="mx-1 my-2 border-none bg-transparent px-3 py-6 shadow-none"
-                        action={
-                          onOpenSetup ? (
-                            <Button type="button" variant="ghost" onClick={onOpenSetup}>
-                              Set up project
-                            </Button>
-                          ) : undefined
-                        }
                       />
                     ) : null
                   }
