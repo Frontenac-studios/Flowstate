@@ -9,7 +9,7 @@
     "packages/sync"
   ],
   "engines": {
-    "node": "20.x",
+    "node": "24.x",
     "npm": ">=10"
   },
   "packageManager": "npm@10.9.0",
@@ -58,7 +58,7 @@
     "@trpc/server": "^11.17.0",
     "@trpc/tanstack-react-query": "^11.17.0",
     "ai": "^6.0.240",
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3": "^12.11.1",
     "client-only": "^0.0.1",
     "drizzle-orm": "^0.45.2",
     "googleapis": "^173.0.0",
