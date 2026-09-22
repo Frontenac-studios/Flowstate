@@ -34,6 +34,9 @@ export default function TodayTimer() {
     void queryClient.invalidateQueries(trpc.timeEntries.getRunning.pathFilter());
     void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
     void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
+    // Stopping the clock is the moment a threshold actually gets crossed, so the
+    // notifier's snapshot is refreshed here rather than polled for (ThresholdNotifier).
+    void queryClient.invalidateQueries(trpc.timeEntries.getThresholdAlerts.pathFilter());
   }, [queryClient, trpc]);
 
   const startMutation = useMutation(
