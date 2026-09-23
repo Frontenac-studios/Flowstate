@@ -54,3 +54,13 @@ apps/desktop/src-tauri/target/
 .idea/
 .claude/
 claude.md
+
+# design-sync (claude.ai/design system sync) — generated/staged, never committed.
+# The durable inputs under .design-sync/ (config.json, NOTES.md, conventions.md,
+# entry.tsx, previews/, fonts/, docs/, overrides/) ARE committed.
+/.ds-sync/
+/ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+.design-sync/types/

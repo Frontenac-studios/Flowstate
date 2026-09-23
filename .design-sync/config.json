@@ -1,0 +1,92 @@
+{
+  "shape": "package",
+  "pkg": "Flowstate",
+  "globalName": "Flowstate",
+  "srcDir": "../src",
+  "tsconfig": "../tsconfig.json",
+  "buildCmd": "node_modules/.bin/tailwindcss -c .design-sync/tailwind.ds.config.ts -i src/app/globals.css -o .design-sync/.cache/flowstate.css",
+  "cssEntry": "./.cache/flowstate.css",
+  "tokensGlob": ["../src/styles/tokens.css", "../src/styles/glass.css"],
+  "extraFonts": ["./fonts/figtree.css"],
+  "componentSrcMap": {
+    "Button": "../src/components/kash/ui/Button.tsx",
+    "IconButton": "../src/components/kash/ui/IconButton.tsx",
+    "Input": "../src/components/kash/ui/Input.tsx",
+    "Textarea": "../src/components/kash/ui/Textarea.tsx",
+    "Select": "../src/components/kash/ui/Select.tsx",
+    "Checkbox": "../src/components/kash/ui/Checkbox.tsx",
+    "InlineValidation": "../src/components/kash/ui/InlineValidation.tsx",
+    "Toast": "../src/components/kash/ui/Toast.tsx",
+    "ToastProvider": "../src/components/kash/ui/ToastProvider.tsx",
+    "QueryErrorNotice": "../src/components/kash/ui/QueryErrorNotice.tsx",
+    "Tooltip": "../src/components/kash/ui/Tooltip.tsx",
+    "KeyCap": "../src/components/kash/ui/KeyCap.tsx",
+    "ShortcutHint": "../src/components/kash/ui/ShortcutHint.tsx",
+    "RitualSheet": "../src/components/kash/ui/RitualSheet.tsx",
+    "ColoredEmptyInvitation": "../src/components/kash/ui/ColoredEmptyInvitation.tsx",
+    "GhostCategoryStrip": "../src/components/kash/ui/GhostCategoryStrip.tsx",
+    "EmptyPlanState": "../src/components/kash/EmptyPlanState.tsx",
+    "InPageSwitcher": "../src/components/kash/InPageSwitcher.tsx",
+    "TaskPriorityIndicator": "../src/components/kash/TaskPriorityIndicator.tsx",
+    "TaskDragHandle": "../src/components/kash/TaskDragHandle.tsx",
+    "SwipeActionRail": "../src/components/kash/SwipeActionRail.tsx"
+  },
+  "overrides": {
+    "Checkbox": {
+      "cardMode": "column"
+    },
+    "ColoredEmptyInvitation": {
+      "cardMode": "column"
+    },
+    "EmptyPlanState": {
+      "cardMode": "column"
+    },
+    "GhostCategoryStrip": {
+      "cardMode": "column"
+    },
+    "InPageSwitcher": {
+      "cardMode": "column"
+    },
+    "Input": {
+      "cardMode": "column"
+    },
+    "QueryErrorNotice": {
+      "cardMode": "column"
+    },
+    "ShortcutHint": {
+      "cardMode": "column"
+    },
+    "SwipeActionRail": {
+      "cardMode": "column"
+    },
+    "TaskDragHandle": {
+      "cardMode": "column"
+    },
+    "TaskPriorityIndicator": {
+      "cardMode": "column"
+    },
+    "Textarea": {
+      "cardMode": "column"
+    },
+    "Toast": {
+      "cardMode": "column"
+    },
+    "RitualSheet": {
+      "cardMode": "single",
+      "primaryStory": "Open",
+      "viewport": "900x620"
+    },
+    "ToastProvider": {
+      "cardMode": "single",
+      "primaryStory": "Stacked"
+    },
+    "Tooltip": {
+      "cardMode": "single",
+      "primaryStory": "IconTrigger"
+    }
+  },
+  "docsDir": "./docs",
+  "guidelinesGlob": [],
+  "readmeHeader": ".design-sync/conventions.md",
+  "projectId": "add0a7de-a735-45eb-8fda-0624c5d0b098"
+}
