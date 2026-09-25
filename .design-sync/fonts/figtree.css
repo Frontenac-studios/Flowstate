@@ -1,0 +1,21 @@
+/* Figtree (DT-5b) — the brand family `--font-sans` names in src/styles/tokens.css.
+ *
+ * In the app these files are served by next/font/google under a hashed family
+ * (`__Figtree_*`). The binaries below are those exact files, copied out of the
+ * Next build and re-declared under the real family name so the design system
+ * ships the same type it renders with. Figtree is SIL OFL 1.1.
+ * Weights 400 (regular) and 500 (medium) — the only two the app loads. */
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./figtree-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./figtree-latin.woff2") format("woff2");
+}

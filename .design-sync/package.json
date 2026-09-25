@@ -1,0 +1,8 @@
+{
+  "name": "flowstate-design-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "design-sync package shim — makes src/components/kash's shipped primitives look like a component package (entry + emitted .d.ts tree) without adding a build to the app.",
+  "types": "./types/.design-sync/entry.d.ts",
+  "module": "./entry.tsx"
+}

@@ -20,3 +20,8 @@ package-lock.json
 # These are deliberately hand-formatted artifacts, and docs/** is already
 # paths-ignored for CI triggering; keep prettier from reflowing them.
 docs/*.html
+# design-sync generated output
+.design-sync/.cache/
+.design-sync/types/
+ds-bundle/
+.ds-sync/
