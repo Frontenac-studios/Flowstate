@@ -107,8 +107,8 @@ Next steps:
   4. Commit & push — CI runs typecheck/lint/test/build on every PR.
 
 Dashboards (replace <project>):
-  • Vercel:   https://vercel.com/frontenac-studios/<project>
-  • Sentry:   https://frontenac-studios.sentry.io/projects/<project>/
+  • Vercel:   https://vercel.com/frontenac-advisory/<project>
+  • Sentry:   https://frontenac-advisory.sentry.io/projects/<project>/
   • Supabase: https://supabase.com/dashboard/project/<ref>
 
 EOF
