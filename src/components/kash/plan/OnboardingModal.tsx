@@ -212,14 +212,14 @@ export function OnboardingModal({
 
   return (
     <RitualSheet open title={title} dismissOnBackdrop={false} footer={footer}>
-      <div className="space-y-[var(--space-5)]">
+      <div className="space-y-[var(--space-4)]">
         <div className="flex items-center justify-between gap-3">
           <StepDots step={step} />
           <p className="text-caption text-ink-muted">First-run setup</p>
         </div>
 
         {step === "capture" ? (
-          <div className="space-y-[var(--space-4)]">
+          <div className="space-y-[var(--space-3)]">
             <p className="text-body text-ink-muted">
               Type 2–3 things you actually need to do. Property chips light up as you type — try{" "}
               <span className="font-medium text-ink">tomorrow</span>,{" "}
@@ -259,7 +259,7 @@ export function OnboardingModal({
         ) : null}
 
         {step === "pin" ? (
-          <div className="space-y-[var(--space-4)]">
+          <div className="space-y-[var(--space-3)]">
             <p className="text-body text-ink-muted">
               Tap the star on the one thing that matters most today. It lands in Top 3 as priority
               #1.
@@ -302,7 +302,7 @@ export function OnboardingModal({
         ) : null}
 
         {step === "hold" ? (
-          <div className="space-y-[var(--space-4)]">
+          <div className="space-y-[var(--space-3)]">
             <p className="text-body text-ink-muted">
               Optionally reserve 45 minutes on the timeline for{" "}
               <span className="font-medium text-ink">{pinnedTask?.title ?? "priority #1"}</span>.
@@ -338,7 +338,7 @@ export function OnboardingModal({
         ) : null}
 
         {step === "categories" ? (
-          <div className="space-y-[var(--space-4)]">
+          <div className="space-y-[var(--space-3)]">
             <p className="text-body text-ink-muted">
               These five life areas color your day. Rename any that don&apos;t fit — colors stay
               with the theme.

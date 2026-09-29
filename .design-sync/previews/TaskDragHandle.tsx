@@ -19,7 +19,7 @@ export const InTaskRow = () => (
   <ul className="w-96 divide-y divide-[var(--border-subtle)] rounded-card border border-border bg-surface">
     {["Send the Great White report", "Reconcile September bills", "Draft the Hume scope note"].map(
       (title) => (
-        <li key={title} className="group flex items-center gap-[var(--space-3)] px-3 py-2">
+        <li key={title} className="group flex items-center gap-[var(--space-2)] px-3 py-2">
           <TaskDragHandle />
           <span className="text-body text-ink">{title}</span>
         </li>

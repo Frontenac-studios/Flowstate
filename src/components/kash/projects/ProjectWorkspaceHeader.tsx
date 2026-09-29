@@ -53,7 +53,7 @@ export default function ProjectWorkspaceHeader({
               ← Projects
             </Link>
           ) : null}
-          <h1 className="text-xl font-semibold text-ink">{project.name}</h1>
+          <h1 className="text-xl font-bold text-ink">{project.name}</h1>
           <CategoryBadge category={project.category} />
         </div>
         {timeLabel ? (

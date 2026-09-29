@@ -73,9 +73,9 @@ function MoreSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="mobile-sheet-panel relative z-10 rounded-t-card border-t border-border bg-surface pb-[max(var(--space-4),env(safe-area-inset-bottom))] shadow-overlay focus:outline-none"
+        className="mobile-sheet-panel relative z-10 rounded-t-card border-t border-border bg-surface pb-[max(var(--space-3),env(safe-area-inset-bottom))] shadow-overlay focus:outline-none"
       >
-        <header className="px-[var(--space-5)] pb-[var(--space-2)] pt-[var(--space-4)]">
+        <header className="px-[var(--space-4)] pb-[var(--space-2)] pt-[var(--space-3)]">
           <h2
             id={titleId}
             className="text-meta font-semibold uppercase tracking-wide text-ink-muted"
@@ -83,7 +83,7 @@ function MoreSheet({
             More
           </h2>
         </header>
-        <nav aria-label="More" className="flex flex-col px-[var(--space-3)]">
+        <nav aria-label="More" className="flex flex-col px-[var(--space-2)]">
           {MORE_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isNavItemActive(item, pathname);

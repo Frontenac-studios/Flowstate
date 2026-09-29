@@ -55,9 +55,9 @@ export function TriageDragBins() {
         icon={<Check {...kashIconProps({ tokenSize: "sm" })} />}
         label="Done"
         style={{
-          borderColor: "var(--cat-body-mind-solid)",
-          backgroundColor: "var(--cat-body-mind-fill)",
-          color: "var(--cat-body-mind-text)",
+          borderColor: "var(--project-3-solid)",
+          backgroundColor: "var(--project-3-fill)",
+          color: "var(--project-3-text)",
         }}
       />
       <Bin

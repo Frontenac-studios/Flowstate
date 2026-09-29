@@ -10,7 +10,7 @@ export function KeyCap({ children, className }: Props) {
   return (
     <kbd
       className={cn(
-        "inline-flex min-w-[1.25rem] items-center justify-center rounded border border-border bg-surface-2 px-1.5 py-0.5 font-sans text-caption text-ink-muted",
+        "inline-flex min-w-[1.25rem] items-center justify-center rounded-pill border border-border bg-surface-2 px-1.5 py-0.5 font-sans text-caption text-ink-muted",
         className
       )}
     >

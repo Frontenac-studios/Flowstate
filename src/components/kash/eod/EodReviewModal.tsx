@@ -226,8 +226,8 @@ export function EodReviewModal({
       {payloadLoading || !payload ? (
         <p className="text-body text-ink-muted">Loading your day…</p>
       ) : (
-        <div id={summarySectionId} className="space-y-[var(--space-6)]">
-          <section aria-label="Celebration" className="space-y-[var(--space-4)]">
+        <div id={summarySectionId} className="space-y-[var(--space-5)]">
+          <section aria-label="Celebration" className="space-y-[var(--space-3)]">
             <p className="text-body text-ink">
               <span className="text-title font-semibold">{payload.completionsToday}</span> task
               {payload.completionsToday === 1 ? "" : "s"} completed today
@@ -258,7 +258,7 @@ export function EodReviewModal({
 
             {reflectiveQuestion ? (
               <>
-                <p className="mt-[var(--space-3)] text-body font-medium text-ink">
+                <p className="mt-[var(--space-2)] text-body font-medium text-ink">
                   {reflectiveQuestion}
                 </p>
                 <label className="block text-caption text-ink-muted" htmlFor="eod-reflection">
@@ -277,7 +277,7 @@ export function EodReviewModal({
           </section>
 
           <section aria-label="Leftover triage">
-            <p className="mb-[var(--space-3)] text-caption font-medium uppercase tracking-wide text-ink-muted">
+            <p className="mb-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
               Still open
             </p>
             <EodLeftoverTriage localDate={localDate} tasks={incompleteTasks as HandoffPlanTask[]} />
@@ -286,7 +286,7 @@ export function EodReviewModal({
       )}
 
       {saveError ? (
-        <p className="mt-[var(--space-4)] text-body text-critical" role="alert">
+        <p className="mt-[var(--space-3)] text-body text-critical" role="alert">
           {saveError}
         </p>
       ) : null}

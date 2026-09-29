@@ -248,7 +248,7 @@ export function MorningTriageChat({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-2)]">
       <div className="flex min-h-[16rem] flex-1 flex-col overflow-hidden rounded-row border border-subtle bg-surface-2">
-        <header className="flex shrink-0 items-center gap-2 border-b border-subtle px-[var(--space-3)] py-[var(--space-2)]">
+        <header className="flex shrink-0 items-center gap-2 border-b border-subtle px-[var(--space-2)] py-[var(--space-2)]">
           <KashAvatar />
           <div className="min-w-0">
             <p className="text-body font-semibold text-ink">Kash</p>
@@ -256,7 +256,7 @@ export function MorningTriageChat({
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-[var(--space-3)] py-[var(--space-2)]">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-[var(--space-2)] py-[var(--space-2)]">
           {!configured ? (
             <p className="rounded-control bg-accent-soft px-3 py-2 text-caption text-ink-muted">
               AI isn&apos;t configured — add <code className="text-ink">OPENROUTER_API_KEY</code> to
@@ -328,7 +328,7 @@ export function MorningTriageChat({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="shrink-0 px-[var(--space-3)] pb-[var(--space-2)]">
+        <div className="shrink-0 px-[var(--space-2)] pb-[var(--space-2)]">
           {!dumpEnabled && skipToDumpLabel && onSkipToDump ? (
             <button
               type="button"
@@ -352,10 +352,10 @@ export function MorningTriageChat({
 
       {pendingProposal ? (
         <div className="flex max-h-[40%] min-h-0 shrink-0 flex-col overflow-hidden rounded-row border border-subtle bg-surface-2">
-          <h3 className="shrink-0 px-[var(--space-3)] pt-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
+          <h3 className="shrink-0 px-[var(--space-2)] pt-[var(--space-2)] text-caption font-medium uppercase tracking-wide text-ink-muted">
             Suggested
           </h3>
-          <div className="min-h-0 flex-1 overflow-y-auto px-[var(--space-3)] pb-[var(--space-2)]">
+          <div className="min-h-0 flex-1 overflow-y-auto px-[var(--space-2)] pb-[var(--space-2)]">
             <ConfirmActionCard
               proposal={pendingProposal.proposal}
               busy={proposalBusy}

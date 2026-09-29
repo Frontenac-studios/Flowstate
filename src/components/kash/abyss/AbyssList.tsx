@@ -305,7 +305,7 @@ export default function AbyssList({
       {keepsCalling.length > 0 ? (
         <section className="bg-abyss-surface-2/60 mb-1 rounded-card p-1">
           <div className="flex items-center gap-2 px-2.5 pb-1 pt-2">
-            <SparkleIcon size={14} className="text-cat-adulting" />
+            <SparkleIcon size={14} className="text-project-2" />
             <span className="text-meta font-medium text-abyss-ink">Keeps calling you</span>
             <span className="text-caption text-abyss-ink-faint">· {keepsCalling.length}</span>
           </div>

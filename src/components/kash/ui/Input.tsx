@@ -2,10 +2,12 @@ import { forwardRef, type InputHTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
+import { FIELD_CHROME, FIELD_PILL, FIELD_READ_ONLY } from "./field-styles";
+
 /**
- * Flat text input (replaces `.glass-input`): white surface, hairline border,
- * focus ring at `--focus-ring`. Not `w-full` by default — callers add width
- * utilities via `className`.
+ * Text input (Spec v2): 40px pill, hairline border, ink border + halo on focus,
+ * crimson border when `aria-invalid`. Not `w-full` by default — callers add
+ * width utilities via `className`.
  */
 type Props = InputHTMLAttributes<HTMLInputElement>;
 
@@ -13,10 +15,7 @@ const Input = forwardRef<HTMLInputElement, Props>(function Input({ className, ..
   return (
     <input
       ref={ref}
-      className={cn(
-        "kash-focus-visible rounded-control border border-border bg-surface px-3 py-2 text-body text-ink outline-none transition-shadow",
-        className
-      )}
+      className={cn(FIELD_CHROME, FIELD_PILL, FIELD_READ_ONLY, className)}
       {...rest}
     />
   );

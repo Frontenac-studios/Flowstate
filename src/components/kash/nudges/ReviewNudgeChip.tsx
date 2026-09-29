@@ -38,7 +38,7 @@ export default function ReviewNudgeChip({ kind, message, onReview, onDismiss, cl
   return (
     <div
       className={cn(
-        "flex items-center gap-[var(--space-3)] rounded-row border border-l-[length:var(--stripe-width)] border-border border-l-ink bg-surface px-[var(--space-3)] py-[var(--space-2)]",
+        "flex items-center gap-[var(--space-2)] rounded-row border border-l-[length:var(--stripe-width)] border-border border-l-ink bg-surface px-[var(--space-2)] py-[var(--space-2)]",
         exiting ? "nudge-fade-out" : "nudge-fade-in",
         className
       )}

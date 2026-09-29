@@ -66,7 +66,7 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
   return (
     <section className="rounded-card border border-abyss-border-strong bg-abyss-surface p-3 shadow-surface">
       <div className="flex items-center gap-2">
-        <SparkleIcon size={14} className="text-cat-adulting" />
+        <SparkleIcon size={14} className="text-project-2" />
         <span className="text-meta font-medium text-abyss-ink">
           You keep parking similar things
         </span>
@@ -81,11 +81,11 @@ export default function AbyssEmergingCard({ members, onDismiss }: Props) {
         </button>
       </div>
 
-      <p className="mt-1.5 pl-[calc(var(--icon-sm)+var(--space-3))] text-caption text-abyss-ink-muted">
+      <p className="mt-1.5 pl-[calc(var(--icon-sm)+var(--space-2))] text-caption text-abyss-ink-muted">
         {members.map((member) => member.title).join(" · ")}
       </p>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 pl-[calc(var(--icon-sm)+var(--space-3))]">
+      <div className="mt-2 flex flex-wrap items-center gap-2 pl-[calc(var(--icon-sm)+var(--space-2))]">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}

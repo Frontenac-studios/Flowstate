@@ -1,0 +1,30 @@
+/* Spec v2 — round checkbox: 18px, 1.5px --check-border ring; checked = filled
+   --check-fill (ink by default) with a white check. The native control is kept
+   (appearance: none) so keyboard, form and label behaviour stay native. */
+.kash-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  border: var(--border-emphasis-width) solid var(--check-border);
+  background: var(--surface) center / 12px 12px no-repeat;
+  transition:
+    background-color var(--motion-micro) var(--ease-enter),
+    border-color var(--motion-micro) var(--ease-enter);
+}
+
+.kash-checkbox:hover:not(:disabled) {
+  border-color: var(--ink-muted);
+}
+
+.kash-checkbox:checked {
+  border-color: var(--check-fill, var(--ink));
+  background-color: var(--check-fill, var(--ink));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2 5 8.5l4.5-5'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kash-checkbox {
+    transition: none;
+  }
+}

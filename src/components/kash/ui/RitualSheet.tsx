@@ -123,14 +123,14 @@ export function RitualSheet({
 
   const body =
     bodyLayout === "fill" ? (
-      <div className="flex h-full min-h-0 flex-col px-[var(--space-5)] py-[var(--space-4)]">
+      <div className="flex h-full min-h-0 flex-col px-[var(--space-4)] py-[var(--space-3)]">
         {children}
       </div>
     ) : (
       <>
         <div
           ref={scrollRef}
-          className="ritual-sheet-scroll h-full overflow-y-auto px-[var(--space-5)] py-[var(--space-4)]"
+          className="ritual-sheet-scroll h-full overflow-y-auto px-[var(--space-4)] py-[var(--space-3)]"
           onScroll={updateFade}
         >
           {children}
@@ -174,7 +174,7 @@ export function RitualSheet({
               : "max-h-[85vh] max-w-xl"
         )}
       >
-        <header className="shrink-0 border-b border-subtle px-[var(--space-5)] py-[var(--space-4)]">
+        <header className="shrink-0 border-b border-subtle px-[var(--space-4)] py-[var(--space-3)]">
           <h2 id={titleId} className="text-title font-semibold text-ink">
             {title}
           </h2>
@@ -183,7 +183,7 @@ export function RitualSheet({
         <div className="relative min-h-0 flex-1">{body}</div>
 
         {footer ? (
-          <footer className="shrink-0 border-t border-subtle px-[var(--space-5)] py-[var(--space-4)]">
+          <footer className="shrink-0 border-t border-subtle px-[var(--space-4)] py-[var(--space-3)]">
             {footer}
           </footer>
         ) : null}

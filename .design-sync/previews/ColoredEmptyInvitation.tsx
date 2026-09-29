@@ -16,7 +16,12 @@ export const WithAction = () => (
     <ColoredEmptyInvitation
       title="Nothing waiting on you"
       hint="When a project goes quiet for a week it shows up here."
-      action={<Button variant="ghost">Review the backlog</Button>}
+      action={
+        <>
+          <Button variant="secondary">Browse projects</Button>
+          <Button>Add task</Button>
+        </>
+      }
     />
   </div>
 );

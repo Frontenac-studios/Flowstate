@@ -18,7 +18,11 @@ const EXIT_MS = 160;
 
 export type ToastInput = {
   message: ReactNode;
+  /** Optional muted second line under the message. */
+  detail?: ReactNode;
   variant?: ToastVariant;
+  /** Stripe colour — pass the project's hue; defaults by variant (see Toast). */
+  stripe?: string;
   duration?: number;
   action?: { label: string; onClick: () => void };
 };
@@ -98,7 +102,7 @@ export default function ToastProvider({ children }: ProviderProps) {
       {mounted
         ? createPortal(
             <div
-              className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--space-5)+var(--mobile-nav-clearance))] z-toast flex flex-col items-center gap-[var(--space-2)] px-[var(--space-4)] lg:bottom-[var(--space-5)]"
+              className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--space-4)+var(--mobile-nav-clearance))] z-toast flex flex-col items-center gap-[var(--space-2)] px-[var(--space-3)] lg:bottom-[var(--space-4)]"
               aria-live="polite"
             >
               {toasts.map((t) => (
@@ -106,7 +110,9 @@ export default function ToastProvider({ children }: ProviderProps) {
                   <Toast
                     id={t.id}
                     message={t.message}
+                    detail={t.detail}
                     variant={t.variant}
+                    stripe={t.stripe}
                     exiting={t.exiting}
                     action={t.action}
                     onDismiss={() => dismiss(t.id)}

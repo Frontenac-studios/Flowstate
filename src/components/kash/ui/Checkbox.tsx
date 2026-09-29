@@ -1,12 +1,15 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import { forwardRef, type CSSProperties, type InputHTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
+import "./checkbox.css";
+
 type Props = InputHTMLAttributes<HTMLInputElement> & {
-  /** CSS color for the native checkbox tint; defaults to ink. */
+  /** CSS color for the checked fill; defaults to ink. */
   accentColor?: string;
 };
 
+/** Round 18px checkbox (Spec v2) — a native checkbox restyled via `.kash-checkbox`. */
 const Checkbox = forwardRef<HTMLInputElement, Props>(function Checkbox(
   { className, accentColor = "var(--ink)", style, ...rest },
   ref
@@ -16,11 +19,11 @@ const Checkbox = forwardRef<HTMLInputElement, Props>(function Checkbox(
       ref={ref}
       type="checkbox"
       className={cn(
-        "kash-focus-visible h-icon-md w-icon-md shrink-0 cursor-pointer self-center rounded-control outline-none",
+        "kash-checkbox kash-focus-visible shrink-0 cursor-pointer self-center outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
-      style={{ accentColor, ...style }}
+      style={{ "--check-fill": accentColor, ...style } as CSSProperties}
       {...rest}
     />
   );

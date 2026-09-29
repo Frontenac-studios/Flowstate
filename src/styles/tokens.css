@@ -1,9 +1,13 @@
 /* Kash 3.0 — Design Tokens (source of truth)
  * Spec: kash-3.0-design-tokens.md + kash-3.0-visual-redesign.md. Black-and-white
  * aesthetic (DT-1, B&W revision Jun 24): pure-white surfaces, near-black ink,
- * hairline borders. Accent = black (DT-2 revised), Apple category palette (DT-3),
- * icon-led semantics (DT-3b), light theme only (DT-4), compact density (DT-5a),
- * Figtree (DT-5b), crisp/flat finish (DT-5c).
+ * hairline borders. Accent = black (DT-2 revised), icon-led semantics (DT-3b), light
+ * theme only (DT-4), crisp/flat finish (DT-5c).
+ *
+ * Spec v2 (Sep 2026, designed in claude.ai/design — templates/ds-proposals/
+ * SPEC-V2-TOKENS.md) supersedes the type, palette, spacing, radius and density
+ * decisions: Plus Jakarta Sans, the 8-hue project palette, a 4px grid with no 6px
+ * step, pill controls + 14px containers, 10px row padding.
  *
  * Theming: every value here is a semantic variable. A dark theme = one extra
  * :root[data-theme="dark"] block remapping these same names. No component references
@@ -26,8 +30,16 @@
 
   /* ---- ink — crisp near-black ---- */
   --ink: #16181d;
-  --ink-muted: #6b7280;
-  --ink-faint: #767e8e; /* DT-9 — AA fix (was #9aa0ad) */
+  --ink-muted: #5b6270; /* Spec v2 — darkened so counts and meta pass AA (was #6b7280) */
+  /* Spec v2 wants #8a909b here, for decorative/large text only. Held at the DT-9 AA
+     value until the ~200 small-text ink-faint usages move to --ink-muted. */
+  --ink-faint: #767e8e;
+
+  /* ---- form controls (Spec v2) ---- */
+  --control-height: 40px;
+  --control-border: #d3d6dc; /* field hairline — a step above --border so empty fields read */
+  --check-border: #c2c6cd; /* unchecked round checkbox ring */
+  --focus-halo: 0 0 0 3px rgba(22, 24, 29, 0.08); /* soft ring around a focused field */
 
   /* ---- accent = black (DT-2 revised Jun 24, was graphite) ---- */
   --accent: #16181d;
@@ -57,11 +69,42 @@
   --active-raised: #ffffff; /* inset white pill · Week "today" column — raised, not filled */
   --active-raised-border: #e2e4e8; /* hairline that sells the raised pill; NO shadow (kept flat) */
 
-  /* ---- category palette (DT-3, Apple set): fill / solid / text ----
-     The enum collapsed to business|personal (W1). `business` reuses the old
-     professional blue; `personal` keeps its purple. The other three (relationships,
-     adulting, body-mind) are retained because non-category tokens still reference
-     them (e.g. --action-edit, --action-complete) and the project-cycle palette. */
+  /* ---- project palette (Spec v2): 8 hues + personal, fill / solid / text ----
+     Colour follows the project, not the life-area category. Fill and text derive
+     from the solid so a hue is retuned in one place. Red (--project-4) is a
+     project hue, so danger always pairs crimson with text or an icon. */
+  --project-1-solid: #009ddc;
+  --project-2-solid: #f6821f;
+  --project-3-solid: #61bb47;
+  --project-4-solid: #e03a3e;
+  --project-5-solid: #fcb827;
+  --project-6-solid: #00a79d;
+  --project-7-solid: #4f5bd5;
+  --project-8-solid: #e5498f;
+  --project-personal-solid: #973d97;
+  --project-1-fill: color-mix(in srgb, var(--project-1-solid) 12%, #fff);
+  --project-2-fill: color-mix(in srgb, var(--project-2-solid) 12%, #fff);
+  --project-3-fill: color-mix(in srgb, var(--project-3-solid) 12%, #fff);
+  --project-4-fill: color-mix(in srgb, var(--project-4-solid) 12%, #fff);
+  --project-5-fill: color-mix(in srgb, var(--project-5-solid) 12%, #fff);
+  --project-6-fill: color-mix(in srgb, var(--project-6-solid) 12%, #fff);
+  --project-7-fill: color-mix(in srgb, var(--project-7-solid) 12%, #fff);
+  --project-8-fill: color-mix(in srgb, var(--project-8-solid) 12%, #fff);
+  --project-personal-fill: color-mix(in srgb, var(--project-personal-solid) 12%, #fff);
+  --project-1-text: color-mix(in oklch, var(--project-1-solid) 62%, #000);
+  --project-2-text: color-mix(in oklch, var(--project-2-solid) 62%, #000);
+  --project-3-text: color-mix(in oklch, var(--project-3-solid) 62%, #000);
+  --project-4-text: color-mix(in oklch, var(--project-4-solid) 62%, #000);
+  --project-5-text: color-mix(in oklch, var(--project-5-solid) 62%, #000);
+  --project-6-text: color-mix(in oklch, var(--project-6-solid) 62%, #000);
+  --project-7-text: color-mix(in oklch, var(--project-7-solid) 62%, #000);
+  --project-8-text: color-mix(in oklch, var(--project-8-solid) 62%, #000);
+  --project-personal-text: color-mix(in oklch, var(--project-personal-solid) 62%, #000);
+
+  /* ---- category palette (DT-3): fill / solid / text ----
+     The enum collapsed to business|personal (W1). These stay until projects carry
+     their own assigned hue; relationships / adulting / body-mind are retired
+     (Spec v2) — their hues now live on as --project-2/3/4. */
   --cat-business-fill: #e5f5fc;
   --cat-business-solid: #009ddc;
   --cat-business-text: #0a6a93;
@@ -73,18 +116,6 @@
   --cat-personal-fill: #f4e8f4;
   --cat-personal-solid: #973d97;
   --cat-personal-text: #6e2c6e;
-
-  --cat-relationships-fill: #fce8e9;
-  --cat-relationships-solid: #e03a3e;
-  --cat-relationships-text: #962427;
-
-  --cat-adulting-fill: #fdeede;
-  --cat-adulting-solid: #f6821f;
-  --cat-adulting-text: #9a4e08;
-
-  --cat-body-mind-fill: #ecf6e8;
-  --cat-body-mind-solid: #61bb47;
-  --cat-body-mind-text: #3a7026;
 
   /* ---- daily wins facets (D16) — cool trio, separate from categories ---- */
   --win-body-fill: color-mix(in srgb, #0f6e56 12%, var(--surface));
@@ -107,15 +138,16 @@
   --status-ink: var(--ink);
   --status-icon: var(--ink-muted);
   --status-critical: var(--crimson);
+  --status-critical-soft: #fbe9eb; /* soft-crimson fill: destructive buttons, overdue pill */
 
   /* ---- swipe-action glyphs ----
    * The row reveal rail is icon-only, so the glyph carries the whole meaning and
-   * earns colour where the rest of the chrome stays graphite. Deliberately aliased
-   * off the category ramps' `-text` stops (not `-solid`): the solid stops sit near
-   * 2.4:1 on --surface-2 and fail the 3:1 non-text contrast floor. Retune here, not
-   * in components — nothing else in the app should read a category token for state. */
-  --action-edit: var(--cat-adulting-text);
-  --action-complete: var(--cat-body-mind-text);
+   * earns colour where the rest of the chrome stays graphite. Explicit values (Spec
+   * v2 retired the categories they used to alias): these are the old orange/green
+   * `-text` stops, not the solids, which sit near 2.4:1 on --surface-2 and fail
+   * the 3:1 non-text contrast floor. Retune here, not in components. */
+  --action-edit: #9a4e08;
+  --action-complete: #3a7026;
   --action-danger: var(--status-critical);
 
   /* ---- priority + due urgency (VF-4) ---- */
@@ -128,41 +160,51 @@
   --due-soon: var(--ink);
   --due-future: var(--ink-faint);
 
-  /* ---- typography (DT-5b) ----
-   * Scale bumped for full-screen readability (Spacious). Prior compact scale
-   * (11/12/13/15/17/20) was too small at desktop widths. */
-  --font-sans: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-  /* Screenshot-match hierarchy (Jul 7): stronger header emphasis + a smaller,
-     muted meta so each layer's title anchors it. Tailwind text-* tiers below are
-     bumped in lockstep. Prior Spacious scale: 13/14/16/18/21/26. */
-  --text-micro: 11px; /* sub-caption micro labels (badges, calendar cells); was ad-hoc text-[10px] */
-  --text-caption: 13px;
+  /* ---- typography (Spec v2) ----
+   * Plus Jakarta Sans, four weights. Hierarchy comes from size and weight, with
+   * one uppercase label-caps style (micro / 600 / 0.08em) for dates and group
+   * labels. Tailwind's stock text-* tiers track this scale (tailwind.config.ts).
+   * The family is loaded by next/font in app/layout.tsx, which sets --font-sans
+   * on <body>; this value is the fallback. Prior scale: 11/13/13/17/19/22/30. */
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-micro: 11px; /* label caps: pair with 600 + uppercase + --tracking-caps */
+  --text-caption: 12px;
   --text-meta: 13px;
-  --text-body: 17px;
-  --text-subtitle: 19px;
-  --text-title: 22px;
-  --text-h1: 30px;
+  --text-body: 15px;
+  --text-subtitle: 17px; /* card headers, at 600 */
+  --text-title: 20px;
+  --text-h1: 40px; /* at 700, --tracking-h1, leading 1.05 */
+  --tracking-caps: 0.08em;
+  --tracking-h1: -0.025em;
   --weight-regular: 400;
   --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
   --leading-tight: 1.25;
   --leading-body: 1.4;
 
-  /* ---- spacing — 4px grid ---- */
+  /* ---- spacing — 4px grid, no 6px step (Spec v2) ----
+     Renumbered when the 6px step was dropped: every step from --space-2 up moved
+     down one index, and usages were rewritten to keep their pixel values (old
+     6px usages became 8px). */
   --space-0: 2px;
   --space-1: 4px;
-  --space-2: 6px;
-  --space-3: 8px;
-  --space-4: 12px;
-  --space-5: 16px;
-  --space-6: 20px;
-  --space-7: 24px;
-  --space-8: 32px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
 
-  /* ---- radius (DT-5c; card/row softened for clearer object layering Jul 7) ---- */
-  --radius-card: 14px; /* was 8px — larger outer corners separate card layers */
-  --radius-row: 8px; /* was 5px — inner rows track the softer card corner */
-  --radius-control: 5px;
-  --radius-chip: 5px;
+  /* ---- radius (Spec v2): two radii only ----
+     Pill for anything you click (buttons, fields, chips, nav items, checkboxes,
+     tooltips); 14px for containers (cards, textareas, toasts, sheets); 8px only
+     for a selected row's background. */
+  --radius-card: 14px;
+  --radius-row: 8px;
+  --radius-control: 9999px;
+  --radius-chip: 9999px;
   --radius-pill: 9999px;
 
   /* ---- elevation ---- */
@@ -178,8 +220,8 @@
 
   /* ---- density (DT-5a — compact) ---- */
   --row-min-height: 26px;
-  --row-py: 2px;
-  --density-base: 17px; /* body base font-size — tracks --text-body (was 16px) */
+  --row-py: 10px; /* Spec v2 — rows breathe (was 2px) */
+  --density-base: 15px; /* body base font-size — tracks --text-body (was 17px) */
 
   /* ---- motion (AN-0b — gentle-calm) ---- */
   --motion-micro: 90ms;
@@ -211,10 +253,10 @@
   --shell-pad-x-lg: 2.5rem;
   --shell-pad-y: 1.5rem;
   --shell-sticky-top: 1.5rem;
-  --stack-gap: 1rem;
-  --section-gap: 1.5rem;
-  --card-pad-x: 1.25rem;
-  --card-pad-y: 1rem;
+  --stack-gap: 20px; /* Spec v2 (was 1rem) */
+  --section-gap: 20px; /* Spec v2 (was 1.5rem) */
+  --card-pad-x: 24px; /* Spec v2 (was 1.25rem) */
+  --card-pad-y: 16px; /* Spec v2 (was 1rem) */
   --chat-rail-width: 22rem;
 }
 
@@ -231,10 +273,7 @@ html.is-desktop {
   --shell-pad-x-lg: var(--shell-pad);
   --shell-pad-y: var(--shell-pad);
   --shell-sticky-top: var(--shell-pad-y);
-  --stack-gap: calc(var(--nav-rail-width) * 0.375);
-  --section-gap: calc(var(--nav-rail-width) * 0.375);
-  --card-pad-x: calc(var(--nav-rail-width) * 0.417);
-  --card-pad-y: calc(var(--nav-rail-width) * 0.417);
+  /* stack/section gaps and card padding are fixed Spec v2 values, not rail-scaled */
   --chat-rail-width: calc(var(--nav-rail-width) * 7);
 }
 
@@ -688,9 +727,6 @@ html.is-desktop[data-spacing-variant="b"] {
   --cat-business-solid: #3bb6e6;
   --cat-professional-solid: #3bb6e6;
   --cat-personal-solid: #c06fc0;
-  --cat-relationships-solid: #f06366;
-  --cat-adulting-solid: #fb9d4b;
-  --cat-body-mind-solid: #83cf6c;
 }
 
 .abyss-root[data-abyss-theme="light"] {
