@@ -14,6 +14,7 @@ import {
   SETTINGS_ITEM,
   type NavItem,
 } from "@/components/kash/nav-items";
+import { NavProjectsGroup } from "@/components/kash/nav/NavProjectsGroup";
 import { SyncFooterIndicator } from "@/components/kash/nav/SyncFooterIndicator";
 import { formatHeaderDate } from "@/lib/dates/local-day";
 import { useDesktopFullscreen } from "@/hooks/useDesktopFullscreen";
@@ -21,7 +22,8 @@ import { readNavRailPinned, writeNavRailPinned } from "@/lib/nav/nav-rail-storag
 
 const NAV_ICON_PROPS = kashIconProps({ tokenSize: "lg" });
 
-const NAV_LINK_FOCUS = "focus:outline-none focus-visible:bg-ink focus-visible:text-on-accent";
+// Spec v3 Fc: keyboard focus is the tint underline, never an inverted block.
+const NAV_LINK_FOCUS = "kash-focus-row outline-none";
 
 function NavLink({
   item,
@@ -48,8 +50,8 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       aria-busy={pending || undefined}
       title={item.label}
-      className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : ""} ${NAV_LINK_FOCUS} ${
-        highlighted ? "bg-[var(--surface-selected)] text-ink" : "text-ink hover:bg-tint-hover"
+      className={`flex h-nav-item items-center rounded-row transition-colors motion-reduce:transition-none ${expanded ? "pr-2" : ""} ${NAV_LINK_FOCUS} ${
+        highlighted ? "bg-active-surface text-ink" : "text-ink hover:bg-tint-hover"
       }`}
     >
       <span
@@ -62,7 +64,7 @@ function NavLink({
       {/* Label is always rendered so it can fade in on expand; when collapsed the
           full-width icon span pushes it past the rail's overflow-hidden edge. */}
       <span
-        className={`nav-cascade-item whitespace-nowrap text-sm ${
+        className={`nav-cascade-item whitespace-nowrap text-[15px] ${
           highlighted ? "font-semibold" : "font-medium"
         }`}
       >
@@ -74,11 +76,13 @@ function NavLink({
 
 function NavSections({
   expanded,
+  pathname,
   isActive,
   isPending,
   onSelect,
 }: {
   expanded: boolean;
+  pathname: string;
   isActive: (item: NavItem) => boolean;
   isPending: (item: NavItem) => boolean;
   onSelect?: (href: string) => void;
@@ -88,13 +92,13 @@ function NavSections({
       {NAV_GROUPS.map((group, index) => {
         return (
           <Fragment key={group.label}>
-            <div className="px-1 pb-1 pt-2">
+            <div className={`px-1 pb-2 ${index > 0 ? "pt-5" : "pt-2"}`}>
               {expanded ? (
-                <span className="whitespace-nowrap px-1 text-caption font-semibold uppercase tracking-wide text-ink-muted">
+                <span className="whitespace-nowrap px-2 text-micro font-semibold uppercase tracking-caps text-ink-muted">
                   {group.label}
                 </span>
               ) : index > 0 ? (
-                <div className="mx-2 h-px bg-[var(--border-subtle)]" />
+                <div className="mx-2 h-px bg-menu-divider" />
               ) : null}
             </div>
             {group.items.map((item) => (
@@ -110,7 +114,8 @@ function NavSections({
           </Fragment>
         );
       })}
-      <div className="mt-auto">
+      <NavProjectsGroup expanded={expanded} pathname={pathname} />
+      <div className="mt-auto pt-2">
         <SyncFooterIndicator expanded={expanded} />
         <NavLink
           item={SETTINGS_ITEM}
@@ -333,7 +338,7 @@ export function LeftNavRail() {
               title={pinned ? "Unpin navigation" : "Pin navigation"}
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition ${NAV_LINK_FOCUS} ${
                 pinned
-                  ? "bg-[var(--surface-selected)] text-ink"
+                  ? "bg-active-surface text-ink"
                   : "text-ink-muted hover:bg-tint-hover hover:text-ink"
               }`}
             >
@@ -350,6 +355,7 @@ export function LeftNavRail() {
 
         <NavSections
           expanded={expanded}
+          pathname={pathname}
           isActive={isActive}
           isPending={isPending}
           onSelect={onSelect}
