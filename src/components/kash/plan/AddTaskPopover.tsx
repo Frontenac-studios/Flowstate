@@ -10,6 +10,10 @@ import {
   useState,
 } from "react";
 
+import Menu from "@/components/kash/ui/Menu";
+import { MENU_ROW } from "@/components/kash/ui/overlay-styles";
+import { useDismiss } from "@/hooks/useDismiss";
+import { cn } from "@/lib/cn";
 import { FLAGS } from "@/lib/flags";
 
 export type AddTaskPopoverHandle = {
@@ -31,8 +35,13 @@ type Props = {
   menuAlign?: "left" | "right";
 };
 
-const MENU_BTN_FOCUS =
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
+const TRIGGER_EMBEDDED =
+  "flex h-8 w-8 items-center justify-center rounded-pill border border-transparent bg-transparent text-lg leading-none text-ink-muted transition hover:bg-active-raised hover:text-ink aria-expanded:bg-tint-open aria-expanded:text-ink kash-focus-visible outline-none";
+const TRIGGER_STANDALONE =
+  "flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink aria-expanded:bg-tint-open aria-expanded:text-ink kash-focus-visible outline-none";
+
+/** A two-line menu row (label + caption): MENU_ROW, grown past its fixed 36px. */
+const TWO_LINE_ROW = cn(MENU_ROW, "!h-auto flex-col !items-start !gap-0.5 py-2");
 
 /**
  * Compact "+" that de-emphasizes the manual composers (Phase 5): chat is the
@@ -58,26 +67,8 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
     triggerRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        close();
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
+  // Escape and outside presses both close; close() also hands focus back to the "+".
+  useDismiss(open, [containerRef], close);
 
   // Move focus onto the first action when the popover opens (keyboard entry).
   useEffect(() => {
@@ -103,11 +94,7 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
           type="button"
           aria-label={`Add ${noun}`}
           onClick={onTypeManually}
-          className={
-            embedded
-              ? `flex h-8 w-8 items-center justify-center rounded-pill border border-transparent bg-transparent text-lg leading-none text-ink-muted transition hover:bg-active-raised hover:text-ink ${MENU_BTN_FOCUS}`
-              : `flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink ${MENU_BTN_FOCUS}`
-          }
+          className={embedded ? TRIGGER_EMBEDDED : TRIGGER_STANDALONE}
         >
           <span aria-hidden>+</span>
         </button>
@@ -125,33 +112,29 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
         aria-controls={open ? menuId : undefined}
         aria-label={`Add ${noun}`}
         onClick={() => setOpen((value) => !value)}
-        className={
-          embedded
-            ? `flex h-8 w-8 items-center justify-center rounded-pill border border-transparent bg-transparent text-lg leading-none text-ink-muted transition hover:bg-active-raised hover:text-ink ${MENU_BTN_FOCUS}`
-            : `flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink ${MENU_BTN_FOCUS}`
-        }
+        className={embedded ? TRIGGER_EMBEDDED : TRIGGER_STANDALONE}
       >
         <span aria-hidden>+</span>
       </button>
 
       {open ? (
-        <div
+        <Menu
           id={menuId}
-          role="menu"
           aria-label={`Add ${noun}`}
-          className={`absolute top-11 z-overlay w-64 rounded-card border border-border bg-surface p-1.5 shadow-overlay ${
+          className={cn(
+            "absolute top-full mt-1 w-64",
             menuAlign === "right" ? "right-0" : "left-0"
-          }`}
+          )}
         >
           <button
             ref={firstItemRef}
             type="button"
             role="menuitem"
             onClick={() => choose(onAskChat)}
-            className={`flex w-full flex-col items-start gap-0.5 rounded-control px-2 py-2 text-left transition-colors hover:bg-surface-2 ${MENU_BTN_FOCUS}`}
+            className={TWO_LINE_ROW}
           >
-            <span className="text-body font-medium text-ink">Ask chat</span>
-            <span className="text-caption text-ink-muted">
+            <span className="text-[14px] font-medium text-ink">Ask chat</span>
+            <span className="text-caption font-normal text-ink-muted">
               Describe what you need — chat drafts the {noun}s
             </span>
           </button>
@@ -159,12 +142,12 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
             type="button"
             role="menuitem"
             onClick={() => choose(onTypeManually)}
-            className={`mt-0.5 flex w-full flex-col items-start gap-0.5 rounded-control px-2 py-2 text-left transition-colors hover:bg-surface-2 ${MENU_BTN_FOCUS}`}
+            className={TWO_LINE_ROW}
           >
-            <span className="text-body text-ink">Type {noun}s</span>
-            <span className="text-caption text-ink-muted">Enter them yourself</span>
+            <span className="text-[14px] font-medium text-ink">Type {noun}s</span>
+            <span className="text-caption font-normal text-ink-muted">Enter them yourself</span>
           </button>
-        </div>
+        </Menu>
       ) : null}
     </div>
   );

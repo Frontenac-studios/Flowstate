@@ -71,7 +71,7 @@ export default function SwipeActionRail({ actions, open, className = "" }: Props
             title={action.label}
             onClick={action.onClick}
             style={{ width: SWIPE_ACTION_WIDTH_PX, color: TONE_COLOR[action.tone] }}
-            className={`flex shrink-0 items-center justify-center focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+            className={`kash-focus-row flex shrink-0 items-center justify-center focus:outline-none ${
               index > 0 ? "border-l border-subtle" : ""
             } ${
               action.disabled

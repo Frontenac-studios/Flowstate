@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
+import Switch from "@/components/kash/ui/Switch";
 import { useTRPC } from "@/trpc/client";
 
 import { NotificationSettingsSection } from "./NotificationSettingsSection";
@@ -20,20 +21,27 @@ function OnOffToggle({
   disabled?: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const labelId = useId();
+  const descriptionId = useId();
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
-      <input
-        type="checkbox"
-        className="mt-0.5"
+    <div className="flex items-start justify-between gap-4 py-2">
+      <div className="min-w-0">
+        <span id={labelId} className="block text-sm font-medium text-ink">
+          {label}
+        </span>
+        <span id={descriptionId} className="mt-0.5 block text-sm text-ink-muted">
+          {description}
+        </span>
+      </div>
+      <Switch
         checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
+        onCheckedChange={onChange}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
+        className="mt-0.5"
       />
-      <span>
-        <span className="text-sm font-medium text-ink">{label}</span>
-        <span className="mt-0.5 block text-sm text-ink-muted">{description}</span>
-      </span>
-    </label>
+    </div>
   );
 }
 
@@ -84,7 +92,7 @@ export function AssistanceSettingsSection() {
         Gentle, load-aware help on Today — separate from notification delivery.
       </p>
 
-      <fieldset className="mt-4 space-y-2" disabled={busy}>
+      <fieldset className="mt-3 space-y-1" disabled={busy}>
         <legend className="sr-only">Assistance preferences</legend>
         <OnOffToggle
           label="Assistance nudges"

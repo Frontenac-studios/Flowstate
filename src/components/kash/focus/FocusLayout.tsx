@@ -18,7 +18,7 @@ export function FocusLayout({ children }: { children: React.ReactNode }) {
       <div className="absolute left-4 top-4 z-sticky">
         <Link
           href="/today"
-          className="pointer-events-auto rounded-chip px-2 py-1 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+          className="kash-focus-row pointer-events-auto rounded-chip px-2 py-1 text-sm text-ink-muted transition hover:text-ink focus:outline-none"
         >
           ← Plan
         </Link>

@@ -79,7 +79,7 @@ function UserMessageRow({
               setDraft(message.content.text);
               setEditing(false);
             }}
-            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+            className="kash-focus-row rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted hover:text-ink focus:outline-none"
           >
             Cancel
           </button>
@@ -90,7 +90,7 @@ function UserMessageRow({
               onEdit(message.id, draft.trim());
               setEditing(false);
             }}
-            className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-accent focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+            className="kash-focus-row rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-accent focus:outline-none"
           >
             Save & resend
           </button>
@@ -105,7 +105,7 @@ function UserMessageRow({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="absolute -left-7 top-1 rounded p-0.5 text-xs text-ink-muted opacity-0 transition hover:text-ink focus:opacity-100 focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] group-hover:opacity-100"
+          className="kash-focus-row absolute -left-7 top-1 rounded p-0.5 text-xs text-ink-muted opacity-0 transition hover:text-ink focus:opacity-100 focus:outline-none group-hover:opacity-100"
           aria-label="Edit message"
           title="Edit & resend"
         >
@@ -170,7 +170,7 @@ export function MessageList({
           type="button"
           disabled={loadingOlder}
           onClick={onLoadOlder}
-          className="mx-auto rounded-pill border border-border bg-surface px-3 py-1 text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:opacity-50"
+          className="kash-focus-row mx-auto rounded-pill border border-border bg-surface px-3 py-1 text-xs text-ink-muted transition hover:text-ink focus:outline-none disabled:opacity-50"
         >
           {loadingOlder ? "Loading…" : "Load older messages"}
         </button>

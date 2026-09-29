@@ -94,7 +94,7 @@ export default function TiltLedger() {
             onClick={() => step(-1)}
             disabled={atOldest || !period}
             aria-label="Earlier fortnight"
-            className="rounded p-1 text-ink-muted transition hover:bg-surface-2 disabled:opacity-30 disabled:hover:bg-transparent"
+            className="rounded p-1 text-ink-muted transition hover:bg-tint-hover disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ChevronLeft size={16} />
           </button>
@@ -103,7 +103,7 @@ export default function TiltLedger() {
             onClick={() => step(1)}
             disabled={atNewest || !period}
             aria-label="Later fortnight"
-            className="rounded p-1 text-ink-muted transition hover:bg-surface-2 disabled:opacity-30 disabled:hover:bg-transparent"
+            className="rounded p-1 text-ink-muted transition hover:bg-tint-hover disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ChevronRight size={16} />
           </button>

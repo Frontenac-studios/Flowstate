@@ -65,6 +65,29 @@
   --icon-lg: 20px;
   --icon-xl: 24px;
 
+  /* ---- interaction tint (Spec v3 Ib/Fc) ----
+     Hover, pressed and focus take the colour of the project in context. Outside a
+     project (settings, search, dialogs) they are gray. A project surface opts in
+     with the `.kash-tint-scope` class + an inline `--tint` (see tintScopeStyle()),
+     which recomputes the derived stops below from its own --tint. */
+  --tint: #8a909b;
+  --tint-hover: #f5f6f8; /* 6% — hover fill */
+  --tint-pressed: #eceef1; /* 12% — pressed / selected fill */
+  --tint-open: #eceef1; /* 16% — a menu trigger while its menu is open */
+  --tint-border: #d5d8dd; /* 40% — secondary-button hover border */
+  --tint-ink: var(--ink); /* text on a selected row */
+  --primary-hover: #2a2d34;
+  --primary-pressed: #000000;
+  --outline-border: #d5d8dd; /* outline buttons in dialogs + sheets */
+
+  /* ---- overlays (Spec v3 Sa / Pa1) ---- */
+  --scrim: rgba(22, 24, 29, 0.32);
+  --shadow-menu: 0 2px 6px rgba(22, 24, 29, 0.08), 0 18px 44px rgba(22, 24, 29, 0.2);
+  --shadow-dialog: 0 16px 48px rgba(22, 24, 29, 0.18);
+  --shadow-sheet: -8px 0 32px rgba(22, 24, 29, 0.12);
+  --menu-divider: #eceef1;
+  --search-fill: #f5f6f8;
+
   /* ---- active states (A2 / DT-7): soft unified gray, strictly flat (border only) ---- */
   --active-surface: #eceef1; /* nav active pill · segmented track · Week gray background */
   --active-raised: #ffffff; /* inset white pill · Week "today" column — raised, not filled */
@@ -215,7 +238,7 @@
   /* overlay — floating layers only (modals, popovers, menus, toasts) */
   --shadow-overlay: 0 8px 24px rgba(20, 28, 40, 0.12);
   /* overlay scrim — Today stays readable behind ritual sheets (D38) */
-  --backdrop: rgba(0, 0, 0, 0.2);
+  --backdrop: var(--scrim); /* Spec v3 Sa — one 32% ink scrim for sheets and dialogs */
   /* deeper scrim — morning hand-off pushes the blurred rail further back */
   --backdrop-strong: rgba(0, 0, 0, 0.4);
 
@@ -435,11 +458,26 @@ html.is-desktop[data-spacing-variant="b"] {
   animation: ghost-settle var(--motion-short) var(--ease-enter) both;
 }
 
+/* Spec v3 Fc — focus is a 2px underline in the context tint, never a ring, and only on
+   keyboard focus. Controls get it just below their edge (it follows a pill's curve);
+   rows get an inset bottom line (.kash-focus-row). */
 .kash-focus-visible:focus-visible {
   outline: none;
-  box-shadow:
-    0 0 0 var(--focus-ring-width) var(--surface),
-    0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) var(--focus-ring);
+  box-shadow: 0 3px 0 -1px var(--tint);
+}
+
+.kash-focus-row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 -2px 0 var(--tint);
+}
+
+/* A project surface: re-derives the tint stops from this element's own --tint. */
+.kash-tint-scope {
+  --tint-hover: color-mix(in srgb, var(--tint) 6%, var(--surface));
+  --tint-pressed: color-mix(in srgb, var(--tint) 12%, var(--surface));
+  --tint-open: color-mix(in srgb, var(--tint) 16%, var(--surface));
+  --tint-border: color-mix(in srgb, var(--tint) 40%, var(--surface));
+  --tint-ink: color-mix(in oklch, var(--tint) 62%, #000);
 }
 
 @keyframes stripe-resolving {

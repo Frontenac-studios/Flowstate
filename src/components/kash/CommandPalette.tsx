@@ -21,8 +21,7 @@ import {
 
 export { DECIDE_EVENT, OPEN_PALETTE_EVENT } from "./chrome-events";
 
-const ROW_FOCUS =
-  "focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]";
+const ROW_FOCUS = "focus:outline-none kash-focus-row";
 
 type Command = {
   id: string;
@@ -182,13 +181,8 @@ export function CommandPalette() {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div
-        className="modal-backdrop absolute inset-0"
-        style={{ background: "var(--backdrop)" }}
-        aria-hidden
-        onMouseDown={close}
-      />
-      <div className="modal-panel relative z-sticky w-full max-w-lg overflow-hidden rounded-card border border-border bg-surface p-2 shadow-overlay">
+      <div className="modal-backdrop absolute inset-0 bg-scrim" aria-hidden onMouseDown={close} />
+      <div className="modal-panel relative z-sticky w-full max-w-lg overflow-hidden rounded-card bg-surface p-2 shadow-dialog">
         <Input
           ref={inputRef}
           value={query}

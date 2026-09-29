@@ -94,7 +94,7 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
     <section className="mt-section" aria-labelledby={`${regionId}-heading`}>
       <button
         type="button"
-        className="flex w-full items-center gap-2 rounded-card px-1 py-1 text-left focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+        className="kash-focus-row flex w-full items-center gap-2 rounded-card px-1 py-1 text-left focus:outline-none"
         aria-expanded={showBody}
         aria-controls={regionId}
         onClick={() => setCollapsed((v) => !v)}

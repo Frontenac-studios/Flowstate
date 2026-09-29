@@ -210,7 +210,7 @@ export default function MillerColumn({
               <button
                 type="button"
                 onClick={onClearPriorityFilter}
-                className="font-medium text-ink underline-offset-2 hover:underline focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+                className="kash-focus-visible font-medium text-ink underline-offset-2 hover:underline focus:outline-none"
               >
                 Clear
               </button>

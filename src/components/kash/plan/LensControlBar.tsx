@@ -68,7 +68,7 @@ export function LensControlBar({ collapseUntilUseful = false }: Props) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-2.5 py-1 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+        className="kash-focus-visible inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-2.5 py-1 text-sm text-ink-muted transition hover:text-ink focus:outline-none"
         aria-expanded={false}
         aria-label="Show filters"
         title="Filters"

@@ -68,3 +68,11 @@ export function taskSolidVar(task: {
 }): string {
   return projectSolidVar({ category: task.category, hue: task.projectHue });
 }
+
+/**
+ * Inline style for a `.kash-tint-scope` element: hover, pressed and focus inside it
+ * take the project's colour (Spec v3 Ib/Fc) instead of the default gray.
+ */
+export function tintScopeStyle(source: HueSource): { "--tint": string } {
+  return { "--tint": projectSolidVar(source) };
+}

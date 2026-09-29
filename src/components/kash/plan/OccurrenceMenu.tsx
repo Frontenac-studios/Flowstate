@@ -1,9 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 
 import Input from "@/components/kash/ui/Input";
+import Menu, { MenuItem } from "@/components/kash/ui/Menu";
+import { useDismiss } from "@/hooks/useDismiss";
 import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
@@ -17,10 +19,17 @@ type Props = {
   onSaved?: () => void;
 };
 
-const MENU_BTN_FOCUS =
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
-
 type Step = "menu" | "edit" | "reschedule";
+
+const MENU_NAV_KEYS = new Set(["ArrowDown", "ArrowUp", "Home", "End"]);
+
+/**
+ * The edit/reschedule steps hold text and date inputs, where arrows and Home/End
+ * edit the value; keep those keys from reaching the Menu's roving focus.
+ */
+const keepInputKeys = (e: KeyboardEvent<HTMLDivElement>) => {
+  if (e.target instanceof HTMLInputElement && MENU_NAV_KEYS.has(e.key)) e.stopPropagation();
+};
 
 /**
  * Per-occurrence actions for recurring plan rows: edit-this, skip, reschedule.
@@ -84,20 +93,7 @@ export default function OccurrenceMenu({
 
   const busy = skipMutation.isPending || editMutation.isPending || rescheduleMutation.isPending;
 
-  useEffect(() => {
-    const onDown = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+  useDismiss(true, [ref], onClose);
 
   const saveEdit = () => {
     const trimmed = editTitle.trim();
@@ -130,49 +126,33 @@ export default function OccurrenceMenu({
   };
 
   return (
-    <div
+    <Menu
       ref={ref}
-      role="menu"
       aria-label={`Recurring occurrence actions for ${title}`}
-      className="absolute right-0 top-8 z-overlay w-56 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
+      className="absolute right-0 top-full mt-1 w-56"
     >
       {step === "menu" ? (
         <>
-          <p className="px-2 pb-1 text-caption text-ink-muted">
+          <p className="px-3 pb-1 pt-1 text-caption text-ink-muted">
             This occurrence only — series unchanged
           </p>
-          <button
-            type="button"
-            role="menuitem"
-            disabled={busy}
-            onClick={() => setStep("edit")}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-          >
+          <MenuItem disabled={busy} onClick={() => setStep("edit")}>
             Edit this occurrence
-          </button>
-          <button
-            type="button"
-            role="menuitem"
+          </MenuItem>
+          <MenuItem
             disabled={busy}
             onClick={() => skipMutation.mutate({ recurrenceId, occurrenceDate })}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
           >
             {skipMutation.isPending ? "Skipping…" : "Skip"}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            disabled={busy}
-            onClick={() => setStep("reschedule")}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-          >
+          </MenuItem>
+          <MenuItem disabled={busy} onClick={() => setStep("reschedule")}>
             Reschedule
-          </button>
+          </MenuItem>
         </>
       ) : null}
 
       {step === "edit" ? (
-        <div className="flex flex-col gap-2 px-1 py-1">
+        <div className="flex flex-col gap-2 px-1 py-1" onKeyDown={keepInputKeys}>
           <p className="text-caption text-ink-muted">Edit this occurrence only</p>
           <Input
             type="text"
@@ -217,30 +197,22 @@ export default function OccurrenceMenu({
             })}
           </div>
           <div className="flex gap-1">
-            <button
-              type="button"
-              role="menuitem"
-              disabled={busy}
-              onClick={saveEdit}
-              className={`flex-1 rounded-control px-2 py-1.5 text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-            >
+            <MenuItem disabled={busy} onClick={saveEdit} className="flex-1 text-center">
               {editMutation.isPending ? "Saving…" : "Save"}
-            </button>
-            <button
-              type="button"
-              role="menuitem"
+            </MenuItem>
+            <MenuItem
               disabled={busy}
               onClick={() => setStep("menu")}
-              className={`flex-1 rounded-control px-2 py-1.5 text-body text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+              className="flex-1 text-center !text-ink-muted"
             >
               Back
-            </button>
+            </MenuItem>
           </div>
         </div>
       ) : null}
 
       {step === "reschedule" ? (
-        <div className="flex flex-col gap-2 px-1 py-1">
+        <div className="flex flex-col gap-2 px-1 py-1" onKeyDown={keepInputKeys}>
           <p className="text-caption text-ink-muted">Move this occurrence to</p>
           <Input
             type="date"
@@ -250,31 +222,23 @@ export default function OccurrenceMenu({
             onChange={(e) => setRescheduleDate(e.target.value)}
           />
           <div className="flex gap-1">
-            <button
-              type="button"
-              role="menuitem"
-              disabled={busy}
-              onClick={saveReschedule}
-              className={`flex-1 rounded-control px-2 py-1.5 text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
-            >
+            <MenuItem disabled={busy} onClick={saveReschedule} className="flex-1 text-center">
               {rescheduleMutation.isPending ? "Moving…" : "Move"}
-            </button>
-            <button
-              type="button"
-              role="menuitem"
+            </MenuItem>
+            <MenuItem
               disabled={busy}
               onClick={() => setStep("menu")}
-              className={`flex-1 rounded-control px-2 py-1.5 text-body text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
+              className="flex-1 text-center !text-ink-muted"
             >
               Back
-            </button>
+            </MenuItem>
           </div>
         </div>
       ) : null}
 
       {skipMutation.isError || editMutation.isError || rescheduleMutation.isError ? (
-        <p className="px-2 py-1 text-caption text-critical">Something went wrong — try again.</p>
+        <p className="px-3 py-1 text-caption text-critical">Something went wrong — try again.</p>
       ) : null}
-    </div>
+    </Menu>
   );
 }

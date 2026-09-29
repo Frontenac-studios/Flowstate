@@ -94,7 +94,7 @@ export default function ProjectMilestoneStrip({
           type="button"
           onClick={toggleCollapsed}
           aria-expanded={!collapsed}
-          className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          className="kash-focus-visible flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted transition hover:text-ink focus:outline-none"
         >
           <ChevronRight
             {...kashIconProps({
@@ -130,7 +130,7 @@ export default function ProjectMilestoneStrip({
                     aria-pressed={done}
                     aria-label={done ? `Mark "${mi.title}" not done` : `Mark "${mi.title}" done`}
                     title={done ? "Mark not done" : "Mark done"}
-                    className={`flex shrink-0 items-center justify-center rounded-full outline-none transition focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                    className={`kash-focus-visible flex shrink-0 items-center justify-center rounded-full outline-none transition ${
                       busy ? "opacity-40" : "hover:opacity-80"
                     }`}
                   >

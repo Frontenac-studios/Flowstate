@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
+import Switch from "@/components/kash/ui/Switch";
 import {
   readCaptureShortcutStatus,
   writeAutostart,
@@ -125,21 +126,24 @@ export function CaptureShortcutSection() {
         </p>
       ) : null}
 
-      <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
-        <input
-          type="checkbox"
-          className="mt-0.5"
-          checked={status.autostart}
-          onChange={(e) => void toggleAutostart(e.target.checked)}
-        />
-        <span>
-          <span className="text-sm font-medium text-ink">Launch Kash at login</span>
-          <span className="mt-0.5 block text-sm text-ink-muted">
+      <div className="mt-4 flex items-start justify-between gap-4 py-2">
+        <div className="min-w-0">
+          <span id="capture-autostart-label" className="block text-sm font-medium text-ink">
+            Launch Kash at login
+          </span>
+          <span id="capture-autostart-description" className="mt-0.5 block text-sm text-ink-muted">
             The shortcut only answers while Kash is running, so leaving this off means capture works
             on the days you remember to open the app.
           </span>
-        </span>
-      </label>
+        </div>
+        <Switch
+          checked={status.autostart}
+          onCheckedChange={(next) => void toggleAutostart(next)}
+          aria-labelledby="capture-autostart-label"
+          aria-describedby="capture-autostart-description"
+          className="mt-0.5"
+        />
+      </div>
     </section>
   );
 }

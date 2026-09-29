@@ -1,7 +1,9 @@
 "use client";
 
 import Button from "@/components/kash/ui/Button";
+import { OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
 import type { SyncDisplayState } from "@/hooks/useSyncStatus";
+import { cn } from "@/lib/cn";
 
 type Props = {
   displayState: SyncDisplayState;
@@ -32,7 +34,7 @@ export function SyncFooterDetailPanel({
 
   return (
     <div
-      className="absolute bottom-full left-2 right-2 mb-1 rounded-card border border-border bg-surface p-3 shadow-overlay"
+      className={cn(OVERLAY_CARD, "absolute bottom-full left-2 right-2 mb-1 px-3 py-3")}
       role="region"
       aria-label="Sync status"
     >

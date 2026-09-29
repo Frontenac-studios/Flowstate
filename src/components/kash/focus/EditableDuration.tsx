@@ -80,7 +80,7 @@ export function EditableDuration({
         setDraft(timeString(seconds));
         setEditing(true);
       }}
-      className={`rounded-chip text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:cursor-default disabled:hover:bg-transparent ${textClass} ${className}`}
+      className={`kash-focus-row rounded-chip text-ink transition hover:bg-tint-hover focus:outline-none disabled:cursor-default disabled:hover:bg-transparent ${textClass} ${className}`}
       title="Click to edit duration"
       aria-label={`Duration ${timeString(seconds)}. Click to edit.`}
     >

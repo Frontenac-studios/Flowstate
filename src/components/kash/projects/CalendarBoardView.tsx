@@ -232,7 +232,7 @@ export default function CalendarBoardView({
                   type="button"
                   onClick={() => seedDates(r.node.phase.id)}
                   disabled={m.updatePhase.isPending}
-                  className="rounded-full border border-transparent px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
+                  className="kash-focus-visible rounded-full border border-transparent px-3 py-1 text-sm font-medium transition focus:outline-none disabled:opacity-50"
                   style={{
                     backgroundColor: projectFillVar({ category, hue }),
                     color: projectTextVar({ category, hue }),

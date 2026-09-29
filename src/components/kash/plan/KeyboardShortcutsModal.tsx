@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 import Button from "@/components/kash/ui/Button";
+import Dialog from "@/components/kash/ui/Dialog";
 
 type Shortcut = {
   keys: string;
@@ -38,67 +37,27 @@ type Props = {
 };
 
 export function KeyboardShortcutsModal({ open, onClose }: Props) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.preventDefault();
-      onClose();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    dialogRef.current?.focus();
-  }, [open]);
-
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-4"
-      role="presentation"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="absolute inset-0 bg-black/20" aria-hidden />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="shortcuts-title"
-        tabIndex={-1}
-        className="relative z-modal max-h-[85vh] w-full max-w-md overflow-y-auto rounded-card border border-border bg-surface p-6 shadow-overlay"
-      >
-        <h2 id="shortcuts-title" className="text-lg font-semibold text-ink">
-          Keyboard shortcuts
-        </h2>
-        <p className="mt-1 text-sm text-ink-muted">On the plan canvas only.</p>
-        <dl className="mt-4 space-y-3">
-          {SHORTCUTS.map((s) => (
-            <div key={s.keys} className="flex items-start justify-between gap-4">
-              <dt className="shrink-0 font-mono text-sm text-ink">{s.keys}</dt>
-              <dd className="text-right text-sm text-ink-muted">{s.description}</dd>
-            </div>
-          ))}
-        </dl>
-        <Button type="button" variant="ghost" className="mt-6 text-sm" onClick={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Keyboard shortcuts"
+      description="On the plan canvas only."
+      size="md"
+      actions={
+        <Button type="button" variant="outline" onClick={onClose}>
           Close
         </Button>
-      </div>
-    </div>
+      }
+    >
+      <dl className="mt-2 max-h-[60vh] space-y-3 overflow-y-auto">
+        {SHORTCUTS.map((s) => (
+          <div key={s.keys} className="flex items-start justify-between gap-4">
+            <dt className="shrink-0 font-mono text-sm text-ink">{s.keys}</dt>
+            <dd className="text-right text-sm text-ink-muted">{s.description}</dd>
+          </div>
+        ))}
+      </dl>
+    </Dialog>
   );
 }

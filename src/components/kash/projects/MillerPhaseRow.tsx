@@ -135,7 +135,7 @@ export default function MillerPhaseRow({
             type="button"
             onClick={onOpen}
             aria-expanded={selected}
-            className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+            className="kash-focus-row flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none"
           >
             <span className="flex min-w-0 flex-1 items-center gap-1.5">
               <span

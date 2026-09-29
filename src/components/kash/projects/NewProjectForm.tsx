@@ -125,7 +125,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
                 type="button"
                 onClick={() => setClientChoice(isSelected ? JUST_ME : value)}
                 aria-pressed={isSelected}
-                className={`flex items-center gap-1.5 rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                className={`kash-focus-visible flex items-center gap-1.5 rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none ${
                   isSelected ? "border-ink text-ink" : "border-subtle text-ink-muted hover:text-ink"
                 }`}
               >

@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import Button from "@/components/kash/ui/Button";
+import Dialog from "@/components/kash/ui/Dialog";
 import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import { isDesktopRuntime } from "@/lib/runtime/is-desktop";
 import {
@@ -105,6 +107,7 @@ export default function DesktopTimerBridge() {
 
   // Idle keep/trim prompt. Only meaningful while a timer is actually running.
   const [idlePrompt, setIdlePrompt] = useState<{ awaySeconds: number } | null>(null);
+  const trimRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!desktop) return;
     return subscribeIdleReturn(({ awaySeconds }) => {
@@ -134,43 +137,32 @@ export default function DesktopTimerBridge() {
     [idlePrompt, resolveIdleMutation, toast]
   );
 
-  if (!idlePrompt) return null;
+  const keepIdle = useCallback(() => resolveIdle("keep"), [resolveIdle]);
 
   return (
-    <div
-      className="bg-ink/20 fixed inset-0 z-overlay flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Idle time detected"
-      onKeyDown={(e) => {
-        // Enter confirms the focused (Trim) default; Escape is the safe keep.
-        if (e.key === "Escape") resolveIdle("keep");
-      }}
-    >
-      <div className="w-full max-w-sm rounded-card border border-border bg-surface p-5 shadow-surface">
-        <h2 className="text-body font-medium text-ink">You were away</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          You were away {awayPhrase(idlePrompt.awaySeconds)} — keep that time on the timer, or trim
-          it off?
-        </p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => resolveIdle("keep")}
-            className="rounded-control border border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-ink transition hover:text-accent"
-          >
+    <Dialog
+      open={idlePrompt !== null}
+      // Escape is the safe keep; the scrim does nothing (the choice must be explicit).
+      onClose={keepIdle}
+      dismissOnScrim={false}
+      title="You were away"
+      description={
+        idlePrompt
+          ? `You were away ${awayPhrase(idlePrompt.awaySeconds)} — keep that time on the timer, or trim it off?`
+          : null
+      }
+      // Trim is the preselected default, so Enter confirms it.
+      initialFocusRef={trimRef}
+      actions={
+        <>
+          <Button type="button" variant="outline" onClick={keepIdle}>
             Keep
-          </button>
-          <button
-            type="button"
-            autoFocus
-            onClick={() => resolveIdle("trim")}
-            className="rounded-control bg-ink px-3 py-1.5 text-xs font-medium text-surface transition hover:opacity-90"
-          >
+          </Button>
+          <Button ref={trimRef} type="button" variant="primary" onClick={() => resolveIdle("trim")}>
             Trim
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </>
+      }
+    />
   );
 }
