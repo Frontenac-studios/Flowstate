@@ -1,6 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
@@ -12,6 +13,7 @@ import { groupTodayTasks } from "@/lib/today/group-today-tasks";
 
 import { CompletedSection, type CompletedTaskRow } from "./CompletedSection";
 import { useLens } from "./LensProvider";
+import { TagFilterChips } from "./TagFilterChips";
 import type { PlanTaskRow } from "./TaskRow";
 import { TaskRow } from "./TaskRow";
 
@@ -91,6 +93,14 @@ export function TodayList({
   const todayIso = useLocalCalendarDate();
   const lens = useLens();
 
+  // `/today?tag=blocked` (the nav's Status items) opens Today filtered to that tag.
+  const searchParams = useSearchParams();
+  const tagParam = searchParams.get("tag");
+  const setTagFilter = lens?.setTagFilter;
+  useEffect(() => {
+    if (tagParam && setTagFilter) setTagFilter([tagParam]);
+  }, [tagParam, setTagFilter]);
+
   // Spec v5: cards for Overdue / Today / Anytime. A lens group-by replaces those
   // groups and lens / tag filters narrow the list — the lens bar stays useful.
   const groups = useMemo((): ListGroup[] => {
@@ -117,6 +127,18 @@ export function TodayList({
       } ${isOver ? "kash-section-drop-target rounded-[var(--radius-card)]" : ""}`}
       aria-labelledby="today-heading"
     >
+      {/* Above the empty/filtered states, so a filter that matches nothing can be cleared. */}
+      {lens && !isLoading && !isError && tasks.length > 0 ? (
+        <TagFilterChips
+          className="mb-stack"
+          taskTags={tasks.map((t) => t.tags)}
+          total={tasks.length}
+          selected={lens.tagFilter}
+          onToggle={lens.toggleTagFilter}
+          onClear={() => lens.setTagFilter([])}
+        />
+      ) : null}
+
       <h2 id="today-heading" className="sr-only">
         Today&apos;s tasks
       </h2>

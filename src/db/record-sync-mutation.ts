@@ -213,6 +213,14 @@ export async function syncTaskChecklistItemRow(
   await recordSyncMutation({ table: "task_checklist_items", rowId, op, payload });
 }
 
+export async function syncTaskTagStyleRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "task_tag_styles", rowId, op, payload });
+}
+
 export async function syncTaskBulkImportRow(
   rowId: string,
   op: SyncOp,

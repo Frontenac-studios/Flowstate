@@ -50,6 +50,8 @@ type LensContextValue = {
   setGroup: (prop: LensProperty | null) => void;
   toggleFilter: (prop: LensProperty, value: string) => void;
   toggleTagFilter: (tag: string) => void;
+  /** Replace the tag filter outright — [] clears it ("All"). */
+  setTagFilter: (tags: string[]) => void;
 };
 
 const LensContext = createContext<LensContextValue | null>(null);
@@ -79,11 +81,11 @@ export function LensProvider({
   bindKeys?: boolean;
 }) {
   const [state, setState] = useState<LensState>(EMPTY_LENS);
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [tagFilter, setTagFilterState] = useState<string[]>([]);
 
   useEffect(() => {
     setState(readLensState(scope));
-    if (scope === "this-week") setTagFilter(readTagFilter(scope));
+    if (scope === "this-week") setTagFilterState(readTagFilter(scope));
   }, [scope]);
 
   // All mutations flow through one updater so every change persists.
@@ -110,14 +112,22 @@ export function LensProvider({
     (prop: LensProperty, value: string) => update((prev) => toggleFilterValue(prev, prop, value)),
     [update]
   );
+  // Tag filters apply on every lens surface (Spec v3: Today's filter chips); only
+  // This Week remembers its filter across visits.
   const toggleTagFilter = useCallback(
     (tag: string) => {
-      if (scope !== "this-week") return;
-      setTagFilter((prev) => {
+      setTagFilterState((prev) => {
         const next = toggleTagFilterValue(prev, tag);
-        writeTagFilter(scope as TagFilterScope, next);
+        if (scope === "this-week") writeTagFilter(scope as TagFilterScope, next);
         return next;
       });
+    },
+    [scope]
+  );
+  const setTagFilter = useCallback(
+    (tags: string[]) => {
+      setTagFilterState(tags);
+      if (scope === "this-week") writeTagFilter(scope as TagFilterScope, tags);
     },
     [scope]
   );
@@ -148,8 +158,19 @@ export function LensProvider({
       setGroup,
       toggleFilter,
       toggleTagFilter,
+      setTagFilter,
     }),
-    [scope, properties, state, tagFilter, toggle, setGroup, toggleFilter, toggleTagFilter]
+    [
+      scope,
+      properties,
+      state,
+      tagFilter,
+      toggle,
+      setGroup,
+      toggleFilter,
+      toggleTagFilter,
+      setTagFilter,
+    ]
   );
 
   return <LensContext.Provider value={value}>{children}</LensContext.Provider>;

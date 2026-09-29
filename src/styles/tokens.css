@@ -125,6 +125,24 @@
   --project-8-text: color-mix(in oklch, var(--project-8-solid) 62%, #000);
   --project-personal-text: color-mix(in oklch, var(--project-personal-solid) 62%, #000);
 
+  /* ---- tag colours (Spec v3 Ta): opt-in, muted, kept apart from project hues ----
+     fill = chip background, ink = chip text, dot = the 6px dot. */
+  --tag-sand-fill: #fff4d6;
+  --tag-sand-ink: #7a5200;
+  --tag-sand-dot: #e0a100;
+  --tag-rose-fill: #fbe9eb;
+  --tag-rose-ink: #b3122a;
+  --tag-rose-dot: #b3122a;
+  --tag-sky-fill: #e6f0fb;
+  --tag-sky-ink: #1d4f8a;
+  --tag-sky-dot: #3a7bd5;
+  --tag-lilac-fill: #efe8fb;
+  --tag-lilac-ink: #5b3a9e;
+  --tag-lilac-dot: #8a5cd6;
+  --tag-sage-fill: #e7f3ea;
+  --tag-sage-ink: #2f6a3c;
+  --tag-sage-dot: #4c9a5f;
+
   /* ---- category palette (DT-3): fill / solid / text ----
      The enum collapsed to business|personal (W1). These stay until projects carry
      their own assigned hue; relationships / adulting / body-mind are retired

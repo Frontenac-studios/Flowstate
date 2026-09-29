@@ -1,8 +1,9 @@
 "use client";
 
-import { Hash, withKashIcon } from "@/components/kash/ui/icon";
+import { useTagStyles } from "@/hooks/useTagStyles";
+import { colouredTags, resolveTagStyle } from "@/lib/tasks/tag-styles";
 
-const HashIcon = withKashIcon(Hash);
+import { TagChip } from "./TagChip";
 
 type Props = {
   tags: string[];
@@ -11,29 +12,25 @@ type Props = {
   className?: string;
 };
 
-/** Compact read-only tag chips for task rows (Phase 5 / F3). */
+/**
+ * Tag chips on a task row. Spec v3 "Ta": only COLOURED tags show on rows (gray tags
+ * live in the task detail), each with its dot.
+ */
 export function TaskTagChips({ tags, maxVisible = 3, className = "" }: Props) {
-  if (!tags.length) return null;
+  const styles = useTagStyles();
+  const shown = colouredTags(tags, styles);
+  if (!shown.length) return null;
 
-  const visible = tags.slice(0, maxVisible);
-  const overflow = tags.length - visible.length;
+  const visible = shown.slice(0, maxVisible);
+  const overflow = shown.length - visible.length;
 
   return (
     <div className={`flex flex-wrap items-center gap-1 ${className}`}>
       {visible.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex max-w-[8rem] items-center gap-0.5 truncate rounded-pill border border-border bg-surface-2 px-1.5 py-0.5 text-caption text-ink-muted"
-          title={tag}
-        >
-          <HashIcon size={9} className="shrink-0 text-ink-muted" aria-hidden />
-          <span className="truncate">{tag}</span>
-        </span>
+        <TagChip key={tag} name={tag} color={resolveTagStyle(tag, styles).color} />
       ))}
       {overflow > 0 ? (
-        <span className="rounded-pill border border-border px-1.5 py-0.5 text-caption text-ink-muted">
-          +{overflow}
-        </span>
+        <span className="text-caption font-semibold text-ink-muted">+{overflow}</span>
       ) : null}
     </div>
   );

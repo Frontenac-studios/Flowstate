@@ -37,6 +37,7 @@ export * from "./sync-mutations";
 export * from "./targets";
 export * from "./task-checklist-items";
 export * from "./task-recurrence";
+export * from "./task-tag-styles";
 export * from "./task-occurrence-overrides";
 export * from "./tasks";
 export * from "./task-bulk-imports";
