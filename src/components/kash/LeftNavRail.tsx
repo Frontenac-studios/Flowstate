@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, Suspense, useEffect, useRef, useState } from "react";
 
 import { kashIconProps, Pin, Search } from "@/components/kash/ui/icon";
 import { ChatToggleButton } from "@/components/kash/chat/ChatToggleButton";
@@ -15,6 +15,7 @@ import {
   type NavItem,
 } from "@/components/kash/nav-items";
 import { NavProjectsGroup } from "@/components/kash/nav/NavProjectsGroup";
+import { NavStatusGroup } from "@/components/kash/nav/NavStatusGroup";
 import { SyncFooterIndicator } from "@/components/kash/nav/SyncFooterIndicator";
 import { formatHeaderDate } from "@/lib/dates/local-day";
 import { useDesktopFullscreen } from "@/hooks/useDesktopFullscreen";
@@ -115,6 +116,10 @@ function NavSections({
         );
       })}
       <NavProjectsGroup expanded={expanded} pathname={pathname} />
+      {/* useSearchParams inside: its own Suspense boundary keeps static builds happy. */}
+      <Suspense fallback={null}>
+        <NavStatusGroup expanded={expanded} pathname={pathname} />
+      </Suspense>
       <div className="mt-auto pt-2">
         <SyncFooterIndicator expanded={expanded} />
         <NavLink

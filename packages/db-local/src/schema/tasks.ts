@@ -28,8 +28,10 @@ export const tasks = sqliteTable(
     categoryUnresolved: integer("category_unresolved", { mode: "boolean" })
       .notNull()
       .default(false),
-    // jsonb string[] in Postgres; stored as a JSON string here (see row-mapper).
-    tags: text("tags"),
+    // jsonb string[] in Postgres; JSON text here. json mode makes Drizzle parse it on
+    // read and serialize on write, so shared server code always sees a string[] (a
+    // plain text column handed the client a JSON *string*, which sliced into chars).
+    tags: text("tags", { mode: "json" }).$type<string[]>(),
     isTop3: integer("is_top_3", { mode: "boolean" }).notNull().default(false),
     top3Order: integer("top_3_order"),
     top3PinnedAt: integer("top_3_pinned_at", { mode: "timestamp_ms" }),

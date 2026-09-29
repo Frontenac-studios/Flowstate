@@ -16,6 +16,7 @@ import {
   phases,
   projectMilestones,
   taskChecklistItems,
+  taskTagStyles,
   projectFees,
   projects,
   projectTemplates,
@@ -476,6 +477,7 @@ async function upsertRow(
     }
     case "project_milestones":
     case "task_checklist_items":
+    case "task_tag_styles":
     case "directions":
     case "targets":
     case "leads":
@@ -488,6 +490,7 @@ async function upsertRow(
       const tableMap = {
         project_milestones: projectMilestones,
         task_checklist_items: taskChecklistItems,
+        task_tag_styles: taskTagStyles,
         directions,
         targets,
         leads,

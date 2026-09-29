@@ -40,6 +40,7 @@ export * from "./tasks";
 export * from "./task-bulk-imports";
 export * from "./task-checklist-items";
 export * from "./task-recurrence";
+export * from "./task-tag-styles";
 export * from "./task-occurrence-overrides";
 export * from "./time-entries";
 export * from "./time-tags";

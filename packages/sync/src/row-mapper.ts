@@ -33,8 +33,14 @@ export function mapRemoteRow(
     base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
   }
 
-  if (table === "tasks" && base.tags != null) {
-    base.tags = typeof base.tags === "string" ? base.tags : JSON.stringify(base.tags);
+  // tasks.tags is a json-mode column in the SQLite mirror: Drizzle serializes the
+  // array itself, so pass an array through (stringifying here would double-encode).
+  if (table === "tasks" && typeof base.tags === "string") {
+    try {
+      base.tags = JSON.parse(base.tags);
+    } catch {
+      base.tags = [];
+    }
   }
 
   if (table === "project_templates" && base.structure != null) {

@@ -737,9 +737,6 @@ export function TaskRow({
                     color={stripeColor}
                   />
                 ) : null}
-                {(task.tags?.length ?? 0) > 0 ? (
-                  <TaskTagChips tags={task.tags ?? []} className="mt-1" />
-                ) : null}
               </>
             )}
           </div>
@@ -760,6 +757,9 @@ export function TaskRow({
               }
             />
           ) : null}
+
+          {/* Spec v3/v5: coloured tags sit on the right, before the due pill. */}
+          <TaskTagChips tags={task.tags ?? []} maxVisible={2} className="shrink-0" />
 
           {shownDue ? <DueChip due={shownDue} /> : null}
 

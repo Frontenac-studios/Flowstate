@@ -268,6 +268,19 @@ CREATE TABLE IF NOT EXISTS task_checklist_items (
 CREATE INDEX IF NOT EXISTS task_checklist_items_task_id_sort_idx ON task_checklist_items (task_id, sort_order);
 CREATE INDEX IF NOT EXISTS task_checklist_items_user_id_updated_at_idx ON task_checklist_items (user_id, updated_at);
 
+CREATE TABLE IF NOT EXISTS task_tag_styles (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  name_key TEXT NOT NULL,
+  kind TEXT,
+  color TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS task_tag_styles_user_id_name_key_idx ON task_tag_styles (user_id, name_key);
+CREATE INDEX IF NOT EXISTS task_tag_styles_user_id_updated_at_idx ON task_tag_styles (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS task_recurrence (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,

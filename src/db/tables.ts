@@ -29,6 +29,7 @@ import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { phases as pgPhases } from "./schema/phases";
 import { projectMilestones as pgProjectMilestones } from "./schema/project-milestones";
 import { taskChecklistItems as pgTaskChecklistItems } from "./schema/task-checklist-items";
+import { taskTagStyles as pgTaskTagStyles } from "./schema/task-tag-styles";
 import { projectTemplates as pgProjectTemplates } from "./schema/project-templates";
 import { projects as pgProjects } from "./schema/projects";
 import { protectedBlockTemplates as pgProtectedBlockTemplates } from "./schema/protected-block-templates";
@@ -62,6 +63,9 @@ export const projectMilestones = (
 export const taskChecklistItems = (
   isSqliteMode() ? sqliteSchema.taskChecklistItems : pgTaskChecklistItems
 ) as typeof pgTaskChecklistItems;
+export const taskTagStyles = (
+  isSqliteMode() ? sqliteSchema.taskTagStyles : pgTaskTagStyles
+) as typeof pgTaskTagStyles;
 export const taskBulkImports = (
   isSqliteMode() ? sqliteSchema.taskBulkImports : pgTaskBulkImports
 ) as typeof pgTaskBulkImports;

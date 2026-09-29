@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import TaskTagsEditor from "@/components/kash/projects/TaskTagsEditor";
 import Button from "@/components/kash/ui/Button";
 import Checkbox from "@/components/kash/ui/Checkbox";
 import IconButton from "@/components/kash/ui/IconButton";
@@ -20,6 +19,8 @@ import { dispatchCompleteTask } from "@/lib/tasks/complete-task-event";
 import { PRIORITY_LEVELS, priorityMeta } from "@/lib/tasks/priority";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { useTRPC } from "@/trpc/client";
+
+import TaskTagsByKind from "./TaskTagsByKind";
 
 type Props = {
   /** The task to show, or null when the sheet is closed. */
@@ -258,11 +259,7 @@ export default function TaskDetailSheet({ taskId, onClose, onDeleted }: Props) {
           </dl>
 
           <Section label="Tags">
-            <TaskTagsEditor
-              hideHeading
-              tags={task.tags ?? []}
-              onChange={(tags) => patch({ tags })}
-            />
+            <TaskTagsByKind tags={task.tags ?? []} onChange={(tags) => patch({ tags })} />
           </Section>
 
           <Section

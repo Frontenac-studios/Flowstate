@@ -2,11 +2,14 @@ import "server-only";
 
 import { isSqliteMode } from "@/db/mode";
 
-/** SQLite stores tags as JSON text; Postgres uses jsonb string[]. */
-export function taskTagsForDb(tags: readonly string[]): string[] | string | null {
-  if (!isSqliteMode()) return [...tags];
-  if (tags.length === 0) return null;
-  return JSON.stringify(tags);
+/**
+ * Postgres stores tags as jsonb string[]; the SQLite mirror's `tags` is a json-mode
+ * text column, so Drizzle serializes the array itself — both take the array. An
+ * empty list is stored as NULL in SQLite, as before.
+ */
+export function taskTagsForDb(tags: readonly string[]): string[] | null {
+  if (isSqliteMode() && tags.length === 0) return null;
+  return [...tags];
 }
 
 /** Cast for Drizzle inserts typed as Postgres jsonb while SQLite uses text. */
