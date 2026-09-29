@@ -11,8 +11,8 @@ import { Top3RolloverRunner } from "./Top3RolloverRunner";
  * Wraps the Today and Week surfaces with plan-mode state and the daily-loop
  * runners (Top-3 rollover, end-of-day review, Monday entry, first-run onboarding).
  * These are scoped here rather than in the global shell so they don't run on
- * Projects, Settings, Abyss, or Care. The triage inbox is mounted per-route via
- * ContextualInbox.
+ * Projects, Settings, Abyss, or Care. Overdue tasks show in Today's Overdue card
+ * and in This Week's overdue popover.
  */
 export function PlanSurface({ children }: { children: React.ReactNode }) {
   return (

@@ -24,9 +24,9 @@ const ACTIONS: ReadonlyArray<readonly [InboxAction, string, string]> = [
 ];
 
 /**
- * Triage inbox: overdue + unscheduled tasks. List data is owned by
- * {@link ContextualInbox} (fetched only while the strip is open); this panel
- * handles mutations and keyboard triage. When `active`, arrow keys move the
+ * Triage inbox: overdue tasks. List data is owned by the host (This Week's
+ * OverduePopover fetches it only while open); this panel handles mutations and
+ * keyboard triage. When `active`, arrow keys move the
  * selection and 1–4 apply an action to the selected task.
  */
 export function InboxPanel({
