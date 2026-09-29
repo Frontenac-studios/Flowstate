@@ -17,7 +17,7 @@ type Props = {
 };
 
 /**
- * Header affordance replacing the always-mounted ContextualInbox on This Week:
+ * This Week's overdue affordance (Today shows overdue tasks in its own Overdue card):
  * an "N overdue" chip that opens a small popover rendering {@link InboxPanel}
  * with the Today/Tomorrow/Later/Drop triage actions. The candidate list is
  * fetched only while the popover is open.

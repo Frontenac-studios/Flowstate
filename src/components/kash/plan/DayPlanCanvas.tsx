@@ -274,7 +274,6 @@ export function DayPlanCanvas() {
     isError: isTasksError,
     refetch: refetchTasks,
   } = useQuery(trpc.tasks.listIncomplete.queryOptions());
-  const { data: triageTasks = [] } = useQuery(trpc.tasks.listTriageCandidates.queryOptions());
   const { data: top3Slots = [] } = useQuery(trpc.tasks.listTop3Slots.queryOptions(top3QueryInput));
   const { data: recentlyCompleted = [] } = useQuery(
     trpc.tasks.listRecentlyCompleted.queryOptions()
@@ -294,22 +293,11 @@ export function DayPlanCanvas() {
     [recentlyCompleted, localDate, tzOffsetMinutes]
   );
 
-  const triageIds = useMemo(() => new Set(triageTasks.map((t) => t.id)), [triageTasks]);
+  // Spec v5 (TodayB2): overdue tasks stay on Today, in the Overdue card — they no
+  // longer move out to a separate triage inbox.
+  const partitionedRelative = useMemo(() => partitionPlanTasks(tasks, now), [tasks, now]);
 
-  const tasksExcludingTriage = useMemo(
-    () => tasks.filter((t) => !triageIds.has(t.id)),
-    [tasks, triageIds]
-  );
-
-  const partitionedRelative = useMemo(
-    () => partitionPlanTasks(tasksExcludingTriage, now),
-    [tasksExcludingTriage, now]
-  );
-
-  const partitionedNamed = useMemo(
-    () => partitionNamedDays(tasksExcludingTriage, now),
-    [tasksExcludingTriage, now]
-  );
+  const partitionedNamed = useMemo(() => partitionNamedDays(tasks, now), [tasks, now]);
 
   const todayTasks =
     bucketMode === "named_days" ? partitionedNamed.today : partitionedRelative.today;
