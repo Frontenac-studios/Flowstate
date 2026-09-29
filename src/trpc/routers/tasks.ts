@@ -7,7 +7,6 @@ import {
   inArray,
   isNotNull,
   isNull,
-  lt,
   lte,
   ne,
   or,
@@ -18,8 +17,21 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { taskTagsColumn } from "@/db/task-tags-for-db";
-import { syncRecurrenceRow, syncTaskCompletion, syncTaskRow } from "@/db/record-sync-mutation";
-import { phases, projects, taskOccurrenceOverrides, taskRecurrence, tasks } from "@/db/tables";
+import {
+  syncRecurrenceRow,
+  syncTaskChecklistItemRow,
+  syncTaskCompletion,
+  syncTaskRow,
+} from "@/db/record-sync-mutation";
+import {
+  focusBlocks,
+  phases,
+  projects,
+  taskChecklistItems,
+  taskOccurrenceOverrides,
+  taskRecurrence,
+  tasks,
+} from "@/db/tables";
 import {
   isDateInIsoWeek,
   parseISODateString,
@@ -51,6 +63,9 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 /** `YYYY-MM-DD`, the shape `tasks.scheduled_date` is stored in. */
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD).");
 
+/** Spec v5 DetailA free-text notes. */
+const taskNotesSchema = z.string().max(10_000);
+
 const localCalendarInputSchema = z.object({
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   tzOffsetMinutes: z.number().int().min(-840).max(840),
@@ -70,8 +85,9 @@ function triageCandidatesWhere(userId: string, todayIso: string) {
   return and(
     eq(tasks.userId, userId),
     isNull(tasks.completedAt),
-    isNotNull(tasks.scheduledDate),
-    lt(tasks.scheduledDate, todayIso),
+    // Spec v5: overdue by the deadline when set, else by the planned day. Mirrors
+    // isTriageCandidate / lib/tasks/overdue.ts. COALESCE works in Postgres and SQLite.
+    sql`coalesce(${tasks.dueDate}, ${tasks.scheduledDate}) < ${todayIso}`,
     or(isNull(tasks.bucketOverride), ne(tasks.bucketOverride, "later"))
   );
 }
@@ -91,6 +107,24 @@ const taskSnapshotSchema = z.object({
   category: categorySchema,
   categoryUnresolved: z.boolean(),
   tags: z.array(z.string()).optional(),
+  // Optional so an undo frame from before these fields still parses. Phase and
+  // estimate were silently dropped by undo before they were carried here.
+  phaseId: z.string().uuid().nullable().optional(),
+  timeEstimateMinutes: z.number().int().nullable().optional(),
+  // Spec v5 DetailA fields.
+  dueDate: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  /** Checklist items cascade-delete with the task, so undo carries them back. */
+  checklist: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        text: z.string(),
+        doneAt: z.string().nullable(),
+        sortOrder: z.number().int(),
+      })
+    )
+    .optional(),
 });
 
 async function getOwnedTask(userId: string, taskId: string) {
@@ -127,6 +161,7 @@ export const tasksRouter = createTRPCRouter({
           title: tasks.title,
           priority: tasks.priority,
           scheduledDate: tasks.scheduledDate,
+          dueDate: tasks.dueDate,
           bucketOverride: tasks.bucketOverride,
           suggestedScheduledDate: tasks.suggestedScheduledDate,
           projectId: tasks.projectId,
@@ -268,6 +303,7 @@ export const tasksRouter = createTRPCRouter({
         title: tasks.title,
         priority: tasks.priority,
         scheduledDate: tasks.scheduledDate,
+        dueDate: tasks.dueDate,
         bucketOverride: tasks.bucketOverride,
         projectId: tasks.projectId,
         isTop3: tasks.isTop3,
@@ -313,6 +349,7 @@ export const tasksRouter = createTRPCRouter({
         title: tasks.title,
         priority: tasks.priority,
         scheduledDate: tasks.scheduledDate,
+        dueDate: tasks.dueDate,
         bucketOverride: tasks.bucketOverride,
         projectId: tasks.projectId,
         isTop3: tasks.isTop3,
@@ -345,6 +382,7 @@ export const tasksRouter = createTRPCRouter({
           title: tasks.title,
           priority: tasks.priority,
           scheduledDate: tasks.scheduledDate,
+          dueDate: tasks.dueDate,
           bucketOverride: tasks.bucketOverride,
           projectId: tasks.projectId,
           isTop3: tasks.isTop3,
@@ -378,6 +416,7 @@ export const tasksRouter = createTRPCRouter({
           id: tasks.id,
           top3PinnedAt: tasks.top3PinnedAt,
           scheduledDate: tasks.scheduledDate,
+          dueDate: tasks.dueDate,
         })
         .from(tasks)
         .where(
@@ -715,6 +754,9 @@ export const tasksRouter = createTRPCRouter({
           .nullable()
           .optional(),
         tags: taskTagsSchema.optional(),
+        /** Spec v5 deadline, separate from the planned day. */
+        dueDate: isoDateSchema.nullable().optional(),
+        notes: taskNotesSchema.nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -764,6 +806,8 @@ export const tasksRouter = createTRPCRouter({
           category: resolved.category,
           categoryUnresolved: resolved.unresolved,
           tags: taskTagsColumn(input.tags ? normalizeTaskTags(input.tags) : []),
+          dueDate: input.dueDate ?? null,
+          notes: input.notes?.trim() || null,
         })
         .returning();
 
@@ -815,6 +859,10 @@ export const tasksRouter = createTRPCRouter({
           category: input.category,
           categoryUnresolved: input.categoryUnresolved,
           tags: taskTagsColumn(input.tags ? normalizeTaskTags(input.tags) : []),
+          phaseId: input.phaseId ?? null,
+          timeEstimateMinutes: input.timeEstimateMinutes ?? null,
+          dueDate: input.dueDate ?? null,
+          notes: input.notes ?? null,
         })
         .returning();
 
@@ -823,6 +871,22 @@ export const tasksRouter = createTRPCRouter({
       }
 
       await syncTaskRow(row.id, "insert", row);
+
+      // The checklist cascade-deleted with the task; put it back as it was.
+      for (const item of input.checklist ?? []) {
+        const [restored] = await db
+          .insert(taskChecklistItems)
+          .values({
+            id: item.id,
+            userId: ctx.userId,
+            taskId: row.id,
+            text: item.text,
+            doneAt: item.doneAt ? new Date(item.doneAt) : null,
+            sortOrder: item.sortOrder,
+          })
+          .returning();
+        if (restored) await syncTaskChecklistItemRow(restored.id, "insert", restored);
+      }
       return row;
     }),
 
@@ -849,6 +913,9 @@ export const tasksRouter = createTRPCRouter({
           .nullable()
           .optional(),
         tags: taskTagsSchema.optional(),
+        /** Spec v5 deadline, separate from the planned day. */
+        dueDate: isoDateSchema.nullable().optional(),
+        notes: taskNotesSchema.nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -857,6 +924,8 @@ export const tasksRouter = createTRPCRouter({
       const patch: Partial<typeof tasks.$inferInsert> = {
         updatedAt: new Date(),
       };
+      if (input.dueDate !== undefined) patch.dueDate = input.dueDate;
+      if (input.notes !== undefined) patch.notes = input.notes?.trim() || null;
       if (input.title !== undefined) patch.title = input.title.trim();
       if (input.scheduledDate !== undefined) patch.scheduledDate = input.scheduledDate;
       if (input.priority !== undefined) patch.priority = input.priority;
@@ -958,6 +1027,14 @@ export const tasksRouter = createTRPCRouter({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const existing = await getOwnedTask(ctx.userId, input.id);
+      // Read the checklist before the cascade removes it, so undo can restore it.
+      const checklist = await db
+        .select()
+        .from(taskChecklistItems)
+        .where(
+          and(eq(taskChecklistItems.taskId, input.id), eq(taskChecklistItems.userId, ctx.userId))
+        )
+        .orderBy(asc(taskChecklistItems.sortOrder));
 
       await db.delete(tasks).where(and(eq(tasks.id, input.id), eq(tasks.userId, ctx.userId)));
 
@@ -976,7 +1053,67 @@ export const tasksRouter = createTRPCRouter({
           category: existing.category,
           categoryUnresolved: existing.categoryUnresolved,
           tags: existing.tags ?? [],
+          phaseId: existing.phaseId,
+          timeEstimateMinutes: existing.timeEstimateMinutes,
+          dueDate: existing.dueDate,
+          notes: existing.notes,
+          checklist: checklist.map((item) => ({
+            id: item.id,
+            text: item.text,
+            doneAt: item.doneAt ? item.doneAt.toISOString() : null,
+            sortOrder: item.sortOrder,
+          })),
         },
+      };
+    }),
+
+  /**
+   * Spec v5 DetailA: everything the task detail sheet shows — the task, its project
+   * and phase (for the breadcrumb and colour), and its time block on the planned day
+   * (the "Scheduled · 10:00–11:00" line). The checklist comes from taskChecklist.
+   */
+  getDetail: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const task = await getOwnedTask(ctx.userId, input.id);
+      const [project] = task.projectId
+        ? await db
+            .select({
+              id: projects.id,
+              name: projects.name,
+              hue: projects.hue,
+              category: projects.category,
+            })
+            .from(projects)
+            .where(and(eq(projects.id, task.projectId), eq(projects.userId, ctx.userId)))
+            .limit(1)
+        : [];
+      const [phase] = task.phaseId
+        ? await db
+            .select({ id: phases.id, name: phases.name })
+            .from(phases)
+            .where(and(eq(phases.id, task.phaseId), eq(phases.userId, ctx.userId)))
+            .limit(1)
+        : [];
+      const [block] = task.scheduledDate
+        ? await db
+            .select({ startMin: focusBlocks.startMin, endMin: focusBlocks.endMin })
+            .from(focusBlocks)
+            .where(
+              and(
+                eq(focusBlocks.userId, ctx.userId),
+                eq(focusBlocks.taskId, task.id),
+                eq(focusBlocks.date, task.scheduledDate)
+              )
+            )
+            .orderBy(asc(focusBlocks.startMin))
+            .limit(1)
+        : [];
+      return {
+        task,
+        project: project ?? null,
+        phase: phase ?? null,
+        block: block ?? null,
       };
     }),
 
@@ -1005,6 +1142,7 @@ export const tasksRouter = createTRPCRouter({
           title: tasks.title,
           priority: tasks.priority,
           scheduledDate: tasks.scheduledDate,
+          dueDate: tasks.dueDate,
           bucketOverride: tasks.bucketOverride,
           suggestedScheduledDate: tasks.suggestedScheduledDate,
           projectId: tasks.projectId,

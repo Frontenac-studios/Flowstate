@@ -19,6 +19,11 @@ export type TaskSnapshot = {
   category: ProjectCategory;
   categoryUnresolved: boolean;
   tags?: string[];
+  phaseId?: string | null;
+  timeEstimateMinutes?: number | null;
+  dueDate?: string | null;
+  notes?: string | null;
+  checklist?: { id: string; text: string; doneAt: string | null; sortOrder: number }[];
 };
 
 type UndoFrame =

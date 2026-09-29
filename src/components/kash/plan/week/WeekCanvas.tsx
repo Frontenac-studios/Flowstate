@@ -64,6 +64,7 @@ import type { PlanTaskRow } from "../TaskRow";
 import type { DayPrioritySlotTask } from "./DayPrioritiesSlots";
 
 import { WeekColumn } from "./WeekColumn";
+import TaskDetailSheet from "../TaskDetailSheet";
 import { WeekDragOverlay } from "./WeekDragOverlay";
 import { WeekDraftPanel } from "./WeekDraftPanel";
 import { WeekInbox } from "./WeekInbox";
@@ -317,6 +318,9 @@ export function WeekCanvas({
     [partitioned.inbox]
   );
   const selectionInInbox = selectedTaskId !== null && inboxTaskIdSet.has(selectedTaskId);
+
+  // Spec v5 DetailA: the task open in the detail sheet (single click on a row).
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   const handleActivateTask = useCallback(
     (taskId: string) => {
@@ -597,6 +601,7 @@ export function WeekCanvas({
     categoryUnresolved: task.categoryUnresolved,
     tags: task.tags ?? [],
     scheduledDate: task.scheduledDate,
+    dueDate: task.dueDate ?? null,
     suggestedScheduledDate: task.suggestedScheduledDate,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,
@@ -866,6 +871,7 @@ export function WeekCanvas({
               fillHeight
               selectedTaskId={selectedTaskId}
               onSelectTask={selectTask}
+              onOpenTask={setDetailTaskId}
               onActivateTask={handleActivateTask}
               onComplete={pushComplete}
               onDelete={pushDelete}
@@ -896,6 +902,7 @@ export function WeekCanvas({
       forceExpanded={(inboxHighlightIds?.size ?? 0) > 0 || selectionInInbox}
       selectedTaskId={selectedTaskId}
       onSelectTask={selectTask}
+      onOpenTask={setDetailTaskId}
       onActivateTask={handleActivateTask}
       onComplete={pushComplete}
       onDelete={pushDelete}
@@ -1020,6 +1027,11 @@ export function WeekCanvas({
         />
       ) : null}
 
+      <TaskDetailSheet
+        taskId={detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+        onDeleted={pushDelete}
+      />
       <DragOverlay
         dropAnimation={{
           duration: 200,

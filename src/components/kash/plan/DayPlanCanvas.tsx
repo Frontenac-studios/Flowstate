@@ -55,6 +55,7 @@ import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
 import { TimeBudgetBar } from "./TimeBudgetBar";
 import { LensControlBar } from "./LensControlBar";
+import TaskDetailSheet from "./TaskDetailSheet";
 import { TimelinePane, type TimelineDropPreview } from "./TimelinePane";
 import { WeekDragOverlay } from "./week/WeekDragOverlay";
 import { TodayList } from "./TodayList";
@@ -349,6 +350,7 @@ export function DayPlanCanvas() {
     categoryUnresolved: task.categoryUnresolved,
     tags: task.tags ?? [],
     scheduledDate: task.scheduledDate,
+    dueDate: task.dueDate ?? null,
     phaseName: task.phaseName,
     phaseSortOrder: task.phaseSortOrder,
     isRecurringOccurrence: task.isRecurringOccurrence,
@@ -486,6 +488,7 @@ export function DayPlanCanvas() {
             title: source.title,
             priority: source.priority,
             scheduledDate: todayFields.scheduledDate,
+            dueDate: source.dueDate ?? null,
             bucketOverride: todayFields.bucketOverride,
             projectId: source.projectId,
             isTop3: true,
@@ -641,6 +644,9 @@ export function DayPlanCanvas() {
       onError: notifyMutationError,
     })
   );
+
+  // Spec v5 DetailA: the task open in the detail sheet (single click on a row).
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   const handleActivateTask = useCallback(
     (taskId: string) => {
@@ -953,6 +959,7 @@ export function DayPlanCanvas() {
                   onRetry={() => void refetchTasks()}
                   selectedTaskId={selectedTaskId}
                   onSelectTask={selectTask}
+                  onOpenTask={setDetailTaskId}
                   onActivateTask={handleActivateTask}
                   onComplete={pushComplete}
                   onUncomplete={pushUncomplete}
@@ -982,6 +989,11 @@ export function DayPlanCanvas() {
           </div>
         )}
       </div>
+      <TaskDetailSheet
+        taskId={detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+        onDeleted={pushDelete}
+      />
       <DragOverlay dropAnimation={null}>
         {draggedTask ? <WeekDragOverlay task={toRow(draggedTask)} /> : null}
       </DragOverlay>

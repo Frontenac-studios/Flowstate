@@ -25,6 +25,7 @@ export const SYNC_TABLES = [
   "week_day_priorities",
   "reserved_days",
   "tasks",
+  "task_checklist_items",
   "time_entries",
   "time_tags",
   "task_recurrence",

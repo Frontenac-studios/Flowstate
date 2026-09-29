@@ -33,7 +33,15 @@ export const tasks = pgTable(
     /** Phase 5 (§14): freeform labels — many per task, distinct from category. */
     tags: jsonb("tags").$type<string[]>().default([]),
     priority: integer("priority").notNull().default(0),
+    /** The planned day — when you mean to work on it (Spec v5 DetailA "Scheduled"). */
     scheduledDate: date("scheduled_date", { mode: "string" }),
+    /**
+     * The deadline, separate from the planned day (Spec v5 DetailA "Due"). When set,
+     * it decides overdue; when null, the planned day does (see lib/tasks/overdue.ts).
+     */
+    dueDate: date("due_date", { mode: "string" }),
+    /** Free-text notes shown in the task detail sheet. */
+    notes: text("notes"),
     bucketOverride: text("bucket_override"),
     /**
      * Chat-proposed day for an inbox task (§chat-first creation). The task stays
@@ -59,6 +67,7 @@ export const tasks = pgTable(
   },
   (table) => [
     index("tasks_user_id_scheduled_date_idx").on(table.userId, table.scheduledDate),
+    index("tasks_user_id_due_date_idx").on(table.userId, table.dueDate),
     index("tasks_user_id_updated_at_idx").on(table.userId, table.updatedAt),
     index("tasks_user_id_completed_at_idx")
       .on(table.userId, table.completedAt)

@@ -1,3 +1,5 @@
+import { effectiveDueDate, isOverdue, type DueInput } from "@/lib/tasks/overdue";
+
 /**
  * Spec v5 (TodayB2): Today's list reads as separate cards — Overdue, Today (dated
  * today), Anytime (no date). Empty groups are dropped. Order inside a group is
@@ -13,15 +15,15 @@ const LABELS: Record<TodayGroupKey, string> = {
   anytime: "Anytime",
 };
 
-export function groupTodayTasks<T extends { scheduledDate?: string | null }>(
+export function groupTodayTasks<T extends DueInput>(
   tasks: readonly T[],
   todayIso: string
 ): TodayGroup<T>[] {
   const buckets: Record<TodayGroupKey, T[]> = { overdue: [], today: [], anytime: [] };
   for (const task of tasks) {
-    const date = task.scheduledDate ?? null;
-    if (date === null) buckets.anytime.push(task);
-    else if (date < todayIso) buckets.overdue.push(task);
+    // Overdue by deadline when there is one, else by the planned day.
+    if (isOverdue(task, todayIso)) buckets.overdue.push(task);
+    else if (effectiveDueDate(task) === null) buckets.anytime.push(task);
     else buckets.today.push(task);
   }
   return (["overdue", "today", "anytime"] as const)

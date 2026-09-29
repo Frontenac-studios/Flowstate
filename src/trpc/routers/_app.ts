@@ -20,6 +20,7 @@ import { moneyRouter } from "./money";
 import { phasesRouter } from "./phases";
 import { planningRouter } from "./planning";
 import { projectMilestonesRouter } from "./project-milestones";
+import { taskChecklistRouter } from "./task-checklist";
 import { projectsRouter } from "./projects";
 import { protectedBlocksRouter } from "./protected-blocks";
 import { recurrenceRouter } from "./recurrence";
@@ -62,6 +63,7 @@ export const appRouter = createTRPCRouter({
   phases: phasesRouter,
   planning: planningRouter,
   projectMilestones: projectMilestonesRouter,
+  taskChecklist: taskChecklistRouter,
   projects: projectsRouter,
   protectedBlocks: protectedBlocksRouter,
   recurrence: recurrenceRouter,
