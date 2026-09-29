@@ -1,9 +1,10 @@
 # Flowstate — how to build with this design system
 
 Flowstate (product name **Kash**) is a keyboard-first daily-planning and consulting-money
-app. Its look is **flat-calm black-and-white**: pure-white surfaces on a medium gray tray
-canvas, hairline borders, near-black ink, and colour reserved for three jobs only —
-life-area categories, crimson for irreversible danger, and the Abyss's dark page.
+app. Its look is **flat-calm black-and-white** (Spec v2): pure-white surfaces on a medium
+gray tray canvas, hairline borders, near-black ink, Plus Jakarta Sans, pill-shaped
+controls, and colour reserved for three jobs only — the project's hue, crimson for danger,
+and the Abyss's dark page.
 
 ## 1. Setup and wrapping
 
@@ -28,40 +29,50 @@ Style with Tailwind utilities. **Almost every utility you need resolves to a
 `var(--token)`** through the preset, so prefer the named utility over an arbitrary
 value, and never write a raw hex.
 
-| Concern           | Use these                                                                                                                                                                                       |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Surface           | `bg-surface` `bg-surface-2` `bg-canvas` `bg-bg`                                                                                                                                                 |
-| Active / selected | `bg-active-surface` `bg-active-raised` `border-active-raised-border`                                                                                                                            |
-| Border            | `border-border` `border-subtle` · `border-emphasis` (the 1.5px stroke)                                                                                                                          |
-| Ink               | `text-ink` `text-ink-muted` `text-ink-faint`                                                                                                                                                    |
-| Accent (= black)  | `bg-accent` `text-accent` `hover:bg-accent-hover` `text-accent-on` `bg-accent-soft`                                                                                                             |
-| Danger            | `text-critical` `bg-critical`                                                                                                                                                                   |
-| Category          | `bg-cat-professional` `bg-cat-personal` (also `cat-relationships`, `cat-adulting`, `cat-body-mind`). The `business` category reuses the professional blue — there is no `cat-business` utility. |
-| Radius            | `rounded-card` (14) `rounded-row` (8) `rounded-control` (5) `rounded-chip` (5) `rounded-pill`                                                                                                   |
-| Elevation         | `shadow-surface` (in-page objects) `shadow-overlay` (modals, popovers, toasts)                                                                                                                  |
-| Type              | `text-micro` `text-caption` `text-meta` `text-body` `text-subtitle` `text-title` `text-h1`                                                                                                      |
-| Icon box          | `h-icon-sm w-icon-sm` … `-md` `-lg` `-xl`                                                                                                                                                       |
-| Layout rhythm     | `gap-stack` `gap-section` `gap-shell` · `px-card-x` `py-card-y`                                                                                                                                 |
-| Shell widths      | `w-nav-rail` `w-nav-rail-expanded` `w-chat-rail` `h-nav-item` `h-kash-row`                                                                                                                      |
-| Stacking          | `z-base` `z-sticky` `z-overlay` `z-modal` `z-toast`                                                                                                                                             |
-| Motion            | `duration-micro` `duration-short` `duration-medium` `duration-long` · `ease-enter` `ease-move` `ease-exit`                                                                                      |
+| Concern           | Use these                                                                                                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surface           | `bg-surface` `bg-surface-2` `bg-canvas` `bg-bg`                                                                                                                               |
+| Active / selected | `bg-active-surface` `bg-active-raised` `border-active-raised-border`                                                                                                          |
+| Border            | `border-border` `border-subtle` · `border-emphasis` (the 1.5px stroke)                                                                                                        |
+| Ink               | `text-ink` `text-ink-muted` `text-ink-faint`                                                                                                                                  |
+| Accent (= black)  | `bg-accent` `text-accent` `hover:bg-accent-hover` `text-accent-on` `bg-accent-soft`                                                                                           |
+| Danger            | `text-critical` `bg-critical` `bg-critical-soft`                                                                                                                              |
+| Project hue       | `bg-project-1` … `bg-project-8` `bg-project-personal`; tints via `var(--project-N-fill)` / `var(--project-N-text)`. Legacy category: `bg-cat-professional` `bg-cat-personal`. |
+| Fields            | `h-control` (40) `border-control-border` `shadow-focus` · `border-check-border`                                                                                               |
+| Radius            | `rounded-pill` for anything clickable (`rounded-control` and `rounded-chip` are pills too) · `rounded-card` (14) for containers · `rounded-row` (8) only for a selected row   |
+| Elevation         | `shadow-surface` (in-page objects) `shadow-overlay` (modals, popovers, toasts)                                                                                                |
+| Type              | `text-micro` `text-caption` `text-meta` `text-body` `text-subtitle` `text-title` `text-h1` · `tracking-caps` · `font-medium` `font-semibold` `font-bold`                      |
+| Icon box          | `h-icon-sm w-icon-sm` … `-md` `-lg` `-xl`                                                                                                                                     |
+| Layout rhythm     | `gap-stack` `gap-section` `gap-shell` · `px-card-x` `py-card-y`                                                                                                               |
+| Shell widths      | `w-nav-rail` `w-nav-rail-expanded` `w-chat-rail` `h-nav-item` `h-kash-row`                                                                                                    |
+| Stacking          | `z-base` `z-sticky` `z-overlay` `z-modal` `z-toast`                                                                                                                           |
+| Motion            | `duration-micro` `duration-short` `duration-medium` `duration-long` · `ease-enter` `ease-move` `ease-exit`                                                                    |
 
 **The stock Tailwind type scale is overridden**, so `text-xs`/`text-sm`/`text-base`/
-`text-lg`/`text-xl` are _not_ the Tailwind defaults — they are 13/17/19/22/30px and track
-the token scale. `text-sm` is body text here, not small text.
+`text-lg`/`text-xl` are _not_ the Tailwind defaults — they are 13/15/17/20/40px and track
+the token scale. `text-sm` is body text here, not small text; `text-xl` is the page h1
+(pair it with `font-bold`). Card headers are `text-subtitle font-semibold`, section titles
+`text-title font-semibold`. Dates and group labels use label caps:
+`text-micro font-semibold uppercase tracking-caps text-ink-muted`.
 
-For one-off spacing the app writes the token inline: `px-[var(--space-4)]`,
-`gap-[var(--space-2)]`. The scale is `--space-0` 2px through `--space-8` 32px.
+For one-off spacing the app writes the token inline: `px-[var(--space-3)]`,
+`gap-[var(--space-2)]`. The scale is a 4px grid with no 6px step: `--space-0`…`--space-8`
+= 2 4 8 12 16 20 24 32 40px.
 
 Two app-level classes worth knowing: `kash-focus-visible` (the standard two-ring focus
 treatment — put it on any custom interactive element) and `text-balance`.
 
 ## 3. Composition rules this system actually enforces
 
-- **Primary actions are outlines, not fills.** `<Button>` defaults to a 1.5px ink
-  border on a transparent background. A filled button means destructive.
-- **Colour is semantic, never decorative.** Icon-led first; crimson (`--status-critical`)
-  only on irreversible paths; category colour only for life areas.
+- **Primary actions are filled ink pills.** `<Button>` defaults to `primary`. Use
+  `secondary` (soft gray) for the other action beside it, `tertiary` (underlined text)
+  for skip/cancel, `soft-destructive` for everyday deletes, and solid `destructive` only
+  on the final irreversible confirm. `ghost` is for quiet chrome actions.
+- **Colour is semantic, never decorative.** A project's hue appears as its row stripe,
+  dots and toast stripe — nothing else. Red is also a project hue, so danger always
+  pairs crimson with text or an icon.
+- **Only High priority is marked** — `TaskPriorityIndicator` shows a crimson "!" for
+  High and nothing for Low/Med.
 - **Flat, not glassy.** `shadow-surface` is a whisper. Active states are carried by
   `--active-raised-border`, not by shadow. `--kash-glass-*` names still exist as
   back-compat aliases that resolve flat — don't reach for them in new work.
@@ -95,8 +106,8 @@ same property will both land; order decides.
 
 ```jsx
 <section className="rounded-card border border-border bg-surface px-card-x py-card-y shadow-surface">
-  <header className="flex items-center justify-between gap-[var(--space-3)]">
-    <h2 className="text-title text-ink">This fortnight</h2>
+  <header className="flex items-center justify-between gap-[var(--space-2)]">
+    <h2 className="text-title font-semibold text-ink">This fortnight</h2>
     <InPageSwitcher
       ariaLabel="Ledger scope"
       options={[
@@ -108,12 +119,12 @@ same property will both land; order decides.
     />
   </header>
 
-  <ul className="mt-[var(--space-5)] divide-y divide-[var(--border-subtle)]">
+  <ul className="mt-[var(--space-4)] divide-y divide-[var(--border-subtle)]">
     {tasks.map((t) => (
-      <li key={t.id} className="flex items-center gap-[var(--space-3)] py-[var(--space-2)]">
+      <li key={t.id} className="flex items-center gap-[var(--space-2)] py-[var(--space-2)]">
         <TaskPriorityIndicator priority={t.priority} reserveSpace />
         <span className="flex-1 text-body text-ink">{t.title}</span>
-        <Button variant="ghost" className="text-xs">
+        <Button variant="secondary" className="text-xs">
           Move
         </Button>
       </li>

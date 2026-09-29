@@ -101,7 +101,7 @@ export default function ProjectsIndex() {
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold text-ink">Projects</h1>
+          <h1 className="text-xl font-bold text-ink">Projects</h1>
           {hasProjects || FLAGS.sourcing ? (
             <InPageSwitcher
               options={[

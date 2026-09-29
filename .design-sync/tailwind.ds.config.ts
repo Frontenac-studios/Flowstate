@@ -34,23 +34,24 @@ const config: Config = {
     // Semantic colours on every colour-consuming utility.
     {
       pattern:
-        /^(bg|text|border|divide|fill|stroke|ring|from|to|via)-(bg|canvas|surface|surface-2|active-surface|active-raised|active-raised-border|border|border-subtle|subtle|ink|ink-muted|ink-faint|critical|accent|accent-hover|accent-soft|accent-on|background|foreground)$/,
+        /^(bg|text|border|divide|fill|stroke|ring|from|to|via)-(bg|canvas|surface|surface-2|active-surface|active-raised|active-raised-border|border|border-subtle|subtle|ink|ink-muted|ink-faint|critical|critical-soft|control-border|check-border|accent|accent-hover|accent-soft|accent-on|background|foreground)$/,
       variants: STATES,
     },
-    // Category + Abyss + legacy kash-* ramps.
+    // Project + category + Abyss + legacy kash-* ramps.
     {
       pattern:
-        /^(bg|text|border|divide|fill|stroke)-(cat-(professional|personal|relationships|adulting|body-mind)|abyss-(bg|surface|surface-2|bar|border|border-strong|ink|ink-muted|ink-faint|accent|on-accent)|kash-(accent|ink|ink-muted|glass))$/,
+        /^(bg|text|border|divide|fill|stroke)-(project-([1-8]|personal)|cat-(professional|personal)|abyss-(bg|surface|surface-2|bar|border|border-strong|ink|ink-muted|ink-faint|accent|on-accent)|kash-(accent|ink|ink-muted|glass))$/,
       variants: STATES,
     },
     { pattern: /^rounded-(card|row|control|chip|pill|kash)$/ },
     { pattern: /^rounded-(t|r|b|l|tl|tr|br|bl)-(card|row|control|chip|pill)$/ },
-    { pattern: /^shadow-(surface|overlay)$/, variants: STATES },
+    { pattern: /^shadow-(surface|overlay|focus)$/, variants: STATES },
+    { pattern: /^tracking-caps$/ },
     { pattern: /^border-emphasis$/, variants: STATES },
     { pattern: /^text-(micro|caption|meta|body|subtitle|title|h1|kash)$/ },
     { pattern: /^(h|w|min-h|min-w)-icon-(sm|md|lg|xl)$/ },
     { pattern: /^w-(nav-rail|nav-rail-expanded|chat-rail)$/ },
-    { pattern: /^(h|min-h)-(kash-row|nav-item)$/ },
+    { pattern: /^(h|min-h)-(kash-row|nav-item|control)$/ },
     { pattern: /^z-(base|sticky|overlay|modal|toast)$/ },
     { pattern: /^(gap|gap-x|gap-y)-(shell|stack|section)$/ },
     { pattern: /^(p|px|py)-(card-x|card-y|kash-task-y|kash-task-y-compact)$/ },

@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Figtree } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import localFont from "next/font/local";
 
 import { AppBackdrop } from "@/components/kash/AppBackdrop";
@@ -12,9 +12,9 @@ import { TRPCReactProvider } from "@/trpc/client";
 
 import "./globals.css";
 
-const figtree = Figtree({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -55,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${figtree.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${plusJakartaSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppBackdrop />
         <DesktopRuntimeFlag />

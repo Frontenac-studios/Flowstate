@@ -37,7 +37,7 @@ function ClusterCard({
   return (
     <article className="rounded-card border border-abyss-border bg-abyss-surface p-3 shadow-surface">
       <div className="flex items-center gap-2">
-        <SparkleIcon size={14} className="text-cat-adulting" />
+        <SparkleIcon size={14} className="text-project-2" />
         <h3 className="text-meta font-medium text-abyss-ink">{title}</h3>
         <span className="text-caption text-abyss-ink-faint">· {count}</span>
       </div>

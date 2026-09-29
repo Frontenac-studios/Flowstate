@@ -128,7 +128,7 @@ export function SettingsForm() {
 
   return (
     <div className="space-y-6 rounded-card bg-canvas p-6">
-      <h1 className="text-xl font-semibold text-ink">Settings</h1>
+      <h1 className="text-xl font-bold text-ink">Settings</h1>
 
       <nav
         aria-label="Settings sections"

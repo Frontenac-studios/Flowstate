@@ -1,9 +1,11 @@
+import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
+
+/** The Plan surface's zero state (Spec v2 empty-state layout, fixed copy). */
 export function EmptyPlanState() {
   return (
-    <section className="rounded-card border border-border bg-surface px-6 py-10 text-center shadow-surface">
-      <p className="text-balance text-body leading-relaxed text-ink-muted">
-        Capture something, or ask Claude what&apos;s on deck.
-      </p>
-    </section>
+    <ColoredEmptyInvitation
+      title="Nothing planned yet"
+      hint="Capture something, or ask Claude what's on deck."
+    />
   );
 }

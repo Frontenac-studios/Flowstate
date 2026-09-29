@@ -18,7 +18,7 @@ export const InTaskRow = () => (
       { label: "Reconcile September bills in Xero", done: false },
       { label: "Draft the Hume scope note", done: false },
     ].map((t) => (
-      <li key={t.label} className="flex items-center gap-[var(--space-3)] px-4 py-2">
+      <li key={t.label} className="flex items-center gap-[var(--space-2)] px-4 py-2">
         <Checkbox aria-label={t.label} defaultChecked={t.done} />
         <span className={t.done ? "text-body text-ink-faint line-through" : "text-body text-ink"}>
           {t.label}

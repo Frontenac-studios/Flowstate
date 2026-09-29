@@ -150,7 +150,7 @@ export default function AbyssRoot() {
     >
       {/* Sticky title row carries the bar treatment so the h1 and toolbar stick together. */}
       <div className="sticky top-0 z-sticky flex flex-wrap items-center justify-between gap-3 rounded-card border border-abyss-border bg-abyss-bar px-3 py-2 backdrop-blur-md">
-        <h1 className="text-xl font-semibold text-abyss-ink">Backlog</h1>
+        <h1 className="text-xl font-bold text-abyss-ink">Backlog</h1>
         <AbyssFloatingBar
           view={view}
           onViewChange={setView}

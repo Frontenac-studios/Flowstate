@@ -52,7 +52,7 @@ export default function LooseTasksIndex() {
           <Link href="/projects" className="text-sm text-ink-muted transition hover:text-ink">
             ← Projects
           </Link>
-          <h1 className="text-xl font-semibold text-ink">Loose tasks</h1>
+          <h1 className="text-xl font-bold text-ink">Loose tasks</h1>
           <p className="text-sm text-ink-muted">
             Tasks without a project — assign or recategorize.
           </p>

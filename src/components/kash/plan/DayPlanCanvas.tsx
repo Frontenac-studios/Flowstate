@@ -805,7 +805,7 @@ export function DayPlanCanvas() {
         <ThresholdNotifier />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-ink">Today</h1>
+            <h1 className="text-xl font-bold text-ink">Today</h1>
             <TodayTimer />
           </div>
           <InPageSwitcher

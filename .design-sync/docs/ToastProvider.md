@@ -12,8 +12,9 @@ Owns the toast stack, the 5s auto-dismiss, the exit animation and the `document.
 ```jsx
 const { toast } = useToast();
 toast({
-  message: "3 tasks swept to Later.",
-  variant: "success",
+  message: "Task completed",
+  detail: "Draft Great White weekly report",
+  stripe: "var(--project-1-solid)",
   action: { label: "Undo", onClick: undo },
 });
 ```

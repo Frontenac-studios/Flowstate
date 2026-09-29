@@ -17,7 +17,7 @@ export function Top3ReviewSummary({ top3Status }: Props) {
         return (
           <div
             key={slot.order}
-            className={`flex min-h-[var(--space-8)] flex-col justify-center rounded-pill border border-l-[length:var(--stripe-width)] border-border bg-surface px-[var(--space-3)] py-[var(--row-py)] ${
+            className={`flex min-h-[var(--space-7)] flex-col justify-center rounded-pill border border-l-[length:var(--stripe-width)] border-border bg-surface px-[var(--space-2)] py-[var(--row-py)] ${
               slot.status === "empty" ? "border-transparent opacity-70" : "border-accent"
             }`}
           >

@@ -79,10 +79,11 @@ export default function Tooltip({
               role="tooltip"
               style={{ top: position.top, left: position.left }}
               className={cn(
-                "fixed z-toast max-w-xs -translate-x-1/2 px-[var(--space-3)] py-[var(--space-2)] text-caption transition-opacity duration-micro motion-reduce:transition-none",
+                "fixed z-toast max-w-xs -translate-x-1/2 text-meta font-medium transition-opacity duration-micro motion-reduce:transition-none",
                 variant === "light"
-                  ? "rounded-row border border-border bg-surface text-ink shadow-overlay"
-                  : "rounded-control bg-[var(--tooltip-bg)] text-[var(--tooltip-ink)]",
+                  ? "rounded-row border border-border bg-surface px-[var(--space-2)] py-[var(--space-2)] text-ink shadow-overlay"
+                  : // Spec v2: ink pill; a KeyCap inside inverts to a translucent chip.
+                    "inline-flex items-center gap-[var(--space-2)] rounded-pill bg-[var(--tooltip-bg)] px-[var(--space-3)] py-1.5 text-[var(--tooltip-ink)] [&_kbd]:rounded-pill [&_kbd]:border-transparent [&_kbd]:bg-white/15 [&_kbd]:text-micro [&_kbd]:font-semibold [&_kbd]:text-[var(--tooltip-ink)]",
                 className
               )}
             >

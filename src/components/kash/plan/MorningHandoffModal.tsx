@@ -219,7 +219,7 @@ function Section({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-[var(--space-3)]", className)}>
+    <section className={cn("space-y-[var(--space-2)]", className)}>
       <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">{title}</h3>
       {children}
     </section>
@@ -269,7 +269,7 @@ function CartRowItem({
   return (
     <li
       className={cn(
-        "flex items-center gap-2 border border-subtle px-[var(--space-3)] py-[var(--space-2)]",
+        "flex items-center gap-2 border border-subtle px-[var(--space-2)] py-[var(--space-2)]",
         row.category != null ? "rounded-r-row" : "rounded-row",
         row.isStaged && "border-dashed"
       )}
@@ -878,10 +878,10 @@ export function MorningHandoffModal({
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveDragTask(null)}
       >
-        <div className="flex h-full min-h-0 flex-col gap-[var(--space-4)]">
+        <div className="flex h-full min-h-0 flex-col gap-[var(--space-3)]">
           <div className="shrink-0 space-y-[var(--space-2)]">
             {previewBanner ? (
-              <p className="rounded-row border border-accent bg-[var(--accent-soft)] px-[var(--space-3)] py-[var(--space-2)] text-body text-ink">
+              <p className="rounded-row border border-accent bg-[var(--accent-soft)] px-[var(--space-2)] py-[var(--space-2)] text-body text-ink">
                 {previewBanner}
               </p>
             ) : null}
@@ -916,7 +916,7 @@ export function MorningHandoffModal({
             ) : null}
           </div>
 
-          <div className="grid min-h-0 flex-1 gap-[var(--space-5)] overflow-y-auto lg:grid-cols-2 lg:overflow-visible">
+          <div className="grid min-h-0 flex-1 gap-[var(--space-4)] overflow-y-auto lg:grid-cols-2 lg:overflow-visible">
             {/* Left: chat-first morning triage with in-thread act cards. */}
             <div className="relative flex min-h-0 flex-col lg:h-full lg:overflow-y-auto lg:pr-[var(--space-2)]">
               {activeDragTask ? <TriageDragBins /> : null}
@@ -935,7 +935,7 @@ export function MorningHandoffModal({
 
             {/* Right: cart — Top 3, Today, the balance preview, and the sheet actions. */}
             <div className="flex min-h-0 flex-col lg:h-full">
-              <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-4)] lg:overflow-y-auto lg:pr-[var(--space-1)]">
+              <div className="flex min-h-0 flex-1 flex-col gap-[var(--space-3)] lg:overflow-y-auto lg:pr-[var(--space-1)]">
                 <Section title="Top 3">
                   <ul className="grid grid-cols-3 gap-2">
                     {top3SlotEntries.map(({ slot, title, category }) => (
@@ -961,7 +961,7 @@ export function MorningHandoffModal({
                 {showHoldSection ? (
                   <Section title="Focus hold preview">
                     <div
-                      className="rounded-row border border-dashed px-[var(--space-3)] py-[var(--space-3)]"
+                      className="rounded-row border border-dashed px-[var(--space-2)] py-[var(--space-2)]"
                       style={categorySurfaceTint(holdPreview.category)}
                     >
                       <p
@@ -1065,7 +1065,7 @@ export function MorningHandoffModal({
                 ) : null}
               </div>
 
-              <div className="flex shrink-0 flex-col gap-[var(--space-2)] pt-[var(--space-4)] sm:flex-row sm:justify-end">
+              <div className="flex shrink-0 flex-col gap-[var(--space-2)] pt-[var(--space-3)] sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="ghost"

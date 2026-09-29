@@ -30,13 +30,26 @@ const config: Config = {
           soft: "var(--accent-soft)",
           on: "var(--on-accent)",
         },
-        critical: "var(--status-critical)",
+        critical: {
+          DEFAULT: "var(--status-critical)",
+          soft: "var(--status-critical-soft)",
+        },
+        "control-border": "var(--control-border)",
+        "check-border": "var(--check-border)",
         cat: {
           professional: "var(--cat-professional-solid)",
           personal: "var(--cat-personal-solid)",
-          relationships: "var(--cat-relationships-solid)",
-          adulting: "var(--cat-adulting-solid)",
-          "body-mind": "var(--cat-body-mind-solid)",
+        },
+        project: {
+          1: "var(--project-1-solid)",
+          2: "var(--project-2-solid)",
+          3: "var(--project-3-solid)",
+          4: "var(--project-4-solid)",
+          5: "var(--project-5-solid)",
+          6: "var(--project-6-solid)",
+          7: "var(--project-7-solid)",
+          8: "var(--project-8-solid)",
+          personal: "var(--project-personal-solid)",
         },
         // The Abyss (dark aesthetic exception) — page-scoped tokens, tokens.css
         abyss: {
@@ -79,7 +92,11 @@ const config: Config = {
         chip: "var(--radius-chip)",
         pill: "var(--radius-pill)",
       },
+      letterSpacing: {
+        caps: "var(--tracking-caps)",
+      },
       boxShadow: {
+        focus: "var(--focus-halo)",
         surface: "var(--shadow-surface)",
         overlay: "var(--shadow-overlay)",
       },
@@ -106,6 +123,7 @@ const config: Config = {
         "icon-xl": "var(--icon-xl)",
         "kash-row": "var(--kash-row-min-height)",
         "nav-item": "var(--nav-item-height)",
+        control: "var(--control-height)",
       },
       minWidth: {
         "icon-sm": "var(--icon-sm)",
@@ -131,20 +149,20 @@ const config: Config = {
         body: "var(--text-body)",
         subtitle: "var(--text-subtitle)",
         title: "var(--text-title)",
-        h1: "var(--text-h1)",
+        h1: ["var(--text-h1)", { lineHeight: "1.05", letterSpacing: "var(--tracking-h1)" }],
         // Stock Tailwind sizes are overridden to match the token scale. Many
         // components use text-xs/sm/base/... directly, so these scale in lockstep
-        // with the tokens above. Screenshot-match pass (Jul 7): xs=meta(13),
-        // sm=body(17), base=subtitle(19), lg=title(22), xl=h1(30); display tiers
-        // grown to stay monotonic. Prior: 14/16/18/22/26/30/36/42/52/64.
+        // with the tokens above. Spec v2: xs=meta(13), sm=body(15),
+        // base=subtitle(17), lg=title(20), xl=h1(40); display tiers grown to stay
+        // monotonic. Prior (Jul 7): 13/17/19/22/30/34/40/46/58/70.
         xs: ["13px", "18px"],
-        sm: ["17px", "24px"],
-        base: ["19px", "27px"],
-        lg: ["22px", "30px"],
-        xl: ["30px", "36px"],
-        "2xl": ["34px", "40px"],
-        "3xl": ["40px", "46px"],
-        "4xl": ["46px", "50px"],
+        sm: ["15px", "22px"],
+        base: ["17px", "24px"],
+        lg: ["20px", "28px"],
+        xl: ["40px", { lineHeight: "1.05", letterSpacing: "var(--tracking-h1)" }],
+        "2xl": ["44px", "48px"],
+        "3xl": ["48px", "52px"],
+        "4xl": ["52px", "56px"],
         "5xl": ["58px", "1"],
         "6xl": ["70px", "1"],
       },

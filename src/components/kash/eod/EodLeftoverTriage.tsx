@@ -51,11 +51,11 @@ export function EodLeftoverTriage({ localDate, tasks }: Props) {
   }
 
   return (
-    <ul className="space-y-[var(--space-3)]">
+    <ul className="space-y-[var(--space-2)]">
       {leftovers.map((task) => (
         <li
           key={task.id}
-          className="space-y-[var(--space-2)] rounded-row border border-subtle px-[var(--space-3)] py-[var(--space-2)]"
+          className="space-y-[var(--space-2)] rounded-row border border-subtle px-[var(--space-2)] py-[var(--space-2)]"
         >
           <p className="break-words text-body text-ink">{task.title}</p>
           {rescheduleTaskId === task.id ? (

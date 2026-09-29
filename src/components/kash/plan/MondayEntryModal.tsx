@@ -44,7 +44,7 @@ export function MondayEntryModal() {
         </div>
       }
     >
-      <div className="space-y-[var(--space-3)]">
+      <div className="space-y-[var(--space-2)]">
         <p className="text-body font-medium text-ink">Plan the week or dive into today?</p>
         <p className="text-body text-ink-muted">
           Choose how you want to start Monday. You can switch anytime from the sidebar.
