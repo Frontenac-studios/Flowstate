@@ -7,6 +7,7 @@ import { useState } from "react";
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
+import Switch from "@/components/kash/ui/Switch";
 import { formatCents } from "@/lib/rates/format-cents";
 import { useTRPC } from "@/trpc/client";
 
@@ -111,14 +112,16 @@ export default function ClientsIndex() {
         </ul>
       )}
 
-      <label className="flex items-center gap-2 text-sm text-ink-muted">
-        <input
-          type="checkbox"
+      <div className="flex items-center gap-2">
+        <Switch
+          id="clients-show-archived"
           checked={includeArchived}
-          onChange={(e) => setIncludeArchived(e.target.checked)}
+          onCheckedChange={setIncludeArchived}
         />
-        Show archived
-      </label>
+        <label htmlFor="clients-show-archived" className="text-sm text-ink-muted">
+          Show archived
+        </label>
+      </div>
     </div>
   );
 }

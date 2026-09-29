@@ -14,11 +14,11 @@ type Props = {
 };
 
 const CHIP_CLASS =
-  "rounded-pill border border-border bg-surface px-2.5 py-1 text-xs text-ink-muted transition hover:text-accent focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-pill border border-border bg-surface px-2.5 py-1 text-xs text-ink-muted transition hover:text-accent focus:outline-none kash-focus-row disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Revealed on hover or keyboard focus, but always in the DOM so it stays reachable. */
 const CHIP_ACTION_CLASS =
-  "rounded-pill px-1 text-xs leading-none text-ink-muted opacity-0 transition hover:text-accent focus:outline-none focus-visible:opacity-100 focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] group-hover:opacity-100 group-focus-within:opacity-100";
+  "rounded-pill px-1 text-xs leading-none text-ink-muted opacity-0 transition hover:text-accent focus:outline-none focus-visible:opacity-100 kash-focus-row group-hover:opacity-100 group-focus-within:opacity-100";
 
 function RenameChip({
   suggestion,
@@ -60,7 +60,7 @@ function RenameChip({
           onCancel();
         }
       }}
-      className={`${CHIP_CLASS} w-48 text-ink focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]`}
+      className={`${CHIP_CLASS} kash-focus-row w-48 text-ink`}
     />
   );
 }

@@ -60,7 +60,7 @@ export function SyncFooterIndicator({ expanded }: { expanded: boolean }) {
       ) : null}
       <button
         type="button"
-        className={`flex h-10 w-full items-center transition hover:bg-surface-2 focus:outline-none focus-visible:bg-surface-2 ${
+        className={`flex h-10 w-full items-center transition hover:bg-tint-hover focus:outline-none focus-visible:bg-surface-2 ${
           expanded ? "gap-2 px-3 text-left" : "justify-center px-0"
         }`}
         aria-expanded={panelOpen}

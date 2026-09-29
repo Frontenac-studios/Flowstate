@@ -8,7 +8,7 @@ export default function LooseTasksCard({ count }: { count: number }) {
   return (
     <Link
       href="/projects/loose"
-      className="kash-focus-visible block rounded-card border-2 border-dashed border-subtle bg-surface p-4 shadow-surface outline-none transition hover:bg-surface-2"
+      className="kash-focus-visible block rounded-card border-2 border-dashed border-subtle bg-surface p-4 shadow-surface outline-none transition hover:bg-tint-hover"
     >
       <h3 className="font-medium text-ink">Loose tasks</h3>
       <p className="mt-3 text-caption text-ink-muted">{label} · no project</p>

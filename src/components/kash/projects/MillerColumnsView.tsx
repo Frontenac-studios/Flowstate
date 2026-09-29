@@ -713,7 +713,7 @@ export default function MillerColumnsView({
               tabIndex={0}
               onKeyDown={handleKeyDown}
               aria-label="Project columns"
-              className="miller-column-scroll flex min-h-0 flex-1 items-stretch overflow-x-auto focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+              className="miller-column-scroll kash-focus-visible flex min-h-0 flex-1 items-stretch overflow-x-auto focus:outline-none"
             >
               {columns.map((col) => (
                 <MillerColumn

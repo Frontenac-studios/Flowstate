@@ -22,7 +22,7 @@ const BILLING = [
 ] as const;
 
 const CHIP =
-  "rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
+  "rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none kash-focus-visible";
 
 function chipClass(selected: boolean): string {
   return `${CHIP} ${selected ? "border-ink text-ink" : "border-subtle text-ink-muted hover:text-ink"}`;

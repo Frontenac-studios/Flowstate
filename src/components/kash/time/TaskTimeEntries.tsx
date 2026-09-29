@@ -149,7 +149,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
                 <button
                   type="button"
                   onClick={() => beginEdit(entry)}
-                  className="text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+                  className="kash-focus-row text-ink-muted transition hover:text-ink focus:outline-none"
                   aria-label="Edit entry"
                 >
                   Edit
@@ -158,7 +158,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
                   type="button"
                   onClick={() => deleteMutation.mutate({ entryId: entry.id })}
                   disabled={deleteMutation.isPending}
-                  className="text-ink-muted transition hover:text-critical focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] disabled:opacity-50"
+                  className="kash-focus-row text-ink-muted transition hover:text-critical focus:outline-none disabled:opacity-50"
                   aria-label="Delete entry"
                 >
                   Delete
@@ -208,7 +208,7 @@ export default function TaskTimeEntries({ taskId }: Props) {
           <button
             type="button"
             onClick={resetForm}
-            className="text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+            className="kash-focus-row text-xs text-ink-muted transition hover:text-ink focus:outline-none"
           >
             Cancel
           </button>

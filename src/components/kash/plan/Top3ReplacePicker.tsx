@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { MENU_ROW, OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
+import { cn } from "@/lib/cn";
+
 import type { Top3SlotTask } from "./Top3Slots";
 
 const SLOT_LABELS = ["①", "②", "③"] as const;
@@ -76,21 +79,16 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
       ref={panelRef}
       role="dialog"
       aria-label="Replace a priority"
-      className="fixed z-modal flex flex-col gap-2 rounded-card border border-subtle bg-surface p-3 shadow-overlay"
+      className={cn(OVERLAY_CARD, "fixed z-modal flex flex-col gap-1")}
       style={{ top, left, width: Math.min(width, 400) }}
     >
-      <p className="text-sm font-medium text-ink">Replace a priority</p>
-      <div className="flex flex-col gap-1">
+      <p className="px-3 pb-1 pt-1.5 text-sm font-medium text-ink">Replace a priority</p>
+      <div className="flex flex-col">
         {([1, 2, 3] as const).map((slot) => {
           const task = pinnedBySlot.get(slot);
           const label = SLOT_LABELS[slot - 1];
           return (
-            <button
-              key={slot}
-              type="button"
-              className="flex min-h-9 items-center gap-2 rounded-pill border border-border bg-surface px-3 py-0.5 text-left text-sm text-ink hover:ring-2 hover:ring-[var(--accent-soft)] focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
-              onClick={() => onReplace(slot)}
-            >
+            <button key={slot} type="button" className={MENU_ROW} onClick={() => onReplace(slot)}>
               <span className="shrink-0 text-xs text-accent" aria-hidden>
                 {label}
               </span>
@@ -101,7 +99,7 @@ export function Top3ReplacePicker({ pinnedBySlot, anchorEl, onReplace, onDismiss
       </div>
       <button
         type="button"
-        className="mt-1 text-center text-xs text-ink-muted hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+        className="kash-focus-visible mt-1 rounded-row py-1 text-center text-xs text-ink-muted outline-none hover:text-ink"
         onClick={onDismiss}
       >
         Nevermind

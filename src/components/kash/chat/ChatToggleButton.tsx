@@ -30,7 +30,7 @@ export function ChatToggleButton({ threadId, expanded }: Props) {
     <button
       type="button"
       onClick={toggleRail}
-      className={`flex h-9 items-center rounded-control bg-[var(--surface-selected)] text-ink transition hover:bg-[var(--surface-2)] ${
+      className={`flex h-9 items-center rounded-control bg-[var(--surface-selected)] text-ink transition hover:bg-tint-hover ${
         expanded ? "pr-2" : ""
       } ${FOCUS}`}
       aria-pressed={railOpen}

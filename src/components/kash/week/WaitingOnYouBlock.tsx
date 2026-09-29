@@ -47,7 +47,7 @@ export function WaitingOnYouBlock() {
             <li key={`${row.kind}:${row.id}`}>
               <Link
                 href={row.href}
-                className="flex items-center gap-2 rounded-control px-1 py-0.5 transition hover:bg-surface-2"
+                className="flex items-center gap-2 rounded-control px-1 py-0.5 transition hover:bg-tint-hover"
               >
                 <span
                   className={`shrink-0 rounded-pill border px-1.5 py-0.5 text-meta ${ROW_TONE[row.kind]}`}

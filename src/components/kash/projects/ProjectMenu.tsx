@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 
 import Input from "@/components/kash/ui/Input";
+import Menu, { MenuDivider, MenuItem } from "@/components/kash/ui/Menu";
+import { MENU_ROW } from "@/components/kash/ui/overlay-styles";
+import { useDismiss } from "@/hooks/useDismiss";
 import { useTRPC } from "@/trpc/client";
 
 import ConfirmDialog from "./ConfirmDialog";
@@ -13,13 +16,17 @@ import ConfirmDialog from "./ConfirmDialog";
 type Props = {
   project: { id: string; name: string };
   showTemplateFeatures?: boolean;
+  /** The ⋯ trigger, so a click on it toggles the menu instead of dismiss-then-reopen. */
+  triggerRef?: RefObject<HTMLElement | null>;
   onClose: () => void;
 };
 
-const MENU_BTN_FOCUS =
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
-
-export default function ProjectMenu({ project, showTemplateFeatures = true, onClose }: Props) {
+export default function ProjectMenu({
+  project,
+  showTemplateFeatures = true,
+  triggerRef,
+  onClose,
+}: Props) {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -49,64 +56,53 @@ export default function ProjectMenu({ project, showTemplateFeatures = true, onCl
     })
   );
 
-  useEffect(() => {
-    const onDown = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+  // Paused while a confirm dialog is up: the dialog portals outside the menu, so a
+  // click inside it would otherwise read as "outside" and unmount the dialog with it.
+  const fallbackTriggerRef = useRef<HTMLElement>(null);
+  useDismiss(
+    !saveDialogOpen && !archiveDialogOpen,
+    [ref, triggerRef ?? fallbackTriggerRef],
+    onClose
+  );
 
   const trimmedName = templateName.trim();
   const canSave = trimmedName.length > 0 && !saveTemplate.isPending;
 
   return (
     <>
-      <div
+      <Menu
         ref={ref}
-        role="menu"
         aria-label={`Actions for ${project.name}`}
-        className="absolute right-0 top-full z-overlay mt-1 w-52 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
+        className="absolute right-0 top-full mt-1 w-52"
       >
         <Link
           href={`/projects/${project.id}/imports`}
           role="menuitem"
           onClick={onClose}
-          className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 ${MENU_BTN_FOCUS}`}
+          className={MENU_ROW}
         >
           Import history
         </Link>
         {showTemplateFeatures ? (
-          <button
-            type="button"
-            role="menuitem"
+          <MenuItem
             onClick={() => {
               setTemplateName(project.name);
               setSaveDialogOpen(true);
             }}
             disabled={saveTemplate.isPending}
-            className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-ink transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
           >
             Save as template
-          </button>
+          </MenuItem>
         ) : null}
-        <button
-          type="button"
-          role="menuitem"
+        <MenuDivider />
+        <MenuItem
+          destructive
           onClick={() => setArchiveDialogOpen(true)}
           disabled={archiveProject.isPending}
-          className={`flex w-full items-center rounded-control px-2 py-1.5 text-left text-body text-critical transition-colors hover:bg-surface-2 disabled:opacity-50 ${MENU_BTN_FOCUS}`}
         >
           Archive project
-        </button>
-      </div>
+        </MenuItem>
+      </Menu>
 
       <ConfirmDialog
         open={saveDialogOpen}

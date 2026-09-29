@@ -17,6 +17,7 @@ export { default as Input } from "../src/components/kash/ui/Input";
 export { default as Textarea } from "../src/components/kash/ui/Textarea";
 export { default as Select } from "../src/components/kash/ui/Select";
 export { default as Checkbox } from "../src/components/kash/ui/Checkbox";
+export { default as Switch } from "../src/components/kash/ui/Switch";
 
 // ---- Feedback
 export { default as InlineValidation } from "../src/components/kash/ui/InlineValidation";
@@ -30,6 +31,17 @@ export {
 } from "../src/components/kash/ui/ToastProvider";
 export { QueryErrorNotice } from "../src/components/kash/ui/QueryErrorNotice";
 export { default as Tooltip } from "../src/components/kash/ui/Tooltip";
+
+// ---- Overlays (Spec v3 Pa1 / Sa)
+export {
+  default as Menu,
+  MenuItem,
+  MenuDivider,
+  MenuLabel,
+  MenuSearch,
+} from "../src/components/kash/ui/Menu";
+export { default as Dialog } from "../src/components/kash/ui/Dialog";
+export { default as Sheet } from "../src/components/kash/ui/Sheet";
 
 // ---- Keyboard affordances
 export { KeyCap } from "../src/components/kash/ui/KeyCap";

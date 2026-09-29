@@ -25,9 +25,10 @@ type Props<T extends string> = {
 };
 
 /**
- * The shared in-page segmented control: an inset white pill (the active option)
- * riding a soft-gray `--active-surface` track (DT-7). The raised pill reads as
- * raised purely via `--active-raised-border` — strictly flat, no shadow.
+ * The shared in-page segmented control (Spec v2/v3 Cc): an inset white pill (the
+ * active option, 13/600) riding a soft-gray `--active-surface` track. The raised pill
+ * reads as raised purely via `--active-raised-border` — strictly flat, no shadow. Use
+ * it instead of a select for 2–3 short options.
  * Presentational and fully controlled — callers own the value and its
  * persistence — so it can back Today's Day/Week, the Projects view/zoom toggles,
  * and the Plan sub-view switchers without bespoke markup each time.
@@ -60,7 +61,7 @@ export function InPageSwitcher<T extends string>({
 
   return (
     <div
-      className="inline-flex items-center gap-[var(--space-0)] rounded-pill bg-active-surface p-[var(--space-0)] text-sm"
+      className="inline-flex items-center gap-[var(--space-0)] rounded-pill bg-active-surface p-[3px] text-meta"
       role="group"
       aria-label={ariaLabel}
     >
@@ -77,9 +78,9 @@ export function InPageSwitcher<T extends string>({
             onKeyDown={(e) => onKeyDown(e, index)}
             aria-pressed={pressed}
             className={cn(
-              "rounded-pill border px-3 py-1 transition-colors focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]",
+              "kash-focus-visible rounded-pill border px-3.5 py-1 outline-none transition-colors motion-reduce:transition-none",
               pressed
-                ? "border-active-raised-border bg-active-raised text-ink"
+                ? "border-active-raised-border bg-active-raised font-semibold text-ink"
                 : "border-transparent bg-transparent text-ink-muted hover:text-ink"
             )}
           >

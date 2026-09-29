@@ -66,7 +66,7 @@ export function BucketSection({
       <button
         ref={setNodeRef}
         type="button"
-        className={`flex min-h-[var(--row-min-height)] w-full items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2 focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+        className={`kash-focus-visible flex min-h-[var(--row-min-height)] w-full items-center gap-2 rounded-card border border-subtle bg-surface px-3 py-2 focus:outline-none ${
           isOver ? "shadow-[inset_0_0_0_2px_var(--accent-soft)]" : ""
         }`}
         aria-expanded={showBody}

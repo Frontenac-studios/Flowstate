@@ -149,7 +149,7 @@ export function SettingsForm() {
                 aria-selected={active}
                 aria-controls={`settings-panel-${t.id}`}
                 onClick={() => setTab(t.id)}
-                className={`rounded-control px-3 py-1.5 text-sm transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
+                className={`kash-focus-row rounded-control px-3 py-1.5 text-sm transition focus:outline-none ${
                   active
                     ? "border border-active-raised-border bg-surface font-medium text-ink"
                     : "border border-transparent text-ink-muted hover:text-ink"

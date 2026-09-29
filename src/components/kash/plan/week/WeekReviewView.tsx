@@ -47,7 +47,7 @@ export function WeekReviewView() {
       <div>
         <Link
           href="/this-week"
-          className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          className="kash-focus-visible rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none"
         >
           ← This Week
         </Link>

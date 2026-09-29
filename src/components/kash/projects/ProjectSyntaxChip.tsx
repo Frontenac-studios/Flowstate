@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
+
+import { OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
+import { useDismiss } from "@/hooks/useDismiss";
+import { cn } from "@/lib/cn";
 
 const SYNTAX_HINT = [
   "One task per line: title ; due ; priority ; phase. Everything after the title is optional.",
@@ -24,21 +28,8 @@ export default function ProjectSyntaxChip({ showOnFocus = false, focused = false
   const ref = useRef<HTMLDivElement>(null);
   const hintId = useId();
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, [ref], close);
 
   const visible = open || (showOnFocus && focused);
 
@@ -49,7 +40,7 @@ export default function ProjectSyntaxChip({ showOnFocus = false, focused = false
         aria-expanded={open}
         aria-controls={hintId}
         onClick={() => setOpen((value) => !value)}
-        className="rounded-chip border border-subtle px-2 py-0.5 text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+        className="kash-focus-visible rounded-chip border border-subtle px-2 py-0.5 text-xs text-ink-muted transition hover:text-ink focus:outline-none"
       >
         syntax
       </button>
@@ -57,7 +48,10 @@ export default function ProjectSyntaxChip({ showOnFocus = false, focused = false
         <div
           id={hintId}
           role="tooltip"
-          className="absolute bottom-full left-0 z-overlay mb-1 w-80 whitespace-pre-line rounded-card border border-subtle bg-surface p-3 text-xs leading-relaxed text-ink-muted shadow-overlay"
+          className={cn(
+            OVERLAY_CARD,
+            "absolute bottom-full left-0 z-overlay mb-1 w-80 whitespace-pre-line px-3 py-3 text-xs leading-relaxed text-ink-muted"
+          )}
         >
           {SYNTAX_HINT}
         </div>

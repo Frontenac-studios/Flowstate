@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
 import Button from "@/components/kash/ui/Button";
+import Dialog from "@/components/kash/ui/Dialog";
 
 type Props = {
   open: boolean;
@@ -12,6 +12,7 @@ type Props = {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  /** @deprecated Every Spec v3 dialog is opaque; kept so existing callers compile. */
   opaque?: boolean;
   confirmDisabled?: boolean;
   children?: ReactNode;
@@ -19,6 +20,7 @@ type Props = {
   onCancel: () => void;
 };
 
+/** Confirm / cancel on the Spec v3 dialog. Solid crimson only when `destructive`. */
 export default function ConfirmDialog({
   open,
   title,
@@ -26,7 +28,6 @@ export default function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   destructive = false,
-  opaque = false,
   confirmDisabled = false,
   children,
   onConfirm,
@@ -36,66 +37,31 @@ export default function ConfirmDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
+    if (!open || destructive) return;
+    // Destructive actions require an explicit click on the confirm button, so a
+    // stray Enter right after the dialog opens can't fire the irreversible action.
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCancel();
-      } else if (e.key === "Enter" && !confirmDisabled && !destructive) {
-        // Destructive actions require an explicit click on the confirm button, so a
-        // stray Enter right after the dialog opens can't fire the irreversible action.
+      if (e.key === "Enter" && !confirmDisabled) {
         e.preventDefault();
         onConfirm();
       }
     };
-
     window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, confirmDisabled, destructive, onCancel, onConfirm]);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, confirmDisabled, destructive, onConfirm]);
 
-  useEffect(() => {
-    if (!open) return;
-    // For destructive dialogs, focus Cancel so a reflexive Enter/Space doesn't trigger confirm.
-    if (destructive) cancelRef.current?.focus();
-    else confirmRef.current?.focus();
-  }, [open, destructive]);
-
-  if (!open) return null;
-
-  const panelClass = opaque
-    ? "rounded-card border border-subtle bg-surface"
-    : "rounded-card border border-border bg-surface shadow-overlay";
-  const widthClass = children ? "max-w-md" : "max-w-sm";
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-4"
-      role="presentation"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div className="absolute inset-0 bg-black/20" aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-title"
-        className={`${panelClass} relative z-base w-full ${widthClass} p-6`}
-      >
-        <h2 id="confirm-title" className="text-lg font-semibold text-ink">
-          {title}
-        </h2>
-        <p className="mt-2 text-sm text-ink-muted">{message}</p>
-        {children}
-        <div className="mt-6 flex justify-end gap-2">
-          <Button ref={cancelRef} type="button" variant="ghost" onClick={onCancel}>
+  return (
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      title={title}
+      description={message}
+      size={children ? "md" : "sm"}
+      // For destructive dialogs, focus Cancel so a reflexive Enter/Space doesn't confirm.
+      initialFocusRef={destructive ? cancelRef : confirmRef}
+      actions={
+        <>
+          <Button ref={cancelRef} type="button" variant="outline" onClick={onCancel}>
             {cancelLabel}
           </Button>
           <Button
@@ -107,9 +73,10 @@ export default function ConfirmDialog({
           >
             {confirmLabel}
           </Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </>
+      }
+    >
+      {children}
+    </Dialog>
   );
 }

@@ -64,7 +64,7 @@ export function EodLeftoverTriage({ localDate, tasks }: Props) {
                 <button
                   key={iso}
                   type="button"
-                  className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink-muted hover:bg-[var(--accent-soft)] hover:text-ink"
+                  className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink-muted hover:bg-tint-hover hover:text-ink"
                   onClick={() => {
                     scheduleMutation.mutate({ id: task.id, scheduledDate: iso });
                     setRescheduleTaskId(null);
@@ -86,14 +86,14 @@ export function EodLeftoverTriage({ localDate, tasks }: Props) {
             <div className="flex flex-wrap gap-1">
               <button
                 type="button"
-                className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-[var(--accent-soft)]"
+                className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-tint-hover"
                 onClick={() => setRescheduleTaskId(task.id)}
               >
                 Reschedule
               </button>
               <button
                 type="button"
-                className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-[var(--accent-soft)]"
+                className="rounded-pill border border-border px-2 py-0.5 text-caption text-ink transition hover:bg-tint-hover"
                 onClick={() => moveMutation.mutate({ id: task.id, bucket: "tomorrow" })}
               >
                 Tomorrow

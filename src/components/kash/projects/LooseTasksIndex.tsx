@@ -133,7 +133,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className="flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+      className="kash-focus-visible flex items-center gap-1.5 rounded-chip border px-3 py-1 text-sm font-medium transition focus:outline-none"
       style={
         selected && category
           ? {

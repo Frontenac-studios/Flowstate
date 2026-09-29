@@ -52,7 +52,7 @@ export default function SuggestedDateChip({
       </span>
       <button
         type="button"
-        className="kash-focus-visible rounded-pill border border-accent px-2 py-0.5 text-xs font-medium text-accent transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+        className="kash-focus-visible rounded-pill border border-accent px-2 py-0.5 text-xs font-medium text-accent transition hover:bg-tint-hover disabled:opacity-50"
         disabled={acceptSuggestedDateMutation.isPending}
         aria-label={`Accept suggested date, schedule for ${suggestedScheduledDate}`}
         onClick={(e) => {

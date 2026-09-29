@@ -667,7 +667,7 @@ export function TimelinePane({
         <button
           type="button"
           onClick={() => setRailExpanded(true)}
-          className="flex w-full flex-col items-center gap-2 px-1 focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          className="kash-focus-row flex w-full flex-col items-center gap-2 px-1 focus:outline-none"
           aria-expanded={false}
           aria-label="Expand timeline"
           title="Expand timeline"

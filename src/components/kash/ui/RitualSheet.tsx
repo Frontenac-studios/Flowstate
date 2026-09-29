@@ -33,8 +33,8 @@ type Props = {
 };
 
 /**
- * Centered ritual modal — full-screen dim + blur; the panel scrolls internally with
- * D13 fade cues. Used for morning hand-off, EOD, Monday entry, and onboarding.
+ * Centered ritual modal over the Spec v3 32% ink scrim (no blur); the panel scrolls
+ * internally with D13 fade cues. Used for morning hand-off, EOD, Monday entry, and onboarding.
  */
 export function RitualSheet({
   open,
@@ -154,7 +154,7 @@ export function RitualSheet({
 
   return createPortal(
     <div
-      className="ritual-sheet-overlay fixed inset-0 z-modal flex items-center justify-center p-4 backdrop-blur-sm"
+      className="ritual-sheet-overlay fixed inset-0 z-modal flex items-center justify-center p-4"
       role="presentation"
     >
       {backdrop}
@@ -166,7 +166,7 @@ export function RitualSheet({
         aria-describedby={describedBy}
         tabIndex={-1}
         className={cn(
-          "ritual-sheet-panel relative z-10 flex w-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-overlay focus:outline-none",
+          "ritual-sheet-panel relative z-10 flex w-full flex-col overflow-hidden rounded-card bg-surface shadow-dialog focus:outline-none",
           size === "xl"
             ? "max-h-[92vh] max-w-7xl"
             : size === "wide"
@@ -174,7 +174,7 @@ export function RitualSheet({
               : "max-h-[85vh] max-w-xl"
         )}
       >
-        <header className="shrink-0 border-b border-subtle px-[var(--space-4)] py-[var(--space-3)]">
+        <header className="shrink-0 border-b border-menu-divider px-6 py-4">
           <h2 id={titleId} className="text-title font-semibold text-ink">
             {title}
           </h2>
@@ -183,9 +183,7 @@ export function RitualSheet({
         <div className="relative min-h-0 flex-1">{body}</div>
 
         {footer ? (
-          <footer className="shrink-0 border-t border-subtle px-[var(--space-4)] py-[var(--space-3)]">
-            {footer}
-          </footer>
+          <footer className="shrink-0 border-t border-menu-divider px-6 py-4">{footer}</footer>
         ) : null}
       </div>
     </div>,
