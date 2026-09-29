@@ -33,10 +33,14 @@ type Props = {
   embedded?: boolean;
   /** Popover menu alignment; default left. */
   menuAlign?: "left" | "right";
+  /** Spec v5 page header: a primary "Add task" pill instead of the "+" icon. */
+  labelled?: boolean;
 };
 
 const TRIGGER_EMBEDDED =
   "flex h-8 w-8 items-center justify-center rounded-pill border border-transparent bg-transparent text-lg leading-none text-ink-muted transition hover:bg-active-raised hover:text-ink aria-expanded:bg-tint-open aria-expanded:text-ink kash-focus-visible outline-none";
+const TRIGGER_LABELLED =
+  "flex h-9 items-center justify-center gap-1.5 rounded-pill bg-accent px-4 text-[14px] font-semibold text-accent-on transition-colors hover:bg-primary-hover active:bg-primary-pressed aria-expanded:bg-primary-pressed kash-focus-visible outline-none motion-reduce:transition-none";
 const TRIGGER_STANDALONE =
   "flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink aria-expanded:bg-tint-open aria-expanded:text-ink kash-focus-visible outline-none";
 
@@ -51,7 +55,15 @@ const TWO_LINE_ROW = cn(MENU_ROW, "!h-auto flex-col !items-start !gap-0.5 py-2")
  * focus; the parent moves focus into the composer when "Type" is chosen.
  */
 export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function AddTaskPopover(
-  { onAskChat, onTypeManually, noun = "task", className, embedded = false, menuAlign = "left" },
+  {
+    onAskChat,
+    onTypeManually,
+    noun = "task",
+    className,
+    embedded = false,
+    menuAlign = "left",
+    labelled = false,
+  },
   ref
 ) {
   const [open, setOpen] = useState(false);
@@ -86,6 +98,13 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
   // between chat and the manual composer; with chat gone there is nothing to
   // choose, so "+" reveals the composer directly. Without this, "+" would open a
   // one-item menu and task creation would gain a pointless click.
+  const triggerClass = labelled
+    ? TRIGGER_LABELLED
+    : embedded
+      ? TRIGGER_EMBEDDED
+      : TRIGGER_STANDALONE;
+  const triggerContent = labelled ? <span>Add {noun}</span> : <span aria-hidden>+</span>;
+
   if (!FLAGS.chat) {
     return (
       <div className={`relative ${className ?? ""}`}>
@@ -94,9 +113,9 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
           type="button"
           aria-label={`Add ${noun}`}
           onClick={onTypeManually}
-          className={embedded ? TRIGGER_EMBEDDED : TRIGGER_STANDALONE}
+          className={triggerClass}
         >
-          <span aria-hidden>+</span>
+          {triggerContent}
         </button>
       </div>
     );
@@ -112,9 +131,9 @@ export const AddTaskPopover = forwardRef<AddTaskPopoverHandle, Props>(function A
         aria-controls={open ? menuId : undefined}
         aria-label={`Add ${noun}`}
         onClick={() => setOpen((value) => !value)}
-        className={embedded ? TRIGGER_EMBEDDED : TRIGGER_STANDALONE}
+        className={triggerClass}
       >
-        <span aria-hidden>+</span>
+        {triggerContent}
       </button>
 
       {open ? (

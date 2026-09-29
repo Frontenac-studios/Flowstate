@@ -18,6 +18,7 @@ import type { TaskSnapshot } from "@/hooks/useSessionUndo";
 import OccurrenceMenu from "@/components/kash/plan/OccurrenceMenu";
 import { ComposerAssistInput } from "@/components/kash/composer/ComposerAssistInput";
 import { TaskDragHandle } from "@/components/kash/TaskDragHandle";
+import Checkbox from "@/components/kash/ui/Checkbox";
 import SwipeActionRail, { swipeRevealWidth } from "@/components/kash/SwipeActionRail";
 import TaskContextMenu from "@/components/kash/TaskContextMenu";
 import { Check, Lock, Pencil, SkipForward, Trash2, withKashIcon } from "@/components/kash/ui/icon";
@@ -28,10 +29,9 @@ import { TaskPriorityIndicator } from "@/components/kash/TaskPriorityIndicator";
 import { useRowSwipe } from "@/hooks/useRowSwipe";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
-import { formatRelativeDue } from "@/lib/dates/format-relative-due";
+import { formatDuePill, type DuePill } from "@/lib/dates/format-due-pill";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { taskSolidVar } from "@/lib/projects/project-hue";
-import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
 import { onCompleteTaskRequest } from "@/lib/tasks/complete-task-event";
@@ -117,7 +117,10 @@ type Props = {
   suppressDue?: boolean;
   /** AN-T2: stagger index for Today list arrival; omit on other surfaces. */
   arriveIndex?: number;
-  /** AN §5 / WD7: scale + shadow lift while dragging on the Week surface. */
+  /**
+   * AN §5 / WD7 / Spec v5 DragA: the surface renders a DragOverlay, so while
+   * dragging this row stays put as a dashed gap (Week and Today).
+   */
   weekDragLift?: boolean;
   /**
    * Inbox-only: when true, an unscheduled task carrying a `suggestedScheduledDate`
@@ -205,10 +208,9 @@ export function TaskRow({
   const lensReveal = useReveal();
   const activeReveal = reveal ?? lensReveal;
 
-  // Project stripe (Spec v2): an always-on channel in the project's hue; loose and
-  // personal tasks fall back to the category colour. A neutral marker shows while
-  // the category is unresolved. The richer category treatments (list grouping,
-  // fills) stay lens-gated — only the stripe is persistent.
+  // The project's colour (Spec v2/v5): the dot on the project line, and the tint of
+  // the row's hover / selected fill. Loose and personal tasks fall back to the
+  // category colour; an unresolved category stays neutral.
   const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
   const stripeColor = resolvedCategory
     ? taskSolidVar({ category: resolvedCategory, projectHue: task.projectHue })
@@ -217,8 +219,10 @@ export function TaskRow({
     ? (task.projectName ?? categoryLabel(resolvedCategory))
     : "No category yet";
 
-  const relativeDue =
-    activeReveal.due && !suppressDue ? formatRelativeDue(task.scheduledDate) : null;
+  // Spec v2/v5: overdue and due-today pills always show; a future date is plain
+  // muted text and only under the due lens. Day-grouped surfaces suppress it.
+  const duePill = suppressDue ? null : formatDuePill(task.scheduledDate);
+  const shownDue = duePill && (duePill.tone !== "muted" || activeReveal.due) ? duePill : null;
   // Inbox-only: an unscheduled task carrying a chat-suggested day offers a
   // one-tap Accept that commits the suggestion (Phase 4). A committed task
   // (non-null scheduledDate) never shows it.
@@ -235,14 +239,9 @@ export function TaskRow({
     if (title) return title;
     return task.blockedByIds.length === 1 ? "blocker" : `${task.blockedByIds.length} blockers`;
   }, [isBlocked, task.blockedByIds, task.taskTitleById]);
-  const isOverdue = relativeDue?.emphasis === "danger";
-  const dueEmphasisClass =
-    relativeDue?.emphasis === "danger"
-      ? "font-medium text-[var(--due-overdue)]"
-      : relativeDue?.emphasis === "soon"
-        ? "font-medium text-[var(--due-soon)]"
-        : "text-[var(--due-future)]";
-  const showProjectIndicator = Boolean(activeReveal.project && showProject && task.projectName);
+  // Spec v5: the project line (dot + name) is always on — it replaces the stripe.
+  // Loose tasks show their category instead.
+  const showProjectLine = Boolean(showProject && resolvedCategory);
   const { revealOffset, flingOffset, isRevealOpen, hide, consumeSwipe, containerRef } = useRowSwipe(
     {
       revealWidth: REVEAL_WIDTH_PX,
@@ -538,7 +537,7 @@ export function TaskRow({
   return (
     <li
       ref={setRootRef}
-      className={`relative grid overflow-hidden rounded-[var(--radius-card)] ${
+      className={`kash-tint-scope relative grid overflow-hidden rounded-row ${
         completing ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
       } ${arriveIndex != null ? "row-arrive" : ""} ${
         weekDragLift && !isDragging && !completing
@@ -552,7 +551,9 @@ export function TaskRow({
             // `space-y-2` gap this row contributes so the collapse closes fully.
             "!mt-0 translate-x-6 opacity-0 transition-[grid-template-rows,transform,opacity,margin] duration-medium ease-exit motion-reduce:translate-x-0 motion-reduce:duration-short"
           : weekDragWithOverlay
-            ? "opacity-40"
+            ? // Spec v5 DragA: the row lifts into the overlay; its slot stays open
+              // as a dashed gap.
+              "outline-dashed outline-[1.5px] -outline-offset-2 outline-outline-border [&>*]:invisible"
             : isDragging
               ? "opacity-60"
               : weekDragLift
@@ -560,6 +561,7 @@ export function TaskRow({
                 : "transition-transform"
       } ${highlightClassName ?? ""}`}
       style={{
+        ["--tint" as string]: stripeColor,
         transform: completing ? undefined : dragTransform || undefined,
         ...(arriveIndex != null
           ? {
@@ -568,12 +570,12 @@ export function TaskRow({
           : undefined),
       }}
     >
-      <div ref={containerRef} className="relative min-h-0 touch-pan-y overflow-hidden rounded-card">
+      <div ref={containerRef} className="relative min-h-0 touch-pan-y overflow-hidden rounded-row">
         {/* Complete-tone hint revealed under the row as it flings right (D1). */}
         {flingOffset > 0 ? (
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center rounded-card pl-3"
+            className="pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center rounded-row pl-3"
             style={{
               width: flingOffset,
               backgroundColor: "color-mix(in srgb, var(--action-complete) 14%, transparent)",
@@ -585,9 +587,9 @@ export function TaskRow({
         <div
           ref={rowContentRef}
           data-task-row={task.id}
-          className={`relative flex min-h-[var(--row-min-height)] cursor-pointer items-start gap-2 overflow-hidden rounded-card bg-surface px-3 py-[var(--row-py)] transition-transform duration-short ease-move motion-reduce:transition-none ${
-            isBlocked ? "border-l-2 border-dashed border-ink-faint" : ""
-          } ${task.isTop3 ? "border-l-2 border-accent" : ""} ${selected ? "ring-2 ring-[var(--accent-soft)]" : ""}`}
+          className={`relative flex min-h-12 cursor-pointer items-center gap-3 overflow-hidden rounded-row px-2 py-1.5 transition-[transform,background-color] duration-short ease-move motion-reduce:transition-none ${
+            selected ? "bg-tint-pressed" : "bg-surface hover:bg-tint-hover"
+          } ${isBlocked ? "border-l-2 border-dashed border-ink-faint" : ""}`}
           style={flingOffset > 0 ? { transform: `translateX(${flingOffset}px)` } : undefined}
           onClick={() => {
             // A pointer swipe ends in a click — suppress the select it would fire.
@@ -601,21 +603,24 @@ export function TaskRow({
             setContextMenu({ x: e.clientX, y: e.clientY });
           }}
         >
-          <span
-            className={`mt-0.5 w-[var(--stripe-width)] shrink-0 self-stretch rounded-full${
-              task.categoryUnresolved ? "stripe-resolving" : ""
-            }`}
-            style={{ backgroundColor: stripeColor }}
-            aria-label={stripeLabel}
-            title={stripeLabel}
+          <TaskDragHandle
+            ref={setActivatorNodeRef}
+            listeners={listeners}
+            attributes={dragAttributes}
+          />
+
+          <Checkbox
+            round
+            className="!size-5"
+            checked={completing}
+            disabled={isBlocked || completing}
+            aria-label={`Complete ${task.title}`}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => completeSelfRef.current()}
           />
 
           {task.isTop3 ? (
-            <span
-              className="shrink-0"
-              style={{ color: resolvedCategory ? stripeColor : "var(--accent)" }}
-              aria-label="Top 3"
-            >
+            <span className="shrink-0" style={{ color: "var(--accent)" }} aria-label="Top 3">
               ★
             </span>
           ) : null}
@@ -691,36 +696,29 @@ export function TaskRow({
             ) : (
               <>
                 <span
-                  className={`block break-words text-sm leading-snug ${
+                  className={`block break-words text-body font-medium leading-snug ${
                     completing ? "text-ink-faint line-through" : "text-ink"
-                  } ${isOverdue ? "font-medium" : ""}`}
+                  }`}
                 >
                   {task.title}
                 </span>
+                {showProjectLine ? (
+                  <ProjectLine
+                    projectId={task.projectId}
+                    label={
+                      task.projectName
+                        ? `${task.projectName}${task.phaseName ? ` · ${task.phaseName}` : ""}`
+                        : stripeLabel
+                    }
+                    color={stripeColor}
+                  />
+                ) : null}
                 {(task.tags?.length ?? 0) > 0 ? (
                   <TaskTagChips tags={task.tags ?? []} className="mt-1" />
                 ) : null}
               </>
             )}
           </div>
-
-          {showProjectIndicator && task.projectId ? (
-            <Link
-              href={`/projects/${task.projectId}`}
-              className="mt-0.5 flex max-w-[11rem] shrink-0 items-center gap-1.5 text-xs text-ink-muted underline underline-offset-2 hover:text-accent"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: phaseRampColor(task.projectId, task.phaseSortOrder) }}
-                aria-hidden
-              />
-              <span className="truncate">
-                {task.projectName}
-                {task.phaseName ? ` · ${task.phaseName}` : ""}
-              </span>
-            </Link>
-          ) : null}
 
           {suggestion ? (
             <SuggestedDateChip
@@ -739,25 +737,14 @@ export function TaskRow({
             />
           ) : null}
 
-          {relativeDue ? (
-            <span className={`mt-0.5 shrink-0 self-start text-xs ${dueEmphasisClass}`}>
-              {relativeDue.text}
-            </span>
-          ) : null}
+          {shownDue ? <DueChip due={shownDue} /> : null}
 
-          {activeReveal.priority ? (
-            <TaskPriorityIndicator priority={task.priority} reserveSpace />
-          ) : null}
-
-          <TaskDragHandle
-            ref={setActivatorNodeRef}
-            listeners={listeners}
-            attributes={dragAttributes}
-          />
+          {/* Spec v2: only High is marked, so it is never lens-gated. */}
+          <TaskPriorityIndicator priority={task.priority} />
 
           <SwipeActionRail
             open={actionRailOpen}
-            className="-my-[var(--row-py)] -mr-3"
+            className="-my-1.5 -mr-2"
             actions={[
               {
                 key: "edit",
@@ -796,5 +783,55 @@ export function TaskRow({
         />
       ) : null}
     </li>
+  );
+}
+
+/** Spec v5 second line: the project's dot + name (or the category, for loose tasks). */
+function ProjectLine({
+  projectId,
+  label,
+  color,
+}: {
+  projectId: string | null;
+  label: string;
+  color: string;
+}) {
+  const content = (
+    <>
+      <span
+        className="size-1.5 shrink-0 rounded-pill"
+        style={{ backgroundColor: color }}
+        aria-hidden
+      />
+      <span className="truncate">{label}</span>
+    </>
+  );
+  const className = "mt-0.5 flex max-w-full items-center gap-1.5 text-caption text-ink-muted";
+  return projectId ? (
+    <Link
+      href={`/projects/${projectId}`}
+      className={`${className} w-fit hover:text-ink hover:underline`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {content}
+    </Link>
+  ) : (
+    <span className={className}>{content}</span>
+  );
+}
+
+/** Overdue = crimson on soft crimson, today = ink on soft gray, future = muted text. */
+function DueChip({ due }: { due: DuePill }) {
+  if (due.tone === "muted") {
+    return <span className="shrink-0 text-caption text-[var(--due-future)]">{due.text}</span>;
+  }
+  return (
+    <span
+      className={`shrink-0 rounded-pill px-2.5 py-0.5 text-caption font-semibold ${
+        due.tone === "overdue" ? "bg-critical-soft text-critical" : "bg-active-surface text-ink"
+      }`}
+    >
+      {due.text}
+    </span>
   );
 }

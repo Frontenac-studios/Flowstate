@@ -3,7 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { focusBlocks, tasks } from "@/db/tables";
+import { DEFAULT_FOCUS_BLOCK_MINUTES } from "@/lib/timeline/focus-block-defaults";
+import { focusBlocks, projects, tasks } from "@/db/tables";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
 
@@ -11,7 +12,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (Y
 
 const DAY_MINUTES = 24 * 60;
 const SNAP_MINUTES = 15;
-const DEFAULT_DURATION = 45;
+const DEFAULT_DURATION = DEFAULT_FOCUS_BLOCK_MINUTES;
 
 /** Snap to the nearest 15-minute increment and clamp a start into the day. */
 function snap(min: number): number {
@@ -52,9 +53,13 @@ export const focusBlocksRouter = createTRPCRouter({
           category: tasks.category,
           categoryUnresolved: tasks.categoryUnresolved,
           isTop3: tasks.isTop3,
+          // Spec v5: schedule blocks are tinted in the task's project colour.
+          projectName: projects.name,
+          projectHue: projects.hue,
         })
         .from(focusBlocks)
         .innerJoin(tasks, eq(tasks.id, focusBlocks.taskId))
+        .leftJoin(projects, eq(projects.id, tasks.projectId))
         .where(and(eq(focusBlocks.userId, ctx.userId), eq(focusBlocks.date, input.date)))
         .orderBy(asc(focusBlocks.startMin));
     }),

@@ -12,11 +12,13 @@ import { toISODateString } from "@/lib/dates/local-day";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { categoryLabel } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { projectFillVar, projectSolidVar, projectTextVar } from "@/lib/projects/project-hue";
 import { DEFAULT_DAY_END_HOUR, DEFAULT_DAY_START_HOUR } from "@/lib/settings/constants";
 import {
   computeTimelineRange,
   defaultViewportTopMin,
   TIMELINE_VIEWPORT_MINUTES,
+  TIMELINE_HOUR_HEIGHT,
 } from "@/lib/timeline/adaptive-window";
 import { layoutBlocks } from "@/lib/timeline/layout-blocks";
 import { timelineBlockStyle } from "@/lib/timeline/block-geometry";
@@ -37,7 +39,7 @@ import { TOP3_HOLD_LABEL } from "@/lib/top3/constants";
 import { ChevronLeft, ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import IconButton from "@/components/kash/ui/IconButton";
 
-const HOUR_HEIGHT = 56; // px per hour
+const HOUR_HEIGHT = TIMELINE_HOUR_HEIGHT; // px per hour (Spec v5 schedule rail)
 const SLOT_MINUTES = 15;
 /** Height of the visible scroll window — the six-hour default viewport. */
 const VIEWPORT_HEIGHT = (TIMELINE_VIEWPORT_MINUTES / 60) * HOUR_HEIGHT;
@@ -57,11 +59,41 @@ type Block = {
   category: ProjectCategory | null;
   categoryUnresolved: boolean;
   isTop3: boolean;
+  projectName?: string | null;
+  projectHue?: number | null;
+};
+
+/** Spec v5 DragA: where a dragged task would land, drawn as a tinted block. */
+export type TimelineDropPreview = {
+  startMin: number;
+  endMin: number;
+  category: ProjectCategory | null;
+  projectHue?: number | null;
 };
 
 /** The left-stripe colour for a block/marker: its category, or the accent when unresolved. */
 function stripeColor(category: ProjectCategory | null, unresolved: boolean): string {
   return category && !unresolved ? categorySolidVar(category) : "var(--accent)";
+}
+
+/**
+ * Spec v5 schedule block colours: tinted in the task's project hue (fill + a 3px
+ * inset stripe + the time line in the project's ink). Unresolved → neutral gray.
+ */
+function blockColors(block: Pick<Block, "category" | "categoryUnresolved" | "projectHue">): {
+  solid: string;
+  fill: string;
+  ink: string;
+} {
+  if (!block.category || block.categoryUnresolved) {
+    return { solid: "var(--ink-faint)", fill: "var(--surface-2)", ink: "var(--ink-muted)" };
+  }
+  const source = { category: block.category, hue: block.projectHue };
+  return {
+    solid: projectSolidVar(source),
+    fill: projectFillVar(source),
+    ink: projectTextVar(source),
+  };
 }
 
 function formatDuration(min: number): string {
@@ -94,7 +126,10 @@ function TimelineSlot({ min, top }: { min: number; top: number }) {
   return (
     <div
       ref={setNodeRef}
-      className={`absolute left-11 right-1 ${isOver ? "rounded bg-[var(--accent-soft)]" : ""}`}
+      // No hover fill: while a task is dragged here the canvas draws the tinted
+      // drop preview (Spec v5 DragA) instead.
+      className="absolute left-11 right-1"
+      data-over={isOver || undefined}
       style={{ top, height: (SLOT_MINUTES / 60) * HOUR_HEIGHT }}
     />
   );
@@ -108,7 +143,8 @@ function TimelineNowDrop({ nowMin, rangeStart }: { nowMin: number; rangeStart: n
   return (
     <div
       ref={setNodeRef}
-      className={`absolute left-11 right-1 z-sticky rounded ${isOver ? "bg-[var(--accent-soft)]" : ""}`}
+      className="absolute left-11 right-1 z-sticky rounded"
+      data-over={isOver || undefined}
       style={{ top: centerTop - slotHeight, height: slotHeight * 2 }}
       title="Drop to start focus now"
     />
@@ -289,6 +325,7 @@ function TimelineBlock({
   const top = ((startMin - rangeStart) / 60) * HOUR_HEIGHT;
   const height = Math.max(18, ((endMin - startMin) / 60) * HOUR_HEIGHT);
   const geometry = timelineBlockStyle({ col: block.col, cols: block.cols }, top, height);
+  const colors = blockColors(block);
 
   const beginResize = (edge: "top" | "bottom") => (e: React.PointerEvent) => {
     if (done) return;
@@ -320,12 +357,13 @@ function TimelineBlock({
   return (
     <div
       ref={setNodeRef}
-      className={`absolute flex flex-col overflow-hidden rounded-pill border border-l-[var(--stripe-width)] bg-surface ${
-        done ? "opacity-60" : ""
-      } ${active ? "ring-1 ring-accent" : ""} ${isDragging ? "z-sticky opacity-80" : ""}`}
+      className={`absolute flex flex-col overflow-hidden rounded-row ${done ? "opacity-60" : ""} ${
+        active ? "ring-1 ring-ink" : ""
+      } ${isDragging ? "z-sticky opacity-80" : ""}`}
       style={{
         ...geometry,
-        borderLeftColor: stripeColor(block.category, block.categoryUnresolved),
+        backgroundColor: colors.fill,
+        boxShadow: `inset var(--stripe-width) 0 0 ${colors.solid}`,
         transform: CSS.Translate.toString(transform),
       }}
       onDoubleClick={() => (done ? undefined : onOpen(block.taskId, block.id))}
@@ -342,30 +380,18 @@ function TimelineBlock({
         />
       ) : null}
 
-      <div className="flex items-center gap-1 px-2 py-1">
+      <div className="flex items-center gap-1 pl-3 pr-1 pt-1">
         {block.isTop3 ? (
           <span className="shrink-0 text-caption leading-none text-accent" title="Top 3">
             ★
           </span>
         ) : null}
         <span
-          className={`min-w-0 flex-1 truncate text-xs font-medium text-ink ${
+          className={`min-w-0 flex-1 truncate text-caption font-semibold text-ink ${
             done ? "line-through" : ""
           }`}
         >
           {block.title}
-        </span>
-        <span
-          className={`shrink-0 text-caption tabular-nums ${
-            active ? "font-medium text-accent" : "text-ink-muted"
-          }`}
-          title={done ? "Focused time" : active ? "Running" : "Starts"}
-        >
-          {done
-            ? `✓ ${formatDuration(durationMin)}`
-            : active
-              ? formatDuration(elapsedMin)
-              : formatClock(startMin)}
         </span>
         {!done ? (
           <button
@@ -410,6 +436,18 @@ function TimelineBlock({
           ×
         </button>
       </div>
+      <span
+        className={`truncate pl-3 pr-2 text-caption tabular-nums ${active ? "font-semibold" : ""}`}
+        style={{ color: colors.ink }}
+        title={done ? "Focused time" : active ? "Running" : "Starts"}
+      >
+        {done
+          ? `✓ ${formatDuration(durationMin)}`
+          : active
+            ? formatDuration(elapsedMin)
+            : formatClock(startMin)}
+        {block.projectName ? ` · ${block.projectName}` : ""}
+      </span>
 
       {!done ? (
         <div
@@ -446,12 +484,14 @@ type TimelinePaneProps = {
   /** D14/V3: hide decide slot, gap rows, and sync badge until the day has tasks or blocks. */
   planItemCount?: number;
   /**
-   * D11/V3 slim rail: List view collapses the timeline to a mini-map that expands
-   * on click. Calendar view keeps the full pane (`"full"`).
+   * Spec v5: List view shows a 280px schedule rail beside the list (it can fold to
+   * a mini-map). Calendar view keeps the full pane (`"full"`).
    */
   density?: "full" | "rail";
   /** Calendar sync status — badge only when `"on"` or `"error"`. */
   syncStatus?: TimelineSyncStatus;
+  /** A task being dragged over the grid — drawn as a tinted block with its time range. */
+  dropPreview?: TimelineDropPreview | null;
   className?: string;
 };
 
@@ -460,6 +500,7 @@ export function TimelinePane({
   planItemCount = 0,
   density = "full",
   syncStatus = "off",
+  dropPreview = null,
   className,
 }: TimelinePaneProps) {
   const trpc = useTRPC();
@@ -469,11 +510,13 @@ export function TimelinePane({
   useStaleCalendarSync();
   const tzOffsetMinutes = clientTzOffsetMinutes();
   const [now, setNow] = useState<Date | null>(null);
-  const [railExpanded, setRailExpanded] = useState(false);
+  // Spec v5: the schedule rail is open by default beside the list (it can still
+  // fold to the mini-map).
+  const [railExpanded, setRailExpanded] = useState(true);
 
   useEffect(() => {
-    // Calendar view always shows the full pane; reset when switching back to list.
-    if (density === "full") setRailExpanded(false);
+    // Calendar view always shows the full pane; reopen the rail when back in list.
+    if (density === "full") setRailExpanded(true);
   }, [density]);
 
   useEffect(() => {
@@ -661,7 +704,7 @@ export function TimelinePane({
 
     return (
       <section
-        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card border border-border bg-surface py-3 shadow-surface ${className ?? ""}`}
+        className={`flex w-[4.5rem] shrink-0 flex-col items-center self-stretch rounded-card bg-surface py-3 ${className ?? ""}`}
         aria-label="Today timeline mini-map"
       >
         <button
@@ -699,7 +742,7 @@ export function TimelinePane({
             })}
             {nowFrac != null ? (
               <span
-                className="absolute inset-x-[-2px] h-0.5 rounded-full bg-accent"
+                className="absolute inset-x-[-2px] h-0.5 rounded-full bg-ink"
                 style={{ top: nowFrac * railHeight }}
               />
             ) : null}
@@ -714,10 +757,12 @@ export function TimelinePane({
 
   return (
     <section
-      className={`flex min-w-[16rem] flex-1 flex-col rounded-card border border-border bg-surface p-4 shadow-surface ${className ?? ""}`}
-      aria-label="Today timeline"
+      className={`flex flex-col gap-3 ${
+        density === "rail" ? "w-full shrink-0 lg:w-[280px]" : "min-w-[16rem] flex-1"
+      } ${className ?? ""}`}
+      aria-label="Today schedule"
     >
-      <header className="mb-3 flex items-center gap-2">
+      <header className="flex min-h-7 items-center gap-2">
         {density === "rail" ? (
           <IconButton
             type="button"
@@ -729,10 +774,15 @@ export function TimelinePane({
             <ChevronLeft {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
           </IconButton>
         ) : null}
-        <h2 className="text-sm font-medium uppercase tracking-wide text-ink-muted">Timeline</h2>
-        <span className="text-xs text-ink-muted">
-          · today · {formatHour(startHour)}–{formatHour(endHour)}
-        </span>
+        {/* Spec v5: "SCHEDULE" in label caps above a plain white card. */}
+        <h2 className="text-micro font-semibold uppercase tracking-caps text-ink-muted">
+          Schedule
+        </h2>
+        {density === "full" ? (
+          <span className="text-caption text-ink-muted">
+            · {formatHour(startHour)}–{formatHour(endHour)}
+          </span>
+        ) : null}
         {showSyncBadge ? (
           <span
             className={`ml-auto rounded-pill border px-2 py-0.5 text-xs ${
@@ -747,169 +797,210 @@ export function TimelinePane({
         ) : null}
       </header>
 
-      {allDayProtected.length > 0 || allDayExternal.length > 0 ? (
-        <ul className="mb-3 space-y-1.5" aria-label="All-day events today">
-          {allDayProtected.map((block) => (
-            <ProtectedBlockChip
-              key={block.id}
-              block={block}
-              onRemove={(id) => removeProtectedMutation.mutate({ id })}
-            />
-          ))}
-          {allDayExternal.map((event) => (
-            <ExternalEventAllDayChip key={event.id} event={event} />
-          ))}
-        </ul>
-      ) : null}
-
-      <div className="relative">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="relative overflow-y-auto overflow-x-hidden pt-2"
-          style={{ height: VIEWPORT_HEIGHT }}
-        >
-          <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
-            {hours.map((hour, i) => (
-              <div
-                key={hour}
-                className="absolute inset-x-0 flex items-start"
-                style={{ top: i * HOUR_HEIGHT, height: HOUR_HEIGHT }}
-              >
-                <span className="w-9 shrink-0 -translate-y-2 text-right text-caption tabular-nums text-ink-muted">
-                  {formatHour(hour)}
-                </span>
-                <div className="ml-2 flex-1 border-t border-dashed border-[var(--border)]" />
-              </div>
-            ))}
-
-            {slots.map((min) => (
-              <TimelineSlot key={min} min={min} top={((min - rangeStart) / 60) * HOUR_HEIGHT} />
-            ))}
-
-            {laidOutGrid.map((item) =>
-              item.kind === "external" ? (
-                <ExternalEventBlock
-                  key={`external-${item.id}`}
-                  event={item}
-                  layout={{ col: item.col, cols: item.cols }}
-                  rangeStart={rangeStart}
-                />
-              ) : item.kind === "protected" ? (
-                <ProtectedTimelineBlock
-                  key={`protected-${item.id}`}
-                  block={item}
-                  layout={{ col: item.col, cols: item.cols }}
-                  rangeStart={rangeStart}
-                />
-              ) : (
-                <TimelineBlock
-                  key={item.id}
-                  block={item}
-                  rangeStart={rangeStart}
-                  rangeEnd={rangeEnd}
-                  nowMin={nowMinutes}
-                  onResize={(id, startMin, endMin) =>
-                    resizeMutation.mutate({ id, startMin, endMin })
-                  }
-                  onRemove={(id) => removeMutation.mutate({ id })}
-                  onComplete={(id) => completeMutation.mutate({ id })}
-                  onOpen={openFocus}
-                />
-              )
-            )}
-
-            {top3HoldOffer?.show && top3HoldOffer.slot ? (
-              <Top3HoldGhost
-                slot={top3HoldOffer.slot}
-                rangeStart={rangeStart}
-                onConfirm={top3HoldOffer.onConfirm}
-                onDismiss={top3HoldOffer.onDismiss}
-                confirming={top3HoldOffer.confirming}
+      <div className="rounded-card bg-surface py-3 pr-3">
+        {allDayProtected.length > 0 || allDayExternal.length > 0 ? (
+          <ul className="mb-3 space-y-1.5 pl-3" aria-label="All-day events today">
+            {allDayProtected.map((block) => (
+              <ProtectedBlockChip
+                key={block.id}
+                block={block}
+                onRemove={(id) => removeProtectedMutation.mutate({ id })}
               />
-            ) : null}
-
-            {untimedCompletions.map((t) => (
-              <div
-                key={`done-${t.id}`}
-                className="pointer-events-none absolute left-11 right-1 flex items-center gap-1.5"
-                style={{ top: ((t.min - rangeStart) / 60) * HOUR_HEIGHT }}
-                title={`Completed ${formatClock(t.min)}`}
-              >
-                <span
-                  className="size-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: stripeColor(t.category, t.categoryUnresolved) }}
-                />
-                <span className="min-w-0 flex-1 truncate text-caption text-ink-muted line-through">
-                  {t.title}
-                </span>
-                <span className="shrink-0 text-caption text-ink-muted">✓</span>
-              </div>
             ))}
+            {allDayExternal.map((event) => (
+              <ExternalEventAllDayChip key={event.id} event={event} />
+            ))}
+          </ul>
+        ) : null}
 
-            {showTimelineChrome && decideSlotMin != null ? (
-              <div
-                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-[var(--border)] text-caption text-ink-muted"
-                style={{
-                  top: ((decideSlotMin - rangeStart) / 60) * HOUR_HEIGHT,
-                  height: (NEXT_BLOCK_MIN / 60) * HOUR_HEIGHT - 4,
-                }}
-              >
-                <span>Decide</span>
-                <kbd className="rounded border border-border bg-surface-2 px-1 py-0.5 font-sans text-caption">
-                  ⌘D
-                </kbd>
-                <span>drops the next block here</span>
-              </div>
-            ) : null}
+        <div className="relative">
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="relative overflow-y-auto overflow-x-hidden pt-2"
+            style={{ height: VIEWPORT_HEIGHT }}
+          >
+            <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
+              {hours.map((hour, i) => (
+                <div
+                  key={hour}
+                  className="absolute inset-x-0 flex items-start"
+                  style={{ top: i * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+                >
+                  <span className="w-9 shrink-0 -translate-y-2 pr-2 text-right text-caption tabular-nums text-ink-muted">
+                    {formatHour(hour)}
+                  </span>
+                  <div className="flex-1 border-t border-menu-divider" />
+                </div>
+              ))}
 
-            {showNowLine ? <TimelineNowDrop nowMin={nowMinutes!} rangeStart={rangeStart} /> : null}
+              {slots.map((min) => (
+                <TimelineSlot key={min} min={min} top={((min - rangeStart) / 60) * HOUR_HEIGHT} />
+              ))}
 
-            {isDayEmpty ? (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
-                <p className="max-w-[16rem] text-center text-caption text-ink-muted">
-                  Nothing scheduled yet. Drag a task onto the timeline to block time, or press{" "}
-                  <kbd className="rounded border border-border bg-surface-2 px-1 font-sans">⌘D</kbd>{" "}
-                  to drop the next block.
-                </p>
-              </div>
-            ) : null}
+              {laidOutGrid.map((item) =>
+                item.kind === "external" ? (
+                  <ExternalEventBlock
+                    key={`external-${item.id}`}
+                    event={item}
+                    layout={{ col: item.col, cols: item.cols }}
+                    rangeStart={rangeStart}
+                  />
+                ) : item.kind === "protected" ? (
+                  <ProtectedTimelineBlock
+                    key={`protected-${item.id}`}
+                    block={item}
+                    layout={{ col: item.col, cols: item.cols }}
+                    rangeStart={rangeStart}
+                  />
+                ) : (
+                  <TimelineBlock
+                    key={item.id}
+                    block={item}
+                    rangeStart={rangeStart}
+                    rangeEnd={rangeEnd}
+                    nowMin={nowMinutes}
+                    onResize={(id, startMin, endMin) =>
+                      resizeMutation.mutate({ id, startMin, endMin })
+                    }
+                    onRemove={(id) => removeMutation.mutate({ id })}
+                    onComplete={(id) => completeMutation.mutate({ id })}
+                    onOpen={openFocus}
+                  />
+                )
+              )}
 
-            {showNowLine ? (
-              <div
-                className="pointer-events-none absolute inset-x-0 z-sticky flex items-center"
-                style={{ top: ((nowMinutes! - rangeStart) / 60) * HOUR_HEIGHT }}
-                aria-hidden
-              >
-                <span className="w-9 shrink-0 -translate-y-2 text-right text-caption font-medium text-accent">
-                  now
-                </span>
-                <div className="ml-2 flex-1 border-t border-accent" />
-                <span className="ml-1 shrink-0 -translate-y-2 text-caption font-medium tabular-nums text-accent">
-                  {formatClock(nowMinutes!)}
-                </span>
-              </div>
-            ) : null}
+              {top3HoldOffer?.show && top3HoldOffer.slot ? (
+                <Top3HoldGhost
+                  slot={top3HoldOffer.slot}
+                  rangeStart={rangeStart}
+                  onConfirm={top3HoldOffer.onConfirm}
+                  onDismiss={top3HoldOffer.onDismiss}
+                  confirming={top3HoldOffer.confirming}
+                />
+              ) : null}
+
+              {untimedCompletions.map((t) => (
+                <div
+                  key={`done-${t.id}`}
+                  className="pointer-events-none absolute left-11 right-1 flex items-center gap-1.5"
+                  style={{ top: ((t.min - rangeStart) / 60) * HOUR_HEIGHT }}
+                  title={`Completed ${formatClock(t.min)}`}
+                >
+                  <span
+                    className="size-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: stripeColor(t.category, t.categoryUnresolved) }}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-caption text-ink-muted line-through">
+                    {t.title}
+                  </span>
+                  <span className="shrink-0 text-caption text-ink-muted">✓</span>
+                </div>
+              ))}
+
+              {showTimelineChrome && decideSlotMin != null ? (
+                <div
+                  className="pointer-events-none absolute left-11 right-1 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-[var(--border)] text-caption text-ink-muted"
+                  style={{
+                    top: ((decideSlotMin - rangeStart) / 60) * HOUR_HEIGHT,
+                    height: (NEXT_BLOCK_MIN / 60) * HOUR_HEIGHT - 4,
+                  }}
+                >
+                  <span>Decide</span>
+                  <kbd className="rounded border border-border bg-surface-2 px-1 py-0.5 font-sans text-caption">
+                    ⌘D
+                  </kbd>
+                  <span>drops the next block here</span>
+                </div>
+              ) : null}
+
+              {showNowLine ? (
+                <TimelineNowDrop nowMin={nowMinutes!} rangeStart={rangeStart} />
+              ) : null}
+
+              {dropPreview ? (
+                <DropPreviewBlock preview={dropPreview} rangeStart={rangeStart} />
+              ) : null}
+
+              {isDayEmpty ? (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
+                  <p className="max-w-[16rem] text-center text-caption text-ink-muted">
+                    Nothing scheduled yet. Drag a task onto the timeline to block time, or press{" "}
+                    <kbd className="rounded border border-border bg-surface-2 px-1 font-sans">
+                      ⌘D
+                    </kbd>{" "}
+                    to drop the next block.
+                  </p>
+                </div>
+              ) : null}
+
+              {showNowLine ? (
+                <div
+                  className="pointer-events-none absolute inset-x-0 z-sticky flex items-center"
+                  style={{ top: ((nowMinutes! - rangeStart) / 60) * HOUR_HEIGHT }}
+                  aria-hidden
+                >
+                  {/* Spec v5: a 2px ink now-line with a dot at its start. */}
+                  <span className="w-9 shrink-0" />
+                  <span className="-ml-1 size-2 shrink-0 rounded-pill bg-ink" />
+                  <div className="h-0.5 flex-1 bg-ink" />
+                  <span className="sr-only">Now, {formatClock(nowMinutes!)}</span>
+                </div>
+              ) : null}
+            </div>
           </div>
+
+          {nowOffscreen ? (
+            <button
+              type="button"
+              onClick={scrollToNow}
+              className="kash-focus-visible absolute bottom-2 right-2 z-sticky rounded-pill border border-outline-border bg-surface px-2.5 py-0.5 text-caption font-semibold text-ink shadow-surface outline-none"
+            >
+              {nowTopPx != null && scrollRef.current && nowTopPx < scrollRef.current.scrollTop
+                ? "↑"
+                : "↓"}{" "}
+              jump to now
+            </button>
+          ) : null}
         </div>
 
-        {nowOffscreen ? (
-          <button
-            type="button"
-            onClick={scrollToNow}
-            className="absolute bottom-2 right-2 z-sticky rounded-pill border bg-surface px-2 py-0.5 text-caption font-medium text-accent shadow-surface"
-          >
-            {nowTopPx != null && scrollRef.current && nowTopPx < scrollRef.current.scrollTop
-              ? "↑"
-              : "↓"}{" "}
-            jump to now
-          </button>
+        {blocks.length === 0 && !isDayEmpty ? (
+          <p className="mt-3 pl-3 text-center text-caption text-ink-muted">
+            Drag a task here to block 45 min.
+          </p>
         ) : null}
       </div>
-
-      {blocks.length === 0 && !isDayEmpty ? (
-        <p className="mt-3 text-center text-xs text-ink-muted">Drag a task here to block 45 min.</p>
-      ) : null}
     </section>
+  );
+}
+
+/** Spec v5 DragA: the tinted block previewing where a dragged task lands. */
+function DropPreviewBlock({
+  preview,
+  rangeStart,
+}: {
+  preview: TimelineDropPreview;
+  rangeStart: number;
+}) {
+  const top = ((preview.startMin - rangeStart) / 60) * HOUR_HEIGHT;
+  const height = ((preview.endMin - preview.startMin) / 60) * HOUR_HEIGHT;
+  const colors = blockColors({
+    category: preview.category,
+    categoryUnresolved: false,
+    projectHue: preview.projectHue,
+  });
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute z-sticky rounded-row py-1.5 pl-3 pr-2 text-caption font-semibold tabular-nums opacity-90"
+      style={{
+        ...timelineBlockStyle({ col: 0, cols: 1 }, top, height),
+        backgroundColor: colors.fill,
+        boxShadow: `inset var(--stripe-width) 0 0 ${colors.solid}`,
+        color: colors.ink,
+      }}
+    >
+      {formatClock(preview.startMin)}–{formatClock(preview.endMin)}
+    </div>
   );
 }
