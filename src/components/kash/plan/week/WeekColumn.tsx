@@ -42,6 +42,7 @@ type Props = {
   /** D5 selection: the currently-highlighted task id across the whole week. */
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
+  onOpenTask?: (taskId: string) => void;
   onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
@@ -81,6 +82,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
     showProject = true,
     selectedTaskId = null,
     onSelectTask,
+    onOpenTask,
     onActivateTask,
     onComplete,
     onDelete,
@@ -166,6 +168,7 @@ export const WeekColumn = forwardRef<HTMLDivElement, Props>(function WeekColumn(
             canPin={canPinMore}
             selected={selectedTaskId === task.id}
             onSelect={onSelectTask}
+            onOpenDetail={onOpenTask}
             onActivate={onActivateTask}
             onPin={onPinTask}
             onComplete={onComplete}

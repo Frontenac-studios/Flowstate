@@ -15,9 +15,16 @@ type Props = {
   tags: string[];
   disabled?: boolean;
   onChange: (tags: string[]) => void;
+  /** Hide the built-in "Tags" heading when the host already labels the section. */
+  hideHeading?: boolean;
 };
 
-export default function TaskTagsEditor({ tags, disabled = false, onChange }: Props) {
+export default function TaskTagsEditor({
+  tags,
+  disabled = false,
+  onChange,
+  hideHeading = false,
+}: Props) {
   const trpc = useTRPC();
   const { data: tagVocabulary = [] } = useQuery(trpc.tasks.listTagVocabulary.queryOptions());
   const [draft, setDraft] = useState("");
@@ -50,7 +57,7 @@ export default function TaskTagsEditor({ tags, disabled = false, onChange }: Pro
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-ink">Tags</span>
+      {hideHeading ? null : <span className="text-sm font-medium text-ink">Tags</span>}
       {current.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {current.map((tag) => (
@@ -59,7 +66,7 @@ export default function TaskTagsEditor({ tags, disabled = false, onChange }: Pro
               type="button"
               disabled={disabled}
               onClick={() => removeTag(tag)}
-              className="flex items-center gap-1 rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink transition hover:text-ink-muted disabled:opacity-50"
+              className="kash-focus-visible flex h-6 items-center gap-1 rounded-pill bg-active-surface px-2.5 text-caption font-semibold text-ink outline-none transition-colors hover:bg-tint-pressed disabled:opacity-40"
               aria-label={`Remove tag ${tag}`}
             >
               <HashIcon size={10} className="text-ink-muted" />
@@ -69,7 +76,7 @@ export default function TaskTagsEditor({ tags, disabled = false, onChange }: Pro
           ))}
         </div>
       ) : (
-        <p className="text-xs text-ink-muted">No tags yet — add one below.</p>
+        <p className="text-meta text-ink-muted">No tags yet — add one below.</p>
       )}
 
       <Input

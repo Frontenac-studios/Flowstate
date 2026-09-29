@@ -27,6 +27,7 @@ type Props = {
   /** D5 selection: the currently-highlighted task id across the whole week. */
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
+  onOpenTask?: (taskId: string) => void;
   onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onDelete: (snapshot: TaskSnapshot) => void;
@@ -44,6 +45,7 @@ export function WeekInbox({
   forceExpanded = false,
   selectedTaskId = null,
   onSelectTask,
+  onOpenTask,
   onActivateTask,
   onComplete,
   onDelete,
@@ -146,6 +148,7 @@ export function WeekInbox({
                     showSuggestedDate
                     selected={selectedTaskId === task.id}
                     onSelect={onSelectTask}
+                    onOpenDetail={onOpenTask}
                     onActivate={onActivateTask}
                     onComplete={onComplete}
                     onDelete={onDelete}

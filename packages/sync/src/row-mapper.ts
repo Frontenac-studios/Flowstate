@@ -64,6 +64,8 @@ export function mapRemoteRow(
     "last_used_at",
     "expires_at",
     "revoked_at",
+    // task_checklist_items (Spec v5 DetailA)
+    "done_at",
   ];
 
   for (const key of dateFields) {

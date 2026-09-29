@@ -7,6 +7,7 @@ import { taskMatchesTagFilter } from "@/lib/tasks/tags";
 
 import type { LensProperty, LensState } from "./lens";
 import type { PlanTaskRow } from "@/components/kash/plan/TaskRow";
+import { effectiveDueDate } from "./overdue";
 
 /** A sentinel value-key for "this property is absent on the task". */
 export const LENS_NONE = "none";
@@ -82,7 +83,8 @@ export function taskLensValue(
     case "project":
       return task.projectId ?? LENS_NONE;
     case "due":
-      return dueBucket(task.scheduledDate, today);
+      // Spec v5: the deadline when set, else the planned day.
+      return dueBucket(effectiveDueDate(task), today);
   }
 }
 

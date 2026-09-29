@@ -242,3 +242,42 @@ describe("sqlite projects.hue", () => {
     expect(hues).toEqual({ a: 1, b: 2, c: 7, old: 4, p: null });
   });
 });
+
+// Spec v5 DetailA: tasks gain due_date + notes (ADDED_COLUMNS) and a checklist table
+// that cascades with its task.
+describe("sqlite task detail (due_date, notes, checklist)", () => {
+  it("adds due_date and notes to an existing tasks table", () => {
+    const sqlite = new Database(":memory:");
+    runSqliteMigrations(sqlite);
+    const columns = (
+      sqlite.prepare("PRAGMA table_info(tasks)").all() as Array<{ name: string }>
+    ).map((c) => c.name);
+    expect(columns).toEqual(expect.arrayContaining(["due_date", "notes"]));
+  });
+
+  it("round-trips a checklist item and cascades it with its task", async () => {
+    const { db, sqlite } = createSqliteDb(":memory:");
+    sqlite.pragma("foreign_keys = ON");
+    const [task] = await db
+      .insert(schema.tasks)
+      .values({
+        userId: USER,
+        title: "Review wireframes",
+        category: "business",
+        dueDate: "2026-10-01",
+        notes: "hero copy",
+      })
+      .returning();
+    await db
+      .insert(schema.taskChecklistItems)
+      .values({ userId: USER, taskId: task!.id, text: "Desktop frames" });
+
+    const items = await db.select().from(schema.taskChecklistItems);
+    expect(items).toHaveLength(1);
+    expect(items[0]!.doneAt).toBeNull();
+    expect(items[0]!.sortOrder).toBe(0);
+
+    await db.delete(schema.tasks).where(eq(schema.tasks.id, task!.id));
+    expect(await db.select().from(schema.taskChecklistItems)).toHaveLength(0);
+  });
+});

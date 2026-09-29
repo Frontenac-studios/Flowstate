@@ -38,6 +38,7 @@ export * from "./reserved-days";
 export * from "./targets";
 export * from "./tasks";
 export * from "./task-bulk-imports";
+export * from "./task-checklist-items";
 export * from "./task-recurrence";
 export * from "./task-occurrence-overrides";
 export * from "./time-entries";

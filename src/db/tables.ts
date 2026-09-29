@@ -28,6 +28,7 @@ import { dayReviews as pgDayReviews } from "./schema/day-reviews";
 import { focusBlocks as pgFocusBlocks } from "./schema/focus-blocks";
 import { phases as pgPhases } from "./schema/phases";
 import { projectMilestones as pgProjectMilestones } from "./schema/project-milestones";
+import { taskChecklistItems as pgTaskChecklistItems } from "./schema/task-checklist-items";
 import { projectTemplates as pgProjectTemplates } from "./schema/project-templates";
 import { projects as pgProjects } from "./schema/projects";
 import { protectedBlockTemplates as pgProtectedBlockTemplates } from "./schema/protected-block-templates";
@@ -58,6 +59,9 @@ export const phases = (isSqliteMode() ? sqliteSchema.phases : pgPhases) as typeo
 export const projectMilestones = (
   isSqliteMode() ? sqliteSchema.projectMilestones : pgProjectMilestones
 ) as typeof pgProjectMilestones;
+export const taskChecklistItems = (
+  isSqliteMode() ? sqliteSchema.taskChecklistItems : pgTaskChecklistItems
+) as typeof pgTaskChecklistItems;
 export const taskBulkImports = (
   isSqliteMode() ? sqliteSchema.taskBulkImports : pgTaskBulkImports
 ) as typeof pgTaskBulkImports;

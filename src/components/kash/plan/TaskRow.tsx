@@ -30,6 +30,7 @@ import { useRowSwipe } from "@/hooks/useRowSwipe";
 import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { formatDuePill, type DuePill } from "@/lib/dates/format-due-pill";
+import { effectiveDueDate } from "@/lib/tasks/overdue";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { taskSolidVar } from "@/lib/projects/project-hue";
 import { type RevealFlags } from "@/lib/tasks/lens";
@@ -70,6 +71,8 @@ export type PlanTaskRow = {
   taskTitleById?: Record<string, string>;
   // Surfaced under the due lens as a relative label (VF-1).
   scheduledDate?: string | null;
+  /** Spec v5 deadline, separate from the planned day. */
+  dueDate?: string | null;
   /**
    * Chat-proposed day carried on an unscheduled inbox task. When set with a null
    * scheduledDate, the inbox surfaces a chip + Accept button (chat-first creation).
@@ -94,6 +97,8 @@ type Props = {
   task: PlanTaskRow;
   selected?: boolean;
   onSelect?: (taskId: string) => void;
+  /** Spec v5 DetailA: a single click opens the task detail sheet. */
+  onOpenDetail?: (taskId: string) => void;
   /** Double-click / activate — opens the task in focus mode. */
   onActivate?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
@@ -143,6 +148,7 @@ export function TaskRow({
   task,
   selected = false,
   onSelect,
+  onOpenDetail,
   onActivate,
   onComplete,
   onDelete,
@@ -201,6 +207,13 @@ export function TaskRow({
   // closure without re-subscribing the gesture/event listeners each render.
   const completeSelfRef = useRef<() => void>(() => {});
   const runSwipeComplete = useCallback(() => completeSelfRef.current(), []);
+  const openDetailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (openDetailTimer.current) clearTimeout(openDetailTimer.current);
+    },
+    []
+  );
 
   // Clean by default; indicators reveal per active lens (VF-2). The surrounding
   // LensProvider renders clean on the server / first paint, then hydrates from
@@ -221,7 +234,8 @@ export function TaskRow({
 
   // Spec v2/v5: overdue and due-today pills always show; a future date is plain
   // muted text and only under the due lens. Day-grouped surfaces suppress it.
-  const duePill = suppressDue ? null : formatDuePill(task.scheduledDate);
+  // Spec v5: the deadline when set, else the planned day.
+  const duePill = suppressDue ? null : formatDuePill(effectiveDueDate(task));
   const shownDue = duePill && (duePill.tone !== "muted" || activeReveal.due) ? duePill : null;
   // Inbox-only: an unscheduled task carrying a chat-suggested day offers a
   // one-tap Accept that commits the suggestion (Phase 4). A committed task
@@ -591,12 +605,22 @@ export function TaskRow({
             selected ? "bg-tint-pressed" : "bg-surface hover:bg-tint-hover"
           } ${isBlocked ? "border-l-2 border-dashed border-ink-faint" : ""}`}
           style={flingOffset > 0 ? { transform: `translateX(${flingOffset}px)` } : undefined}
-          onClick={() => {
+          onClick={(e) => {
             // A pointer swipe ends in a click — suppress the select it would fire.
             if (consumeSwipe()) return;
             onSelect?.(task.id);
+            // Open the detail sheet on a single click only: wait out the
+            // double-click window so a double-click still goes to focus mode.
+            // Recurring occurrences are virtual rows with no task to open.
+            if (onOpenDetail && !task.isRecurringOccurrence && e.detail === 1) {
+              if (openDetailTimer.current) clearTimeout(openDetailTimer.current);
+              openDetailTimer.current = setTimeout(() => onOpenDetail(task.id), 220);
+            }
           }}
-          onDoubleClick={() => onActivate?.(task.id)}
+          onDoubleClick={() => {
+            if (openDetailTimer.current) clearTimeout(openDetailTimer.current);
+            onActivate?.(task.id);
+          }}
           onContextMenu={(e) => {
             e.preventDefault();
             hide();

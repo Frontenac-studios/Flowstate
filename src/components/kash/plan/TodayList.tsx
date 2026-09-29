@@ -24,6 +24,7 @@ type Props = {
   onRetry?: () => void;
   selectedTaskId?: string | null;
   onSelectTask?: (taskId: string) => void;
+  onOpenTask?: (taskId: string) => void;
   onActivateTask?: (taskId: string) => void;
   onComplete: (taskId: string, previousCompletedAt: Date | null) => void;
   onUncomplete?: (taskId: string) => void;
@@ -78,6 +79,7 @@ export function TodayList({
   onRetry,
   selectedTaskId,
   onSelectTask,
+  onOpenTask,
   onActivateTask,
   onComplete,
   onUncomplete,
@@ -159,6 +161,7 @@ export function TodayList({
                     task={task}
                     selected={selectedTaskId === task.id}
                     onSelect={onSelectTask}
+                    onOpenDetail={onOpenTask}
                     onActivate={onActivateTask}
                     onComplete={onComplete}
                     onDelete={onDelete}

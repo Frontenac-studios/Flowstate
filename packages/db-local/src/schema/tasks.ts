@@ -17,6 +17,9 @@ export const tasks = sqliteTable(
     priority: integer("priority").notNull().default(0),
     sortOrder: integer("sort_order").notNull().default(0),
     scheduledDate: text("scheduled_date"),
+    // Spec v5 deadline + notes, mirroring Postgres (plain date string / text).
+    dueDate: text("due_date"),
+    notes: text("notes"),
     bucketOverride: text("bucket_override"),
     // Chat-proposed day for an inbox task; a plain date string mirroring Postgres.
     suggestedScheduledDate: text("suggested_scheduled_date"),

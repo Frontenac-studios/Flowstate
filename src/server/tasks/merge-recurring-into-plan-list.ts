@@ -10,6 +10,8 @@ export type PlanListTaskRow = {
   title: string;
   priority: number;
   scheduledDate: string | null;
+  /** Spec v5 deadline; recurring occurrences never carry one. */
+  dueDate?: string | null;
   bucketOverride: string | null;
   /** Chat-proposed day carried on an inbox task until Accept/drag commits it. */
   suggestedScheduledDate: string | null;
@@ -122,6 +124,7 @@ export function mergeRecurringIntoPlanList({
         title: patched.title,
         priority: patched.priority,
         scheduledDate: occurrence.displayDate,
+        dueDate: null,
         bucketOverride: null,
         suggestedScheduledDate: null,
         projectId: template.projectId,

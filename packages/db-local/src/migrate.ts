@@ -255,6 +255,19 @@ CREATE INDEX IF NOT EXISTS time_entries_user_id_updated_at_idx ON time_entries (
 CREATE INDEX IF NOT EXISTS time_entries_user_id_started_at_idx ON time_entries (user_id, started_at);
 CREATE INDEX IF NOT EXISTS time_entries_user_id_project_id_idx ON time_entries (user_id, project_id);
 
+CREATE TABLE IF NOT EXISTS task_checklist_items (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  done_at INTEGER,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS task_checklist_items_task_id_sort_idx ON task_checklist_items (task_id, sort_order);
+CREATE INDEX IF NOT EXISTS task_checklist_items_user_id_updated_at_idx ON task_checklist_items (user_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS task_recurrence (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL,
@@ -810,6 +823,9 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "projects", column: "swept_kept_until", definition: "INTEGER" },
   // Spec v2 — per-project hue (1–8; null for personal projects).
   { table: "projects", column: "hue", definition: "INTEGER" },
+  // Spec v5 DetailA — task deadline + notes.
+  { table: "tasks", column: "due_date", definition: "TEXT" },
+  { table: "tasks", column: "notes", definition: "TEXT" },
   { table: "targets", column: "swept_kept_until", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_first_run_at", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_tilt_business_pct", definition: "INTEGER" },
@@ -858,6 +874,9 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
   // (created before the column) makes the index reference a missing column.
   sqlite.exec(
     "CREATE INDEX IF NOT EXISTS projects_user_id_client_id_idx ON projects (user_id, client_id);"
+  );
+  sqlite.exec(
+    "CREATE INDEX IF NOT EXISTS tasks_user_id_due_date_idx ON tasks (user_id, due_date);"
   );
 
   // The org-bootstrap guard, mirroring drizzle/0059. Same reason as the index

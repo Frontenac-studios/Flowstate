@@ -102,6 +102,7 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   task_bulk_import_items: "org_shared",
   task_bulk_imports: "org_shared",
   task_occurrence_overrides: "org_shared",
+  task_checklist_items: "org_shared",
   task_recurrence: "org_shared",
   tasks: "org_shared",
   // A tag is invoice structure — the shape of the work, not money. The billable

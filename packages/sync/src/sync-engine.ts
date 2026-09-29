@@ -15,6 +15,7 @@ import {
   sourcingSettings,
   phases,
   projectMilestones,
+  taskChecklistItems,
   projectFees,
   projects,
   projectTemplates,
@@ -474,6 +475,7 @@ async function upsertRow(
       return true;
     }
     case "project_milestones":
+    case "task_checklist_items":
     case "directions":
     case "targets":
     case "leads":
@@ -485,6 +487,7 @@ async function upsertRow(
     case "reserved_days": {
       const tableMap = {
         project_milestones: projectMilestones,
+        task_checklist_items: taskChecklistItems,
         directions,
         targets,
         leads,

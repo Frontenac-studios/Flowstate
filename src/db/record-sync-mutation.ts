@@ -205,6 +205,14 @@ export async function syncProjectMilestoneRow(
   await recordSyncMutation({ table: "project_milestones", rowId, op, payload });
 }
 
+export async function syncTaskChecklistItemRow(
+  rowId: string,
+  op: SyncOp,
+  payload: unknown
+): Promise<void> {
+  await recordSyncMutation({ table: "task_checklist_items", rowId, op, payload });
+}
+
 export async function syncTaskBulkImportRow(
   rowId: string,
   op: SyncOp,
