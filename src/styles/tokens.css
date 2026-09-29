@@ -262,8 +262,8 @@
 
   /* ---- layout spacing (web defaults — match current Tailwind literals) ---- */
   --nav-rail-width: 4rem;
-  --nav-rail-width-expanded: 12.5rem;
-  --nav-item-height: 3rem;
+  --nav-rail-width-expanded: 15rem; /* Spec v5: 240px labelled rail (was 12.5rem) */
+  --nav-item-height: 2.25rem; /* Spec v2/v5: 36px items (was 3rem) */
   /* Mobile bottom tab bar (below lg). The bar is a --mobile-nav-height row plus
      max(--space-1, safe-area) bottom padding; fixed elements add
      --mobile-nav-clearance to their bottom offsets so they clear the full bar. */
@@ -288,7 +288,7 @@
    data-spacing-variant="b" on <html> (dev preview at /dev/spacing-preview). */
 html.is-desktop {
   --nav-rail-width: 3rem;
-  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 4.375);
+  --nav-rail-width-expanded: 15rem; /* Spec v5: 240px, same as web */
   --nav-item-height: calc(var(--nav-rail-width) * 0.75);
   --shell-gap: calc(var(--nav-rail-width) * 0.5);
   --shell-pad: calc(var(--nav-rail-width) * 0.5);
@@ -301,10 +301,11 @@ html.is-desktop {
   --chat-rail-width: calc(var(--nav-rail-width) * 7);
 }
 
-/* Desktop fullscreen — nav rail stays expanded, but trimmed ~20% narrower so it
-   reclaims horizontal space for the content + coach dock (was 4.75×). */
+/* Desktop fullscreen — nav rail stays expanded, but trimmed narrower than the 240px
+   peek so it reclaims space for the content + coach dock, while still fitting the
+   Projects group's names and counts (Spec v5). Was 3.8× (182px). */
 html.is-desktop.is-fullscreen {
-  --nav-rail-width-expanded: calc(var(--nav-rail-width) * 3.8);
+  --nav-rail-width-expanded: 13.5rem;
 }
 
 html.is-desktop[data-spacing-variant="b"] {
