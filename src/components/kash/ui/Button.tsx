@@ -3,15 +3,20 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * The button set (Spec v2). Every variant is a pill:
- * - `primary`          — filled ink, the default. (Reverses the old rule where an
- *   outline meant primary.)
- * - `secondary`        — soft gray fill (`--active-surface`).
+ * The button set (Spec v2 shapes, Spec v3 states). Every variant is a pill:
+ * - `primary`          — filled ink, the default. Hover #2a2d34, pressed #000.
+ * - `secondary`        — soft gray fill; hover adds a border in the context tint.
+ * - `outline`          — white with a hairline border; the quiet action in dialogs
+ *   and sheets (Cancel, Delete-in-a-sheet).
  * - `tertiary`         — underlined text link, for skip / cancel.
  * - `ghost`            — borderless muted pill for icon+label chrome actions.
  * - `soft-destructive` — soft crimson; the everyday delete / remove.
  * - `destructive`      — solid crimson, reserved for the final irreversible
  *   confirm (§9: crimson fill appears only on irreversible-danger paths).
+ *
+ * States (Spec v3 Ib): hover and pressed are fills, never a scale change; disabled is
+ * 40% opacity; keyboard focus is the tint underline from `kash-focus-visible`. Inside
+ * a `.kash-tint-scope` the tint is the project's colour, elsewhere gray.
  *
  * Font-size is intentionally NOT set here so a caller's `text-sm`/`text-xs`
  * wins on source order (see cn). Pass extra utilities via `className`.
@@ -19,55 +24,59 @@ import { cn } from "@/lib/cn";
 export type ButtonVariant =
   | "primary"
   | "secondary"
+  | "outline"
   | "tertiary"
   | "ghost"
   | "soft-destructive"
   | "destructive";
 
 const FOCUS_VISIBLE = "kash-focus-visible outline-none";
-const DISABLED = "disabled:cursor-not-allowed disabled:opacity-50";
-const PRESS = "active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+const DISABLED = "disabled:cursor-not-allowed disabled:opacity-40";
 const SOLID =
-  "inline-flex items-center justify-center gap-2 rounded-pill px-4 py-2 font-semibold transition";
+  "inline-flex items-center justify-center gap-2 rounded-pill border px-4 py-2 font-semibold transition-colors motion-reduce:transition-none";
+// Border colour is per variant, never in SOLID: cn() doesn't merge, so a shared
+// `border-transparent` would beat the outline variant's border on CSS order.
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: cn(
     SOLID,
-    "bg-accent text-accent-on hover:bg-accent-hover",
+    "border-transparent bg-accent text-accent-on hover:bg-primary-hover active:bg-primary-pressed",
     // a KeyCap shortcut hint inside the ink pill inverts to a translucent chip
     "[&_kbd]:rounded-pill [&_kbd]:border-transparent [&_kbd]:bg-white/15 [&_kbd]:text-micro [&_kbd]:font-semibold [&_kbd]:text-accent-on",
-    PRESS,
     DISABLED,
     FOCUS_VISIBLE
   ),
   secondary: cn(
     SOLID,
-    "bg-active-surface text-ink hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--active-surface))]",
-    PRESS,
+    "border-transparent bg-active-surface text-ink hover:border-tint-border active:bg-tint-pressed aria-expanded:bg-tint-open",
+    DISABLED,
+    FOCUS_VISIBLE
+  ),
+  outline: cn(
+    SOLID,
+    "border-outline-border bg-surface text-ink hover:bg-tint-hover active:bg-tint-pressed",
     DISABLED,
     FOCUS_VISIBLE
   ),
   tertiary: cn(
-    "inline-flex items-center gap-2 rounded-pill px-1.5 py-2 font-semibold text-ink underline decoration-[var(--check-border)] underline-offset-[3px] transition hover:decoration-ink",
+    "inline-flex items-center gap-2 rounded-pill px-1.5 py-2 font-semibold text-ink underline decoration-[var(--check-border)] underline-offset-[3px] transition-colors hover:decoration-ink",
     DISABLED,
     FOCUS_VISIBLE
   ),
   ghost: cn(
-    "inline-flex items-center gap-2 rounded-pill border border-transparent bg-transparent px-3 py-1.5 text-ink-muted transition hover:border-border hover:bg-surface-2 hover:text-ink",
+    "inline-flex items-center gap-2 rounded-pill border border-transparent bg-transparent px-3 py-1.5 text-ink-muted transition-colors hover:bg-tint-hover hover:text-ink active:bg-tint-pressed aria-expanded:bg-tint-open aria-expanded:text-ink",
     DISABLED,
     FOCUS_VISIBLE
   ),
   "soft-destructive": cn(
     SOLID,
-    "bg-critical-soft text-critical hover:bg-[color-mix(in_srgb,var(--status-critical)_16%,var(--surface))]",
-    PRESS,
+    "border-transparent bg-critical-soft text-critical hover:bg-[color-mix(in_srgb,var(--status-critical)_16%,var(--surface))] active:bg-[color-mix(in_srgb,var(--status-critical)_22%,var(--surface))]",
     DISABLED,
     FOCUS_VISIBLE
   ),
   destructive: cn(
     SOLID,
-    "bg-critical text-accent-on hover:opacity-90",
-    PRESS,
+    "border-transparent bg-critical text-accent-on hover:bg-[color-mix(in_srgb,var(--status-critical)_88%,#000)] active:bg-[color-mix(in_srgb,var(--status-critical)_76%,#000)]",
     DISABLED,
     FOCUS_VISIBLE
   ),

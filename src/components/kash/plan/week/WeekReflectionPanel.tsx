@@ -111,7 +111,7 @@ export function WeekReflectionPanel() {
           type="button"
           onClick={handleGenerate}
           disabled={generateMutation.isPending}
-          className="shrink-0 rounded-pill border border-border bg-surface px-2.5 py-1 text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
+          className="kash-focus-visible shrink-0 rounded-pill border border-border bg-surface px-2.5 py-1 text-xs text-ink-muted transition hover:text-ink focus:outline-none disabled:opacity-50"
         >
           {generateMutation.isPending ? "Generating…" : "Generate with AI"}
         </button>

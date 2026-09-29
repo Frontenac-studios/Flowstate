@@ -23,6 +23,7 @@ import {
 } from "@/server/tasks/resolve-task-category";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
+import { hueForNewProject } from "@/server/projects/next-project-hue";
 
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const typeSchema = z.enum(["idea", "task"]);
@@ -438,6 +439,7 @@ export const abyssRouter = createTRPCRouter({
             name: item.title,
             slug: await uniqueProjectSlug(ctx.userId, item.title),
             category,
+            hue: await hueForNewProject(db, ctx.userId, category),
           })
           .returning();
         if (!project) {

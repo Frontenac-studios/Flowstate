@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
 import { MoreHorizontal, kashIconProps } from "@/components/kash/ui/icon";
@@ -39,6 +39,7 @@ export default function ProjectWorkspaceHeader({
   showTemplateFeatures = true,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
 
   return (
@@ -48,7 +49,7 @@ export default function ProjectWorkspaceHeader({
           {showBackToProjects ? (
             <Link
               href="/projects"
-              className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+              className="kash-focus-visible rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none"
             >
               ← Projects
             </Link>
@@ -74,6 +75,7 @@ export default function ProjectWorkspaceHeader({
         />
         <div className="relative">
           <IconButton
+            ref={menuTriggerRef}
             type="button"
             aria-label={`Actions for ${project.name}`}
             aria-haspopup="menu"
@@ -86,6 +88,7 @@ export default function ProjectWorkspaceHeader({
             <ProjectMenu
               project={project}
               showTemplateFeatures={showTemplateFeatures}
+              triggerRef={menuTriggerRef}
               onClose={() => setMenuOpen(false)}
             />
           ) : null}

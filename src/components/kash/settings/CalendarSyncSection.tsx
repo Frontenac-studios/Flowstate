@@ -2,9 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import ConfirmDialog from "@/components/kash/projects/ConfirmDialog";
 import Button from "@/components/kash/ui/Button";
+import Switch from "@/components/kash/ui/Switch";
 import { useTRPC } from "@/trpc/client";
 
 type SyncStatus = "off" | "on" | "error";
@@ -52,7 +54,7 @@ function syncStatusLabel(status: SyncStatus): string {
 function syncStatusClass(status: SyncStatus): string {
   if (status === "error") return "border-critical text-critical";
   if (status === "on") return "border-border bg-surface text-ink-muted";
-  return "border-subtle text-ink-faint";
+  return "border-subtle text-ink-muted";
 }
 
 function CalendarAiToggle({
@@ -64,25 +66,28 @@ function CalendarAiToggle({
   disabled?: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const labelId = useId();
+  const descriptionId = useId();
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-chip)] border border-subtle bg-surface p-3">
-      <input
-        type="checkbox"
-        className="mt-0.5"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>
-        <span className="text-sm font-medium text-ink">
+    <div className="flex items-start justify-between gap-4 py-2">
+      <div className="min-w-0">
+        <span id={labelId} className="block text-sm font-medium text-ink">
           Include calendar details in AI suggestions
         </span>
-        <span className="mt-0.5 block text-sm text-ink-muted">
+        <span id={descriptionId} className="mt-0.5 block text-sm text-ink-muted">
           When off, Kash only uses event counts and busy durations — not titles or locations.
           Private events are always hidden in planning surfaces.
         </span>
-      </span>
-    </label>
+      </div>
+      <Switch
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onChange}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
+        className="mt-0.5"
+      />
+    </div>
   );
 }
 
@@ -205,14 +210,19 @@ export function CalendarSyncSection() {
     syncMutation.mutate();
   };
 
+  const disconnectFormRef = useRef<HTMLFormElement>(null);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
   const handleDisconnect = (event: React.FormEvent<HTMLFormElement>) => {
-    if (
-      !window.confirm(
-        "Disconnect Google Calendar? Synced events will be removed and planning will no longer include calendar busy time."
-      )
-    ) {
-      event.preventDefault();
-    }
+    // Hold the native POST until the user confirms in the dialog.
+    event.preventDefault();
+    setConfirmDisconnect(true);
+  };
+
+  const runDisconnect = () => {
+    setConfirmDisconnect(false);
+    // form.submit() skips onSubmit, so this posts straight to the disconnect route.
+    disconnectFormRef.current?.submit();
   };
 
   const status = syncStatus?.status ?? "off";
@@ -285,9 +295,9 @@ export function CalendarSyncSection() {
               </span>
             </p>
             {lastSyncedLabel ? (
-              <p className="mt-1 text-xs text-ink-faint">Last synced {lastSyncedLabel}</p>
+              <p className="mt-1 text-xs text-ink-muted">Last synced {lastSyncedLabel}</p>
             ) : (
-              <p className="mt-1 text-xs text-ink-faint">Not synced yet</p>
+              <p className="mt-1 text-xs text-ink-muted">Not synced yet</p>
             )}
             {status === "error" && (syncStatus?.lastError ?? connection.lastError) ? (
               <p className="mt-2 text-sm text-critical" role="alert">
@@ -331,7 +341,7 @@ export function CalendarSyncSection() {
                       <span className="min-w-0 flex-1 text-sm text-ink">
                         {calendar.name}
                         {calendar.primary ? (
-                          <span className="ml-1 text-xs text-ink-faint">(primary)</span>
+                          <span className="ml-1 text-xs text-ink-muted">(primary)</span>
                         ) : null}
                       </span>
                     </label>
@@ -379,6 +389,7 @@ export function CalendarSyncSection() {
           </div>
 
           <form
+            ref={disconnectFormRef}
             action="/api/calendar/google/disconnect"
             method="post"
             className="pt-2"
@@ -388,10 +399,19 @@ export function CalendarSyncSection() {
               Disconnect Google Calendar
             </Button>
           </form>
+          <ConfirmDialog
+            open={confirmDisconnect}
+            title="Disconnect Google Calendar?"
+            message="Synced events will be removed and planning will no longer include calendar busy time."
+            confirmLabel="Disconnect"
+            destructive
+            onConfirm={runDisconnect}
+            onCancel={() => setConfirmDisconnect(false)}
+          />
         </div>
       )}
 
-      <fieldset className="mt-4 space-y-2 border-t border-subtle pt-4" disabled={busy}>
+      <fieldset className="mt-4 space-y-1 border-t border-subtle pt-2" disabled={busy}>
         <legend className="sr-only">Calendar AI privacy</legend>
         <CalendarAiToggle
           checked={settings?.calendarAiEnabled ?? true}

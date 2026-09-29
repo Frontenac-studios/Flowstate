@@ -11,7 +11,7 @@ import {
   type OutlineMove,
 } from "@/lib/projects/plan-outline-moves";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import { useTRPC } from "@/trpc/client";
 
@@ -20,6 +20,8 @@ import type { ProjectPhase, ProjectTask } from "./types";
 type Props = {
   projectId: string;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   tree: ProjectTree<ProjectPhase, ProjectTask>;
 };
 
@@ -43,7 +45,7 @@ const GHOST =
  * be gone. Outdenting a task out of its last phase makes it a loose project task,
  * which is a state `tasks.phaseId` already models.
  */
-export default function PlanOutline({ projectId, category, tree }: Props) {
+export default function PlanOutline({ projectId, category, hue, tree }: Props) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -268,25 +270,25 @@ export default function PlanOutline({ projectId, category, tree }: Props) {
             <tr className="border-b border-border bg-surface-2">
               <th
                 scope="col"
-                className="px-3 py-2 text-left text-caption font-normal text-ink-faint"
+                className="px-3 py-2 text-left text-caption font-normal text-ink-muted"
               >
                 Phase and tasks
               </th>
               <th
                 scope="col"
-                className="px-2 py-2 text-right text-caption font-normal text-ink-faint"
+                className="px-2 py-2 text-right text-caption font-normal text-ink-muted"
               >
                 Due
               </th>
               <th
                 scope="col"
-                className="px-2 py-2 text-right text-caption font-normal text-ink-faint"
+                className="px-2 py-2 text-right text-caption font-normal text-ink-muted"
               >
                 Est
               </th>
               <th
                 scope="col"
-                className="px-2 py-2 text-right text-caption font-normal text-ink-faint"
+                className="px-2 py-2 text-right text-caption font-normal text-ink-muted"
               >
                 Logged
               </th>
@@ -313,7 +315,7 @@ export default function PlanOutline({ projectId, category, tree }: Props) {
                         <span
                           className="h-1.5 w-1.5 shrink-0 rounded-full"
                           style={{
-                            backgroundColor: categorySolidVar(category),
+                            backgroundColor: projectSolidVar({ category, hue }),
                             boxShadow: "0 0 0 1px var(--mark-ring)",
                           }}
                           aria-hidden
@@ -362,12 +364,12 @@ export default function PlanOutline({ projectId, category, tree }: Props) {
                         className={`${GHOST} w-[44px]`}
                       />
                     ) : (
-                      <span className="pr-1 text-ink-faint opacity-60">—</span>
+                      <span className="pr-1 text-ink-muted opacity-60">—</span>
                     )}
                   </td>
 
                   <td
-                    className={`${CELL} pr-3 ${row.hot ? "text-critical" : "text-ink-faint"}`}
+                    className={`${CELL} pr-3 ${row.hot ? "text-critical" : "text-ink-muted"}`}
                     title={row.hot ? "Budget is running ahead of the work" : undefined}
                   >
                     {row.actualHours === null ? (
@@ -384,25 +386,25 @@ export default function PlanOutline({ projectId, category, tree }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-border bg-surface-2 px-3 py-2">
-        <span className="text-caption text-ink-faint">
+        <span className="text-caption text-ink-muted">
           <kbd className="rounded border border-border bg-surface px-1">tab</kbd> indent
         </span>
-        <span className="text-caption text-ink-faint">
+        <span className="text-caption text-ink-muted">
           <kbd className="rounded border border-border bg-surface px-1">⇧tab</kbd> outdent
         </span>
-        <span className="text-caption text-ink-faint">
+        <span className="text-caption text-ink-muted">
           <kbd className="rounded border border-border bg-surface px-1">↵</kbd> new task
         </span>
-        <span className="text-caption text-ink-faint">
+        <span className="text-caption text-ink-muted">
           <kbd className="rounded border border-border bg-surface px-1">⇧↵</kbd> new phase
         </span>
         <span className="ml-auto text-caption" role="status">
           {error ? (
             <span className="text-critical">{error}</span>
           ) : busy ? (
-            <span className="text-ink-faint">Saving…</span>
+            <span className="text-ink-muted">Saving…</span>
           ) : (
-            <span className="text-ink-faint">Saved</span>
+            <span className="text-ink-muted">Saved</span>
           )}
         </span>
       </div>

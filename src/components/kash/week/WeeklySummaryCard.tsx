@@ -104,7 +104,7 @@ export default function WeeklySummaryCard() {
         <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
           This week
         </span>
-        <span className="text-xs text-ink-faint">{formatWeekRange(weekStart, weekEnd)}</span>
+        <span className="text-xs text-ink-muted">{formatWeekRange(weekStart, weekEnd)}</span>
       </div>
 
       <div className="mt-2">
@@ -141,7 +141,7 @@ export default function WeeklySummaryCard() {
                   {row.offerTitle ? (
                     <span className="truncate text-ink-muted">{row.offerTitle}</span>
                   ) : (
-                    <span className="text-ink-faint">Add something small</span>
+                    <span className="text-ink-muted">Add something small</span>
                   )}
                 </li>
               ))}

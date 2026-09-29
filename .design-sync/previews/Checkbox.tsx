@@ -1,6 +1,6 @@
 import Checkbox from "../../src/components/kash/ui/Checkbox";
 
-/** Native checkbox tinted via accentColor; defaults to --ink. */
+/** Spec v3: 18px square, 6px radius; checked = ink fill + white check. */
 export const States = () => (
   <div className="flex items-center gap-4">
     <Checkbox aria-label="Unchecked" />
@@ -10,7 +10,7 @@ export const States = () => (
   </div>
 );
 
-/** In a task row — the dominant use. */
+/** `round` for task completion — tasks are circles, checklists are squares. */
 export const InTaskRow = () => (
   <ul className="w-96 divide-y divide-[var(--border-subtle)] rounded-card border border-border bg-surface">
     {[
@@ -19,7 +19,7 @@ export const InTaskRow = () => (
       { label: "Draft the Hume scope note", done: false },
     ].map((t) => (
       <li key={t.label} className="flex items-center gap-[var(--space-2)] px-4 py-2">
-        <Checkbox aria-label={t.label} defaultChecked={t.done} />
+        <Checkbox round aria-label={t.label} defaultChecked={t.done} />
         <span className={t.done ? "text-body text-ink-faint line-through" : "text-body text-ink"}>
           {t.label}
         </span>

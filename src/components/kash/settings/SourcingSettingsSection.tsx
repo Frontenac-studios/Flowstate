@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
-import Checkbox from "@/components/kash/ui/Checkbox";
 import Input from "@/components/kash/ui/Input";
 import Select from "@/components/kash/ui/Select";
+import Switch from "@/components/kash/ui/Switch";
 import Textarea from "@/components/kash/ui/Textarea";
 import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import { DEFAULT_VOICE, DEFAULT_WEIGHTS } from "@/lib/sourcing/constants";
@@ -175,7 +175,7 @@ export default function SourcingSettingsSection() {
                   gap-filling.
                 </span>
               ) : healthBySegment.get(seg.id) ? (
-                <span className="text-caption text-ink-faint">
+                <span className="text-caption text-ink-muted">
                   {healthBySegment.get(seg.id)!.meanConfidence}% mean confidence over{" "}
                   {healthBySegment.get(seg.id)!.scored} prospects.
                 </span>
@@ -244,22 +244,28 @@ export default function SourcingSettingsSection() {
       {/* The weekly run — the only control here that spends money on its own. */}
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-medium text-ink">Weekly sourcing</h3>
-        <label className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            checked={weeklyRunEnabled}
-            onChange={(e) => setWeeklyRunEnabled(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span className="text-sm text-ink">
-            Source new prospects every Tuesday
-            <span className="mt-0.5 block text-caption text-ink-muted">
+        <div className="flex items-start justify-between gap-4 py-2">
+          <div className="min-w-0">
+            <span id="sourcing-weekly-run-label" className="block text-sm text-ink">
+              Source new prospects every Tuesday
+            </span>
+            <span
+              id="sourcing-weekly-run-description"
+              className="mt-0.5 block text-caption text-ink-muted"
+            >
               The agent searches the web against your ICP, then researches and scores what it finds
               — unattended, and it costs about 35¢ a prospect. Off by default. You can always run a
               batch by hand from the Pipeline board instead.
             </span>
-          </span>
-        </label>
+          </div>
+          <Switch
+            checked={weeklyRunEnabled}
+            onCheckedChange={setWeeklyRunEnabled}
+            aria-labelledby="sourcing-weekly-run-label"
+            aria-describedby="sourcing-weekly-run-description"
+            className="mt-0.5"
+          />
+        </div>
 
         <label className="flex items-center gap-2 text-sm text-ink-muted">
           Prospects per run
@@ -308,13 +314,16 @@ export default function SourcingSettingsSection() {
             </Select>
           </label>
         </div>
-        <label className="flex items-center gap-2 text-sm text-ink">
-          <Checkbox
+        <div className="flex items-center justify-between gap-4 text-sm text-ink">
+          <span id="cite-analogous-label">Cite an analogous won client in the opener</span>
+          <Switch
+            aria-labelledby="cite-analogous-label"
             checked={voice.citeAnalogousClient}
-            onChange={(e) => setVoice((v) => ({ ...v, citeAnalogousClient: e.target.checked }))}
+            onCheckedChange={(citeAnalogousClient) =>
+              setVoice((v) => ({ ...v, citeAnalogousClient }))
+            }
           />
-          Cite an analogous won client in the opener
-        </label>
+        </div>
         <Input
           aria-label="Signature"
           value={voice.signature}

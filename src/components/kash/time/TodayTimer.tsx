@@ -4,8 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import Input from "@/components/kash/ui/Input";
+import { OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
 import Select from "@/components/kash/ui/Select";
+import { useDismiss } from "@/hooks/useDismiss";
 import { useElapsedSeconds } from "@/hooks/useElapsedSeconds";
+import { cn } from "@/lib/cn";
 import { ensureNotifyPermission, showNotification } from "@/lib/notify/notify";
 import { formatElapsedClock } from "@/lib/time/duration";
 import { isLongRunningTimer } from "@/lib/time/timer-thresholds";
@@ -140,21 +143,7 @@ function StartTimerPopover({
 
   const close = useCallback(() => setOpen(false), []);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) close();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
+  useDismiss(open, [containerRef], close);
 
   const submit = () => {
     if (!effectiveProjectId) return;
@@ -181,7 +170,7 @@ function StartTimerPopover({
           id={menuId}
           role="dialog"
           aria-label="Start a timer"
-          className="absolute right-0 z-20 mt-1 flex w-64 flex-col gap-2 rounded-card border border-border bg-surface p-3 shadow-surface"
+          className={cn(OVERLAY_CARD, "absolute right-0 z-overlay mt-1 flex w-64 flex-col gap-2")}
         >
           {sorted.length === 0 ? (
             <p className="text-xs text-ink-muted">

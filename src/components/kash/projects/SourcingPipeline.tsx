@@ -430,7 +430,7 @@ export default function SourcingPipeline() {
                                 key={o.value}
                                 type="button"
                                 onClick={() => handleDismiss(lead.id, o.value)}
-                                className="rounded px-2 py-1.5 text-left text-sm text-ink transition hover:bg-surface-2"
+                                className="rounded px-2 py-1.5 text-left text-sm text-ink transition hover:bg-tint-hover"
                               >
                                 {o.label}
                               </button>

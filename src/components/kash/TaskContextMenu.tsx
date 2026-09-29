@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   Check,
@@ -10,6 +11,8 @@ import {
   Undo2,
   kashIconProps,
 } from "@/components/kash/ui/icon";
+import Menu, { MenuDivider, MenuItem } from "@/components/kash/ui/Menu";
+import { useDismiss } from "@/hooks/useDismiss";
 
 type Props = {
   /** Viewport coordinates of the right-click (the menu opens at the cursor). */
@@ -23,9 +26,6 @@ type Props = {
   onDelete: () => void;
   onClose: () => void;
 };
-
-const ITEM_CLASS =
-  "flex w-full items-center gap-2.5 rounded-control px-2 py-1.5 text-left text-body transition-colors hover:bg-surface-2 focus:outline-none focus-visible:bg-surface-2";
 
 const MENU_WIDTH_PX = 208;
 const VIEWPORT_MARGIN_PX = 8;
@@ -65,89 +65,63 @@ export default function TaskContextMenu({
     el.querySelector<HTMLButtonElement>("[role='menuitem']")?.focus();
   }, [x, y]);
 
-  useEffect(() => {
-    const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-      e.preventDefault();
-      const items = Array.from(
-        ref.current?.querySelectorAll<HTMLButtonElement>("[role='menuitem']") ?? []
-      );
-      if (items.length === 0) return;
-      const current = items.findIndex((el) => el === document.activeElement);
-      const delta = e.key === "ArrowDown" ? 1 : -1;
-      const next = (current + delta + items.length) % items.length;
-      items[next]!.focus();
-    };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+  // Arrow keys / Home / End are the Menu's; this closes on outside press + Escape.
+  useDismiss(true, [ref], onClose);
 
   const run = (action: () => void) => () => {
     action();
     onClose();
   };
 
-  return (
-    <div
+  // Portaled: a task row keeps a transform from its arrival animation, which turns
+  // `position: fixed` into "relative to the row" and clips the menu to the row.
+  return createPortal(
+    <Menu
       ref={ref}
-      role="menu"
       aria-label="Task actions"
-      className="fixed z-overlay flex flex-col rounded-card border border-border bg-surface p-1.5 shadow-overlay"
+      className="fixed"
       style={{ left: pos.x, top: pos.y, width: MENU_WIDTH_PX }}
     >
-      <button
-        type="button"
-        role="menuitem"
-        className={`${ITEM_CLASS} text-ink`}
-        onClick={run(onComplete)}
-      >
-        {completed ? (
-          <Undo2 {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })} aria-hidden />
-        ) : (
-          <Check
-            {...kashIconProps({ tokenSize: "sm", className: "text-[var(--action-complete)]" })}
-            aria-hidden
-          />
-        )}
-        {completed ? "Mark not done" : "Complete"}
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        className={`${ITEM_CLASS} text-ink`}
-        onClick={run(onEdit)}
-      >
-        <Pencil {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })} aria-hidden />
-        Edit
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        className={`${ITEM_CLASS} ${isRecurringOccurrence ? "text-ink" : "text-[var(--action-danger)]"}`}
-        onClick={run(onDelete)}
-      >
-        {isRecurringOccurrence ? (
-          <SkipForward
+      <MenuItem onClick={run(onComplete)}>
+        <span className="flex items-center gap-2.5">
+          {completed ? (
+            <Undo2
+              {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })}
+              aria-hidden
+            />
+          ) : (
+            <Check
+              {...kashIconProps({ tokenSize: "sm", className: "text-[var(--action-complete)]" })}
+              aria-hidden
+            />
+          )}
+          {completed ? "Mark not done" : "Complete"}
+        </span>
+      </MenuItem>
+      <MenuItem onClick={run(onEdit)}>
+        <span className="flex items-center gap-2.5">
+          <Pencil
             {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })}
             aria-hidden
           />
-        ) : (
-          <Trash2 {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
-        )}
-        {isRecurringOccurrence ? "Skip this occurrence" : "Delete"}
-      </button>
-    </div>
+          Edit
+        </span>
+      </MenuItem>
+      <MenuDivider />
+      <MenuItem destructive={!isRecurringOccurrence} onClick={run(onDelete)}>
+        <span className="flex items-center gap-2.5">
+          {isRecurringOccurrence ? (
+            <SkipForward
+              {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })}
+              aria-hidden
+            />
+          ) : (
+            <Trash2 {...kashIconProps({ tokenSize: "sm" })} aria-hidden />
+          )}
+          {isRecurringOccurrence ? "Skip this occurrence" : "Delete"}
+        </span>
+      </MenuItem>
+    </Menu>,
+    document.body
   );
 }

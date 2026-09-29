@@ -35,6 +35,22 @@ const config: Config = {
           soft: "var(--status-critical-soft)",
         },
         "control-border": "var(--control-border)",
+        "outline-border": "var(--outline-border)",
+        // Spec v3 interaction tint — gray outside a project, the project hue inside
+        // a .kash-tint-scope.
+        tint: {
+          DEFAULT: "var(--tint)",
+          hover: "var(--tint-hover)",
+          pressed: "var(--tint-pressed)",
+          open: "var(--tint-open)",
+          border: "var(--tint-border)",
+          ink: "var(--tint-ink)",
+        },
+        "primary-hover": "var(--primary-hover)",
+        "primary-pressed": "var(--primary-pressed)",
+        scrim: "var(--scrim)",
+        "menu-divider": "var(--menu-divider)",
+        "search-fill": "var(--search-fill)",
         "check-border": "var(--check-border)",
         cat: {
           professional: "var(--cat-professional-solid)",
@@ -97,6 +113,9 @@ const config: Config = {
       },
       boxShadow: {
         focus: "var(--focus-halo)",
+        menu: "var(--shadow-menu)",
+        dialog: "var(--shadow-dialog)",
+        sheet: "var(--shadow-sheet)",
         surface: "var(--shadow-surface)",
         overlay: "var(--shadow-overlay)",
       },

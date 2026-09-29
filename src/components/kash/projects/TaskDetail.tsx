@@ -120,7 +120,7 @@ export default function TaskDetail({
                 type="button"
                 onClick={() => onUpdate({ priority: p })}
                 aria-pressed={selected}
-                className={`flex min-w-0 flex-1 items-center justify-center rounded-full px-2 py-1 transition focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                className={`kash-focus-row flex min-w-0 flex-1 items-center justify-center rounded-full px-2 py-1 transition focus:outline-none ${
                   selected ? "text-on-accent bg-accent" : "text-ink-muted hover:text-ink"
                 }`}
               >
@@ -182,7 +182,7 @@ export default function TaskDetail({
         type="button"
         onClick={onRequestDelete}
         disabled={pending}
-        className="self-start text-sm text-critical transition hover:underline focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
+        className="kash-focus-visible self-start text-sm text-critical transition hover:underline focus:outline-none disabled:opacity-50"
       >
         Delete task
       </button>

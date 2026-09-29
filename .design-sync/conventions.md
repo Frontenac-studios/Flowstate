@@ -34,13 +34,13 @@ value, and never write a raw hex.
 | Surface           | `bg-surface` `bg-surface-2` `bg-canvas` `bg-bg`                                                                                                                               |
 | Active / selected | `bg-active-surface` `bg-active-raised` `border-active-raised-border`                                                                                                          |
 | Border            | `border-border` `border-subtle` · `border-emphasis` (the 1.5px stroke)                                                                                                        |
-| Ink               | `text-ink` `text-ink-muted` `text-ink-faint`                                                                                                                                  |
+| Ink               | `text-ink` `text-ink-muted` for all readable text (meta, counts, hints) · `ink-faint` is decorative only — placeholders, struck-through done titles, stripes                  |
 | Accent (= black)  | `bg-accent` `text-accent` `hover:bg-accent-hover` `text-accent-on` `bg-accent-soft`                                                                                           |
 | Danger            | `text-critical` `bg-critical` `bg-critical-soft`                                                                                                                              |
 | Project hue       | `bg-project-1` … `bg-project-8` `bg-project-personal`; tints via `var(--project-N-fill)` / `var(--project-N-text)`. Legacy category: `bg-cat-professional` `bg-cat-personal`. |
 | Fields            | `h-control` (40) `border-control-border` `shadow-focus` · `border-check-border`                                                                                               |
 | Radius            | `rounded-pill` for anything clickable (`rounded-control` and `rounded-chip` are pills too) · `rounded-card` (14) for containers · `rounded-row` (8) only for a selected row   |
-| Elevation         | `shadow-surface` (in-page objects) `shadow-overlay` (modals, popovers, toasts)                                                                                                |
+| Elevation         | `shadow-surface` (in-page objects) `shadow-menu` (menus, popovers) `shadow-dialog` (dialogs) `shadow-sheet` (side sheets) · `bg-scrim` behind dialogs and sheets              |
 | Type              | `text-micro` `text-caption` `text-meta` `text-body` `text-subtitle` `text-title` `text-h1` · `tracking-caps` · `font-medium` `font-semibold` `font-bold`                      |
 | Icon box          | `h-icon-sm w-icon-sm` … `-md` `-lg` `-xl`                                                                                                                                     |
 | Layout rhythm     | `gap-stack` `gap-section` `gap-shell` · `px-card-x` `py-card-y`                                                                                                               |
@@ -71,6 +71,17 @@ treatment — put it on any custom interactive element) and `text-balance`.
 - **Colour is semantic, never decorative.** A project's hue appears as its row stripe,
   dots and toast stripe — nothing else. Red is also a project hue, so danger always
   pairs crimson with text or an icon.
+- **States follow the context tint** (Spec v3). Hover = `bg-tint-hover`, pressed/selected =
+  `bg-tint-pressed`, a menu trigger while open = `bg-tint-open`, focus = the 2px underline from
+  `kash-focus-visible` (controls) or `kash-focus-row` (rows) — **never a ring**. Outside a
+  project the tint is gray; wrap a project surface in `kash-tint-scope` with
+  `style={{ "--tint": "var(--project-N-solid)" }}` and everything inside tints to the project.
+  Disabled is 40% opacity. No scale-on-press.
+- **Overlays:** menus and popovers are `Menu` (white card, no border, `shadow-menu`,
+  destructive item last); decisions are a `Dialog` (360px, centered); object detail is a
+  `Sheet` (right-docked, full height, no radius). All sit over `--scrim`. The quiet button in a
+  dialog or sheet is `variant="outline"`. On/off settings are a `Switch`; 2–3 short options
+  are `InPageSwitcher`, not a select.
 - **Only High priority is marked** — `TaskPriorityIndicator` shows a crimson "!" for
   High and nothing for Low/Med.
 - **Flat, not glassy.** `shadow-surface` is a whisper. Active states are carried by

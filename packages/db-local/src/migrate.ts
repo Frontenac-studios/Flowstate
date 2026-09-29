@@ -808,6 +808,8 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   // W7 — the Sweep: "kept until" marker on the three stale altitudes.
   { table: "tasks", column: "swept_kept_until", definition: "INTEGER" },
   { table: "projects", column: "swept_kept_until", definition: "INTEGER" },
+  // Spec v2 — per-project hue (1–8; null for personal projects).
+  { table: "projects", column: "hue", definition: "INTEGER" },
   { table: "targets", column: "swept_kept_until", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_first_run_at", definition: "INTEGER" },
   { table: "app_settings", column: "quarter_tilt_business_pct", definition: "INTEGER" },
@@ -884,6 +886,27 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
     );
   }
   sqlite.exec("DELETE FROM category_settings WHERE category NOT IN ('business', 'personal');");
+
+  // Spec v2 project hue backfill, mirroring drizzle/0065: each user's business
+  // projects get hues 1–8 in creation order, live projects first. Runs after the
+  // ADDED_COLUMNS loop (which adds `hue`) and touches only NULL rows, so it is a
+  // no-op once applied and never overrides a hue the user chose.
+  sqlite.exec(
+    `UPDATE projects
+       SET hue = (
+         SELECT numbered.hue FROM (
+           SELECT id,
+                  ((row_number() OVER (
+                    PARTITION BY user_id
+                    ORDER BY (archived_at IS NOT NULL), created_at, id
+                  ) - 1) % 8) + 1 AS hue
+             FROM projects
+            WHERE category = 'business'
+         ) AS numbered
+         WHERE numbered.id = projects.id
+       )
+     WHERE hue IS NULL AND category = 'business';`
+  );
 
   // W4 double-bill guard, mirroring the Postgres trigger in
   // drizzle/0050_time_entries_invoice_id_immutable.sql. `invoice_id` is write-once:

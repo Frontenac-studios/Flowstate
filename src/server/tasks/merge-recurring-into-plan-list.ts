@@ -25,6 +25,7 @@ export type PlanListTaskRow = {
   timeEstimateMinutes?: number | null;
   projectSlug: string | null;
   projectName: string | null;
+  projectHue: number | null;
   phaseName: string | null;
   phaseSortOrder: number | null;
   isBlocked?: boolean;
@@ -58,6 +59,7 @@ type RecurrenceTemplateRow = {
   timeEstimateMinutes?: number | null;
   projectSlug: string | null;
   projectName: string | null;
+  projectHue: number | null;
   phaseName: string | null;
   phaseSortOrder: number | null;
 };
@@ -134,6 +136,7 @@ export function mergeRecurringIntoPlanList({
         timeEstimateMinutes: template.timeEstimateMinutes ?? null,
         projectSlug: template.projectSlug,
         projectName: template.projectName,
+        projectHue: template.projectHue,
         phaseName: template.phaseName,
         phaseSortOrder: template.phaseSortOrder,
         isRecurringOccurrence: true,

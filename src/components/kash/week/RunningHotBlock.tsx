@@ -34,10 +34,10 @@ export function RunningHotBlock() {
           <li key={read.projectId}>
             <Link
               href={`/projects/${read.projectId}`}
-              className="flex flex-col rounded-control px-1 py-0.5 transition hover:bg-surface-2"
+              className="flex flex-col rounded-control px-1 py-0.5 transition hover:bg-tint-hover"
             >
               <span className="truncate text-sm text-ink">{read.projectName}</span>
-              <span className="text-meta text-ink-faint">{read.message}</span>
+              <span className="text-meta text-ink-muted">{read.message}</span>
             </Link>
           </li>
         ))}

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { taskSolidVar } from "@/lib/projects/project-hue";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import type { RouterOutputs } from "@/trpc/client";
 import { useTRPC } from "@/trpc/client";
@@ -126,7 +126,7 @@ export function InboxPanel({
       {tasks.map((task, index) => {
         const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
         const stripeColor = resolvedCategory
-          ? categorySolidVar(resolvedCategory)
+          ? taskSolidVar({ category: resolvedCategory, projectHue: task.projectHue })
           : NEUTRAL_CATEGORY_STRIPE;
         return (
           <li
@@ -167,7 +167,7 @@ export function InboxPanel({
                   key={action}
                   type="button"
                   onClick={() => apply(index, action)}
-                  className="rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted transition hover:bg-[var(--accent-soft)] hover:text-accent focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+                  className="kash-focus-row rounded-pill border border-border bg-surface px-2 py-0.5 text-xs text-ink-muted transition hover:bg-tint-hover hover:text-accent focus:outline-none"
                 >
                   {label}
                   <span className="ml-1 opacity-60">{key}</span>

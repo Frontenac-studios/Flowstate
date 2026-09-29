@@ -67,13 +67,13 @@ export default function ProtectedBlockChip({
           {title}
           {!compact ? <span className="font-normal text-ink-muted"> · protected</span> : null}
         </p>
-        {timed ? <p className="text-caption text-ink-faint">{timed}</p> : null}
-        {proposed ? <p className="text-caption text-ink-faint">Proposed</p> : null}
+        {timed ? <p className="text-caption text-ink-muted">{timed}</p> : null}
+        {proposed ? <p className="text-caption text-ink-muted">Proposed</p> : null}
       </div>
       {onRemove ? (
         <button
           type="button"
-          className="shrink-0 text-ink-faint hover:text-ink"
+          className="shrink-0 text-ink-muted hover:text-ink"
           aria-label={`Remove protected block ${title}`}
           onClick={() => onRemove(block.id)}
         >

@@ -82,7 +82,7 @@ export default function DrawPanel() {
           {panel ? dollars(panel.availableToDrawCents) : "—"}
         </p>
         {panel ? (
-          <p className="mt-1 text-caption text-ink-faint">
+          <p className="mt-1 text-caption text-ink-muted">
             {dollars(panel.businessCashCents)} business cash
             {panel.taxReserveCents != null
               ? ` · less ${dollars(panel.taxReserveCents)} tax reserve`
@@ -108,7 +108,7 @@ export default function DrawPanel() {
           <LedgerRow label="Owner draws" value={dollars(panel.drawsCents)} sign="−" />
           <div className="my-1 border-t border-subtle" />
           <LedgerRow label="Business cash" value={dollars(panel.businessCashCents)} strong />
-          <p className="mt-1 text-caption text-ink-faint">
+          <p className="mt-1 text-caption text-ink-muted">
             {dollars(panel.billedUnpaidRevenueCents)} billed but not yet collected (incoming, not
             counted)
           </p>
@@ -123,14 +123,14 @@ export default function DrawPanel() {
             <p className="mt-1 text-title font-semibold tabular-nums text-ink">
               {months(panel.businessRunwayMonths)}
             </p>
-            <p className="mt-1 text-caption text-ink-faint">business cash ÷ recent monthly burn</p>
+            <p className="mt-1 text-caption text-ink-muted">business cash ÷ recent monthly burn</p>
           </div>
           <div className="rounded-card border border-border bg-surface p-4">
             <p className="text-caption text-ink-muted">Personal runway</p>
             <p className="mt-1 text-title font-semibold tabular-nums text-ink">
               {panel.costOfLivingCents ? months(panel.personalRunwayMonths) : "—"}
             </p>
-            <p className="mt-1 text-caption text-ink-faint">
+            <p className="mt-1 text-caption text-ink-muted">
               {panel.costOfLivingCents
                 ? "savings ÷ cost of living"
                 : "set your cost of living below"}
@@ -151,7 +151,7 @@ export default function DrawPanel() {
               Off by {dollars(panel.bankDriftCents)} from computed cash — a missed expense or draw?
             </p>
           ) : (
-            <p className="mt-1 text-caption text-ink-faint">Matches computed cash.</p>
+            <p className="mt-1 text-caption text-ink-muted">Matches computed cash.</p>
           )}
         </div>
       ) : null}
@@ -380,7 +380,7 @@ function EntrySection({
     <details className="rounded-card border border-subtle bg-surface">
       <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-ink">
         {title}
-        <span className="ml-2 text-caption text-ink-faint">{rows.length}</span>
+        <span className="ml-2 text-caption text-ink-muted">{rows.length}</span>
       </summary>
       <div className="flex flex-col gap-2 px-4 pb-4">
         {extra}
@@ -429,7 +429,7 @@ function EntrySection({
                   </span>
                   <span className="truncate">{row.label}</span>
                   {row.source === "csv_import" ? (
-                    <span className="rounded-pill bg-surface px-1.5 text-caption text-ink-faint">
+                    <span className="rounded-pill bg-surface px-1.5 text-caption text-ink-muted">
                       imported
                     </span>
                   ) : null}
@@ -440,7 +440,7 @@ function EntrySection({
                     type="button"
                     onClick={() => onDelete(row.id)}
                     title="Delete"
-                    className="text-ink-faint transition hover:text-critical"
+                    className="text-ink-muted transition hover:text-critical"
                   >
                     <Trash2 size={14} />
                   </button>

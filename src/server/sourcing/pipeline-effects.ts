@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { syncClientRow, syncLeadRow, syncProjectRow } from "@/db/record-sync-mutation";
 import { clients, leads, projects } from "@/db/tables";
 import { slugifyProjectName } from "@/lib/projects/slugify";
+import { hueForNewProject } from "@/server/projects/next-project-hue";
 
 /**
  * W10f — the side effects a stage change has outside the lead row. Moving a deal
@@ -68,6 +69,7 @@ export async function ensureProspectProject(
       name: lead.companyName,
       slug: await uniqueProjectSlug(ctx.userId, lead.companyName),
       category: "business",
+      hue: await hueForNewProject(db, ctx.userId, "business"),
       state: "prospect",
     })
     .returning();

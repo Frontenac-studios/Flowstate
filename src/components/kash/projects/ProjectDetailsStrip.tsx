@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 import Input from "@/components/kash/ui/Input";
+import { PROJECT_HUES, projectSolidVar } from "@/lib/projects/project-hue";
 import { useTRPC } from "@/trpc/client";
 
 import type { ProjectDetail } from "./types";
@@ -21,7 +22,7 @@ const BILLING = [
 ] as const;
 
 const CHIP =
-  "rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
+  "rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none kash-focus-visible";
 
 function chipClass(selected: boolean): string {
   return `${CHIP} ${selected ? "border-ink text-ink" : "border-subtle text-ink-muted hover:text-ink"}`;
@@ -34,6 +35,9 @@ function chipClass(selected: boolean): string {
  * the setup wizard. `clientId` was never asked for. `state` has existed on the row
  * since W1 with no control anywhere in the app. Billing type was buried in the burn
  * panel below the fold.
+ *
+ * Colour (Spec v2) joined them: a business project's hue is assigned in order at
+ * creation and overridden here; personal projects are always purple.
  *
  * They live here rather than on the board header because the working surface should
  * stay quiet, and because these are decisions rather than daily actions. Everything
@@ -106,7 +110,7 @@ export default function ProjectDetailsStrip({ project }: { project: ProjectDetai
     <div className="rounded-card border border-border bg-surface p-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="project-name-field" className="text-caption text-ink-faint">
+          <label htmlFor="project-name-field" className="text-caption text-ink-muted">
             Name
           </label>
           <Input
@@ -129,7 +133,7 @@ export default function ProjectDetailsStrip({ project }: { project: ProjectDetai
         </div>
 
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-caption text-ink-faint">Client</legend>
+          <legend className="mb-1.5 text-caption text-ink-muted">Client</legend>
           <div className="flex flex-wrap gap-1.5">
             {clients.map((client) => (
               <button
@@ -154,7 +158,7 @@ export default function ProjectDetailsStrip({ project }: { project: ProjectDetai
         </fieldset>
 
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-caption text-ink-faint">State</legend>
+          <legend className="mb-1.5 text-caption text-ink-muted">State</legend>
           <div className="flex flex-wrap gap-1.5">
             {STATES.map(({ value, label }) => (
               <button
@@ -171,7 +175,7 @@ export default function ProjectDetailsStrip({ project }: { project: ProjectDetai
         </fieldset>
 
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-caption text-ink-faint">Billing</legend>
+          <legend className="mb-1.5 text-caption text-ink-muted">Billing</legend>
           <div className="flex flex-wrap gap-1.5">
             {BILLING.map(({ value, label }) => (
               <button
@@ -188,9 +192,44 @@ export default function ProjectDetailsStrip({ project }: { project: ProjectDetai
             ))}
           </div>
         </fieldset>
+
+        <fieldset className="flex flex-col gap-1.5">
+          <legend className="mb-1.5 text-caption text-ink-muted">Colour</legend>
+          {project.category === "business" ? (
+            <div className="flex flex-wrap gap-2">
+              {PROJECT_HUES.map((hue) => {
+                const selected = project.hue === hue;
+                return (
+                  <button
+                    key={hue}
+                    type="button"
+                    onClick={() => updateMutation.mutate({ id: project.id, hue })}
+                    aria-pressed={selected}
+                    aria-label={`Project colour ${hue}`}
+                    className={`kash-focus-visible size-6 rounded-pill outline-none transition ${
+                      selected
+                        ? "shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--ink)]"
+                        : "hover:scale-110 motion-reduce:hover:scale-100"
+                    }`}
+                    style={{ backgroundColor: projectSolidVar({ category: "business", hue }) }}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="flex items-center gap-2 text-caption text-ink-muted">
+              <span
+                className="size-3 rounded-pill"
+                style={{ backgroundColor: projectSolidVar(project) }}
+                aria-hidden
+              />
+              Personal projects are always purple.
+            </p>
+          )}
+        </fieldset>
       </div>
 
-      <p className="mt-3 text-caption text-ink-faint" role="status">
+      <p className="mt-3 text-caption text-ink-muted" role="status">
         {error ?? (updateMutation.isPending || billingMutation.isPending ? "Saving…" : "Saved")}
       </p>
     </div>

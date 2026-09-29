@@ -6,6 +6,7 @@ import { useState } from "react";
 import Button from "@/components/kash/ui/Button";
 import Input from "@/components/kash/ui/Input";
 import Select from "@/components/kash/ui/Select";
+import Switch from "@/components/kash/ui/Switch";
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
@@ -231,7 +232,7 @@ export default function DefaultWeekSection() {
         </div>
 
         <label className="flex flex-col gap-1 text-sm text-ink-muted">
-          Label <span className="text-ink-faint">(optional)</span>
+          Label <span className="text-ink-muted">(optional)</span>
           <Input
             value={draft.label}
             maxLength={200}
@@ -240,14 +241,16 @@ export default function DefaultWeekSection() {
           />
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-ink-muted">
-          <input
-            type="checkbox"
+        <div className="flex items-center justify-between gap-4">
+          <label htmlFor="default-week-all-day" className="text-sm text-ink-muted">
+            All day (no fixed clock time)
+          </label>
+          <Switch
+            id="default-week-all-day"
             checked={draft.allDay}
-            onChange={(e) => setDraft((d) => ({ ...d, allDay: e.target.checked }))}
+            onCheckedChange={(next) => setDraft((d) => ({ ...d, allDay: next }))}
           />
-          All day (no fixed clock time)
-        </label>
+        </div>
 
         {!draft.allDay ? (
           <div className="flex flex-wrap items-end gap-3">

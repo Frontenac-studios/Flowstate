@@ -23,6 +23,8 @@ import {
 import { PROJECT_CATEGORIES } from "@/lib/projects/categories";
 import { resolveProjectBacklogCreateFields } from "@/lib/tasks/project-backlog-create";
 
+import { huePatchForCategoryChange } from "./next-project-hue";
+
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD).");
 
@@ -389,6 +391,12 @@ export async function commitProjectSetup(userId: string, input: CommitSetupInput
       const patch: Partial<typeof projects.$inferInsert> = { updatedAt: new Date() };
       if (parsed.project.name !== undefined) patch.name = parsed.project.name.trim();
       if (parsed.project.category !== undefined) patch.category = parsed.project.category;
+      if (parsed.project.category !== undefined) {
+        Object.assign(
+          patch,
+          await huePatchForCategoryChange(tx, userId, project, parsed.project.category)
+        );
+      }
 
       if (Object.keys(patch).length > 1) {
         const [row] = await tx

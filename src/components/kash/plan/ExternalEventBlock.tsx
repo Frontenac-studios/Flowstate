@@ -89,9 +89,9 @@ export function ExternalEventAllDayChip({ event }: AllDayChipProps) {
       <div className="min-w-0 flex-1">
         <p className="font-medium text-ink">
           {title}
-          <span className="text-ink-faint"> cal</span>
+          <span className="text-ink-muted"> cal</span>
         </p>
-        <p className="text-caption text-ink-faint">
+        <p className="text-caption text-ink-muted">
           All day
           {event.calendarName ? ` · ${event.calendarName}` : ""}
         </p>
@@ -147,9 +147,9 @@ export function ExternalEventWeekChip({ event }: WeekChipProps) {
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-ink">
           {title}
-          <span className="text-ink-faint"> cal</span>
+          <span className="text-ink-muted"> cal</span>
         </p>
-        <p className="text-caption text-ink-faint">
+        <p className="text-caption text-ink-muted">
           {event.isAllDay ? "All day" : formatTimeRange(event.startMin, event.endMin)}
           {event.calendarName ? ` · ${event.calendarName}` : ""}
         </p>

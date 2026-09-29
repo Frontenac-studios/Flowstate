@@ -41,7 +41,7 @@ export function GoneQuietPreview({
         <span className="text-caption font-semibold uppercase tracking-wide text-ink-muted">
           Gone quiet
         </span>
-        <span className="text-caption text-ink-faint">{draft.totalStale} →</span>
+        <span className="text-caption text-ink-muted">{draft.totalStale} →</span>
       </span>
       <ul className="flex flex-col gap-0.5">
         {shown.map((item) => (
@@ -50,13 +50,13 @@ export function GoneQuietPreview({
             className="flex items-baseline justify-between gap-2 text-sm text-ink"
           >
             <span className="min-w-0 truncate">{item.title}</span>
-            <span className="shrink-0 text-caption text-ink-faint">
+            <span className="shrink-0 text-caption text-ink-muted">
               {ALTITUDE_LABEL[item.altitude]} · {item.staleDays}d
             </span>
           </li>
         ))}
       </ul>
-      {rest > 0 ? <span className="text-caption text-ink-faint">+{rest} more</span> : null}
+      {rest > 0 ? <span className="text-caption text-ink-muted">+{rest} more</span> : null}
     </button>
   );
 }

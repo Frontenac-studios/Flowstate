@@ -211,3 +211,34 @@ describe("sqlite legacy category remap", () => {
     expect(categoryOf("projects", "p1")).toBe("personal");
   });
 });
+
+// Spec v2 per-project hue: a local DB from before the column gets it, and existing
+// business projects are numbered 1–8 in creation order (live first), mirroring
+// drizzle/0065. Personal projects stay NULL; a chosen hue is never overwritten.
+describe("sqlite projects.hue", () => {
+  it("adds hue and backfills business projects in creation order", () => {
+    const sqlite = new Database(":memory:");
+    runSqliteMigrations(sqlite);
+    const insert = sqlite.prepare(
+      `INSERT INTO projects (id, user_id, name, slug, category, created_at, updated_at, archived_at, hue)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    insert.run("a", USER, "A", "a", "business", 1, 1, null, null);
+    insert.run("old", USER, "Old", "old", "business", 0, 0, 5, null); // archived → numbered last
+    insert.run("b", USER, "B", "b", "business", 2, 2, null, null);
+    insert.run("p", USER, "P", "p", "personal", 3, 3, null, null);
+    insert.run("c", USER, "C", "c", "business", 4, 4, null, 7); // user-chosen hue
+
+    runSqliteMigrations(sqlite);
+
+    const hues = Object.fromEntries(
+      (
+        sqlite.prepare("SELECT id, hue FROM projects").all() as Array<{
+          id: string;
+          hue: number | null;
+        }>
+      ).map((r) => [r.id, r.hue])
+    );
+    expect(hues).toEqual({ a: 1, b: 2, c: 7, old: 4, p: null });
+  });
+});

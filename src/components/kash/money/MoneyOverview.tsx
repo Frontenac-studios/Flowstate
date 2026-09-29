@@ -33,7 +33,7 @@ export default function MoneyOverview() {
 
       <Link
         href="/clients"
-        className="flex items-center justify-between gap-4 rounded-card border border-border bg-surface p-5 shadow-surface transition hover:bg-surface-2"
+        className="flex items-center justify-between gap-4 rounded-card border border-border bg-surface p-5 shadow-surface transition hover:bg-tint-hover"
       >
         <span className="flex items-center gap-3">
           <Users size={20} className="text-ink-muted" />

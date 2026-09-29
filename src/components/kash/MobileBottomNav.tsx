@@ -94,9 +94,7 @@ function MoreSheet({
                 onClick={onDismiss}
                 aria-current={active ? "page" : undefined}
                 className={`flex min-h-12 items-center gap-3 rounded-row px-3 transition ${TAB_FOCUS} ${
-                  active
-                    ? "bg-[var(--surface-selected)] text-ink"
-                    : "text-ink hover:bg-[var(--surface-2)]"
+                  active ? "bg-[var(--surface-selected)] text-ink" : "text-ink hover:bg-tint-hover"
                 }`}
               >
                 <Icon {...SHEET_ICON_PROPS} aria-hidden />

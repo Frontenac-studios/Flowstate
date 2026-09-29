@@ -100,7 +100,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="new-project-name" className="text-caption text-ink-faint">
+        <label htmlFor="new-project-name" className="text-caption text-ink-muted">
           Name
         </label>
         <Input
@@ -125,7 +125,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
                 type="button"
                 onClick={() => setClientChoice(isSelected ? JUST_ME : value)}
                 aria-pressed={isSelected}
-                className={`flex items-center gap-1.5 rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                className={`kash-focus-visible flex items-center gap-1.5 rounded-chip border px-2.5 py-1 text-caption transition focus:outline-none ${
                   isSelected ? "border-ink text-ink" : "border-subtle text-ink-muted hover:text-ink"
                 }`}
               >
@@ -145,7 +145,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
           })}
         </div>
         {clientChoice === null && suggestedClientId ? (
-          <p className="text-caption text-ink-faint">Matched from the name</p>
+          <p className="text-caption text-ink-muted">Matched from the name</p>
         ) : null}
       </fieldset>
 

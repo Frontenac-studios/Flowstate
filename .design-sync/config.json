@@ -15,11 +15,15 @@
     "Textarea": "../src/components/kash/ui/Textarea.tsx",
     "Select": "../src/components/kash/ui/Select.tsx",
     "Checkbox": "../src/components/kash/ui/Checkbox.tsx",
+    "Switch": "../src/components/kash/ui/Switch.tsx",
     "InlineValidation": "../src/components/kash/ui/InlineValidation.tsx",
     "Toast": "../src/components/kash/ui/Toast.tsx",
     "ToastProvider": "../src/components/kash/ui/ToastProvider.tsx",
     "QueryErrorNotice": "../src/components/kash/ui/QueryErrorNotice.tsx",
     "Tooltip": "../src/components/kash/ui/Tooltip.tsx",
+    "Menu": "../src/components/kash/ui/Menu.tsx",
+    "Dialog": "../src/components/kash/ui/Dialog.tsx",
+    "Sheet": "../src/components/kash/ui/Sheet.tsx",
     "KeyCap": "../src/components/kash/ui/KeyCap.tsx",
     "ShortcutHint": "../src/components/kash/ui/ShortcutHint.tsx",
     "RitualSheet": "../src/components/kash/ui/RitualSheet.tsx",
@@ -83,6 +87,24 @@
     "Tooltip": {
       "cardMode": "single",
       "primaryStory": "IconTrigger"
+    },
+    "Menu": {
+      "cardMode": "single",
+      "primaryStory": "TaskMenu",
+      "viewport": "420x420"
+    },
+    "Dialog": {
+      "cardMode": "single",
+      "primaryStory": "DeleteConfirm",
+      "viewport": "640x420"
+    },
+    "Sheet": {
+      "cardMode": "single",
+      "primaryStory": "TaskDetail",
+      "viewport": "900x620"
+    },
+    "Switch": {
+      "cardMode": "column"
     }
   },
   "docsDir": "./docs",

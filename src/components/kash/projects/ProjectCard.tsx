@@ -43,7 +43,7 @@ export default function ProjectCard({
   return (
     <Link
       href={`/projects/${project.id}`}
-      className={`kash-focus-visible block rounded-card border-2 p-4 shadow-surface outline-none transition hover:bg-surface-2 ${
+      className={`kash-focus-visible block rounded-card border-2 p-4 shadow-surface outline-none transition hover:bg-tint-hover ${
         finishing ? "bg-surface" : "bg-surface"
       }${folding ? "project-fold-to-filed" : ""}`}
       style={{
@@ -92,7 +92,7 @@ export default function ProjectCard({
         ) : null}
       </div>
       <p
-        className={`mt-1.5 text-caption ${finishing ? "" : "text-ink-faint"}`}
+        className={`mt-1.5 text-caption ${finishing ? "" : "text-ink-muted"}`}
         style={finishing ? { color: categoryTextVar(project.category) } : undefined}
       >
         {!hasTasks

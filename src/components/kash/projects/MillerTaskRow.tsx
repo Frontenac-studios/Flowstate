@@ -154,12 +154,12 @@ export default function MillerTaskRow({
             }}
             onDoubleClick={onToggleDetail}
             aria-expanded={selected}
-            className={`min-w-0 flex-1 text-left text-xs leading-snug focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+            className={`kash-focus-row min-w-0 flex-1 text-left text-xs leading-snug focus:outline-none ${
               completed ? "text-ink-muted line-through" : "text-ink"
             }`}
           >
             {isBlocked ? (
-              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-faint">
+              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-muted">
                 <LockIcon size={12} className="shrink-0" aria-hidden />
                 <span>Waiting on {blockerLabel}</span>
               </p>

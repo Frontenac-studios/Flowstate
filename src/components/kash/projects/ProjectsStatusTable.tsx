@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 import type { ProjectCategory } from "@/lib/projects/categories";
 
 export type ProjectStatusRow = {
   id: string;
   name: string;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   state: "prospect" | "active" | "paused" | "done";
   percent: number;
   taskCount: number;
@@ -59,30 +61,30 @@ export default function ProjectsStatusTable({ rows }: { rows: ProjectStatusRow[]
       <table className="w-full min-w-[640px] border-collapse text-body">
         <thead>
           <tr className="border-b border-border bg-surface-2">
-            <th scope="col" className="px-3 py-2 text-left text-caption font-normal text-ink-faint">
+            <th scope="col" className="px-3 py-2 text-left text-caption font-normal text-ink-muted">
               Project
             </th>
             <th
               scope="col"
-              className="px-3 py-2 text-right text-caption font-normal text-ink-faint"
+              className="px-3 py-2 text-right text-caption font-normal text-ink-muted"
             >
               Done
             </th>
             <th
               scope="col"
-              className="px-3 py-2 text-right text-caption font-normal text-ink-faint"
+              className="px-3 py-2 text-right text-caption font-normal text-ink-muted"
             >
               Budget
             </th>
             <th
               scope="col"
-              className="px-3 py-2 text-right text-caption font-normal text-ink-faint"
+              className="px-3 py-2 text-right text-caption font-normal text-ink-muted"
             >
               Next
             </th>
             <th
               scope="col"
-              className="px-3 py-2 text-right text-caption font-normal text-ink-faint"
+              className="px-3 py-2 text-right text-caption font-normal text-ink-muted"
             >
               State
             </th>
@@ -96,12 +98,12 @@ export default function ProjectsStatusTable({ rows }: { rows: ProjectStatusRow[]
                   href={`/projects/${row.id}`}
                   className="kash-focus-visible flex min-h-[30px] items-center gap-2 py-1.5 pl-3 text-ink"
                   style={{
-                    borderLeft: `var(--stripe-width) solid ${categorySolidVar(row.category)}`,
+                    borderLeft: `var(--stripe-width) solid ${projectSolidVar(row)}`,
                   }}
                 >
                   <span className="truncate">{row.name}</span>
                   {row.clientName ? (
-                    <span className="shrink-0 text-caption text-ink-faint">{row.clientName}</span>
+                    <span className="shrink-0 text-caption text-ink-muted">{row.clientName}</span>
                   ) : null}
                 </Link>
               </td>

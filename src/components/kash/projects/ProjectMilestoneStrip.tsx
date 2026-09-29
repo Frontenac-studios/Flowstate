@@ -94,7 +94,7 @@ export default function ProjectMilestoneStrip({
           type="button"
           onClick={toggleCollapsed}
           aria-expanded={!collapsed}
-          className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          className="kash-focus-visible flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted transition hover:text-ink focus:outline-none"
         >
           <ChevronRight
             {...kashIconProps({
@@ -104,14 +104,14 @@ export default function ProjectMilestoneStrip({
             })}
           />
           <span>Milestones</span>
-          {ordered.length > 0 ? <span className="text-ink-faint">· {ordered.length}</span> : null}
+          {ordered.length > 0 ? <span className="text-ink-muted">· {ordered.length}</span> : null}
         </button>
         {addSlot ? <div className="ml-auto flex shrink-0 items-center">{addSlot}</div> : null}
       </div>
 
       {!collapsed ? (
         ordered.length === 0 ? (
-          <p className="mt-1.5 pl-1 text-xs text-ink-faint">None yet</p>
+          <p className="mt-1.5 pl-1 text-xs text-ink-muted">None yet</p>
         ) : (
           <ol className="mt-1.5 flex flex-col gap-0.5">
             {ordered.map((mi, index) => {
@@ -120,7 +120,7 @@ export default function ProjectMilestoneStrip({
               const busy = pendingId === mi.id;
               return (
                 <li key={mi.id} className="flex items-center gap-2 py-0.5 text-sm">
-                  <span className="w-5 shrink-0 text-right text-xs tabular-nums text-ink-faint">
+                  <span className="w-5 shrink-0 text-right text-xs tabular-nums text-ink-muted">
                     {index + 1}.
                   </span>
                   <button
@@ -130,7 +130,7 @@ export default function ProjectMilestoneStrip({
                     aria-pressed={done}
                     aria-label={done ? `Mark "${mi.title}" not done` : `Mark "${mi.title}" done`}
                     title={done ? "Mark not done" : "Mark done"}
-                    className={`flex shrink-0 items-center justify-center rounded-full outline-none transition focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] ${
+                    className={`kash-focus-visible flex shrink-0 items-center justify-center rounded-full outline-none transition ${
                       busy ? "opacity-40" : "hover:opacity-80"
                     }`}
                   >
@@ -142,7 +142,7 @@ export default function ProjectMilestoneStrip({
                       />
                     ) : (
                       <Circle
-                        {...kashIconProps({ tokenSize: "sm", className: "text-ink-faint" })}
+                        {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })}
                         aria-hidden
                       />
                     )}

@@ -358,7 +358,7 @@ export function FocusCanvas() {
   return (
     <div key={taskId} className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div className="row-arrive flex min-h-0 flex-1 flex-col p-8 lg:p-12">
-        <span className="text-caption text-ink-faint">Focus session</span>
+        <span className="text-caption text-ink-muted">Focus session</span>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span
@@ -409,7 +409,7 @@ export function FocusCanvas() {
           <button
             type="button"
             onClick={() => void handleDone()}
-            className="inline-flex items-center gap-2 rounded-control border-emphasis border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-control border-emphasis border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-tint-hover disabled:opacity-50"
             disabled={doneFlash !== null || exiting}
           >
             Done
@@ -448,7 +448,7 @@ export function FocusCanvas() {
               onClick={() => void (isPaused ? handleResume() : handlePause())}
               disabled={doneFlash !== null}
               aria-label={isPaused ? "Resume" : "Pause"}
-              className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-emphasis border-ink text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
+              className="focus-visible:text-on-accent flex h-11 w-11 items-center justify-center rounded-full border-emphasis border-ink text-ink transition hover:bg-tint-hover focus:outline-none focus-visible:bg-ink disabled:opacity-50"
             >
               {isPaused ? (
                 <Play {...kashIconProps({ tokenSize: "md", fill: "currentColor" })} aria-hidden />
@@ -492,7 +492,7 @@ export function FocusCanvas() {
               <button
                 type="button"
                 onClick={() => void handleContinueAfterBreak()}
-                className="rounded-control border-emphasis border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-[var(--accent-soft)]"
+                className="rounded-control border-emphasis border-ink px-5 py-2 text-sm font-medium text-ink transition hover:bg-tint-hover"
               >
                 Continue
               </button>
@@ -534,7 +534,7 @@ function FocusEmptyState({ message, onBack }: { message: string; onBack?: () => 
       {onBack ? (
         <button
           type="button"
-          className="rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+          className="kash-focus-row rounded-chip px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none"
           onClick={onBack}
         >
           Back to plan

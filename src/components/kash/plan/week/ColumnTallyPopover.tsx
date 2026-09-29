@@ -4,6 +4,8 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 
 import { BalanceBar } from "@/components/kash/plan/BalanceBar";
 import type { PlanTaskRow } from "@/components/kash/plan/TaskRow";
+import { OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
+import { cn } from "@/lib/cn";
 
 import type { OverCommitThresholdMode } from "@/lib/week/over-commit-threshold";
 
@@ -110,7 +112,10 @@ export default function ColumnTallyPopover({
           id={tallyId}
           role="region"
           aria-label={`${label} category balance`}
-          className="absolute bottom-full left-1/2 z-overlay mb-2 w-[min(16rem,calc(100vw-2rem))] -translate-x-1/2 rounded-card border border-subtle bg-surface p-3 shadow-overlay"
+          className={cn(
+            OVERLAY_CARD,
+            "absolute bottom-full left-1/2 z-overlay mb-2 w-[min(16rem,calc(100vw-2rem))] -translate-x-1/2 px-3 py-3"
+          )}
         >
           <BalanceBar tasks={tasks} />
         </div>
@@ -119,7 +124,7 @@ export default function ColumnTallyPopover({
       <button
         ref={headerRef}
         type="button"
-        className={`w-full rounded-t-card px-2 py-2 text-center focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] ${
+        className={`kash-focus-row w-full rounded-t-card px-2 py-2 text-center focus:outline-none ${
           showDetail && !canHover ? "cursor-pointer" : "cursor-default"
         }`}
         aria-expanded={showDetail ? open : undefined}
@@ -129,7 +134,7 @@ export default function ColumnTallyPopover({
         {categoryStrip ? <div className="mb-2">{categoryStrip}</div> : null}
         <p
           className={`text-caption uppercase tracking-wide ${
-            isToday ? "font-medium text-ink" : "text-ink-faint"
+            isToday ? "font-medium text-ink" : "text-ink-muted"
           }`}
         >
           {label}
@@ -143,7 +148,7 @@ export default function ColumnTallyPopover({
         ) : (
           <p className="text-micro text-ink-muted">{headerDate}</p>
         )}
-        {meetingSummary ? <p className="mt-1 text-micro text-ink-faint">{meetingSummary}</p> : null}
+        {meetingSummary ? <p className="mt-1 text-micro text-ink-muted">{meetingSummary}</p> : null}
         {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
       </button>
     </div>

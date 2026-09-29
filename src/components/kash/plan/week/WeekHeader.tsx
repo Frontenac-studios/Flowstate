@@ -21,9 +21,9 @@ type Props = {
 };
 
 const ACTION_BTN =
-  "rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
+  "rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none kash-focus-visible";
 const ADD_BTN =
-  "flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]";
+  "flex h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface text-lg leading-none text-ink-muted transition hover:text-ink focus:outline-none kash-focus-visible";
 
 /**
  * Care-style page header for This Week: an `h1` + date-range subtitle with a
@@ -43,7 +43,7 @@ export function WeekHeader({ weekRange, overdueCount, reflectionOpen, onToggleRe
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-title font-semibold text-ink">This Week</h1>
-          <p className="text-meta text-ink-faint">{weekRange}</p>
+          <p className="text-meta text-ink-muted">{weekRange}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -57,7 +57,7 @@ export function WeekHeader({ weekRange, overdueCount, reflectionOpen, onToggleRe
             aria-pressed={reflectionOpen}
             className={
               reflectionOpen
-                ? "rounded-pill border border-border bg-active-surface px-3 py-1.5 text-sm text-ink transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+                ? "kash-focus-visible rounded-pill border border-border bg-active-surface px-3 py-1.5 text-sm text-ink transition focus:outline-none"
                 : ACTION_BTN
             }
           >

@@ -47,7 +47,7 @@ export function WeekReviewView() {
       <div>
         <Link
           href="/this-week"
-          className="rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          className="kash-focus-visible rounded-pill border border-border bg-surface px-3 py-1.5 text-sm text-ink-muted transition hover:text-ink focus:outline-none"
         >
           ← This Week
         </Link>
@@ -55,7 +55,7 @@ export function WeekReviewView() {
 
       <div className="flex flex-col gap-1">
         <h1 className="text-h1 font-medium text-ink">Week review</h1>
-        <p className="text-meta text-ink-faint">Your weekly focus and reflections</p>
+        <p className="text-meta text-ink-muted">Your weekly focus and reflections</p>
       </div>
 
       <WeeklySummaryCard />
@@ -76,7 +76,7 @@ export function WeekReviewView() {
                     {formatStoredWeekRange(review.weekStart)}
                   </span>
                   {review.totalSeconds != null && review.totalSeconds > 0 ? (
-                    <span className="text-xs text-ink-faint">
+                    <span className="text-xs text-ink-muted">
                       {formatDuration(review.totalSeconds)} focused
                     </span>
                   ) : null}

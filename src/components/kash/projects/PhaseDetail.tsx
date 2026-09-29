@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { EstimateConfidenceHint } from "@/components/kash/projects/EstimateConfidenceHint";
 import Input from "@/components/kash/ui/Input";
 import Textarea from "@/components/kash/ui/Textarea";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import {
   collectSubtreeTasks,
@@ -31,6 +31,8 @@ type PhasePatch = {
 type Props = {
   node: Node;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   dayPriorityTaskIds: ReadonlySet<string>;
   timeSpentSeconds?: number;
   estimateSampleCount?: number;
@@ -46,6 +48,7 @@ function dateSideLabel(side: "Start" | "End", manual: boolean): string {
 export default function PhaseDetail({
   node,
   category,
+  hue,
   dayPriorityTaskIds,
   timeSpentSeconds = 0,
   estimateSampleCount = 0,
@@ -66,7 +69,7 @@ export default function PhaseDetail({
     })),
     dayPriorityTaskIds
   );
-  const stripe = categorySolidVar(category);
+  const stripe = projectSolidVar({ category, hue });
 
   const [name, setName] = useState(phase.name);
   const [description, setDescription] = useState(phase.description ?? "");
@@ -193,7 +196,7 @@ export default function PhaseDetail({
                 type="button"
                 onClick={clearAllDates}
                 disabled={pending}
-                className="self-start text-xs text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
+                className="kash-focus-visible self-start text-xs text-ink-muted transition hover:text-ink focus:outline-none disabled:opacity-50"
               >
                 Clear all dates (use task schedules)
               </button>
@@ -212,7 +215,7 @@ export default function PhaseDetail({
         type="button"
         onClick={onRequestDelete}
         disabled={pending}
-        className="self-start text-sm text-critical transition hover:underline focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
+        className="kash-focus-visible self-start text-sm text-critical transition hover:underline focus:outline-none disabled:opacity-50"
       >
         Delete phase
       </button>

@@ -96,7 +96,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
       <div className="flex flex-col gap-2">
         <Link
           href={`/projects/${projectId}`}
-          className="w-fit text-meta text-ink-muted transition hover:text-ink focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+          className="kash-focus-visible w-fit text-meta text-ink-muted transition hover:text-ink focus:outline-none"
         >
           ← {projectName}
         </Link>
@@ -136,7 +136,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
                   <p className="font-medium text-ink">
                     {row.taskCount} {row.taskCount === 1 ? "task" : "tasks"}
                   </p>
-                  <p className="text-caption text-ink-faint">
+                  <p className="text-caption text-ink-muted">
                     {formatImportTime(row.createdAt)}
                     {undone ? " · Undone" : " · Active"}
                   </p>
@@ -144,7 +144,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
                 {!undone ? (
                   <button
                     type="button"
-                    className="focus-visible:text-on-accent shrink-0 rounded-control border-emphasis border-ink px-3 py-1 text-meta text-ink transition hover:bg-[var(--accent-soft)] focus:outline-none focus-visible:bg-ink disabled:opacity-50"
+                    className="focus-visible:text-on-accent shrink-0 rounded-control border-emphasis border-ink px-3 py-1 text-meta text-ink transition hover:bg-tint-hover focus:outline-none focus-visible:bg-ink disabled:opacity-50"
                     disabled={undoMutation.isPending}
                     onClick={() => setUndoTarget({ importId: row.id, taskCount: row.taskCount })}
                   >

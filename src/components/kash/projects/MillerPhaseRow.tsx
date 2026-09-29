@@ -11,7 +11,7 @@ import { ChevronRight, kashIconProps, Pencil, Undo2 } from "@/components/kash/ui
 import { useTrackpadSwipeReveal } from "@/hooks/useTrackpadSwipeReveal";
 import type { ProjectCategory } from "@/lib/projects/categories";
 import type { ProjectTree } from "@/lib/projects/phase-tree";
-import { projectCycleSolidVar } from "@/lib/projects/project-cycle-color";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 import { formatDuration } from "@/lib/time/duration";
 
 import type { ProjectPhase, ProjectTask } from "./types";
@@ -22,6 +22,8 @@ type Props = {
   node: Node;
   parentPhaseId: string | null;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   isOpen: boolean;
   selected: boolean;
   focused: boolean;
@@ -35,6 +37,8 @@ type Props = {
 export default function MillerPhaseRow({
   node,
   parentPhaseId,
+  category,
+  hue,
   isOpen,
   selected,
   focused,
@@ -45,7 +49,7 @@ export default function MillerPhaseRow({
   onToggleComplete,
 }: Props) {
   const itemCount = node.children.length + node.tasks.length;
-  const stripe = projectCycleSolidVar(node.phase.sortOrder);
+  const stripe = projectSolidVar({ category, hue });
   const showProgress = itemCount > 0 && progressPercent !== undefined;
   const timeLabel = timeSpentSeconds > 0 ? formatDuration(timeSpentSeconds) : null;
   const completed = node.phase.completedAt !== null;
@@ -131,7 +135,7 @@ export default function MillerPhaseRow({
             type="button"
             onClick={onOpen}
             aria-expanded={selected}
-            className="flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--focus-ring)]"
+            className="kash-focus-row flex min-w-0 flex-1 items-start justify-between gap-2 text-left text-sm text-ink focus:outline-none"
           >
             <span className="flex min-w-0 flex-1 items-center gap-1.5">
               <span
@@ -146,7 +150,7 @@ export default function MillerPhaseRow({
             </span>
             <span className="mt-0.5 flex shrink-0 items-center gap-1">
               {timeLabel ? (
-                <span className="text-xs tabular-nums text-ink-faint">{timeLabel}</span>
+                <span className="text-xs tabular-nums text-ink-muted">{timeLabel}</span>
               ) : null}
               {itemCount > 0 ? (
                 <span className="text-xs tabular-nums text-ink-muted">{itemCount}</span>
@@ -154,7 +158,7 @@ export default function MillerPhaseRow({
               <ChevronRight
                 {...kashIconProps({
                   tokenSize: "sm",
-                  className: `shrink-0 transition-transform ${isOpen ? "rotate-90 text-ink" : "text-ink-faint"}`,
+                  className: `shrink-0 transition-transform ${isOpen ? "rotate-90 text-ink" : "text-ink-muted"}`,
                   "aria-hidden": true,
                 })}
               />

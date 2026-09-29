@@ -7,7 +7,7 @@ import Checkbox from "@/components/kash/ui/Checkbox";
 import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
 import { useToast } from "@/components/kash/ui/ToastProvider";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { taskSolidVar } from "@/lib/projects/project-hue";
 import { useTRPC, type RouterOutputs } from "@/trpc/client";
 
 import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
@@ -22,6 +22,8 @@ export type CompletedTaskRow = {
   completedAt: Date;
   category: ProjectCategory;
   categoryUnresolved: boolean;
+  /** Spec v2 — the task's project hue, when it has one. */
+  projectHue?: number | null;
 };
 
 function completedTime(at: Date): string {
@@ -92,7 +94,7 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
     <section className="mt-section" aria-labelledby={`${regionId}-heading`}>
       <button
         type="button"
-        className="flex w-full items-center gap-2 rounded-card px-1 py-1 text-left focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)]"
+        className="kash-focus-row flex w-full items-center gap-2 rounded-card px-1 py-1 text-left focus:outline-none"
         aria-expanded={showBody}
         aria-controls={regionId}
         onClick={() => setCollapsed((v) => !v)}
@@ -100,7 +102,7 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
         <ChevronRight
           {...kashIconProps({
             tokenSize: "sm",
-            className: `text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
+            className: `text-ink-muted transition-transform duration-short ease-enter motion-reduce:transition-none ${
               showBody ? "rotate-90" : ""
             }`,
           })}
@@ -112,13 +114,15 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
         >
           Completed
         </span>
-        <span className="text-sm text-ink-faint">· {completions.length}</span>
+        <span className="text-sm text-ink-muted">· {completions.length}</span>
       </button>
 
       <ul id={regionId} hidden={!showBody} className="mt-3 space-y-2">
         {completions.map((task) => {
           const resolved = task.categoryUnresolved ? null : task.category;
-          const checkColor = resolved ? categorySolidVar(resolved) : NEUTRAL_CHECK;
+          const checkColor = resolved
+            ? taskSolidVar({ category: resolved, projectHue: task.projectHue })
+            : NEUTRAL_CHECK;
           const label = resolved ? categoryLabel(resolved) : "No category yet";
           const isUncompleting = uncompletingId === task.id;
           return (
@@ -129,6 +133,7 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
               }`}
             >
               <Checkbox
+                round
                 accentColor={checkColor}
                 aria-label={`Uncomplete ${task.title}`}
                 title={label}
@@ -140,7 +145,7 @@ export function CompletedSection({ completions, onUncomplete }: Props) {
               <span className="min-w-0 flex-1 break-words text-ink-faint line-through">
                 {task.title}
               </span>
-              <span className="mt-0.5 shrink-0 self-start text-xs text-ink-faint">
+              <span className="mt-0.5 shrink-0 self-start text-xs text-ink-muted">
                 {completedTime(task.completedAt)}
               </span>
             </li>

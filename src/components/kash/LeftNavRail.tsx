@@ -49,9 +49,7 @@ function NavLink({
       aria-busy={pending || undefined}
       title={item.label}
       className={`flex h-nav-item items-center rounded-control transition ${expanded ? "pr-2" : ""} ${NAV_LINK_FOCUS} ${
-        highlighted
-          ? "bg-[var(--surface-selected)] text-ink"
-          : "text-ink hover:bg-[var(--surface-2)]"
+        highlighted ? "bg-[var(--surface-selected)] text-ink" : "text-ink hover:bg-tint-hover"
       }`}
     >
       <span
@@ -142,7 +140,7 @@ function RailSearchButton({ expanded }: { expanded: boolean }) {
       className={`group flex items-center text-ink-muted transition ${NAV_LINK_FOCUS} ${
         expanded
           ? "h-9 self-start rounded-full border border-transparent hover:border-border hover:bg-surface hover:text-ink"
-          : "h-9 w-full justify-center rounded-control hover:bg-[var(--surface-2)] hover:text-ink"
+          : "h-9 w-full justify-center rounded-control hover:bg-tint-hover hover:text-ink"
       }`}
     >
       <span className={`flex shrink-0 items-center justify-center ${expanded ? "h-9 w-9" : ""}`}>
@@ -336,7 +334,7 @@ export function LeftNavRail() {
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-control transition ${NAV_LINK_FOCUS} ${
                 pinned
                   ? "bg-[var(--surface-selected)] text-ink"
-                  : "text-ink-muted hover:bg-[var(--surface-2)] hover:text-ink"
+                  : "text-ink-muted hover:bg-tint-hover hover:text-ink"
               }`}
             >
               <Pin {...kashIconProps({ tokenSize: "md" })} />

@@ -1,7 +1,9 @@
 "use client";
 
 import Button from "@/components/kash/ui/Button";
+import { OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
 import type { SyncDisplayState } from "@/hooks/useSyncStatus";
+import { cn } from "@/lib/cn";
 
 type Props = {
   displayState: SyncDisplayState;
@@ -32,7 +34,7 @@ export function SyncFooterDetailPanel({
 
   return (
     <div
-      className="absolute bottom-full left-2 right-2 mb-1 rounded-card border border-border bg-surface p-3 shadow-overlay"
+      className={cn(OVERLAY_CARD, "absolute bottom-full left-2 right-2 mb-1 px-3 py-3")}
       role="region"
       aria-label="Sync status"
     >
@@ -46,9 +48,9 @@ export function SyncFooterDetailPanel({
       </div>
       <p className="mt-1.5 text-caption leading-snug text-ink-muted">{message}</p>
       {lastSyncTime ? (
-        <p className="mt-1 text-caption text-ink-faint">Last synced {lastSyncTime}</p>
+        <p className="mt-1 text-caption text-ink-muted">Last synced {lastSyncTime}</p>
       ) : null}
-      <p className="mt-2 text-caption text-ink-faint">
+      <p className="mt-2 text-caption text-ink-muted">
         Conflicts resolve automatically — the most recent change wins.
       </p>
       <Button

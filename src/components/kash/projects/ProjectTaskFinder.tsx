@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { MENU_ROW, OVERLAY_CARD } from "@/components/kash/ui/overlay-styles";
+import { cn } from "@/lib/cn";
 import { rankResults, type RankableResult } from "@/lib/search/rank-results";
 
 type FinderTask = {
@@ -78,16 +80,16 @@ export function ProjectTaskFinder({
         }}
         placeholder="Find a task in this project…"
         aria-label="Find a task in this project"
-        className="w-full rounded-control border border-subtle bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus-visible:shadow-[inset_0_0_0_var(--focus-ring-width)_var(--ink)] sm:max-w-xs"
+        className="kash-focus-row w-full rounded-control border border-subtle bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:outline-none sm:max-w-xs"
       />
 
       {query.trim().length >= MIN_QUERY_LENGTH ? (
         <ul
-          className="absolute z-sticky mt-1 w-full overflow-hidden rounded-card border border-border bg-surface shadow-overlay sm:max-w-xs"
+          className={cn(OVERLAY_CARD, "absolute z-sticky mt-1 w-full overflow-hidden sm:max-w-xs")}
           role="listbox"
         >
           {matches.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-ink-muted">Nothing by that name here</li>
+            <li className="px-3 py-2 text-[14px] text-ink-muted">Nothing by that name here</li>
           ) : (
             matches.map((match) => (
               <li key={match.id} role="option" aria-selected={false}>
@@ -97,7 +99,7 @@ export function ProjectTaskFinder({
                     onReveal(match.task);
                     setQuery("");
                   }}
-                  className="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-sm hover:bg-active-surface"
+                  className={MENU_ROW}
                 >
                   <span
                     className={`min-w-0 flex-1 truncate ${
@@ -106,7 +108,7 @@ export function ProjectTaskFinder({
                   >
                     {match.title}
                   </span>
-                  <span className="shrink-0 text-xs text-ink-faint">
+                  <span className="shrink-0 text-caption font-normal text-ink-muted">
                     {phaseName(match.task.phaseId) ?? "No phase"}
                   </span>
                 </button>
