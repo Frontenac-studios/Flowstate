@@ -106,7 +106,7 @@ export function ProjectTaskFinder({
                   >
                     {match.title}
                   </span>
-                  <span className="shrink-0 text-xs text-ink-faint">
+                  <span className="shrink-0 text-xs text-ink-muted">
                     {phaseName(match.task.phaseId) ?? "No phase"}
                   </span>
                 </button>

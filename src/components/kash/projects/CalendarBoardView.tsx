@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/kash/ui/Button";
 import { addDays, startOfLocalDay, toISODateString } from "@/lib/dates/local-day";
 import { type ProjectCategory } from "@/lib/projects/categories";
-import { categoryFillVar, categorySolidVar, categoryTextVar } from "@/lib/projects/category-tokens";
+import { projectFillVar, projectSolidVar, projectTextVar } from "@/lib/projects/project-hue";
 import {
   buildTicks,
   computeProjectSpan,
@@ -29,6 +29,8 @@ type Props = {
   tree: Tree;
   projectId: string;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   milestones?: ProjectMilestone[];
 };
 
@@ -45,13 +47,19 @@ function clampPxPerDay(px: number): number {
   return Math.min(MAX_PX_PER_DAY, Math.max(MIN_PX_PER_DAY, px));
 }
 
-export default function CalendarBoardView({ tree, projectId, category, milestones = [] }: Props) {
+export default function CalendarBoardView({
+  tree,
+  projectId,
+  category,
+  hue,
+  milestones = [],
+}: Props) {
   const m = useProjectMutations(projectId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const span = useMemo(() => computeProjectSpan(tree), [tree]);
   const rows = useMemo(() => flattenTree(tree), [tree]);
-  const color = categorySolidVar(category);
+  const color = projectSolidVar({ category, hue });
 
   const [pxPerDay, setPxPerDay] = useState(GRANULARITY_PX.day);
   const [granularityOverride, setGranularityOverride] = useState<GanttGranularity | "auto">("auto");
@@ -226,8 +234,8 @@ export default function CalendarBoardView({ tree, projectId, category, milestone
                   disabled={m.updatePhase.isPending}
                   className="rounded-full border border-transparent px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:shadow-[0_0_0_var(--focus-ring-width)_var(--focus-ring)] disabled:opacity-50"
                   style={{
-                    backgroundColor: categoryFillVar(category),
-                    color: categoryTextVar(category),
+                    backgroundColor: projectFillVar({ category, hue }),
+                    color: projectTextVar({ category, hue }),
                   }}
                 >
                   {r.node.phase.name}

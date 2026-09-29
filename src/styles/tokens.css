@@ -31,9 +31,10 @@
   /* ---- ink — crisp near-black ---- */
   --ink: #16181d;
   --ink-muted: #5b6270; /* Spec v2 — darkened so counts and meta pass AA (was #6b7280) */
-  /* Spec v2 wants #8a909b here, for decorative/large text only. Held at the DT-9 AA
-     value until the ~200 small-text ink-faint usages move to --ink-muted. */
-  --ink-faint: #767e8e;
+  /* Spec v2: decorative only — stripes, fills, placeholders, struck-through done
+     titles. It is 3.3:1 on white, so it must NOT carry readable text; counts, meta
+     and hints use --ink-muted (text-ink-faint was migrated to text-ink-muted). */
+  --ink-faint: #8a909b;
 
   /* ---- form controls (Spec v2) ---- */
   --control-height: 40px;
@@ -158,7 +159,7 @@
   /* Due: crimson overdue only; soon (today/tomorrow) = graphite bold; future = muted. */
   --due-overdue: var(--status-critical);
   --due-soon: var(--ink);
-  --due-future: var(--ink-faint);
+  --due-future: var(--ink-muted); /* Spec v2: future due dates are muted text */
 
   /* ---- typography (Spec v2) ----
    * Plus Jakarta Sans, four weights. Hierarchy comes from size and weight, with
@@ -738,7 +739,7 @@ html.is-desktop[data-spacing-variant="b"] {
   --abyss-border-strong: var(--border);
   --abyss-ink: var(--ink);
   --abyss-ink-muted: var(--ink-muted);
-  --abyss-ink-faint: var(--ink-faint);
+  --abyss-ink-faint: var(--ink-muted); /* carries text; --ink-faint is decorative-only */
   --abyss-accent: var(--accent);
   --abyss-on-accent: var(--on-accent);
 }

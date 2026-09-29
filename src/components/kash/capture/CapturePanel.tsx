@@ -284,7 +284,7 @@ export function CapturePanel() {
 
       {results.length > 0 ? (
         <div className="border-t border-border py-1" role="listbox" aria-label="Existing items">
-          <p className="px-3 pb-1 text-[10px] uppercase tracking-wide text-ink-faint">
+          <p className="px-3 pb-1 text-[10px] uppercase tracking-wide text-ink-muted">
             Already captured
           </p>
           {results.map((result, index) => (
@@ -314,7 +314,7 @@ export function CapturePanel() {
           ) : null}
 
           {dropped.length > 0 ? (
-            <p className="text-xs text-ink-faint">
+            <p className="text-xs text-ink-muted">
               Backlog items don&apos;t carry a {dropped.join(" or ")}. Switch to Today to keep{" "}
               {dropped.length > 1 ? "them" : "it"}.
             </p>
@@ -330,7 +330,7 @@ export function CapturePanel() {
         </div>
       ) : null}
 
-      <div className="flex items-center gap-3 border-t border-border bg-surface-2 px-3 py-1.5 text-[11px] text-ink-faint">
+      <div className="flex items-center gap-3 border-t border-border bg-surface-2 px-3 py-1.5 text-[11px] text-ink-muted">
         <span>{selected >= 0 ? "⏎ open" : "⏎ save"}</span>
         <span>⇧⏎ save and keep going</span>
         {results.length > 0 ? <span>↑↓ existing</span> : null}

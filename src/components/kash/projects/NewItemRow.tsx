@@ -312,11 +312,11 @@ export default function NewItemRow({
         }}
       />
 
-      <p className="mt-1.5 text-caption text-ink-faint">
+      <p className="mt-1.5 text-caption text-ink-muted">
         title ; due ; priority ; phase — trailing parts optional
         {!cursorOnPlusParentDirLine && assist?.suggestionSuffix ? " · ⇥ accept suggestion" : null}
       </p>
-      <p className="mt-0.5 text-caption text-ink-faint">
+      <p className="mt-0.5 text-caption text-ink-muted">
         ⌘↵ to add · ↵ for a new line
         {isBusy ? " · Adding…" : null}
       </p>

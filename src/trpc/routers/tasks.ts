@@ -141,6 +141,7 @@ export const tasksRouter = createTRPCRouter({
           timeEstimateMinutes: tasks.timeEstimateMinutes,
           projectSlug: projects.slug,
           projectName: projects.name,
+          projectHue: projects.hue,
           phaseName: phases.name,
           phaseSortOrder: phases.sortOrder,
         })
@@ -177,6 +178,7 @@ export const tasksRouter = createTRPCRouter({
           timeEstimateMinutes: tasks.timeEstimateMinutes,
           projectSlug: projects.slug,
           projectName: projects.name,
+          projectHue: projects.hue,
           phaseName: phases.name,
           phaseSortOrder: phases.sortOrder,
         })
@@ -242,6 +244,7 @@ export const tasksRouter = createTRPCRouter({
           timeEstimateMinutes: r.timeEstimateMinutes,
           projectSlug: r.projectSlug,
           projectName: r.projectName,
+          projectHue: r.projectHue,
           phaseName: r.phaseName,
           phaseSortOrder: r.phaseSortOrder,
         })),
@@ -273,6 +276,7 @@ export const tasksRouter = createTRPCRouter({
         createdAt: tasks.createdAt,
         projectSlug: projects.slug,
         projectName: projects.name,
+        projectHue: projects.hue,
       })
       .from(tasks)
       .leftJoin(projects, eq(tasks.projectId, projects.id))
@@ -319,6 +323,7 @@ export const tasksRouter = createTRPCRouter({
         categoryUnresolved: tasks.categoryUnresolved,
         projectSlug: projects.slug,
         projectName: projects.name,
+        projectHue: projects.hue,
         phaseName: phases.name,
         phaseSortOrder: phases.sortOrder,
       })
@@ -349,6 +354,7 @@ export const tasksRouter = createTRPCRouter({
           createdAt: tasks.createdAt,
           projectSlug: projects.slug,
           projectName: projects.name,
+          projectHue: projects.hue,
           category: tasks.category,
           categoryUnresolved: tasks.categoryUnresolved,
         })
@@ -935,6 +941,7 @@ export const tasksRouter = createTRPCRouter({
         title: tasks.title,
         completedAt: tasks.completedAt,
         projectSlug: projects.slug,
+        projectHue: projects.hue,
         category: tasks.category,
         categoryUnresolved: tasks.categoryUnresolved,
       })

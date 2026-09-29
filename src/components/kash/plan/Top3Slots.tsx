@@ -5,6 +5,7 @@ import { forwardRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
 import { categorySolidVar, categoryFillVar } from "@/lib/projects/category-tokens";
+import { taskSolidVar } from "@/lib/projects/project-hue";
 import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categories";
 
 import { GhostCategoryStrip } from "@/components/kash/ui/GhostCategoryStrip";
@@ -24,6 +25,8 @@ export type Top3SlotTask = {
   completedAt: Date | null;
   category?: ProjectCategory | null;
   categoryUnresolved?: boolean;
+  /** Spec v2 — the task's project hue, when it has one. */
+  projectHue?: number | null;
 };
 
 const SLOT_LABELS = ["①", "②", "③"] as const;
@@ -39,7 +42,9 @@ function Top3Slot({ slot, task, onUnpin }: SlotProps) {
   const label = SLOT_LABELS[slot - 1];
   const isCompleted = task.completedAt != null;
   const starColor =
-    task.category && !task.categoryUnresolved ? categorySolidVar(task.category) : "var(--accent)";
+    task.category && !task.categoryUnresolved
+      ? taskSolidVar({ category: task.category, projectHue: task.projectHue })
+      : "var(--accent)";
 
   return (
     <div

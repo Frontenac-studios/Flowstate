@@ -25,12 +25,15 @@ export type MultiProjectCalendarProject = {
   id: string;
   name: string;
   category: ProjectCategory;
+  /** Spec v2 project hue (1–8); null for personal projects. */
+  hue?: number | null;
 };
 
 export type MultiProjectCalendarRow = {
   projectId: string;
   projectName: string;
   category: ProjectCategory;
+  hue: number | null;
   phaseId: string;
   phaseName: string;
   depth: number;
@@ -80,6 +83,7 @@ export function buildMultiProjectCalendarRows(
         projectId: project.id,
         projectName: project.name,
         category: project.category,
+        hue: project.hue ?? null,
         phaseId: flat.node.phase.id,
         phaseName: flat.node.phase.name,
         depth: flat.depth,
@@ -91,11 +95,4 @@ export function buildMultiProjectCalendarRows(
     }
   }
   return { span, rows };
-}
-
-export function projectIndexById(
-  projects: readonly MultiProjectCalendarProject[]
-): Map<string, number> {
-  const sorted = [...projects].sort((a, b) => a.name.localeCompare(b.name));
-  return new Map(sorted.map((project, index) => [project.id, index]));
 }

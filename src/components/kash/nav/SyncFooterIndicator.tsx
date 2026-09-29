@@ -75,7 +75,7 @@ export function SyncFooterIndicator({ expanded }: { expanded: boolean }) {
         ) : (
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink-faint" aria-hidden />
         )}
-        {expanded ? <span className="text-caption text-ink-faint">Sync</span> : null}
+        {expanded ? <span className="text-caption text-ink-muted">Sync</span> : null}
       </button>
     </div>
   );

@@ -104,7 +104,7 @@ export default function XeroImport({ onImported }: { onImported: () => void }) {
           {p.warnings.length > 0 ? (
             <ul className="flex flex-col gap-0.5">
               {p.warnings.map((w, i) => (
-                <li key={i} className="text-caption text-ink-faint">
+                <li key={i} className="text-caption text-ink-muted">
                   {w}
                 </li>
               ))}

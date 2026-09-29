@@ -100,7 +100,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="new-project-name" className="text-caption text-ink-faint">
+        <label htmlFor="new-project-name" className="text-caption text-ink-muted">
           Name
         </label>
         <Input
@@ -145,7 +145,7 @@ export default function NewProjectForm({ onCreated, onCancel }: Props) {
           })}
         </div>
         {clientChoice === null && suggestedClientId ? (
-          <p className="text-caption text-ink-faint">Matched from the name</p>
+          <p className="text-caption text-ink-muted">Matched from the name</p>
         ) : null}
       </fieldset>
 

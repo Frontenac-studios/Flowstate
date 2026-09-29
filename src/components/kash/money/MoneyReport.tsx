@@ -172,7 +172,7 @@ function Tile({
     <div className="rounded-card border border-border bg-surface p-4">
       <p className="text-caption text-ink-muted">{label}</p>
       <p className="mt-1 text-title font-semibold tabular-nums text-ink">{value}</p>
-      <p className="mt-1 text-caption text-ink-faint">{children}</p>
+      <p className="mt-1 text-caption text-ink-muted">{children}</p>
     </div>
   );
 }

@@ -9,5 +9,5 @@ export function EstimateConfidenceHint({ sampleCount }: Props) {
   const label = estimateConfidenceLabel(sampleCount);
   if (!label) return null;
 
-  return <span className="text-ink-faint">{label}</span>;
+  return <span className="text-ink-muted">{label}</span>;
 }

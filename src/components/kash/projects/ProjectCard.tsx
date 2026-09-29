@@ -92,7 +92,7 @@ export default function ProjectCard({
         ) : null}
       </div>
       <p
-        className={`mt-1.5 text-caption ${finishing ? "" : "text-ink-faint"}`}
+        className={`mt-1.5 text-caption ${finishing ? "" : "text-ink-muted"}`}
         style={finishing ? { color: categoryTextVar(project.category) } : undefined}
       >
         {!hasTasks

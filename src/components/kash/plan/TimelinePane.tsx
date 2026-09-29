@@ -192,7 +192,7 @@ function ProtectedTimelineBlock({
           </span>
           {title}
         </span>
-        <span className="shrink-0 text-caption tabular-nums text-ink-faint">
+        <span className="shrink-0 text-caption tabular-nums text-ink-muted">
           {formatClock(block.startMin)}
         </span>
       </div>
@@ -704,7 +704,7 @@ export function TimelinePane({
               />
             ) : null}
           </div>
-          <span className="text-caption text-ink-faint" style={{ writingMode: "vertical-rl" }}>
+          <span className="text-caption text-ink-muted" style={{ writingMode: "vertical-rl" }}>
             timeline
           </span>
         </button>
@@ -843,13 +843,13 @@ export function TimelinePane({
                 <span className="min-w-0 flex-1 truncate text-caption text-ink-muted line-through">
                   {t.title}
                 </span>
-                <span className="shrink-0 text-caption text-ink-faint">✓</span>
+                <span className="shrink-0 text-caption text-ink-muted">✓</span>
               </div>
             ))}
 
             {showTimelineChrome && decideSlotMin != null ? (
               <div
-                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-[var(--border)] text-caption text-ink-faint"
+                className="pointer-events-none absolute left-11 right-1 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-[var(--border)] text-caption text-ink-muted"
                 style={{
                   top: ((decideSlotMin - rangeStart) / 60) * HOUR_HEIGHT,
                   height: (NEXT_BLOCK_MIN / 60) * HOUR_HEIGHT - 4,

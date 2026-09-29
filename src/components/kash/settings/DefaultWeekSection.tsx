@@ -231,7 +231,7 @@ export default function DefaultWeekSection() {
         </div>
 
         <label className="flex flex-col gap-1 text-sm text-ink-muted">
-          Label <span className="text-ink-faint">(optional)</span>
+          Label <span className="text-ink-muted">(optional)</span>
           <Input
             value={draft.label}
             maxLength={200}

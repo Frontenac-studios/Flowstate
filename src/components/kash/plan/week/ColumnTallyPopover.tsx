@@ -129,7 +129,7 @@ export default function ColumnTallyPopover({
         {categoryStrip ? <div className="mb-2">{categoryStrip}</div> : null}
         <p
           className={`text-caption uppercase tracking-wide ${
-            isToday ? "font-medium text-ink" : "text-ink-faint"
+            isToday ? "font-medium text-ink" : "text-ink-muted"
           }`}
         >
           {label}
@@ -143,7 +143,7 @@ export default function ColumnTallyPopover({
         ) : (
           <p className="text-micro text-ink-muted">{headerDate}</p>
         )}
-        {meetingSummary ? <p className="mt-1 text-micro text-ink-faint">{meetingSummary}</p> : null}
+        {meetingSummary ? <p className="mt-1 text-micro text-ink-muted">{meetingSummary}</p> : null}
         {overCommitted ? <OverCommitFlag mode={overCommitMode} /> : null}
       </button>
     </div>

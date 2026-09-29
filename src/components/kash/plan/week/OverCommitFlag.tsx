@@ -26,7 +26,7 @@ export default function OverCommitFlag({ mode }: Props) {
         aria-label={`Heavy day. ${tooltip}.`}
       >
         Heavy day
-        <span className="text-ink-faint"> · {tooltip}</span>
+        <span className="text-ink-muted"> · {tooltip}</span>
       </p>
     </Tooltip>
   );

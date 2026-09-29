@@ -276,6 +276,7 @@ export function WeekCanvas({
           completedAt: t.completedAt,
           category: t.category,
           categoryUnresolved: t.categoryUnresolved,
+          projectHue: t.projectHue,
         }))
       );
     });
@@ -589,6 +590,7 @@ export function WeekCanvas({
     projectId: task.projectId,
     projectSlug: task.projectSlug,
     projectName: task.projectName,
+    projectHue: task.projectHue,
     isTop3: task.isTop3,
     dayPriorityOrder: dayPriorityOrderByTaskId.get(task.id) ?? null,
     category: task.category,

@@ -62,6 +62,8 @@ type Props = {
   projectId: string;
   projectSlug: string;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   phases: ProjectPhase[];
   tasks: ProjectTask[];
   selectedPath: string[];
@@ -94,6 +96,7 @@ export default function MillerColumnsView({
   projectId,
   projectSlug,
   category,
+  hue,
   phases,
   tasks,
   selectedPath,
@@ -584,6 +587,7 @@ export default function MillerColumnsView({
           <PhaseDetail
             node={item.node}
             category={category}
+            hue={hue}
             dayPriorityTaskIds={dayPriorityTaskIds}
             timeSpentSeconds={timeRollups?.byPhaseId[item.node.phase.id] ?? 0}
             estimateSampleCount={estimateSampleCount}
@@ -604,7 +608,7 @@ export default function MillerColumnsView({
         />
       );
     },
-    [detail, m, category, dayPriorityTaskIds, timeRollups?.byPhaseId, estimateSampleCount]
+    [detail, m, category, hue, dayPriorityTaskIds, timeRollups?.byPhaseId, estimateSampleCount]
   );
 
   const handleSubmitComposer = async (lines: ParsedProjectLine[]) => {
@@ -718,6 +722,7 @@ export default function MillerColumnsView({
                   level={col.level}
                   parentPhaseId={col.parentPhaseId}
                   category={category}
+                  hue={hue}
                   items={col.items}
                   openPhaseId={selectedPath[col.level] ?? null}
                   detail={detail}

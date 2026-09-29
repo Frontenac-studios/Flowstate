@@ -49,7 +49,7 @@ export default function ExpensesByCategoryChart({ data }: { data: ChartData }) {
 
   return (
     <div className="rounded-card border border-subtle bg-surface p-4">
-      <p className="mb-2 text-caption font-medium uppercase tracking-wide text-ink-faint">
+      <p className="mb-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
         Expenses by category · last 6 months
       </p>
       <div className="overflow-x-auto">

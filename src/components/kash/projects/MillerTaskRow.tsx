@@ -159,7 +159,7 @@ export default function MillerTaskRow({
             }`}
           >
             {isBlocked ? (
-              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-faint">
+              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-muted">
                 <LockIcon size={12} className="shrink-0" aria-hidden />
                 <span>Waiting on {blockerLabel}</span>
               </p>

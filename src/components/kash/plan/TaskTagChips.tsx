@@ -26,12 +26,12 @@ export function TaskTagChips({ tags, maxVisible = 3, className = "" }: Props) {
           className="inline-flex max-w-[8rem] items-center gap-0.5 truncate rounded-pill border border-border bg-surface-2 px-1.5 py-0.5 text-caption text-ink-muted"
           title={tag}
         >
-          <HashIcon size={9} className="shrink-0 text-ink-faint" aria-hidden />
+          <HashIcon size={9} className="shrink-0 text-ink-muted" aria-hidden />
           <span className="truncate">{tag}</span>
         </span>
       ))}
       {overflow > 0 ? (
-        <span className="rounded-pill border border-border px-1.5 py-0.5 text-caption text-ink-faint">
+        <span className="rounded-pill border border-border px-1.5 py-0.5 text-caption text-ink-muted">
           +{overflow}
         </span>
       ) : null}

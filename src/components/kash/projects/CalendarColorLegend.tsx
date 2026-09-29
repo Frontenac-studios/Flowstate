@@ -5,13 +5,13 @@ import Link from "next/link";
 import { PROJECT_CATEGORIES, categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
 import { categorySolidVar } from "@/lib/projects/category-tokens";
 import type { CalendarColorMode } from "@/lib/projects/calendar-color-mode";
-import { projectCycleSolidVar } from "@/lib/projects/project-cycle-color";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 
 type ProjectLegendItem = {
   id: string;
   name: string;
   category: ProjectCategory;
-  projectIndex: number;
+  hue?: number | null;
 };
 
 type Props = {
@@ -49,7 +49,7 @@ export default function CalendarColorLegend({ mode, projects }: Props) {
         <li key={project.id} className="flex items-center gap-1.5">
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: projectCycleSolidVar(project.projectIndex) }}
+            style={{ backgroundColor: projectSolidVar(project) }}
             aria-hidden
           />
           <Link

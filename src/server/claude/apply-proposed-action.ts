@@ -29,6 +29,7 @@ import { slugifyProjectName } from "@/lib/projects/slugify";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 import { applyScheduleBatch } from "@/server/tasks/apply-schedule-batch";
 import { resolveTaskCategoryForUser } from "@/server/tasks/resolve-task-category";
+import { hueForNewProject } from "@/server/projects/next-project-hue";
 
 export async function resolveOwnedTaskTitles(
   userId: string,
@@ -694,6 +695,7 @@ export async function applyProposedActionPayload(
             name: item.name.trim(),
             slug,
             category: item.category,
+            hue: await hueForNewProject(db, userId, item.category),
           })
           .returning();
 

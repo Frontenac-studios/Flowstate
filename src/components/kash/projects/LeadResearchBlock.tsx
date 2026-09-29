@@ -25,7 +25,7 @@ export default function LeadResearchBlock({
       <div className="flex items-baseline gap-2">
         <span className="text-caption font-medium text-ink-muted">Research</span>
         {when ? (
-          <span className="text-caption text-ink-faint">
+          <span className="text-caption text-ink-muted">
             {when.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </span>
         ) : null}
@@ -48,7 +48,7 @@ export default function LeadResearchBlock({
       ) : null}
 
       {facts.unverified.length ? (
-        <p className="text-caption text-ink-faint">Unconfirmed: {facts.unverified.join("; ")}</p>
+        <p className="text-caption text-ink-muted">Unconfirmed: {facts.unverified.join("; ")}</p>
       ) : null}
 
       {facts.sources.length ? (
@@ -59,7 +59,7 @@ export default function LeadResearchBlock({
               href={source.url}
               target="_blank"
               rel="noreferrer noopener"
-              className="text-caption text-ink-faint underline-offset-2 hover:text-ink hover:underline"
+              className="text-caption text-ink-muted underline-offset-2 hover:text-ink hover:underline"
             >
               {source.title || new URL(source.url).hostname}
             </a>

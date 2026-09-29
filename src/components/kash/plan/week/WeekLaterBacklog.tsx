@@ -37,7 +37,7 @@ export function WeekLaterBacklog({ tasks, onComplete, onDelete }: Props) {
         <span className="text-caption uppercase tracking-wide text-ink-muted">
           Later · {tasks.length} someday
         </span>
-        <span className="text-meta text-ink-faint">{open ? "Hide" : "Show"}</span>
+        <span className="text-meta text-ink-muted">{open ? "Hide" : "Show"}</span>
       </button>
       {open ? (
         <ul className="space-y-1.5 px-3 pb-3" aria-label="Later tasks">

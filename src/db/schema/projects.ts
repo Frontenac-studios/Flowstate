@@ -1,13 +1,17 @@
 import {
   boolean,
+  check,
   index,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+
+import { sql } from "drizzle-orm";
 
 import { clients } from "./clients";
 import { targets } from "./targets";
@@ -74,6 +78,12 @@ export const projects = pgTable(
      * fixed-fee burn means the margin is evaporating. Same signal, opposite meaning.
      */
     billingType: projectBillingType("billing_type").notNull().default("hourly"),
+    /**
+     * Spec v2 — the project's colour: one of the 8 project hues (--project-1..8),
+     * assigned in order at creation and overridable. Null for personal projects,
+     * which are always personal purple. Not money, so it may live here.
+     */
+    hue: smallint("hue"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
@@ -81,5 +91,9 @@ export const projects = pgTable(
     uniqueIndex("projects_user_id_slug_idx").on(table.userId, table.slug),
     index("projects_user_id_updated_at_idx").on(table.userId, table.updatedAt),
     index("projects_user_id_client_id_idx").on(table.userId, table.clientId),
+    check(
+      "projects_hue_check",
+      sql`${table.hue} IS NULL OR (${table.hue} BETWEEN 1 AND 8 AND ${table.category} = 'business')`
+    ),
   ]
 );

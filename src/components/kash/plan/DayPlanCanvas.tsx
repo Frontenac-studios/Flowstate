@@ -339,6 +339,7 @@ export function DayPlanCanvas() {
     projectId: task.projectId,
     projectSlug: task.projectSlug,
     projectName: task.projectName,
+    projectHue: task.projectHue,
     isTop3: task.isTop3,
     category: task.category,
     categoryUnresolved: task.categoryUnresolved,
@@ -490,6 +491,7 @@ export function DayPlanCanvas() {
             createdAt: source.createdAt,
             projectSlug: source.projectSlug,
             projectName: source.projectName,
+            projectHue: source.projectHue,
             category: source.category,
             categoryUnresolved: source.categoryUnresolved,
           };
@@ -880,7 +882,7 @@ export function DayPlanCanvas() {
           {/* W6 — the Budget: today's logged-time split against the declared tilt. */}
           {budgetToday ? (
             <div className="flex items-center gap-3">
-              <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-faint">
+              <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-muted">
                 Budget
               </span>
               <TimeBudgetBar bar={budgetToday} />

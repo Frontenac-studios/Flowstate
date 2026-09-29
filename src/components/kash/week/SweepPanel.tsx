@@ -185,7 +185,7 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
         <h2 className="text-body font-medium text-ink">
           Gone quiet — {draft.totalStale} at three altitudes
         </h2>
-        <span className="shrink-0 text-caption text-ink-faint">
+        <span className="shrink-0 text-caption text-ink-muted">
           ↑↓ move · k keep · p park · d drop · x delete a deal · ↵ sweep
         </span>
       </div>
@@ -202,11 +202,11 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
               }`}
             >
               <span className="flex min-w-0 items-baseline gap-2">
-                <span className="shrink-0 rounded-pill border border-subtle px-1.5 py-0.5 text-meta text-ink-faint">
+                <span className="shrink-0 rounded-pill border border-subtle px-1.5 py-0.5 text-meta text-ink-muted">
                   {item.isDeal ? "Deal" : ALTITUDE_CHIP[item.altitude]}
                 </span>
                 <span className="min-w-0 truncate text-sm text-ink">{item.title}</span>
-                <span className="shrink-0 text-caption text-ink-faint">
+                <span className="shrink-0 text-caption text-ink-muted">
                   {item.staleDays}d quiet
                 </span>
               </span>
@@ -221,7 +221,7 @@ export function SweepPanel({ open, onClose }: { open: boolean; onClose: () => vo
       </ul>
 
       {draft.remaining > 0 ? (
-        <p className="text-caption text-ink-faint">
+        <p className="text-caption text-ink-muted">
           +{draft.remaining} more gone quiet — rule these first; the rest surface next week.
         </p>
       ) : null}
