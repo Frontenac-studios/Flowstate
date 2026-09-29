@@ -142,6 +142,76 @@ describe("sqlite orgs.personal_for_user_id", () => {
   });
 });
 
+// Regression: Postgres collapsed the five legacy categories into business/personal in
+// drizzle/0045, but the local mirror stores plain text and kept the old labels, so
+// `categorySolidVar` resolved to `--cat-undefined-solid` and stripes rendered blank.
+describe("sqlite legacy category remap", () => {
+  it("collapses legacy labels the way drizzle/0045 did, preserving NULLs", () => {
+    const sqlite = new Database(":memory:");
+    runSqliteMigrations(sqlite);
+
+    const legacy = ["professional", "personal_projects", "relationships", "body_mind", "adulting"];
+    const insertProject = sqlite.prepare(
+      "INSERT INTO projects (id, user_id, name, slug, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, 0)"
+    );
+    const insertTask = sqlite.prepare(
+      "INSERT INTO tasks (id, user_id, title, category, created_at, updated_at) VALUES (?, ?, 't', ?, 0, 0)"
+    );
+    const insertSetting = sqlite.prepare(
+      "INSERT INTO category_settings (user_id, category, created_at, updated_at) VALUES (?, ?, 0, 0)"
+    );
+    [...legacy, "business", "personal"].forEach((category, i) => {
+      insertProject.run(`p${i}`, USER, `P${i}`, `p${i}`, category);
+      insertTask.run(`t${i}`, USER, category);
+      insertSetting.run(USER, category);
+    });
+    insertTask.run("t-null", USER, null);
+    sqlite
+      .prepare(
+        "INSERT INTO app_settings (user_id, last_used_category, created_at, updated_at) VALUES (?, 'professional', 0, 0)"
+      )
+      .run(USER);
+
+    runSqliteMigrations(sqlite);
+
+    const categoryOf = (table: string, id: string) =>
+      (
+        sqlite.prepare(`SELECT category FROM ${table} WHERE id = ?`).get(id) as {
+          category: string | null;
+        }
+      ).category;
+    const expected = [
+      "business",
+      "personal",
+      "personal",
+      "personal",
+      "personal",
+      "business",
+      "personal",
+    ];
+    expected.forEach((category, i) => {
+      expect(categoryOf("projects", `p${i}`)).toBe(category);
+      expect(categoryOf("tasks", `t${i}`)).toBe(category);
+    });
+    expect(categoryOf("tasks", "t-null")).toBeNull();
+    expect(
+      (sqlite.prepare("SELECT last_used_category AS c FROM app_settings").get() as { c: string }).c
+    ).toBe("business");
+    // Seven labels fold into two primary-key rows without a constraint error.
+    expect(
+      (
+        sqlite.prepare("SELECT category FROM category_settings ORDER BY category").all() as Array<{
+          category: string;
+        }>
+      ).map((r) => r.category)
+    ).toEqual(["business", "personal"]);
+
+    // Idempotent: a second pass changes nothing.
+    expect(() => runSqliteMigrations(sqlite)).not.toThrow();
+    expect(categoryOf("projects", "p1")).toBe("personal");
+  });
+});
+
 // Spec v2 per-project hue: a local DB from before the column gets it, and existing
 // business projects are numbered 1–8 in creation order (live first), mirroring
 // drizzle/0065. Personal projects stay NULL; a chosen hue is never overwritten.
