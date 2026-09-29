@@ -824,6 +824,18 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "orgs", column: "personal_for_user_id", definition: "TEXT" },
 ];
 
+// Every local column 0045 remapped (goals has no SQLite mirror).
+const LEGACY_CATEGORY_COLUMNS: ReadonlyArray<readonly [table: string, column: string]> = [
+  ["projects", "category"],
+  ["tasks", "category"],
+  ["project_templates", "category"],
+  ["protected_block_templates", "category"],
+  ["protected_blocks", "category"],
+  ["category_settings", "category"],
+  ["abyss_items", "category"],
+  ["app_settings", "last_used_category"],
+];
+
 function hasColumn(sqlite: Database.Database, table: string, column: string): boolean {
   const info = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
   return info.some((c) => c.name === column);
@@ -854,6 +866,24 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
   sqlite.exec(
     "CREATE UNIQUE INDEX IF NOT EXISTS orgs_personal_for_user_id_idx ON orgs (personal_for_user_id);"
   );
+
+  // W1 category collapse, mirroring the hand-written USING casts in
+  // drizzle/0045_military_outlaw_kid.sql: professional -> business, every other
+  // legacy label (personal_projects | relationships | body_mind | adulting) ->
+  // personal. Postgres got this as part of its enum retype; the local mirror stores
+  // plain text, so rows written before the collapse kept their old labels and
+  // rendered with no category colour. NULLs are left alone (the nullable columns
+  // preserve them in 0045 too). Idempotent: once collapsed, the WHERE matches nothing.
+  // category_settings is keyed on (user_id, category), so two legacy labels folding
+  // into one would collide — OR IGNORE keeps the first, and the delete drops the rest.
+  for (const [table, column] of LEGACY_CATEGORY_COLUMNS) {
+    sqlite.exec(
+      `UPDATE OR IGNORE ${table}
+         SET ${column} = CASE WHEN ${column} = 'professional' THEN 'business' ELSE 'personal' END
+         WHERE ${column} IS NOT NULL AND ${column} NOT IN ('business', 'personal');`
+    );
+  }
+  sqlite.exec("DELETE FROM category_settings WHERE category NOT IN ('business', 'personal');");
 
   // W4 double-bill guard, mirroring the Postgres trigger in
   // drizzle/0050_time_entries_invoice_id_immutable.sql. `invoice_id` is write-once:
