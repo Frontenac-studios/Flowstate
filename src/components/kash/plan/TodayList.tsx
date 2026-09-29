@@ -1,13 +1,17 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ColoredEmptyInvitation } from "@/components/kash/ui/ColoredEmptyInvitation";
 import { QueryErrorNotice } from "@/components/kash/ui/QueryErrorNotice";
+import { useLocalCalendarDate } from "@/hooks/useLocalCalendarDate";
 import type { TaskSnapshot } from "@/hooks/useSessionUndo";
+import { applyLens } from "@/lib/tasks/lens-apply";
+import { groupTodayTasks } from "@/lib/today/group-today-tasks";
 
 import { CompletedSection, type CompletedTaskRow } from "./CompletedSection";
+import { useLens } from "./LensProvider";
 import type { PlanTaskRow } from "./TaskRow";
 import { TaskRow } from "./TaskRow";
 
@@ -26,6 +30,8 @@ type Props = {
   onDelete: (snapshot: TaskSnapshot) => void;
   onPin?: (taskId: string, sourceEl: HTMLElement) => void;
 };
+
+type ListGroup = { key: string; label: string; color?: string; tasks: PlanTaskRow[] };
 
 /**
  * AN-T2: tracks which Today rows should play the arrival slide-in — staggered
@@ -80,53 +86,92 @@ export function TodayList({
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: "bucket:today" });
   const arriveMap = useTodayRowArrival(tasks, isLoading);
+  const todayIso = useLocalCalendarDate();
+  const lens = useLens();
+
+  // Spec v5: cards for Overdue / Today / Anytime. A lens group-by replaces those
+  // groups and lens / tag filters narrow the list — the lens bar stays useful.
+  const groups = useMemo((): ListGroup[] => {
+    if (lens) {
+      const result = applyLens(tasks, lens.state, new Date(), lens.tagFilter);
+      if (result.kind === "grouped") {
+        return result.groups.map((g) => ({
+          key: g.key,
+          label: g.label,
+          color: g.color,
+          tasks: g.tasks,
+        }));
+      }
+      return groupTodayTasks(result.tasks, todayIso);
+    }
+    return groupTodayTasks(tasks, todayIso);
+  }, [lens, tasks, todayIso]);
 
   return (
     <section
       ref={setNodeRef}
-      className={`mt-section ${
+      className={`${
         pulse ? "kash-section-pulse rounded-[var(--radius-card)]" : ""
       } ${isOver ? "kash-section-drop-target rounded-[var(--radius-card)]" : ""}`}
       aria-labelledby="today-heading"
     >
-      <h2
-        id="today-heading"
-        className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-muted"
-      >
-        Today
-        {tasks.length > 0 ? (
-          <span className="ml-2 font-normal normal-case text-ink-muted">({tasks.length})</span>
-        ) : null}
+      <h2 id="today-heading" className="sr-only">
+        Today&apos;s tasks
       </h2>
 
       {isLoading ? (
-        <p className="rounded-card border border-subtle bg-surface px-4 py-8 text-center text-sm text-ink-muted">
+        <p className="rounded-card bg-surface px-4 py-8 text-center text-body text-ink-muted">
           Loading…
         </p>
       ) : isError ? (
         <QueryErrorNotice message="Today didn't load." onRetry={onRetry} />
       ) : tasks.length === 0 ? (
         <ColoredEmptyInvitation
-          title="Start your first task"
+          title="Nothing on today yet"
           hint="Capture something above — property chips appear as you type."
         />
+      ) : groups.length === 0 ? (
+        <p className="rounded-card bg-surface px-4 py-8 text-center text-body text-ink-muted">
+          No tasks match the current filter.
+        </p>
       ) : (
-        <ul className="space-y-2">
-          {tasks.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              selected={selectedTaskId === task.id}
-              onSelect={onSelectTask}
-              onActivate={onActivateTask}
-              onComplete={onComplete}
-              onDelete={onDelete}
-              onPin={onPin}
-              canPin={onPin != null}
-              arriveIndex={arriveMap.get(task.id)}
-            />
+        <div className="flex flex-col gap-stack">
+          {groups.map((group) => (
+            <div key={group.key} className="flex flex-col gap-2">
+              <h3
+                className={`flex items-center gap-2 px-1 text-meta font-semibold ${
+                  group.key === "overdue" ? "text-critical" : "text-ink"
+                }`}
+              >
+                {group.color ? (
+                  <span
+                    aria-hidden
+                    className="size-2 shrink-0 rounded-pill"
+                    style={{ backgroundColor: group.color }}
+                  />
+                ) : null}
+                {group.label} · {group.tasks.length}
+              </h3>
+              <ul className="divide-y divide-menu-divider rounded-card bg-surface px-3 py-2">
+                {group.tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    selected={selectedTaskId === task.id}
+                    onSelect={onSelectTask}
+                    onActivate={onActivateTask}
+                    onComplete={onComplete}
+                    onDelete={onDelete}
+                    onPin={onPin}
+                    canPin={onPin != null}
+                    arriveIndex={arriveMap.get(task.id)}
+                    weekDragLift
+                  />
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       <CompletedSection completions={completions} onUncomplete={onUncomplete} />

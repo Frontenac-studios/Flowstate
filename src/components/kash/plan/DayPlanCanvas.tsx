@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closestCenter,
   DndContext,
+  DragOverlay,
   type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
@@ -24,7 +27,7 @@ import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
 import { isCompleteSelectionChord } from "@/lib/keyboard/complete-chord";
 import { dispatchCompleteTask } from "@/lib/tasks/complete-task-event";
 import { moveInList } from "@/lib/tasks/list-selection";
-import { toISODateString } from "@/lib/dates/local-day";
+import { parseISODateString, toISODateString } from "@/lib/dates/local-day";
 import type { Bucket } from "@/lib/tasks/derive-bucket";
 import { bucketToSchedulingFields } from "@/lib/tasks/bucket-scheduling";
 import { partitionNamedDays } from "@/lib/tasks/partition-named-days";
@@ -52,7 +55,8 @@ import { QuickInput, type QuickInputHandle } from "./QuickInput";
 import type { PlanTaskRow } from "./TaskRow";
 import { TimeBudgetBar } from "./TimeBudgetBar";
 import { LensControlBar } from "./LensControlBar";
-import { TimelinePane } from "./TimelinePane";
+import { TimelinePane, type TimelineDropPreview } from "./TimelinePane";
+import { WeekDragOverlay } from "./week/WeekDragOverlay";
 import { TodayList } from "./TodayList";
 import { TodayReviewPanel } from "./TodayReviewPanel";
 import { Top3ReplacePicker } from "./Top3ReplacePicker";
@@ -60,6 +64,7 @@ import { Top3Slots, type Top3SlotTask } from "./Top3Slots";
 import { useChat } from "../chat/ChatProvider";
 import { createCaptureContext } from "@/lib/chat/capture-context";
 import { optimisticPatch, rollbackPatches } from "./optimistic-cache";
+import { DEFAULT_FOCUS_BLOCK_MINUTES } from "@/lib/timeline/focus-block-defaults";
 
 type IncompleteTask = RouterOutputs["tasks"]["listIncomplete"][number];
 type Top3SlotRow = RouterOutputs["tasks"]["listTop3Slots"][number];
@@ -126,6 +131,17 @@ function firstFreeSlot(pinnedBySlot: Map<number, Top3SlotTask>): 1 | 2 | 3 | nul
 
 function clientTzOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
+}
+
+const HEADER_DATE = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "short",
+  day: "numeric",
+});
+
+/** "Monday, Sep 28" — rendered in label caps. */
+function formatHeaderDate(localDate: string): string {
+  return HEADER_DATE.format(parseISODateString(localDate));
 }
 
 export function DayPlanCanvas() {
@@ -731,7 +747,36 @@ export function DayPlanCanvas() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
+  // Spec v5 DragA: which task is lifted and where it hovers — drives the overlay
+  // card and the tinted drop preview on the schedule.
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const clearDrag = () => {
+    setDragTaskId(null);
+    setDragOverId(null);
+  };
+  const onDragStart = (event: DragStartEvent) => {
+    const id = String(event.active.id);
+    setDragTaskId(id.startsWith("task:") ? id.slice("task:".length) : null);
+  };
+  const onDragOver = (event: DragOverEvent) => {
+    const id = event.over?.id;
+    setDragOverId(typeof id === "string" ? id : null);
+  };
+  const draggedTask = dragTaskId ? (todayTasks.find((t) => t.id === dragTaskId) ?? null) : null;
+  const dropStartMin = draggedTask && dragOverId ? timelineDropStartMin(dragOverId) : null;
+  const dropPreview: TimelineDropPreview | null =
+    draggedTask && dropStartMin != null
+      ? {
+          startMin: dropStartMin,
+          endMin: dropStartMin + DEFAULT_FOCUS_BLOCK_MINUTES,
+          category: draggedTask.categoryUnresolved ? null : draggedTask.category,
+          projectHue: draggedTask.projectHue,
+        }
+      : null;
+
   const onDragEnd = (event: DragEndEvent) => {
+    clearDrag();
     const overId = event.over?.id;
     if (!overId || typeof overId !== "string") return;
 
@@ -802,40 +847,52 @@ export function DayPlanCanvas() {
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDragCancel={clearDrag}
+    >
       <div className="flex flex-col gap-stack">
         <ThresholdNotifier />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        {/* Spec v5 (TodayB2) header: label-caps date + progress, 40px h1, Add task. */}
+        <header className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex flex-col gap-2">
+            <span className="text-micro font-semibold uppercase tracking-caps text-ink-muted">
+              {formatHeaderDate(localDate)} · {completedToday.length} of{" "}
+              {completedToday.length + todayTasks.length} done
+            </span>
             <h1 className="text-xl font-bold text-ink">Today</h1>
-            <TodayTimer />
           </div>
-          <InPageSwitcher
-            options={VIEW_OPTIONS}
-            value={view}
-            onChange={changeView}
-            ariaLabel="Today view"
-            trailing={
-              <AddTaskPopover
-                ref={addTaskRef}
-                embedded
-                menuAlign="right"
-                onAskChat={() =>
-                  openRail({
-                    captureContext: createCaptureContext({
-                      surface: "today",
-                      defaultBucket: "today",
-                    }),
-                  })
-                }
-                onTypeManually={() => {
-                  setComposerOpen(true);
-                  requestAnimationFrame(() => quickInputRef.current?.focus());
-                }}
-              />
-            }
-          />
-        </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <TodayTimer />
+            <InPageSwitcher
+              options={VIEW_OPTIONS}
+              value={view}
+              onChange={changeView}
+              ariaLabel="Today view"
+            />
+            <AddTaskPopover
+              ref={addTaskRef}
+              labelled
+              menuAlign="right"
+              onAskChat={() =>
+                openRail({
+                  captureContext: createCaptureContext({
+                    surface: "today",
+                    defaultBucket: "today",
+                  }),
+                })
+              }
+              onTypeManually={() => {
+                setComposerOpen(true);
+                requestAnimationFrame(() => quickInputRef.current?.focus());
+              }}
+            />
+          </div>
+        </header>
 
         {composerOpen ? (
           <div
@@ -856,7 +913,7 @@ export function DayPlanCanvas() {
         ) : null}
 
         <section
-          className="flex flex-col gap-stack rounded-card border border-border bg-surface px-card-x py-card-y shadow-surface"
+          className="flex flex-col gap-3 rounded-card bg-surface px-card-x py-card-y"
           aria-label="Today summary"
         >
           <Top3Slots
@@ -882,7 +939,7 @@ export function DayPlanCanvas() {
           {/* W6 — the Budget: today's logged-time split against the declared tilt. */}
           {budgetToday ? (
             <div className="flex items-center gap-3">
-              <span className="w-14 shrink-0 text-caption uppercase tracking-wide text-ink-muted">
+              <span className="w-14 shrink-0 text-micro font-semibold uppercase tracking-caps text-ink-muted">
                 Budget
               </span>
               <TimeBudgetBar bar={budgetToday} />
@@ -893,7 +950,7 @@ export function DayPlanCanvas() {
         {view === "review" ? (
           <TodayReviewPanel localDate={localDate} tzOffsetMinutes={tzOffsetMinutes} />
         ) : (
-          <div className="flex flex-col gap-stack lg:flex-row">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
             {view === "list" ? (
               <div className="min-w-0 flex-1 lg:basis-0">
                 <div className="mb-3">
@@ -921,6 +978,7 @@ export function DayPlanCanvas() {
               density={view === "list" ? "rail" : "full"}
               className={view === "list" ? undefined : "min-w-0 flex-1 lg:basis-0"}
               syncStatus={calendarSync?.status ?? "off"}
+              dropPreview={dropPreview}
               top3HoldOffer={
                 top3Assurance.showHoldGhost && top3Assurance.holdGhost
                   ? {
@@ -936,6 +994,9 @@ export function DayPlanCanvas() {
           </div>
         )}
       </div>
+      <DragOverlay dropAnimation={null}>
+        {draggedTask ? <WeekDragOverlay task={toRow(draggedTask)} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }

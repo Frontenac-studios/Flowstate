@@ -3,6 +3,7 @@
 import type { EventForDay } from "@/trpc/routers/calendar";
 import { calendarEventColors } from "@/lib/calendar/event-color";
 import { timelineBlockStyle } from "@/lib/timeline/block-geometry";
+import { TIMELINE_HOUR_HEIGHT } from "@/lib/timeline/adaptive-window";
 
 export type ExternalEventBlockProps = {
   event: Pick<
@@ -25,35 +26,33 @@ function displayTitle(event: { title: string | null }): string {
   return event.title?.trim() || "Busy";
 }
 
-/** Read-only inbound calendar event on the Today timeline (A1 soft Google fill). */
+/**
+ * Read-only inbound calendar event on the Today timeline. Spec v4/v5: external events
+ * are white with a hairline outline and muted 12/600 text, so they read as "not
+ * mine" next to the project-tinted task blocks.
+ */
 export function ExternalEventBlock({ event, layout, rangeStart }: ExternalEventBlockProps) {
   const title = displayTitle(event);
-  const top = ((event.startMin - rangeStart) / 60) * 56;
-  const height = Math.max(18, ((event.endMin - event.startMin) / 60) * 56);
+  const top = ((event.startMin - rangeStart) / 60) * TIMELINE_HOUR_HEIGHT;
+  const height = Math.max(18, ((event.endMin - event.startMin) / 60) * TIMELINE_HOUR_HEIGHT);
   const geometry = timelineBlockStyle(layout, top, height);
-  const colors = calendarEventColors(event.calendarColor);
   const tentative = event.status === "tentative";
 
   return (
     <div
-      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-row border border-[var(--border-subtle)] border-l-[var(--stripe-width)] ${
+      className={`pointer-events-none absolute flex flex-col overflow-hidden rounded-row border border-outline-border bg-surface text-ink-muted ${
         tentative ? "opacity-75" : ""
       }`}
-      style={{
-        ...geometry,
-        backgroundColor: colors.fill,
-        borderLeftColor: colors.stripe,
-        color: colors.text,
-      }}
+      style={geometry}
       title={
         event.calendarName
           ? `${title} · ${event.calendarName}${event.visibility === "private" ? " (private)" : ""}`
           : title
       }
     >
-      <div className="flex items-center gap-1 px-2 py-1">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium">{title}</span>
-        <span className="shrink-0 text-caption tabular-nums opacity-80">
+      <div className="flex items-center gap-1 px-2.5 py-0.5">
+        <span className="min-w-0 flex-1 truncate text-caption font-semibold">{title}</span>
+        <span className="shrink-0 text-caption tabular-nums">
           {formatTimeRange(event.startMin, event.endMin)}
         </span>
       </div>

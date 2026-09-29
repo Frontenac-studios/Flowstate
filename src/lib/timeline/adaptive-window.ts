@@ -3,6 +3,9 @@ const MINUTES_PER_DAY = 24 * 60;
 /** The default visible slice of the timeline — six hours anchored to now (Today §6 Q1b). */
 export const TIMELINE_VIEWPORT_MINUTES = 6 * 60;
 
+/** Spec v5 schedule rail: 48px per hour. Shared by every block on the Today timeline. */
+export const TIMELINE_HOUR_HEIGHT = 48;
+
 /** Padding kept above the earliest / below the latest piece of content. */
 const EDGE_PAD_MINUTES = 30;
 
