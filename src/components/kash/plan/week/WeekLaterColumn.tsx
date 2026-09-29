@@ -32,7 +32,7 @@ function LaterZone({ id, icon, title, caption, tint }: ZoneProps) {
         {icon}
       </span>
       <span className="text-xs font-medium text-ink">{title}</span>
-      <span className="text-meta text-ink-faint">{caption}</span>
+      <span className="text-meta text-ink-muted">{caption}</span>
     </div>
   );
 }
@@ -51,7 +51,7 @@ export function WeekLaterColumn() {
     >
       <div className="px-2 pb-2 pt-3 text-center">
         <p className="text-sm font-medium text-ink-muted">Later</p>
-        <p className="text-meta text-ink-faint">drop to defer</p>
+        <p className="text-meta text-ink-muted">drop to defer</p>
       </div>
       <div className="flex flex-1 flex-col gap-2 px-2 pb-2">
         <LaterZone

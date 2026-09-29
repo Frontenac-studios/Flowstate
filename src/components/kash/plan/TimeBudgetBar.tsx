@@ -63,12 +63,12 @@ export function TimeBudgetBar({ bar }: { bar: BudgetBar }) {
               {tiltLabel(pct)}
             </button>
           ))}
-          <span className="text-meta text-ink-faint">business / personal</span>
+          <span className="text-meta text-ink-muted">business / personal</span>
           {editing ? (
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="ml-1 text-meta text-ink-faint underline-offset-2 hover:underline"
+              className="ml-1 text-meta text-ink-muted underline-offset-2 hover:underline"
             >
               Cancel
             </button>
@@ -141,7 +141,7 @@ export function TimeBudgetBar({ bar }: { bar: BudgetBar }) {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="shrink-0 text-meta text-ink-faint underline-offset-2 hover:text-ink-muted hover:underline"
+          className="shrink-0 text-meta text-ink-muted underline-offset-2 hover:text-ink-muted hover:underline"
           title="Change your quarter tilt"
         >
           tilt {tiltLabel(tilt)}
@@ -171,7 +171,7 @@ export function TimeBudgetBar({ bar }: { bar: BudgetBar }) {
         <p className="text-meta text-ink-muted" role="note">
           {caption}
         </p>
-        {freeLine ? <p className="text-meta text-ink-faint">{freeLine}</p> : null}
+        {freeLine ? <p className="text-meta text-ink-muted">{freeLine}</p> : null}
       </div>
     </div>
   );

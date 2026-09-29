@@ -54,7 +54,7 @@ export function BalanceBar({ tasks, weeklyTiltCaption, showGhostWhenSparse = fal
     return (
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <GhostCategoryStrip className="w-full max-w-md" />
-        <p className="text-meta text-ink-faint">Balance fills in as tasks land</p>
+        <p className="text-meta text-ink-muted">Balance fills in as tasks land</p>
       </div>
     );
   }
@@ -122,7 +122,7 @@ export function BalanceBar({ tasks, weeklyTiltCaption, showGhostWhenSparse = fal
           </p>
         ) : null}
         {weeklyTiltCaption ? (
-          <p className="text-meta text-ink-faint motion-safe:transition-opacity motion-safe:duration-medium">
+          <p className="text-meta text-ink-muted motion-safe:transition-opacity motion-safe:duration-medium">
             {weeklyTiltCaption}
           </p>
         ) : null}

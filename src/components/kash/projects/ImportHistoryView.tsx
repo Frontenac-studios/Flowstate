@@ -136,7 +136,7 @@ export default function ImportHistoryView({ projectId, projectName }: Props) {
                   <p className="font-medium text-ink">
                     {row.taskCount} {row.taskCount === 1 ? "task" : "tasks"}
                   </p>
-                  <p className="text-caption text-ink-faint">
+                  <p className="text-caption text-ink-muted">
                     {formatImportTime(row.createdAt)}
                     {undone ? " · Undone" : " · Active"}
                   </p>

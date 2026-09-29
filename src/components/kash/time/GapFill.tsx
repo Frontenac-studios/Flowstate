@@ -104,7 +104,7 @@ export default function GapFill({
                   ))}
                 </Select>
               ) : (
-                <span className="text-ink-faint">No projects</span>
+                <span className="text-ink-muted">No projects</span>
               )}
               <button
                 type="button"

@@ -16,8 +16,7 @@ import {
   totalDays,
   type GanttGranularity,
 } from "@/lib/projects/gantt-scale";
-import { projectIndexById } from "@/lib/projects/multi-project-calendar";
-import { projectCalendarSolidVar } from "@/lib/projects/project-cycle-color";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 import { useTRPC } from "@/trpc/client";
 
 import { InPageSwitcher } from "../InPageSwitcher";
@@ -45,7 +44,6 @@ export default function MultiProjectCalendarView() {
   const span = data?.span ?? null;
   const rows = data?.rows ?? [];
   const projects = useMemo(() => data?.projects ?? [], [data?.projects]);
-  const projectIndexes = useMemo(() => projectIndexById(projects), [projects]);
 
   const fitToWidth = useCallback(() => {
     if (!span || !scrollRef.current) return;
@@ -124,10 +122,7 @@ export default function MultiProjectCalendarView() {
           </Button>
         </div>
       </div>
-      <CalendarColorLegend
-        mode={colorMode}
-        projects={projects.map((p) => ({ ...p, projectIndex: projectIndexes.get(p.id) ?? 0 }))}
-      />
+      <CalendarColorLegend mode={colorMode} projects={projects} />
       {span === null || rows.length === 0 ? (
         <div className="rounded-card border border-border bg-surface px-6 py-10 text-center text-ink-muted shadow-surface">
           No dated phases yet across your projects.
@@ -154,7 +149,7 @@ export default function MultiProjectCalendarView() {
                 color={
                   colorMode === "category"
                     ? categorySolidVar(row.category)
-                    : projectCalendarSolidVar(projectIndexes.get(row.projectId) ?? 0, row.category)
+                    : projectSolidVar({ category: row.category, hue: row.hue })
                 }
                 showProjectName={row.projectId !== rows[index - 1]?.projectId}
               />

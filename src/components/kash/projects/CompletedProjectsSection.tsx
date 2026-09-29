@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useId, useState } from "react";
 
 import { ChevronRight, kashIconProps } from "@/components/kash/ui/icon";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { projectSolidVar } from "@/lib/projects/project-hue";
 import { type ProjectCategory } from "@/lib/projects/categories";
 
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
@@ -14,6 +14,8 @@ export type CompletedProjectRow = {
   name: string;
   slug: string;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
 };
 
 export default function CompletedProjectsSection({
@@ -43,7 +45,7 @@ export default function CompletedProjectsSection({
         <ChevronRight
           {...kashIconProps({
             tokenSize: "sm",
-            className: `text-ink-faint transition-transform duration-short ease-enter motion-reduce:transition-none ${
+            className: `text-ink-muted transition-transform duration-short ease-enter motion-reduce:transition-none ${
               expanded ? "rotate-90" : ""
             }`,
           })}
@@ -52,7 +54,7 @@ export default function CompletedProjectsSection({
         <span id={headingId} className="text-sm font-medium uppercase tracking-wide text-ink-muted">
           Completed
         </span>
-        <span className="text-sm text-ink-faint">· {projects.length}</span>
+        <span className="text-sm text-ink-muted">· {projects.length}</span>
       </button>
       <ul id={panelId} hidden={!expanded} className="mt-3 space-y-2">
         {projects.map((project) => (
@@ -72,7 +74,7 @@ export default function CompletedProjectsSection({
                   className="h-3 shrink-0 rounded-full"
                   style={{
                     width: "var(--stripe-width)",
-                    backgroundColor: categorySolidVar(project.category),
+                    backgroundColor: projectSolidVar(project),
                   }}
                   aria-hidden
                 />

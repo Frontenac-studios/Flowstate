@@ -948,7 +948,7 @@ export function MorningHandoffModal({
                         <span
                           className={cn(
                             "truncate text-caption",
-                            title ? "text-ink" : "text-ink-faint"
+                            title ? "text-ink" : "text-ink-muted"
                           )}
                         >
                           {title ?? "Star a task below"}

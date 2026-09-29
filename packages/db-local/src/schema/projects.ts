@@ -44,6 +44,8 @@ export const projects = sqliteTable(
     billingType: text("billing_type", { enum: ["hourly", "fixed_fee"] })
       .notNull()
       .$defaultFn(() => "hourly"),
+    /** Spec v2 project hue 1–8; null for personal (see src/db/schema/projects.ts). */
+    hue: integer("hue"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => sqliteNow()),

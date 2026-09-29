@@ -28,6 +28,8 @@ type Props = {
   level: number;
   parentPhaseId: string | null;
   category: ProjectCategory;
+  /** Spec v2 — the project's hue (1–8); null for personal projects. */
+  hue?: number | null;
   items: ColumnItem[];
   openPhaseId: string | null;
   detail: DetailSelection;
@@ -68,6 +70,7 @@ export default function MillerColumn({
   level,
   parentPhaseId,
   category,
+  hue,
   items,
   openPhaseId,
   detail,
@@ -105,6 +108,7 @@ export default function MillerColumn({
             node={item.node}
             parentPhaseId={parentPhaseId}
             category={category}
+            hue={hue}
             isOpen={openPhaseId === item.node.phase.id}
             selected={expanded}
             focused={focused}
@@ -185,7 +189,7 @@ export default function MillerColumn({
               <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">
                 Completed
               </span>
-              <span className="text-caption text-ink-faint">· {completedItems.length}</span>
+              <span className="text-caption text-ink-muted">· {completedItems.length}</span>
               <span className="ml-1.5 h-px flex-1 bg-border" aria-hidden />
             </li>
             <li>

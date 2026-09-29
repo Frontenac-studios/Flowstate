@@ -61,7 +61,7 @@ export default function SourcingRunStrip() {
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-subtle bg-surface-2 px-4 py-2">
       <div className="flex min-w-0 flex-col">
         <span className="text-caption text-ink">{state}</span>
-        <span className="text-caption text-ink-faint">
+        <span className="text-caption text-ink-muted">
           {settings?.weeklyRunEnabled
             ? `Sources every Tuesday · ${settings.weeklyRunBatchSize} a week`
             : "Weekly sourcing is off — turn it on in Settings."}

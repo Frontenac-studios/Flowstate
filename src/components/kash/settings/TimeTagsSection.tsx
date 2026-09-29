@@ -83,7 +83,7 @@ export function TimeTagsSection() {
 
       <ul className="mt-3 flex flex-col gap-1.5">
         {tags.length === 0 ? (
-          <li className="text-sm text-ink-faint">No tags yet.</li>
+          <li className="text-sm text-ink-muted">No tags yet.</li>
         ) : (
           tags.map((tag) => (
             <li

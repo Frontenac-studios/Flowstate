@@ -358,7 +358,7 @@ export function FocusCanvas() {
   return (
     <div key={taskId} className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div className="row-arrive flex min-h-0 flex-1 flex-col p-8 lg:p-12">
-        <span className="text-caption text-ink-faint">Focus session</span>
+        <span className="text-caption text-ink-muted">Focus session</span>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span

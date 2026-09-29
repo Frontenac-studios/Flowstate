@@ -39,18 +39,18 @@ export function SearchResultRow({
       }`}
     >
       {showKind ? (
-        <span className="shrink-0 rounded-chip bg-surface-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint">
+        <span className="shrink-0 rounded-chip bg-surface-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-muted">
           {KIND_LABEL[result.kind]}
         </span>
       ) : null}
       <span className={`min-w-0 flex-1 truncate ${result.done ? "text-ink-muted" : "text-ink"}`}>
         {result.title}
         {result.snippet ? (
-          <span className="ml-2 text-xs text-ink-faint">{result.snippet}</span>
+          <span className="ml-2 text-xs text-ink-muted">{result.snippet}</span>
         ) : null}
       </span>
       {result.context ? (
-        <span className="shrink-0 text-xs text-ink-faint">{result.context}</span>
+        <span className="shrink-0 text-xs text-ink-muted">{result.context}</span>
       ) : null}
     </button>
   );

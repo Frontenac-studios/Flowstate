@@ -9,6 +9,7 @@ import { slugifyProjectName } from "@/lib/projects/slugify";
 import { quarterOf } from "@/lib/quarter/quarter-period";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
+import { hueForNewProject } from "@/server/projects/next-project-hue";
 
 /**
  * The learning roadmap (W5, discovery §13 Q7). Learning is not its own table — it
@@ -112,6 +113,7 @@ export const learningRouter = createTRPCRouter({
           name: input.capability.trim(),
           slug,
           category: "business",
+          hue: await hueForNewProject(db, ctx.userId, "business"),
           clientId: null,
           state: "active",
           isLearning: true,

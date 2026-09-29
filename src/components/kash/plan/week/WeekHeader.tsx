@@ -43,7 +43,7 @@ export function WeekHeader({ weekRange, overdueCount, reflectionOpen, onToggleRe
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-title font-semibold text-ink">This Week</h1>
-          <p className="text-meta text-ink-faint">{weekRange}</p>
+          <p className="text-meta text-ink-muted">{weekRange}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

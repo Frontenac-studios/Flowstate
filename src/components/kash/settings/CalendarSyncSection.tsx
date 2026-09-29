@@ -52,7 +52,7 @@ function syncStatusLabel(status: SyncStatus): string {
 function syncStatusClass(status: SyncStatus): string {
   if (status === "error") return "border-critical text-critical";
   if (status === "on") return "border-border bg-surface text-ink-muted";
-  return "border-subtle text-ink-faint";
+  return "border-subtle text-ink-muted";
 }
 
 function CalendarAiToggle({
@@ -285,9 +285,9 @@ export function CalendarSyncSection() {
               </span>
             </p>
             {lastSyncedLabel ? (
-              <p className="mt-1 text-xs text-ink-faint">Last synced {lastSyncedLabel}</p>
+              <p className="mt-1 text-xs text-ink-muted">Last synced {lastSyncedLabel}</p>
             ) : (
-              <p className="mt-1 text-xs text-ink-faint">Not synced yet</p>
+              <p className="mt-1 text-xs text-ink-muted">Not synced yet</p>
             )}
             {status === "error" && (syncStatus?.lastError ?? connection.lastError) ? (
               <p className="mt-2 text-sm text-critical" role="alert">
@@ -331,7 +331,7 @@ export function CalendarSyncSection() {
                       <span className="min-w-0 flex-1 text-sm text-ink">
                         {calendar.name}
                         {calendar.primary ? (
-                          <span className="ml-1 text-xs text-ink-faint">(primary)</span>
+                          <span className="ml-1 text-xs text-ink-muted">(primary)</span>
                         ) : null}
                       </span>
                     </label>

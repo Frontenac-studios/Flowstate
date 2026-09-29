@@ -138,7 +138,7 @@ export default function OccurrenceMenu({
     >
       {step === "menu" ? (
         <>
-          <p className="px-2 pb-1 text-caption text-ink-faint">
+          <p className="px-2 pb-1 text-caption text-ink-muted">
             This occurrence only — series unchanged
           </p>
           <button
@@ -173,7 +173,7 @@ export default function OccurrenceMenu({
 
       {step === "edit" ? (
         <div className="flex flex-col gap-2 px-1 py-1">
-          <p className="text-caption text-ink-faint">Edit this occurrence only</p>
+          <p className="text-caption text-ink-muted">Edit this occurrence only</p>
           <Input
             type="text"
             className="w-full text-sm"
@@ -241,7 +241,7 @@ export default function OccurrenceMenu({
 
       {step === "reschedule" ? (
         <div className="flex flex-col gap-2 px-1 py-1">
-          <p className="text-caption text-ink-faint">Move this occurrence to</p>
+          <p className="text-caption text-ink-muted">Move this occurrence to</p>
           <Input
             type="date"
             className="w-full text-sm"

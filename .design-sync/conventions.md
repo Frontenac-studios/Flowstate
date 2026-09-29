@@ -34,7 +34,7 @@ value, and never write a raw hex.
 | Surface           | `bg-surface` `bg-surface-2` `bg-canvas` `bg-bg`                                                                                                                               |
 | Active / selected | `bg-active-surface` `bg-active-raised` `border-active-raised-border`                                                                                                          |
 | Border            | `border-border` `border-subtle` · `border-emphasis` (the 1.5px stroke)                                                                                                        |
-| Ink               | `text-ink` `text-ink-muted` `text-ink-faint`                                                                                                                                  |
+| Ink               | `text-ink` `text-ink-muted` for all readable text (meta, counts, hints) · `ink-faint` is decorative only — placeholders, struck-through done titles, stripes                  |
 | Accent (= black)  | `bg-accent` `text-accent` `hover:bg-accent-hover` `text-accent-on` `bg-accent-soft`                                                                                           |
 | Danger            | `text-critical` `bg-critical` `bg-critical-soft`                                                                                                                              |
 | Project hue       | `bg-project-1` … `bg-project-8` `bg-project-personal`; tints via `var(--project-N-fill)` / `var(--project-N-text)`. Legacy category: `bg-cat-professional` `bg-cat-personal`. |

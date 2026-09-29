@@ -30,7 +30,7 @@ import { buildComposerConfig } from "@/lib/parser/composer-assist";
 import { parseQuickInput } from "@/lib/parser/parse-quick-input";
 import { formatRelativeDue } from "@/lib/dates/format-relative-due";
 import { categoryLabel, type ProjectCategory } from "@/lib/projects/categories";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { taskSolidVar } from "@/lib/projects/project-hue";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import { type RevealFlags } from "@/lib/tasks/lens";
 import { getTaskTitleError } from "@/lib/taskValidation";
@@ -52,6 +52,8 @@ export type PlanTaskRow = {
   projectId: string | null;
   projectSlug: string | null;
   projectName: string | null;
+  /** Spec v2 — the project's hue (1–8); null for personal / loose tasks. */
+  projectHue?: number | null;
   isTop3: boolean;
   /** Week day-priority slot (1–3) when pinned for a weekday (WD1). */
   dayPriorityOrder?: number | null;
@@ -203,15 +205,17 @@ export function TaskRow({
   const lensReveal = useReveal();
   const activeReveal = reveal ?? lensReveal;
 
-  // Life-area stripe (Kash 3.0): an always-on category channel. Colour comes from
-  // the --cat-*-solid token (so user category-colour overrides apply); a neutral
-  // marker shows when the category is unresolved. The richer category treatments
-  // (list grouping, fills) stay lens-gated — only the stripe is persistent.
+  // Project stripe (Spec v2): an always-on channel in the project's hue; loose and
+  // personal tasks fall back to the category colour. A neutral marker shows while
+  // the category is unresolved. The richer category treatments (list grouping,
+  // fills) stay lens-gated — only the stripe is persistent.
   const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
   const stripeColor = resolvedCategory
-    ? categorySolidVar(resolvedCategory)
+    ? taskSolidVar({ category: resolvedCategory, projectHue: task.projectHue })
     : NEUTRAL_CATEGORY_STRIPE;
-  const stripeLabel = resolvedCategory ? categoryLabel(resolvedCategory) : "No category yet";
+  const stripeLabel = resolvedCategory
+    ? (task.projectName ?? categoryLabel(resolvedCategory))
+    : "No category yet";
 
   const relativeDue =
     activeReveal.due && !suppressDue ? formatRelativeDue(task.scheduledDate) : null;
@@ -325,6 +329,7 @@ export function TaskRow({
               title: task.title,
               completedAt: new Date(),
               projectSlug: task.projectSlug,
+              projectHue: task.projectHue ?? null,
               category,
               categoryUnresolved: task.categoryUnresolved ?? false,
             },
@@ -650,7 +655,7 @@ export function TaskRow({
 
           <div className="min-w-0 flex-1">
             {isBlocked && blockerLabel ? (
-              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-faint">
+              <p className="mb-0.5 flex items-center gap-1 text-caption text-ink-muted">
                 <LockIcon size={12} className="shrink-0" aria-hidden />
                 <span>Waiting on {blockerLabel}</span>
               </p>

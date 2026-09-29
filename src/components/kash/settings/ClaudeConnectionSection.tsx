@@ -180,7 +180,7 @@ export default function ClaudeConnectionSection() {
       {error ? <p className="mt-2 text-sm text-critical">{error}</p> : null}
 
       {isLoading ? null : tokens.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-faint">No tokens yet.</p>
+        <p className="mt-4 text-sm text-ink-muted">No tokens yet.</p>
       ) : (
         <ul className="mt-4 divide-y divide-subtle rounded-[var(--radius-chip)] border border-subtle">
           {tokens.map((token) => {

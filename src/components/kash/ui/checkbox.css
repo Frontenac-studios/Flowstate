@@ -1,16 +1,22 @@
-/* Spec v2 — round checkbox: 18px, 1.5px --check-border ring; checked = filled
-   --check-fill (ink by default) with a white check. The native control is kept
-   (appearance: none) so keyboard, form and label behaviour stay native. */
+/* Spec v3 (Cc) — checkbox: 18px square, 6px radius, 1.5px --check-border; checked =
+   filled --check-fill (ink by default) with a white check. Task-completion circles
+   stay round (they are not this component), so checklists read differently from
+   tasks. The native control is kept (appearance: none) so keyboard, form and label
+   behaviour stay native. */
 .kash-checkbox {
   appearance: none;
   width: 18px;
   height: 18px;
-  border-radius: var(--radius-pill);
+  border-radius: 6px;
   border: var(--border-emphasis-width) solid var(--check-border);
   background: var(--surface) center / 12px 12px no-repeat;
   transition:
     background-color var(--motion-micro) var(--ease-enter),
     border-color var(--motion-micro) var(--ease-enter);
+}
+
+.kash-checkbox[data-shape="round"] {
+  border-radius: var(--radius-pill);
 }
 
 .kash-checkbox:hover:not(:disabled) {

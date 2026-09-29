@@ -36,7 +36,7 @@ export function BetsBlock() {
         The bets
       </h3>
       {bets.length === 0 ? (
-        <p className="text-meta text-ink-faint">No active bets this quarter.</p>
+        <p className="text-meta text-ink-muted">No active bets this quarter.</p>
       ) : (
         <ul className="flex flex-col gap-2.5">
           {bets.map((bet) => (
@@ -52,7 +52,7 @@ export function BetsBlock() {
                 />
               </div>
               <span
-                className={`text-meta ${bet.movedThisWeek ? "text-ink-muted" : "text-ink-faint"}`}
+                className={`text-meta ${bet.movedThisWeek ? "text-ink-muted" : "text-ink-muted"}`}
               >
                 {evidenceLine(bet)}
               </span>

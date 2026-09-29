@@ -28,7 +28,7 @@ export function SyncStatusPanel() {
         </p>
       ) : null}
       {lastSyncTime ? (
-        <p className="mt-1 text-xs text-ink-faint">Last synced {lastSyncTime}</p>
+        <p className="mt-1 text-xs text-ink-muted">Last synced {lastSyncTime}</p>
       ) : null}
       <Button
         type="button"

@@ -26,8 +26,10 @@ import { PROJECT_CATEGORIES, type ProjectCategory } from "@/lib/projects/categor
 import { countEstimateSamplesForUser } from "@/lib/projects/count-estimate-samples";
 import { buildMultiProjectCalendarRows } from "@/lib/projects/multi-project-calendar";
 import { weightedProgressForTasks } from "@/lib/projects/progress-task-input";
+import { PROJECT_HUES } from "@/lib/projects/project-hue";
 import { slugifyProjectName } from "@/lib/projects/slugify";
 import { hasTemplateFeatures } from "@/lib/projects/template-milestone";
+import { hueForNewProject, huePatchForCategoryChange } from "@/server/projects/next-project-hue";
 import {
   buildTemplateStructureFromProject,
   countTemplateItems,
@@ -121,6 +123,7 @@ export const projectsRouter = createTRPCRouter({
           name: projects.name,
           slug: projects.slug,
           category: projects.category,
+          hue: projects.hue,
           isLearning: projects.isLearning,
           billingType: projects.billingType,
           // W15/3.2: the Projects index is a status view, so lifecycle and client
@@ -335,6 +338,7 @@ export const projectsRouter = createTRPCRouter({
           id: projects.id,
           name: projects.name,
           category: projects.category,
+          hue: projects.hue,
         })
         .from(projects)
         .where(and(eq(projects.userId, ctx.userId), isNull(projects.archivedAt)))
@@ -463,6 +467,8 @@ export const projectsRouter = createTRPCRouter({
         });
       }
 
+      const hue = await hueForNewProject(db, ctx.userId, input.category);
+
       let row: typeof projects.$inferSelect | undefined;
       try {
         [row] = await db
@@ -472,6 +478,7 @@ export const projectsRouter = createTRPCRouter({
             name: input.name.trim(),
             slug,
             category: input.category,
+            hue,
             clientId: input.clientId ?? null,
             state: input.state ?? "active",
             isMaintenance: input.isMaintenance ?? false,
@@ -543,6 +550,7 @@ export const projectsRouter = createTRPCRouter({
 
       try {
         const { project, applied } = await db.transaction(async (tx) => {
+          const hue = await hueForNewProject(tx, ctx.userId, input.category);
           const [row] = await tx
             .insert(projects)
             .values({
@@ -550,6 +558,7 @@ export const projectsRouter = createTRPCRouter({
               name: input.name.trim(),
               slug,
               category: input.category,
+              hue,
               isMaintenance: input.isMaintenance ?? false,
               targetId,
             })
@@ -657,17 +666,39 @@ export const projectsRouter = createTRPCRouter({
         id: z.string().uuid(),
         name: z.string().min(1).max(120).optional(),
         category: categorySchema.optional(),
+        /** Spec v2 colour override — one of the 8 project hues (business only). */
+        hue: z
+          .number()
+          .int()
+          .min(PROJECT_HUES[0])
+          .max(PROJECT_HUES[PROJECT_HUES.length - 1])
+          .optional(),
         clientId: z.string().uuid().nullable().optional(),
         state: stateSchema.optional(),
         isMaintenance: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await getOwnedProject(ctx.userId, input.id);
+      const current = await getOwnedProject(ctx.userId, input.id);
+      const nextCategory = input.category ?? current.category;
 
       const patch: Partial<typeof projects.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) patch.name = input.name.trim();
       if (input.category !== undefined) patch.category = input.category;
+      if (input.hue !== undefined) {
+        if (nextCategory !== "business") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Personal projects are always purple; only business projects take a colour.",
+          });
+        }
+        patch.hue = input.hue;
+      } else {
+        Object.assign(
+          patch,
+          await huePatchForCategoryChange(db, ctx.userId, current, nextCategory)
+        );
+      }
       if (input.clientId !== undefined) patch.clientId = input.clientId;
       if (input.state !== undefined) patch.state = input.state;
       if (input.isMaintenance !== undefined) patch.isMaintenance = input.isMaintenance;

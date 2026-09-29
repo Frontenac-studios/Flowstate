@@ -327,7 +327,7 @@ export default function InvoicesPanel() {
       {/* History */}
       {history && history.length > 0 ? (
         <div className="flex flex-col gap-2">
-          <h3 className="text-caption font-medium uppercase tracking-wide text-ink-faint">
+          <h3 className="text-caption font-medium uppercase tracking-wide text-ink-muted">
             History
           </h3>
           {history.map((inv) => (
@@ -341,7 +341,7 @@ export default function InvoicesPanel() {
                 <p className="text-sm text-ink">
                   #{inv.invoiceNumber} · {inv.clientName}
                   {inv.status === "void" ? (
-                    <span className="ml-2 text-caption text-ink-faint">void</span>
+                    <span className="ml-2 text-caption text-ink-muted">void</span>
                   ) : null}
                 </p>
                 <p className="text-caption text-ink-muted">

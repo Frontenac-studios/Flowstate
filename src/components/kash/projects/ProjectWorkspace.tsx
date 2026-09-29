@@ -133,7 +133,12 @@ export default function ProjectWorkspace({
         // own scroll, so a long outline never clips under the fill layout.
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
           <ProjectDetailsStrip project={project} />
-          <PlanOutline projectId={initialProject.id} category={project.category} tree={tree} />
+          <PlanOutline
+            projectId={initialProject.id}
+            category={project.category}
+            hue={project.hue}
+            tree={tree}
+          />
         </div>
       ) : viewMode === "columns" ? (
         <>
@@ -151,6 +156,7 @@ export default function ProjectWorkspace({
             projectId={initialProject.id}
             projectSlug={project.slug}
             category={project.category}
+            hue={project.hue}
             phases={phasesQuery.data ?? []}
             tasks={tasksQuery.data ?? []}
             selectedPath={selectedPath}
@@ -175,6 +181,7 @@ export default function ProjectWorkspace({
             tree={tree}
             projectId={initialProject.id}
             category={project.category}
+            hue={project.hue}
             milestones={milestonesQuery.data ?? []}
           />
         </div>

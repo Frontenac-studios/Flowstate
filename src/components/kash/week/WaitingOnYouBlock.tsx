@@ -23,7 +23,7 @@ const ROW_CHIP: Record<WaitingRowKind, string> = {
 
 /** Follow-ups read as the loudest row; the sourced batch is deliberately the quietest. */
 const ROW_TONE: Record<WaitingRowKind, string> = {
-  sourced: "border-subtle text-ink-faint",
+  sourced: "border-subtle text-ink-muted",
   follow_up: "border-ink text-ink",
   deal: "border-subtle text-ink-muted",
 };
@@ -38,7 +38,7 @@ export function WaitingOnYouBlock() {
         Waiting on you
       </h3>
       {rows.length === 0 ? (
-        <p className="text-meta text-ink-faint">
+        <p className="text-meta text-ink-muted">
           Nothing waiting — no prospects to triage, no follow-ups owed, no deals in flight.
         </p>
       ) : (
@@ -56,7 +56,7 @@ export function WaitingOnYouBlock() {
                 </span>
                 <span className="min-w-0 truncate text-sm text-ink">{row.label}</span>
                 {row.detail ? (
-                  <span className="ml-auto shrink-0 truncate text-meta text-ink-faint">
+                  <span className="ml-auto shrink-0 truncate text-meta text-ink-muted">
                     {row.detail}
                   </span>
                 ) : null}

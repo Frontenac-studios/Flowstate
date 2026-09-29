@@ -101,7 +101,7 @@ export default function DayPrioritiesSlots({
             {onDismissPinHint ? (
               <button
                 type="button"
-                className="ml-1 text-ink-faint underline underline-offset-2 hover:text-ink"
+                className="ml-1 text-ink-muted underline underline-offset-2 hover:text-ink"
                 onClick={onDismissPinHint}
               >
                 Got it

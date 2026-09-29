@@ -109,7 +109,7 @@ export function EodLeftoverTriage({ localDate, tasks }: Props) {
           )}
         </li>
       ))}
-      <p className="text-caption text-ink-faint">
+      <p className="text-caption text-ink-muted">
         Untouched items roll into tomorrow&apos;s carryover.
       </p>
       <p className="sr-only">Tomorrow is {tomorrowIso}</p>

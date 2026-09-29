@@ -18,7 +18,7 @@ function Bucket({ label, items }: { label: string; items: ComingUpItem[] }) {
   if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-meta uppercase tracking-wide text-ink-faint">{label}</p>
+      <p className="text-meta uppercase tracking-wide text-ink-muted">{label}</p>
       <ul className="flex flex-col gap-1">
         {items.map((item) => (
           <li key={`${item.kind}:${item.id}`} className="flex items-center gap-2">
@@ -27,7 +27,7 @@ function Bucket({ label, items }: { label: string; items: ComingUpItem[] }) {
               style={{ backgroundColor: categorySolidVar(item.category) }}
             />
             <span className="min-w-0 truncate text-sm text-ink">{item.title}</span>
-            <span className="ml-auto flex shrink-0 items-baseline gap-2 text-meta text-ink-faint">
+            <span className="ml-auto flex shrink-0 items-baseline gap-2 text-meta text-ink-muted">
               <span className="max-w-[8rem] truncate">{item.clientName ?? item.projectName}</span>
               <span>{formatShortDate(item.date)}</span>
             </span>
@@ -56,7 +56,7 @@ export function ComingUpBlock({ localDate }: { localDate: string }) {
         Coming up
       </h3>
       {empty ? (
-        <p className="text-meta text-ink-faint">Nothing due in the next two weeks.</p>
+        <p className="text-meta text-ink-muted">Nothing due in the next two weeks.</p>
       ) : (
         <div className="flex flex-col gap-2.5">
           <Bucket label="This week" items={thisWeek} />

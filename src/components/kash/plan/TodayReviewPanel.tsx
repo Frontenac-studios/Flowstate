@@ -45,7 +45,7 @@ export function TodayReviewPanel({
         <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">
           How today went
         </span>
-        <span className="text-caption text-ink-faint">{data.completionsToday} done</span>
+        <span className="text-caption text-ink-muted">{data.completionsToday} done</span>
       </div>
       <Top3ReviewSummary top3Status={data.top3Status} />
       <FocusTimeChart bars={data.focusBars} overflowCount={data.focusOverflowCount} />

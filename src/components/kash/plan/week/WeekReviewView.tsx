@@ -55,7 +55,7 @@ export function WeekReviewView() {
 
       <div className="flex flex-col gap-1">
         <h1 className="text-h1 font-medium text-ink">Week review</h1>
-        <p className="text-meta text-ink-faint">Your weekly focus and reflections</p>
+        <p className="text-meta text-ink-muted">Your weekly focus and reflections</p>
       </div>
 
       <WeeklySummaryCard />
@@ -76,7 +76,7 @@ export function WeekReviewView() {
                     {formatStoredWeekRange(review.weekStart)}
                   </span>
                   {review.totalSeconds != null && review.totalSeconds > 0 ? (
-                    <span className="text-xs text-ink-faint">
+                    <span className="text-xs text-ink-muted">
                       {formatDuration(review.totalSeconds)} focused
                     </span>
                   ) : null}

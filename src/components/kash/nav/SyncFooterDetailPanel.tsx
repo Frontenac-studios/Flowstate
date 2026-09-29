@@ -46,9 +46,9 @@ export function SyncFooterDetailPanel({
       </div>
       <p className="mt-1.5 text-caption leading-snug text-ink-muted">{message}</p>
       {lastSyncTime ? (
-        <p className="mt-1 text-caption text-ink-faint">Last synced {lastSyncTime}</p>
+        <p className="mt-1 text-caption text-ink-muted">Last synced {lastSyncTime}</p>
       ) : null}
-      <p className="mt-2 text-caption text-ink-faint">
+      <p className="mt-2 text-caption text-ink-muted">
         Conflicts resolve automatically — the most recent change wins.
       </p>
       <Button

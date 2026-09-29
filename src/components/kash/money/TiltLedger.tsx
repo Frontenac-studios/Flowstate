@@ -111,7 +111,7 @@ export default function TiltLedger() {
       </header>
 
       {isLoading || !ledger || !period ? (
-        <p className="mt-3 text-caption text-ink-faint">
+        <p className="mt-3 text-caption text-ink-muted">
           {isLoading ? "Reading the fortnight…" : "No fortnight to show yet."}
         </p>
       ) : (
@@ -144,12 +144,12 @@ function LedgerBody({
   return (
     <>
       <p className="mt-3 text-body text-ink">{copy.headline}</p>
-      {copy.note ? <p className="mt-1 text-caption text-ink-faint">{copy.note}</p> : null}
+      {copy.note ? <p className="mt-1 text-caption text-ink-muted">{copy.note}</p> : null}
 
       {ledger.bar.state === "unset" ? (
         // A link, never an inline control: a review arrives answered, and a form
         // embedded in a retrospective is the blank page (§8b).
-        <p className="mt-1 text-caption text-ink-faint">
+        <p className="mt-1 text-caption text-ink-muted">
           <Link href="/today" className="underline underline-offset-2 hover:text-ink-muted">
             Declare a tilt on Today
           </Link>{" "}
@@ -176,7 +176,7 @@ function LedgerBody({
                       className="flex items-baseline justify-between gap-3"
                     >
                       <span className="truncate text-caption text-ink-muted">{project.name}</span>
-                      <span className="shrink-0 text-caption tabular-nums text-ink-faint">
+                      <span className="shrink-0 text-caption tabular-nums text-ink-muted">
                         {hoursLabel(project.seconds)}
                       </span>
                     </li>

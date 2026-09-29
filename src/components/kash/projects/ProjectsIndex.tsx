@@ -84,6 +84,7 @@ export default function ProjectsIndex() {
             id: project.id,
             name: project.name,
             category: project.category,
+            hue: project.hue,
             state: project.state,
             percent: project.percent,
             taskCount: project.taskCount,

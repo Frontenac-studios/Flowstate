@@ -37,7 +37,7 @@ export function FocusTimerRing({
 
   return (
     <div className={`focus-ring-arrive flex flex-col items-center gap-5 ${className}`}>
-      <span className="text-caption tracking-[0.12em] text-ink-faint">{label}</span>
+      <span className="text-caption tracking-[0.12em] text-ink-muted">{label}</span>
       <div className="relative flex items-center justify-center">
         <svg
           width={RING_SIZE}

@@ -175,7 +175,7 @@ export default function SourcingSettingsSection() {
                   gap-filling.
                 </span>
               ) : healthBySegment.get(seg.id) ? (
-                <span className="text-caption text-ink-faint">
+                <span className="text-caption text-ink-muted">
                   {healthBySegment.get(seg.id)!.meanConfidence}% mean confidence over{" "}
                   {healthBySegment.get(seg.id)!.scored} prospects.
                 </span>

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 import { isEditableTarget } from "@/lib/keyboard/is-editable-target";
-import { categorySolidVar } from "@/lib/projects/category-tokens";
+import { taskSolidVar } from "@/lib/projects/project-hue";
 import { phaseRampColor } from "@/lib/projects/project-phase-color";
 import type { RouterOutputs } from "@/trpc/client";
 import { useTRPC } from "@/trpc/client";
@@ -126,7 +126,7 @@ export function InboxPanel({
       {tasks.map((task, index) => {
         const resolvedCategory = task.category && !task.categoryUnresolved ? task.category : null;
         const stripeColor = resolvedCategory
-          ? categorySolidVar(resolvedCategory)
+          ? taskSolidVar({ category: resolvedCategory, projectHue: task.projectHue })
           : NEUTRAL_CATEGORY_STRIPE;
         return (
           <li

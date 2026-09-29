@@ -104,14 +104,14 @@ export default function ProjectMilestoneStrip({
             })}
           />
           <span>Milestones</span>
-          {ordered.length > 0 ? <span className="text-ink-faint">· {ordered.length}</span> : null}
+          {ordered.length > 0 ? <span className="text-ink-muted">· {ordered.length}</span> : null}
         </button>
         {addSlot ? <div className="ml-auto flex shrink-0 items-center">{addSlot}</div> : null}
       </div>
 
       {!collapsed ? (
         ordered.length === 0 ? (
-          <p className="mt-1.5 pl-1 text-xs text-ink-faint">None yet</p>
+          <p className="mt-1.5 pl-1 text-xs text-ink-muted">None yet</p>
         ) : (
           <ol className="mt-1.5 flex flex-col gap-0.5">
             {ordered.map((mi, index) => {
@@ -120,7 +120,7 @@ export default function ProjectMilestoneStrip({
               const busy = pendingId === mi.id;
               return (
                 <li key={mi.id} className="flex items-center gap-2 py-0.5 text-sm">
-                  <span className="w-5 shrink-0 text-right text-xs tabular-nums text-ink-faint">
+                  <span className="w-5 shrink-0 text-right text-xs tabular-nums text-ink-muted">
                     {index + 1}.
                   </span>
                   <button
@@ -142,7 +142,7 @@ export default function ProjectMilestoneStrip({
                       />
                     ) : (
                       <Circle
-                        {...kashIconProps({ tokenSize: "sm", className: "text-ink-faint" })}
+                        {...kashIconProps({ tokenSize: "sm", className: "text-ink-muted" })}
                         aria-hidden
                       />
                     )}
