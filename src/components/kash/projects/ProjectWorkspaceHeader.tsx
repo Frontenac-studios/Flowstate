@@ -29,6 +29,7 @@ type Props = {
 
 const TABS: { value: ProjectViewMode; label: string }[] = [
   { value: "tasks", label: "Tasks" },
+  { value: "timeline", label: "Timeline" },
   { value: "columns", label: "Columns" },
   { value: "calendar", label: "Calendar" },
 ];

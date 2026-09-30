@@ -18,6 +18,7 @@ import AddProjectTaskDialog from "./AddProjectTaskDialog";
 import PhaseBurnBars from "./PhaseBurnBars";
 import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
 import ProjectTasksTab from "./ProjectTasksTab";
+import ProjectTimelineTab from "./ProjectTimelineTab";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
 import { ProjectTaskFinder } from "./ProjectTaskFinder";
 import { useFocusParam } from "@/hooks/useFocusParam";
@@ -26,7 +27,7 @@ import { ProjectSlipReplanCard } from "./ProjectSlipReplanCard";
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
-const TAB_VALUES: readonly ProjectViewMode[] = ["tasks", "columns", "calendar"];
+const TAB_VALUES: readonly ProjectViewMode[] = ["tasks", "timeline", "columns", "calendar"];
 
 function isTab(value: string | null): value is ProjectViewMode {
   return value != null && (TAB_VALUES as readonly string[]).includes(value);
@@ -175,6 +176,15 @@ export default function ProjectWorkspace({ project: initialProject }: { project:
             project={project}
             phases={phasesQuery.data ?? []}
             tasks={tasksQuery.data ?? []}
+          />
+        </div>
+      ) : viewMode === "timeline" ? (
+        <div className="flex min-h-0 flex-1 overflow-y-auto">
+          <ProjectTimelineTab
+            project={project}
+            phases={phasesQuery.data ?? []}
+            tree={tree}
+            milestones={milestonesQuery.data ?? []}
           />
         </div>
       ) : viewMode === "columns" ? (
