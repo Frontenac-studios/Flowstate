@@ -16,6 +16,8 @@ export type InvoiceLineView = {
 };
 
 export type InvoiceView = {
+  /** `time` (hourly, the default) or `fee` (lump sum — no hours, no rate). */
+  kind?: "time" | "fee";
   invoiceNumber: number;
   clientName: string;
   periodStart: Date;
@@ -48,8 +50,29 @@ function csvCell(value: string): string {
   return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
+/** A lump-sum invoice: one line per installment, amounts only. */
+function feeInvoiceToMarkdown(invoice: InvoiceView): string {
+  const lines: string[] = [
+    `INVOICE #${invoice.invoiceNumber} — ${invoice.clientName}`,
+    `Issued: ${isoDate(invoice.issuedAt)}`,
+    `Amount due: $${dollars(invoice.amountCents)}`,
+    "",
+    "Delivered:",
+    "",
+  ];
+  for (const line of invoice.lines) {
+    lines.push(`${line.label} — $${dollars(line.amountCents)}`);
+    if (line.description.trim()) lines.push(`  ${line.description.trim()}`);
+    lines.push("");
+  }
+  lines.push("—");
+  lines.push(`Total: $${dollars(invoice.amountCents)}`);
+  return lines.join("\n");
+}
+
 /** The paste-ready plain-text/Markdown invoice block. */
 export function invoiceToMarkdown(invoice: InvoiceView): string {
+  if (invoice.kind === "fee") return feeInvoiceToMarkdown(invoice);
   const period = `${isoDate(invoice.periodStart)} – ${isoDate(invoice.periodEnd)}`;
   const rate = dollars(invoice.rateCents);
 
@@ -78,14 +101,17 @@ export function invoiceToMarkdown(invoice: InvoiceView): string {
   return lines.join("\n");
 }
 
-/** CSV of the invoice line items: Label, Description, Hours, Amount (USD). */
+/**
+ * CSV of the invoice line items: Label, Description, Hours, Amount (USD). A fee
+ * invoice leaves Hours blank — a lump sum has none.
+ */
 export function invoiceToCsv(invoice: InvoiceView): string {
   const header = ["Label", "Description", "Hours", "Amount (USD)"];
   const rows = invoice.lines.map((line) =>
     [
       csvCell(line.label),
       csvCell(line.description),
-      hours(line.billedSeconds),
+      invoice.kind === "fee" ? "" : hours(line.billedSeconds),
       (line.amountCents / 100).toFixed(2),
     ].join(",")
   );

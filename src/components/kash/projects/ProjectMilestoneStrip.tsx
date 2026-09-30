@@ -66,6 +66,8 @@ export default function ProjectMilestoneStrip({
         void queryClient.invalidateQueries({
           queryKey: trpc.projectMilestones.listByProject.queryKey({ projectId }),
         });
+        // A completed milestone makes its fee installment billable (KashB2).
+        void queryClient.invalidateQueries(trpc.feeInstallments.pathFilter());
       },
     })
   );

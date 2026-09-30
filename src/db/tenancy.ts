@@ -125,6 +125,9 @@ export const TABLE_VISIBILITY: Readonly<Record<string, VisibilityClass>> = {
   // Accepted invoices and their line items (W4) — revenue a Member never reads.
   invoices: "financial",
   invoice_lines: "financial",
+  // Lump-sum pieces of a fixed fee (Spec v5 KashB2) — amounts owed, billed on a fee
+  // invoice. Their own table so the fee never becomes a column on `projects`.
+  fee_installments: "financial",
   money_settings: "financial",
   // Sealed fortnights (W8) — the frozen tilt read; the breakdown carries client
   // names against logged seconds, so a Member never reads it.

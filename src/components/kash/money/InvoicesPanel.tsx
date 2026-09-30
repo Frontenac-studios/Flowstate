@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { Copy, Download, FileText, Loader2, Undo2 } from "@/components/kash/ui/icon";
+import Button from "@/components/kash/ui/Button";
+import { Check, Copy, Download, FileText, Loader2, Undo2 } from "@/components/kash/ui/icon";
 import {
   invoiceToCsv,
   invoiceToMarkdown,
@@ -47,6 +48,23 @@ type DraftState = {
   lines: EditableLine[];
 };
 
+/** A lump-sum (fee) invoice being reviewed: amounts are fixed, wording is yours. */
+type FeeDraftState = {
+  clientId: string;
+  clientName: string;
+  lines: {
+    installmentId: string;
+    projectName: string;
+    label: string;
+    description: string;
+    amountCents: number;
+  }[];
+};
+
+function shortDate(d: Date): string {
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function copyText(text: string) {
   void navigator.clipboard?.writeText(text);
 }
@@ -73,8 +91,20 @@ export default function InvoicesPanel() {
 
   const { data: ready } = useQuery(trpc.invoices.readyToBill.queryOptions());
   const { data: history } = useQuery(trpc.invoices.list.queryOptions({}));
+  const { data: feeReady } = useQuery(trpc.feeInstallments.readyByClient.queryOptions());
 
   const [draft, setDraft] = useState<DraftState | null>(null);
+  const [feeDraft, setFeeDraft] = useState<FeeDraftState | null>(null);
+
+  /** Everything an invoice write can move: the lists, installments, and cash. */
+  async function invalidateMoney() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: trpc.invoices.readyToBill.queryKey() }),
+      queryClient.invalidateQueries({ queryKey: trpc.invoices.list.queryKey() }),
+      queryClient.invalidateQueries(trpc.feeInstallments.pathFilter()),
+      queryClient.invalidateQueries({ queryKey: trpc.money.drawPanel.queryKey() }),
+    ]);
+  }
 
   const draftMutation = useMutation(
     trpc.invoices.draft.mutationOptions({
@@ -110,15 +140,54 @@ export default function InvoicesPanel() {
   );
 
   const voidMutation = useMutation(
-    trpc.invoices.void.mutationOptions({
+    trpc.invoices.void.mutationOptions({ onSuccess: invalidateMoney })
+  );
+
+  const acceptFeeMutation = useMutation(
+    trpc.invoices.acceptFee.mutationOptions({
       onSuccess: async () => {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: trpc.invoices.readyToBill.queryKey() }),
-          queryClient.invalidateQueries({ queryKey: trpc.invoices.list.queryKey() }),
-        ]);
+        setFeeDraft(null);
+        await invalidateMoney();
       },
     })
   );
+
+  // Recording a payment is a fact you enter, not something Flowstate sends (law 1).
+  const markPaidMutation = useMutation(
+    trpc.invoices.markPaid.mutationOptions({ onSuccess: invalidateMoney })
+  );
+  const markUnpaidMutation = useMutation(
+    trpc.invoices.markUnpaid.mutationOptions({ onSuccess: invalidateMoney })
+  );
+
+  function startFeeDraft(clientId: string) {
+    const group = feeReady?.find((g) => g.clientId === clientId);
+    if (!group) return;
+    setDraft(null);
+    setFeeDraft({
+      clientId: group.clientId,
+      clientName: group.clientName,
+      lines: group.installments.map((i) => ({
+        installmentId: i.id,
+        projectName: i.projectName,
+        label: i.label,
+        description: "",
+        amountCents: i.amountCents,
+      })),
+    });
+  }
+
+  function acceptFeeDraft() {
+    if (!feeDraft) return;
+    acceptFeeMutation.mutate({
+      clientId: feeDraft.clientId,
+      lines: feeDraft.lines.map((l) => ({
+        installmentId: l.installmentId,
+        label: l.label,
+        description: l.description,
+      })),
+    });
+  }
 
   // Preview total: quarter-hour round each edited line, then price it. The server
   // recomputes this authoritatively on accept — this is just what the user sees.
@@ -157,6 +226,7 @@ export default function InvoicesPanel() {
   async function exportInvoice(invoiceId: string, kind: "md" | "csv") {
     const inv = await queryClient.fetchQuery(trpc.invoices.getById.queryOptions({ id: invoiceId }));
     const view: InvoiceView = {
+      kind: inv.kind === "fee" ? "fee" : "time",
       invoiceNumber: inv.invoiceNumber,
       clientName: inv.clientName,
       periodStart: inv.periodStart,
@@ -220,7 +290,7 @@ export default function InvoicesPanel() {
         </div>
       )}
 
-      {ready && ready.length === 0 && !draft ? (
+      {ready && ready.length === 0 && !draft && !feeDraft && (feeReady?.length ?? 0) === 0 ? (
         <p className="rounded-card border border-border bg-surface p-5 text-sm text-ink-muted shadow-surface">
           Nothing to bill yet — billable time shows up here as it accrues.
         </p>
@@ -304,18 +374,132 @@ export default function InvoicesPanel() {
           ) : null}
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={acceptDraft}
               disabled={acceptMutation.isPending || draft.lines.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-pill bg-active-raised px-4 py-1.5 text-xs font-medium text-active-raised-border transition hover:opacity-90 disabled:opacity-50"
+              className="px-4 py-1.5 text-xs"
             >
               {acceptMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
               Accept & mark billed
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => setDraft(null)}
+              className="rounded-pill border border-subtle bg-surface px-3 py-1.5 text-xs text-ink-muted transition hover:text-ink"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Lump sums ready — fixed-fee installments bill on their own fee invoice. */}
+      {feeReady && feeReady.length > 0 && !feeDraft ? (
+        <div className="flex flex-col gap-2">
+          {feeReady.map((group) => (
+            <div
+              key={group.clientId}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-subtle bg-surface px-4 py-3"
+            >
+              <div>
+                <p className="text-sm font-medium text-ink">{group.clientName}</p>
+                <p className="text-caption text-ink-muted">
+                  {group.installments.length === 1
+                    ? "1 lump sum"
+                    : `${group.installments.length} lump sums`}{" "}
+                  billable · <span className="tabular-nums">{money(group.totalCents)}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => startFeeDraft(group.clientId)}
+                className="inline-flex items-center gap-1.5 rounded-pill border border-subtle bg-surface px-3 py-1 text-xs font-medium text-ink transition hover:text-accent"
+              >
+                Draft fee invoice
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {feeDraft ? (
+        <div className="flex flex-col gap-3 rounded-card border border-active-raised-border bg-surface p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold text-ink">Fee invoice — {feeDraft.clientName}</h3>
+            <span className="text-caption text-ink-muted">Lump sum · no hours</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {feeDraft.lines.map((line, index) => (
+              <div
+                key={line.installmentId}
+                className="flex flex-col gap-1.5 rounded-control bg-surface-2 p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    value={line.label}
+                    onChange={(e) =>
+                      setFeeDraft((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              lines: prev.lines.map((l, i) =>
+                                i === index ? { ...l, label: e.target.value } : l
+                              ),
+                            }
+                          : prev
+                      )
+                    }
+                    className="flex-1 rounded-control border border-subtle bg-surface px-2 py-1 text-sm text-ink"
+                    aria-label="Line label"
+                  />
+                  <span className="text-sm tabular-nums text-ink">{money(line.amountCents)}</span>
+                </div>
+                <p className="text-caption text-ink-muted">{line.projectName}</p>
+                <textarea
+                  value={line.description}
+                  onChange={(e) =>
+                    setFeeDraft((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            lines: prev.lines.map((l, i) =>
+                              i === index ? { ...l, description: e.target.value } : l
+                            ),
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="What was delivered…"
+                  rows={2}
+                  className="w-full resize-y rounded-control border border-subtle bg-surface px-2 py-1 text-caption text-ink-muted"
+                  aria-label="Line description"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between text-caption text-ink-muted">
+            <span>Billed this invoice</span>
+            <span className="tabular-nums text-ink">
+              {money(feeDraft.lines.reduce((sum, l) => sum + l.amountCents, 0))}
+            </span>
+          </div>
+          {acceptFeeMutation.isError ? (
+            <p className="text-caption text-critical">{acceptFeeMutation.error.message}</p>
+          ) : null}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={acceptFeeDraft}
+              disabled={acceptFeeMutation.isPending || feeDraft.lines.some((l) => !l.label.trim())}
+              className="px-4 py-1.5 text-xs"
+            >
+              {acceptFeeMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+              Accept & mark billed
+            </Button>
+            <button
+              type="button"
+              onClick={() => setFeeDraft(null)}
               className="rounded-pill border border-subtle bg-surface px-3 py-1.5 text-xs text-ink-muted transition hover:text-ink"
             >
               Cancel
@@ -342,15 +526,51 @@ export default function InvoicesPanel() {
                   #{inv.invoiceNumber} · {inv.clientName}
                   {inv.status === "void" ? (
                     <span className="ml-2 text-caption text-ink-muted">void</span>
-                  ) : null}
+                  ) : inv.paidAt ? (
+                    <span className="ml-2 text-caption text-ink-muted">
+                      paid {shortDate(inv.paidAt)}
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-caption font-medium text-unpaid">unpaid</span>
+                  )}
                 </p>
                 <p className="text-caption text-ink-muted">
-                  {inv.periodStart.toISOString().slice(0, 10)} –{" "}
-                  {inv.periodEnd.toISOString().slice(0, 10)} · {hoursLabel(inv.billedSeconds)} ·{" "}
+                  {inv.kind === "fee" ? (
+                    <>Lump sum · issued {inv.createdAt.toISOString().slice(0, 10)} · </>
+                  ) : (
+                    <>
+                      {inv.periodStart.toISOString().slice(0, 10)} –{" "}
+                      {inv.periodEnd.toISOString().slice(0, 10)} · {hoursLabel(inv.billedSeconds)}{" "}
+                      ·{" "}
+                    </>
+                  )}
                   {money(inv.amountCents)}
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
+                {inv.status !== "void" ? (
+                  inv.paidAt ? (
+                    <button
+                      type="button"
+                      onClick={() => markUnpaidMutation.mutate({ invoiceId: inv.id })}
+                      disabled={markUnpaidMutation.isPending}
+                      title="Undo — record this invoice as not yet paid"
+                      className="inline-flex items-center gap-1 rounded-pill border border-subtle px-2.5 py-1 text-caption text-ink-muted transition hover:text-ink disabled:opacity-50"
+                    >
+                      <Undo2 size={13} /> Unpaid
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => markPaidMutation.mutate({ invoiceId: inv.id })}
+                      disabled={markPaidMutation.isPending}
+                      title="Record that the client paid (today)"
+                      className="inline-flex items-center gap-1 rounded-pill border border-subtle px-2.5 py-1 text-caption font-medium text-ink transition hover:bg-tint-hover disabled:opacity-50"
+                    >
+                      <Check size={13} /> Mark paid
+                    </button>
+                  )
+                ) : null}
                 <button
                   type="button"
                   onClick={() => void exportInvoice(inv.id, "md")}

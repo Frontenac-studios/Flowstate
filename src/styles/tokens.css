@@ -181,6 +181,8 @@
   --status-icon: var(--ink-muted);
   --status-critical: var(--crimson);
   --status-critical-soft: #fbe9eb; /* soft-crimson fill: destructive buttons, overdue pill */
+  /* Spec v5 KashB2: money billed but not yet collected (AR). Amber text, never a fill. */
+  --status-unpaid: #7a5200;
 
   /* ---- swipe-action glyphs ----
    * The row reveal rail is icon-only, so the glyph carries the whole meaning and

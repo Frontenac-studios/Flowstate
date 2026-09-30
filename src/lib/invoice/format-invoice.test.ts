@@ -54,3 +54,33 @@ describe("invoiceToCsv", () => {
     expect(rows[1]).toContain("12.00,540.00");
   });
 });
+
+describe("fee (lump-sum) invoices", () => {
+  const fee: InvoiceView = {
+    ...invoice,
+    kind: "fee",
+    rateCents: 0,
+    billedSeconds: 0,
+    carriedSeconds: 0,
+    amountCents: 200000,
+    lines: [
+      {
+        label: "Milestone 3 — brand guidelines",
+        description: "",
+        billedSeconds: 0,
+        amountCents: 200000,
+      },
+    ],
+  };
+
+  it("shows amounts, never hours or a rate", () => {
+    const md = invoiceToMarkdown(fee);
+    expect(md).toContain("Amount due: $2,000.00");
+    expect(md).toContain("Milestone 3 — brand guidelines — $2,000.00");
+    expect(md).not.toMatch(/\/hr| h\b/);
+  });
+
+  it("leaves the CSV hours cell blank", () => {
+    expect(invoiceToCsv(fee).split("\r\n")[1]).toBe("Milestone 3 — brand guidelines,,,2000.00");
+  });
+});

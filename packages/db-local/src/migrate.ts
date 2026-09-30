@@ -122,6 +122,27 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
 );
 CREATE INDEX IF NOT EXISTS invoice_lines_invoice_id_idx ON invoice_lines (invoice_id);
 
+-- Lump-sum installments of a fixed fee (Spec v5 KashB2). Financial-class; mirrored
+-- from src/db/schema/fee-installments.ts. Billed on a fee invoice (invoices.kind).
+CREATE TABLE IF NOT EXISTS fee_installments (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  org_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+  milestone_id TEXT REFERENCES project_milestones(id) ON DELETE SET NULL,
+  ready_at INTEGER,
+  invoice_id TEXT REFERENCES invoices(id),
+  invoiced_at INTEGER,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS fee_installments_user_id_project_id_idx ON fee_installments (user_id, project_id);
+CREATE INDEX IF NOT EXISTS fee_installments_invoice_id_idx ON fee_installments (invoice_id);
+CREATE INDEX IF NOT EXISTS fee_installments_user_id_updated_at_idx ON fee_installments (user_id, updated_at);
+
 -- Owner's draws (W16). Financial-class; mirrored from src/db/schema/owner-draws.ts.
 CREATE TABLE IF NOT EXISTS ledger_periods (
   id TEXT PRIMARY KEY NOT NULL,
@@ -845,6 +866,8 @@ const ADDED_COLUMNS: ReadonlyArray<{ table: string; column: string; definition: 
   { table: "external_calendar_events", column: "calendar_color", definition: "TEXT" },
   { table: "time_entries", column: "invoice_id", definition: "TEXT" },
   { table: "invoices", column: "paid_at", definition: "INTEGER" },
+  // Spec v5 KashB2 — hourly (time) vs lump-sum (fee) invoices.
+  { table: "invoices", column: "kind", definition: "TEXT NOT NULL DEFAULT 'time'" },
   {
     table: "clients",
     column: "billing_threshold_hours",
@@ -958,6 +981,22 @@ export function runSqliteMigrations(sqlite: Database.Database): void {
          SELECT RAISE(
            ABORT,
            'time_entries.invoice_id is immutable once set; void the invoice to release the entry before re-billing'
+         );
+       END;`
+  );
+
+  // The same write-once guard for lump-sum installments (drizzle/0068).
+  sqlite.exec(
+    `CREATE TRIGGER IF NOT EXISTS fee_installments_invoice_id_immutable
+       BEFORE UPDATE OF invoice_id ON fee_installments
+       FOR EACH ROW
+       WHEN OLD.invoice_id IS NOT NULL
+            AND NEW.invoice_id IS NOT NULL
+            AND NEW.invoice_id <> OLD.invoice_id
+       BEGIN
+         SELECT RAISE(
+           ABORT,
+           'fee_installments.invoice_id is immutable once set; void the invoice to release the installment before re-billing'
          );
        END;`
   );

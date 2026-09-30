@@ -20,6 +20,8 @@ export const SYNC_TABLES = [
   "project_templates",
   "phases",
   "project_milestones",
+  // After projects, project_milestones and invoices: the SQLite mirror enforces FKs.
+  "fee_installments",
   "protected_block_templates",
   "protected_blocks",
   "week_day_priorities",
