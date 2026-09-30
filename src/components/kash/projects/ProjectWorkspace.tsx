@@ -14,8 +14,10 @@ import CalendarBoardView from "./CalendarBoardView";
 import MillerColumnsView from "./MillerColumnsView";
 import PlanOutline from "./PlanOutline";
 import ProjectDetailsStrip from "./ProjectDetailsStrip";
+import AddProjectTaskDialog from "./AddProjectTaskDialog";
 import PhaseBurnBars from "./PhaseBurnBars";
 import ProjectMilestoneStrip from "./ProjectMilestoneStrip";
+import ProjectTasksTab from "./ProjectTasksTab";
 import ProjectWorkspaceHeader from "./ProjectWorkspaceHeader";
 import { ProjectTaskFinder } from "./ProjectTaskFinder";
 import { useFocusParam } from "@/hooks/useFocusParam";
@@ -24,13 +26,13 @@ import { ProjectSlipReplanCard } from "./ProjectSlipReplanCard";
 import { ProjectTemplateSuggestSlot } from "./ProjectTemplateSuggestSlot";
 import type { ProjectDetail, ProjectViewMode } from "./types";
 
-export default function ProjectWorkspace({
-  project: initialProject,
-  showBackToProjects = false,
-}: {
-  project: ProjectDetail;
-  showBackToProjects?: boolean;
-}) {
+const TAB_VALUES: readonly ProjectViewMode[] = ["tasks", "columns", "calendar"];
+
+function isTab(value: string | null): value is ProjectViewMode {
+  return value != null && (TAB_VALUES as readonly string[]).includes(value);
+}
+
+export default function ProjectWorkspace({ project: initialProject }: { project: ProjectDetail }) {
   const trpc = useTRPC();
 
   const { data: project } = useQuery(
@@ -55,12 +57,24 @@ export default function ProjectWorkspace({
   const { data: allProjects = [] } = useQuery(trpc.projects.list.queryOptions());
   const showTemplateFeatures = hasTemplateFeatures(allProjects.length);
 
-  const [viewMode, setViewMode] = useState<ProjectViewMode>("columns");
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
+  // The tab lives in the URL (?tab=) so a view is linkable; Tasks is the default.
+  const tabParam = searchParams.get("tab");
+  const viewMode: ProjectViewMode = isTab(tabParam) ? tabParam : "tasks";
+  const setViewMode = (mode: ProjectViewMode) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode === "tasks") params.delete("tab");
+    else params.set("tab", mode);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   // Kash 3.2: creation no longer hands off to the wizard. `?setup=new` used to
   // auto-open a four-step modal the moment a project was created — two modals and a
@@ -83,10 +97,14 @@ export default function ProjectWorkspace({
     [phasesQuery.data, tasksQuery.data]
   );
 
-  const projectComplete = useMemo(() => {
-    const tasks = tasksQuery.data ?? [];
+  const { projectComplete, percentComplete } = useMemo(() => {
+    const tasks = tasksQuery.data;
+    if (!tasks) return { projectComplete: false, percentComplete: null };
     const completedCount = tasks.filter((task) => task.completedAt !== null).length;
-    return isProjectComplete({ taskCount: tasks.length, completedCount });
+    return {
+      projectComplete: isProjectComplete({ taskCount: tasks.length, completedCount }),
+      percentComplete: tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0,
+    };
   }, [tasksQuery.data]);
 
   // milestonesQuery stays in the loading gate: the milestone strip reads it, and
@@ -107,7 +125,10 @@ export default function ProjectWorkspace({
           project={project}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          showBackToProjects={showBackToProjects}
+          percentComplete={percentComplete}
+          editing={editing}
+          onToggleEdit={() => setEditing((v) => !v)}
+          onAddTask={() => setAddOpen(true)}
           timeSpentSeconds={timeRollups?.projectSeconds ?? 0}
           estimateSampleCount={estimateSampleCount}
           showTemplateFeatures={showTemplateFeatures}
@@ -127,10 +148,11 @@ export default function ProjectWorkspace({
             void milestonesQuery.refetch();
           }}
         />
-      ) : viewMode === "plan" ? (
-        // Plan mode (Kash 3.2, 2D + 3B): the same tree the Columns view renders, laid
-        // out whole, with the project-level facts above it. Natural height with its
-        // own scroll, so a long outline never clips under the fill layout.
+      ) : editing ? (
+        // Edit (Kat, 2026-09-30): the header's Edit swaps the tabs for the project's
+        // facts and structure until Done — details, the whole-tree outline (Tab /
+        // Shift+Tab to indent), milestones, and billing + plan-vs-actual. Natural
+        // height with its own scroll, so a long outline never clips.
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
           <ProjectDetailsStrip project={project} />
           <PlanOutline
@@ -138,6 +160,21 @@ export default function ProjectWorkspace({
             category={project.category}
             hue={project.hue}
             tree={tree}
+          />
+          <ProjectMilestoneStrip
+            projectId={initialProject.id}
+            milestones={milestonesQuery.data ?? []}
+            alwaysRender
+          />
+          {/* W15 billing + burn; the burn moves onto the Phases tab when it lands. */}
+          <PhaseBurnBars projectId={initialProject.id} />
+        </div>
+      ) : viewMode === "tasks" ? (
+        <div className="flex min-h-0 flex-1 overflow-y-auto">
+          <ProjectTasksTab
+            project={project}
+            phases={phasesQuery.data ?? []}
+            tasks={tasksQuery.data ?? []}
           />
         </div>
       ) : viewMode === "columns" ? (
@@ -187,12 +224,12 @@ export default function ProjectWorkspace({
         </div>
       )}
 
-      {/*
-        W15 — estimate vs actual, the deepest of the three altitudes. Outside the
-        view switch: the plan is a property of the project, not of how you happen to
-        be looking at its tasks today.
-      */}
-      <PhaseBurnBars projectId={initialProject.id} />
+      <AddProjectTaskDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        project={project}
+        phases={phasesQuery.data ?? []}
+      />
     </div>
   );
 }

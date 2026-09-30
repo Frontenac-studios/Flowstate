@@ -9,4 +9,5 @@ export type ProjectPhase = RouterOutputs["phases"]["listByProject"][number];
 export type ProjectTask = RouterOutputs["tasks"]["listByProject"][number];
 export type ProjectMilestone = RouterOutputs["projectMilestones"]["listByProject"][number];
 
-export type ProjectViewMode = "columns" | "plan" | "calendar";
+/** The project page tabs (Spec v4; Timeline and Phases land in their own PRs). */
+export type ProjectViewMode = "tasks" | "columns" | "calendar";
