@@ -1,4 +1,5 @@
-import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { check, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { clients } from "./clients";
 
@@ -49,6 +50,13 @@ export const invoices = pgTable(
     amountCents: integer("amount_cents").notNull(),
     /** `accepted | void`. Void keeps the row but releases its entries to bill again. */
     status: text("status").notNull().default("accepted"),
+    /**
+     * `time` (hourly — billed from time entries) or `fee` (lump sum — billed from
+     * `fee_installments`, Spec v5 KashB2). A fee invoice carries 0 in the hourly
+     * snapshot columns (threshold, rate, billed/carried seconds) and shares the
+     * client's invoice-number sequence.
+     */
+    kind: text("kind").notNull().default("time"),
     note: text("note"),
     voidedAt: timestamp("voided_at", { withTimezone: true, mode: "date" }),
     /**
@@ -63,5 +71,6 @@ export const invoices = pgTable(
   (table) => [
     index("invoices_user_id_client_id_idx").on(table.userId, table.clientId),
     index("invoices_user_id_created_at_idx").on(table.userId, table.createdAt),
+    check("invoices_kind_check", sql`${table.kind} IN ('time', 'fee')`),
   ]
 );

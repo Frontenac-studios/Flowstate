@@ -72,6 +72,11 @@ export function mapRemoteRow(
     "revoked_at",
     // task_checklist_items (Spec v5 DetailA)
     "done_at",
+    // fee_installments (Spec v5 KashB2) + the invoice timestamps it shares
+    "ready_at",
+    "invoiced_at",
+    "paid_at",
+    "voided_at",
   ];
 
   for (const key of dateFields) {

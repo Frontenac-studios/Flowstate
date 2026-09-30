@@ -11,6 +11,7 @@ import { mcpTokensRouter } from "./mcp-tokens";
 import { dayReviewsRouter } from "./day-reviews";
 import { directionsRouter } from "./directions";
 import { focusBlocksRouter } from "./focus-blocks";
+import { feeInstallmentsRouter } from "./fee-installments";
 import { invoicesRouter } from "./invoices";
 import { learningRouter } from "./learning";
 import { ledgerRouter } from "./ledger";
@@ -56,6 +57,7 @@ export const appRouter = createTRPCRouter({
   directions: directionsRouter,
   focusBlocks: focusBlocksRouter,
   invoices: invoicesRouter,
+  feeInstallments: feeInstallmentsRouter,
   learning: learningRouter,
   ledger: ledgerRouter,
   quarterReview: quarterReviewRouter,

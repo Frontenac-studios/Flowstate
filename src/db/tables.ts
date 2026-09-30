@@ -14,6 +14,7 @@ import { leadOutreach as pgLeadOutreach } from "./schema/lead-outreach";
 import { rates as pgRates } from "./schema/rates";
 import { invoices as pgInvoices } from "./schema/invoices";
 import { invoiceLines as pgInvoiceLines } from "./schema/invoice-lines";
+import { feeInstallments as pgFeeInstallments } from "./schema/fee-installments";
 import { moneySettings as pgMoneySettings } from "./schema/money-settings";
 import { businessExpenses as pgBusinessExpenses } from "./schema/business-expenses";
 import { ledgerPeriods as pgLedgerPeriods } from "./schema/ledger-periods";
@@ -150,6 +151,9 @@ export const invoices = (isSqliteMode() ? sqliteSchema.invoices : pgInvoices) as
 export const invoiceLines = (
   isSqliteMode() ? sqliteSchema.invoiceLines : pgInvoiceLines
 ) as typeof pgInvoiceLines;
+export const feeInstallments = (
+  isSqliteMode() ? sqliteSchema.feeInstallments : pgFeeInstallments
+) as typeof pgFeeInstallments;
 export const moneySettings = (
   isSqliteMode() ? sqliteSchema.moneySettings : pgMoneySettings
 ) as typeof pgMoneySettings;

@@ -6,6 +6,8 @@ import { useState } from "react";
 import Select from "@/components/kash/ui/Select";
 import { useOptionalToast } from "@/components/kash/ui/ToastProvider";
 import { formatCents } from "@/lib/rates/format-cents";
+
+import FeeInstallments from "./FeeInstallments";
 import { useTRPC } from "@/trpc/client";
 
 /**
@@ -206,6 +208,10 @@ export default function PhaseBurnBars({ projectId }: { projectId: string }) {
             : ""}
           .
         </p>
+      ) : null}
+
+      {billingType === "fixed_fee" ? (
+        <FeeInstallments projectId={projectId} feeAmountCents={fee?.feeAmountCents ?? null} />
       ) : null}
 
       {burn.phases.length === 0 ? (

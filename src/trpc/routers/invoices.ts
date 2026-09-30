@@ -6,12 +6,18 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { runAppTransaction } from "@/db/run-transaction";
-import { syncInvoiceLineRow, syncInvoiceRow } from "@/db/record-sync-mutation";
+import {
+  syncFeeInstallmentRow,
+  syncInvoiceLineRow,
+  syncInvoiceRow,
+} from "@/db/record-sync-mutation";
 import {
   clients,
+  feeInstallments,
   invoiceLines,
   invoices,
   moneySettings,
+  projectMilestones,
   projects,
   rates,
   tasks,
@@ -23,6 +29,7 @@ import {
   roundToQuarterSeconds,
   type UnbilledEntry,
 } from "@/lib/invoice/build-invoice-draft";
+import { isInstallmentBillable } from "@/lib/money/fee-installments";
 import { draftInvoiceLineItems } from "@/server/invoice/draft-line-items";
 
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -374,6 +381,7 @@ export const invoicesRouter = createTRPCRouter({
         carriedSeconds,
         amountCents,
         status: "accepted",
+        kind: "time",
         note: input.note ?? null,
       };
       const lineRows = pricedLines.map((l) => ({
@@ -420,6 +428,133 @@ export const invoicesRouter = createTRPCRouter({
       return { invoiceId, invoiceNumber, amountCents, billedSeconds, carriedSeconds };
     }),
 
+  /**
+   * Bill a client's ready lump-sum installments on their own FEE invoice (Spec v5
+   * KashB2 — never mixed into an hourly invoice). One line per installment; the
+   * amount always comes from the installment row, only the wording is the user's.
+   * Same double-bill shape as `accept`: a conditional stamp of `invoice_id` where
+   * still null, aborting on a short count (plus the write-once DB trigger).
+   */
+  acceptFee: protectedProcedure
+    .input(
+      z.object({
+        clientId: z.string().uuid(),
+        note: z.string().trim().max(1000).optional(),
+        lines: z
+          .array(
+            z.object({
+              installmentId: z.string().uuid(),
+              label: z.string().trim().min(1).max(120),
+              description: z.string().trim().max(500),
+            })
+          )
+          .min(1)
+          .max(50),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      await getOwnedClient(ctx.userId, input.clientId);
+      const ids = input.lines.map((l) => l.installmentId);
+      if (new Set(ids).size !== ids.length) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "An installment is listed twice." });
+      }
+
+      const rows = await db
+        .select({
+          id: feeInstallments.id,
+          amountCents: feeInstallments.amountCents,
+          readyAt: feeInstallments.readyAt,
+          invoiceId: feeInstallments.invoiceId,
+          milestoneCompletedAt: projectMilestones.completedAt,
+        })
+        .from(feeInstallments)
+        .innerJoin(projects, eq(feeInstallments.projectId, projects.id))
+        .leftJoin(projectMilestones, eq(feeInstallments.milestoneId, projectMilestones.id))
+        .where(
+          and(
+            eq(feeInstallments.userId, ctx.userId),
+            eq(projects.clientId, input.clientId),
+            inArray(feeInstallments.id, ids)
+          )
+        );
+      const billable = rows.filter((r) => isInstallmentBillable(r));
+      if (billable.length !== ids.length) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Some installments were already billed or aren't ready. Refresh and try again.",
+        });
+      }
+      const amountById = new Map(billable.map((r) => [r.id, r.amountCents]));
+      const amountCents = billable.reduce((sum, r) => sum + r.amountCents, 0);
+
+      const [{ maxNumber } = { maxNumber: 0 }] = await db
+        .select({ maxNumber: sql<number>`coalesce(max(${invoices.invoiceNumber}), 0)` })
+        .from(invoices)
+        .where(and(eq(invoices.userId, ctx.userId), eq(invoices.clientId, input.clientId)));
+      const invoiceNumber = Number(maxNumber) + 1;
+
+      const invoiceId = randomUUID();
+      const invoiceRow = {
+        id: invoiceId,
+        userId: ctx.userId,
+        orgId: ctx.orgId,
+        clientId: input.clientId,
+        invoiceNumber,
+        periodStart: now,
+        periodEnd: now,
+        // The hourly snapshot columns don't apply to a lump-sum invoice.
+        thresholdHours: 0,
+        rateCents: 0,
+        billedSeconds: 0,
+        carriedSeconds: 0,
+        amountCents,
+        status: "accepted",
+        kind: "fee",
+        note: input.note ?? null,
+      };
+      const lineRows = input.lines.map((l, sortOrder) => ({
+        id: randomUUID(),
+        userId: ctx.userId,
+        orgId: ctx.orgId,
+        invoiceId,
+        label: l.label,
+        description: l.description,
+        billedSeconds: 0,
+        amountCents: amountById.get(l.installmentId) ?? 0,
+        sortOrder,
+      }));
+
+      const stampedRows = await runAppTransaction(async (tx) => {
+        await tx.insert(invoices).values(invoiceRow);
+        await tx.insert(invoiceLines).values(lineRows);
+        const stamped = await tx
+          .update(feeInstallments)
+          .set({ invoiceId, invoicedAt: now, updatedAt: now })
+          .where(
+            and(
+              eq(feeInstallments.userId, ctx.userId),
+              inArray(feeInstallments.id, ids),
+              isNull(feeInstallments.invoiceId)
+            )
+          )
+          .returning();
+        if (stamped.length !== ids.length) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "An installment was billed concurrently. Refresh and try again.",
+          });
+        }
+        return stamped;
+      });
+
+      await syncInvoiceRow(invoiceId, "insert", invoiceRow);
+      for (const line of lineRows) await syncInvoiceLineRow(line.id, "insert", line);
+      for (const row of stampedRows) await syncFeeInstallmentRow(row.id, "update", row);
+
+      return { invoiceId, invoiceNumber, amountCents };
+    }),
+
   /** Un-accept: void the invoice and release its entries to be billed again. */
   void: protectedProcedure
     .input(z.object({ invoiceId: z.string().uuid() }))
@@ -436,6 +571,21 @@ export const invoicesRouter = createTRPCRouter({
 
       const now = new Date();
       const voided = { ...invoice, status: "void", voidedAt: now, updatedAt: now };
+      // Read before the release clears the link — these get a sync update after.
+      const releasedInstallmentIds =
+        invoice.kind === "fee"
+          ? (
+              await db
+                .select({ id: feeInstallments.id })
+                .from(feeInstallments)
+                .where(
+                  and(
+                    eq(feeInstallments.userId, ctx.userId),
+                    eq(feeInstallments.invoiceId, input.invoiceId)
+                  )
+                )
+            ).map((r) => r.id)
+          : [];
 
       await runAppTransaction(async (tx) => {
         await tx
@@ -445,12 +595,33 @@ export const invoicesRouter = createTRPCRouter({
             and(eq(timeEntries.userId, ctx.userId), eq(timeEntries.invoiceId, input.invoiceId))
           );
         await tx
+          .update(feeInstallments)
+          .set({ invoiceId: null, invoicedAt: null, updatedAt: now })
+          .where(
+            and(
+              eq(feeInstallments.userId, ctx.userId),
+              eq(feeInstallments.invoiceId, input.invoiceId)
+            )
+          );
+        await tx
           .update(invoices)
           .set({ status: "void", voidedAt: now, updatedAt: now })
           .where(and(eq(invoices.id, input.invoiceId), eq(invoices.userId, ctx.userId)));
       });
 
       await syncInvoiceRow(input.invoiceId, "update", voided);
+      if (invoice.kind === "fee") {
+        const released = await db
+          .select()
+          .from(feeInstallments)
+          .where(
+            and(
+              eq(feeInstallments.userId, ctx.userId),
+              inArray(feeInstallments.id, releasedInstallmentIds)
+            )
+          );
+        for (const row of released) await syncFeeInstallmentRow(row.id, "update", row);
+      }
       return { invoiceId: input.invoiceId };
     }),
 
@@ -501,6 +672,7 @@ export const invoicesRouter = createTRPCRouter({
           clientId: invoices.clientId,
           clientName: clients.name,
           invoiceNumber: invoices.invoiceNumber,
+          kind: invoices.kind,
           periodStart: invoices.periodStart,
           periodEnd: invoices.periodEnd,
           billedSeconds: invoices.billedSeconds,
@@ -526,6 +698,7 @@ export const invoicesRouter = createTRPCRouter({
           clientId: invoices.clientId,
           clientName: clients.name,
           invoiceNumber: invoices.invoiceNumber,
+          kind: invoices.kind,
           periodStart: invoices.periodStart,
           periodEnd: invoices.periodEnd,
           rateCents: invoices.rateCents,

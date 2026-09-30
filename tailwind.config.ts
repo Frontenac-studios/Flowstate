@@ -34,6 +34,7 @@ const config: Config = {
           DEFAULT: "var(--status-critical)",
           soft: "var(--status-critical-soft)",
         },
+        unpaid: "var(--status-unpaid)",
         "control-border": "var(--control-border)",
         "outline-border": "var(--outline-border)",
         // Spec v3 interaction tint — gray outside a project, the project hue inside

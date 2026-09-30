@@ -281,3 +281,85 @@ describe("sqlite task detail (due_date, notes, checklist)", () => {
     expect(await db.select().from(schema.taskChecklistItems)).toHaveLength(0);
   });
 });
+
+describe("sqlite fee installments (Spec v5 KashB2)", () => {
+  const ORG = "22222222-2222-2222-2222-222222222222";
+
+  async function seed() {
+    const { db, sqlite } = createSqliteDb(":memory:");
+    sqlite.pragma("foreign_keys = ON");
+    const [client] = await db
+      .insert(schema.clients)
+      .values({ userId: USER, orgId: ORG, name: "Great White" })
+      .returning();
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: USER,
+        name: "Brand system",
+        slug: "brand-system",
+        category: "business",
+        clientId: client!.id,
+      })
+      .returning();
+    const invoice = (n: number) => ({
+      userId: USER,
+      orgId: ORG,
+      clientId: client!.id,
+      invoiceNumber: n,
+      periodStart: new Date(),
+      periodEnd: new Date(),
+      thresholdHours: 0,
+      rateCents: 0,
+      billedSeconds: 0,
+      amountCents: 200000,
+      kind: "fee",
+    });
+    const [inv1] = await db.insert(schema.invoices).values(invoice(1)).returning();
+    const [inv2] = await db.insert(schema.invoices).values(invoice(2)).returning();
+    const [installment] = await db
+      .insert(schema.feeInstallments)
+      .values({
+        userId: USER,
+        orgId: ORG,
+        projectId: project!.id,
+        label: "Milestone 3",
+        amountCents: 200000,
+      })
+      .returning();
+    return { db, sqlite, project: project!, inv1: inv1!, inv2: inv2!, installment: installment! };
+  }
+
+  it("defaults invoices.kind to 'time'", () => {
+    const sqlite = new Database(":memory:");
+    runSqliteMigrations(sqlite);
+    const kind = (
+      sqlite.prepare("PRAGMA table_info(invoices)").all() as Array<{
+        name: string;
+        dflt_value: string | null;
+      }>
+    ).find((c) => c.name === "kind");
+    expect(kind?.dflt_value).toBe("'time'");
+  });
+
+  it("lets an installment be billed and released, but never re-pointed", async () => {
+    const { db, installment, inv1, inv2 } = await seed();
+    const byId = eq(schema.feeInstallments.id, installment.id);
+
+    await db.update(schema.feeInstallments).set({ invoiceId: inv1.id }).where(byId);
+    await expect(
+      db.update(schema.feeInstallments).set({ invoiceId: inv2.id }).where(byId)
+    ).rejects.toThrow(/immutable/);
+
+    await db.update(schema.feeInstallments).set({ invoiceId: null }).where(byId);
+    await db.update(schema.feeInstallments).set({ invoiceId: inv2.id }).where(byId);
+    const [row] = await db.select().from(schema.feeInstallments).where(byId);
+    expect(row!.invoiceId).toBe(inv2.id);
+  });
+
+  it("cascades with its project", async () => {
+    const { db, project } = await seed();
+    await db.delete(schema.projects).where(eq(schema.projects.id, project.id));
+    expect(await db.select().from(schema.feeInstallments)).toHaveLength(0);
+  });
+});

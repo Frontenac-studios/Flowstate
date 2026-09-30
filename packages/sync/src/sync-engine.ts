@@ -18,6 +18,7 @@ import {
   taskChecklistItems,
   taskTagStyles,
   projectFees,
+  feeInstallments,
   projects,
   projectTemplates,
   rates,
@@ -483,6 +484,7 @@ async function upsertRow(
     case "leads":
     case "lead_outreach":
     case "project_fees":
+    case "fee_installments":
     case "sourcing_runs":
     case "sourcing_run_costs":
     case "mcp_tokens":
@@ -496,6 +498,7 @@ async function upsertRow(
         leads,
         lead_outreach: leadOutreach,
         project_fees: projectFees,
+        fee_installments: feeInstallments,
         sourcing_runs: sourcingRuns,
         mcp_tokens: mcpTokens,
         sourcing_run_costs: sourcingRunCosts,

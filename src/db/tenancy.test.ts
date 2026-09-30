@@ -136,6 +136,7 @@ describe("financial data placement", () => {
     // returns sorted. Update the expected list as financial tables land.
     expect(tablesInClass("financial")).toEqual([
       "business_expenses",
+      "fee_installments",
       "invoice_lines",
       "invoices",
       "ledger_periods",

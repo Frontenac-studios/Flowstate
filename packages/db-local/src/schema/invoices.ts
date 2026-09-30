@@ -19,6 +19,7 @@ export const invoices = sqliteTable("invoices", {
   carriedSeconds: integer("carried_seconds").notNull().default(0),
   amountCents: integer("amount_cents").notNull(),
   status: text("status").notNull().default("accepted"),
+  kind: text("kind").notNull().default("time"),
   note: text("note"),
   voidedAt: integer("voided_at", { mode: "timestamp_ms" }),
   paidAt: integer("paid_at", { mode: "timestamp_ms" }),
