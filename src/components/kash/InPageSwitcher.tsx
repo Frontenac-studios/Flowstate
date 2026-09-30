@@ -22,6 +22,8 @@ type Props<T extends string> = {
   ariaLabel: string;
   /** Optional control clustered after the segments (e.g. Today add-task +). */
   trailing?: ReactNode;
+  /** Stretch the track to its container, segments sharing the width (a rail switch). */
+  fullWidth?: boolean;
 };
 
 /**
@@ -39,6 +41,7 @@ export function InPageSwitcher<T extends string>({
   onChange,
   ariaLabel,
   trailing,
+  fullWidth = false,
 }: Props<T>) {
   const buttonsRef = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -61,7 +64,10 @@ export function InPageSwitcher<T extends string>({
 
   return (
     <div
-      className="inline-flex items-center gap-[var(--space-0)] rounded-pill bg-active-surface p-[3px] text-meta"
+      className={cn(
+        "items-center gap-[var(--space-0)] rounded-pill bg-active-surface p-[3px] text-meta",
+        fullWidth ? "flex w-full" : "inline-flex"
+      )}
       role="group"
       aria-label={ariaLabel}
     >
@@ -79,6 +85,7 @@ export function InPageSwitcher<T extends string>({
             aria-pressed={pressed}
             className={cn(
               "kash-focus-visible rounded-pill border px-3.5 py-1 outline-none transition-colors motion-reduce:transition-none",
+              fullWidth && "flex-1",
               pressed
                 ? "border-active-raised-border bg-active-raised font-semibold text-ink"
                 : "border-transparent bg-transparent text-ink-muted hover:text-ink"

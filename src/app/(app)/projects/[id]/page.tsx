@@ -30,7 +30,7 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <SurfaceCoachLayout surface="projects" variant="fill">
-      <ProjectWorkspace project={project} showBackToProjects />
+      <ProjectWorkspace project={project} />
     </SurfaceCoachLayout>
   );
 }

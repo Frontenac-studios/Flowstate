@@ -72,6 +72,7 @@ export default function TaskDetailSheet({ taskId, onClose, onDeleted }: Props) {
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTriageCandidates.queryKey() });
+    void queryClient.invalidateQueries(trpc.tasks.listByProject.pathFilter());
   };
   const invalidateChecklist = () => {
     if (!taskId) return;

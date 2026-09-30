@@ -270,6 +270,8 @@ export function TaskRow({
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listIncomplete.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listTop3Slots.queryKey() });
     void queryClient.invalidateQueries({ queryKey: trpc.tasks.listRecentlyCompleted.queryKey() });
+    // The project page Tasks tab lists through listByProject.
+    void queryClient.invalidateQueries(trpc.tasks.listByProject.pathFilter());
     void queryClient.invalidateQueries(trpc.planning.getYearActivity.pathFilter());
     void queryClient.invalidateQueries(trpc.planning.getQuarterActivity.pathFilter());
   };
