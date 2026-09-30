@@ -165,7 +165,7 @@ export function OnboardingModal({
           ? "Hold time for #1?"
           : "Confirm your categories";
 
-  const footer =
+  const stepAction =
     step === "capture" ? (
       <Button
         type="button"
@@ -209,6 +209,17 @@ export function OnboardingModal({
         Continue
       </Button>
     );
+
+  // Every step can be skipped: setup is a guide, never a gate. Skipping marks
+  // onboarding complete exactly like finishing it, so it won't come back.
+  const footer = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <Button type="button" variant="tertiary" className="text-body" onClick={onFinish}>
+        Skip setup
+      </Button>
+      {stepAction}
+    </div>
+  );
 
   return (
     <RitualSheet open title={title} dismissOnBackdrop={false} footer={footer}>
