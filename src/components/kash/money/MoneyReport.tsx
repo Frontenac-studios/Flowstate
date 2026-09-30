@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
+import { InPageSwitcher } from "@/components/kash/InPageSwitcher";
 import { entriesToCsv, type ExportRow } from "@/lib/time/entries-to-csv";
 import {
   REPORT_PERIOD_LABEL,
@@ -11,6 +12,11 @@ import {
   type ReportPeriodKind,
 } from "@/lib/time/report-period";
 import { useTRPC } from "@/trpc/client";
+
+const PERIOD_OPTIONS = REPORT_PERIODS.map((value) => ({
+  value,
+  label: REPORT_PERIOD_LABEL[value],
+}));
 
 function hoursLabel(seconds: number): string {
   return `${(seconds / 3600).toFixed(1)}h`;
@@ -65,23 +71,12 @@ export default function MoneyReport() {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Report period">
-          {REPORT_PERIODS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              onClick={() => setPeriod(kind)}
-              aria-pressed={period === kind}
-              className={`rounded-pill border px-3 py-1 text-xs transition-colors ${
-                period === kind
-                  ? "border-active-raised-border bg-active-raised text-ink"
-                  : "border-subtle text-ink-muted hover:text-ink"
-              }`}
-            >
-              {REPORT_PERIOD_LABEL[kind]}
-            </button>
-          ))}
-        </div>
+        <InPageSwitcher
+          options={PERIOD_OPTIONS}
+          value={period}
+          onChange={setPeriod}
+          ariaLabel="Report period"
+        />
         <button
           type="button"
           onClick={() => void downloadCsv()}
@@ -95,7 +90,7 @@ export default function MoneyReport() {
       {isLoading || !report || !totals ? (
         <p className="text-sm text-ink-muted">Loading report…</p>
       ) : totals.totalSeconds === 0 ? (
-        <p className="rounded-card border border-border bg-surface p-5 text-sm text-ink-muted shadow-surface">
+        <p className="rounded-card bg-surface p-5 text-sm text-ink-muted">
           No time tracked in this period.
         </p>
       ) : (
@@ -115,10 +110,7 @@ export default function MoneyReport() {
 
           <div className="flex flex-col gap-2">
             {report.clients.map((client) => (
-              <details
-                key={client.clientId ?? "none"}
-                className="rounded-card border border-subtle bg-surface"
-              >
+              <details key={client.clientId ?? "none"} className="rounded-card bg-surface">
                 <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-sm">
                   <span className="font-medium text-ink">{client.name}</span>
                   <span className="tabular-nums text-ink-muted">
@@ -169,7 +161,7 @@ function Tile({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-card border border-border bg-surface p-4">
+    <div className="rounded-card bg-surface p-4">
       <p className="text-caption text-ink-muted">{label}</p>
       <p className="mt-1 text-title font-semibold tabular-nums text-ink">{value}</p>
       <p className="mt-1 text-caption text-ink-muted">{children}</p>
