@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import Button from "@/components/kash/ui/Button";
-import { Check, Copy, Download, FileText, Loader2, Undo2 } from "@/components/kash/ui/icon";
+import { Check, Copy, Download, Loader2, Undo2 } from "@/components/kash/ui/icon";
 import {
   invoiceToCsv,
   invoiceToMarkdown,
@@ -103,6 +103,7 @@ export default function InvoicesPanel() {
       queryClient.invalidateQueries({ queryKey: trpc.invoices.list.queryKey() }),
       queryClient.invalidateQueries(trpc.feeInstallments.pathFilter()),
       queryClient.invalidateQueries({ queryKey: trpc.money.drawPanel.queryKey() }),
+      queryClient.invalidateQueries({ queryKey: trpc.money.kashTable.queryKey() }),
     ]);
   }
 
@@ -133,6 +134,7 @@ export default function InvoicesPanel() {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: trpc.invoices.readyToBill.queryKey() }),
           queryClient.invalidateQueries({ queryKey: trpc.invoices.list.queryKey() }),
+          queryClient.invalidateQueries({ queryKey: trpc.money.kashTable.queryKey() }),
         ]);
         void variables;
       },
@@ -249,27 +251,20 @@ export default function InvoicesPanel() {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <FileText size={18} className="text-ink-muted" />
-        <h2 className="text-body font-semibold text-ink">Invoicing</h2>
-      </div>
-
       {/* Ready to bill */}
       {ready && ready.length > 0 && (
         <div className="flex flex-col gap-2">
           {ready.map((client) => (
             <div
               key={client.clientId}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-subtle bg-surface px-4 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-surface px-4 py-3"
             >
               <div>
                 <p className="text-sm font-medium text-ink">{client.name}</p>
                 <p className="text-caption text-ink-muted">
                   {hoursLabel(client.unbilledSeconds)} unbilled · threshold {client.thresholdHours}h
                   {client.atThreshold ? (
-                    <span className="ml-2 rounded-pill bg-active-raised px-2 py-0.5 text-active-raised-border">
-                      ready
-                    </span>
+                    <span className="ml-2 font-semibold text-ink">ready</span>
                   ) : null}
                 </p>
               </div>
@@ -291,7 +286,7 @@ export default function InvoicesPanel() {
       )}
 
       {ready && ready.length === 0 && !draft && !feeDraft && (feeReady?.length ?? 0) === 0 ? (
-        <p className="rounded-card border border-border bg-surface p-5 text-sm text-ink-muted shadow-surface">
+        <p className="rounded-card bg-surface p-5 text-sm text-ink-muted">
           Nothing to bill yet — billable time shows up here as it accrues.
         </p>
       ) : null}
@@ -302,7 +297,7 @@ export default function InvoicesPanel() {
 
       {/* Draft editor */}
       {draft ? (
-        <div className="flex flex-col gap-3 rounded-card border border-active-raised-border bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-card border border-control-border bg-surface p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="text-sm font-semibold text-ink">
               Invoice #{draft.invoiceNumber} — {draft.clientName}
@@ -400,7 +395,7 @@ export default function InvoicesPanel() {
           {feeReady.map((group) => (
             <div
               key={group.clientId}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-subtle bg-surface px-4 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-surface px-4 py-3"
             >
               <div>
                 <p className="text-sm font-medium text-ink">{group.clientName}</p>
@@ -424,7 +419,7 @@ export default function InvoicesPanel() {
       ) : null}
 
       {feeDraft ? (
-        <div className="flex flex-col gap-3 rounded-card border border-active-raised-border bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-card border border-control-border bg-surface p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="text-sm font-semibold text-ink">Fee invoice — {feeDraft.clientName}</h3>
             <span className="text-caption text-ink-muted">Lump sum · no hours</span>
@@ -517,7 +512,7 @@ export default function InvoicesPanel() {
           {history.map((inv) => (
             <div
               key={inv.id}
-              className={`flex flex-wrap items-center justify-between gap-3 rounded-card border border-subtle bg-surface px-4 py-2.5 ${
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-card bg-surface px-4 py-2.5 ${
                 inv.status === "void" ? "opacity-60" : ""
               }`}
             >

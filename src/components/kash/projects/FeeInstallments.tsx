@@ -60,6 +60,7 @@ export default function FeeInstallments({
     toast?.toast({ message: e.message, variant: "error" });
   const invalidate = () => {
     void queryClient.invalidateQueries(trpc.feeInstallments.pathFilter());
+    void queryClient.invalidateQueries({ queryKey: trpc.money.kashTable.queryKey() });
   };
 
   const create = useMutation(

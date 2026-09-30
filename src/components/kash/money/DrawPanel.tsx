@@ -1,11 +1,12 @@
 "use client";
 
+import Button from "@/components/kash/ui/Button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 
 import ExpensesByCategoryChart from "@/components/kash/money/ExpensesByCategoryChart";
 import XeroImport from "@/components/kash/money/XeroImport";
-import { Plus, Trash2, Wallet } from "@/components/kash/ui/icon";
+import { Plus, Trash2 } from "@/components/kash/ui/icon";
 import { useTRPC } from "@/trpc/client";
 
 function dollars(cents: number): string {
@@ -70,13 +71,8 @@ export default function DrawPanel() {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Wallet size={18} className="text-ink-muted" />
-        <h2 className="text-body font-semibold text-ink">The draw</h2>
-      </div>
-
       {/* Hero: available to draw */}
-      <div className="rounded-card border border-border bg-surface p-5 shadow-surface">
+      <div className="rounded-card bg-surface p-5">
         <p className="text-caption text-ink-muted">Available to draw</p>
         <p className="mt-1 text-title font-semibold tabular-nums text-ink">
           {panel ? dollars(panel.availableToDrawCents) : "—"}
@@ -98,7 +94,7 @@ export default function DrawPanel() {
 
       {/* Cash ledger */}
       {panel ? (
-        <dl className="flex flex-col gap-1.5 rounded-card border border-subtle bg-surface px-4 py-3 text-sm">
+        <dl className="flex flex-col gap-1.5 rounded-card bg-surface px-4 py-3 text-sm">
           <LedgerRow
             label="Collected (paid invoices)"
             value={dollars(panel.collectedRevenueCents)}
@@ -118,14 +114,14 @@ export default function DrawPanel() {
       {/* Runways */}
       {panel ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-card border border-border bg-surface p-4">
+          <div className="rounded-card bg-surface p-4">
             <p className="text-caption text-ink-muted">Business runway</p>
             <p className="mt-1 text-title font-semibold tabular-nums text-ink">
               {months(panel.businessRunwayMonths)}
             </p>
             <p className="mt-1 text-caption text-ink-muted">business cash ÷ recent monthly burn</p>
           </div>
-          <div className="rounded-card border border-border bg-surface p-4">
+          <div className="rounded-card bg-surface p-4">
             <p className="text-caption text-ink-muted">Personal runway</p>
             <p className="mt-1 text-title font-semibold tabular-nums text-ink">
               {panel.costOfLivingCents ? months(panel.personalRunwayMonths) : "—"}
@@ -141,7 +137,7 @@ export default function DrawPanel() {
 
       {/* Bank reconcile drift */}
       {panel && panel.bankBalanceCents != null ? (
-        <div className="rounded-card border border-subtle bg-surface px-4 py-3 text-sm">
+        <div className="rounded-card bg-surface px-4 py-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-ink-muted">Bank balance (reconciled)</span>
             <span className="tabular-nums text-ink">{dollars(panel.bankBalanceCents)}</span>
@@ -250,7 +246,7 @@ function SettingsEditor({
   saving: boolean;
 }) {
   return (
-    <details className="rounded-card border border-subtle bg-surface">
+    <details className="rounded-card bg-surface">
       <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-ink">
         Money settings
       </summary>
@@ -301,13 +297,9 @@ function SettingsEditor({
           label="Bank balance — reconcile ($)"
           defaultValue={settings?.bankBalanceCents != null ? settings.bankBalanceCents / 100 : ""}
         />
-        <button
-          type="submit"
-          disabled={saving}
-          className="self-start rounded-pill bg-active-raised px-4 py-1.5 text-xs font-medium text-active-raised-border transition hover:opacity-90 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={saving} className="self-start px-4 py-1.5 text-xs">
           {saving ? "Saving…" : "Save settings"}
-        </button>
+        </Button>
       </form>
     </details>
   );
@@ -377,7 +369,7 @@ function EntrySection({
   };
 
   return (
-    <details className="rounded-card border border-subtle bg-surface">
+    <details className="rounded-card bg-surface">
       <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-ink">
         {title}
         <span className="ml-2 text-caption text-ink-muted">{rows.length}</span>

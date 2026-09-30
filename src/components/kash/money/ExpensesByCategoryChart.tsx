@@ -41,14 +41,14 @@ export default function ExpensesByCategoryChart({ data }: { data: ChartData }) {
 
   if (!hasAny) {
     return (
-      <p className="rounded-card border border-border bg-surface p-4 text-caption text-ink-muted shadow-surface">
+      <p className="rounded-card bg-surface p-4 text-caption text-ink-muted">
         No expenses in the last 6 months yet — add or import some below.
       </p>
     );
   }
 
   return (
-    <div className="rounded-card border border-subtle bg-surface p-4">
+    <div className="rounded-card bg-surface p-4">
       <p className="mb-2 text-caption font-medium uppercase tracking-wide text-ink-muted">
         Expenses by category · last 6 months
       </p>

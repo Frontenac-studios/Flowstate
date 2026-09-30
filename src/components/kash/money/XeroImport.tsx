@@ -1,5 +1,6 @@
 "use client";
 
+import Button from "@/components/kash/ui/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
@@ -112,15 +113,15 @@ export default function XeroImport({ onImported }: { onImported: () => void }) {
           ) : null}
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={() => importBills.mutate({ csv })}
               disabled={importBills.isPending || p.newExpenseCount + p.newDrawCount === 0}
-              className="inline-flex items-center gap-1.5 rounded-pill bg-active-raised px-4 py-1.5 text-xs font-medium text-active-raised-border transition hover:opacity-90 disabled:opacity-50"
+              className="px-4 py-1.5 text-xs"
             >
               {importBills.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
               Import {p.newExpenseCount + p.newDrawCount} lines
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => {

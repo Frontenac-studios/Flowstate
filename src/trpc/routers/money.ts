@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -8,8 +8,22 @@ import {
   syncMoneySettingsRow,
   syncOwnerDrawRow,
 } from "@/db/record-sync-mutation";
-import { businessExpenses, invoices, moneySettings, ownerDraws } from "@/db/tables";
+import {
+  businessExpenses,
+  clients,
+  feeInstallments,
+  invoices,
+  moneySettings,
+  ownerDraws,
+  projectFees,
+  projectMilestones,
+  projects,
+  rates,
+  timeEntries,
+} from "@/db/tables";
 import { computeDrawPanel } from "@/lib/money/compute-draw-panel";
+import { isInstallmentReady } from "@/lib/money/fee-installments";
+import { buildKashTable } from "@/lib/money/kash-table";
 import { aggregateExpensesByCategory } from "@/lib/money/expenses-by-category";
 import { parseXeroBills, type ParsedBillLine } from "@/lib/money/parse-xero-bills";
 import { computeToolSpend } from "@/lib/quarter/tool-spend";
@@ -22,6 +36,146 @@ const BURN_WINDOW_MONTHS = 3;
 const centsSchema = z.number().int().min(0).max(1_000_000_00);
 
 export const moneyRouter = createTRPCRouter({
+  /**
+   * The Kash money table (Spec v5 KashB2): totals + client rows with their
+   * projects. Every figure is derived here from invoices, time and installments —
+   * see lib/money/kash-table.ts for the rules.
+   */
+  kashTable: protectedProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const [clientRows, rateRows, projectRows, feeRows, entryRows, invoiceRows, installmentRows] =
+      await Promise.all([
+        db
+          .select({ id: clients.id, name: clients.name, archivedAt: clients.archivedAt })
+          .from(clients)
+          .where(eq(clients.userId, ctx.userId)),
+        // Client default rates only: that's what an invoice draft bills at.
+        db
+          .select({
+            clientId: rates.clientId,
+            amountCents: rates.amountCents,
+            effectiveFrom: rates.effectiveFrom,
+          })
+          .from(rates)
+          .where(and(eq(rates.userId, ctx.userId), isNull(rates.projectId))),
+        db
+          .select({
+            id: projects.id,
+            name: projects.name,
+            clientId: projects.clientId,
+            hue: projects.hue,
+            billingType: projects.billingType,
+            archivedAt: projects.archivedAt,
+          })
+          .from(projects)
+          .where(and(eq(projects.userId, ctx.userId), isNotNull(projects.clientId))),
+        db
+          .select({
+            projectId: projectFees.projectId,
+            feeAmountCents: projectFees.feeAmountCents,
+            proposalAmountCents: projectFees.proposalAmountCents,
+          })
+          .from(projectFees)
+          .where(eq(projectFees.userId, ctx.userId)),
+        // Completed entries only — a running timer isn't billable yet.
+        db
+          .select({
+            projectId: timeEntries.projectId,
+            startedAt: timeEntries.startedAt,
+            endedAt: timeEntries.endedAt,
+            billable: timeEntries.billable,
+            invoiceId: timeEntries.invoiceId,
+          })
+          .from(timeEntries)
+          .where(and(eq(timeEntries.userId, ctx.userId), isNotNull(timeEntries.endedAt))),
+        db
+          .select({
+            id: invoices.id,
+            clientId: invoices.clientId,
+            kind: invoices.kind,
+            amountCents: invoices.amountCents,
+            status: invoices.status,
+            paidAt: invoices.paidAt,
+          })
+          .from(invoices)
+          .where(eq(invoices.userId, ctx.userId)),
+        db
+          .select({
+            projectId: feeInstallments.projectId,
+            label: feeInstallments.label,
+            amountCents: feeInstallments.amountCents,
+            invoiceId: feeInstallments.invoiceId,
+            readyAt: feeInstallments.readyAt,
+            milestoneCompletedAt: projectMilestones.completedAt,
+          })
+          .from(feeInstallments)
+          .leftJoin(projectMilestones, eq(feeInstallments.milestoneId, projectMilestones.id))
+          .where(eq(feeInstallments.userId, ctx.userId)),
+      ]);
+
+    const rateByClient = new Map<string, { amountCents: number; effectiveFrom: Date }>();
+    for (const r of rateRows) {
+      if (r.effectiveFrom.getTime() > now.getTime()) continue;
+      const best = rateByClient.get(r.clientId);
+      if (!best || r.effectiveFrom > best.effectiveFrom) rateByClient.set(r.clientId, r);
+    }
+
+    return buildKashTable({
+      now,
+      clients: clientRows.map((c) => ({
+        id: c.id,
+        name: c.name,
+        rateCents: rateByClient.get(c.id)?.amountCents ?? null,
+        archived: c.archivedAt != null,
+      })),
+      projects: projectRows.flatMap((p) =>
+        p.clientId
+          ? [
+              {
+                id: p.id,
+                name: p.name,
+                clientId: p.clientId,
+                hue: p.hue,
+                billingType: p.billingType,
+                archived: p.archivedAt != null,
+              },
+            ]
+          : []
+      ),
+      fees: feeRows,
+      entries: entryRows.flatMap((e) =>
+        e.projectId && e.endedAt
+          ? [
+              {
+                projectId: e.projectId,
+                seconds: Math.max(
+                  0,
+                  Math.floor((e.endedAt.getTime() - e.startedAt.getTime()) / 1000)
+                ),
+                billable: e.billable,
+                invoiceId: e.invoiceId,
+              },
+            ]
+          : []
+      ),
+      invoices: invoiceRows.map((i) => ({
+        id: i.id,
+        clientId: i.clientId,
+        kind: i.kind === "fee" ? ("fee" as const) : ("time" as const),
+        amountCents: i.amountCents,
+        status: i.status === "void" ? ("void" as const) : ("accepted" as const),
+        paidAt: i.paidAt,
+      })),
+      installments: installmentRows.map((i) => ({
+        projectId: i.projectId,
+        label: i.label,
+        amountCents: i.amountCents,
+        invoiceId: i.invoiceId,
+        ready: isInstallmentReady({ ...i }),
+      })),
+    });
+  }),
+
   /** The held Draw-panel figures. Null throughout means "not set yet" — the UI prompts. */
   getSettings: protectedProcedure.query(async ({ ctx }) => {
     const [row] = await db

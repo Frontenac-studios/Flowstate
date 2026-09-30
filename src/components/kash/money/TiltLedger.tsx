@@ -74,10 +74,7 @@ export default function TiltLedger() {
   const atOldest = !!(period && bounds && period.key === bounds.earliestKey);
 
   return (
-    <section
-      aria-labelledby="ledger-heading"
-      className="rounded-card border border-border bg-surface p-5 shadow-surface"
-    >
+    <section aria-labelledby="ledger-heading" className="rounded-card bg-surface p-5">
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="flex items-baseline gap-2">
           <h2 id="ledger-heading" className="text-body font-medium text-ink">
